@@ -8,6 +8,32 @@ services:
       - "8083:5000"
     volumes:
       - .:/app
+      - ./data:/app/data
+      - ./output:/app/output
+      - ./yt-dlp-cache:/root/.cache/yt-dlp
     environment:
       - FLASK_ENV=development
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_API_KEY=""
+    env_file:
+      - .env
+    depends_on:
+      - qdrant
     restart: unless-stopped
+    networks:
+      - youtubetodoc_network
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: youtubetodoc_qdrant
+    ports:
+      - "6334:6333"
+    volumes:
+      - ./qdrant_data:/qdrant/storage
+    restart: unless-stopped
+    networks:
+      - youtubetodoc_network
+
+networks:
+  youtubetodoc_network:
+    driver: bridge

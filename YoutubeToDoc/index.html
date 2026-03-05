@@ -1,19 +1,22 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YoutubeToDoc - AI 가공 텍스트 요약</title>
     <meta name="description" content="Youtube 비디오를 깔끔하고 완성도 높은 문서로 자동 변환합니다.">
-    
+
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <!-- Background Animated Shapes -->
     <div class="blob blob-1"></div>
@@ -23,11 +26,13 @@
         <header>
             <div class="logo">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M20 4H4C2.89543 4 2 4.89543 2 6V18C2 19.1046 2.89543 20 4 20H20C21.1046 20 22 19.1046 22 18V6C22 4.89543 21.1046 4 20 4ZM8 15V9L15 12L8 15Z" fill="url(#paint0_linear)"/>
+                    <path fill-rule="evenodd" clip-rule="evenodd"
+                        d="M20 4H4C2.89543 4 2 4.89543 2 6V18C2 19.1046 2.89543 20 4 20H20C21.1046 20 22 19.1046 22 18V6C22 4.89543 21.1046 4 20 4ZM8 15V9L15 12L8 15Z"
+                        fill="url(#paint0_linear)" />
                     <defs>
                         <linearGradient id="paint0_linear" x1="2" y1="4" x2="22" y2="20" gradientUnits="userSpaceOnUse">
-                            <stop stop-color="#FF2A5F"/>
-                            <stop offset="1" stop-color="#FF6A88"/>
+                            <stop stop-color="#FF2A5F" />
+                            <stop offset="1" stop-color="#FF6A88" />
                         </linearGradient>
                     </defs>
                 </svg>
@@ -63,7 +68,6 @@
             <div id="result-container" class="result-container hidden">
                 <h3 class="result-title">문서 생성 완료! 🎊</h3>
                 <p class="result-msg">문서가 성공적으로 준비되었습니다.</p>
-                <a href="#" class="btn-secondary" id="open-doc-btn">변환된 문서 보기</a>
             </div>
         </main>
     </div>
@@ -71,4 +75,5 @@
     <!-- Custom Logic -->
     <script src="script.js"></script>
 </body>
+
 </html>

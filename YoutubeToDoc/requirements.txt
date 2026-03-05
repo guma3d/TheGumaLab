@@ -1,3 +1,12 @@
-Flask==2.3.2
-requests==2.31.0
-waitress==2.1.2
+Flask>=2.3.2
+requests>=2.31.0
+waitress>=2.1.2
+opencv-python-headless
+numpy
+psutil
+qdrant-client
+google-genai
+beautifulsoup4
+markdown
+python-dotenv
+yt-dlp

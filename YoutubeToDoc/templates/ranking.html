@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>선호도 순위 - YouTube Processor</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            color: #333;
+            font-size: 28px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .nav-links a {
+            padding: 8px 16px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        
+        .nav-links a:hover {
+            background: #5a6268;
+        }
+        
+        .stats-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .ranking-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .ranking-header {
+            background: #007bff;
+            color: white;
+            padding: 15px 20px;
+            display: grid;
+            grid-template-columns: 60px 1fr 100px 100px 100px 120px 100px 100px;
+            gap: 15px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .ranking-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: grid;
+            grid-template-columns: 60px 1fr 100px 100px 100px 120px 100px 100px;
+            gap: 15px;
+            align-items: center;
+            transition: background 0.3s;
+        }
+        
+        .ranking-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .ranking-item:last-child {
+            border-bottom: none;
+        }
+        
+        .rank {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .rank.gold { color: #FFD700; }
+        .rank.silver { color: #C0C0C0; }
+        .rank.bronze { color: #CD7F32; }
+        .rank.normal { color: #999; }
+        
+        .task-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .task-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+        }
+        
+        .task-status {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .status-completed { color: #10b981; }
+        .status-processing { color: #f59e0b; }
+        .status-failed { color: #ef4444; }
+        
+        .score-cell {
+            text-align: center;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .total-score {
+            font-size: 18px;
+            color: #007bff;
+            font-weight: bold;
+        }
+        
+        .score-link {
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .score-link:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+        
+        .delete-btn {
+            padding: 8px 16px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s;
+        }
+        
+        .delete-btn:hover {
+            background: #c82333;
+        }
+        
+        .wiki-btn {
+            padding: 8px 16px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s;
+            margin-right: 5px;
+        }
+        
+        .wiki-btn:hover {
+            background: #218838;
+        }
+        
+        .wiki-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 8px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 13px;
+        }
+        
+        .info-text {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .ranking-header, .ranking-item {
+                grid-template-columns: 50px 1fr 80px 120px 80px;
+                gap: 10px;
+                padding: 15px;
+            }
+            
+            .hide-mobile {
+                display: none;
+            }
+            
+            .rank {
+                font-size: 18px;
+            }
+            
+            .task-title {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 선호도 순위</h1>
+            <div class="nav-links">
+                <a href="/">메인 페이지</a>
+                <a href="/search">검색</a>
+                <a href="/admin/settings">관리자 페이지</a>
+            </div>
+        </div>
+        
+        <div class="stats-section">
+            <p class="info-text">요약보기 1점 · 상세보기 3점 · 추천 5점</p>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalTasks">0</div>
+                    <div class="stat-label">전체 Task</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalViews">0</div>
+                    <div class="stat-label">총 조회수</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalRecommends">0</div>
+                    <div class="stat-label">총 추천수</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="ranking-container">
+            <div class="ranking-header">
+                <div>순위</div>
+                <div>영상 제목</div>
+                <div class="hide-mobile">요약</div>
+                <div class="hide-mobile">상세</div>
+                <div class="hide-mobile">추천</div>
+                <div>총점</div>
+                <div>위키</div>
+                <div>관리</div>
+            </div>
+            <div id="rankingList">
+                <div style="padding: 40px; text-align: center; color: #999;">
+                    로딩 중...
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function loadRanking() {
+            console.log('Loading ranking data...');
+            fetch('/api/ranking')
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Received data:', data);
+                    const listEl = document.getElementById('rankingList');
+                    
+                    if (!data.success) {
+                        listEl.innerHTML = `<div style="padding: 40px; text-align: center; color: #ef4444;">에러: ${data.error || '알 수 없는 오류'}</div>`;
+                        return;
+                    }
+                    
+                    if (!data.ranking || data.ranking.length === 0) {
+                        listEl.innerHTML = '<div style="padding: 40px; text-align: center; color: #999;">데이터가 없습니다.</div>';
+                        return;
+                    }
+                    
+                    // 통계 업데이트
+                    document.getElementById('totalTasks').textContent = data.ranking.length;
+                    
+                    let totalViews = 0;
+                    let totalRecommends = 0;
+                    data.ranking.forEach(item => {
+                        totalViews += item.summary_views + item.detail_views;
+                        totalRecommends += item.recommend_count;
+                    });
+                    
+                    document.getElementById('totalViews').textContent = totalViews;
+                    document.getElementById('totalRecommends').textContent = totalRecommends;
+                    
+                    // 순위 리스트 생성
+                    listEl.innerHTML = data.ranking.map(item => {
+                        let rankClass = 'normal';
+                        if (item.rank === 1) rankClass = 'gold';
+                        else if (item.rank === 2) rankClass = 'silver';
+                        else if (item.rank === 3) rankClass = 'bronze';
+                        
+                        let statusClass = '';
+                        let statusText = item.status;
+                        if (item.status === 'completed') {
+                            statusClass = 'status-completed';
+                            statusText = '완료';
+                        } else if (item.status === 'processing') {
+                            statusClass = 'status-processing';
+                            statusText = '처리중';
+                        } else if (item.status === 'failed') {
+                            statusClass = 'status-failed';
+                            statusText = '실패';
+                        }
+                        // 요약/상세 링크 생성
+                        const summaryLink = item.summary_html_path ? 
+                            `<a href="/view/${item.task_id}/summary" class="score-link" target="_blank">${item.summary_views}</a>` : 
+                            item.summary_views;
+                        
+                        const detailLink = item.html_path ? 
+                            `<a href="/view/${item.task_id}/detail" class="score-link" target="_blank">${item.detail_views}</a>` : 
+                            item.detail_views;
+                        
+                        return `
+                            <div class="ranking-item">
+                                <div class="rank ${rankClass}">${item.rank}</div>
+                                <div class="task-info">
+                                    <div class="task-title">${item.video_title}</div>
+                                    <div class="task-status ${statusClass}">${statusText}</div>
+                                </div>
+                                <div class="score-cell hide-mobile">${summaryLink}</div>
+                                <div class="score-cell hide-mobile">${detailLink}</div>
+                                <div class="score-cell hide-mobile">${item.recommend_count}</div>
+                                <div class="score-cell total-score">${item.score}</div>
+                                <div class="score-cell">
+                                    <button class="wiki-btn" onclick="publishToWiki('${item.task_id}')" ${item.status !== 'completed' ? 'disabled' : ''}>위키 발행</button>
+                                </div>
+                                <div class="score-cell">
+                                    <button class="delete-btn" onclick="deleteTask('${item.task_id}')">삭제</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                })
+                .catch(error => {
+                    console.error('순위 로딩 실패:', error);
+                    document.getElementById('rankingList').innerHTML = 
+                        '<div style="padding: 40px; text-align: center; color: #ef4444;">로딩 실패</div>';
+                });
+        }
+        
+        // 위키 발행 함수
+        function publishToWiki(taskId) {
+            if (!confirm('이 영상을 Confluence 위키로 발행하시겠습니까?')) {
+                return;
+            }
+            
+            const button = event.target;
+            button.disabled = true;
+            button.textContent = '발행 중...';
+            
+            fetch(`/publish-to-wiki/${taskId}`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('위키 발행 완료!\n\n페이지: ' + data.page_title + '\nURL: ' + data.page_url);
+                    window.open(data.page_url, '_blank');
+                } else {
+                    alert('위키 발행 실패: ' + (data.error || '알 수 없는 오류'));
+                }
+            })
+            .catch(error => {
+                console.error('위키 발행 실패:', error);
+                alert('위키 발행 실패: ' + error.message);
+            })
+            .finally(() => {
+                button.disabled = false;
+                button.textContent = '위키 발행';
+            });
+        }
+        
+        // Task 삭제 함수
+        function deleteTask(taskId) {
+            if (!confirm('정말 이 Task를 삭제하시겠습니까?')) {
+                return;
+            }
+            
+            fetch(`/delete/${taskId}`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Task가 삭제되었습니다.');
+                    loadRanking();  // 목록 새로고침
+                } else {
+                    alert('삭제 실패: ' + (data.error || '알 수 없는 오류'));
+                }
+            })
+            .catch(error => {
+                console.error('삭제 실패:', error);
+                alert('삭제 실패: ' + error.message);
+            });
+        }
+        
+        // 페이지 로드 시 실행
+        loadRanking();
+        
+        // 10초마다 자동 갱신
+        setInterval(loadRanking, 10000);
+    </script>
+</body>
+</html>

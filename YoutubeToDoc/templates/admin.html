@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>관리자 설정 - YouTube Video Processor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            margin: 0;
+            color: #333;
+            font-size: 28px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+        }
+
+        .back-link {
+            padding: 8px 16px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+
+        .back-link:hover {
+            background: #5a6268;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            background-color: white;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .btn-save {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: #218838;
+        }
+
+        .btn-reset {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #c82333;
+        }
+
+        #message {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #007bff;
+        }
+
+        .info-box h3 {
+            margin-top: 0;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .info-box code {
+            background: #fff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .info-box ul {
+            margin: 10px 0 0 0;
+            padding-left: 20px;
+        }
+
+        .info-box li {
+            margin: 8px 0;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .section-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border-left: 4px solid #007bff;
+        }
+
+        .section-box h2 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .section-box .form-group:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>⚙️ 관리자 설정</h1>
+        <div class="nav-links">
+            <a href="/ranking" class="back-link">📊 순위</a>
+            <a href="/" class="back-link">← 홈으로</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="info-box">
+            <h3>� 설정 안내</h3>
+            <p>YouTube 영상 처리 파이프라인과 검색 시스템의 모든 설정을 커스터마이징할 수 있습니다.</p>
+            <ul>
+                <li><a href="#whisper-settings" style="color: #28a745; text-decoration: none;"><strong>🎤 자막 생성
+                            설정:</strong> Gemini 모델 선택</a></li>
+                <li><a href="#translation-settings" style="color: #17a2b8; text-decoration: none;"><strong>🌐 번역
+                            설정:</strong> Gemini 모델 선택 및 번역 프롬프트 커스터마이징</a></li>
+                <li><a href="#summary-settings" style="color: #ffc107; text-decoration: none;"><strong>📝 요약
+                            설정:</strong> 전체 영상 요약을 위한 프롬프트 설정</a></li>
+                <li><a href="#filter-settings" style="color: #6f42c1; text-decoration: none;"><strong>🔍 벡터DB 필터링
+                            설정:</strong> 중요 세그먼트 필터링 프롬프트</a></li>
+                <li><a href="#query-expansion-settings" style="color: #20c997; text-decoration: none;"><strong>🔎 검색 쿼리
+                            확장 설정:</strong> 사용자 질문을 분석하여 검색 키워드 확장</a></li>
+                <li><a href="#answer-settings" style="color: #fd7e14; text-decoration: none;"><strong>💬 검색 답변 생성
+                            설정:</strong> 검색 결과를 바탕으로 최종 답변 생성</a></li>
+                <li><a href="#general-settings" style="color: #007bff; text-decoration: none;"><strong>🔧 일반
+                            설정:</strong> Task 관리, 자동 클린업, HTML 생성 옵션 등</a></li>
+            </ul>
+        </div>
+
+        <form id="settingsForm">
+            <!-- 자막 생성 설정 섹션 -->
+            <div class="section-box" id="whisper-settings" style="border-left-color: #28a745;">
+                <h2>🎤 자막 생성 설정</h2>
+
+                <div class="form-group">
+                    <label for="whisper_model">Whisper Model</label>
+                    <select id="whisper_model" name="whisper_model">
+                        <option value="whisper-1" {% if whisper_model=='whisper-1' %}selected{% endif %}>whisper-1
+                            (Default)</option>
+                    </select>
+                    <div class="help-text">자막 생성에 사용할 Whisper 모델을 선택하세요.</div>
+                </div>
+            </div>
+
+            <!-- 번역 설정 섹션 -->
+            <div class="section-box" id="translation-settings" style="border-left-color: #17a2b8;">
+                <h2>🌐 번역 설정</h2>
+
+                <div class="form-group">
+                    <label for="translation_model">Translation Model</label>
+                    <select id="translation_model" name="translation_model">
+                        {% if available_models %}
+                        {% for model in available_models %}
+                        <option value="{{ model }}" {% if translation_model==model %}selected{% endif %}>
+                            {{ model }}{% if model == 'gemini-2.5-flash' %} ⭐ Default{% endif %}
+                        </option>
+                        {% endfor %}
+                        {% else %}
+                        <!-- Fallback: 모델 리스트를 가져올 수 없을 때 기본 옵션들 -->
+                        <option value="gemini-2.5-flash" {% if translation_model=='gemini-2.5-flash' %}selected{% endif
+                            %}>
+                            gemini-2.5-flash ⭐ Default</option>
+                        {% endif %}
+                    </select>
+                    <div class="help-text">번역 및 요약에 사용할 Gemini 모델을 선택하세요. 기본값은 gemini-2.5-flash (비용 효율적)입니다.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="system_prompt">System Prompt (번역용)</label>
+                    <textarea id="system_prompt" name="system_prompt" rows="6">{{ system_prompt }}</textarea>
+                    <div class="help-text">번역 AI의 역할과 전반적인 지시사항을 입력하세요.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="user_prompt_template">User Prompt Template (번역용)</label>
+                    <textarea id="user_prompt_template" name="user_prompt_template"
+                        rows="4">{{ user_prompt_template }}</textarea>
+                    <div class="help-text"><code>{text}</code>는 자막 텍스트로 자동 치환됩니다. 예: "다음 텍스트를 번역해줘: {text}"</div>
+                </div>
+            </div>
+
+            <!-- 요약 설정 섹션 -->
+            <div class="section-box" id="summary-settings" style="border-left-color: #ffc107;">
+                <h2>📝 요약 설정</h2>
+
+                <div class="form-group">
+                    <label for="summary_system_prompt">Summary System Prompt (요약용)</label>
+                    <textarea id="summary_system_prompt" name="summary_system_prompt"
+                        rows="6">{{ summary_system_prompt }}</textarea>
+                    <div class="help-text">요약 AI의 역할과 전반적인 지시사항을 입력하세요.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="summary_user_prompt_template">Summary User Prompt Template (요약용)</label>
+                    <textarea id="summary_user_prompt_template" name="summary_user_prompt_template"
+                        rows="4">{{ summary_user_prompt_template }}</textarea>
+                    <div class="help-text"><code>{text}</code>는 전체 자막 텍스트로 자동 치환됩니다.</div>
+                </div>
+            </div>
+
+            <!-- 필터링 설정 섹션 -->
+            <div class="section-box" id="filter-settings" style="border-left-color: #6f42c1;">
+                <h2>🔍 벡터DB 필터링 설정</h2>
+
+                <div class="form-group">
+                    <label for="filter_system_prompt">Filter System Prompt (벡터DB 필터링용)</label>
+                    <textarea id="filter_system_prompt" name="filter_system_prompt"
+                        rows="3">{{ filter_system_prompt }}</textarea>
+                    <div class="help-text">중요 세그먼트 필터링 AI의 역할과 지시사항을 입력하세요.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="filter_user_prompt_template">Filter User Prompt Template (필터링용)</label>
+                    <textarea id="filter_user_prompt_template" name="filter_user_prompt_template"
+                        rows="4">{{ filter_user_prompt_template }}</textarea>
+                    <div class="help-text"><code>{text}</code>는 세그먼트 목록으로 자동 치환됩니다. JSON 배열 형식으로 인덱스를 반환해야 합니다.</div>
+                </div>
+            </div>
+
+            <!-- 검색 쿼리 확장 설정 섹션 -->
+            <div class="section-box" id="query-expansion-settings" style="border-left-color: #20c997;">
+                <h2>🔎 검색 쿼리 확장 설정</h2>
+
+                <div class="form-group">
+                    <label for="query_expansion_model">Query Expansion Model (검색 쿼리 확장용)</label>
+                    <select id="query_expansion_model" name="query_expansion_model">
+                        {% if available_models %}
+                        {% for model in available_models %}
+                        <option value="{{ model }}" {% if query_expansion_model==model %}selected{% endif %}>
+                            {{ model }}{% if model == 'gemini-2.5-flash' %} ⭐ Default{% endif %}
+                        </option>
+                        {% endfor %}
+                        {% else %}
+                        <option value="gemini-2.5-flash" {% if query_expansion_model=='gemini-2.5-flash' %}selected{%
+                            endif %}>gemini-2.5-flash ⭐ Default</option>
+                        {% endif %}
+                    </select>
+                    <div class="help-text">검색 쿼리 확장에 사용할 모델을 선택하세요. 기본값은 gemini-2.5-flash (빠르고 저렴)입니다.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="query_expansion_system_prompt">Query Expansion System Prompt (검색 쿼리 확장용)</label>
+                    <textarea id="query_expansion_system_prompt" name="query_expansion_system_prompt"
+                        rows="4">{{ query_expansion_system_prompt }}</textarea>
+                    <div class="help-text">검색 쿼리를 확장하는 AI의 역할과 지시사항을 입력하세요. 사용자 질문을 분석하여 검색에 효과적인 키워드를 추가합니다.</div>
+                </div>
+            </div>
+
+            <!-- 검색 답변 생성 설정 섹션 -->
+            <div class="section-box" id="answer-settings" style="border-left-color: #fd7e14;">
+                <h2>💬 검색 답변 생성 설정</h2>
+
+                <div class="form-group">
+                    <label for="answer_model">Answer Generation Model (검색 답변 생성용)</label>
+                    <select id="answer_model" name="answer_model">
+                        {% if available_models %}
+                        {% for model in available_models %}
+                        <option value="{{ model }}" {% if answer_model==model %}selected{% endif %}>
+                            {{ model }}{% if model == 'gemini-2.5-flash' %} ⭐ Default{% endif %}
+                        </option>
+                        {% endfor %}
+                        {% else %}
+                        <option value="gemini-2.5-flash" {% if answer_model=='gemini-2.5-flash' %}selected{% endif %}>
+                            gemini-2.5-flash ⭐ Default</option>
+                        {% endif %}
+                    </select>
+                    <div class="help-text">검색 결과를 바탕으로 최종 답변을 생성하는 모델을 선택하세요. 기본값은 gemini-2.5-flash (빠르고 저렴)입니다.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="answer_system_prompt">Answer Generation System Prompt (검색 답변 생성용)</label>
+                    <textarea id="answer_system_prompt" name="answer_system_prompt"
+                        rows="4">{{ answer_system_prompt }}</textarea>
+                    <div class="help-text">검색 결과를 바탕으로 최종 답변을 생성하는 AI의 역할과 지시사항을 입력하세요. 답변의 톤, 길이, 형식 등을 지정합니다.</div>
+                </div>
+            </div>
+
+            <!-- 일반 설정 섹션 -->
+            <div class="section-box" id="general-settings">
+                <h2>🔧 일반 설정</h2>
+
+                <div class="form-group">
+                    <label for="max_tasks">최대 Task 유지 개수</label>
+                    <input type="number" id="max_tasks" name="max_tasks" value="{{ max_tasks }}" min="0" step="1">
+                    <div class="help-text">
+                        유지할 최대 Task 개수를 설정하세요. 0이면 제한 없음.
+                        초과 시 선호도가 낮은 Task부터 자동 삭제됩니다.
+                        (요약보기 1점, 상세보기 3점, 추천 5점 기준)
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="auto_cleanup">자동 클린업</label>
+                    <select id="auto_cleanup" name="auto_cleanup">
+                        <option value="1" {% if auto_cleanup=='1' %}selected{% endif %}>활성화 (기본값)</option>
+                        <option value="0" {% if auto_cleanup=='0' %}selected{% endif %}>비활성화</option>
+                    </select>
+                    <div class="help-text">
+                        비활성화하면 동일 URL의 중복 Task와 최대 개수 초과 시 자동 삭제가 실행되지 않습니다.
+                        프롬프트 테스트 시 유용합니다.
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="skip_detail_html">상세보기 HTML 생성</label>
+                    <select id="skip_detail_html" name="skip_detail_html">
+                        <option value="0" {% if skip_detail_html=='0' %}selected{% endif %}>생성 (기본값)</option>
+                        <option value="1" {% if skip_detail_html=='1' %}selected{% endif %}>건너뛰기</option>
+                    </select>
+                    <div class="help-text">
+                        상세보기 HTML 생성을 건너뛰면 처리 속도가 빨라집니다. 요약만 필요할 때 유용합니다.
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="enable_reranking">LLM Re-ranking 활성화</label>
+                    <select id="enable_reranking" name="enable_reranking">
+                        <option value="1" {% if enable_reranking=='1' %}selected{% endif %}>활성화 (기본값)</option>
+                        <option value="0" {% if enable_reranking=='0' %}selected{% endif %}>비활성화</option>
+                    </select>
+                    <div class="help-text">
+                        검색 결과를 LLM으로 재평가하여 더 정확한 순위를 제공합니다.
+                        비활성화하면 벡터 유사도만 사용하여 빠르지만 정확도가 낮을 수 있습니다.
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="enable_search_answer">AI 답변 생성</label>
+                    <select id="enable_search_answer" name="enable_search_answer">
+                        <option value="1" {% if enable_search_answer=='1' %}selected{% endif %}>활성화 (기본값)</option>
+                        <option value="0" {% if enable_search_answer=='0' %}selected{% endif %}>비활성화</option>
+                    </select>
+                    <div class="help-text">
+                        검색 결과를 바탕으로 LLM이 요약 답변을 생성합니다.
+                        비활성화하면 검색 결과만 유사도 순으로 표시하여 빠르고 비용이 절감됩니다.
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="min_similarity_threshold">최소 유사도 임계값 (Re-ranking 시)</label>
+                    <input type="number" id="min_similarity_threshold" name="min_similarity_threshold"
+                        value="{{ min_similarity_threshold }}" min="0" max="1" step="0.05">
+                    <div class="help-text">
+                        Re-ranking 활성화 시 검색 결과를 필터링할 최소 유사도를 설정합니다. (0.0 ~ 1.0)
+                        예: 0.5 = 50% 이상, 0.3 = 30% 이상. 낮을수록 더 많은 결과가 표시됩니다.
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn-save">💾 저장</button>
+                <button type="button" class="btn-reset" onclick="resetToDefault()">🔄 기본값으로 복원</button>
+            </div>
+        </form>
+
+        <div
+            style="margin-top: 30px; padding: 20px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+            <h3 style="margin-bottom: 10px;">🔄 Qdrant 재인덱싱</h3>
+            <p style="margin-bottom: 15px; color: #856404;">완료된 모든 영상을 Qdrant DB에 재인덱싱합니다. 콘솔 로그를 확인하세요.</p>
+            <button type="button" class="btn-reset" onclick="reindexAll()" style="background-color: #667eea;">🔄 전체 재인덱싱
+                실행</button>
+        </div>
+
+        <div
+            style="margin-top: 30px; padding: 20px; background: #d1ecf1; border-left: 4px solid #17a2b8; border-radius: 4px;">
+            <h3 style="margin-bottom: 10px;">📄 HTML 파일 최신화</h3>
+            <p style="margin-bottom: 15px; color: #0c5460;">구버전 상세 HTML을 최신 형식으로 재생성합니다. 검색에서 정확한 위치로 이동하려면 필요합니다.</p>
+            <button type="button" class="btn-reset" onclick="regenerateAllHtml()" style="background-color: #17a2b8;">📝
+                전체 HTML 재생성</button>
+        </div>
+
+        <div id="message"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('settingsForm');
+        const messageDiv = document.getElementById('message');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const whisperModel = document.getElementById('whisper_model').value;
+            const translationModel = document.getElementById('translation_model').value;
+            const systemPrompt = document.getElementById('system_prompt').value;
+            const userPromptTemplate = document.getElementById('user_prompt_template').value;
+            const summarySystemPrompt = document.getElementById('summary_system_prompt').value;
+            const summaryUserPromptTemplate = document.getElementById('summary_user_prompt_template').value;
+            const filterSystemPrompt = document.getElementById('filter_system_prompt').value;
+            const filterUserPromptTemplate = document.getElementById('filter_user_prompt_template').value;
+            const maxTasks = document.getElementById('max_tasks').value;
+            const autoCleanup = document.getElementById('auto_cleanup').value;
+            const skipDetailHtml = document.getElementById('skip_detail_html').value;
+
+            try {
+                const response = await fetch('/admin/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        whisper_model: whisperModel,
+                        translation_model: translationModel,
+                        system_prompt: systemPrompt,
+                        user_prompt_template: userPromptTemplate,
+                        summary_system_prompt: summarySystemPrompt,
+                        summary_user_prompt_template: summaryUserPromptTemplate,
+                        filter_system_prompt: filterSystemPrompt,
+                        filter_user_prompt_template: filterUserPromptTemplate,
+                        query_expansion_system_prompt: document.getElementById('query_expansion_system_prompt').value,
+                        query_expansion_model: document.getElementById('query_expansion_model').value,
+                        answer_system_prompt: document.getElementById('answer_system_prompt').value,
+                        answer_model: document.getElementById('answer_model').value,
+                        max_tasks: maxTasks,
+                        auto_cleanup: autoCleanup,
+                        skip_detail_html: skipDetailHtml,
+                        enable_reranking: document.getElementById('enable_reranking').value,
+                        enable_search_answer: document.getElementById('enable_search_answer').value,
+                        min_similarity_threshold: document.getElementById('min_similarity_threshold').value
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('설정이 성공적으로 저장되었습니다! ✅', 'success');
+                } else {
+                    showMessage('저장 실패: ' + (data.error || '알 수 없는 오류'), 'error');
+                }
+            } catch (error) {
+                showMessage('저장 중 오류 발생: ' + error, 'error');
+            }
+        });
+
+        function showMessage(text, type) {
+            messageDiv.textContent = text;
+            messageDiv.className = type;
+            messageDiv.style.display = 'block';
+
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        function resetToDefault() {
+            if (confirm('기본값으로 복원하시겠습니까?')) {
+                document.getElementById('whisper_model').value = 'whisper-1';
+                document.getElementById('translation_model').value = 'gemini-2.5-flash';
+                document.getElementById('system_prompt').value = 'You are a translator. Translate the following English text to Korean. Only output the translated text, nothing else.';
+                document.getElementById('user_prompt_template').value = '{text}';
+                document.getElementById('summary_system_prompt').value = 'You are a professional summarizer. Create a comprehensive summary in Korean with markdown formatting including headings, bullet points, and key insights.';
+                document.getElementById('summary_user_prompt_template').value = '다음은 영상의 전체 자막입니다. 핵심 내용을 마크다운 형식으로 요약해주세요:\\n\\n{text}';
+                document.getElementById('filter_system_prompt').value = 'You are an expert at identifying important information in video transcripts. Return only the indices of important segments as a JSON array of numbers.';
+                document.getElementById('filter_user_prompt_template').value = '다음은 영상의 번역된 세그먼트들입니다. 핵심 정보를 담고 있는 중요한 세그먼트들의 인덱스만 JSON 배열로 반환해주세요 (예: [0, 3, 7]). 전체의 30-50% 정도만 선택하세요.\\n\\n{text}';
+                document.getElementById('query_expansion_system_prompt').value = '당신은 검색 전문가입니다. 사용자의 질문을 분석하고, 검색에 효과적인 키워드와 관련 용어를 추가하여 확장된 검색 쿼리를 생성해주세요. 고유명사(게임명, 기술명, 회사명 등), 관련 개념, 동의어를 포함하되, 자연스러운 한 문장으로 작성하세요.';
+                document.getElementById('query_expansion_model').value = 'gemini-2.5-flash';
+                document.getElementById('answer_system_prompt').value = '당신은 언리얼 엔진 전문가입니다. 검색된 영상 내용을 바탕으로 사용자의 질문에 200-300자 내외로 간결하게 마크다운형식으로 정리해주세요.';
+                document.getElementById('answer_model').value = 'gemini-2.5-flash';
+                document.getElementById('max_tasks').value = '0';
+                document.getElementById('auto_cleanup').value = '1';
+                document.getElementById('skip_detail_html').value = '0';
+                document.getElementById('enable_reranking').value = '1';
+                document.getElementById('enable_search_answer').value = '1';
+                document.getElementById('min_similarity_threshold').value = '0.5';
+                showMessage('기본값으로 복원되었습니다. 저장 버튼을 눌러주세요.', 'success');
+            }
+        }
+
+        async function reindexAll() {
+            if (!confirm('모든 완료된 영상을 Qdrant DB에 재인덱싱하시겠습니까?\n시간이 오래 걸릴 수 있습니다.\n\n콘솔 로그를 확인하세요.')) {
+                return;
+            }
+
+            console.log('전체 재인덱싱 시작...');
+            showMessage('재인덱싱 중... 콘솔 로그를 확인하세요.', 'success');
+
+            try {
+                const response = await fetch('/admin/reindex-all', {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    console.log('재인덱싱 완료:', data);
+                    showMessage(`재인덱싱 완료!\n전체: ${data.total}개\n성공: ${data.success_count}개\n실패: ${data.failed_count}개`, 'success');
+                } else {
+                    showMessage('재인덱싱 실패: ' + data.error, 'error');
+                }
+            } catch (error) {
+                console.error('재인덱싱 오류:', error);
+                showMessage('오류 발생: ' + error, 'error');
+            }
+        }
+
+        async function regenerateAllHtml() {
+            if (!confirm('모든 완료된 영상의 상세 HTML을 앵커 포함 버전으로 재생성하시겠습니까?\n시간이 오래 걸릴 수 있습니다.\n\n콘솔 로그를 확인하세요.')) {
+                return;
+            }
+
+            console.log('전체 HTML 재생성 시작...');
+            showMessage('HTML 재생성 중... 콘솔 로그를 확인하세요.', 'success');
+
+            try {
+                const response = await fetch('/admin/regenerate-html', {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    console.log('HTML 재생성 완료:', data);
+                    showMessage(`HTML 재생성 완료!\n전체: ${data.total}개\n성공: ${data.success_count}개\n실패: ${data.failed_count}개`, 'success');
+                } else {
+                    showMessage('HTML 재생성 실패: ' + data.error, 'error');
+                }
+            } catch (error) {
+                console.error('HTML 재생성 오류:', error);
+                showMessage('오류 발생: ' + error, 'error');
+            }
+        }
+    </script>
+</body>
+
+</html>

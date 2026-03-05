@@ -32,24 +32,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // 서버에 POST 요청
-            const response = await fetch('/api/analyze', {
+            const response = await fetch('/process', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url })
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Source': 'web'
+                },
+                body: JSON.stringify({ url: url, force: true }) // force: true to skip duplicate checks for now
             });
 
             const data = await response.json();
 
             if (data.success) {
-                updateProgress(30, '요청 접수 완료! 영상 분석을 준비하고 있습니다.');
+                updateProgress(10, '요청 접수 완료! Task를 큐에 등록했습니다.');
 
-                // 실제 서비스에서는 여기서 1초마다 상태를 폴링(Polling)하거나
-                // SSE(Server-Sent Events)를 통해 /status를 지속적으로 호출해 상태 업데이트를 받습니다.
-
-                // 데모 목적으로 가짜 진행률 애니메이션 추가
-                simulateProcessing();
+                // data.task_id를 이용해 폴링 시작
+                startPolling(data.task_id);
             } else {
-                throw new Error(data.message || '요청 처리에 실패했습니다.');
+                throw new Error(data.error || data.message || '요청 처리에 실패했습니다.');
             }
         } catch (error) {
             handleError(error.message);
@@ -76,9 +76,18 @@ document.addEventListener('DOMContentLoaded', () => {
         resetButton();
     }
 
-    function showResult() {
+    function showResult(taskId) {
         statusContainer.classList.add('hidden');
         resultContainer.classList.remove('hidden');
+
+        let actionsHtml = `
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="window.location.href='/view/${taskId}?type=summary'" class="btn primary">📄 요약 결과 보기</button>
+                <button onclick="window.location.href='/view/${taskId}?type=detail'" class="btn" style="background: rgba(255, 255, 255, 0.2)">📋 상세 리포트</button>
+                <button onclick="window.location.href='/download/${taskId}'" class="btn" style="background: rgba(255, 255, 255, 0.2)">⬇️ 압축 파일 다운로드</button>
+            </div>
+        `;
+        resultContainer.innerHTML += actionsHtml;
         resetButton();
         input.value = ''; // 입력창 초기화
     }
@@ -88,13 +97,51 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.disabled = false;
         btnText.style.display = 'block';
         loader.style.display = 'none';
+
+        // 에러 상태 리셋
+        progressFill.style.backgroundColor = '';
+        statusText.style.color = '';
     }
 
-    // 가짜 진행률 체이닝 (데모용)
-    function simulateProcessing() {
-        setTimeout(() => updateProgress(45, '오디오 파형을 추출 중...'), 1500);
-        setTimeout(() => updateProgress(65, 'AI가 텍스트를 인지하고 요약 중... (시간이 걸릴 수 있습니다)'), 3500);
-        setTimeout(() => updateProgress(85, '최종 문서 렌더링 중...'), 6000);
-        setTimeout(() => updateProgress(100, '변환 완료!'), 7500);
+    // 실제 서버 폴링 로직
+    let pollingInterval = null;
+    function startPolling(taskId) {
+        if (pollingInterval) clearInterval(pollingInterval);
+
+        pollingInterval = setInterval(async () => {
+            try {
+                const response = await fetch(`/task_status/${taskId}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    const status = data.status;
+                    const progressText = data.progress || '처리 중입니다...';
+
+                    // 정규표현식으로 진행도(예: [3/10]) 기반 퍼센티지 대략적 계산
+                    let percent = 15;
+                    const match = progressText.match(/\[(\d+)\/(\d+)\]/);
+                    if (match) {
+                        const current = parseInt(match[1]);
+                        const total = parseInt(match[2]);
+                        percent = (current / total) * 100;
+                    }
+                    if (status === 'queued') percent = 10;
+                    if (status === 'completed') percent = 100;
+
+                    updateProgress(Math.min(percent, 99), progressText);
+
+                    if (status === 'completed') {
+                        clearInterval(pollingInterval);
+                        updateProgress(100, '변환 완료!');
+                        setTimeout(() => showResult(taskId), 1000);
+                    } else if (status === 'failed' || status === 'interrupted' || status === 'cancelled') {
+                        clearInterval(pollingInterval);
+                        handleError(progressText || '처리 실패');
+                    }
+                }
+            } catch (err) {
+                console.error("Polling error:", err);
+            }
+        }, 3000); // 3초마다 체크
     }
 });
