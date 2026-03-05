@@ -637,6 +637,29 @@ except Exception as e:
 # Gemini 클라이언트 초기화
 gemini_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
+if gemini_client:
+    original_generate_content = gemini_client.models.generate_content
+    
+    def generate_content_with_retry(*args, **kwargs):
+        import time
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                return original_generate_content(*args, **kwargs)
+            except Exception as e:
+                error_msg = str(e)
+                if '429' in error_msg or 'RESOURCE_EXHAUSTED' in error_msg:
+                    if attempt < max_retries - 1:
+                        wait_time = 45 # Google rate limit retry guide
+                        print(f"[Gemini API] Quota Exceeded (429). {wait_time}초 후 재시도합니다... ({attempt + 1}/{max_retries})")
+                        time.sleep(wait_time)
+                    else:
+                        raise e
+                else:
+                    raise e
+                    
+    gemini_client.models.generate_content = generate_content_with_retry
+
 def init_qdrant():
     """Qdrant 컬렉션 초기화"""
     if not qdrant_client:
