@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  youtubetodoc:
+    build: .
+    container_name: youtubetodoc_app
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    environment:
+      - FLASK_ENV=development
+    restart: unless-stopped
