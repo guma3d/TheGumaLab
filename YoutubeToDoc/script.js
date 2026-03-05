@@ -1,4 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // 동적 경로 적용 (Nginx 하위 도메인/폴더 라우팅 지원)
+    const BASE_URL = window.location.pathname.endsWith('/') ? window.location.pathname : window.location.pathname + '/';
+
     const form = document.getElementById('url-form');
     const input = document.getElementById('youtube-url');
     const submitBtn = document.getElementById('submit-btn');
@@ -32,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // 서버에 POST 요청
-            const response = await fetch('/process', {
+            const response = await fetch(BASE_URL + 'process', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -82,9 +85,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let actionsHtml = `
             <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button onclick="window.location.href='/view/${taskId}?type=summary'" class="btn primary">📄 요약 결과 보기</button>
-                <button onclick="window.location.href='/view/${taskId}?type=detail'" class="btn" style="background: rgba(255, 255, 255, 0.2)">📋 상세 리포트</button>
-                <button onclick="window.location.href='/download/${taskId}'" class="btn" style="background: rgba(255, 255, 255, 0.2)">⬇️ 압축 파일 다운로드</button>
+                <button onclick="window.location.href='${BASE_URL}view/${taskId}?type=summary'" class="btn primary">📄 요약 결과 보기</button>
+                <button onclick="window.location.href='${BASE_URL}view/${taskId}?type=detail'" class="btn" style="background: rgba(255, 255, 255, 0.2)">📋 상세 리포트</button>
+                <button onclick="window.location.href='${BASE_URL}download/${taskId}'" class="btn" style="background: rgba(255, 255, 255, 0.2)">⬇️ 압축 파일 다운로드</button>
             </div>
         `;
         resultContainer.innerHTML += actionsHtml;
@@ -110,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         pollingInterval = setInterval(async () => {
             try {
-                const response = await fetch(`/task_status/${taskId}`);
+                const response = await fetch(`${BASE_URL}task_status/${taskId}`);
                 const data = await response.json();
 
                 if (data.success) {
