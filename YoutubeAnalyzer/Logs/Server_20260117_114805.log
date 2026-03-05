@@ -1,0 +1,86 @@
+[2026-01-17 11:48:05] [INFO] ================================================================================
+[2026-01-17 11:48:05] [INFO] YouTube Script Extractor Server Started
+[2026-01-17 11:48:05] [INFO] Log file: C:\Users\guma3\OneDrive\Documents\AI_Study\AWS_LAMP_ImageCheck\Logs\Server_20260117_114805.log
+[2026-01-17 11:48:05] [INFO] ================================================================================
+[2026-01-17 11:48:05] [INFO] ================================================================================
+[2026-01-17 11:48:05] [INFO] YouTube Script Extractor Server Started
+[2026-01-17 11:48:05] [INFO] Log file: C:\Users\guma3\OneDrive\Documents\AI_Study\AWS_LAMP_ImageCheck\Logs\Server_20260117_114805.log
+[2026-01-17 11:48:05] [INFO] ================================================================================
+[2026-01-17 11:49:00] [INFO] New extraction request: https://www.youtube.com/watch?v=PnGjkHxyNHk
+[2026-01-17 11:49:00] [INFO] Extracted video ID: PnGjkHxyNHk
+[2026-01-17 11:49:00] [INFO] Starting extraction for video: PnGjkHxyNHk
+[2026-01-17 11:49:00] [INFO] Background extraction thread started for video: PnGjkHxyNHk
+[2026-01-17 11:49:00] [INFO] [5%] Extracting video information...
+[2026-01-17 11:49:00] [DEBUG] Getting video title for: PnGjkHxyNHk
+[2026-01-17 11:49:17] [INFO] Video title: ?
+[2026-01-17 11:49:17] [INFO] [10%] Downloading audio: ?...
+[2026-01-17 11:49:17] [DEBUG] Starting extract_transcript.py subprocess for: PnGjkHxyNHk
+[2026-01-17 11:49:18] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-17 11:49:18] [DEBUG] extract_transcript.py: \U0001f4f9 YT-DLP \uc624\ub514\uc624 \ub2e4\uc6b4\ub85c\ub4dc \uc2dc\uc791
+[2026-01-17 11:49:18] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-17 11:49:18] [DEBUG] extract_transcript.py: [YT-DLP] URL: https://www.youtube.com/watch?v=PnGjkHxyNHk
+[2026-01-17 11:49:19] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [youtube] Extracting URL: https://www.youtube.com/watch?v=PnGjkHxyNHk
+[2026-01-17 11:49:19] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [youtube] PnGjkHxyNHk: Downloading webpage
+[2026-01-17 11:49:21] [DEBUG] extract_transcript.py: [YT-DLP WARNING] \u26a0\ufe0f  [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+[2026-01-17 11:49:21] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [youtube] PnGjkHxyNHk: Downloading android sdkless player API JSON
+[2026-01-17 11:49:22] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [youtube] PnGjkHxyNHk: Downloading web safari player API JSON
+[2026-01-17 11:49:22] [DEBUG] extract_transcript.py: [YT-DLP WARNING] \u26a0\ufe0f  [youtube] PnGjkHxyNHk: Some web_safari client https formats have been skipped as they are missing a url. YouTube is forcing SABR streaming for this client. See  https://github.com/yt-dlp/yt-dlp/issues/12482  for more details
+[2026-01-17 11:49:22] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [youtube] PnGjkHxyNHk: Downloading m3u8 information
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: [YT-DLP WARNING] \u26a0\ufe0f  [youtube] PnGjkHxyNHk: Some web client https formats have been skipped as they are missing a url. YouTube is forcing SABR streaming for this client. See  https://github.com/yt-dlp/yt-dlp/issues/12482  for more details
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [info] PnGjkHxyNHk: Downloading 1 format(s): 251-1
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: [YT-DLP ERROR] \u274c ERROR: unable to download video data: HTTP Error 403: Forbidden
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: [YT-DLP ERROR] \u274c Traceback (most recent call last):
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: File "C:\Users\guma3\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\yt_dlp\networking\_urllib.py", line 419, in _send
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: res = opener.open(urllib_req, timeout=self._calculate_timeout(request))
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.2544.0_x64__qbz5n2kfra8p0\Lib\urllib\request.py", line 495, in open
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: response = meth(req, response)
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.2544.0_x64__qbz5n2kfra8p0\Lib\urllib\request.py", line 604, in http_response
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: response = self.parent.error(
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: 'http', request, response, code, msg, hdrs)
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.2544.0_x64__qbz5n2kfra8p0\Lib\urllib\request.py", line 533, in error
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: return self._call_chain(*args)
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: ~~~~~~~~~~~~~~~~^^^^^^^
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.2544.0_x64__qbz5n2kfra8p0\Lib\urllib\request.py", line 466, in _call_chain
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: result = func(*args)
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.2544.0_x64__qbz5n2kfra8p0\Lib\urllib\request.py", line 613, in http_error_default
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: raise HTTPError(req.full_url, code, msg, hdrs, fp)
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: urllib.error.HTTPError: HTTP Error 403: Forbidden
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: The above exception was the direct cause of the following exception:
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: Traceback (most recent call last):
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: File "C:\Users\guma3\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\yt_dlp\YoutubeDL.py", line 3536, in process_info
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: success, real_download = self.dl(temp_filename, info_dict)
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: File "C:\Users\guma3\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\yt_dlp\YoutubeDL.py", line 3278, in dl
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: return fd.download(name, new_info, subtitle)
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: File "C:\Users\guma3\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\yt_dlp\downloader\common.py", line 480, in download
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: ret = self.real_download(filename, info_dict)
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: File "C:\Users\guma3\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\yt_dlp\downloader\http.py", line 362, in real_download
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: establish_connection()
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: ~~~~~~~~~~~~~~~~~~~~^^
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: File "C:\Users\guma3\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\yt_dlp\downloader\http.py", line 119, in establish_connection
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: ctx.data = self.ydl.urlopen(request)
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: ~~~~~~~~~~~~~~~~^^^^^^^^^
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: File "C:\Users\guma3\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\yt_dlp\YoutubeDL.py", line 4252, in urlopen
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: return self._request_director.send(req)
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: File "C:\Users\guma3\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\yt_dlp\networking\common.py", line 117, in send
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: response = handler.send(request)
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: File "C:\Users\guma3\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\yt_dlp\networking\_helper.py", line 194, in wrapper
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: return func(self, *args, **kwargs)
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: File "C:\Users\guma3\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\yt_dlp\networking\common.py", line 359, in send
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: return self._send(request)
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: ~~~~~~~~~~^^^^^^^^^
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: File "C:\Users\guma3\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\yt_dlp\networking\_urllib.py", line 424, in _send
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: raise HTTPError(UrllibResponseAdapter(e.fp), redirect_loop='redirect error' in str(e)) from e
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: yt_dlp.networking.exceptions.HTTPError: HTTP Error 403: Forbidden
+[2026-01-17 11:49:23] [DEBUG] extract_transcript.py: Error: ERROR: unable to download video data: HTTP Error 403: Forbidden
+[2026-01-17 11:49:23] [INFO] extract_transcript.py completed. Total debug lines: 60
+[2026-01-17 11:49:23] [DEBUG] Process return code: 1
+[2026-01-17 11:49:23] [ERROR] Extraction process failed with return code 1
+[2026-01-17 11:49:23] [ERROR] stderr: 
+[2026-01-17 11:49:23] [ERROR] ✗ Extraction failed for video PnGjkHxyNHk: Extraction failed: 
+Traceback (most recent call last):
+  File "C:\Users\guma3\OneDrive\Documents\AI_Study\AWS_LAMP_ImageCheck\Server.py", line 226, in extract_video
+    raise Exception(f"Extraction failed: {stderr}")
+Exception: Extraction failed: 

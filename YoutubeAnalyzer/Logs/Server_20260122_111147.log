@@ -1,0 +1,354 @@
+[2026-01-22 11:11:47] [INFO] ================================================================================
+[2026-01-22 11:11:47] [INFO] YouTube Script Extractor Server Started
+[2026-01-22 11:11:47] [INFO] Log file: /app/Logs/Server_20260122_111147.log
+[2026-01-22 11:11:47] [INFO] ================================================================================
+[2026-01-22 11:11:47] [INFO] ================================================================================
+[2026-01-22 11:11:47] [INFO] YouTube Script Extractor Server Started
+[2026-01-22 11:11:47] [INFO] Log file: /app/Logs/Server_20260122_111147.log
+[2026-01-22 11:11:47] [INFO] ================================================================================
+[2026-01-22 11:12:15] [INFO] Listed 3 scripts
+[2026-01-22 11:13:06] [INFO] New extraction request: https://youtu.be/nwThsPCYPzY?si=cvTKFDMe6bifxQ1V
+[2026-01-22 11:13:06] [INFO] Extracted video ID: nwThsPCYPzY
+[2026-01-22 11:13:06] [INFO] Starting extraction for video: nwThsPCYPzY
+[2026-01-22 11:13:06] [INFO] Background extraction thread started for video: nwThsPCYPzY
+[2026-01-22 11:13:06] [INFO] [5%] Extracting video information...
+[2026-01-22 11:13:06] [DEBUG] Getting video title for: nwThsPCYPzY
+[2026-01-22 11:13:17] [INFO] Video title: 여기서 더 추워진다고? '영하 30도' 한기 닥친다 / SBS 8뉴스
+[2026-01-22 11:13:17] [INFO] [10%] Downloading audio: 여기서 더 추워진다고? '영하 30도' 한기 닥친다 / SBS 8뉴스...
+[2026-01-22 11:13:17] [DEBUG] Starting extract_transcript.py subprocess for: nwThsPCYPzY
+[2026-01-22 11:13:17] [DEBUG] extract_transcript.py: [MAIN] Calling extract_transcript_whisper for video: nwThsPCYPzY
+[2026-01-22 11:13:17] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-22 11:13:17] [DEBUG] extract_transcript.py: 📹 YT-DLP 오디오 다운로드 시작
+[2026-01-22 11:13:17] [INFO] [15%] Downloading audio from YouTube...
+[2026-01-22 11:13:17] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-22 11:13:17] [DEBUG] extract_transcript.py: [YT-DLP] URL: https://www.youtube.com/watch?v=nwThsPCYPzY
+[2026-01-22 11:13:17] [DEBUG] extract_transcript.py: [YT-DLP WARNING] ⚠️  Deprecated Feature: Support for Python version 3.9 has been deprecated. Please update to Python 3.10 or above
+[2026-01-22 11:13:17] [DEBUG] extract_transcript.py: [YT-DLP ERROR] ❌ Deprecated Feature: Support for Python version 3.9 has been deprecated. Please update to Python 3.10 or above
+[2026-01-22 11:13:18] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [youtube] Extracting URL: https://www.youtube.com/watch?v=nwThsPCYPzY
+[2026-01-22 11:13:18] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [youtube] nwThsPCYPzY: Downloading webpage
+[2026-01-22 11:13:19] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [youtube] nwThsPCYPzY: Downloading android player API JSON
+[2026-01-22 11:13:20] [DEBUG] extract_transcript.py: [YT-DLP WARNING] ⚠️  [youtube] nwThsPCYPzY: android client https formats require a GVS PO Token which was not provided. They will be skipped as they may yield HTTP Error 403. You can manually pass a GVS PO Token for this client with --extractor-args "youtube:po_token=android.gvs+XXX". For more information, refer to  https://github.com/yt-dlp/yt-dlp/wiki/PO-Token-Guide
+[2026-01-22 11:13:20] [DEBUG] extract_transcript.py: [YT-DLP WARNING] ⚠️  [youtube] nwThsPCYPzY: Some web client https formats have been skipped as they are missing a url. YouTube is forcing SABR streaming for this client. See  https://github.com/yt-dlp/yt-dlp/issues/12482  for more details
+[2026-01-22 11:13:20] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [info] nwThsPCYPzY: Downloading 1 format(s): 18
+[2026-01-22 11:13:20] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download] Sleeping 5.00 seconds as required by the site...
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download] Destination: Temp_Audio/nwThsPCYPzY.m4a
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.0% of    9.36MiB at   75.09KiB/s ETA 02:07
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 0.0% | 다운로드: 1,024/9,815,742 bytes | 속도: 75.1 KB/s | 남은시간: 127초
+[2026-01-22 11:13:25] [INFO] [15%] Downloading: 0.0%...
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.0% of    9.36MiB at  217.98KiB/s ETA 00:43
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 0.0% | 다운로드: 3,072/9,815,742 bytes | 속도: 218.0 KB/s | 남은시간: 43초
+[2026-01-22 11:13:25] [INFO] [15%] Downloading: 0.0%...
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.1% of    9.36MiB at  484.78KiB/s ETA 00:19
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 0.1% | 다운로드: 7,168/9,815,742 bytes | 속도: 484.8 KB/s | 남은시간: 19초
+[2026-01-22 11:13:25] [INFO] [15%] Downloading: 0.1%...
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.2% of    9.36MiB at  890.21KiB/s ETA 00:10
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 0.2% | 다운로드: 15,360/9,815,742 bytes | 속도: 890.2 KB/s | 남은시간: 10초
+[2026-01-22 11:13:25] [INFO] [15%] Downloading: 0.2%...
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.3% of    9.36MiB at    1.71MiB/s ETA 00:05
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 0.3% | 다운로드: 31,744/9,815,742 bytes | 속도: 1750.9 KB/s | 남은시간: 5초
+[2026-01-22 11:13:25] [INFO] [15%] Downloading: 0.3%...
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.7% of    9.36MiB at    3.35MiB/s ETA 00:02
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 0.7% | 다운로드: 64,512/9,815,742 bytes | 속도: 3431.3 KB/s | 남은시간: 2초
+[2026-01-22 11:13:25] [INFO] [15%] Downloading: 0.7%...
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   1.3% of    9.36MiB at    5.97MiB/s ETA 00:01
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 1.3% | 다운로드: 130,048/9,815,742 bytes | 속도: 6113.2 KB/s | 남은시간: 1초
+[2026-01-22 11:13:25] [INFO] [15%] Downloading: 1.3%...
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   2.7% of    9.36MiB at    6.60MiB/s ETA 00:01
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 2.7% | 다운로드: 261,120/9,815,742 bytes | 속도: 6760.7 KB/s | 남은시간: 1초
+[2026-01-22 11:13:25] [INFO] [15%] Downloading: 2.7%...
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   5.3% of    9.36MiB at    8.52MiB/s ETA 00:01
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 5.3% | 다운로드: 523,264/9,815,742 bytes | 속도: 8721.9 KB/s | 남은시간: 1초
+[2026-01-22 11:13:25] [INFO] [16%] Downloading: 5.3%...
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  10.7% of    9.36MiB at   10.60MiB/s ETA 00:00
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 10.7% | 다운로드: 1,047,552/9,815,742 bytes | 속도: 10855.4 KB/s
+[2026-01-22 11:13:25] [INFO] [17%] Downloading: 10.7%...
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  21.4% of    9.36MiB at   10.57MiB/s ETA 00:00
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 21.4% | 다운로드: 2,096,128/9,815,742 bytes | 속도: 10820.6 KB/s
+[2026-01-22 11:13:25] [INFO] [19%] Downloading: 21.4%...
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  42.7% of    9.36MiB at   10.98MiB/s ETA 00:00
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 42.7% | 다운로드: 4,193,280/9,815,742 bytes | 속도: 11244.1 KB/s
+[2026-01-22 11:13:25] [INFO] [23%] Downloading: 42.7%...
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  85.5% of    9.36MiB at   12.31MiB/s ETA 00:00
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 85.5% | 다운로드: 8,387,584/9,815,742 bytes | 속도: 12609.6 KB/s
+[2026-01-22 11:13:25] [INFO] [32%] Downloading: 85.5%...
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download] 100.0% of    9.36MiB at   12.46MiB/s ETA 00:00
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 100.0% | 다운로드: 9,815,742/9,815,742 bytes | 속도: 12758.4 KB/s
+[2026-01-22 11:13:25] [INFO] [35%] Downloading: 100.0%...
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download] 100% of    9.36MiB in 00:00:00 at 11.57MiB/s
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] ✓ 다운로드 완료!
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD]    - 파일: Temp_Audio/nwThsPCYPzY.m4a
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD]    - 크기: 9,815,742 bytes
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD]    - 소요시간: 0.81초
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD]    - 평균 속도: 11844.2 KB/s
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: ✅ YT-DLP 다운로드 완료
+[2026-01-22 11:13:25] [INFO] [35%] Audio download completed!
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: 🎤 WHISPER AI 음성 인식 상세 로그
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [WHISPER] 📥 모델 로딩 중...
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [WHISPER]    - 모델: turbo
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [WHISPER]    - 디바이스: CPU
+[2026-01-22 11:13:25] [DEBUG] extract_transcript.py: [WHISPER]    - 연산 타입: int8
+[2026-01-22 11:14:43] [DEBUG] extract_transcript.py: [WHISPER] ✓ 모델 로딩 완료 (소요시간: 77.83초)
+[2026-01-22 11:14:43] [DEBUG] extract_transcript.py: [WHISPER] 🔍 오디오 파일 분석 중...
+[2026-01-22 11:14:43] [DEBUG] extract_transcript.py: [WHISPER]    - 파일: Temp_Audio/nwThsPCYPzY.m4a
+[2026-01-22 11:14:43] [DEBUG] extract_transcript.py: [WHISPER]    - Beam size: 5
+[2026-01-22 11:14:48] [DEBUG] extract_transcript.py: [WHISPER] ✓ 오디오 분석 완료
+[2026-01-22 11:14:48] [DEBUG] extract_transcript.py: [WHISPER]    - 감지된 언어: ko
+[2026-01-22 11:14:48] [DEBUG] extract_transcript.py: [WHISPER]    - 언어 확률: 0.9982 (99.82%)
+[2026-01-22 11:14:48] [DEBUG] extract_transcript.py: [WHISPER]    - 예상 총 길이: 135.98초
+[2026-01-22 11:14:48] [DEBUG] extract_transcript.py: [WHISPER] 📝 세그먼트 처리 시작...
+[2026-01-22 11:14:48] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:14:48] [INFO] Listed 3 scripts
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: [WHISPER] Segment #001
+[2026-01-22 11:14:53] [INFO] [60%] Processing segment #1...
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: ⏱️  시간: 0.00s ~ 5.00s (길이: 5.00s)
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: 📄 텍스트: 오늘도 종일 영하권 추위가 이어졌는데 내일은 더 추워져 한파가 절정에 달할
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: 📊 문자수: 41 chars
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.2431
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: [WHISPER] Segment #002
+[2026-01-22 11:14:53] [INFO] [60%] Processing segment #2...
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: ⏱️  시간: 5.30s ~ 9.30s (길이: 4.00s)
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: 📄 텍스트: 전망입니다. 바다 쪽을 향하던 찬 공기의 중심이
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: 📊 문자수: 26 chars
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.2431
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: [WHISPER] Segment #003
+[2026-01-22 11:14:53] [INFO] [60%] Processing segment #3...
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: ⏱️  시간: 9.60s ~ 13.60s (길이: 4.00s)
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: 📄 텍스트: 내일은 내륙으로 이동하기 때문입니다. 서동균 기자가 전하겠습니다.
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: 📊 문자수: 36 chars
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.2431
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: [WHISPER] Segment #004
+[2026-01-22 11:14:53] [INFO] [61%] Processing segment #4...
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: ⏱️  시간: 16.60s ~ 20.60s (길이: 4.00s)
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: 📄 텍스트: 잦아들지 않는 칼바람에 시민들의 몸은 더욱 움츠러들었습니다.
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: 📊 문자수: 33 chars
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.2431
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: [WHISPER] Segment #005
+[2026-01-22 11:14:53] [INFO] [61%] Processing segment #5...
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: ⏱️  시간: 21.60s ~ 23.60s (길이: 2.00s)
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: 📄 텍스트: 방안용품으로 무장했지만 역부족입니다.
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: 📊 문자수: 20 chars
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.2431
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:14:53] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: [WHISPER] Segment #006
+[2026-01-22 11:14:59] [INFO] [61%] Processing segment #6...
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: ⏱️  시간: 30.00s ~ 33.50s (길이: 3.50s)
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: 📄 텍스트: 오늘 서울의 낮 최고 기온은 영하 6도. 강한 바람에 체감온도는 낮에도 영하 9.7도까지
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: 📊 문자수: 49 chars
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.3354
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: [WHISPER] Segment #007
+[2026-01-22 11:14:59] [INFO] [61%] Processing segment #7...
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: ⏱️  시간: 33.80s ~ 35.50s (길이: 1.70s)
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: 📄 텍스트: 떨어졌습니다. 한강 곳곳에서는 얼음이 목격됐습니다.
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: 📊 문자수: 28 chars
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.3354
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: [WHISPER] Segment #008
+[2026-01-22 11:14:59] [INFO] [62%] Processing segment #8...
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: ⏱️  시간: 37.50s ~ 42.50s (길이: 5.00s)
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: 📄 텍스트: 연일 강추위가 지속되면서 욕트장 주변의 강물도 이렇게 꽁꽁 얼어버렸습니다.
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: 📊 문자수: 41 chars
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.3354
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: [WHISPER] Segment #009
+[2026-01-22 11:14:59] [INFO] [62%] Processing segment #9...
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: ⏱️  시간: 43.50s ~ 46.50s (길이: 3.00s)
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: 📄 텍스트: 이번 한파는 내일 절정에 이를 것으로 보입니다.
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: 📊 문자수: 26 chars
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.3354
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:14:59] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: [WHISPER] Segment #010
+[2026-01-22 11:15:04] [INFO] [62%] Processing segment #10...
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: ⏱️  시간: 46.50s ~ 52.00s (길이: 5.50s)
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: 📄 텍스트: 베링이 부근에 거대한 고기압이 버티면서 우리나라 북동쪽 저기압이 빠져나가지 못하게
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: 📊 문자수: 45 chars
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.3100
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: [WHISPER] Segment #011
+[2026-01-22 11:15:04] [INFO] [62%] Processing segment #11...
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: ⏱️  시간: 52.30s ~ 56.00s (길이: 3.70s)
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: 📄 텍스트: 막는 이른바 블록킹 현상이 이어져 한반도에 영하 30도의 한기가 계속 내려오고
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: 📊 문자수: 43 chars
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.3100
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: [WHISPER] Segment #012
+[2026-01-22 11:15:04] [INFO] [63%] Processing segment #12...
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: ⏱️  시간: 56.34s ~ 57.84s (길이: 1.50s)
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: 📄 텍스트: 있습니다. 특히 내일은 지상에서 한기를 밀어넣는
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: 📊 문자수: 26 chars
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.3100
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: [WHISPER] Segment #013
+[2026-01-22 11:15:04] [INFO] [63%] Processing segment #13...
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: ⏱️  시간: 58.12s ~ 59.42s (길이: 1.30s)
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: 📄 텍스트: 대륙 고기압이 좀 더 낮아졌습니다.
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: 📊 문자수: 19 chars
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.3100
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:15:04] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: [WHISPER] Segment #014
+[2026-01-22 11:15:11] [INFO] [63%] Processing segment #14...
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: ⏱️  시간: 59.42s ~ 64.92s (길이: 5.50s)
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 📄 텍스트: 한기축이 서해에서 내륙 쪽으로 이동해 전국적으로 더 강한 한파가 찾아옵니다.
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 📊 문자수: 42 chars
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.3546
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: [WHISPER] Segment #015
+[2026-01-22 11:15:11] [INFO] [63%] Processing segment #15...
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: ⏱️  시간: 65.42s ~ 69.42s (길이: 4.00s)
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 📄 텍스트: 한기축이 좀 내륙 쪽으로 더 강하게 내려오면서 내일 아침 기온이 이동해지고
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 📊 문자수: 41 chars
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.3546
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: [WHISPER] Segment #016
+[2026-01-22 11:15:11] [INFO] [64%] Processing segment #16...
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: ⏱️  시간: 69.70s ~ 70.70s (길이: 1.00s)
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 📄 텍스트: 내륙을 보입니다.
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 📊 문자수: 9 chars
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.3546
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: [WHISPER] Segment #017
+[2026-01-22 11:15:11] [INFO] [64%] Processing segment #17...
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: ⏱️  시간: 70.94s ~ 74.94s (길이: 4.00s)
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 📄 텍스트: 베링이 부근에 거대한 고기압이 버티면서 우리나라 북동쪽 저기압이 빠져나가지
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 📊 문자수: 41 chars
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.3546
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: [WHISPER] Segment #018
+[2026-01-22 11:15:11] [INFO] [64%] Processing segment #18...
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: ⏱️  시간: 75.24s ~ 77.24s (길이: 2.00s)
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 📄 텍스트: 못하게 막는 이른바 블록킹 현상이 이어져 한반도에 영하 30도의 한기가 계속 내려오고
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 📊 문자수: 47 chars
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.3546
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: [WHISPER] Segment #019
+[2026-01-22 11:15:11] [INFO] [64%] Processing segment #19...
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: ⏱️  시간: 77.54s ~ 79.70s (길이: 2.16s)
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 📄 텍스트: 있습니다. 특히 내일은 지상에서 한기를 밀어넣는 대륙 고기압이 좀 더
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 📊 문자수: 38 chars
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.3546
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: [WHISPER] Segment #020
+[2026-01-22 11:15:11] [INFO] [65%] Processing segment #20...
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: ⏱️  시간: 80.00s ~ 82.54s (길이: 2.54s)
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 📄 텍스트: 남아하면서 한기축이 서해에서 내륙 쪽으로 이동해 전국적으로 더 강한 한파가
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 📊 문자수: 41 chars
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.3546
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: [WHISPER] Segment #021
+[2026-01-22 11:15:11] [INFO] [65%] Processing segment #21...
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: ⏱️  시간: 82.80s ~ 83.38s (길이: 0.58s)
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 📄 텍스트: 찾아옵니다.
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 📊 문자수: 6 chars
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.3546
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:15:11] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:15:13] [INFO] Listed 3 scripts
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: [WHISPER] Segment #022
+[2026-01-22 11:15:17] [INFO] [65%] Processing segment #22...
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: ⏱️  시간: 89.42s ~ 94.92s (길이: 5.50s)
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: 📄 텍스트: 서울의 아침 기온은 영하 14도, 체감온도는 영하 20도까지 떨어지겠고 대관령 영하 20도,
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: 📊 문자수: 51 chars
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.3328
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: [WHISPER] Segment #023
+[2026-01-22 11:15:17] [INFO] [65%] Processing segment #23...
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: ⏱️  시간: 96.30s ~ 101.30s (길이: 5.00s)
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: 📄 텍스트: 대전 영하 12도, 대구 영하 11도 등 전국에 살을 내는 듯한 추위가 예상됩니다.
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: 📊 문자수: 46 chars
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.3328
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: [WHISPER] Segment #024
+[2026-01-22 11:15:17] [INFO] [66%] Processing segment #24...
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: ⏱️  시간: 105.50s ~ 107.64s (길이: 2.14s)
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: 📄 텍스트: 일부 지역에는 눈도 예보됐습니다.
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: 📊 문자수: 18 chars
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.3328
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: [WHISPER] Segment #025
+[2026-01-22 11:15:17] [INFO] [66%] Processing segment #25...
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: ⏱️  시간: 107.90s ~ 111.54s (길이: 3.64s)
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: 📄 텍스트: 내일까지 울릉도와 독도에 10에서 30cm,
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: 📊 문자수: 24 chars
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.3328
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: [WHISPER] Segment #026
+[2026-01-22 11:15:17] [INFO] [66%] Processing segment #26...
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: ⏱️  시간: 111.84s ~ 117.84s (길이: 6.00s)
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: 📄 텍스트: 제주도 산지 25cm 이상, 호남의 한 10cm 이상, 충남북부 1에서 5cm의 적설이
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: 📊 문자수: 48 chars
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.3328
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:15:17] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: [WHISPER] Segment #027
+[2026-01-22 11:15:22] [INFO] [66%] Processing segment #27...
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: ⏱️  시간: 117.84s ~ 120.84s (길이: 3.00s)
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: 📄 텍스트: 예상됩니다. SBS 서동균입니다.
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: 📊 문자수: 18 chars
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: 🎯 평균 확률: -0.2109
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: 🔇 No-speech 확률: 0.0000
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: ✅ WHISPER 처리 완료!
+[2026-01-22 11:15:22] [INFO] [90%] Whisper transcription completed!
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: 📊 처리 통계:
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: - 총 세그먼트 수: 27
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: - 총 문자 수: 903 chars
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: - 모델 로딩 시간: 77.83초
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: - 음성 인식 시간: 38.39초
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: - 전체 처리 시간: 116.22초
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: - 처리 속도: 3.54x 실시간
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: [MAIN] extract_transcript_whisper returned. HTML length: 1832
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: [MAIN] Creating JSON result...
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: [MAIN] Writing result to file: Temp_Audio/nwThsPCYPzY_result.json
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: [MAIN] Result file written successfully
+[2026-01-22 11:15:22] [DEBUG] extract_transcript.py: [MAIN] Calling sys.exit(0)...
+[2026-01-22 11:15:22] [INFO] extract_transcript.py completed. Total debug lines: 274
+[2026-01-22 11:15:22] [DEBUG] Process return code: 0
+[2026-01-22 11:15:22] [INFO] [90%] Processing transcript...
+[2026-01-22 11:15:22] [DEBUG] Reading result from file: /app/Temp_Audio/nwThsPCYPzY_result.json
+[2026-01-22 11:15:22] [DEBUG] Result file loaded successfully
+[2026-01-22 11:15:22] [DEBUG] Result file removed
+[2026-01-22 11:15:22] [INFO] Transcript extraction successful
+[2026-01-22 11:15:22] [INFO] [95%] Generating HTML file...
+[2026-01-22 11:15:22] [DEBUG] Saving HTML to: /app/Scripts/yt_nwThsPCYPzY.html
+[2026-01-22 11:15:22] [INFO] HTML file saved: /app/Scripts/yt_nwThsPCYPzY.html
+[2026-01-22 11:15:22] [INFO] [100%] Completed!
+[2026-01-22 11:15:22] [INFO] ✓ Extraction completed successfully for: 여기서 더 추워진다고? '영하 30도' 한기 닥친다 / SBS 8뉴스 (nwThsPCYPzY)
+[2026-01-22 11:15:40] [INFO] Listed 4 scripts
+[2026-01-22 11:16:55] [INFO] Listed 4 scripts
+[2026-01-22 11:17:15] [INFO] Listed 4 scripts
+[2026-01-22 11:17:39] [INFO] Listed 4 scripts

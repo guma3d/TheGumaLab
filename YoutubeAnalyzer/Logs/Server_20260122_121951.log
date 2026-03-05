@@ -1,0 +1,256 @@
+[2026-01-22 12:19:51] [INFO] ================================================================================
+[2026-01-22 12:19:51] [INFO] YouTube Script Extractor Server Started
+[2026-01-22 12:19:51] [INFO] Log file: /app/Logs/Server_20260122_121951.log
+[2026-01-22 12:19:51] [INFO] ================================================================================
+[2026-01-22 12:19:51] [INFO] ================================================================================
+[2026-01-22 12:19:51] [INFO] YouTube Script Extractor Server Started
+[2026-01-22 12:19:51] [INFO] Log file: /app/Logs/Server_20260122_121951.log
+[2026-01-22 12:19:51] [INFO] ================================================================================
+[2026-01-22 12:19:57] [INFO] Listed 8 scripts
+[2026-01-22 12:20:03] [INFO] New extraction request: https://youtu.be/a20ll121iYo?si=FBsSL-qyWbynXMGd
+[2026-01-22 12:20:03] [INFO] Extracted video ID: a20ll121iYo
+[2026-01-22 12:20:03] [INFO] Starting extraction for video: a20ll121iYo
+[2026-01-22 12:20:03] [INFO] [5%] Extracting video information...
+[2026-01-22 12:20:03] [DEBUG] Getting video title for: a20ll121iYo
+[2026-01-22 12:20:03] [INFO] Background extraction thread started for video: a20ll121iYo
+[2026-01-22 12:20:05] [INFO] Listed 8 scripts
+[2026-01-22 12:20:08] [INFO] Video title: "이러다 망할 판"…스웨덴은 어쩌다 갱스터의 천국이 되었나｜크랩
+[2026-01-22 12:20:08] [INFO] [10%] Downloading audio: "이러다 망할 판"…스웨덴은 어쩌다 갱스터의 천국이 되었나｜크랩...
+[2026-01-22 12:20:08] [DEBUG] Starting extract_transcript.py subprocess for: a20ll121iYo
+[2026-01-22 12:20:08] [DEBUG] extract_transcript.py: [MAIN] Calling extract_transcript_whisper for video: a20ll121iYo
+[2026-01-22 12:20:08] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-22 12:20:08] [DEBUG] extract_transcript.py: 📹 YT-DLP 오디오 다운로드 시작
+[2026-01-22 12:20:08] [INFO] [15%] Downloading audio from YouTube...
+[2026-01-22 12:20:08] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-22 12:20:08] [DEBUG] extract_transcript.py: [YT-DLP] URL: https://www.youtube.com/watch?v=a20ll121iYo
+[2026-01-22 12:20:08] [DEBUG] extract_transcript.py: [YT-DLP WARNING] ⚠️  Deprecated Feature: Support for Python version 3.9 has been deprecated. Please update to Python 3.10 or above
+[2026-01-22 12:20:08] [DEBUG] extract_transcript.py: [YT-DLP ERROR] ❌ Deprecated Feature: Support for Python version 3.9 has been deprecated. Please update to Python 3.10 or above
+[2026-01-22 12:20:08] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [youtube] Extracting URL: https://www.youtube.com/watch?v=a20ll121iYo
+[2026-01-22 12:20:08] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [youtube] a20ll121iYo: Downloading webpage
+[2026-01-22 12:20:10] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [youtube] a20ll121iYo: Downloading android player API JSON
+[2026-01-22 12:20:10] [DEBUG] extract_transcript.py: [YT-DLP WARNING] ⚠️  [youtube] a20ll121iYo: android client https formats require a GVS PO Token which was not provided. They will be skipped as they may yield HTTP Error 403. You can manually pass a GVS PO Token for this client with --extractor-args "youtube:po_token=android.gvs+XXX". For more information, refer to  https://github.com/yt-dlp/yt-dlp/wiki/PO-Token-Guide
+[2026-01-22 12:20:10] [DEBUG] extract_transcript.py: [YT-DLP WARNING] ⚠️  [youtube] a20ll121iYo: Some web client https formats have been skipped as they are missing a url. YouTube is forcing SABR streaming for this client. See  https://github.com/yt-dlp/yt-dlp/issues/12482  for more details
+[2026-01-22 12:20:10] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [info] a20ll121iYo: Downloading 1 format(s): 18
+[2026-01-22 12:20:10] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download] Sleeping 6.00 seconds as required by the site...
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download] Destination: Temp_Audio/a20ll121iYo.m4a
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.0% of   10.09MiB at   93.22KiB/s ETA 01:51
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 0.0% | 다운로드: 1,024/10,577,245 bytes | 속도: 93.2 KB/s | 남은시간: 111초
+[2026-01-22 12:20:16] [INFO] [15%] Downloading: 0.0%...
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.0% of   10.09MiB at  259.89KiB/s ETA 00:39
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 0.0% | 다운로드: 3,072/10,577,245 bytes | 속도: 259.9 KB/s | 남은시간: 39초
+[2026-01-22 12:20:16] [INFO] [15%] Downloading: 0.0%...
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.1% of   10.09MiB at  515.41KiB/s ETA 00:20
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 0.1% | 다운로드: 7,168/10,577,245 bytes | 속도: 515.4 KB/s | 남은시간: 20초
+[2026-01-22 12:20:16] [INFO] [15%] Downloading: 0.1%...
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.1% of   10.09MiB at  994.90KiB/s ETA 00:10
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 0.1% | 다운로드: 15,360/10,577,245 bytes | 속도: 994.9 KB/s | 남은시간: 10초
+[2026-01-22 12:20:16] [INFO] [15%] Downloading: 0.1%...
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.3% of   10.09MiB at    1.87MiB/s ETA 00:05
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 0.3% | 다운로드: 31,744/10,577,245 bytes | 속도: 1913.5 KB/s | 남은시간: 5초
+[2026-01-22 12:20:16] [INFO] [15%] Downloading: 0.3%...
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.6% of   10.09MiB at    3.31MiB/s ETA 00:03
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 0.6% | 다운로드: 64,512/10,577,245 bytes | 속도: 3389.1 KB/s | 남은시간: 3초
+[2026-01-22 12:20:16] [INFO] [15%] Downloading: 0.6%...
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   1.2% of   10.09MiB at    2.83MiB/s ETA 00:03
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 1.2% | 다운로드: 130,048/10,577,245 bytes | 속도: 2898.4 KB/s | 남은시간: 3초
+[2026-01-22 12:20:16] [INFO] [15%] Downloading: 1.2%...
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   2.5% of   10.09MiB at    1.45MiB/s ETA 00:06
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 2.5% | 다운로드: 261,120/10,577,245 bytes | 속도: 1481.5 KB/s | 남은시간: 6초
+[2026-01-22 12:20:16] [INFO] [15%] Downloading: 2.5%...
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   4.9% of   10.09MiB at    2.54MiB/s ETA 00:03
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 4.9% | 다운로드: 523,264/10,577,245 bytes | 속도: 2596.7 KB/s | 남은시간: 3초
+[2026-01-22 12:20:16] [INFO] [15%] Downloading: 4.9%...
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   9.9% of   10.09MiB at    4.32MiB/s ETA 00:02
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 9.9% | 다운로드: 1,047,552/10,577,245 bytes | 속도: 4428.6 KB/s | 남은시간: 2초
+[2026-01-22 12:20:16] [INFO] [16%] Downloading: 9.9%...
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  19.8% of   10.09MiB at    6.37MiB/s ETA 00:01
+[2026-01-22 12:20:16] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 19.8% | 다운로드: 2,096,128/10,577,245 bytes | 속도: 6520.1 KB/s | 남은시간: 1초
+[2026-01-22 12:20:16] [INFO] [18%] Downloading: 19.8%...
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  39.6% of   10.09MiB at    8.59MiB/s ETA 00:00
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 39.6% | 다운로드: 4,193,280/10,577,245 bytes | 속도: 8797.0 KB/s
+[2026-01-22 12:20:17] [INFO] [22%] Downloading: 39.6%...
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  79.3% of   10.09MiB at   11.53MiB/s ETA 00:00
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 79.3% | 다운로드: 8,387,584/10,577,245 bytes | 속도: 11801.8 KB/s
+[2026-01-22 12:20:17] [INFO] [30%] Downloading: 79.3%...
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  97.9% of   10.09MiB at   13.14MiB/s ETA 00:00
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 97.9% | 다운로드: 10,356,061/10,577,245 bytes | 속도: 13451.3 KB/s
+[2026-01-22 12:20:17] [INFO] [34%] Downloading: 97.9%...
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  97.9% of   10.09MiB at  495.08KiB/s ETA 00:00
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 97.9% | 다운로드: 10,357,085/10,577,245 bytes | 속도: 495.1 KB/s
+[2026-01-22 12:20:17] [INFO] [34%] Downloading: 97.9%...
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  97.9% of   10.09MiB at    1.03MiB/s ETA 00:00
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 97.9% | 다운로드: 10,359,133/10,577,245 bytes | 속도: 1059.7 KB/s
+[2026-01-22 12:20:17] [INFO] [34%] Downloading: 97.9%...
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  98.0% of   10.09MiB at    1.63MiB/s ETA 00:00
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 98.0% | 다운로드: 10,363,229/10,577,245 bytes | 속도: 1668.9 KB/s
+[2026-01-22 12:20:17] [INFO] [34%] Downloading: 98.0%...
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  98.1% of   10.09MiB at    2.73MiB/s ETA 00:00
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 98.1% | 다운로드: 10,371,421/10,577,245 bytes | 속도: 2794.3 KB/s
+[2026-01-22 12:20:17] [INFO] [34%] Downloading: 98.1%...
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  98.2% of   10.09MiB at    1.43MiB/s ETA 00:00
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 98.2% | 다운로드: 10,387,805/10,577,245 bytes | 속도: 1467.6 KB/s
+[2026-01-22 12:20:17] [INFO] [34%] Downloading: 98.2%...
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  98.5% of   10.09MiB at    2.42MiB/s ETA 00:00
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 98.5% | 다운로드: 10,420,573/10,577,245 bytes | 속도: 2476.2 KB/s
+[2026-01-22 12:20:17] [INFO] [34%] Downloading: 98.5%...
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  99.1% of   10.09MiB at    4.38MiB/s ETA 00:00
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 99.1% | 다운로드: 10,486,109/10,577,245 bytes | 속도: 4485.4 KB/s
+[2026-01-22 12:20:17] [INFO] [34%] Downloading: 99.1%...
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download] 100.0% of   10.09MiB at    5.75MiB/s ETA 00:00
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 100.0% | 다운로드: 10,577,245/10,577,245 bytes | 속도: 5891.6 KB/s
+[2026-01-22 12:20:17] [INFO] [35%] Downloading: 100.0%...
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download] 100% of   10.09MiB in 00:00:00 at 11.03MiB/s
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] ✓ 다운로드 완료!
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD]    - 파일: Temp_Audio/a20ll121iYo.m4a
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD]    - 크기: 10,577,245 bytes
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD]    - 소요시간: 0.91초
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD]    - 평균 속도: 11296.1 KB/s
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: ✅ YT-DLP 다운로드 완료
+[2026-01-22 12:20:17] [INFO] [35%] Audio download completed!
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: 🎤 WHISPER AI 음성 인식 상세 로그
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [WHISPER] 📥 모델 로딩 중...
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [WHISPER]    - 모델: turbo
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [WHISPER]    - 디바이스: CPU
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [WHISPER]    - 연산 타입: int8
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [WHISPER] ⚙️  Whisper 모델 초기화 중...
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: [MAIN] Exception caught: local variable 'threading' referenced before assignment
+[2026-01-22 12:20:17] [DEBUG] extract_transcript.py: Error: local variable 'threading' referenced before assignment
+[2026-01-22 12:20:17] [INFO] extract_transcript.py completed. Total debug lines: 78
+[2026-01-22 12:20:17] [DEBUG] Process return code: 1
+[2026-01-22 12:20:17] [ERROR] Extraction process failed with return code 1
+[2026-01-22 12:20:17] [ERROR] stderr: 
+[2026-01-22 12:20:17] [ERROR] stdout: ERROR
+
+[2026-01-22 12:20:17] [ERROR] ✗ Extraction failed for video a20ll121iYo: Extraction failed: 
+Traceback (most recent call last):
+  File "/app/Server.py", line 308, in extract_video
+    raise Exception(f"Extraction failed: {stderr}")
+Exception: Extraction failed: 
+[2026-01-22 12:20:20] [INFO] Listed 8 scripts
+[2026-01-22 12:20:22] [INFO] Listed 8 scripts
+[2026-01-22 12:20:29] [INFO] New extraction request: https://youtu.be/a20ll121iYo?si=FBsSL-qyWbynXMGd
+[2026-01-22 12:20:29] [INFO] Extracted video ID: a20ll121iYo
+[2026-01-22 12:20:29] [INFO] Starting extraction for video: a20ll121iYo
+[2026-01-22 12:20:29] [INFO] Background extraction thread started for video: a20ll121iYo
+[2026-01-22 12:20:29] [INFO] [5%] Extracting video information...
+[2026-01-22 12:20:29] [DEBUG] Getting video title for: a20ll121iYo
+[2026-01-22 12:20:32] [INFO] Video title: "이러다 망할 판"…스웨덴은 어쩌다 갱스터의 천국이 되었나｜크랩
+[2026-01-22 12:20:32] [INFO] [10%] Downloading audio: "이러다 망할 판"…스웨덴은 어쩌다 갱스터의 천국이 되었나｜크랩...
+[2026-01-22 12:20:32] [DEBUG] Starting extract_transcript.py subprocess for: a20ll121iYo
+[2026-01-22 12:20:33] [DEBUG] extract_transcript.py: [MAIN] Calling extract_transcript_whisper for video: a20ll121iYo
+[2026-01-22 12:20:33] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-22 12:20:33] [DEBUG] extract_transcript.py: 📹 YT-DLP 오디오 다운로드 시작
+[2026-01-22 12:20:33] [INFO] [15%] Downloading audio from YouTube...
+[2026-01-22 12:20:33] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-22 12:20:33] [DEBUG] extract_transcript.py: [YT-DLP] URL: https://www.youtube.com/watch?v=a20ll121iYo
+[2026-01-22 12:20:33] [DEBUG] extract_transcript.py: [YT-DLP WARNING] ⚠️  Deprecated Feature: Support for Python version 3.9 has been deprecated. Please update to Python 3.10 or above
+[2026-01-22 12:20:33] [DEBUG] extract_transcript.py: [YT-DLP ERROR] ❌ Deprecated Feature: Support for Python version 3.9 has been deprecated. Please update to Python 3.10 or above
+[2026-01-22 12:20:33] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [youtube] Extracting URL: https://www.youtube.com/watch?v=a20ll121iYo
+[2026-01-22 12:20:33] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [youtube] a20ll121iYo: Downloading webpage
+[2026-01-22 12:20:34] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [youtube] a20ll121iYo: Downloading android player API JSON
+[2026-01-22 12:20:35] [DEBUG] extract_transcript.py: [YT-DLP WARNING] ⚠️  [youtube] a20ll121iYo: android client https formats require a GVS PO Token which was not provided. They will be skipped as they may yield HTTP Error 403. You can manually pass a GVS PO Token for this client with --extractor-args "youtube:po_token=android.gvs+XXX". For more information, refer to  https://github.com/yt-dlp/yt-dlp/wiki/PO-Token-Guide
+[2026-01-22 12:20:35] [DEBUG] extract_transcript.py: [YT-DLP WARNING] ⚠️  [youtube] a20ll121iYo: Some web client https formats have been skipped as they are missing a url. YouTube is forcing SABR streaming for this client. See  https://github.com/yt-dlp/yt-dlp/issues/12482  for more details
+[2026-01-22 12:20:35] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [info] a20ll121iYo: Downloading 1 format(s): 18
+[2026-01-22 12:20:35] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download] Sleeping 6.00 seconds as required by the site...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download] Destination: Temp_Audio/a20ll121iYo.m4a
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.0% of   10.09MiB at  153.72KiB/s ETA 01:07
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 0.0% | 다운로드: 1,024/10,577,245 bytes | 속도: 153.7 KB/s | 남은시간: 67초
+[2026-01-22 12:20:41] [INFO] [15%] Downloading: 0.0%...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.0% of   10.09MiB at  435.80KiB/s ETA 00:23
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 0.0% | 다운로드: 3,072/10,577,245 bytes | 속도: 435.8 KB/s | 남은시간: 23초
+[2026-01-22 12:20:41] [INFO] [15%] Downloading: 0.0%...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.1% of   10.09MiB at  932.27KiB/s ETA 00:11
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 0.1% | 다운로드: 7,168/10,577,245 bytes | 속도: 932.3 KB/s | 남은시간: 11초
+[2026-01-22 12:20:41] [INFO] [15%] Downloading: 0.1%...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.1% of   10.09MiB at    1.79MiB/s ETA 00:05
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 0.1% | 다운로드: 15,360/10,577,245 bytes | 속도: 1835.3 KB/s | 남은시간: 5초
+[2026-01-22 12:20:41] [INFO] [15%] Downloading: 0.1%...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.3% of   10.09MiB at    3.40MiB/s ETA 00:02
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 0.3% | 다운로드: 31,744/10,577,245 bytes | 속도: 3478.3 KB/s | 남은시간: 2초
+[2026-01-22 12:20:41] [INFO] [15%] Downloading: 0.3%...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.6% of   10.09MiB at    4.89MiB/s ETA 00:02
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 0.6% | 다운로드: 64,512/10,577,245 bytes | 속도: 5008.7 KB/s | 남은시간: 2초
+[2026-01-22 12:20:41] [INFO] [15%] Downloading: 0.6%...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   1.2% of   10.09MiB at    6.26MiB/s ETA 00:01
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 1.2% | 다운로드: 130,048/10,577,245 bytes | 속도: 6414.2 KB/s | 남은시간: 1초
+[2026-01-22 12:20:41] [INFO] [15%] Downloading: 1.2%...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   2.5% of   10.09MiB at    8.33MiB/s ETA 00:01
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 2.5% | 다운로드: 261,120/10,577,245 bytes | 속도: 8530.2 KB/s | 남은시간: 1초
+[2026-01-22 12:20:41] [INFO] [15%] Downloading: 2.5%...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   4.9% of   10.09MiB at   10.66MiB/s ETA 00:00
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 4.9% | 다운로드: 523,264/10,577,245 bytes | 속도: 10913.9 KB/s
+[2026-01-22 12:20:41] [INFO] [15%] Downloading: 4.9%...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   9.9% of   10.09MiB at   11.18MiB/s ETA 00:00
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 9.9% | 다운로드: 1,047,552/10,577,245 bytes | 속도: 11452.8 KB/s
+[2026-01-22 12:20:41] [INFO] [16%] Downloading: 9.9%...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  19.8% of   10.09MiB at   15.05MiB/s ETA 00:00
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 19.8% | 다운로드: 2,096,128/10,577,245 bytes | 속도: 15408.5 KB/s
+[2026-01-22 12:20:41] [INFO] [18%] Downloading: 19.8%...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  39.6% of   10.09MiB at   14.78MiB/s ETA 00:00
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 39.6% | 다운로드: 4,193,280/10,577,245 bytes | 속도: 15137.0 KB/s
+[2026-01-22 12:20:41] [INFO] [22%] Downloading: 39.6%...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  79.3% of   10.09MiB at   14.97MiB/s ETA 00:00
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 79.3% | 다운로드: 8,387,584/10,577,245 bytes | 속도: 15325.8 KB/s
+[2026-01-22 12:20:41] [INFO] [30%] Downloading: 79.3%...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  97.7% of   10.09MiB at   14.56MiB/s ETA 00:00
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 97.7% | 다운로드: 10,335,585/10,577,245 bytes | 속도: 14913.2 KB/s
+[2026-01-22 12:20:41] [INFO] [34%] Downloading: 97.7%...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  97.7% of   10.09MiB at  Unknown B/s ETA Unknown
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 97.7% | 다운로드: 10,336,609/10,577,245 bytes
+[2026-01-22 12:20:41] [INFO] [34%] Downloading: 97.7%...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  97.7% of   10.09MiB at  Unknown B/s ETA Unknown
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 97.7% | 다운로드: 10,338,657/10,577,245 bytes
+[2026-01-22 12:20:41] [INFO] [34%] Downloading: 97.7%...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  97.8% of   10.09MiB at  Unknown B/s ETA Unknown
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 97.8% | 다운로드: 10,342,753/10,577,245 bytes
+[2026-01-22 12:20:41] [INFO] [34%] Downloading: 97.8%...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  97.9% of   10.09MiB at   10.53MiB/s ETA 00:00
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 97.9% | 다운로드: 10,350,945/10,577,245 bytes | 속도: 10782.3 KB/s
+[2026-01-22 12:20:41] [INFO] [34%] Downloading: 97.9%...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  98.0% of   10.09MiB at    7.44MiB/s ETA 00:00
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 98.0% | 다운로드: 10,367,329/10,577,245 bytes | 속도: 7613.5 KB/s
+[2026-01-22 12:20:41] [INFO] [34%] Downloading: 98.0%...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  98.3% of   10.09MiB at    8.22MiB/s ETA 00:00
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 98.3% | 다운로드: 10,400,097/10,577,245 bytes | 속도: 8419.6 KB/s
+[2026-01-22 12:20:41] [INFO] [34%] Downloading: 98.3%...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  98.9% of   10.09MiB at    9.84MiB/s ETA 00:00
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 98.9% | 다운로드: 10,465,633/10,577,245 bytes | 속도: 10080.4 KB/s
+[2026-01-22 12:20:41] [INFO] [34%] Downloading: 98.9%...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download] 100.0% of   10.09MiB at   11.27MiB/s ETA 00:00
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] 진행률: 100.0% | 다운로드: 10,577,245/10,577,245 bytes | 속도: 11538.2 KB/s
+[2026-01-22 12:20:41] [INFO] [35%] Downloading: 100.0%...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download] 100% of   10.09MiB in 00:00:00 at 13.55MiB/s
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] ✓ 다운로드 완료!
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD]    - 파일: Temp_Audio/a20ll121iYo.m4a
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD]    - 크기: 10,577,245 bytes
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD]    - 소요시간: 0.74초
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD]    - 평균 속도: 13878.8 KB/s
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: ✅ YT-DLP 다운로드 완료
+[2026-01-22 12:20:41] [INFO] [35%] Audio download completed!
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: 🎤 WHISPER AI 음성 인식 상세 로그
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [WHISPER] 📥 모델 로딩 중...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [WHISPER]    - 모델: turbo
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [WHISPER]    - 디바이스: CPU
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [WHISPER]    - 연산 타입: int8
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [WHISPER] ⚙️  Whisper 모델 초기화 중...
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: [MAIN] Exception caught: local variable 'threading' referenced before assignment
+[2026-01-22 12:20:41] [DEBUG] extract_transcript.py: Error: local variable 'threading' referenced before assignment
+[2026-01-22 12:20:41] [INFO] extract_transcript.py completed. Total debug lines: 78
+[2026-01-22 12:20:41] [DEBUG] Process return code: 1
+[2026-01-22 12:20:41] [ERROR] Extraction process failed with return code 1
+[2026-01-22 12:20:41] [ERROR] stderr: 
+[2026-01-22 12:20:41] [ERROR] stdout: ERROR
+
+[2026-01-22 12:20:41] [ERROR] ✗ Extraction failed for video a20ll121iYo: Extraction failed: 
+Traceback (most recent call last):
+  File "/app/Server.py", line 308, in extract_video
+    raise Exception(f"Extraction failed: {stderr}")
+Exception: Extraction failed: 

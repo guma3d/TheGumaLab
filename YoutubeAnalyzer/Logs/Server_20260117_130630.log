@@ -1,0 +1,630 @@
+[2026-01-17 13:06:30] [INFO] ================================================================================
+[2026-01-17 13:06:30] [INFO] YouTube Script Extractor Server Started
+[2026-01-17 13:06:30] [INFO] Log file: C:\Users\guma3\OneDrive\Documents\AI_Study\AWS_LAMP_ImageCheck\Logs\Server_20260117_130630.log
+[2026-01-17 13:06:30] [INFO] ================================================================================
+[2026-01-17 13:06:30] [INFO] ================================================================================
+[2026-01-17 13:06:30] [INFO] YouTube Script Extractor Server Started
+[2026-01-17 13:06:30] [INFO] Log file: C:\Users\guma3\OneDrive\Documents\AI_Study\AWS_LAMP_ImageCheck\Logs\Server_20260117_130630.log
+[2026-01-17 13:06:30] [INFO] ================================================================================
+[2026-01-17 13:06:58] [INFO] New extraction request: https://www.youtube.com/watch?v=ezMyLqtrfhE
+[2026-01-17 13:06:58] [INFO] Extracted video ID: ezMyLqtrfhE
+[2026-01-17 13:06:58] [INFO] Starting extraction for video: ezMyLqtrfhE
+[2026-01-17 13:06:58] [INFO] Background extraction thread started for video: ezMyLqtrfhE
+[2026-01-17 13:06:58] [INFO] [5%] Extracting video information...
+[2026-01-17 13:06:58] [DEBUG] Getting video title for: ezMyLqtrfhE
+[2026-01-17 13:07:03] [INFO] Video title: .
+[2026-01-17 13:07:03] [INFO] [10%] Downloading audio: ....
+[2026-01-17 13:07:03] [DEBUG] Starting extract_transcript.py subprocess for: ezMyLqtrfhE
+[2026-01-17 13:07:03] [DEBUG] extract_transcript.py: [MAIN] Calling extract_transcript_whisper for video: ezMyLqtrfhE
+[2026-01-17 13:07:03] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-17 13:07:03] [DEBUG] extract_transcript.py: \U0001f4f9 YT-DLP \uc624\ub514\uc624 \ub2e4\uc6b4\ub85c\ub4dc \uc2dc\uc791
+[2026-01-17 13:07:03] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-17 13:07:03] [DEBUG] extract_transcript.py: [YT-DLP] URL: https://www.youtube.com/watch?v=ezMyLqtrfhE
+[2026-01-17 13:07:04] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [youtube] Extracting URL: https://www.youtube.com/watch?v=ezMyLqtrfhE
+[2026-01-17 13:07:04] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [youtube] ezMyLqtrfhE: Downloading webpage
+[2026-01-17 13:07:05] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [youtube] ezMyLqtrfhE: Downloading android player API JSON
+[2026-01-17 13:07:06] [DEBUG] extract_transcript.py: [YT-DLP WARNING] \u26a0\ufe0f  [youtube] ezMyLqtrfhE: android client https formats require a GVS PO Token which was not provided. They will be skipped as they may yield HTTP Error 403. You can manually pass a GVS PO Token for this client with --extractor-args "youtube:po_token=android.gvs+XXX". For more information, refer to  https://github.com/yt-dlp/yt-dlp/wiki/PO-Token-Guide
+[2026-01-17 13:07:06] [DEBUG] extract_transcript.py: [YT-DLP WARNING] \u26a0\ufe0f  [youtube] ezMyLqtrfhE: Some web client https formats have been skipped as they are missing a url. YouTube is forcing SABR streaming for this client. See  https://github.com/yt-dlp/yt-dlp/issues/12482  for more details
+[2026-01-17 13:07:06] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [info] ezMyLqtrfhE: Downloading 1 format(s): 18
+[2026-01-17 13:07:06] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download] Destination: Temp_Audio\ezMyLqtrfhE.m4a
+[2026-01-17 13:07:06] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.0% of   10.49MiB at  637.72KiB/s ETA 00:17
+[2026-01-17 13:07:06] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 0.0% | \ub2e4\uc6b4\ub85c\ub4dc: 1,024/10,998,750 bytes | \uc18d\ub3c4: 637.7 KB/s | \ub0a8\uc740\uc2dc\uac04: 17\ucd08
+[2026-01-17 13:07:06] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.0% of   10.49MiB at  862.67KiB/s ETA 00:12
+[2026-01-17 13:07:06] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 0.0% | \ub2e4\uc6b4\ub85c\ub4dc: 3,072/10,998,750 bytes | \uc18d\ub3c4: 862.7 KB/s | \ub0a8\uc740\uc2dc\uac04: 12\ucd08
+[2026-01-17 13:07:06] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.1% of   10.49MiB at    1.54MiB/s ETA 00:06
+[2026-01-17 13:07:06] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 0.1% | \ub2e4\uc6b4\ub85c\ub4dc: 7,168/10,998,750 bytes | \uc18d\ub3c4: 1572.2 KB/s | \ub0a8\uc740\uc2dc\uac04: 6\ucd08
+[2026-01-17 13:07:06] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.1% of   10.49MiB at    2.62MiB/s ETA 00:04
+[2026-01-17 13:07:06] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 0.1% | \ub2e4\uc6b4\ub85c\ub4dc: 15,360/10,998,750 bytes | \uc18d\ub3c4: 2680.5 KB/s | \ub0a8\uc740\uc2dc\uac04: 4\ucd08
+[2026-01-17 13:07:06] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.3% of   10.49MiB at    4.46MiB/s ETA 00:02
+[2026-01-17 13:07:06] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 0.3% | \ub2e4\uc6b4\ub85c\ub4dc: 31,744/10,998,750 bytes | \uc18d\ub3c4: 4572.0 KB/s | \ub0a8\uc740\uc2dc\uac04: 2\ucd08
+[2026-01-17 13:07:06] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   0.6% of   10.49MiB at    4.50MiB/s ETA 00:02
+[2026-01-17 13:07:06] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 0.6% | \ub2e4\uc6b4\ub85c\ub4dc: 64,512/10,998,750 bytes | \uc18d\ub3c4: 4608.0 KB/s | \ub0a8\uc740\uc2dc\uac04: 2\ucd08
+[2026-01-17 13:07:06] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   1.2% of   10.49MiB at    4.75MiB/s ETA 00:02
+[2026-01-17 13:07:07] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 1.2% | \ub2e4\uc6b4\ub85c\ub4dc: 130,048/10,998,750 bytes | \uc18d\ub3c4: 4868.9 KB/s | \ub0a8\uc740\uc2dc\uac04: 2\ucd08
+[2026-01-17 13:07:07] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   2.4% of   10.49MiB at    6.38MiB/s ETA 00:01
+[2026-01-17 13:07:07] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 2.4% | \ub2e4\uc6b4\ub85c\ub4dc: 261,120/10,998,750 bytes | \uc18d\ub3c4: 6535.7 KB/s | \ub0a8\uc740\uc2dc\uac04: 1\ucd08
+[2026-01-17 13:07:07] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   4.8% of   10.49MiB at    7.39MiB/s ETA 00:01
+[2026-01-17 13:07:07] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 4.8% | \ub2e4\uc6b4\ub85c\ub4dc: 523,264/10,998,750 bytes | \uc18d\ub3c4: 7569.8 KB/s | \ub0a8\uc740\uc2dc\uac04: 1\ucd08
+[2026-01-17 13:07:07] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]   9.5% of   10.49MiB at    8.38MiB/s ETA 00:01
+[2026-01-17 13:07:07] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 9.5% | \ub2e4\uc6b4\ub85c\ub4dc: 1,047,552/10,998,750 bytes | \uc18d\ub3c4: 8582.1 KB/s | \ub0a8\uc740\uc2dc\uac04: 1\ucd08
+[2026-01-17 13:07:07] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  19.1% of   10.49MiB at    9.11MiB/s ETA 00:00
+[2026-01-17 13:07:07] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 19.1% | \ub2e4\uc6b4\ub85c\ub4dc: 2,096,128/10,998,750 bytes | \uc18d\ub3c4: 9331.4 KB/s
+[2026-01-17 13:07:07] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  38.1% of   10.49MiB at    9.89MiB/s ETA 00:00
+[2026-01-17 13:07:07] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 38.1% | \ub2e4\uc6b4\ub85c\ub4dc: 4,193,280/10,998,750 bytes | \uc18d\ub3c4: 10125.0 KB/s
+[2026-01-17 13:07:07] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  76.3% of   10.49MiB at   10.00MiB/s ETA 00:00
+[2026-01-17 13:07:07] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 76.3% | \ub2e4\uc6b4\ub85c\ub4dc: 8,387,584/10,998,750 bytes | \uc18d\ub3c4: 10242.7 KB/s
+[2026-01-17 13:07:07] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  95.1% of   10.49MiB at   10.06MiB/s ETA 00:00
+[2026-01-17 13:07:07] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 95.1% | \ub2e4\uc6b4\ub85c\ub4dc: 10,465,242/10,998,750 bytes | \uc18d\ub3c4: 10300.5 KB/s
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  95.2% of   10.49MiB at  Unknown B/s ETA Unknown
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 95.2% | \ub2e4\uc6b4\ub85c\ub4dc: 10,466,266/10,998,750 bytes
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  95.2% of   10.49MiB at    1.25MiB/s ETA 00:00
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 95.2% | \ub2e4\uc6b4\ub85c\ub4dc: 10,468,314/10,998,750 bytes | \uc18d\ub3c4: 1282.9 KB/s
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  95.2% of   10.49MiB at    2.10MiB/s ETA 00:00
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 95.2% | \ub2e4\uc6b4\ub85c\ub4dc: 10,472,410/10,998,750 bytes | \uc18d\ub3c4: 2150.5 KB/s
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  95.3% of   10.49MiB at    3.49MiB/s ETA 00:00
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 95.3% | \ub2e4\uc6b4\ub85c\ub4dc: 10,480,602/10,998,750 bytes | \uc18d\ub3c4: 3570.0 KB/s
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  95.4% of   10.49MiB at    4.90MiB/s ETA 00:00
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 95.4% | \ub2e4\uc6b4\ub85c\ub4dc: 10,496,986/10,998,750 bytes | \uc18d\ub3c4: 5020.8 KB/s
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  95.7% of   10.49MiB at    7.75MiB/s ETA 00:00
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 95.7% | \ub2e4\uc6b4\ub85c\ub4dc: 10,529,754/10,998,750 bytes | \uc18d\ub3c4: 7936.6 KB/s
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  96.3% of   10.49MiB at    6.30MiB/s ETA 00:00
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 96.3% | \ub2e4\uc6b4\ub85c\ub4dc: 10,595,290/10,998,750 bytes | \uc18d\ub3c4: 6446.2 KB/s
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  97.5% of   10.49MiB at    7.85MiB/s ETA 00:00
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 97.5% | \ub2e4\uc6b4\ub85c\ub4dc: 10,726,362/10,998,750 bytes | \uc18d\ub3c4: 8039.9 KB/s
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download]  99.9% of   10.49MiB at    7.28MiB/s ETA 00:00
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 99.9% | \ub2e4\uc6b4\ub85c\ub4dc: 10,988,506/10,998,750 bytes | \uc18d\ub3c4: 7454.0 KB/s
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download] 100.0% of   10.49MiB at    7.13MiB/s ETA 00:00
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \uc9c4\ud589\ub960: 100.0% | \ub2e4\uc6b4\ub85c\ub4dc: 10,998,750/10,998,750 bytes | \uc18d\ub3c4: 7305.1 KB/s
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DEBUG] [download] 100% of   10.49MiB in 00:00:01 at 8.79MiB/s
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD] \u2713 \ub2e4\uc6b4\ub85c\ub4dc \uc644\ub8cc!
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD]    - \ud30c\uc77c: Temp_Audio\ezMyLqtrfhE.m4a
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD]    - \ud06c\uae30: 10,998,750 bytes
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD]    - \uc18c\uc694\uc2dc\uac04: 1.19\ucd08
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [YT-DLP DOWNLOAD]    - \ud3c9\uade0 \uc18d\ub3c4: 8998.4 KB/s
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: \u2705 YT-DLP \ub2e4\uc6b4\ub85c\ub4dc \uc644\ub8cc
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: \U0001f3a4 WHISPER AI \uc74c\uc131 \uc778\uc2dd \uc0c1\uc138 \ub85c\uadf8
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [WHISPER] \U0001f4e5 \ubaa8\ub378 \ub85c\ub529 \uc911...
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [WHISPER]    - \ubaa8\ub378: turbo
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [WHISPER]    - \ub514\ubc14\uc774\uc2a4: CPU
+[2026-01-17 13:07:08] [DEBUG] extract_transcript.py: [WHISPER]    - \uc5f0\uc0b0 \ud0c0\uc785: int8
+[2026-01-17 13:07:14] [DEBUG] extract_transcript.py: [WHISPER] \u2713 \ubaa8\ub378 \ub85c\ub529 \uc644\ub8cc (\uc18c\uc694\uc2dc\uac04: 6.11\ucd08)
+[2026-01-17 13:07:14] [DEBUG] extract_transcript.py: [WHISPER] \U0001f50d \uc624\ub514\uc624 \ud30c\uc77c \ubd84\uc11d \uc911...
+[2026-01-17 13:07:14] [DEBUG] extract_transcript.py: [WHISPER]    - \ud30c\uc77c: Temp_Audio\ezMyLqtrfhE.m4a
+[2026-01-17 13:07:14] [DEBUG] extract_transcript.py: [WHISPER]    - Beam size: 5
+[2026-01-17 13:07:38] [DEBUG] extract_transcript.py: [WHISPER] \u2713 \uc624\ub514\uc624 \ubd84\uc11d \uc644\ub8cc
+[2026-01-17 13:07:38] [DEBUG] extract_transcript.py: [WHISPER]    - \uac10\uc9c0\ub41c \uc5b8\uc5b4: ko
+[2026-01-17 13:07:38] [DEBUG] extract_transcript.py: [WHISPER]    - \uc5b8\uc5b4 \ud655\ub960: 0.9980 (99.80%)
+[2026-01-17 13:07:38] [DEBUG] extract_transcript.py: [WHISPER]    - \uc608\uc0c1 \ucd1d \uae38\uc774: 170.81\ucd08
+[2026-01-17 13:07:38] [DEBUG] extract_transcript.py: [WHISPER] \U0001f4dd \uc138\uadf8\uba3c\ud2b8 \ucc98\ub9ac \uc2dc\uc791...
+[2026-01-17 13:07:38] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #001
+[2026-01-17 13:08:06] [INFO] [60%] Processing segment #1...
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 0.00s ~ 0.50s (\uae38\uc774: 0.50s)
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \ubb50 \ud560\ub77c\uace0?
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 6 chars
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2207
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #002
+[2026-01-17 13:08:06] [INFO] [60%] Processing segment #2...
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 0.50s ~ 5.70s (\uae38\uc774: 5.20s)
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc774 \ub0b4\uac00 \uc11c\uc6b8\uc5d0\uc11c \uac00\uc7a5 \ub9ce\uc774 \ubc29\ubb38\ud574\uc11c \uba39\uc5c8\ub358 \ub3d9\uae00\ubc45\uc774\ud0d5\uc774 \ubc00\ud0a4\ud2b8\ub85c \ub098\uc654\ub2e4 \uadf8\ub7ec\uae38\ub798 \ub0b4\uac00 \ud0c1 \uac16\uace0 \uc654\uc9c0!
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 57 chars
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2207
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #003
+[2026-01-17 13:08:06] [INFO] [60%] Processing segment #3...
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 5.70s ~ 6.30s (\uae38\uc774: 0.60s)
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uadf8\uac8c \ub098\uc654\uc5b4?
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 7 chars
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2207
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #004
+[2026-01-17 13:08:06] [INFO] [61%] Processing segment #4...
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 6.30s ~ 7.40s (\uae38\uc774: 1.10s)
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc774 \uc9c0\ub09c\ub2ec\uc5d0 \ub098\uc654\ub354\ub77c\uace0!
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 13 chars
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2207
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #005
+[2026-01-17 13:08:06] [INFO] [61%] Processing segment #5...
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 7.40s ~ 8.20s (\uae38\uc774: 0.80s)
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc544 \ub410\uace0!
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 5 chars
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2207
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #006
+[2026-01-17 13:08:06] [INFO] [61%] Processing segment #6...
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 8.20s ~ 9.60s (\uae38\uc774: 1.40s)
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uadf8\ub7fc \uc9c0\ub09c\ub2ec\uc5d0 \uac00\uc838\uc654\uc5b4\uc57c\uc9c0.
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 15 chars
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2207
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #007
+[2026-01-17 13:08:06] [INFO] [61%] Processing segment #7...
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 10.50s ~ 11.80s (\uae38\uc774: 1.30s)
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc544\ub2c8 \uad11\uace0\ubc1b\uc544 \uc654\ub294\ub370.
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 12 chars
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2207
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #008
+[2026-01-17 13:08:06] [INFO] [62%] Processing segment #8...
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 11.80s ~ 13.00s (\uae38\uc774: 1.20s)
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uadf8\ub807\uad70. \ub108 \uba39\uc73c\ub7ec \ubcf8 \uac70\uc57c?
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 16 chars
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2207
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #009
+[2026-01-17 13:08:06] [INFO] [62%] Processing segment #9...
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 13.00s ~ 16.80s (\uae38\uc774: 3.80s)
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc774 \ubc8c\uc368 \uba87 \ubc88\uc774\ub098 \uba39\uc5c8\uc9c0. \ub098 \ud63c\uc790\ub3c4 \uba39\uace0 \uc8fc\ub9d0\uc5d0 \uac00\uc871\ub07c\ub9ac\ub3c4 \ud574\uba39\uace0 \uc5ec\ub7ec \ubc88 \uba39\uc5c8\uc5b4.
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 48 chars
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2207
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #010
+[2026-01-17 13:08:06] [INFO] [62%] Processing segment #10...
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 16.80s ~ 18.40s (\uae38\uc774: 1.60s)
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uadf8\ub7fc \uadf8 \ub178\ud3ec\ub9db\uc9c4 \ub9db\uc774 \ub098\ub294 \uac70\uc57c?
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 19 chars
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2207
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #011
+[2026-01-17 13:08:06] [INFO] [62%] Processing segment #11...
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 18.40s ~ 19.90s (\uae38\uc774: 1.50s)
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc774 \uba39\uc5b4\ubcf4\ub2c8\uae4c \ud655\uc2e4\ud558\uac8c \ub611\uac19\uc544.
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 17 chars
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2207
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #012
+[2026-01-17 13:08:06] [INFO] [63%] Processing segment #12...
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 19.90s ~ 20.40s (\uae38\uc774: 0.50s)
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc5b4\ub514\uc11c \ud314\uc544?
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 7 chars
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2207
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #013
+[2026-01-17 13:08:06] [INFO] [63%] Processing segment #13...
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 20.40s ~ 21.10s (\uae38\uc774: 0.70s)
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \ud574\uae30\ub4f1 \ub9c8\ucf13!
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 7 chars
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2207
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #014
+[2026-01-17 13:08:06] [INFO] [63%] Processing segment #14...
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 21.10s ~ 21.60s (\uae38\uc774: 0.50s)
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc5bc\ub9cc\ub370?
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 4 chars
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2207
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #015
+[2026-01-17 13:08:06] [INFO] [63%] Processing segment #15...
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 21.60s ~ 27.20s (\uae38\uc774: 5.60s)
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc774 \uc694\uac70 29,800\uc6d0\uc778\ub370 16% \ud560\uc778\uc774\uc5b4\uc11c 24,900\uc6d0\uc5d0 5\ub9cc\uc6d0 \uc774\uc0c1 \uc0ac\uba74 \ubb34\ub8cc\ubc30\uc1a1\uc774\uc57c!
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 51 chars
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2207
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: [WHISPER] Segment #016
+[2026-01-17 13:08:38] [INFO] [64%] Processing segment #16...
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 27.20s ~ 29.20s (\uae38\uc774: 2.00s)
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: 24,900\uc6d0? \uad6c\uc131\uc774 \uc5b4\ub5bb\uac8c \ub418\ub294\ub370?
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 21 chars
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.1134
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: [WHISPER] Segment #017
+[2026-01-17 13:08:38] [INFO] [64%] Processing segment #17...
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 29.20s ~ 35.50s (\uae38\uc774: 6.30s)
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc774 \uc694\uac70 \uae4c\uc11c \ubcf4\uba74 \uc721\uc218\uc5d0 \ud1b5\uace8\ubc45\uc774, \uaf2c\uce58\uc5b4\ubb35, \uce7c\uad6d\uc218\uba74, \uae40\uce58, \uace0\ucd94, \ucd08\uc7a5\uc5d0 \ub2e4\uc9c4\ub9c8\ub298\uae4c\uc9c0 \ud480 \ud328\ud0a4\uc9c0\ub85c \ub4e4...
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 63 chars
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.1134
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: [WHISPER] Segment #018
+[2026-01-17 13:08:38] [INFO] [64%] Processing segment #18...
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 35.50s ~ 36.30s (\uae38\uc774: 0.80s)
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc81c\ud488 \ud2b9\uc9d5\uc774 \ubb50\uc57c?
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 10 chars
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.1134
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: [WHISPER] Segment #019
+[2026-01-17 13:08:38] [INFO] [64%] Processing segment #19...
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 36.30s ~ 42.40s (\uae38\uc774: 6.10s)
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc774 \uc9c1\uc811 \uc6b4\uc601\ud588\ub358 \uac00\uac8c\uc5d0 \uace8\ubc45\uc774\ud0d5\uc744 \ub9cc\ub4e0 \uac74\ub370 \ud1b5\uc870\ub9bc\uc774 \uc544\ub2cc \uc790\uc5f0\uace8\ubc45\uc774\ub97c \uc218\uc791\uc5c5\uc73c\ub85c \uc138\ucc99\ud574\uc11c \ube68 \uac19\uc740 \uac70 \ub2e4...
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 65 chars
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.1134
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: [WHISPER] Segment #020
+[2026-01-17 13:08:38] [INFO] [65%] Processing segment #20...
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 42.40s ~ 46.50s (\uae38\uc774: 4.10s)
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uad6d\ub0b4\uc0b0 \ub300\ud30c\ub791 \ubb34, \uccad\uc591\uace0\ucd94, \ub2e4\uc9c4\ub9c8\ub298 \ub4e4\uc5b4\uac00\uc11c \uc5bc\ud070\ud574 \uadf8 \uc2dc\uc6d0\ud55c\ud55c \ub9db\uc774\uc57c.
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 42 chars
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.1134
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: [WHISPER] Segment #021
+[2026-01-17 13:08:38] [INFO] [65%] Processing segment #21...
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 46.50s ~ 47.10s (\uae38\uc774: 0.60s)
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc5b4\ub5bb\uac8c \uba39\uc5b4?
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 7 chars
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.1134
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: [WHISPER] Segment #022
+[2026-01-17 13:08:38] [INFO] [65%] Processing segment #22...
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 47.10s ~ 50.00s (\uae38\uc774: 2.90s)
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc774 \uc721\uc218 \ub2e4 \ud574\ub3d9\ud574\uc11c \ub0c4\ube44\uc5d0 \ubd93\uace0 \ub2e4\uc9c4\ub9c8\ub298\ud558\uace0 \uace0\ucd94 \ub123\uace0
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 31 chars
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.1134
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: [WHISPER] Segment #023
+[2026-01-17 13:08:38] [INFO] [65%] Processing segment #23...
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 50.00s ~ 54.00s (\uae38\uc774: 4.00s)
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uadf8\ub7ec\uba74 \ud55c \ubc88 \uc138\ucc99\ud55c \ud1b5\uace8\ubc45\uc774\ub97c \uc5b4\ubb35\ud558\uace0 \ub123\uace0 \uc624\ubb38\ub9cc \ub531 \ub053\uc5ec\uc11c \uba39\uc73c\uba74
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 39 chars
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.1134
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:08:38] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #024
+[2026-01-17 13:09:06] [INFO] [66%] Processing segment #24...
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 54.00s ~ 57.30s (\uae38\uc774: 3.30s)
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc57c \uc774\uac70 \uac81\ub098 \ub9db\uc788\uc5b4. \ub9db\uc788\uaca0\uc96c?
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 18 chars
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2399
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #025
+[2026-01-17 13:09:06] [INFO] [66%] Processing segment #25...
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 57.30s ~ 57.80s (\uae38\uc774: 0.50s)
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc774\uc81c \uba39\uc5b4\ubd10.
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 7 chars
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2399
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #026
+[2026-01-17 13:09:06] [INFO] [66%] Processing segment #26...
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 57.80s ~ 58.20s (\uae38\uc774: 0.40s)
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uadf8\ub798\uc694.
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 4 chars
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2399
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #027
+[2026-01-17 13:09:06] [INFO] [66%] Processing segment #27...
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 64.50s ~ 65.10s (\uae38\uc774: 0.60s)
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \ub9db\uc740 \uc5b4\ub54c?
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 6 chars
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2399
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #028
+[2026-01-17 13:09:06] [INFO] [67%] Processing segment #28...
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 65.90s ~ 68.40s (\uae38\uc774: 2.50s)
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc57c \ub178\ud3ec \uc74c\uc545\ub300\ub85c\ub124. \uae30\uac00 \ub9c9\ud600.
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 18 chars
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2399
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #029
+[2026-01-17 13:09:06] [INFO] [67%] Processing segment #29...
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 68.40s ~ 71.20s (\uae38\uc774: 2.80s)
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uce7c\uce7c\ud558\uace0 \uc2dc\uc6d0\ud558\ub2c8 \uae4a\uc5b4.
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 13 chars
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2399
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #030
+[2026-01-17 13:09:06] [INFO] [67%] Processing segment #30...
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 71.20s ~ 72.40s (\uae38\uc774: 1.20s)
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uace8\ubc45\uc774\ub294 \uc138\ucc99 \uc798 \ub410\uc5b4?
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 13 chars
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2399
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #031
+[2026-01-17 13:09:06] [INFO] [67%] Processing segment #31...
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 72.40s ~ 73.00s (\uae38\uc774: 0.60s)
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc774 \uace8\ubc45\uc774.
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 6 chars
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2399
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #032
+[2026-01-17 13:09:06] [INFO] [68%] Processing segment #32...
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 73.00s ~ 75.00s (\uae38\uc774: 2.00s)
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uace8\ubc45\uc774\ub294 \ud2b9\uc81c \ucd08\uc7a5\uc744 \uc774\ub807\uac8c \ud0c1 \ucc0d\uc5b4\uc918\uc57c\uc8e0.
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 24 chars
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2399
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #033
+[2026-01-17 13:09:06] [INFO] [68%] Processing segment #33...
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 78.70s ~ 83.20s (\uae38\uc774: 4.50s)
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc57c \uc774\uac70\uc9c0 \ucac4\uae43\ud558\uace0 \ud1b5\ud1b5\ud558\uace0 \uc775\ud798\uc774 \ub531 \uc88b\uc544. \ucd08\uc7a5\ub3c4 \uae30\uac00 \ub9c9\ud788\uac8c \uc5b4\uc6b8\ub9ac\uace0
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 41 chars
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2399
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:09:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: [WHISPER] Segment #034
+[2026-01-17 13:09:35] [INFO] [68%] Processing segment #34...
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 83.20s ~ 84.20s (\uae38\uc774: 1.00s)
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc57c \uc774\uac70 \uc548 \ub418\uac84\ub2e4.
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 11 chars
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2336
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: [WHISPER] Segment #035
+[2026-01-17 13:09:35] [INFO] [68%] Processing segment #35...
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 89.20s ~ 90.60s (\uae38\uc774: 1.40s)
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc5b4\uc6b0 \uc774\uac70 \uc220\ub3c4 \ub290\uaef4.
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 12 chars
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2336
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: [WHISPER] Segment #036
+[2026-01-17 13:09:35] [INFO] [69%] Processing segment #36...
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 90.60s ~ 91.70s (\uae38\uc774: 1.10s)
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc544\ub2c8 \uc220 \uac04\uad6c\ub124 \uc774\uac70.
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 12 chars
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2336
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: [WHISPER] Segment #037
+[2026-01-17 13:09:35] [INFO] [69%] Processing segment #37...
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 91.70s ~ 92.70s (\uae38\uc774: 1.00s)
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc5b4\ubb35\uc740 \uc0c1\ud0dc \uad1c\ucc2e\uc544?
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 11 chars
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2336
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: [WHISPER] Segment #038
+[2026-01-17 13:09:35] [INFO] [69%] Processing segment #38...
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 92.70s ~ 93.20s (\uae38\uc774: 0.50s)
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc774 \uc5b4\ubb35.
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 5 chars
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2336
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: [WHISPER] Segment #039
+[2026-01-17 13:09:35] [INFO] [69%] Processing segment #39...
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 96.30s ~ 98.50s (\uae38\uc774: 2.20s)
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc57c \uc774\uac70 \uc5b4\uc720\uac10\ub7c9 75% \uc774\uc0c1\uc774\uc796\uc544.
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 20 chars
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2336
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: [WHISPER] Segment #040
+[2026-01-17 13:09:35] [INFO] [70%] Processing segment #40...
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 98.50s ~ 101.50s (\uae38\uc774: 3.00s)
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \ucac4\uae43\ud558\uace0 \ubd80\ub4e4\ubd80\ub4e4\ud558\uace0 \uad6d\ubb3c\uc744 \ucad9 \uba39\uc5b4\uac00\uc9c0\uace0
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 23 chars
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2336
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: [WHISPER] Segment #041
+[2026-01-17 13:09:35] [INFO] [70%] Processing segment #41...
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 101.50s ~ 103.30s (\uae38\uc774: 1.80s)
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc57c \uce7c\uce7c\ud558\ub2c8 \uac81\ub098 \ub9db\uc788\uc5b4.
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 14 chars
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2336
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: [WHISPER] Segment #042
+[2026-01-17 13:09:35] [INFO] [70%] Processing segment #42...
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 105.00s ~ 106.10s (\uae38\uc774: 1.10s)
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc544 \uc774\uac70\uac70\ub4e0.
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 7 chars
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2336
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: [WHISPER] Segment #043
+[2026-01-17 13:09:35] [INFO] [70%] Processing segment #43...
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 106.10s ~ 107.80s (\uae38\uc774: 1.70s)
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uadf8\uac70 \uc0bc\ud569\uc73c\ub85c \uba39\ub294 \ubc29\ubc95\uc774 \uc788\ub2e4\ub358\ub370.
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 20 chars
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2336
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: [WHISPER] Segment #044
+[2026-01-17 13:09:35] [INFO] [71%] Processing segment #44...
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 107.80s ~ 108.40s (\uae38\uc774: 0.60s)
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc774\uac8c \uc0bc\ud569?
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 6 chars
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2336
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:09:35] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #045
+[2026-01-17 13:10:06] [INFO] [71%] Processing segment #45...
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 108.40s ~ 111.50s (\uae38\uc774: 3.10s)
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc774\uac70 \uc774\uac70 \uc0dd\uc591\ud30c\ub791 \ub2e8\ubb34\uc9c0\ub97c \ud3ec\ud06c\ub85c \ud558\ub098\uc529 \ub531 \ucc0d\uc5b4.
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 29 chars
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.1815
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #046
+[2026-01-17 13:10:06] [INFO] [71%] Processing segment #46...
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 111.50s ~ 114.20s (\uae38\uc774: 2.70s)
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uadf8 \ub2e4\uc74c\uc5d0 \uace8\ubc45\uc774\ub97c \uc774\ub807\uac8c \uac19\uc774 \ucc0d\uace0 \ucd08\uc7a5\uc5d0\ub2e4\uac00
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 26 chars
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.1815
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #047
+[2026-01-17 13:10:06] [INFO] [71%] Processing segment #47...
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 121.70s ~ 123.90s (\uae38\uc774: 2.20s)
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc57c \uc774\uac74 \uace8\ubc45\uc774\ub791 \uc138\ucc99 \ubb34\ud55c\uc73c\ub85c \ub4e4\uc5b4\uac00\uac84\ub2e4.
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 24 chars
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.1815
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #048
+[2026-01-17 13:10:06] [INFO] [72%] Processing segment #48...
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 123.90s ~ 125.00s (\uae38\uc774: 1.10s)
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uac08\uad6d\uc218\ub294 \uc5b4\ub5bb\uac8c \uba39\ub294 \uac70\uc57c?
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 15 chars
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.1815
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #049
+[2026-01-17 13:10:06] [INFO] [72%] Processing segment #49...
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 125.00s ~ 125.80s (\uae38\uc774: 0.80s)
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc774 \uac08\uad6d\uc218?
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 6 chars
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.1815
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #050
+[2026-01-17 13:10:06] [INFO] [72%] Processing segment #50...
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 125.80s ~ 127.60s (\uae38\uc774: 1.80s)
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc774\uac70 \uace8\ubc45\uc774\ub791 \ubc88\ub370\uae30 \ub2e4 \uac74\uc838 \uba39\uc796\uc544.
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 21 chars
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.1815
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: [WHISPER] Segment #051
+[2026-01-17 13:10:06] [INFO] [72%] Processing segment #51...
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 127.60s ~ 129.60s (\uae38\uc774: 2.00s)
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc5ec\uae30\ub2e4\uac00 \uae40\uce58 \ub123\uace0 3\ubd84 \ub2e4 \ub053\uc5ec\uc8fc\uace0
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 20 chars
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.1815
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:10:06] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: [WHISPER] Segment #052
+[2026-01-17 13:10:37] [INFO] [73%] Processing segment #52...
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 129.60s ~ 131.70s (\uae38\uc774: 2.10s)
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uce7c\uad6d\uc218 \uba74 \ub123\uace0 1\ubd84\ub9cc \ub531 \ub053\uc774\uba74 \ub418\uac70\ub4e0.
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 23 chars
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2144
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: [WHISPER] Segment #053
+[2026-01-17 13:10:37] [INFO] [73%] Processing segment #53...
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 131.70s ~ 132.70s (\uae38\uc774: 1.00s)
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc5b4\uc6b0 \uc774\uac70.
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 6 chars
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2144
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: [WHISPER] Segment #054
+[2026-01-17 13:10:37] [INFO] [73%] Processing segment #54...
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 143.40s ~ 145.10s (\uae38\uc774: 1.70s)
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc57c \uc774\uac70 \uc721\uc218\uac00 \uc9c4\uc9dc \ubbf8\ucce4\ub294\ub514?
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 17 chars
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2144
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: [WHISPER] Segment #055
+[2026-01-17 13:10:37] [INFO] [73%] Processing segment #55...
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 145.10s ~ 147.30s (\uae38\uc774: 2.20s)
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc804\ubb38\uc810 \uae40\uce58 \uce7c\uad6d\uc218 \ubc14\ub85c \uc644\uc131\uc774\uc694.
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 19 chars
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2144
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: [WHISPER] Segment #056
+[2026-01-17 13:10:37] [INFO] [74%] Processing segment #56...
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 147.30s ~ 149.70s (\uae38\uc774: 2.40s)
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uadf8\ub798\uc11c \ub610 \uc0ac\ubcf4\uace0 \uc548 \uba39\uc5b4.
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 15 chars
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2144
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: [WHISPER] Segment #057
+[2026-01-17 13:10:37] [INFO] [74%] Processing segment #57...
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 149.70s ~ 150.90s (\uae38\uc774: 1.20s)
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc57c \uc694\uc998 \uac81\ub0b4\uc90d\uc796\uc544.
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 11 chars
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2144
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: [WHISPER] Segment #058
+[2026-01-17 13:10:37] [INFO] [74%] Processing segment #58...
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 150.90s ~ 153.90s (\uae38\uc774: 3.00s)
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \ub728\ub048\ud55c \uad6d\ubb3c\uc5d0 \uc5b4\ubb35\uc5d0 \uace8\ubc45\uc774\uc5d0 \uce7c\uad6d\uc218\uae4c\uc9c0.
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 23 chars
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2144
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: [WHISPER] Segment #059
+[2026-01-17 13:10:37] [INFO] [74%] Processing segment #59...
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 153.90s ~ 154.90s (\uae38\uc774: 1.00s)
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \ud480\uc138\ud2b8\uc5ec.
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 5 chars
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2144
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:10:37] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: [WHISPER] Segment #060
+[2026-01-17 13:11:10] [INFO] [75%] Processing segment #60...
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 154.90s ~ 160.20s (\uae38\uc774: 5.30s)
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc774\uac74 \uc21f\uac00\ub77d \ub180 \ub54c\uae4c\uc9c0 \uc0ac\uba39\ub294 \uaca8.
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 19 chars
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2396
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: [WHISPER] Segment #061
+[2026-01-17 13:11:10] [INFO] [75%] Processing segment #61...
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 161.70s ~ 162.60s (\uae38\uc774: 0.90s)
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uad6d\ubb3c \uc88b\uc544\ud558\uc2dc\uc796\uc544\uc694?
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 11 chars
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2396
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: [WHISPER] Segment #062
+[2026-01-17 13:11:10] [INFO] [75%] Processing segment #62...
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 162.60s ~ 163.90s (\uae38\uc774: 1.30s)
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uc774\uac70 \ubb34\uc870\uac74 \uc7a1\uc234\ubd10\uc57c \ub418\uc694.
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 15 chars
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2396
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: [WHISPER] Segment #063
+[2026-01-17 13:11:10] [INFO] [75%] Processing segment #63...
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 163.90s ~ 166.20s (\uae38\uc774: 2.30s)
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \ud575\uc774\ub4dd \ucb48\uafb8\ubbf8\ub9cc\ud07c\uc758 \ud30c\uad34\ub825\uc774 \uc788\uc5b4.
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 19 chars
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2396
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: [WHISPER] Segment #064
+[2026-01-17 13:11:10] [INFO] [76%] Processing segment #64...
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \u23f1\ufe0f  \uc2dc\uac04: 168.20s ~ 170.20s (\uae38\uc774: 2.00s)
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \U0001f4c4 \ud14d\uc2a4\ud2b8: \uad6c\ub3c5\uc740 \ud30c\uad34\ub825 \uac19\uc740 \uac74 \ud544\uc694 \uc5c6\ub294\ub514.
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \U0001f4ca \ubb38\uc790\uc218: 20 chars
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \U0001f3af \ud3c9\uade0 \ud655\ub960: -0.2396
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \U0001f507 No-speech \ud655\ub960: 0.0000
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: --------------------------------------------------------------------------------
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \u2705 WHISPER \ucc98\ub9ac \uc644\ub8cc!
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: \U0001f4ca \ucc98\ub9ac \ud1b5\uacc4:
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: - \ucd1d \uc138\uadf8\uba3c\ud2b8 \uc218: 64
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: - \ucd1d \ubb38\uc790 \uc218: 1,197 chars
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: - \ubaa8\ub378 \ub85c\ub529 \uc2dc\uac04: 6.11\ucd08
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: - \uc74c\uc131 \uc778\uc2dd \uc2dc\uac04: 236.52\ucd08
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: - \uc804\uccb4 \ucc98\ub9ac \uc2dc\uac04: 242.63\ucd08
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: - \ucc98\ub9ac \uc18d\ub3c4: 0.72x \uc2e4\uc2dc\uac04
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: ================================================================================
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: [MAIN] extract_transcript_whisper returned. HTML length: 3391
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: [MAIN] Creating JSON result...
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: [MAIN] JSON created. Length: 7661
+[2026-01-17 13:11:10] [DEBUG] extract_transcript.py: [MAIN] Printing JSON to stdout...

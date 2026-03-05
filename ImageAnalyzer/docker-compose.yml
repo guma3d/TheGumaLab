@@ -1,0 +1,9 @@
+services:
+  imageanalyzer:
+    build: .
+    container_name: ImageAnalyzer
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./uploads:/app/uploads
+    restart: always

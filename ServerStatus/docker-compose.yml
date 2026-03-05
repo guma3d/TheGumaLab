@@ -1,0 +1,14 @@
+services:
+  serverstatus:
+    build: .
+    container_name: ServerStatus
+    ports:
+      - "8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      # - LHM_URL 제거됨
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - D:\:/mnt/d:ro
+    restart: always
