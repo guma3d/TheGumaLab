@@ -63,10 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
         progressFill.style.width = `${percent}%`;
         progressPercent.textContent = `${percent}%`;
         statusText.textContent = text;
-
-        if (percent >= 100) {
-            setTimeout(showResult, 800);
-        }
     }
 
     function handleError(errMsg) {
@@ -83,10 +79,11 @@ document.addEventListener('DOMContentLoaded', () => {
         statusContainer.classList.add('hidden');
         resultContainer.classList.remove('hidden');
 
+        // 이전 결과에 있던 중복 버튼 방지용 (혹시 모를 초기화)
         let actionsHtml = `
             <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button onclick="window.location.href='${BASE_URL}view/${taskId}?type=summary'" class="btn primary">📄 요약 결과 보기</button>
-                <button onclick="window.location.href='${BASE_URL}view/${taskId}?type=detail'" class="btn" style="background: rgba(255, 255, 255, 0.2)">📋 상세 리포트</button>
+                <button onclick="window.open('${BASE_URL}view/${taskId}/summary', '_blank')" class="btn primary">📄 요약 결과 보기</button>
+                <button onclick="window.open('${BASE_URL}view/${taskId}/detail', '_blank')" class="btn" style="background: rgba(255, 255, 255, 0.2)">📋 상세 리포트</button>
                 <button onclick="window.location.href='${BASE_URL}download/${taskId}'" class="btn" style="background: rgba(255, 255, 255, 0.2)">⬇️ 압축 파일 다운로드</button>
             </div>
         `;
