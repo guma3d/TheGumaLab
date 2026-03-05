@@ -49,7 +49,7 @@ COOKIE_PATH = str(DATA_DIR / "youtube_cookies.txt")
 
 # yt-dlp 공통 옵션
 YT_DLP_COMMON_OPTIONS = [
-    "--js-runtime", "node",
+    "--js-runtimes", "node",
     "--remote-components", "ejs:github",
 ]
 DATA_DIR.mkdir(exist_ok=True)
