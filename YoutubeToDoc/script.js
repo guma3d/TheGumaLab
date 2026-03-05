@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         pollingInterval = setInterval(async () => {
             try {
-                const response = await fetch(`${BASE_URL}task_status/${taskId}`);
+                const response = await fetch(`${BASE_URL}task/${taskId}`);
                 const data = await response.json();
 
                 if (data.success) {
