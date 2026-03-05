@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch(`${BASE_URL}task/${taskId}`);
                 const data = await response.json();
 
-                if (data.success) {
+                if (data && !data.error) {
                     const status = data.status;
                     const progressText = data.progress || '처리 중입니다...';
 
@@ -141,6 +141,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         clearInterval(pollingInterval);
                         handleError(progressText || '처리 실패');
                     }
+                } else if (data && data.error) {
+                    clearInterval(pollingInterval);
+                    handleError(data.error);
                 }
             } catch (err) {
                 console.error("Polling error:", err);
