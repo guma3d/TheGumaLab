@@ -639,19 +639,39 @@ gemini_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
 if gemini_client:
     original_generate_content = gemini_client.models.generate_content
+    _gemini_last_req_time = 0
+    _gemini_req_lock = threading.Lock()
     
     def generate_content_with_retry(*args, **kwargs):
+        global _gemini_last_req_time
         import time
-        max_retries = 3
+        import re
+        max_retries = 5
         for attempt in range(max_retries):
             try:
+                # 글로벌 15 RPM(분당 15회) 제한을 위해 요청 간 4.1초 간격 보장
+                with _gemini_req_lock:
+                    elapsed = time.time() - _gemini_last_req_time
+                    if elapsed < 4.1:
+                        time.sleep(4.1 - elapsed)
+                    _gemini_last_req_time = time.time()
+                    
                 return original_generate_content(*args, **kwargs)
             except Exception as e:
                 error_msg = str(e)
                 if '429' in error_msg or 'RESOURCE_EXHAUSTED' in error_msg:
                     if attempt < max_retries - 1:
-                        wait_time = 45 # Google rate limit retry guide
-                        print(f"[Gemini API] Quota Exceeded (429). {wait_time}초 후 재시도합니다... ({attempt + 1}/{max_retries})")
+                        # 기본 대기 시간 30초, 실패할수록 가중, 에러 메시지(예: retry in 11.0s)에서 파싱 추가
+                        wait_time = 30.0 + (attempt * 15.0)
+                        match = re.search(r'retry in ([\d\.]+)s', error_msg)
+                        if match:
+                            try:
+                                parsed_wait = float(match.group(1)) + 2.0
+                                wait_time = max(wait_time, parsed_wait)
+                            except ValueError:
+                                pass
+                                
+                        print(f"[Gemini API] Quota Exceeded (429). {wait_time:.1f}초 후 재시도합니다... ({attempt + 1}/{max_retries})")
                         time.sleep(wait_time)
                     else:
                         raise e
