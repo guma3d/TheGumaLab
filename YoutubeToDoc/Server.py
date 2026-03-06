@@ -3726,8 +3726,10 @@ def view_result(task_id, view_type):
         
         # 상대 경로를 Flask 라우트 경로로 변경
         if video_title:
-            html_content = html_content.replace('src="images/', f'src="/output/{video_title}/images/')
-            html_content = html_content.replace("src='images/", f"src='/output/{video_title}/images/")
+            from flask import url_for
+            base_img_path = url_for('serve_output', filename=f'{video_title}/images/')
+            html_content = html_content.replace('src="images/', f'src="{base_img_path}')
+            html_content = html_content.replace("src='images/", f"src='{base_img_path}")
         
         return html_content
 
