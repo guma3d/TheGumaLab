@@ -667,7 +667,7 @@ if gemini_client:
                 return original_generate_content(*args, **kwargs)
             except Exception as e:
                 error_msg = str(e)
-                if '429' in error_msg or 'RESOURCE_EXHAUSTED' in error_msg:
+                if '429' in error_msg or 'RESOURCE_EXHAUSTED' in error_msg or '503' in error_msg or 'UNAVAILABLE' in error_msg:
                     if attempt < max_retries - 1:
                         # 기본 대기 시간 30초, 실패할수록 가중, 에러 메시지(예: retry in 11.0s)에서 파싱 추가
                         wait_time = 30.0 + (attempt * 15.0)
@@ -679,7 +679,8 @@ if gemini_client:
                             except ValueError:
                                 pass
                                 
-                        print(f"[Gemini API] Quota Exceeded (429). {wait_time:.1f}초 후 재시도합니다... ({attempt + 1}/{max_retries})")
+                        error_type = "Quota/Rate Limit (429)" if '429' in error_msg or 'RESOURCE_EXHAUSTED' in error_msg else "Server Overloaded (503)"
+                        print(f"[Gemini API] {error_type}. {wait_time:.1f}초 후 재시도합니다... ({attempt + 1}/{max_retries})")
                         time.sleep(wait_time)
                     else:
                         raise e
