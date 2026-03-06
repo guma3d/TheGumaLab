@@ -120,7 +120,7 @@ def init_db():
             "You are a translator. Translate the following English text to Korean. Only output the translated text, nothing else.",
             "{text}",
             "whisper-1",
-            "gemini-2.5-flash-lite",
+            "gemini-flash-latest",
             "You are a professional summarizer. Create a comprehensive summary in Korean with markdown formatting including headings, bullet points, and key insights.",
             "다음은 영상의 전체 자막입니다. 핵심 내용을 마크다운 형식으로 요약해주세요:\n\n{text}",
             "You are an expert at identifying important information in video transcripts. Return only the indices of important segments as a JSON array of numbers.",
@@ -154,7 +154,7 @@ def init_db():
             WHERE id = 1
         ''', (
             "당신은 검색 전문가입니다. 사용자의 질문을 분석하고, 검색에 효과적인 키워드와 관련 용어를 추가하여 확장된 검색 쿼리를 생성해주세요. 고유명사(게임명, 기술명, 회사명 등), 관련 개념, 동의어를 포함하되, 자연스러운 한 문장으로 작성하세요.",
-            "gemini-2.5-flash-lite"
+            "gemini-flash-latest"
         ))
     
     # 답변 생성 프롬프트 컬럼 추가
@@ -168,7 +168,7 @@ def init_db():
             WHERE id = 1
         ''', (
             "당신은 언리얼 엔진 전문가입니다. 검색된 영상 내용을 바탕으로 사용자의 질문에 200-300자 내외로 간결하게 마크다운형식으로 정리해주세요.",
-            "gemini-2.5-flash-lite"
+            "gemini-flash-latest"
         ))
     
     conn.commit()
@@ -201,14 +201,14 @@ def get_prompts():
         for k in ['whisper_model', 'translation_model', 'query_expansion_model', 'answer_model']:
             val = prompts_dict.get(k)
             if val and ('1.5-flash' in val or '2.0-flash' in val or '2.5-flash' in val):
-                prompts_dict[k] = 'gemini-2.5-flash-lite'
+                prompts_dict[k] = 'gemini-flash-latest'
                 
         return prompts_dict
     return {
         "system_prompt": "You are a translator. Translate the following English text to Korean. Only output the translated text, nothing else.",
         "user_prompt_template": "{text}",
         "whisper_model": "whisper-1",
-        "translation_model": "gemini-2.5-flash-lite",
+        "translation_model": "gemini-flash-latest",
         "summary_system_prompt": "You are a professional summarizer. Create a comprehensive summary in Korean with markdown formatting including headings, bullet points, and key insights.",
         "summary_user_prompt_template": "다음은 영상의 전체 자막입니다. 핵심 내용을 마크다운 형식으로 요약해주세요:\n\n{text}",
         "filter_system_prompt": "You are an expert at identifying important information in video transcripts. Return only the indices of important segments as a JSON array of numbers.",
@@ -741,9 +741,9 @@ def filter_important_segments(segments: List['Segment']) -> List['Segment']:
         
         # LLM에게 중요한 세그먼트 인덱스 요청
         prompts = get_prompts()
-        translation_model = prompts.get("translation_model", "gemini-2.5-flash-lite")
+        translation_model = prompts.get("translation_model", "gemini-flash-latest")
         if translation_model.startswith("gpt-") or "2.5-flash" in translation_model:
-             translation_model = "gemini-2.5-flash-lite"
+             translation_model = "gemini-flash-latest"
              
         # 필터링 프롬프트 가져오기
         filter_system_prompt = prompts.get("filter_system_prompt", "You are an expert at identifying important information in video transcripts. Return only the indices of important segments as a JSON array of numbers.")
@@ -859,7 +859,7 @@ def store_segments_to_qdrant(segments: List['Segment'], task_id: str, youtube_ur
     except Exception as e:
         print(f"Qdrant 저장 오류: {e}")
 
-def rerank_with_llm(query: str, results: list, top_k: int = 10,llm_model="gemini-2.5-flash-lite",):
+def rerank_with_llm(query: str, results: list, top_k: int = 10,llm_model="gemini-flash-latest",):
     """LLM을 사용하여 검색 결과 재평가 및 재정렬"""
     try:
         if not gemini_client or not results:
@@ -1555,9 +1555,9 @@ def transcribe_audio(audio_path: str, srt_path: str):
     
     # 데이터베이스에서 모델 가져오기 플로우가 있지만 Gemini는 보통 flash나 pro 사용
     prompts = get_prompts()
-    whisper_model = prompts.get("whisper_model", "gemini-2.5-flash-lite") # 속도/비용 면에서 flash 권장
+    whisper_model = prompts.get("whisper_model", "gemini-flash-latest") # 속도/비용 면에서 flash 권장
     if "whisper" in whisper_model:
-        whisper_model = "gemini-2.5-flash-lite"
+        whisper_model = "gemini-flash-latest"
     
     try:
         # Gemini API는 파일을 직접 업로드하여 처리할 수 있음 (File API 사용 권장이나, SDK로 단순 생성 가능)
@@ -1876,9 +1876,9 @@ def translate_segments(segments: List[Segment], task_id: str = None):
     prompts = get_prompts()
     system_prompt = prompts["system_prompt"]
     user_prompt_template = prompts["user_prompt_template"]
-    translation_model = prompts.get("translation_model", "gemini-2.5-flash-lite")
+    translation_model = prompts.get("translation_model", "gemini-flash-latest")
     if translation_model.startswith("gpt-") or "2.5-flash" in translation_model:
-         translation_model = "gemini-2.5-flash-lite"
+         translation_model = "gemini-flash-latest"
     
     import json
     batch_size = 50
@@ -1961,9 +1961,9 @@ def summarize_all_captions(captions: List[Caption], task_id: str = None) -> dict
     prompts = get_prompts()
     summary_system_prompt = prompts.get("summary_system_prompt", "You are a professional summarizer.")
     summary_user_prompt_template = prompts.get("summary_user_prompt_template", "{text}")
-    translation_model = prompts.get("translation_model", "gemini-2.5-flash-lite")
+    translation_model = prompts.get("translation_model", "gemini-flash-latest")
     if translation_model.startswith("gpt-") or "2.5-flash" in translation_model:
-         translation_model = "gemini-2.5-flash-lite"
+         translation_model = "gemini-flash-latest"
     
     # 모든 자막 텍스트 합치기
     all_text = " ".join([cap.text for cap in captions])
@@ -2907,9 +2907,9 @@ def api_search():
                 print("쿼리 분석 및 확장 중...")
                 prompts = get_prompts()
                 query_expansion_system_prompt = prompts.get("query_expansion_system_prompt", "당신은 검색 전문가입니다. 사용자의 질문을 분석하고, 검색에 효과적인 키워드와 관련 용어를 추가하여 확장된 검색 쿼리를 생성해주세요.")
-                query_expansion_model = prompts.get("query_expansion_model", "gemini-2.5-flash-lite")
+                query_expansion_model = prompts.get("query_expansion_model", "gemini-flash-latest")
                 if query_expansion_model.startswith("gpt-"):
-                     query_expansion_model = "gemini-2.5-flash-lite"
+                     query_expansion_model = "gemini-flash-latest"
                 
                 expansion_response = gemini_client.models.generate_content(
                     model=query_expansion_model,
@@ -2938,9 +2938,9 @@ def api_search():
                 print("LLM 답변 생성 중...")
                 prompts = get_prompts()
                 answer_system_prompt = prompts.get("answer_system_prompt", "당신은 언리얼 엔진 전문가입니다. 검색된 영상 내용을 바탕으로 사용자의 질문에 200-300자 내외로 간결하게 마크다운형식으로 정리해주세요.")
-                answer_model = prompts.get("answer_model", "gemini-2.5-flash-lite")
+                answer_model = prompts.get("answer_model", "gemini-flash-latest")
                 if answer_model.startswith("gpt-"):
-                     answer_model = "gemini-2.5-flash-lite"
+                     answer_model = "gemini-flash-latest"
                 
                 # 검색 결과를 컨텍스트로 변환
                 context_parts = []
@@ -3086,15 +3086,15 @@ def admin_save():
     system_prompt = data.get('system_prompt', '')
     user_prompt_template = data.get('user_prompt_template', '')
     whisper_model = data.get('whisper_model', 'whisper-1')
-    translation_model = data.get('translation_model', 'gemini-2.5-flash-lite')
+    translation_model = data.get('translation_model', 'gemini-flash-latest')
     summary_system_prompt = data.get('summary_system_prompt', '')
     summary_user_prompt_template = data.get('summary_user_prompt_template', '')
     filter_system_prompt = data.get('filter_system_prompt', '')
     filter_user_prompt_template = data.get('filter_user_prompt_template', '')
     query_expansion_system_prompt = data.get('query_expansion_system_prompt', '')
-    query_expansion_model = data.get('query_expansion_model', 'gemini-2.5-flash-lite')
+    query_expansion_model = data.get('query_expansion_model', 'gemini-flash-latest')
     answer_system_prompt = data.get('answer_system_prompt', '')
-    answer_model = data.get('answer_model', 'gemini-2.5-flash-lite')
+    answer_model = data.get('answer_model', 'gemini-flash-latest')
     max_tasks = data.get('max_tasks', '0')
     auto_cleanup = data.get('auto_cleanup', '1')
     skip_detail_html = data.get('skip_detail_html', '0')

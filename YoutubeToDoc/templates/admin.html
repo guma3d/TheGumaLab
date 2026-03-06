@@ -249,17 +249,17 @@
                         {% if available_models %}
                         {% for model in available_models %}
                         <option value="{{ model }}" {% if translation_model==model %}selected{% endif %}>
-                            {{ model }}{% if model == 'gemini-2.5-flash-lite' %} ⭐ Default{% endif %}
+                            {{ model }}{% if model == 'gemini-flash-latest' %} ⭐ Default{% endif %}
                         </option>
                         {% endfor %}
                         {% else %}
                         <!-- Fallback: 모델 리스트를 가져올 수 없을 때 기본 옵션들 -->
-                        <option value="gemini-2.5-flash-lite" {% if translation_model=='gemini-2.5-flash-lite' %}selected{% endif
+                        <option value="gemini-flash-latest" {% if translation_model=='gemini-flash-latest' %}selected{% endif
                             %}>
-                            gemini-2.5-flash-lite ⭐ Default</option>
+                            gemini-flash-latest ⭐ Default</option>
                         {% endif %}
                     </select>
-                    <div class="help-text">번역 및 요약에 사용할 Gemini 모델을 선택하세요. 기본값은 gemini-2.5-flash-lite (비용 효율적)입니다.</div>
+                    <div class="help-text">번역 및 요약에 사용할 Gemini 모델을 선택하세요. 기본값은 gemini-flash-latest (비용 효율적)입니다.</div>
                 </div>
 
                 <div class="form-group">
@@ -324,15 +324,15 @@
                         {% if available_models %}
                         {% for model in available_models %}
                         <option value="{{ model }}" {% if query_expansion_model==model %}selected{% endif %}>
-                            {{ model }}{% if model == 'gemini-2.5-flash-lite' %} ⭐ Default{% endif %}
+                            {{ model }}{% if model == 'gemini-flash-latest' %} ⭐ Default{% endif %}
                         </option>
                         {% endfor %}
                         {% else %}
-                        <option value="gemini-2.5-flash-lite" {% if query_expansion_model=='gemini-2.5-flash-lite' %}selected{%
-                            endif %}>gemini-2.5-flash-lite ⭐ Default</option>
+                        <option value="gemini-flash-latest" {% if query_expansion_model=='gemini-flash-latest' %}selected{%
+                            endif %}>gemini-flash-latest ⭐ Default</option>
                         {% endif %}
                     </select>
-                    <div class="help-text">검색 쿼리 확장에 사용할 모델을 선택하세요. 기본값은 gemini-2.5-flash-lite (빠르고 저렴)입니다.</div>
+                    <div class="help-text">검색 쿼리 확장에 사용할 모델을 선택하세요. 기본값은 gemini-flash-latest (빠르고 저렴)입니다.</div>
                 </div>
 
                 <div class="form-group">
@@ -353,15 +353,15 @@
                         {% if available_models %}
                         {% for model in available_models %}
                         <option value="{{ model }}" {% if answer_model==model %}selected{% endif %}>
-                            {{ model }}{% if model == 'gemini-2.5-flash-lite' %} ⭐ Default{% endif %}
+                            {{ model }}{% if model == 'gemini-flash-latest' %} ⭐ Default{% endif %}
                         </option>
                         {% endfor %}
                         {% else %}
-                        <option value="gemini-2.5-flash-lite" {% if answer_model=='gemini-2.5-flash-lite' %}selected{% endif %}>
-                            gemini-2.5-flash-lite ⭐ Default</option>
+                        <option value="gemini-flash-latest" {% if answer_model=='gemini-flash-latest' %}selected{% endif %}>
+                            gemini-flash-latest ⭐ Default</option>
                         {% endif %}
                     </select>
-                    <div class="help-text">검색 결과를 바탕으로 최종 답변을 생성하는 모델을 선택하세요. 기본값은 gemini-2.5-flash-lite (빠르고 저렴)입니다.</div>
+                    <div class="help-text">검색 결과를 바탕으로 최종 답변을 생성하는 모델을 선택하세요. 기본값은 gemini-flash-latest (빠르고 저렴)입니다.</div>
                 </div>
 
                 <div class="form-group">
@@ -541,7 +541,7 @@
         function resetToDefault() {
             if (confirm('기본값으로 복원하시겠습니까?')) {
                 document.getElementById('whisper_model').value = 'whisper-1';
-                document.getElementById('translation_model').value = 'gemini-2.5-flash-lite';
+                document.getElementById('translation_model').value = 'gemini-flash-latest';
                 document.getElementById('system_prompt').value = 'You are a translator. Translate the following English text to Korean. Only output the translated text, nothing else.';
                 document.getElementById('user_prompt_template').value = '{text}';
                 document.getElementById('summary_system_prompt').value = 'You are a professional summarizer. Create a comprehensive summary in Korean with markdown formatting including headings, bullet points, and key insights.';
@@ -549,9 +549,9 @@
                 document.getElementById('filter_system_prompt').value = 'You are an expert at identifying important information in video transcripts. Return only the indices of important segments as a JSON array of numbers.';
                 document.getElementById('filter_user_prompt_template').value = '다음은 영상의 번역된 세그먼트들입니다. 핵심 정보를 담고 있는 중요한 세그먼트들의 인덱스만 JSON 배열로 반환해주세요 (예: [0, 3, 7]). 전체의 30-50% 정도만 선택하세요.\\n\\n{text}';
                 document.getElementById('query_expansion_system_prompt').value = '당신은 검색 전문가입니다. 사용자의 질문을 분석하고, 검색에 효과적인 키워드와 관련 용어를 추가하여 확장된 검색 쿼리를 생성해주세요. 고유명사(게임명, 기술명, 회사명 등), 관련 개념, 동의어를 포함하되, 자연스러운 한 문장으로 작성하세요.';
-                document.getElementById('query_expansion_model').value = 'gemini-2.5-flash-lite';
+                document.getElementById('query_expansion_model').value = 'gemini-flash-latest';
                 document.getElementById('answer_system_prompt').value = '당신은 언리얼 엔진 전문가입니다. 검색된 영상 내용을 바탕으로 사용자의 질문에 200-300자 내외로 간결하게 마크다운형식으로 정리해주세요.';
-                document.getElementById('answer_model').value = 'gemini-2.5-flash-lite';
+                document.getElementById('answer_model').value = 'gemini-flash-latest';
                 document.getElementById('max_tasks').value = '0';
                 document.getElementById('auto_cleanup').value = '1';
                 document.getElementById('skip_detail_html').value = '0';
