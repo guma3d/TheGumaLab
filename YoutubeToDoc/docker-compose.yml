@@ -11,6 +11,7 @@ services:
       - ./data:/app/data
       - ./output:/app/output
       - ./yt-dlp-cache:/root/.cache/yt-dlp
+      - ./huggingface-cache:/root/.cache/huggingface
     environment:
       - FLASK_ENV=development
       - QDRANT_URL=http://qdrant:6333
