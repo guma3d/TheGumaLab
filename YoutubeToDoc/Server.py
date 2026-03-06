@@ -1880,48 +1880,59 @@ def translate_segments(segments: List[Segment], task_id: str = None):
     if translation_model.startswith("gpt-") or "2.5-flash" in translation_model:
          translation_model = "gemini-2.5-flash-lite"
     
-    for i, seg in enumerate(segments):
-        current = i + 1
-        percentage = current * 100 // total_segments
-        update_progress(f"번역 중 {current}/{total_segments} ({percentage}%)")
+    import json
+    batch_size = 50
+    
+    # 일괄 처리를 위한 시스템 프롬프트 강화
+    batch_system_prompt = system_prompt + "\n\nIMPORTANT INSTRUCTION: The user provides a JSON array of objects `[{\"id\": 0, \"text\": \"English sentence...\"}, ...]`. You MUST translate the 'text' fields to Korean and return ONLY a valid JSON array of objects with the exact same 'id' and the translated 'text', e.g., `[{\"id\": 0, \"text\": \"한국어 번역...\"}, ...]`. Do not add any other keys. Make sure to return exactly as many objects as provided."
+
+    for i in range(0, total_segments, batch_size):
+        batch = segments[i:i + batch_size]
+        percentage = (i + len(batch)) * 100 // total_segments
+        update_progress(f"번역 중 {i+1}~{i+len(batch)}/{total_segments} ({percentage}%)")
         
-        combined_text = " ".join(seg.texts)
-        
-        # 프롬프트 템플릿에 텍스트 삽입
-        user_content = user_prompt_template.replace("{text}", combined_text)
+        request_data = [{"id": j, "text": " ".join(seg.texts)} for j, seg in enumerate(batch)]
+        batch_text = json.dumps(request_data, ensure_ascii=False)
+        user_content = user_prompt_template.replace("{text}", batch_text)
         
         try:
             response = gemini_client.models.generate_content(
                 model=translation_model,
                 contents=user_content,
                 config=types.GenerateContentConfig(
-                    system_instruction=system_prompt,
+                    system_instruction=batch_system_prompt,
+                    response_mime_type="application/json"
                 )
             )
-            translated = response.text.strip()
+            response_text = response.text.strip()
+            # 마크다운 코드 블록 제거 (혹시 포함된 경우 방어코드)
+            if response_text.startswith("```json"):
+                response_text = response_text[7:-3].strip()
+            elif response_text.startswith("```"):
+                response_text = response_text[3:-3].strip()
+                
+            batch_result = json.loads(response_text)
             
-            # 빈 응답 또는 의미 없는 응답 체크
             meaningless_responses = [
-                '', ' ', '  ', '   ',  # 빈 문자열 및 공백
-                '.', '..', '...',  # 점만
-                '-', '--', '---',  # 하이픈만
-                '_', '__',  # 언더스코어
-                'N/A', 'None', '없음',  # 없음 표현
-                "'", "' '", "''",  # 작은따옴표
-                '"', '" "', '""',  # 큰따옴표
-                '?', '??',  # 물음표
-                '!', '!!',  # 느낌표
+                '', ' ', '  ', '   ', '.', '..', '...', '-', '--', '---', '_', '__', 
+                'N/A', 'None', '없음', "'", "' '", "''", '"', '" "', '""', '?', '??', '!', '!!'
             ]
             
-            if not translated or translated.strip() in meaningless_responses:
-                seg.translated = ""  # 빈 문자열로 설정하여 HTML 생성 시 필터링
-                print(f"번역 결과 없음 [{current}/{total_segments}] - 세그먼트 제외 (응답: '{translated}')")
-            else:
-                seg.translated = translated
-                print(f"번역 완료 [{current}/{total_segments}]")
+            for item in batch_result:
+                idx = item.get("id")
+                translated = item.get("text", "")
+                if idx is not None and 0 <= idx < len(batch):
+                    if not translated or translated.strip() in meaningless_responses:
+                        batch[idx].translated = ""
+                    else:
+                        batch[idx].translated = str(translated).strip()
+            print(f"번역 완료 [배치 {i//batch_size + 1}]")
+            
         except Exception as e:
-            print(f"번역 실패 [{current}]: {e}")
-            seg.translated = combined_text
+            print(f"번역 실패 [배치 {i//batch_size + 1}]: {e}")
+            # 실패 시 원본 텍스트 유지 방어
+            for j, seg in enumerate(batch):
+                seg.translated = " ".join(seg.texts)
     
     update_progress(f"번역 완료 (총 {total_segments}개)")
 
