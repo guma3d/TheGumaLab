@@ -1,0 +1,9 @@
+# YoutubeToDoc ignored files
+YoutubeToDoc/data/task_status.json
+YoutubeToDoc/output/
+YoutubeToDoc/qdrant_data/
+YoutubeToDoc/yt-dlp-cache/
+YoutubeToDoc/yt-dlp
+YoutubeToDoc/__pycache__/
+*.pyc
+.env
