@@ -678,7 +678,7 @@ if gemini_client:
                 
         print(f"[Gemini API] {error_type}. {wait_time:.1f}초 후 재시도합니다... ({retry_state.attempt_number}/5)")
 
-    class CustomWait(tenacity.wait_base):
+    class CustomWait(tenacity.wait.wait_base):
         def __init__(self, multiplier=15, min=30, max=120):
             self.multiplier = multiplier
             self.min = min
