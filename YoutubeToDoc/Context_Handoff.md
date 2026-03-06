@@ -25,6 +25,13 @@
    - Docker가 재시작될 때마다 Whisper AI 모델(1.5GB)을 재다운로드하는 것을 막기 위해 `docker-compose.yml`에 `huggingface-cache` 전용 볼륨 마운트 처리.
 4. **의존성(Dependency) 및 인코딩 수정**: 
    - 윈도우에서 `requirements.txt`에 Null 바이트(`\x00`)가 들어온 문제 말끔하게 정리.
+5. **Nginx 관련 404 이미지 에러 패치**:
+   - `/view/<task_id>/detail` 진입 시 상세보기 HTML에 들어가는 프레임 이미지 `src`가 Nginx 루트인 포트 8081 도메인으로 들어가 404를 내뱉던 버그를 찾아냄.
+   - `url_for` 절대경로 대신 `../../output/<safe-title>/images/` 형태의 상대경로로 치환하도록 우회하여 수정한 상태.
+
+> **⚠️ 향후 개발 원칙 합의 사항 (Surface 랩탑)**
+> - 코드는 "오직 GitHub 서버"에만 푸시(Commit). 직접 홈서버(HomeServer)의 로컬 코드를 실시간으로 만지지 않는다.
+> - 기능 개발 시: `로컬Surface 수정 -> GitHub 푸시 -> 홈서버 SSH접속 후 git pull -> 컨테이너 재가동` 순서의 배포 파이프라인으로 일관성을 유지하기로 약속됨.
 
 ## 🚀 3. 다음으로 진행해야 할 작업 (Next Steps)
 1. **STT 성능 및 속도 실무 테스트**:
