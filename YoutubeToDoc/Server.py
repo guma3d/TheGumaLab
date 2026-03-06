@@ -3756,10 +3756,14 @@ def view_result(task_id, view_type):
         with open(html_path, 'r', encoding='utf-8') as f:
             html_content = f.read()
         
-        # 상대 경로를 Flask 라우트 경로로 변경
+        # 상대 경로를 Flask 및 Nginx 환경 모두에서 호환되도록 상대 경로(../../)로 변경
         if video_title:
-            from flask import url_for
-            base_img_path = url_for('serve_output', filename=f'{video_title}/images/')
+            import urllib.parse
+            # URL 인코딩을 적용 (제목에 공백/특수문자가 있을 수 있으므로)
+            safe_title_url = urllib.parse.quote(video_title)
+            # /view/<task_id>/detail 의 경로는 깊이가 3이므로 ../../output/ 으로 접근하면 루트의 proxy 위치로 매칭됨
+            base_img_path = f"../../output/{safe_title_url}/images/"
+            
             html_content = html_content.replace('src="images/', f'src="{base_img_path}')
             html_content = html_content.replace("src='images/", f"src='{base_img_path}")
         
