@@ -1962,7 +1962,6 @@ def summarize_all_captions(captions: List[Caption], task_id: str = None) -> dict
             print(f"태그 생성 응답: {tag_content}")
             
             # JSON 파싱
-            import json
             tags = json.loads(tag_content)
             if not isinstance(tags, list):
                 print(f"태그가 리스트가 아님: {type(tags)}")
