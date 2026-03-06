@@ -2,6 +2,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // 동적 경로 적용 (Nginx 하위 도메인/폴더 라우팅 지원)
     const BASE_URL = window.location.pathname.endsWith('/') ? window.location.pathname : window.location.pathname + '/';
 
+    // 페이지 진입 시 이전 작업 내역 로드
+    loadAllTasks();
+
     const form = document.getElementById('url-form');
     const input = document.getElementById('youtube-url');
     const submitBtn = document.getElementById('submit-btn');
@@ -146,5 +149,61 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error("Polling error:", err);
             }
         }, 3000); // 3초마다 체크
+    }
+
+    async function loadAllTasks() {
+        try {
+            const response = await fetch(BASE_URL + 'tasks');
+            const data = await response.json();
+            const grid = document.getElementById('tasks-grid');
+            if (!grid) return;
+
+            if (data && data.tasks && data.tasks.length > 0) {
+                // 완료된 항목만 최신순으로 렌더링
+                const completedTasks = data.tasks.filter(t => t.status === 'completed');
+                if (completedTasks.length > 0) {
+                    grid.innerHTML = completedTasks.map(task => createTaskCard(task)).join('');
+                } else {
+                    grid.innerHTML = '<p style="color: rgba(255,255,255,0.5); font-size:0.9rem;">아직 처리된 영상이 없습니다.</p>';
+                }
+            } else {
+                grid.innerHTML = '<p style="color: rgba(255,255,255,0.5); font-size:0.9rem;">아직 처리된 영상이 없습니다.</p>';
+            }
+        } catch (err) {
+            console.error('Failed to load tasks:', err);
+        }
+    }
+
+    function createTaskCard(task) {
+        const videoId = extractVideoId(task.url);
+        const videoTitle = task.video_title || task.url || '알 수 없는 영상';
+        let createdAt = task.created_at_display;
+        if (!createdAt) {
+            const d = new Date(task.created_at);
+            createdAt = isNaN(d) ? '' : d.toLocaleString('ko-KR');
+        }
+        const thumbnailUrl = videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : 'https://via.placeholder.com/320x180/000000/ffffff?text=No+Image';
+
+        return `
+            <a href="${BASE_URL}view/${task.task_id}/summary" target="_blank" class="grid-card">
+                <div class="card-thumb">
+                    <img src="${thumbnailUrl}" alt="Thumbnail">
+                </div>
+                <div class="card-content">
+                    <div class="card-title">${videoTitle}</div>
+                    <div class="card-meta">${createdAt}</div>
+                </div>
+            </a>
+        `;
+    }
+
+    function extractVideoId(url) {
+        if (!url) return null;
+        try {
+            const obj = new URL(url);
+            if (obj.hostname.includes('youtube.com')) return obj.searchParams.get('v');
+            if (obj.hostname.includes('youtu.be')) return obj.pathname.slice(1);
+        } catch (e) { }
+        return null;
     }
 });
