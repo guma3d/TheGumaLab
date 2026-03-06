@@ -1577,75 +1577,49 @@ def merge_srt_segments(srt_texts: List[str], chunk_durations: List[float]) -> st
     
     return "\n\n".join(merged_blocks)
 
-def transcribe_audio(audio_path: str, srt_path: str):
-    """Gemini API로 자막 생성"""
-    print("[4/9] 자막 생성 중...")
+def transcribe_audio(url_or_id: str, srt_path: str):
+    """youtube-transcript-api를 사용하여 자막 다운로드 (Gemini API 오디오 미지원 대체)"""
+    print("[4/10] 자막 생성/다운로드 중...")
     
-    # 이미 파일이 존재하면 생성 생략
     if os.path.exists(srt_path):
         print(f"SRT 파일이 이미 존재합니다. 생성 생략: {srt_path}")
         return
-    
-    if not GEMINI_API_KEY:
-        raise RuntimeError("GEMINI_API_KEY 환경변수가 설정되지 않았습니다.")
-    
-    # 데이터베이스에서 모델 가져오기 플로우가 있지만 Gemini는 보통 flash나 pro 사용
-    prompts = get_prompts()
-    whisper_model = prompts.get("whisper_model", "gemini-3.1-flash-lite-preview") # 속도/비용 면에서 flash 권장
-    if "whisper" in whisper_model:
-        whisper_model = "gemini-3.1-flash-lite-preview"
-    
+        
     try:
-        # Gemini API는 파일을 직접 업로드하여 처리할 수 있음 (File API 사용 권장이나, SDK로 단순 생성 가능)
-        print(f"Gemini({whisper_model}) 전사 중...")
-
-        # 1. 파일 업로드
-        uploaded_file = gemini_client.files.upload(file=audio_path)
-        print(f"파일 업로드 완료: {uploaded_file.name}")
+        from youtube_transcript_api import YouTubeTranscriptApi
+        from youtube_transcript_api.formatters import SRTFormatter
+    except ImportError:
+        raise RuntimeError("youtube-transcript-api 모듈이 설치되지 않았습니다.")
         
-        # 2. 전사 요청
-        prompt = "Transcribe this audio file and return the dialogue in exact SRT subtitle format including timestamps. Translate to Korean if it's in another language."
+    video_id = extract_youtube_video_id(url_or_id)
+    if not video_id:
+        video_id = url_or_id # 혹시 url이 아니라 id가 넘어왔을 경우
         
-        max_retries = 3
-        retry_count = 0
-        final_srt = ""
+    try:
+        # 한국어 우선, 없으면 영어 시도
+        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+        try:
+            transcript = transcript_list.find_transcript(['ko', 'en'])
+        except Exception:
+            # ko, en이 없으면 자동 번역이나 사용 가능한 첫 번째 자막 가져오기
+            transcript = list(transcript_list)[0]
+            if transcript.is_translatable:
+                try:
+                    transcript = transcript.translate('ko')
+                except Exception:
+                    pass
         
-        while retry_count < max_retries:
-            try:
-                response = gemini_client.models.generate_content(
-                    model=whisper_model,
-                    contents=[
-                        uploaded_file,
-                        prompt
-                    ]
-                )
-                
-                final_srt = response.text.strip()
-                # Markdown 양식 정리: ```srt 머리말이 붙을 수 있음
-                if final_srt.startswith("```"):
-                     lines = final_srt.split('\n')
-                     if len(lines) >= 3:
-                         final_srt = '\n'.join(lines[1:-1])
-                break
-            except Exception as e:
-                 retry_count += 1
-                 if retry_count < max_retries:
-                     print(f"오류 발생: {e}. 재시도 {retry_count}/{max_retries}...")
-                     time.sleep(5)
-                 else:
-                     raise
+        data = transcript.fetch()
+        formatter = SRTFormatter()
+        srt_formatted = formatter.format_transcript(data)
         
-        # 업로드된 임시 파일 삭제
-        gemini_client.files.delete(name=uploaded_file.name)
-        
-        # 최종 SRT 파일 저장
         with open(srt_path, "w", encoding="utf-8") as f:
-            f.write(final_srt)
-        
-        print(f"자막 생성 완료: {srt_path}")
+            f.write(srt_formatted)
+            
+        print(f"자막 다운로드 완료: {srt_path}")
         
     except Exception as e:
-        raise RuntimeError(f"자막 생성 실패: {e}")
+        raise RuntimeError(f"자막 다운로드/생성 실패: {e}")
 
 def parse_srt(srt_path: str) -> List[Caption]:
     """SRT 파일 파싱"""
@@ -2717,7 +2691,7 @@ def process_youtube_video(url: str, task_id: str = None) -> dict:
         # 4. 자막 생성
         update_status("processing", "[4/10] 자막 생성 중...")
         srt_path = str(video_dir / f"{safe_title}.srt")
-        transcribe_audio(audio_path, srt_path)
+        transcribe_audio(url, srt_path)
         
         # 5. SRT 파싱
         update_status("processing", "[5/10] SRT 파싱 중...")
