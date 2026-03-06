@@ -650,43 +650,78 @@ if gemini_client:
     _gemini_last_req_time = 0
     _gemini_req_lock = threading.Lock()
     
+    import tenacity
+    import time
+    import re
+    
+    def _is_retryable_gemini_exception(exc):
+        error_msg = str(exc)
+        return '429' in error_msg or 'RESOURCE_EXHAUSTED' in error_msg or '503' in error_msg or 'UNAVAILABLE' in error_msg
+        
+    def _my_before_sleep(retry_state):
+        exc = retry_state.outcome.exception()
+        error_msg = str(exc)
+        error_type = "Quota/Rate Limit (429)" if '429' in error_msg or 'RESOURCE_EXHAUSTED' in error_msg else "Server Overloaded (503)"
+        
+        # Parse wait time if 429
+        wait_time = retry_state.next_action.sleep
+        match = re.search(r'retry in ([\d\.]+)s', error_msg)
+        if match:
+            try:
+                parsed_wait = float(match.group(1)) + 2.0
+                if parsed_wait > wait_time:
+                    # Update sleep time manually in state info, though wait_exponential won't be bypassed directly,
+                    # tenacity's next_action.sleep can be overridden in custom wait. For simplicity, just log it.
+                    pass
+            except ValueError:
+                pass
+                
+        print(f"[Gemini API] {error_type}. {wait_time:.1f}초 후 재시도합니다... ({retry_state.attempt_number}/5)")
+
+    class CustomWait(tenacity.wait_base):
+        def __init__(self, multiplier=15, min=30, max=120):
+            self.multiplier = multiplier
+            self.min = min
+            self.max = max
+            
+        def __call__(self, retry_state):
+            exc = retry_state.outcome.exception()
+            error_msg = str(exc)
+            
+            # Default exponential backoff logic (like multiplier * 2^attempt)
+            # Instead we'll use: wait_time = 30.0 + (attempt * 15.0) which is linear-ish, to match previous logic, 
+            # but user asked for "exponential backoff", so let's do exponential.
+            exp_wait = self.min * (2 ** (retry_state.attempt_number - 1))
+            wait_time = min(exp_wait, self.max)
+            
+            # Check for specific "retry in Xs"
+            match = re.search(r'retry in ([\d\.]+)s', error_msg)
+            if match:
+                try:
+                    parsed_wait = float(match.group(1)) + 2.0
+                    wait_time = max(wait_time, parsed_wait)
+                except ValueError:
+                    pass
+            return wait_time
+
+    @tenacity.retry(
+        retry=tenacity.retry_if_exception(_is_retryable_gemini_exception),
+        wait=CustomWait(min=30, max=120),
+        stop=tenacity.stop_after_attempt(5),
+        before_sleep=_my_before_sleep,
+        reraise=True
+    )
     def generate_content_with_retry(*args, **kwargs):
         global _gemini_last_req_time
-        import time
-        import re
-        max_retries = 5
-        for attempt in range(max_retries):
-            try:
-                # 글로벌 15 RPM(분당 15회) 제한을 위해 요청 간 4.1초 간격 보장
-                with _gemini_req_lock:
-                    elapsed = time.time() - _gemini_last_req_time
-                    if elapsed < 4.1:
-                        time.sleep(4.1 - elapsed)
-                    _gemini_last_req_time = time.time()
-                    
-                return original_generate_content(*args, **kwargs)
-            except Exception as e:
-                error_msg = str(e)
-                if '429' in error_msg or 'RESOURCE_EXHAUSTED' in error_msg or '503' in error_msg or 'UNAVAILABLE' in error_msg:
-                    if attempt < max_retries - 1:
-                        # 기본 대기 시간 30초, 실패할수록 가중, 에러 메시지(예: retry in 11.0s)에서 파싱 추가
-                        wait_time = 30.0 + (attempt * 15.0)
-                        match = re.search(r'retry in ([\d\.]+)s', error_msg)
-                        if match:
-                            try:
-                                parsed_wait = float(match.group(1)) + 2.0
-                                wait_time = max(wait_time, parsed_wait)
-                            except ValueError:
-                                pass
-                                
-                        error_type = "Quota/Rate Limit (429)" if '429' in error_msg or 'RESOURCE_EXHAUSTED' in error_msg else "Server Overloaded (503)"
-                        print(f"[Gemini API] {error_type}. {wait_time:.1f}초 후 재시도합니다... ({attempt + 1}/{max_retries})")
-                        time.sleep(wait_time)
-                    else:
-                        raise e
-                else:
-                    raise e
-                    
+        # 글로벌 15 RPM(분당 15회) 제한을 위해 요청 간 4.1초 간격 보장
+        with _gemini_req_lock:
+            elapsed = time.time() - _gemini_last_req_time
+            if elapsed < 4.1:
+                time.sleep(4.1 - elapsed)
+            _gemini_last_req_time = time.time()
+            
+        return original_generate_content(*args, **kwargs)
+
     gemini_client.models.generate_content = generate_content_with_retry
 
 def init_qdrant():
