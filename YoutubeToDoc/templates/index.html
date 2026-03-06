@@ -135,12 +135,26 @@
 
         .task-card {
             background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             border-left: 4px solid #ccc;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .task-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .task-card-content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
         }
 
         .task-card.queued {
@@ -229,8 +243,8 @@
         .task-video-embed {
             width: 100%;
             aspect-ratio: 16 / 9;
-            margin-bottom: 10px;
-            border-radius: 4px;
+            margin-bottom: 0;
+            border-radius: 0 12px 0 0;
             overflow: hidden;
             position: relative;
             background: #000;
@@ -918,24 +932,26 @@
 
             return `
                 <div class="task-card ${task.status}">
-                    <div class="task-header">
-                        <span class="task-status-badge ${task.status}">${statusText}</span>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            ${headerRestartBtn}
-                            <span class="task-time">${createdAt}</span>
-                        </div>
-                    </div>
                     ${videoId ? `
                         <div class="task-video-embed" onclick="loadVideo(this, '${videoId}')" data-video-id="${videoId}">
                             <img class="task-video-thumbnail" src="https://img.youtube.com/vi/${videoId}/mqdefault.jpg" alt="Video thumbnail">
                             <div class="task-video-play-button"></div>
                         </div>
                     ` : ''}
-                    ${videoTitle ? `<div class="task-title">${videoTitle}</div>` : ''}
-                    ${tagsHtml}
-                    ${viewsHtml}
-                    ${(progress && task.status !== 'completed') ? `<div class="task-progress">${progress}</div>` : ''}
-                    ${actionsHtml}
+                    <div class="task-card-content">
+                        <div class="task-header">
+                            <span class="task-status-badge ${task.status}">${statusText}</span>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                ${headerRestartBtn}
+                                <span class="task-time">${createdAt}</span>
+                            </div>
+                        </div>
+                        ${videoTitle ? `<div class="task-title">${videoTitle}</div>` : ''}
+                        ${tagsHtml}
+                        ${viewsHtml}
+                        ${(progress && task.status !== 'completed') ? `<div class="task-progress">${progress}</div>` : ''}
+                        ${actionsHtml}
+                    </div>
                 </div>
             `;
         }
