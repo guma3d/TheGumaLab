@@ -1577,49 +1577,60 @@ def merge_srt_segments(srt_texts: List[str], chunk_durations: List[float]) -> st
     
     return "\n\n".join(merged_blocks)
 
-def transcribe_audio(url_or_id: str, srt_path: str):
-    """youtube-transcript-api를 사용하여 자막 다운로드 (Gemini API 오디오 미지원 대체)"""
-    print("[4/10] 자막 생성/다운로드 중...")
+def transcribe_audio(audio_path: str, srt_path: str):
+    """Faster Whisper (로컬 버전)를 사용하여 스크립트 추출"""
+    print("[4/10] Whisper AI로 자막 생성 중...")
     
     if os.path.exists(srt_path):
         print(f"SRT 파일이 이미 존재합니다. 생성 생략: {srt_path}")
         return
         
     try:
-        from youtube_transcript_api import YouTubeTranscriptApi
-        from youtube_transcript_api.formatters import SRTFormatter
+        from faster_whisper import WhisperModel
     except ImportError:
-        raise RuntimeError("youtube-transcript-api 모듈이 설치되지 않았습니다.")
-        
-    video_id = extract_youtube_video_id(url_or_id)
-    if not video_id:
-        video_id = url_or_id # 혹시 url이 아니라 id가 넘어왔을 경우
+        raise RuntimeError("faster-whisper 모듈이 설치되지 않았습니다. (pip install faster-whisper)")
         
     try:
-        # 한국어 우선, 없으면 영어 시도
-        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
-        try:
-            transcript = transcript_list.find_transcript(['ko', 'en'])
-        except Exception:
-            # ko, en이 없으면 자동 번역이나 사용 가능한 첫 번째 자막 가져오기
-            transcript = list(transcript_list)[0]
-            if transcript.is_translatable:
-                try:
-                    transcript = transcript.translate('ko')
-                except Exception:
-                    pass
+        import time
+        model_size = "turbo"
         
-        data = transcript.fetch()
-        formatter = SRTFormatter()
-        srt_formatted = formatter.format_transcript(data)
+        print(f"[WHISPER] 📥 모델 로딩 중... (모델: {model_size})")
+        # CPU 환경(Docker)을 위한 설정
+        device = "cpu"
+        compute_type = "int8"
         
-        with open(srt_path, "w", encoding="utf-8") as f:
-            f.write(srt_formatted)
+        model = WhisperModel(model_size, device=device, compute_type=compute_type)
+        print(f"[WHISPER] ✓ 모델 로딩 완료")
+        
+        print(f"[WHISPER] 🧠 딥러닝 추론 시작 ({audio_path})...")
+        segments, info = model.transcribe(audio_path, beam_size=5)
+        
+        print(f"[WHISPER]    - 감지된 언어: {info.language} ({info.language_probability*100:.2f}%)")
+        print(f"[WHISPER] 📝 세그먼트 처리 및 SRT 생성 중...")
+        
+        def format_time(seconds):
+            msec = int((seconds - int(seconds)) * 1000)
+            sec = int(seconds)
+            h = sec // 3600
+            m = (sec % 3600) // 60
+            s = sec % 60
+            return f"{h:02d}:{m:02d}:{s:02d},{msec:03d}"
             
-        print(f"자막 다운로드 완료: {srt_path}")
+        srt_content = ""
+        for idx, segment in enumerate(segments, start=1):
+            start_fmt = format_time(segment.start)
+            end_fmt = format_time(segment.end)
+            text = segment.text.strip()
+            # print(f"[{start_fmt} -> {end_fmt}] {text}")
+            srt_content += f"{idx}\n{start_fmt} --> {end_fmt}\n{text}\n\n"
+            
+        with open(srt_path, "w", encoding="utf-8") as f:
+            f.write(srt_content)
+            
+        print(f"✅ 자막 생성 완료: {srt_path}")
         
     except Exception as e:
-        raise RuntimeError(f"자막 다운로드/생성 실패: {e}")
+        raise RuntimeError(f"자막 생성 실패: {e}")
 
 def parse_srt(srt_path: str) -> List[Caption]:
     """SRT 파일 파싱"""
@@ -2691,7 +2702,7 @@ def process_youtube_video(url: str, task_id: str = None) -> dict:
         # 4. 자막 생성
         update_status("processing", "[4/10] 자막 생성 중...")
         srt_path = str(video_dir / f"{safe_title}.srt")
-        transcribe_audio(url, srt_path)
+        transcribe_audio(audio_path, srt_path)
         
         # 5. SRT 파싱
         update_status("processing", "[5/10] SRT 파싱 중...")

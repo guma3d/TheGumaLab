@@ -12,3 +12,4 @@ python-dotenv
 yt-dlp
 tenacity>=8.2.0
 youtube-transcript-api
+faster-whisper
