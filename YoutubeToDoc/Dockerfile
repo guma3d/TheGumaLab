@@ -18,6 +18,9 @@ COPY requirements.txt .
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
+# LD_LIBRARY_PATH에 pip 설치된 CUDA 라이브러리 경로 추가
+ENV LD_LIBRARY_PATH=/usr/local/lib/python3.11/site-packages/nvidia/cublas/lib:/usr/local/lib/python3.11/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH
+
 COPY . .
 
 EXPOSE 5000

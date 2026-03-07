@@ -1595,9 +1595,9 @@ def transcribe_audio(audio_path: str, srt_path: str):
         model_size = "turbo"
         
         print(f"[WHISPER] 📥 모델 로딩 중... (모델: {model_size})")
-        # CPU 환경(Docker)을 위한 설정
-        device = "cpu"
-        compute_type = "int8"
+        # GPU 환경(CUDA)을 위한 설정 (YoutubeAnalyzer와 동일)
+        device = "cuda"
+        compute_type = "float16"
         
         model = WhisperModel(model_size, device=device, compute_type=compute_type)
         print(f"[WHISPER] ✓ 모델 로딩 완료")

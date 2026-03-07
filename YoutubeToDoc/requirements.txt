@@ -13,3 +13,5 @@ yt-dlp
 tenacity>=8.2.0
 youtube-transcript-api
 faster-whisper
+nvidia-cublas-cu12
+nvidia-cudnn-cu12
