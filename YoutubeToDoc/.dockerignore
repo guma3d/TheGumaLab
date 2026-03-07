@@ -1,0 +1,10 @@
+output/
+qdrant_data/
+data/
+huggingface-cache/
+yt-dlp-cache/
+.git/
+.vscode/
+Temp_Audio/
+__pycache__/
+*.pyc
