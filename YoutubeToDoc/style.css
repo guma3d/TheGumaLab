@@ -3,16 +3,16 @@
    ========================================================================= */
 
    :root {
-    --bg-dark: #0a0a0f;
+    --bg-dark: #050505;
     --primary: #10b981;
     --primary-hover: #059669;
     --primary-glow: rgba(16, 185, 129, 0.4);
     
-    --glass-bg: rgba(255, 255, 255, 0.04);
+    --glass-bg: rgba(255, 255, 255, 0.03);
     --glass-border: rgba(255, 255, 255, 0.1);
     
     --text-main: #ffffff;
-    --text-muted: #a0a0ab;
+    --text-muted: #a1a1aa;
     
     --gradient-1: linear-gradient(135deg, #10b981 0%, #34d399 100%);
 }
@@ -21,7 +21,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 body {
@@ -35,89 +35,42 @@ body {
     position: relative;
 }
 
-/* Background Animated Blobs */
-.blob {
-    position: absolute;
-    filter: blur(80px);
-    z-index: -1;
-    opacity: 0.5;
-    animation: float 10s infinite ease-in-out alternate;
-}
-
-.blob-1 {
-    width: 400px;
-    height: 400px;
-    background: rgba(16, 185, 129, 0.15);
-    border-radius: 50%;
-    top: 10%;
-    left: 10%;
-}
-
-.blob-2 {
-    width: 500px;
-    height: 500px;
-    background: rgba(66, 135, 245, 0.1);
-    border-radius: 50%;
-    bottom: -10%;
-    right: 5%;
-    animation-delay: -5s;
-}
-
-@keyframes float {
-    0% { transform: translateY(0px) scale(1); }
-    100% { transform: translateY(30px) scale(1.1); }
-}
-
 /* Glassmorphism Container */
 .glass-container {
     background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--glass-border);
-    border-radius: 24px;
-    padding: 60px 48px;
+    border-radius: 20px;
+    padding: 2rem;
     width: 100%;
-    max-width: 680px;
-    box-shadow: 0 32px 64px rgba(0, 0, 0, 0.5);
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    max-width: 600px;
+    text-align: center;
     z-index: 10;
-}
-
-.glass-container:hover {
-    transform: translateY(-4px);
+    margin: auto;
 }
 
 /* Header Section */
 header {
     text-align: center;
-    margin-bottom: 48px;
+    margin-bottom: 2rem;
 }
 
 .logo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    margin-bottom: 16px;
+    margin-bottom: 0.5rem;
 }
 
 h1 {
-    font-size: 2.8rem;
-    font-weight: 800;
-    letter-spacing: -1px;
-}
-
-.highlight {
-    background: var(--gradient-1);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
 }
 
 header p {
     color: var(--text-muted);
-    font-size: 1.1rem;
-    font-weight: 400;
-    letter-spacing: -0.2px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
 /* Input Area */
@@ -132,10 +85,10 @@ input[type="url"] {
     flex: 1;
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid var(--glass-border);
-    border-radius: 14px;
+    border-radius: 10px;
     padding: 16px 24px;
     color: var(--text-main);
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 400;
     transition: all 0.3s ease;
     outline: none;
@@ -156,7 +109,7 @@ button {
     background: var(--gradient-1);
     color: white;
     border: none;
-    border-radius: 14px;
+    border-radius: 10px;
     padding: 0 36px;
     font-size: 1rem;
     font-weight: 600;
@@ -393,4 +346,12 @@ button:disabled {
     font-size: 0.8rem;
     color: rgba(255, 255, 255, 0.5);
     margin-top: auto;
+}
+
+.metric-title {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
