@@ -3,7 +3,7 @@ param (
 )
 
 if ([string]::IsNullOrWhiteSpace($TaskMessage)) {
-    $TaskMessage = Read-Host "간단한 커밋 작업 내용을 입력하세요"
+    $TaskMessage = Read-Host "Enter short commit message summary (in English)"
 }
 
 $CommitMessage = "(SurfacePro) $TaskMessage"
