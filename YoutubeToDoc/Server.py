@@ -2349,9 +2349,11 @@ def generate_summary_html(summary_text: str, output_path: Path, file_title: str,
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{page_title} - 요약</title>
     <style>body {{ font-family: "나눔고딕","Malgun Gothic","맑은고딕","굴림","돋움","Helvetica","Apple SD Gothic Neo","sans-serif"; line-height: 1.6; margin: 0; padding: 0; background-color: #353535;color: #e0e0e0; }}
-        .detail-link-container {{ text-align: center; margin: 20px 0; }}
+        .detail-link-container {{ text-align: center; margin: 20px 0; display: flex; justify-content: center; gap: 10px; }}
         .detail-link-btn {{ display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; transition: background-color 0.3s; }}
         .detail-link-btn:hover {{ background-color: #0056b3; }}
+        .delete-link-btn {{ display: inline-block; padding: 12px 24px; background-color: #dc3545; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; transition: background-color 0.3s; }}
+        .delete-link-btn:hover {{ background-color: #c82333; }}
         .progress-container {{ width: 100%; height: 1px;  position: fixed; top: 0; left: 0; z-index: 100;}}
         .progress-bar {{ height: 1px; background: #007bff; width: 0%; transition: width 0.2s; }}
         .youtube-container {{
@@ -2452,6 +2454,7 @@ body {{ background-color: #121212; color: #e0e0e0; }} .content-block {{ backgrou
             
             <div class="detail-link-container">
                 <a href="detail" class="detail-link-btn">📋 상세 보기</a>
+                <a href="#" onclick="deleteRecord(); return false;" class="delete-link-btn">🗑️ 제거</a>
             </div>
             
     </div>
@@ -2465,6 +2468,34 @@ body {{ background-color: #121212; color: #e0e0e0; }} .content-block {{ backgrou
                 element.innerHTML = marked.parse(element.textContent || element.innerText);
             });
         });
+        
+        function deleteRecord() {
+            const taskIdMatch = window.location.pathname.match(/\\/view\\/([^\\/]+)/);
+            const taskId = taskIdMatch ? taskIdMatch[1] : null;
+            if (!taskId) {
+                alert("문서 ID를 찾을 수 없습니다.");
+                return;
+            }
+            if (confirm("정말로 이 문서를 제거하시겠습니까?\\n(서버에서 완전히 삭제되며 복구할 수 없습니다)")) {
+                // 절대경로로 제거 API 호출
+                const baseUrl = window.location.pathname.substring(0, window.location.pathname.indexOf('/view/'));
+                fetch(baseUrl + '/delete/' + taskId, { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("문서가 제거되었습니다.");
+                        if (window.opener) {
+                            window.close();
+                        } else {
+                            window.location.href = baseUrl + '/';
+                        }
+                    } else {
+                        alert("제거 실패: " + data.error);
+                    }
+                })
+                .catch(e => alert("통신 중 오류 발생: " + e));
+            }
+        }
     </script>
     <script>
         var player;
@@ -3619,10 +3650,10 @@ def cancel_task(task_id):
 
 @app.route('/delete/<task_id>', methods=['POST'])
 def delete_task(task_id):
-    """Task 삭제 (관리자 전용)"""
-    from flask import session
-    if not session.get('is_admin'):
-        return jsonify({"success": False, "error": "관리자 권한이 필요합니다."}), 403
+    """Task 삭제 (공개 전환)"""
+    # from flask import session
+    # if not session.get('is_admin'):
+    #     return jsonify({"success": False, "error": "관리자 권한이 필요합니다."}), 403
     
     with task_lock:
         if task_id not in task_status:
