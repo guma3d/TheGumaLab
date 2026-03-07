@@ -1,6 +1,12 @@
 param (
-    [string]$CommitMessage = "Auto Update from Surface Laptop: $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+    [string]$TaskMessage = ""
 )
+
+if ([string]::IsNullOrWhiteSpace($TaskMessage)) {
+    $TaskMessage = Read-Host "간단한 커밋 작업 내용을 입력하세요"
+}
+
+$CommitMessage = "(SurfacePro) $TaskMessage"
 
 # Git 경로 환경변수 추가 (세션 내 적용)
 $env:PATH += ";C:\Program Files\Git\cmd"
