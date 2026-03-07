@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 페이지 진입 시 이전 작업 내역 로드
     loadAllTasks();
+    setInterval(loadAllTasks, 3000); // 주기적으로 작업 상태 업데이트
 
     const form = document.getElementById('url-form');
     const input = document.getElementById('youtube-url');
@@ -156,22 +157,70 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(BASE_URL + 'tasks');
             const data = await response.json();
             const grid = document.getElementById('tasks-grid');
+            const activeList = document.getElementById('active-tasks-list');
+            const activeSection = document.getElementById('active-tasks-section');
             if (!grid) return;
 
             if (data && data.tasks && data.tasks.length > 0) {
-                // 완료된 항목만 최신순으로 렌더링
+                // 완료된 항목
                 const completedTasks = data.tasks.filter(t => t.status === 'completed');
                 if (completedTasks.length > 0) {
                     grid.innerHTML = completedTasks.map(task => createTaskCard(task)).join('');
                 } else {
                     grid.innerHTML = '<p style="color: rgba(255,255,255,0.5); font-size:0.9rem;">No videos processed yet.</p>';
                 }
+                
+                // 진행 중, 대기 중 항목
+                const activeTasks = data.tasks.filter(t => t.status === 'processing' || t.status === 'queued');
+                if (activeTasks.length > 0) {
+                    activeTasks.sort((a, b) => {
+                        if (a.status === 'processing' && b.status !== 'processing') return -1;
+                        if (b.status === 'processing' && a.status !== 'processing') return 1;
+                        const da = new Date(a.created_at).getTime();
+                        const db = new Date(b.created_at).getTime();
+                        return da - db;
+                    });
+                    
+                    if (activeList) activeList.innerHTML = activeTasks.map(task => createActiveTaskCard(task)).join('');
+                    if (activeSection) activeSection.style.display = 'block';
+                } else {
+                    if (activeSection) activeSection.style.display = 'none';
+                    if (activeList) activeList.innerHTML = '';
+                }
             } else {
                 grid.innerHTML = '<p style="color: rgba(255,255,255,0.5); font-size:0.9rem;">No videos processed yet.</p>';
+                if (activeSection) activeSection.style.display = 'none';
             }
         } catch (err) {
             console.error('Failed to load tasks:', err);
         }
+    }
+
+    function createActiveTaskCard(task) {
+        const videoId = extractVideoId(task.url);
+        const videoTitle = task.video_title || task.url || 'Unknown Video';
+        const thumbnailUrl = videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : 'https://via.placeholder.com/120x90/000000/ffffff?text=No+Image';
+        const isProcessing = task.status === 'processing';
+        const statusClass = isProcessing ? 'processing' : '';
+        const statusLabel = isProcessing ? 'Processing' : 'Queued';
+        const progressLog = task.progress || 'Waiting...';
+        
+        const logHtml = isProcessing 
+            ? `<div class="active-log"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right: 4px;"></i>${progressLog}</div>`
+            : `<div class="active-log" style="color: var(--text-muted);"><i class="fa-solid fa-hourglass-half" style="margin-right: 4px;"></i>${progressLog}</div>`;
+
+        return `
+            <div class="active-task-item ${statusClass}">
+                <div class="active-thumb">
+                    <img src="${thumbnailUrl}" alt="Thumbnail">
+                </div>
+                <div class="active-info">
+                    <div class="active-title">${videoTitle}</div>
+                    ${logHtml}
+                </div>
+                <div class="active-status">${statusLabel}</div>
+            </div>
+        `;
     }
 
     function createTaskCard(task) {

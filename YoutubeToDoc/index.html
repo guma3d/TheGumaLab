@@ -55,6 +55,17 @@
                 <h3 class="result-title">Document Created! 🎊</h3>
                 <p class="result-msg">Your document is ready.</p>
             </div>
+            <!-- Active Tasks Section -->
+            <div id="active-tasks-section" style="margin-top: 40px; text-align: left; display: none;">
+                <h3 class="metric-title"
+                    style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; display: flex; align-items: center;">
+                    <i class="fa-solid fa-spinner fa-spin" style="color: var(--primary); margin-right: 8px;"></i>In Progress / Queued
+                </h3>
+                <div id="active-tasks-list" class="active-tasks-list">
+                    <!-- Active task items will be loaded here via JS -->
+                </div>
+            </div>
+
             <!-- History Section -->
             <div id="history-section" style="margin-top: 60px; text-align: left; opacity: 1;">
                 <h3 class="metric-title"
