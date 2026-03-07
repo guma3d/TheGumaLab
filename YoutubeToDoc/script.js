@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         statusContainer.classList.remove('hidden');
 
         // 초기화
-        updateProgress(5, '서버에 분석 요청 중...');
+        updateProgress(5, 'Requesting analysis from server...');
 
         try {
             // 서버에 POST 요청
@@ -50,12 +50,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (data.success) {
-                updateProgress(10, '요청 접수 완료! Task를 큐에 등록했습니다.');
+                updateProgress(10, 'Request received! Task queued.');
 
                 // data.task_id를 이용해 폴링 시작
                 startPolling(data.task_id);
             } else {
-                throw new Error(data.error || data.message || '요청 처리에 실패했습니다.');
+                throw new Error(data.error || data.message || 'Failed to process request.');
             }
         } catch (error) {
             handleError(error.message);
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleError(errMsg) {
-        statusText.textContent = `에러 발생: ${errMsg}`;
+        statusText.textContent = `Error: ${errMsg}`;
         statusText.style.color = '#ff4d4d';
         progressFill.style.backgroundColor = '#ff4d4d';
         progressPercent.textContent = 'Failed';
@@ -85,9 +85,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // 이전 결과에 있던 중복 버튼 방지용 (혹시 모를 초기화)
         let actionsHtml = `
             <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button onclick="window.open('${BASE_URL}view/${taskId}/summary', '_blank')" class="btn primary">📄 요약 결과 보기</button>
-                <button onclick="window.open('${BASE_URL}view/${taskId}/detail', '_blank')" class="btn" style="background: rgba(255, 255, 255, 0.2)">📋 상세 리포트</button>
-                <button onclick="window.location.href='${BASE_URL}download/${taskId}'" class="btn" style="background: rgba(255, 255, 255, 0.2)">⬇️ 압축 파일 다운로드</button>
+                <button onclick="window.open('${BASE_URL}view/${taskId}/summary', '_blank')" class="btn primary">📄 View Summary</button>
+                <button onclick="window.open('${BASE_URL}view/${taskId}/detail', '_blank')" class="btn" style="background: rgba(255, 255, 255, 0.2)">📋 View Details</button>
+                <button onclick="window.location.href='${BASE_URL}download/${taskId}'" class="btn" style="background: rgba(255, 255, 255, 0.2)">⬇️ Download ZIP Archive</button>
             </div>
         `;
         resultContainer.innerHTML += actionsHtml;
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (data && !data.error) {
                     const status = data.status;
-                    const progressText = data.progress || '처리 중입니다...';
+                    const progressText = data.progress || 'Processing...';
 
                     // 정규표현식으로 진행도(예: [3/10]) 기반 퍼센티지 대략적 계산
                     let percent = 15;
@@ -135,11 +135,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (status === 'completed') {
                         clearInterval(pollingInterval);
-                        updateProgress(100, '변환 완료!');
+                        updateProgress(100, 'Conversion complete!');
                         setTimeout(() => showResult(taskId), 1000);
                     } else if (status === 'failed' || status === 'interrupted' || status === 'cancelled') {
                         clearInterval(pollingInterval);
-                        handleError(progressText || '처리 실패');
+                        handleError(progressText || 'Processing failed');
                     }
                 } else if (data && data.error) {
                     clearInterval(pollingInterval);
@@ -164,10 +164,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (completedTasks.length > 0) {
                     grid.innerHTML = completedTasks.map(task => createTaskCard(task)).join('');
                 } else {
-                    grid.innerHTML = '<p style="color: rgba(255,255,255,0.5); font-size:0.9rem;">아직 처리된 영상이 없습니다.</p>';
+                    grid.innerHTML = '<p style="color: rgba(255,255,255,0.5); font-size:0.9rem;">No videos processed yet.</p>';
                 }
             } else {
-                grid.innerHTML = '<p style="color: rgba(255,255,255,0.5); font-size:0.9rem;">아직 처리된 영상이 없습니다.</p>';
+                grid.innerHTML = '<p style="color: rgba(255,255,255,0.5); font-size:0.9rem;">No videos processed yet.</p>';
             }
         } catch (err) {
             console.error('Failed to load tasks:', err);
@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createTaskCard(task) {
         const videoId = extractVideoId(task.url);
-        const videoTitle = task.video_title || task.url || '알 수 없는 영상';
+        const videoTitle = task.video_title || task.url || 'Unknown Video';
         let createdAt = task.created_at_display;
         if (!createdAt) {
             const d = new Date(task.created_at);

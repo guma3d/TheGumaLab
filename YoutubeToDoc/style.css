@@ -4,9 +4,9 @@
 
    :root {
     --bg-dark: #0a0a0f;
-    --primary: #ff2a5f;
-    --primary-hover: #ff4d79;
-    --primary-glow: rgba(255, 42, 95, 0.4);
+    --primary: #10b981;
+    --primary-hover: #059669;
+    --primary-glow: rgba(16, 185, 129, 0.4);
     
     --glass-bg: rgba(255, 255, 255, 0.04);
     --glass-border: rgba(255, 255, 255, 0.1);
@@ -14,7 +14,7 @@
     --text-main: #ffffff;
     --text-muted: #a0a0ab;
     
-    --gradient-1: linear-gradient(135deg, #FF2A5F 0%, #FF6A88 100%);
+    --gradient-1: linear-gradient(135deg, #10b981 0%, #34d399 100%);
 }
 
 * {
@@ -47,7 +47,7 @@ body {
 .blob-1 {
     width: 400px;
     height: 400px;
-    background: rgba(255, 42, 95, 0.15);
+    background: rgba(16, 185, 129, 0.15);
     border-radius: 50%;
     top: 10%;
     left: 10%;
@@ -350,7 +350,7 @@ button:disabled {
 .grid-card:hover {
     transform: translateY(-4px);
     background: rgba(255, 255, 255, 0.1);
-    border-color: #FF2A5F;
+    border-color: #10b981;
 }
 
 .card-thumb {
