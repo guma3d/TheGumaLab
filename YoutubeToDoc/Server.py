@@ -3797,6 +3797,49 @@ def view_result(task_id, view_type):
             
             html_content = html_content.replace('src="images/', f'src="{base_img_path}')
             html_content = html_content.replace("src='images/", f"src='{base_img_path}")
+            
+        # [NEW] 이전에 이미 완성된 영상(Summary)의 HTML에도 '제거' 버튼과 로직을 동적으로 삽입
+        if view_type == "summary" and "deleteRecord()" not in html_content:
+            css_injection = """
+        .delete-link-btn { display: inline-block; padding: 12px 24px; background-color: #dc3545; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; transition: background-color 0.3s; margin-left: 10px; }
+        .delete-link-btn:hover { background-color: #c82333; }
+</style>"""
+            html_content = html_content.replace('</style>', css_injection)
+            
+            button_html = '<a href="detail" class="detail-link-btn">📋 상세 보기</a>\n                <a href="#" onclick="deleteRecord(); return false;" class="delete-link-btn">🗑️ 제거</a>'
+            html_content = html_content.replace('<a href="detail" class="detail-link-btn">📋 상세 보기</a>', button_html)
+            
+            js_injection = r"""
+<script>
+    function deleteRecord() {
+        const taskIdMatch = window.location.pathname.match(/\/view\/([^\/]+)/);
+        const taskId = taskIdMatch ? taskIdMatch[1] : null;
+        if (!taskId) {
+            alert("문서 ID를 찾을 수 없습니다.");
+            return;
+        }
+        if (confirm("정말로 이 문서를 제거하시겠습니까?\n(서버에서 완전히 삭제되며 복구할 수 없습니다)")) {
+            const baseUrl = window.location.pathname.substring(0, window.location.pathname.indexOf('/view/'));
+            fetch(baseUrl + '/delete/' + taskId, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert("문서가 제거되었습니다.");
+                    if (window.opener) {
+                        window.close();
+                    } else {
+                        window.location.href = baseUrl + '/';
+                    }
+                } else {
+                    alert("제거 실패: " + data.error);
+                }
+            })
+            .catch(e => alert("통신 중 오류 발생: " + e));
+        }
+    }
+</script>
+</body>"""
+            html_content = html_content.replace('</body>', js_injection)
         
         return html_content
 
