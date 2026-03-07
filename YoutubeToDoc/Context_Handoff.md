@@ -33,6 +33,7 @@
 > - 코드는 "오직 GitHub 서버"에만 푸시(Commit). 직접 홈서버(HomeServer)의 로컬 코드를 실시간으로 만지지 않는다.
 > - 기능 개발 시: `로컬Surface 수정 -> GitHub 푸시 -> 홈서버 SSH접속 후 git pull -> 컨테이너 재가동` 순서의 배포 파이프라인으로 일관성을 유지하기로 약속됨.
 > - **커밋 메시지 작성 규칙**: 어떤 기기에서 어떤 작업을 했는지 명확히 하기 위해 `(기기명) 간단한 작업 내용 요약` 형식으로 작성. (예: `(SurfacePro) Fix Nginx 404 image routing path`) 날짜는 생략. **모든 커밋 메시지는 항상 영어로 작성할 것.**
+> - **🔑 환경변수(.env) 동기화 특별 규칙**: `.env` 파일(비밀번호, API 키 등 포함)은 보안 상 GitHub 업로드(`git status`) 대상에서 `.gitignore`로 완전 배제된다. 따라서, `.env`를 수정한 경우에 한해 **반드시 `scp 로컬경로 원격지경로` 방식이나 SSH 접속을 통해 홈서버로 직접 파일을 덮어쓰기(동기화)** 한 후 도커 컨테이너를 재시작해야 한다. (예: `scp .env HomeServer:D:\TheGumaLab\YoutubeToDoc\.env`)
 
 ## 🚀 3. 다음으로 진행해야 할 작업 (Next Steps)
 1. **STT 성능 및 속도 실무 테스트**:
