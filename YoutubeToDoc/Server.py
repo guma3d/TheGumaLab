@@ -120,7 +120,7 @@ def init_db():
             "You are a translator. Translate the following English text to Korean. Only output the translated text, nothing else.",
             "{text}",
             "whisper-1",
-            "gemini-3.1-flash-lite-preview",
+            "gemini-2.5-flash",
             "You are a professional summarizer. Create a comprehensive summary in Korean with markdown formatting including headings, bullet points, and key insights.",
             "다음은 영상의 전체 자막입니다. 핵심 내용을 마크다운 형식으로 요약해주세요:\n\n{text}",
             "You are an expert at identifying important information in video transcripts. Return only the indices of important segments as a JSON array of numbers.",
@@ -197,18 +197,18 @@ def get_prompts():
             "answer_model": row[11] if len(row) > 11 and row[11] else "gpt-3.5-turbo"
         }
         
-        # 레거시 모델 또는 할당량 문제 모델을 2.5-flash-lite로 강제 치환
+        # 레거시 모델 또는 할당량 문제 모델을 2.5-flash로 강제 치환
         for k in ['whisper_model', 'translation_model', 'query_expansion_model', 'answer_model']:
             val = prompts_dict.get(k)
-            if val and ('1.5-flash' in val or '2.0-flash' in val or '2.5-flash' in val):
-                prompts_dict[k] = 'gemini-3.1-flash-lite-preview'
+            if val and ('1.5-flash' in val or '2.0-flash' in val or '3.1-flash' in val):
+                prompts_dict[k] = 'gemini-2.5-flash'
                 
         return prompts_dict
     return {
         "system_prompt": "You are a translator. Translate the following English text to Korean. Only output the translated text, nothing else.",
         "user_prompt_template": "{text}",
         "whisper_model": "whisper-1",
-        "translation_model": "gemini-3.1-flash-lite-preview",
+        "translation_model": "gemini-2.5-flash",
         "summary_system_prompt": "You are a professional summarizer. Create a comprehensive summary in Korean with markdown formatting including headings, bullet points, and key insights.",
         "summary_user_prompt_template": "다음은 영상의 전체 자막입니다. 핵심 내용을 마크다운 형식으로 요약해주세요:\n\n{text}",
         "filter_system_prompt": "You are an expert at identifying important information in video transcripts. Return only the indices of important segments as a JSON array of numbers.",
@@ -1897,9 +1897,9 @@ def translate_segments(segments: List[Segment], task_id: str = None):
     prompts = get_prompts()
     system_prompt = prompts["system_prompt"]
     user_prompt_template = prompts["user_prompt_template"]
-    translation_model = prompts.get("translation_model", "gemini-3.1-flash-lite-preview")
-    if translation_model.startswith("gpt-") or "2.5-flash" in translation_model:
-         translation_model = "gemini-3.1-flash-lite-preview"
+    translation_model = prompts.get("translation_model", "gemini-2.5-flash")
+    if translation_model.startswith("gpt-") or "3.1-flash" in translation_model:
+         translation_model = "gemini-2.5-flash"
     
     import json
     batch_size = 50
@@ -1982,9 +1982,9 @@ def summarize_all_captions(captions: List[Caption], task_id: str = None) -> dict
     prompts = get_prompts()
     summary_system_prompt = prompts.get("summary_system_prompt", "You are a professional summarizer.")
     summary_user_prompt_template = prompts.get("summary_user_prompt_template", "{text}")
-    translation_model = prompts.get("translation_model", "gemini-3.1-flash-lite-preview")
-    if translation_model.startswith("gpt-") or "2.5-flash" in translation_model:
-         translation_model = "gemini-3.1-flash-lite-preview"
+    translation_model = prompts.get("translation_model", "gemini-2.5-flash")
+    if translation_model.startswith("gpt-") or "3.1-flash" in translation_model:
+         translation_model = "gemini-2.5-flash"
     
     # 모든 자막 텍스트 합치기
     all_text = " ".join([cap.text for cap in captions])
