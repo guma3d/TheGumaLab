@@ -2109,10 +2109,13 @@ def generate_html(segments: List[Segment], output_path: Path, file_title: str, y
     font-weight: bold;
 }}
 .markdown-body hr {{
-    height: 1px;
-    background-color: #555;
-    border: none;
-    margin: 20px 0;
+    height: 2px !important;
+    background-color: #10b981 !important;
+    border: none !important;
+    margin: 25px 0 !important;
+    opacity: 0.8 !important;
+    display: block !important;
+    width: 100% !important;
 }}
 .markdown-body * {{
     text-indent: 0.8 !important;
@@ -2397,10 +2400,13 @@ def generate_summary_html(summary_text: str, output_path: Path, file_title: str,
     font-weight: bold;
 }}
 .markdown-body hr {{
-    height: 1px;
-    background-color: #555;
-    border: none;
-    margin: 20px 0;
+    height: 2px !important;
+    background-color: #10b981 !important;
+    border: none !important;
+    margin: 25px 0 !important;
+    opacity: 0.8 !important;
+    display: block !important;
+    width: 100% !important;
 }}
 .markdown-body * {{
     text-indent: 0 !important;
