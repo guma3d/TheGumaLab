@@ -720,6 +720,35 @@ if gemini_client:
                 time.sleep(4.1 - elapsed)
             _gemini_last_req_time = time.time()
             
+        from google.genai import types
+        safety_settings = [
+            types.SafetySetting(
+                category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                threshold=types.HarmBlockThreshold.BLOCK_NONE,
+            ),
+            types.SafetySetting(
+                category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                threshold=types.HarmBlockThreshold.BLOCK_NONE,
+            ),
+            types.SafetySetting(
+                category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                threshold=types.HarmBlockThreshold.BLOCK_NONE,
+            ),
+            types.SafetySetting(
+                category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                threshold=types.HarmBlockThreshold.BLOCK_NONE,
+            ),
+        ]
+        
+        config_arg = kwargs.get('config')
+        if config_arg is None:
+            kwargs['config'] = types.GenerateContentConfig(safety_settings=safety_settings)
+        else:
+            if hasattr(config_arg, 'safety_settings') and not getattr(config_arg, 'safety_settings', None):
+                config_arg.safety_settings = safety_settings
+            elif isinstance(config_arg, dict) and 'safety_settings' not in config_arg:
+                config_arg['safety_settings'] = safety_settings
+                
         return original_generate_content(*args, **kwargs)
 
     gemini_client.models.generate_content = generate_content_with_retry
@@ -2488,6 +2517,7 @@ body {{ background-color: #121212; color: #e0e0e0; }} .content-block {{ backgrou
             
             <div class="detail-link-container">
                 <a href="detail" class="detail-link-btn">View Details</a>
+                <a href="#" onclick="retryTranslate(); return false;" class="retry-link-btn" style="background-color: #eab308; color: black; display: inline-block; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#ca8a04'" onmouseout="this.style.backgroundColor='#eab308'">Retry Translate</a>
                 <a href="#" onclick="deleteRecord(); return false;" class="delete-link-btn">Delete</a>
             </div>
             
@@ -2503,6 +2533,33 @@ body {{ background-color: #121212; color: #e0e0e0; }} .content-block {{ backgrou
             });
         });
         
+        function retryTranslate() {
+            const taskIdMatch = window.location.pathname.match(/\/view\/([^\/]+)/);
+            const taskId = taskIdMatch ? taskIdMatch[1] : null;
+            if (!taskId) {
+                alert("문서 ID를 찾을 수 없습니다.");
+                return;
+            }
+            if (confirm("현재 문서의 요약 및 번역에 대해 검증하고 재작업하시겠습니까? (수 분 소요될 수 있습니다)")) {
+                const baseUrl = window.location.pathname.substring(0, window.location.pathname.indexOf('/view/'));
+                fetch(baseUrl + '/retranslate/' + taskId, { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        if (window.opener) {
+                            window.close();
+                        } else {
+                            window.location.href = baseUrl + '/';
+                        }
+                    } else {
+                        alert("요청 실패: " + data.error);
+                    }
+                })
+                .catch(e => alert("통신 중 오류: " + e));
+            }
+        }
+
         function deleteRecord() {
             const taskIdMatch = window.location.pathname.match(/\\/view\\/([^\\/]+)/);
             const taskId = taskIdMatch ? taskIdMatch[1] : null;
@@ -3590,6 +3647,97 @@ def process():
         "task_id": task_id,
         "message": "Task가 Queue에 추가되었습니다."
     })
+
+@app.route('/retranslate/<task_id>', methods=['POST'])
+def retranslate_task(task_id):
+    """현재 문서의 번역 및 요약 과정을 다시 진행 (수동 재번역 기능)"""
+    with task_lock:
+        if task_id not in task_status:
+            return jsonify({"success": False, "error": "Task를 찾을 수 없습니다."})
+        
+        task = task_status[task_id]
+        if task["status"] == "processing":
+            return jsonify({"success": False, "error": "현재 처리 중인 Task는 재작업할 수 없습니다."})
+
+        task_status[task_id]["status"] = "processing"
+        task_status[task_id]["progress"] = "재작업(번역/요약) 대기 중..."
+        save_task_status()
+        
+    def worker():
+        try:
+            url = task.get("url")
+            safe_title = task.get("safe_title")
+            original_title = task.get("video_title")
+            video_dir = OUTPUT_DIR / safe_title
+            
+            with task_lock:
+                task_status[task_id]["progress"] = "[재작업] 1/4 기존 데이터 로딩 중..."
+                save_task_status()
+            
+            segments_file = video_dir / "images" / "segments.json"
+            if not segments_file.exists():
+                raise Exception("세그먼트 데이터가 없습니다. 원본 영상을 다시 처리해야 합니다.")
+                
+            import json
+            with open(segments_file, "r", encoding="utf-8") as f:
+                data_list = json.load(f)
+
+            merged_segments = []
+            for d in data_list:
+                seg = Segment(d["start"], d["end"], d["text"], file_path=d.get("file_path"))
+                if "translation" in d:
+                    seg.translation = d["translation"]
+                merged_segments.append(seg)
+                
+            srt_path = str(video_dir / f"{safe_title}.srt")
+            if not Path(srt_path).exists():
+                raise Exception("원본 자막 파일이 없습니다.")
+            captions = parse_srt(srt_path)
+
+            with task_lock:
+                task_status[task_id]["progress"] = "[재작업] 2/4 문서 강제 재번역 중..."
+                save_task_status()
+            
+            # 기존에 영어로 채워진 구간 강제 초기화
+            for seg in merged_segments:
+                seg.translation = None
+            
+            translate_segments(merged_segments, task_id)
+            
+            with open(segments_file, "w", encoding="utf-8") as f:
+                json.dump([s.to_dict() for s in merged_segments], f, ensure_ascii=False, indent=2)
+
+            with task_lock:
+                task_status[task_id]["progress"] = "[재작업] 3/4 HTML 재생성 중..."
+                save_task_status()
+            html_path = generate_html(merged_segments, video_dir, safe_title, url, original_title)
+            
+            with task_lock:
+                task_status[task_id]["progress"] = "[재작업] 4/4 요약 재생성 중..."
+                save_task_status()
+            summary_result = summarize_all_captions(captions, task_id)
+            summary_text = summary_result.get("summary", "")
+            tags = summary_result.get("tags", [])
+            summary_html_path = generate_summary_html(summary_text, video_dir, safe_title, url, original_title, tags)
+            
+            with task_lock:
+                task_status[task_id]["result"]["html_path"] = html_path
+                task_status[task_id]["result"]["summary_html_path"] = summary_html_path
+                task_status[task_id]["result"]["tags"] = tags
+                task_status[task_id]["status"] = "completed"
+                task_status[task_id]["progress"] = "생성 완료 (재작업 적용됨)"
+                save_task_status()
+                
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            with task_lock:
+                task_status[task_id]["status"] = "failed"
+                task_status[task_id]["progress"] = f"[재작업] 오류: {str(e)}"
+                save_task_status()
+
+    threading.Thread(target=worker, daemon=True).start()
+    return jsonify({"success": True, "message": "재작업(번역 및 검증)이 시작되었습니다. 상태 목록에서 진행률을 확인하실 수 있습니다."})
 
 @app.route('/retry/<task_id>', methods=['POST'])
 def retry_task(task_id):
