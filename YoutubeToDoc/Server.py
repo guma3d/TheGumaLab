@@ -2108,6 +2108,12 @@ def generate_html(segments: List[Segment], output_path: Path, file_title: str, y
     background-color: #2a2a2a;
     font-weight: bold;
 }}
+.markdown-body hr {{
+    height: 1px;
+    background-color: #555;
+    border: none;
+    margin: 20px 0;
+}}
 .markdown-body * {{
     text-indent: 0.8 !important;
 }}
@@ -2389,6 +2395,12 @@ def generate_summary_html(summary_text: str, output_path: Path, file_title: str,
 .markdown-body th {{
     background-color: #2a2a2a;
     font-weight: bold;
+}}
+.markdown-body hr {{
+    height: 1px;
+    background-color: #555;
+    border: none;
+    margin: 20px 0;
 }}
 .markdown-body * {{
     text-indent: 0 !important;
