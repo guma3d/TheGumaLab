@@ -2327,6 +2327,10 @@ def generate_summary_html(summary_text: str, output_path: Path, file_title: str,
     """요약 HTML 생성 (YouTube 썸네일 + 요약 텍스트)"""
     print("[요약] 요약 HTML 생성 중...")
     
+    # AI가 지시를 무시하고 뱉어낸 제일 첫 번째 메인 대제목(# 제목) 마크다운 강제 제거
+    import re
+    summary_text = re.sub(r'^\s*#+\s+[^\n]*\n+', '', summary_text, count=1).strip()
+    
     html_path = output_path / f"{file_title}-summary.html"
     page_title = display_title or file_title
     
