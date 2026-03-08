@@ -2517,7 +2517,7 @@ body {{ background-color: #121212; color: #e0e0e0; }} .content-block {{ backgrou
             
             <div class="detail-link-container">
                 <a href="detail" class="detail-link-btn">View Details</a>
-                <a href="#" onclick="retryTranslate(); return false;" class="retry-link-btn" style="background-color: #eab308; color: black; display: inline-block; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#ca8a04'" onmouseout="this.style.backgroundColor='#eab308'">Retry Translate</a>
+                <a href="#" onclick="retryTranslate(); return false;" class="retry-link-btn" style="background-color: #eab308; color: black; display: inline-block; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#ca8a04'" onmouseout="this.style.backgroundColor='#eab308'">Retry</a>
                 <a href="#" onclick="deleteRecord(); return false;" class="delete-link-btn">Delete</a>
             </div>
             
