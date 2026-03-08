@@ -69,8 +69,12 @@
             <!-- History Section -->
             <div id="history-section" style="margin-top: 60px; text-align: left; opacity: 1;">
                 <h3 class="metric-title"
-                    style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; display: flex; align-items: center;">
-                    <i class="fa-solid fa-clock-rotate-left" style="color: var(--primary); margin-right: 8px;"></i>Completed Documents
+                    style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+                    <div><i class="fa-solid fa-clock-rotate-left" style="color: var(--primary); margin-right: 8px;"></i>Completed Documents</div>
+                    <div style="display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 4px 10px; background: rgba(0,0,0,0.2);">
+                        <input type="text" id="document-search-input" placeholder="Search Completed..." style="background: transparent; border: none; color: white; outline: none; font-size: 0.85em; width: 150px;">
+                        <i class="fa-solid fa-magnifying-glass" id="document-search-btn" style="color: var(--primary); cursor: pointer; margin-left: 5px;"></i>
+                    </div>
                 </h3>
                 <div id="tasks-grid" class="tasks-grid">
                     <!-- Task cards will be loaded here via JS -->

@@ -19,6 +19,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const resultContainer = document.getElementById('result-container');
 
+    let currentSearchQuery = '';
+    const searchInput = document.getElementById('document-search-input');
+    const searchBtn = document.getElementById('document-search-btn');
+
+    if (searchBtn && searchInput) {
+        searchBtn.addEventListener('click', () => {
+            currentSearchQuery = searchInput.value.trim().toLowerCase();
+            loadAllTasks();
+        });
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                currentSearchQuery = searchInput.value.trim().toLowerCase();
+                loadAllTasks();
+            }
+        });
+    }
+
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -163,11 +180,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (data && data.tasks && data.tasks.length > 0) {
                 // 완료된 항목
-                const completedTasks = data.tasks.filter(t => t.status === 'completed');
+                let completedTasks = data.tasks.filter(t => t.status === 'completed');
+                
+                if (currentSearchQuery) {
+                    completedTasks = completedTasks.filter(t => {
+                        const title = (t.video_title || t.url || '').toLowerCase();
+                        return title.includes(currentSearchQuery);
+                    });
+                }
+
                 if (completedTasks.length > 0) {
                     grid.innerHTML = completedTasks.map(task => createTaskCard(task)).join('');
                 } else {
-                    grid.innerHTML = '<p style="color: rgba(255,255,255,0.5); font-size:0.9rem;">No videos processed yet.</p>';
+                    grid.innerHTML = '<p style="color: rgba(255,255,255,0.5); font-size:0.9rem;">No documents found.</p>';
                 }
                 
                 // 진행 중, 대기 중 항목
