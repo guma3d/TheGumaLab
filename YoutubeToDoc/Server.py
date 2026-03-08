@@ -25,7 +25,7 @@ from google.genai import types
 from bs4 import BeautifulSoup
 import markdown
 from requests.auth import HTTPBasicAuth
-import write_wiki
+
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 app.secret_key = os.getenv("SECRET_KEY", "youtube-processor-secret-key-change-in-production")
@@ -2831,43 +2831,8 @@ def process_youtube_video(url: str, task_id: str = None) -> dict:
         }
 
 def auto_publish_to_wiki(task_id: str, summary_html_path: str) -> bool:
-    """Task 완료 후 자동으로 위키에 발행"""
-    try:
-        # Confluence 설정 확인
-        if not all([CONFLUENCE_USERNAME, CONFLUENCE_API_TOKEN]):
-            print(f"[Wiki] Confluence 설정이 없어 위키 발행을 건너뜁니다.")
-            return False
-        
-        if not summary_html_path or not os.path.exists(summary_html_path):
-            print(f"[Wiki] 요약 HTML 파일을 찾을 수 없어 위키 발행을 건너뜁니다.")
-            return False
-        
-        print(f"[Wiki] Task {task_id} 위키 발행 시작...")
-        
-        # write_wiki 모듈 사용
-        page_title, markdown_content = write_wiki.extract_markdown_from_html(summary_html_path)
-        confluence_content = write_wiki.markdown_to_confluence(markdown_content)
-        
-        # Confluence 클라이언트 생성
-        wiki = write_wiki.ConfluenceWiki(CONFLUENCE_URL, CONFLUENCE_USERNAME, CONFLUENCE_API_TOKEN)
-        
-        # 페이지 생성 또는 업데이트
-        result = wiki.create_or_update_page(
-            space_key=CONFLUENCE_SPACE_KEY,
-            title=page_title,
-            content=confluence_content,
-            parent_id=CONFLUENCE_PARENT_PAGE_ID if CONFLUENCE_PARENT_PAGE_ID else None
-        )
-        
-        page_url = f"{CONFLUENCE_URL}/pages/viewpage.action?pageId={result['id']}"
-        print(f"[Wiki] ✅ 위키 발행 완료: {page_title}")
-        print(f"[Wiki] URL: {page_url}")
-        
-        return True
-        
-    except Exception as e:
-        print(f"[Wiki] ⚠️  위키 발행 실패: {e}")
-        return False
+    """Task 완료 후 자동으로 위키에 발행 (비활성화됨)"""
+    return False
 
 def task_worker():
     """백그라운드에서 task queue를 처리하는 worker"""
@@ -3951,69 +3916,11 @@ def serve_output(filename):
 
 @app.route('/publish-to-wiki/<task_id>', methods=['POST'])
 def publish_to_wiki_endpoint(task_id):
-    """Summary HTML을 Confluence 위키로 발행"""
-    try:
-        # Confluence 설정 확인
-        if not all([CONFLUENCE_USERNAME, CONFLUENCE_API_TOKEN]):
-            return jsonify({
-                "success": False,
-                "error": "Confluence 설정이 필요합니다. 환경변수를 확인하세요."
-            }), 400
-        
-        # Task 정보 가져오기
-        with task_lock:
-            if task_id not in task_status:
-                return jsonify({
-                    "success": False,
-                    "error": "Task를 찾을 수 없습니다."
-                }), 404
-            
-            task_data = task_status[task_id]
-            summary_html_path = task_data.get('result', {}).get('summary_html_path')
-        
-        if not summary_html_path or not os.path.exists(summary_html_path):
-            return jsonify({
-                "success": False,
-                "error": "요약 HTML 파일을 찾을 수 없습니다."
-            }), 404
-        
-        # write_wiki 모듈 사용
-        page_title, markdown_content = write_wiki.extract_markdown_from_html(summary_html_path)
-        confluence_content = write_wiki.markdown_to_confluence(markdown_content)
-        
-        # Confluence 클라이언트 생성
-        wiki = write_wiki.ConfluenceWiki(CONFLUENCE_URL, CONFLUENCE_USERNAME, CONFLUENCE_API_TOKEN)
-        
-        # 페이지 생성 또는 업데이트
-        result = wiki.create_or_update_page(
-            space_key=CONFLUENCE_SPACE_KEY,
-            title=page_title,
-            content=confluence_content,
-            parent_id=CONFLUENCE_PARENT_PAGE_ID if CONFLUENCE_PARENT_PAGE_ID else None
-        )
-        
-        page_url = f"{CONFLUENCE_URL}/pages/viewpage.action?pageId={result['id']}"
-        
-        return jsonify({
-            "success": True,
-            "message": "위키 페이지가 발행되었습니다.",
-            "page_url": page_url,
-            "page_title": page_title
-        })
-        
-    except requests.exceptions.HTTPError as e:
-        error_msg = f"Confluence API 오류: {e}"
-        if e.response:
-            error_msg += f" - {e.response.text}"
-        return jsonify({
-            "success": False,
-            "error": error_msg
-        }), 500
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
+    """Summary HTML을 Confluence 위키로 발행 (비활성화됨)"""
+    return jsonify({
+        "success": False,
+        "error": "This feature has been deprecated."
+    }), 400
 
 if __name__ == '__main__':
     # Flask 세션 시크릿 키 설정
