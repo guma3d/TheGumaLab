@@ -1,6 +1,6 @@
 import os
 import sys
-from Server import app, task_status_path, load_task_status
+from Server import app
 
 with app.test_request_context('/admin/regenerate-html', method='POST'):
     from flask import session
