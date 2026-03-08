@@ -2070,7 +2070,7 @@ def generate_html(segments: List[Segment], output_path: Path, file_title: str, y
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{page_title}</title>
-    <style>body {{ font-family: "나눔고딕","Malgun Gothic","맑은고딕","굴림","돋움","Helvetica","Apple SD Gothic Neo","sans-serif"; line-height: 1.6; margin: 0; padding: 0; background-color: #353535;color: #e0e0e0; }}
+    <style>body {{ font-family: "나눔고딕","Malgun Gothic","맑은고딕","굴림","돋움","Helvetica","Apple SD Gothic Neo","sans-serif"; line-height: 1.6; margin: 0; padding: 0; background-color: #121212;color: #e0e0e0; }}
         .progress-container {{ width: 100%; height: 1px;  position: fixed; top: 0; left: 0; z-index: 100;}}
         .progress-bar {{ height: 1px; background: #007bff; width: 0%; transition: width 0.2s; }}
         .youtube-container {{
@@ -2129,7 +2129,7 @@ def generate_html(segments: List[Segment], output_path: Path, file_title: str, y
                 float: left;
                 margin-right: 1px;
             }}
-    .container {{ max-width: 100%; margin: auto; background: #353535; padding: 0; }}
+    .container {{ max-width: 100%; margin: auto; background: transparent; padding: 0; }}
     .content-block {{ 
         display: flex;
         flex-direction: row;
@@ -2155,7 +2155,7 @@ def generate_html(segments: List[Segment], output_path: Path, file_title: str, y
 }}
 /* sero */
 @media (max-aspect-ratio: 1.1/1) {{
-        .container {{ max-width: 100%; margin: auto; background: #353535; padding: 0; }}
+        .container {{ max-width: 100%; margin: auto; background: transparent; padding: 0; }}
         .content-block {{ max-width: 100%; margin-bottom: 20px; text-align: left; }}
         .content-block img {{ max-width: 100%; padding: 0; margin: 1px auto; display: block; }}
         .caption {{ text-indent: 0.8em; font-size: 1em; width: 90%; padding: 5px 10px; margin: 0 auto 0 auto; box-sizing: border-box; }}
@@ -2357,7 +2357,7 @@ def generate_summary_html(summary_text: str, output_path: Path, file_title: str,
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{page_title} - 요약</title>
-    <style>body {{ font-family: "나눔고딕","Malgun Gothic","맑은고딕","굴림","돋움","Helvetica","Apple SD Gothic Neo","sans-serif"; line-height: 1.6; margin: 0; padding: 0; background-color: #353535;color: #e0e0e0; }}
+    <style>body {{ font-family: "나눔고딕","Malgun Gothic","맑은고딕","굴림","돋움","Helvetica","Apple SD Gothic Neo","sans-serif"; line-height: 1.6; margin: 0; padding: 0; background-color: #121212;color: #e0e0e0; }}
         .detail-link-container {{ text-align: center; margin: 20px 0; display: flex; justify-content: center; gap: 10px; }}
         .detail-link-btn {{ display: inline-block; padding: 12px 24px; background-color: #10b981; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; transition: background-color 0.3s; }}
         .detail-link-btn:hover {{ background-color: #059669; }}
@@ -2420,7 +2420,7 @@ def generate_summary_html(summary_text: str, output_path: Path, file_title: str,
                 float: left;
                 margin-right: 1px;
             }}
-    .container {{ max-width: 100%; margin: auto; background: #353535; padding: 0; }}
+    .container {{ max-width: 100%; margin: auto; background: transparent; padding: 0; }}
     .content-block {{ 
         display: flex;
         flex-direction: row;
@@ -2446,7 +2446,7 @@ def generate_summary_html(summary_text: str, output_path: Path, file_title: str,
 }}
 /* sero */
 @media (max-aspect-ratio: 1/1) {{
-        .container {{ max-width: 100%; margin: auto; background: #353535; padding: 0; }}
+        .container {{ max-width: 100%; margin: auto; background: transparent; padding: 0; }}
         .content-block {{ max-width: 100%; margin-bottom: 20px; text-align: left; }}
         .content-block img {{ max-width: 100%; padding: 0; margin: 1px auto; display: block; }}
         .caption {{ text-indent: 0.8em; font-size: 1em; width: 90%; padding: 5px 10px; margin: 0 auto 0 auto; box-sizing: border-box; }}
