@@ -3691,8 +3691,9 @@ def retranslate_task(task_id):
                 
             srt_path = str(video_dir / f"{safe_title}.srt")
             if not Path(srt_path).exists():
-                raise Exception("원본 자막 파일이 없습니다.")
-            captions = parse_srt(srt_path)
+                captions = merged_segments
+            else:
+                captions = parse_srt(srt_path)
 
             with task_lock:
                 task_status[task_id]["progress"] = "[재작업] 2/4 문서 강제 재번역 중..."
