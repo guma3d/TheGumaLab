@@ -3663,79 +3663,94 @@ def retranslate_task(task_id):
         task_status[task_id]["progress"] = "재작업(번역/요약) 대기 중..."
         save_task_status()
         
-    def worker():
-        try:
-            url = task.get("url")
-            safe_title = task.get("safe_title")
-            original_title = task.get("video_title")
-            video_dir = OUTPUT_DIR / safe_title
-            
-            with task_lock:
-                task_status[task_id]["progress"] = "[재작업] 1/4 기존 데이터 로딩 중..."
-                save_task_status()
-            
-            segments_file = video_dir / "images" / "segments.json"
-            if not segments_file.exists():
-                raise Exception("세그먼트 데이터가 없습니다. 원본 영상을 다시 처리해야 합니다.")
+        def worker():
+            try:
+                url = task.get("url")
+                safe_title = task.get("safe_title")
+                original_title = task.get("video_title")
+                video_dir = OUTPUT_DIR / safe_title
                 
-            import json
-            with open(segments_file, "r", encoding="utf-8") as f:
-                data_list = json.load(f)
-
-            merged_segments = []
-            for d in data_list:
-                seg = Segment(d["start"], d["end"], d["text"], file_path=d.get("file_path"))
-                if "translation" in d:
-                    seg.translation = d["translation"]
-                merged_segments.append(seg)
+                with task_lock:
+                    task_status[task_id]["progress"] = "[재작업] 1/4 문서 데이터 역추출 중..."
+                    save_task_status()
                 
-            srt_path = str(video_dir / f"{safe_title}.srt")
-            if not Path(srt_path).exists():
-                captions = merged_segments
-            else:
-                captions = parse_srt(srt_path)
-
-            with task_lock:
-                task_status[task_id]["progress"] = "[재작업] 2/4 문서 강제 재번역 중..."
-                save_task_status()
-            
-            # 기존에 영어로 채워진 구간 강제 초기화
-            for seg in merged_segments:
-                seg.translation = None
-            
-            translate_segments(merged_segments, task_id)
-            
-            with open(segments_file, "w", encoding="utf-8") as f:
-                json.dump([s.to_dict() for s in merged_segments], f, ensure_ascii=False, indent=2)
-
-            with task_lock:
-                task_status[task_id]["progress"] = "[재작업] 3/4 HTML 재생성 중..."
-                save_task_status()
-            html_path = generate_html(merged_segments, video_dir, safe_title, url, original_title)
-            
-            with task_lock:
-                task_status[task_id]["progress"] = "[재작업] 4/4 요약 재생성 중..."
-                save_task_status()
-            summary_result = summarize_all_captions(captions, task_id)
-            summary_text = summary_result.get("summary", "")
-            tags = summary_result.get("tags", [])
-            summary_html_path = generate_summary_html(summary_text, video_dir, safe_title, url, original_title, tags)
-            
-            with task_lock:
-                task_status[task_id]["result"]["html_path"] = html_path
-                task_status[task_id]["result"]["summary_html_path"] = summary_html_path
-                task_status[task_id]["result"]["tags"] = tags
-                task_status[task_id]["status"] = "completed"
-                task_status[task_id]["progress"] = "생성 완료 (재작업 적용됨)"
-                save_task_status()
+                html_path = task.get("result", {}).get("html_path")
+                if not html_path or not Path(html_path).exists():
+                    html_path = str(video_dir / f"{safe_title}.html")
+                    if not Path(html_path).exists():
+                        raise Exception("상세 문서(HTML)가 지워져 기존 번역을 가져올 수 없습니다. 원본 영상을 다시 Convert 해주세요.")
                 
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            with task_lock:
-                task_status[task_id]["status"] = "failed"
-                task_status[task_id]["progress"] = f"[재작업] 오류: {str(e)}"
-                save_task_status()
+                from bs4 import BeautifulSoup
+                with open(html_path, 'r', encoding='utf-8') as f:
+                    html_content = f.read()
+                soup = BeautifulSoup(html_content, 'html.parser')
+                
+                merged_segments = []
+                captions = []
+                content_blocks = soup.find_all('div', class_='content-block')
+                for block in content_blocks:
+                    img_container = block.find('div', class_='image-container')
+                    if not img_container:
+                        continue
+                    start_time = float(img_container.get('data-start-time', 0))
+                    
+                    img_tag = img_container.find('img')
+                    rel_img = img_tag.get('src') if img_tag else ""
+                    # rel_img is like "output_temp/images/frame0000.webp"
+                    abs_img = str(video_dir.parent / rel_img) if rel_img else ""
+                    
+                    caption_div = block.find('div', class_='caption')
+                    if not caption_div:
+                        caption_div = block.find('div', class_='markdown-body')
+                    if not caption_div:
+                        cap_container = block.find('div', class_='caption-container')
+                        if cap_container:
+                            caption_div = cap_container
+                    if not caption_div:
+                        continue
+                    
+                    text = caption_div.get_text(strip=True)
+                    if not text:
+                        continue
+                    
+                    seg = Segment(start=start_time, end=start_time+1.0, texts=[text], image_path=abs_img)
+                    merged_segments.append(seg)
+                    captions.append(Caption(start=start_time, end=start_time+1.0, text=text))
+
+                with task_lock:
+                    task_status[task_id]["progress"] = "[재작업] 2/4 텍스트 강제 재번역 중..."
+                    save_task_status()
+                
+                translate_segments(merged_segments, task_id)
+
+                with task_lock:
+                    task_status[task_id]["progress"] = "[재작업] 3/4 상세 페이지 강제 덮어쓰기 중..."
+                    save_task_status()
+                html_path = generate_html(merged_segments, video_dir, safe_title, url, original_title)
+                
+                with task_lock:
+                    task_status[task_id]["progress"] = "[재작업] 4/4 요약 재생성 중..."
+                    save_task_status()
+                summary_result = summarize_all_captions(captions, task_id)
+                summary_text = summary_result.get("summary", "")
+                tags = summary_result.get("tags", [])
+                summary_html_path = generate_summary_html(summary_text, video_dir, safe_title, url, original_title, tags)
+                
+                with task_lock:
+                    task_status[task_id]["result"]["html_path"] = html_path
+                    task_status[task_id]["result"]["summary_html_path"] = summary_html_path
+                    task_status[task_id]["result"]["tags"] = tags
+                    task_status[task_id]["status"] = "completed"
+                    task_status[task_id]["progress"] = "생성 완료 (재작업 전체 적용됨)"
+                    save_task_status()
+                    
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                with task_lock:
+                    task_status[task_id]["status"] = "failed"
+                    task_status[task_id]["progress"] = f"[재작업] 오류: {str(e)}"
+                    save_task_status()
 
     threading.Thread(target=worker, daemon=True).start()
     return jsonify({"success": True, "message": "재작업(번역 및 검증)이 시작되었습니다. 상태 목록에서 진행률을 확인하실 수 있습니다."})
