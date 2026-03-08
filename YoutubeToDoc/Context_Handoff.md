@@ -28,6 +28,9 @@
    - 불필요하게 남아있던 `write_wiki.py`, `templates/index.html`, 테스트 배포 파일 및 마이그레이션 도구(ex. `cleanup_bad_docs.py`)들을 모두 삭제 및 걷어냄.
 5. **API Rate Limit 방어 로직 강화**:
    - `tenacity` 기반 재시도 로직 및 분당 호출 수 딜레이 컨트롤 기능 탑재(4.1초).
+6. **Gemini Safety Filter 우회 및 수동 재작업(Retry) 시스템**:
+   - 영상의 폭력성/선정성 오분류로 인한 번역 누락을 막기 위해 API `safety_settings`을 전면 해제(`BLOCK_NONE`).
+   - 번역이 실패한 문서를 지우지 않고 UI 상의 "Retry" 버튼만 클릭해 역추출 -> 스크립트 강제 재번역 -> 문서 재생성으로 이어지는 완전 무중단 백그라운드 재작업 파이프라인(`/retranslate`) 구현.
 
 > **⚠️ 개발 원칙 합의 사항 (Surface 랩탑)**
 > - 코드는 "오직 GitHub 서버"에만 푸시(Commit). 직접 홈서버(HomeServer)의 로컬 코드를 실시간으로 만지지 않는다.
