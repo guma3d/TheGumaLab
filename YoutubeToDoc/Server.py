@@ -3384,7 +3384,7 @@ def admin_regenerate_html():
                     print(f"  ℹ 요약 HTML 양식으로 재생성 중...")
                     
                     # task에서 summary_text 가져오기, 없으면 기존 HTML 파싱
-                    summary_text = result_data.get('summary_text', '')
+                    summary_text = result_data.get('summary', result_data.get('summary_text', ''))
                     
                     if not summary_text:
                         # 기존 요약 HTML에서 요약 텍스트 추출
