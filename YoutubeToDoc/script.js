@@ -22,15 +22,39 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentSearchQuery = '';
     const searchInput = document.getElementById('document-search-input');
     const searchBtn = document.getElementById('document-search-btn');
+    const searchModal = document.getElementById('search-modal');
+    const openSearchModalBtn = document.getElementById('open-search-modal-btn');
+    const closeSearchModalBtn = document.getElementById('close-search-modal-btn');
+
+    if (openSearchModalBtn && searchModal && closeSearchModalBtn) {
+        openSearchModalBtn.addEventListener('click', () => {
+            searchModal.style.display = 'flex';
+            if (searchInput) {
+                searchInput.value = currentSearchQuery;
+                searchInput.focus();
+            }
+        });
+        closeSearchModalBtn.addEventListener('click', () => {
+            searchModal.style.display = 'none';
+        });
+        // 팝업 외부 클릭 시 닫기
+        searchModal.addEventListener('click', (e) => {
+            if (e.target === searchModal) {
+                searchModal.style.display = 'none';
+            }
+        });
+    }
 
     if (searchBtn && searchInput) {
         searchBtn.addEventListener('click', () => {
             currentSearchQuery = searchInput.value.trim().toLowerCase();
+            if (searchModal) searchModal.style.display = 'none';
             loadAllTasks();
         });
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 currentSearchQuery = searchInput.value.trim().toLowerCase();
+                if (searchModal) searchModal.style.display = 'none';
                 loadAllTasks();
             }
         });

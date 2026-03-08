@@ -71,16 +71,27 @@
                 <h3 class="metric-title"
                     style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
                     <div><i class="fa-solid fa-clock-rotate-left" style="color: var(--primary); margin-right: 8px;"></i>Completed Documents</div>
-                    <div style="display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 4px 10px; background: rgba(0,0,0,0.2);">
-                        <input type="text" id="document-search-input" placeholder="Search Completed..." style="background: transparent; border: none; color: white; outline: none; font-size: 0.85em; width: 150px;">
-                        <i class="fa-solid fa-magnifying-glass" id="document-search-btn" style="color: var(--primary); cursor: pointer; margin-left: 5px;"></i>
-                    </div>
+                    <i class="fa-solid fa-magnifying-glass" id="open-search-modal-btn" style="color: var(--primary); cursor: pointer; padding: 5px; font-size: 1.1em; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--primary)'" title="Search Documents"></i>
                 </h3>
                 <div id="tasks-grid" class="tasks-grid">
                     <!-- Task cards will be loaded here via JS -->
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- Search Modal -->
+    <div id="search-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
+        <div style="background: var(--bg-dark); border: 1px solid var(--glass-border); border-radius: 12px; padding: 25px; width: 90%; max-width: 450px; box-shadow: 0 10px 40px rgba(0,0,0,0.8);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; font-size: 1.2rem; color: var(--text-main);"><i class="fa-solid fa-magnifying-glass" style="color: var(--primary); margin-right: 8px;"></i>Search Documents</h3>
+                <i class="fa-solid fa-xmark" id="close-search-modal-btn" style="cursor: pointer; color: var(--text-muted); font-size: 1.4rem; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--text-muted)'"></i>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="document-search-input" placeholder="Enter title or keywords..." style="flex: 1; padding: 14px 16px; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: var(--text-main); outline: none; font-family: inherit; font-size: 1rem;">
+                <button id="document-search-btn" class="btn primary" style="padding: 0 24px; border-radius: 8px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+        </div>
     </div>
 
     <!-- Custom Logic -->
