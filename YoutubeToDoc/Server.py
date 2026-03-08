@@ -2327,9 +2327,12 @@ def generate_summary_html(summary_text: str, output_path: Path, file_title: str,
     """요약 HTML 생성 (YouTube 썸네일 + 요약 텍스트)"""
     print("[요약] 요약 HTML 생성 중...")
     
-    # AI가 지시를 무시하고 뱉어낸 메인 대제목(# 제목) 전체 또는 중간에 있어도 강제 제거
+    # 1차 방어막: AI가 지시를 무시하고 뱉어낸 메인 대제목(# 제목) 강제 제거
     import re
     summary_text = re.sub(r'^#\s+[^\n]*\n*', '', summary_text, flags=re.MULTILINE).strip()
+    
+    # 2차 방어막(검증/정제): AI가 너무 크게 만들어버린 2단계 소제목(##)을 3단계(###)로 강제 강등(Downgrade)
+    summary_text = re.sub(r'^##\s+', '### ', summary_text, flags=re.MULTILINE).strip()
     
     html_path = output_path / f"{file_title}-summary.html"
     page_title = display_title or file_title
