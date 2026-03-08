@@ -121,8 +121,8 @@ def init_db():
             "{text}",
             "whisper-1",
             "gemini-3.1-flash-lite-preview",
-            "You are a professional summarizer. Create a comprehensive summary in Korean with markdown formatting including headings, bullet points, and key insights.",
-            "다음은 영상의 전체 자막입니다. 핵심 내용을 마크다운 형식으로 요약해주세요:\n\n{text}",
+            "You are a professional summarizer. Create a concise summary in Korean. Do NOT include the main title. 1. Start with a plain text introduction like '본 영상은...'. 2. Use small headings (### or ####) for organizing the content. 3. Include a '핵심 인사이트' section. 4. End with a single bold sentence as a one-line summary.",
+            "다음은 영상의 전체 자막입니다. 다음 규칙에 따라 마크다운 형식으로 요약해주세요:\n- 메인 제목(# 또는 ##) 작성 금지\n- '본 영상은~' 으로 시작하는 간단한 소개 문단 작성\n- 작은 주제(### 또는 그 이하)로 내용 정리\n- '핵심 인사이트' 정리\n- 가장 마지막에 굵은 글씨(** **)로 핵심을 관통하는 한줄 요약 작성\n\n{text}",
             "You are an expert at identifying important information in video transcripts. Return only the indices of important segments as a JSON array of numbers.",
             "다음은 영상의 번역된 세그먼트들입니다. 핵심 정보를 담고 있는 중요한 세그먼트들의 인덱스만 JSON 배열로 반환해주세요 (예: [0, 3, 7]). 전체의 30-50% 정도만 선택하세요.\n\n{text}"
         ))
@@ -2350,10 +2350,10 @@ def generate_summary_html(summary_text: str, output_path: Path, file_title: str,
     <title>{page_title} - 요약</title>
     <style>body {{ font-family: "나눔고딕","Malgun Gothic","맑은고딕","굴림","돋움","Helvetica","Apple SD Gothic Neo","sans-serif"; line-height: 1.6; margin: 0; padding: 0; background-color: #353535;color: #e0e0e0; }}
         .detail-link-container {{ text-align: center; margin: 20px 0; display: flex; justify-content: center; gap: 10px; }}
-        .detail-link-btn {{ display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; transition: background-color 0.3s; }}
-        .detail-link-btn:hover {{ background-color: #0056b3; }}
-        .delete-link-btn {{ display: inline-block; padding: 12px 24px; background-color: #dc3545; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; transition: background-color 0.3s; }}
-        .delete-link-btn:hover {{ background-color: #c82333; }}
+        .detail-link-btn {{ display: inline-block; padding: 12px 24px; background-color: #10b981; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; transition: background-color 0.3s; }}
+        .detail-link-btn:hover {{ background-color: #059669; }}
+        .delete-link-btn {{ display: inline-block; padding: 12px 24px; background-color: #059669; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; transition: background-color 0.3s; }}
+        .delete-link-btn:hover {{ background-color: #047857; }}
         .progress-container {{ width: 100%; height: 1px;  position: fixed; top: 0; left: 0; z-index: 100;}}
         .progress-bar {{ height: 1px; background: #007bff; width: 0%; transition: width 0.2s; }}
         .youtube-container {{
@@ -2453,8 +2453,8 @@ body {{ background-color: #121212; color: #e0e0e0; }} .content-block {{ backgrou
             </div>
             
             <div class="detail-link-container">
-                <a href="detail" class="detail-link-btn">📋 상세 보기</a>
-                <a href="#" onclick="deleteRecord(); return false;" class="delete-link-btn">🗑️ 제거</a>
+                <a href="detail" class="detail-link-btn">View Details</a>
+                <a href="#" onclick="deleteRecord(); return false;" class="delete-link-btn">Delete</a>
             </div>
             
     </div>
@@ -3801,13 +3801,17 @@ def view_result(task_id, view_type):
         # [NEW] 이전에 이미 완성된 영상(Summary)의 HTML에도 '제거' 버튼과 로직을 동적으로 삽입
         if view_type == "summary" and "deleteRecord()" not in html_content:
             css_injection = """
-        .delete-link-btn { display: inline-block; padding: 12px 24px; background-color: #dc3545; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; transition: background-color 0.3s; margin-left: 10px; }
-        .delete-link-btn:hover { background-color: #c82333; }
+        .detail-link-btn { background-color: #10b981 !important; color: white !important; }
+        .detail-link-btn:hover { background-color: #059669 !important; }
+        .delete-link-btn { display: inline-block; padding: 12px 24px; background-color: #059669 !important; color: white !important; text-decoration: none; border-radius: 4px; font-weight: bold; transition: background-color 0.3s; margin-left: 10px; }
+        .delete-link-btn:hover { background-color: #047857 !important; }
 </style>"""
             html_content = html_content.replace('</style>', css_injection)
             
-            button_html = '<a href="detail" class="detail-link-btn">📋 상세 보기</a>\n                <a href="#" onclick="deleteRecord(); return false;" class="delete-link-btn">🗑️ 제거</a>'
+            button_html = '<a href="detail" class="detail-link-btn">View Details</a>\n                <a href="#" onclick="deleteRecord(); return false;" class="delete-link-btn">Delete</a>'
             html_content = html_content.replace('<a href="detail" class="detail-link-btn">📋 상세 보기</a>', button_html)
+            # 호환성을 위해 영어 텍스트이거나 버튼이 다른 텍스트로 되어 있는 경우도 치환
+            html_content = html_content.replace('<a href="detail" class="detail-link-btn">View Details</a>\n                <a href="#" onclick="deleteRecord(); return false;" class="delete-link-btn">🗑️ 제거</a>', button_html)
             
             js_injection = r"""
 <script>
