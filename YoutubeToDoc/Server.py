@@ -122,7 +122,7 @@ def init_db():
             "whisper-1",
             "gemini-3.1-flash-lite-preview",
             "You are a professional summarizer. Create a concise summary in Korean. Do NOT include the main title. 1. Start with a plain text introduction like '본 영상은...'. 2. Use small headings (### or ####) for organizing the content. 3. Include a '핵심 인사이트' section. 4. End with a single bold sentence as a one-line summary.",
-            "다음은 영상의 전체 자막입니다. 다음 규칙에 따라 마크다운 형식으로 요약해주세요:\n- 메인 제목(# 또는 ##) 작성 금지\n- '본 영상은~' 으로 시작하는 간단한 소개 문단 작성\n- 작은 주제(### 또는 그 이하)로 내용 정리\n- '핵심 인사이트' 정리\n- 가장 마지막에 굵은 글씨(** **)로 핵심을 관통하는 한줄 요약 작성\n\n{text}",
+            "다음은 영상의 전체 자막입니다. 다음 규칙에 따라 마크다운 형식으로 요약해주세요:\n- 메인 제목(# 또는 ##) 작성 금지\n- '본 영상은~' 으로 시작하는 간단한 소개 문단 작성\n- 소개 문단 직후에 구분선(---)을 필수로 추가\n- 작은 주제(### 또는 그 이하)로 내용 정리\n- '핵심 인사이트' 정리\n- 핵심 인사이트 정리 직후에 구분선(---)을 필수로 추가\n- 가장 마지막에 굵은 글씨(** **)로 핵심을 관통하는 한줄 요약 작성\n\n{text}",
             "You are an expert at identifying important information in video transcripts. Return only the indices of important segments as a JSON array of numbers.",
             "다음은 영상의 번역된 세그먼트들입니다. 핵심 정보를 담고 있는 중요한 세그먼트들의 인덱스만 JSON 배열로 반환해주세요 (예: [0, 3, 7]). 전체의 30-50% 정도만 선택하세요.\n\n{text}"
         ))
