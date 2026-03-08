@@ -2323,7 +2323,7 @@ body {{ background-color: #121212; color: #e0e0e0; }} .content-block {{ backgrou
     print(f"HTML 생성 완료: {html_path}")
     return str(html_path)
 
-def generate_summary_html(summary_text: str, output_path: Path, file_title: str, youtube_url: str = "", display_title: str = ""):
+def generate_summary_html(summary_text: str, output_path: Path, file_title: str, youtube_url: str = "", display_title: str = "", tags: list = None):
     """요약 HTML 생성 (YouTube 썸네일 + 요약 텍스트)"""
     print("[요약] 요약 HTML 생성 중...")
     
@@ -2348,7 +2348,16 @@ def generate_summary_html(summary_text: str, output_path: Path, file_title: str,
     image_html = ""
     if video_id:
         thumbnail_url = f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"
-        image_html = f'<div class="image-container" data-start-time="0.0"><img src="{thumbnail_url}" alt="YouTube Thumbnail" onerror="this.src=\'https://img.youtube.com/vi/{video_id}/hqdefault.jpg\'"></div>'
+        img_tag = f'<img src="{thumbnail_url}" alt="YouTube Thumbnail" onerror="this.src=\'https://img.youtube.com/vi/{video_id}/hqdefault.jpg\'">'
+        
+        tags_html = ""
+        if tags:
+            tags_html = '<div class="tags-container" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 12px 10px; background: rgba(0,0,0,0.3); border-radius: 0 0 4px 4px; box-sizing: border-box; width: 100%;">'
+            for tag in tags:
+                tags_html += f'<span style="border: 1px solid #10b981; color: #10b981; padding: 4px 10px; border-radius: 4px; font-size: 0.85em; background: rgba(16, 185, 129, 0.05); white-space: nowrap; cursor: default;" onclick="event.stopPropagation();">#{tag}</span>'
+            tags_html += '</div>'
+            
+        image_html = f'<div class="image-container" data-start-time="0.0" style="display: flex; flex-direction: column;">{img_tag}{tags_html}</div>'
     
     html = []
     html.append(f"""<!DOCTYPE html>
@@ -2797,7 +2806,7 @@ def process_youtube_video(url: str, task_id: str = None) -> dict:
         tags = summary_result.get("tags", [])
         
         # 요약 HTML은 항상 YouTube 썸네일 사용
-        summary_html_path = generate_summary_html(summary_text, video_dir, safe_title, url, original_title)
+        summary_html_path = generate_summary_html(summary_text, video_dir, safe_title, url, original_title, tags)
         
         # 11. Qdrant에 세그먼트 저장 (원본 YouTube 제목 사용)
         update_status("processing", "[11/11] 벡터 DB 저장 중...")
@@ -3387,7 +3396,8 @@ def admin_regenerate_html():
                                 print(f"  ✓ 기존 HTML에서 요약 텍스트 추출 완료 ({len(summary_text)} 문자)")
                     
                     if summary_text:
-                        generate_summary_html(summary_text, output_path, title, youtube_url, display_title)
+                        tags = result_data.get('tags', [])
+                        generate_summary_html(summary_text, output_path, title, youtube_url, display_title, tags)
                         print(f"  ✓ 요약 HTML 재생성 완료")
                     else:
                         print(f"  ⚠ 요약 텍스트 추출 실패, 요약 HTML 재생성 스킵")
