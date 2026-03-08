@@ -1,26 +1,18 @@
 import json
 import sqlite3
 import os
-import pickle
 import urllib.request
+import re
 from pathlib import Path
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+from bs4 import BeautifulSoup
 import sys
 import argparse
 import time
 
 sys.path.append("/app")
-
-try:
-    from Server import Segment
-except Exception:
-    class Segment:
-        def __init__(self, start, end, text):
-            self.start = start
-            self.end = end
-            self.text = text
 
 def update_db_prompt():
     db_path = "/app/data/settings.db"
@@ -87,33 +79,39 @@ def main():
             video_title = task.get("video_title", task_id)
             safe_title = task.get("safe_title")
             if not safe_title:
-                result = task.get("result", {})
-                title = result.get("title", "")
-                if title:
-                    safe_title = title
-                else:
-                    safe_title = task_id
+                continue
             
             out_dir = Path("/app/output") / safe_title
-            pkl_path = out_dir / "merged_segments.pkl"
-            if not pkl_path.exists():
-                pkl_path = out_dir / "segments.pkl"
+            detail_html_path1 = out_dir / f"{safe_title}.html"
+            detail_html_path2 = out_dir / f"{video_title}.html"
             
-            if not pkl_path.exists():
-                print(f"⚠️ 피클 파일이 없습니다: {pkl_path}")
+            html_path = detail_html_path1 if detail_html_path1.exists() else detail_html_path2
+            
+            if not html_path.exists():
+                print(f"⚠️ Detail HTML 파일이 없습니다: {html_path}")
                 continue
                 
-            with open(pkl_path, "rb") as bf:
-                segments = pickle.load(bf)
-            
-            all_text = ""
-            for seg in segments:
-                if hasattr(seg, 'text'):
-                    all_text += seg.text + " "
-                elif isinstance(seg, dict) and 'text' in seg:
-                    all_text += seg['text'] + " "
-            
-            if not all_text.strip():
+            try:
+                with open(html_path, "r", encoding="utf-8") as bf:
+                    html_content = bf.read()
+                    
+                soup = BeautifulSoup(html_content, "html.parser")
+                blocks = soup.find_all("div", class_="content-block")
+                
+                # Exclude blocks[0] which is the summary
+                all_text = ""
+                for index, block in enumerate(blocks):
+                    if index == 0:
+                        continue
+                    cap = block.find("div", class_="caption")
+                    if cap:
+                        all_text += cap.get_text(separator=" ", strip=True) + " "
+                        
+                if not all_text.strip():
+                    print(f"자막 텍스트를 파싱하지 못함 {safe_title}")
+                    continue
+            except Exception as e:
+                print(f"HTML 파싱 에러 {safe_title}: {e}")
                 continue
 
             print(f"[{processed+1}/{total_to_process}] 재요약 중: {video_title[:30]}...")

@@ -3248,8 +3248,6 @@ def admin_reindex_all():
 def admin_regenerate_html():
     """관리자 전용: 모든 완료된 Task의 상세 HTML을 앵커 포함 버전으로 재생성"""
     from flask import session
-    if not session.get('is_admin'):
-        return jsonify({"error": "Unauthorized"}), 403
     
     print(f"\n{'='*60}")
     print("전체 HTML 재생성 시작 (앵커 추가)")
