@@ -7,7 +7,7 @@
 - **Frontend**: 바닐라 HTML/CSS/JS (`index.html`, `style.css`, `script.js`). 최근 UI 개편으로 Completed Documents 아래 검색 모달 및 썸네일+태그 리스트 UI 적용 완료.
 - **AI Models & Processing**:
   - **텍스트 요약/번역/태그 추출**: Google **Gemini API** (`gemini-3.1-flash-lite-preview` 사용)
-  - **음성 인식(STT)**: **Faster-Whisper** (Turbo 모델, CPU 기반 `int8` 연산 적용). 로컬 오프라인 STT 파이프라인.
+  - **음성 인식(STT)**: **Faster-Whisper** (Turbo 모델, GPU 기반 `float16` 연산 적용). 로컬 오프라인 STT 파이프라인.
 - **Database**: 
   - 진행 상태 저장: `data/task_status.json`
   - 벡터 검색: Qdrant (Docker 묶음 배포)

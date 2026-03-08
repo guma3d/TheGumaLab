@@ -13,7 +13,7 @@
 - **DB (Vector)**: Qdrant (Docker 배포, `qdrant:6333` 포트 통신) - 영상 내 세부 스크립트를 임베딩하여 문맥 기반 의미(Semantic) 검색 지원.
 - **Frontend**: Vanilla HTML / JS (`script.js`). 폴링(Polling) 방식을 통한 백엔드 태스크 모니터링 수행 가능.
 - **AI Models**:
-  - `faster-whisper`: 로컬 환경에서 구동되는 오디오-투-텍스트(Speech-to-Text) 추출 엔진. 시스템 자원 소모를 방지하기 최적화된 터보(`turbo`) 및 CPU `int8` 연산 모드를 씁니다.
+  - `faster-whisper`: 로컬 환경에서 구동되는 오디오-투-텍스트(Speech-to-Text) 추출 엔진. 분석 속도를 극대화하기 위해 GPU 환경(CUDA)에서 터보(`turbo`) 모델 및 `float16` 연산을 사용합니다.
   - `Gemini 3.1 Flash Lite`: 구글 제공 API로 입력받은 자막(Script) 뭉치를 한글로 번역(`translating`)하고, 전체 영상을 요약(`summarize`)하며 영어 4가지 핵심 태그(`tags`)를 생성하는 데 사용.
 
 ---
@@ -61,8 +61,9 @@ subprocess.run(['ffmpeg', '-i', downloaded_file, '-q:a', '0', '-map', 'a', outpu
 과거 Gemini API 등을 요청했으나 대용량 음원 오디오 파일 거부 문제로, 인하우스 자체 로컬인 **`faster-whisper`** 엔진을 내장했습니다.
 ```python
 # [3/11] STT 자막 생성 중...
-model = WhisperModel("turbo", device="cpu", compute_type="int8")
-segments, info = model.transcribe(audio_path, beam_size=1) 
+model = WhisperModel("turbo", device="cuda", compute_type="float16")
+segments, info = model.transcribe(audio_path, beam_size=5) 
+
 # -> 나온 결과물을 SRT(자막) 포맷에 맞게 변환 후 임시저장
 ```
 결과는 `[00:00:10 -> 00:00:15] 안녕하세요` 형태로 저장됩니다.
