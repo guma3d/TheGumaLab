@@ -2361,8 +2361,8 @@ def generate_summary_html(summary_text: str, output_path: Path, file_title: str,
         .detail-link-container {{ text-align: center; margin: 20px 0; display: flex; justify-content: center; gap: 10px; }}
         .detail-link-btn {{ display: inline-block; padding: 12px 24px; background-color: #10b981; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; transition: background-color 0.3s; }}
         .detail-link-btn:hover {{ background-color: #059669; }}
-        .delete-link-btn {{ display: inline-block; padding: 12px 24px; background-color: #059669; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; transition: background-color 0.3s; }}
-        .delete-link-btn:hover {{ background-color: #047857; }}
+        .delete-link-btn {{ display: inline-block; padding: 12px 24px; background-color: #ef4444; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; transition: background-color 0.3s; }}
+        .delete-link-btn:hover {{ background-color: #dc2626; }}
         .progress-container {{ width: 100%; height: 1px;  position: fixed; top: 0; left: 0; z-index: 100;}}
         .progress-bar {{ height: 1px; background: #007bff; width: 0%; transition: width 0.2s; }}
         .youtube-container {{
@@ -3819,8 +3819,8 @@ def view_result(task_id, view_type):
             css_injection = """
         .detail-link-btn { background-color: #10b981 !important; color: white !important; }
         .detail-link-btn:hover { background-color: #059669 !important; }
-        .delete-link-btn { display: inline-block; padding: 12px 24px; background-color: #059669 !important; color: white !important; text-decoration: none; border-radius: 4px; font-weight: bold; transition: background-color 0.3s; margin-left: 10px; }
-        .delete-link-btn:hover { background-color: #047857 !important; }
+        .delete-link-btn { display: inline-block; padding: 12px 24px; background-color: #ef4444 !important; color: white !important; text-decoration: none; border-radius: 4px; font-weight: bold; transition: background-color 0.3s; margin-left: 10px; }
+        .delete-link-btn:hover { background-color: #dc2626 !important; }
 </style>"""
             html_content = html_content.replace('</style>', css_injection)
             
