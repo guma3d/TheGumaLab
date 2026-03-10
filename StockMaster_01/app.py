@@ -59,9 +59,9 @@ def fetch_stock_data(tickers):
                 data = {
                     "ticker": ticker.replace(".KS", ""), # 한국 주식의 경우 UI 표시용으로 .KS 제거
                     "name": name,
-                    "price": round(current_price, 2),
-                    "change": round(change_percent, 2),
-                    "is_up": change_percent >= 0,
+                    "price": float(round(current_price, 2)),
+                    "change": float(round(change_percent, 2)),
+                    "is_up": bool(change_percent >= 0),
                     "currency": "₩" if ".KS" in ticker else "$"
                 }
             else:
