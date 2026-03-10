@@ -226,9 +226,9 @@
         /* Market Indices */
         .market-indices {
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             margin-bottom: 1rem;
-            gap: 1rem;
+            gap: 0.5rem;
         }
 
         .index-item {
@@ -716,11 +716,15 @@
                         const priceStr = item.price === "N/A" || item.price === "Error" ? item.price : `${item.currency}${formatNumberWithDot(item.price)}`;
 
                         container.innerHTML += `
-                            <div class="index-item ${isUpStr}">
-                                <span class="index-name">${item.name}</span>
-                                <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                                    <span class="index-value">${priceStr}</span>
-                                    <span class="index-change">${changeStr}</span>
+                            <div class="stock-row">
+                                <div class="stock-info">
+                                    <span class="stock-ticker" style="color: var(--text-main);">${item.name}</span>
+                                </div>
+                                <div style="display: flex; align-items: center;">
+                                    <div class="stock-numbers ${isUpStr}">
+                                        <span class="price">${priceStr}</span>
+                                        <span class="change">${changeStr}</span>
+                                    </div>
                                 </div>
                             </div>
                         `;
@@ -893,7 +897,7 @@
             });
 
             async function addStockToWatchlist(ticker, name) {
-                const sharesStr = prompt(`${name}의 보유 수량을 입력하세요:`, "1");
+                const sharesStr = prompt('Enter quantity:', "1");
                 if (sharesStr === null) return;
                 const shares = parseFloat(sharesStr) || 1;
 
@@ -925,7 +929,7 @@
             }
 
             window.editStockShares = async function (rawTicker, name, currentShares) {
-                const sharesStr = prompt(`${name}의 새로운 보유 수량을 입력하세요:`, currentShares);
+                const sharesStr = prompt('Enter quantity:', currentShares);
                 if (sharesStr === null) return;
                 const shares = parseFloat(sharesStr) || 0;
 
