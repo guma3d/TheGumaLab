@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StockMaster - Guma Lab</title>
+    <title>Guma Stock Analyzer - Guma Lab</title>
     <!-- Use FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts for consistency -->
@@ -594,8 +594,7 @@
         <header>
             <div class="header-content" style="justify-content: center;">
                 <div class="title-group" style="text-align: center;">
-                    <h1>StockMaster</h1>
-                    <p class="subtitle">AI-Powered Personalized Portfolio & Trend Analysis</p>
+                    <h1>Guma Stock Analyzer</h1>
                 </div>
             </div>
         </header>
@@ -716,14 +715,14 @@
                         const priceStr = item.price === "N/A" || item.price === "Error" ? item.price : `${item.currency}${formatNumberWithDot(item.price)}`;
 
                         container.innerHTML += `
-                            <div class="stock-row">
-                                <div class="stock-info">
-                                    <span class="stock-ticker" style="color: var(--text-main);">${item.name}</span>
+                            <div class="stock-row" style="padding: 0.6rem 0.8rem;">
+                                <div class="stock-info" style="flex: 1;">
+                                    <span class="stock-ticker" style="color: var(--text-main); font-size: 1.1rem;">${item.name}</span>
                                 </div>
                                 <div style="display: flex; align-items: center;">
-                                    <div class="stock-numbers ${isUpStr}">
-                                        <span class="price">${priceStr}</span>
-                                        <span class="change">${changeStr}</span>
+                                    <div class="stock-numbers ${isUpStr}" style="flex-direction: row; gap: 0.75rem; align-items: center;">
+                                        <span class="price" style="font-size: 1.1rem;">${priceStr}</span>
+                                        <span class="change" style="font-size: 1.1rem;">${changeStr}</span>
                                     </div>
                                 </div>
                             </div>
@@ -747,8 +746,9 @@
 
                     data.forEach(item => {
                         const isUpStr = item.is_up ? 'positive' : 'negative';
-                        const signStr = item.change > 0 ? '+' : '';
-                        const changeStr = item.price === "N/A" || item.price === "Error" ? 'N/A' : `${signStr}${item.change}%`;
+                        const signStr = item.is_up ? '+' : '';
+                        const iconStr = item.is_up ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
+                        const changeStr = item.price === "N/A" || item.price === "Error" ? 'N/A' : `${signStr}${item.change}% <i class="fa-solid ${iconStr}"></i>`;
                         const priceStr = item.price === "N/A" || item.price === "Error" ? item.price : `${item.currency}${formatNumberWithDot(item.price)}`;
 
                         const shares = item.shares || 0;
