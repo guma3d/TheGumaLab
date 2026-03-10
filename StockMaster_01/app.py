@@ -60,7 +60,9 @@ def get_watchlist():
 # 시장 지표 리스트
 INDICES = [
     {"ticker": "^KS11", "name": "KOSPI"},
+    {"ticker": "^KQ11", "name": "KOSDAQ"},
     {"ticker": "^IXIC", "name": "NASDAQ"},
+    {"ticker": "^DJI", "name": "Dow Jones"},
     {"ticker": "^GSPC", "name": "S&P 500"}
 ]
 
