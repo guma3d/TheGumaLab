@@ -424,27 +424,6 @@
         }
 
         /* AI Panel */
-        .insight-content {
-            background: rgba(0, 240, 255, 0.03);
-            border: 1px solid rgba(0, 240, 255, 0.1);
-            border-radius: 12px;
-            padding: 1.5rem;
-            position: relative;
-        }
-
-        .ai-pill {
-            position: absolute;
-            top: -10px;
-            right: 20px;
-            background: linear-gradient(90deg, #6366f1, #00f0ff);
-            color: #fff;
-            font-size: 0.75rem;
-            font-weight: 700;
-            padding: 0.25rem 0.75rem;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
-        }
-
         .insight-title {
             font-size: 1.2rem;
             margin-bottom: 0.5rem;
@@ -592,8 +571,7 @@
             <!-- AI News & Insight Card (Wide) -->
             <div class="card panel-ai-insight">
                 <h2><i class="fa-solid fa-wand-magic-sparkles"></i> Portfolio Analysis</h2>
-                <div class="insight-content" id="portfolio-analysis-container">
-                    <div class="ai-pill"><i class="fa-solid fa-robot"></i> Gemini AI</div>
+                <div id="portfolio-analysis-container">
                     <div style="color: var(--text-muted); text-align: center; padding: 2rem;">
                         <i class="fa-solid fa-spinner fa-spin"
                             style="font-size: 2rem; margin-bottom: 1rem; color: var(--accent-color);"></i>
@@ -710,13 +688,11 @@
                         htmlContent = htmlContent.replace(/\n/g, '<br>');
 
                         container.innerHTML = `
-                            <div class="ai-pill"><i class="fa-solid fa-robot"></i> Gemini AI</div>
                             <h3 class="insight-title">Current Portfolio Status & Outlook</h3>
                             <p class="insight-text" style="color: var(--text-main);">${htmlContent}</p>
                         `;
                     } else if (data.error) {
                         container.innerHTML = `
-                            <div class="ai-pill"><i class="fa-solid fa-robot"></i> Gemini AI</div>
                             <p class="insight-text" style="color: var(--negative-color);">Error: ${data.error}</p>
                         `;
                     }
