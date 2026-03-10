@@ -641,6 +641,13 @@
     </div>
 
     <script>
+        function formatNumberWithDot(num) {
+            if (num === "N/A" || num === "Error") return num;
+            let parts = num.toString().split(".");
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            return parts.join(".");
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             console.log('StockMaster UI Loaded');
 
@@ -683,13 +690,15 @@
                         const signStr = item.is_up ? '+' : '';
                         const iconStr = item.is_up ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
                         const changeStr = item.price === "N/A" || item.price === "Error" ? 'N/A' : `${signStr}${item.change}% <i class="fa-solid ${iconStr}"></i>`;
-                        const priceStr = item.price === "N/A" || item.price === "Error" ? item.price : `${item.currency}${item.price}`;
+                        const priceStr = item.price === "N/A" || item.price === "Error" ? item.price : `${item.currency}${formatNumberWithDot(item.price)}`;
 
                         container.innerHTML += `
                             <div class="index-item ${isUpStr}">
                                 <span class="index-name">${item.name}</span>
-                                <span class="index-value">${priceStr}</span>
-                                <span class="index-change">${changeStr}</span>
+                                <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                                    <span class="index-value">${priceStr}</span>
+                                    <span class="index-change">${changeStr}</span>
+                                </div>
                             </div>
                         `;
                     });
@@ -710,7 +719,7 @@
                         const isUpStr = item.is_up ? 'positive' : 'negative';
                         const signStr = item.change > 0 ? '+' : '';
                         const changeStr = item.price === "N/A" || item.price === "Error" ? 'N/A' : `${signStr}${item.change}%`;
-                        const priceStr = item.price === "N/A" || item.price === "Error" ? item.price : `${item.currency}${item.price}`;
+                        const priceStr = item.price === "N/A" || item.price === "Error" ? item.price : `${item.currency}${formatNumberWithDot(item.price)}`;
 
                         container.innerHTML += `
                             <div class="stock-row">
@@ -741,13 +750,14 @@
                     const data = await res.json();
 
                     if (data.success) {
-                        let htmlContent = data.analysis.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                        htmlContent = htmlContent.replace(/\n\n/g, '</p><p class="insight-text" style="color: var(--text-main);">');
+                        let htmlContent = data.analysis.replace(/\[Current Portfolio Status\]/gi, '<h3 class="insight-title">Current Portfolio Status</h3>');
+                        htmlContent = htmlContent.replace(/\[Recommended Modifications\]/gi, '<h3 class="insight-title" style="margin-top: 1.5rem;">Recommended Modifications</h3>');
+                        htmlContent = htmlContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                        htmlContent = htmlContent.replace(/\n\n/g, '</p><p class="insight-text" style="color: var(--text-main); margin-bottom: 0.5rem;">');
                         htmlContent = htmlContent.replace(/\n/g, '<br>');
 
                         container.innerHTML = `
-                            <h3 class="insight-title">Current Portfolio Status & Outlook</h3>
-                            <p class="insight-text" style="color: var(--text-main);">${htmlContent}</p>
+                            <div class="insight-text" style="color: var(--text-main); margin-top: 0;">${htmlContent}</div>
                         `;
                     } else if (data.error) {
                         container.innerHTML = `
