@@ -2,7 +2,10 @@ from flask import Flask, render_template, jsonify
 import yfinance as yf
 import redis
 import json
+import sqlite3
+import os
 from datetime import datetime
+from flask import Flask, render_template, jsonify, request
 
 app = Flask(__name__)
 
@@ -13,12 +16,32 @@ except Exception as e:
     print(f"Redis connection error: {e}")
     cache = None
 
-# 관심 종목 리스트 (임시: 하드코딩, 추후 DB 연동)
-WATCHLIST = [
-    {"ticker": "AAPL", "name": "Apple Inc."},
-    {"ticker": "005930.KS", "name": "Samsung Elec"},
-    {"ticker": "NVDA", "name": "NVIDIA"}
-]
+DB_PATH = 'watchlist.db'
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS watchlist (ticker TEXT PRIMARY KEY, name TEXT)''')
+    # 기본 종목 셋팅
+    c.execute('SELECT count(*) FROM watchlist')
+    if c.fetchone()[0] == 0:
+        c.executemany('INSERT INTO watchlist VALUES (?, ?)', [
+            ('AAPL', 'Apple Inc.'),
+            ('005930.KS', '삼성전자'),
+            ('NVDA', 'NVIDIA')
+        ])
+    conn.commit()
+    conn.close()
+
+init_db()
+
+def get_watchlist():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('SELECT ticker, name FROM watchlist')
+    rows = c.fetchall()
+    conn.close()
+    return [{"ticker": r[0], "name": r[1]} for r in rows]
 
 # 시장 지표 리스트
 INDICES = [
@@ -57,6 +80,7 @@ def fetch_stock_data(tickers):
                 change_percent = ((current_price - prev_close) / prev_close) * 100
                 
                 data = {
+                    "raw_ticker": ticker,
                     "ticker": ticker.replace(".KS", ""), # 한국 주식의 경우 UI 표시용으로 .KS 제거
                     "name": name,
                     "price": float(round(current_price, 2)),
@@ -66,6 +90,7 @@ def fetch_stock_data(tickers):
                 }
             else:
                 data = {
+                    "raw_ticker": ticker,
                     "ticker": ticker.replace(".KS", ""),
                     "name": name,
                     "price": "N/A",
@@ -82,6 +107,7 @@ def fetch_stock_data(tickers):
         except Exception as e:
             print(f"Error fetching data for {ticker}: {e}")
             result.append({
+                "raw_ticker": ticker,
                 "ticker": ticker.replace(".KS", ""),
                 "name": name,
                 "price": "Error",
@@ -102,10 +128,36 @@ def api_market_indices():
     data = fetch_stock_data(INDICES)
     return jsonify(data)
 
-@app.route("/api/watchlist")
+@app.route("/api/watchlist", methods=["GET"])
 def api_watchlist():
-    data = fetch_stock_data(WATCHLIST)
+    watchlist = get_watchlist()
+    data = fetch_stock_data(watchlist)
     return jsonify(data)
+
+@app.route("/api/watchlist", methods=["POST"])
+def add_watchlist():
+    data = request.json
+    ticker = data.get("ticker", "").strip().upper()
+    name = data.get("name", "").strip()
+    if ticker and name:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute('INSERT OR REPLACE INTO watchlist VALUES (?, ?)', (ticker, name))
+        conn.commit()
+        conn.close()
+        return jsonify({"success": True})
+    return jsonify({"success": False, "error": "잘못된 입력값입니다."}), 400
+
+@app.route("/api/watchlist/<ticker>", methods=["DELETE"])
+def remove_watchlist(ticker):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('DELETE FROM watchlist WHERE ticker=?', (ticker,))
+    if c.rowcount == 0:
+        c.execute('DELETE FROM watchlist WHERE ticker=?', (ticker + '.KS',))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8050)

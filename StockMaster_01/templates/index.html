@@ -328,6 +328,101 @@
             font-size: 0.9rem;
         }
 
+        /* Watchlist Form */
+        .watchlist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .watchlist-header h2 {
+            margin-bottom: 0;
+        }
+
+        .btn-add {
+            background: transparent;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-add:hover {
+            background: rgba(0, 240, 255, 0.1);
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+        }
+
+        .add-form-container {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--card-border);
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            display: none;
+            animation: fadeInDown 0.3s ease-out;
+        }
+
+        .add-form-container.active {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .add-form-container input {
+            flex: 1;
+            min-width: 100px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            color: #fff;
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .add-form-container input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .add-form-container button {
+            background: linear-gradient(90deg, #6366f1, #00f0ff);
+            color: #fff;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+        }
+
+        .add-form-container button.btn-cancel {
+            background: transparent;
+            border: 1px solid var(--text-muted);
+            color: var(--text-muted);
+        }
+
+        .btn-remove {
+            background: transparent;
+            border: none;
+            color: var(--negative-color);
+            cursor: pointer;
+            font-size: 1rem;
+            opacity: 0.5;
+            transition: all 0.2s;
+            padding-left: 1rem;
+        }
+
+        .btn-remove:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
         /* AI Panel */
         .insight-content {
             background: rgba(0, 240, 255, 0.03);
@@ -475,7 +570,18 @@
 
             <!-- Portfolio Watchlist Card -->
             <div class="card panel-watchlist">
-                <h2><i class="fa-solid fa-star"></i> My Watchlist</h2>
+                <div class="watchlist-header">
+                    <h2><i class="fa-solid fa-star"></i> My Watchlist</h2>
+                    <button class="btn-add" id="btn-toggle-add"><i class="fa-solid fa-plus"></i> Add</button>
+                </div>
+
+                <div class="add-form-container" id="add-form">
+                    <input type="text" id="input-ticker" placeholder="Ticker (e.g. TSLA, 005930.KS)">
+                    <input type="text" id="input-name" placeholder="Company Name">
+                    <button id="btn-save-stock">Save</button>
+                    <button class="btn-cancel" id="btn-cancel-add">Cancel</button>
+                </div>
+
                 <div class="stock-list" id="watchlist-container">
                     <!-- Dynamically populated by JS -->
                     <div style="color: var(--text-muted); text-align: center; padding: 1rem;">Loading portfolio data...
@@ -577,12 +683,15 @@
                         container.innerHTML += `
                             <div class="stock-row">
                                 <div class="stock-info">
-                                    <span class="stock-ticker">${item.ticker}</span>
-                                    <span class="stock-company">${item.name}</span>
+                                    <span class="stock-ticker">${item.name}</span>
+                                    <span class="stock-company">${item.ticker}</span>
                                 </div>
-                                <div class="stock-numbers ${isUpStr}">
-                                    <span class="price">${priceStr}</span>
-                                    <span class="change">${changeStr}</span>
+                                <div style="display: flex; align-items: center;">
+                                    <div class="stock-numbers ${isUpStr}">
+                                        <span class="price">${priceStr}</span>
+                                        <span class="change">${changeStr}</span>
+                                    </div>
+                                    <button class="btn-remove" onclick="removeStock('${item.ticker.replace(".KS", "")}')" title="Remove"><i class="fa-solid fa-trash"></i></button>
                                 </div>
                             </div>
                         `;
@@ -599,6 +708,70 @@
                 fetchMarketData();
                 fetchWatchlistData();
             }, 60000); // 1 minute refresh period
+
+            // Watchlist Add/Remove interactions
+            const addForm = document.getElementById('add-form');
+            const tickerInput = document.getElementById('input-ticker');
+            const nameInput = document.getElementById('input-name');
+
+            document.getElementById('btn-toggle-add').addEventListener('click', () => {
+                addForm.classList.toggle('active');
+            });
+
+            document.getElementById('btn-cancel-add').addEventListener('click', () => {
+                addForm.classList.remove('active');
+                tickerInput.value = '';
+                nameInput.value = '';
+            });
+
+            document.getElementById('btn-save-stock').addEventListener('click', async () => {
+                const ticker = tickerInput.value;
+                const name = nameInput.value;
+                if (!ticker || !name) {
+                    alert('Please enter both ticker and company name.');
+                    return;
+                }
+
+                try {
+                    const res = await fetch('/StockMaster_01/api/watchlist', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ticker, name })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        addForm.classList.remove('active');
+                        tickerInput.value = '';
+                        nameInput.value = '';
+
+                        document.getElementById('watchlist-container').innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 1rem;">Updating...</div>';
+                        fetchWatchlistData();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                } catch (e) {
+                    console.error("Failed to add stock", e);
+                }
+            });
+
+            window.removeStock = async function (rawTicker) {
+                // If the stock is korean, we need to append .KS for DB removal if we striped it, BUT our UI strips it before rendering.
+                // Wait, in fetch_stock_data, we return stripped ticker in UI. We should delete using full ticker...
+                // Actually it's easier to just issue DELETE and let backend handle it, but wait: backend returns .replace('.KS', '') for the ID.
+                // It's safer if backend returns the original ticker as `id` or `raw_ticker`.
+                if (!confirm("Are you sure you want to remove this stock?")) return;
+
+                try {
+                    const res = await fetch(`/StockMaster_01/api/watchlist/${rawTicker}`, { method: 'DELETE' });
+                    const data = await res.json();
+                    if (data.success) {
+                        document.getElementById('watchlist-container').innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 1rem;">Updating...</div>';
+                        fetchWatchlistData();
+                    }
+                } catch (e) {
+                    console.error("Failed to remove stock", e);
+                }
+            };
         });
     </script>
 </body>
