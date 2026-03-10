@@ -751,6 +751,7 @@
 
                     if (data.success) {
                         let htmlContent = data.analysis.replace(/\[Current Portfolio Status\]/gi, '<h3 class="insight-title">Current Portfolio Status</h3>');
+                        htmlContent = htmlContent.replace(/\[Market News & Portfolio Direction\]/gi, '<h3 class="insight-title" style="margin-top: 1.5rem;">Market News & Portfolio Direction</h3>');
                         htmlContent = htmlContent.replace(/\[Recommended Modifications\]/gi, '<h3 class="insight-title" style="margin-top: 1.5rem;">Recommended Modifications</h3>');
                         htmlContent = htmlContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                         htmlContent = htmlContent.replace(/\n\n/g, '</p><p class="insight-text" style="color: var(--text-main); margin-bottom: 0.5rem;">');
