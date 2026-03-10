@@ -3,3 +3,4 @@ redis
 Flask
 requests
 pytz
+yfinance

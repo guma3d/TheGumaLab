@@ -162,6 +162,7 @@
             margin-bottom: 0.2rem;
             background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             text-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
         }
@@ -466,22 +467,9 @@
             <div class="card panel-overview">
                 <div class="status-dot"></div>
                 <h2><i class="fa-solid fa-earth-americas"></i> Market Overview</h2>
-                <div class="market-indices">
-                    <div class="index-item positive">
-                        <span class="index-name">KOSPI</span>
-                        <span class="index-value">2,654.12</span>
-                        <span class="index-change">+1.2% <i class="fa-solid fa-arrow-trend-up"></i></span>
-                    </div>
-                    <div class="index-item negative">
-                        <span class="index-name">NASDAQ</span>
-                        <span class="index-value">16,211.50</span>
-                        <span class="index-change">-0.4% <i class="fa-solid fa-arrow-trend-down"></i></span>
-                    </div>
-                    <div class="index-item positive">
-                        <span class="index-name">S&P 500</span>
-                        <span class="index-value">5,123.69</span>
-                        <span class="index-change">+0.1% <i class="fa-solid fa-arrow-trend-up"></i></span>
-                    </div>
+                <div class="market-indices" id="market-indices-container">
+                    <div style="color: var(--text-muted); text-align: center; width: 100%;">Loading market data...</div>
+                    <!-- Dynamically populated by JS -->
                 </div>
                 <p class="card-desc">Real-time macro indicators showing overall market temperature.</p>
             </div>
@@ -489,37 +477,9 @@
             <!-- Portfolio Watchlist Card -->
             <div class="card panel-watchlist">
                 <h2><i class="fa-solid fa-star"></i> My Watchlist</h2>
-                <div class="stock-list">
-                    <!-- Dummy Items for Preview -->
-                    <div class="stock-row">
-                        <div class="stock-info">
-                            <span class="stock-ticker">AAPL</span>
-                            <span class="stock-company">Apple Inc.</span>
-                        </div>
-                        <div class="stock-numbers positive">
-                            <span class="price">$173.50</span>
-                            <span class="change">+2.1%</span>
-                        </div>
-                    </div>
-                    <div class="stock-row">
-                        <div class="stock-info">
-                            <span class="stock-ticker">005930</span>
-                            <span class="stock-company">Samsung Elec</span>
-                        </div>
-                        <div class="stock-numbers negative">
-                            <span class="price">₩74,200</span>
-                            <span class="change">-1.5%</span>
-                        </div>
-                    </div>
-                    <div class="stock-row">
-                        <div class="stock-info">
-                            <span class="stock-ticker">NVDA</span>
-                            <span class="stock-company">NVIDIA</span>
-                        </div>
-                        <div class="stock-numbers positive">
-                            <span class="price">$875.28</span>
-                            <span class="change">+4.3%</span>
-                        </div>
+                <div class="stock-list" id="watchlist-container">
+                    <!-- Dynamically populated by JS -->
+                    <div style="color: var(--text-muted); text-align: center; padding: 1rem;">Loading portfolio data...
                     </div>
                 </div>
             </div>
@@ -571,6 +531,75 @@
                     card.style.transition = 'all 0.4s ease'; // restore transition when leaving
                 });
             });
+
+            // Polling data functionality
+            async function fetchMarketData() {
+                try {
+                    const res = await fetch('/StockMaster_01/api/market-indices');
+                    const data = await res.json();
+
+                    const container = document.getElementById('market-indices-container');
+                    container.innerHTML = ''; // clear
+
+                    data.forEach(item => {
+                        const isUpStr = item.is_up ? 'positive' : 'negative';
+                        const signStr = item.is_up ? '+' : '';
+                        const iconStr = item.is_up ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
+                        const changeStr = item.price === "N/A" || item.price === "Error" ? 'N/A' : `${signStr}${item.change}% <i class="fa-solid ${iconStr}"></i>`;
+                        const priceStr = item.price === "N/A" || item.price === "Error" ? item.price : `${item.currency}${item.price}`;
+
+                        container.innerHTML += `
+                            <div class="index-item ${isUpStr}">
+                                <span class="index-name">${item.name}</span>
+                                <span class="index-value">${priceStr}</span>
+                                <span class="index-change">${changeStr}</span>
+                            </div>
+                        `;
+                    });
+                } catch (e) {
+                    console.error("Failed to fetch market data", e);
+                }
+            }
+
+            async function fetchWatchlistData() {
+                try {
+                    const res = await fetch('/StockMaster_01/api/watchlist');
+                    const data = await res.json();
+
+                    const container = document.getElementById('watchlist-container');
+                    container.innerHTML = ''; // clear
+
+                    data.forEach(item => {
+                        const isUpStr = item.is_up ? 'positive' : 'negative';
+                        const signStr = item.change > 0 ? '+' : '';
+                        const changeStr = item.price === "N/A" || item.price === "Error" ? 'N/A' : `${signStr}${item.change}%`;
+                        const priceStr = item.price === "N/A" || item.price === "Error" ? item.price : `${item.currency}${item.price}`;
+
+                        container.innerHTML += `
+                            <div class="stock-row">
+                                <div class="stock-info">
+                                    <span class="stock-ticker">${item.ticker}</span>
+                                    <span class="stock-company">${item.name}</span>
+                                </div>
+                                <div class="stock-numbers ${isUpStr}">
+                                    <span class="price">${priceStr}</span>
+                                    <span class="change">${changeStr}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } catch (e) {
+                    console.error("Failed to fetch watchlist data", e);
+                }
+            }
+
+            // Initialization and setup interval
+            fetchMarketData();
+            fetchWatchlistData();
+            setInterval(() => {
+                fetchMarketData();
+                fetchWatchlistData();
+            }, 60000); // 1 minute refresh period
         });
     </script>
 </body>
