@@ -407,6 +407,23 @@
             color: var(--text-muted);
         }
 
+        .btn-edit {
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            cursor: pointer;
+            font-size: 1rem;
+            opacity: 0.5;
+            transition: all 0.2s;
+            padding-left: 1rem;
+        }
+
+        .btn-edit:hover {
+            opacity: 1;
+            transform: scale(1.1);
+            color: var(--accent-color);
+        }
+
         .btn-remove {
             background: transparent;
             border: none;
@@ -415,7 +432,7 @@
             font-size: 1rem;
             opacity: 0.5;
             transition: all 0.2s;
-            padding-left: 1rem;
+            padding-left: 0.75rem;
         }
 
         .btn-remove:hover {
@@ -731,7 +748,7 @@
                         const priceStr = item.price === "N/A" || item.price === "Error" ? item.price : `${item.currency}${formatNumberWithDot(item.price)}`;
 
                         const shares = item.shares || 0;
-                        const totalValStr = shares > 0 && item.total_value ? `<br><span style="font-size:0.85rem; color:var(--accent-color);">보유: ${formatNumberWithDot(shares)}주 (${item.currency}${formatNumberWithDot(item.total_value)})</span>` : '';
+                        const totalValStr = shares > 0 && item.total_value ? `<div style="font-size:0.85rem; color:var(--accent-color); margin-top:0.15rem;">보유: ${formatNumberWithDot(shares)}주 (${item.currency}${formatNumberWithDot(item.total_value)})</div>` : '';
 
                         if (item.currency === '₩' && item.total_value) totalKrw += item.total_value;
                         else if (item.currency === '$' && item.total_value) totalUsd += item.total_value;
@@ -740,14 +757,15 @@
                             <div class="stock-row">
                                 <div class="stock-info">
                                     <span class="stock-ticker">${item.name}</span>
-                                    <span class="stock-company">${item.ticker}${totalValStr}</span>
+                                    ${totalValStr}
                                 </div>
                                 <div style="display: flex; align-items: center;">
                                     <div class="stock-numbers ${isUpStr}">
                                         <span class="price">${priceStr}</span>
                                         <span class="change">${changeStr}</span>
                                     </div>
-                                    <button class="btn-remove" onclick="removeStock('${item.ticker.replace(".KS", "")}')" title="Remove"><i class="fa-solid fa-trash"></i></button>
+                                    <button class="btn-edit" onclick="editStockShares('${item.raw_ticker}', '${item.name}', ${shares})" title="Edit Shares"><i class="fa-solid fa-pen"></i></button>
+                                    <button class="btn-remove" onclick="removeStock('${item.raw_ticker}')" title="Remove"><i class="fa-solid fa-trash"></i></button>
                                 </div>
                             </div>
                         `;
@@ -906,11 +924,34 @@
                 }
             }
 
+            window.editStockShares = async function (rawTicker, name, currentShares) {
+                const sharesStr = prompt(`${name}의 새로운 보유 수량을 입력하세요:`, currentShares);
+                if (sharesStr === null) return;
+                const shares = parseFloat(sharesStr) || 0;
+
+                try {
+                    document.getElementById('watchlist-container').innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 1rem;">Updating...</div>';
+                    const res = await fetch('/StockMaster_01/api/watchlist', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ticker: rawTicker, name: name, shares: shares })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        fetchWatchlistData();
+                        fetchPortfolioAnalysis();
+                    } else {
+                        alert('Error: ' + data.error);
+                        fetchWatchlistData();
+                    }
+                } catch (e) {
+                    console.error("Failed to update stock", e);
+                    alert("Failed to update stock.");
+                    fetchWatchlistData();
+                }
+            };
+
             window.removeStock = async function (rawTicker) {
-                // If the stock is korean, we need to append .KS for DB removal if we striped it, BUT our UI strips it before rendering.
-                // Wait, in fetch_stock_data, we return stripped ticker in UI. We should delete using full ticker...
-                // Actually it's easier to just issue DELETE and let backend handle it, but wait: backend returns .replace('.KS', '') for the ID.
-                // It's safer if backend returns the original ticker as `id` or `raw_ticker`.
                 if (!confirm("Are you sure you want to remove this stock?")) return;
 
                 try {
