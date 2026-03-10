@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockMaster - Guma Lab</title>
+    <!-- Use FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts for consistency -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <!-- Ambient glowing backgrounds matching the Portal -->
+    <div class="ambient-glow"></div>
+    <div class="ambient-glow-2"></div>
+    <div class="ambient-glow-3"></div>
+
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <a href="/" class="back-button" title="Back to Portal"><i class="fa-solid fa-arrow-left"></i></a>
+                <div class="title-group">
+                    <h1>StockMaster</h1>
+                    <p class="subtitle">AI-Powered Personalized Portfolio & Trend Analysis</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic Dashboard Grid -->
+        <main class="grid dashboard">
+            <!-- Market Overview Card -->
+            <div class="card panel-overview">
+                <div class="status-dot"></div>
+                <h2><i class="fa-solid fa-earth-americas"></i> Market Overview</h2>
+                <div class="market-indices">
+                    <div class="index-item positive">
+                        <span class="index-name">KOSPI</span>
+                        <span class="index-value">2,654.12</span>
+                        <span class="index-change">+1.2% <i class="fa-solid fa-arrow-trend-up"></i></span>
+                    </div>
+                    <div class="index-item negative">
+                        <span class="index-name">NASDAQ</span>
+                        <span class="index-value">16,211.50</span>
+                        <span class="index-change">-0.4% <i class="fa-solid fa-arrow-trend-down"></i></span>
+                    </div>
+                    <div class="index-item positive">
+                        <span class="index-name">S&P 500</span>
+                        <span class="index-value">5,123.69</span>
+                        <span class="index-change">+0.1% <i class="fa-solid fa-arrow-trend-up"></i></span>
+                    </div>
+                </div>
+                <p class="card-desc">Real-time macro indicators showing overall market temperature.</p>
+            </div>
+
+            <!-- Portfolio Watchlist Card -->
+            <div class="card panel-watchlist">
+                <h2><i class="fa-solid fa-star"></i> My Watchlist</h2>
+                <div class="stock-list">
+                    <!-- Dummy Items for Preview -->
+                    <div class="stock-row">
+                        <div class="stock-info">
+                            <span class="stock-ticker">AAPL</span>
+                            <span class="stock-company">Apple Inc.</span>
+                        </div>
+                        <div class="stock-numbers positive">
+                            <span class="price">$173.50</span>
+                            <span class="change">+2.1%</span>
+                        </div>
+                    </div>
+                    <div class="stock-row">
+                        <div class="stock-info">
+                            <span class="stock-ticker">005930</span>
+                            <span class="stock-company">Samsung Elec</span>
+                        </div>
+                        <div class="stock-numbers negative">
+                            <span class="price">₩74,200</span>
+                            <span class="change">-1.5%</span>
+                        </div>
+                    </div>
+                    <div class="stock-row">
+                        <div class="stock-info">
+                            <span class="stock-ticker">NVDA</span>
+                            <span class="stock-company">NVIDIA</span>
+                        </div>
+                        <div class="stock-numbers positive">
+                            <span class="price">$875.28</span>
+                            <span class="change">+4.3%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI News & Insight Card (Wide) -->
+            <div class="card panel-ai-insight">
+                <h2><i class="fa-solid fa-wand-magic-sparkles"></i> Gemini AI Insight & Hot Trends</h2>
+                <div class="insight-content">
+                    <div class="ai-pill">Scanning Recent News Vectors...</div>
+                    <h3 class="insight-title">Semiconductor Rally Continues Amidst AI Demand</h3>
+                    <p class="insight-text">Based on the latest news flow, AI chip demand remains structurally strong.
+                        Market focus is shifting towards edge AI and advanced packaging. <strong>NVDA</strong> continues
+                        pushing all-time highs, while memory manufacturers like <strong>Samsung</strong> are adjusting
+                        utilization rates.</p>
+                    <div class="recommendation-box">
+                        <span class="label">Top AI Pick:</span>
+                        <span class="ticker">TSM</span> - Strong foundry utilization expected in Q3.
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>
