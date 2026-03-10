@@ -423,6 +423,55 @@
             transform: scale(1.1);
         }
 
+        /* Search Results Dropdown */
+        .search-results {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            margin-top: 0.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+        }
+
+        .search-results.active {
+            display: flex;
+        }
+
+        .search-result-item {
+            padding: 0.8rem 1rem;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-result-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .search-result-name {
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .search-result-ticker {
+            font-size: 0.8rem;
+            color: var(--accent-color);
+            background: rgba(0, 240, 255, 0.1);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+
         /* AI Panel */
         .insight-title {
             font-size: 1.2rem;
@@ -554,11 +603,16 @@
                     <button class="btn-add" id="btn-toggle-add"><i class="fa-solid fa-plus"></i> Add</button>
                 </div>
 
-                <div class="add-form-container" id="add-form">
-                    <input type="text" id="input-ticker" placeholder="Ticker (e.g. TSLA, 005930.KS)">
-                    <input type="text" id="input-name" placeholder="Company Name">
-                    <button id="btn-save-stock">Save</button>
-                    <button class="btn-cancel" id="btn-cancel-add">Cancel</button>
+                <div class="add-form-container" id="add-form" style="flex-direction: column;">
+                    <div style="display: flex; gap: 0.5rem; width: 100%;">
+                        <input type="text" id="input-search" placeholder="Search company (e.g., 테슬라, Apple)..."
+                            autocomplete="off">
+                        <button id="btn-search-stock"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+                        <button class="btn-cancel" id="btn-cancel-add">Cancel</button>
+                    </div>
+                    <div class="search-results" id="search-results-container">
+                        <!-- Search results will appear here -->
+                    </div>
                 </div>
 
                 <div class="stock-list" id="watchlist-container">
@@ -712,28 +766,84 @@
 
             // Watchlist Add/Remove interactions
             const addForm = document.getElementById('add-form');
-            const tickerInput = document.getElementById('input-ticker');
-            const nameInput = document.getElementById('input-name');
+            const searchInput = document.getElementById('input-search');
+            const searchBtn = document.getElementById('btn-search-stock');
+            const searchResultsContainer = document.getElementById('search-results-container');
 
             document.getElementById('btn-toggle-add').addEventListener('click', () => {
                 addForm.classList.toggle('active');
+                if (addForm.classList.contains('active')) {
+                    searchInput.focus();
+                }
             });
 
             document.getElementById('btn-cancel-add').addEventListener('click', () => {
                 addForm.classList.remove('active');
-                tickerInput.value = '';
-                nameInput.value = '';
+                searchInput.value = '';
+                searchResultsContainer.classList.remove('active');
+                searchResultsContainer.innerHTML = '';
             });
 
-            document.getElementById('btn-save-stock').addEventListener('click', async () => {
-                const ticker = tickerInput.value;
-                const name = nameInput.value;
-                if (!ticker || !name) {
-                    alert('Please enter both ticker and company name.');
+            searchBtn.addEventListener('click', async () => {
+                const query = searchInput.value;
+                if (!query) {
+                    alert('Please enter a search term.');
                     return;
                 }
 
+                searchBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                searchBtn.disabled = true;
+                searchResultsContainer.classList.add('active');
+                searchResultsContainer.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-muted);">Searching with AI...</div>';
+
                 try {
+                    const res = await fetch('/StockMaster_01/api/search-stock', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ query })
+                    });
+                    const data = await res.json();
+
+                    searchBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Search';
+                    searchBtn.disabled = false;
+
+                    if (data.success && data.results.length > 0) {
+                        searchResultsContainer.innerHTML = '';
+                        data.results.forEach(stock => {
+                            const item = document.createElement('div');
+                            item.className = 'search-result-item';
+                            item.innerHTML = `
+                                <span class="search-result-name">${stock.name}</span>
+                                <span class="search-result-ticker">${stock.ticker}</span>
+                            `;
+                            item.addEventListener('click', () => {
+                                addStockToWatchlist(stock.ticker, stock.name);
+                            });
+                            searchResultsContainer.appendChild(item);
+                        });
+                    } else if (data.success && data.results.length === 0) {
+                        searchResultsContainer.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-muted);">No results found.</div>';
+                    } else {
+                        searchResultsContainer.innerHTML = `<div style="padding: 1rem; text-align: center; color: var(--negative-color);">Error: ${data.error}</div>`;
+                    }
+                } catch (e) {
+                    console.error("Search API failed", e);
+                    searchBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Search';
+                    searchBtn.disabled = false;
+                    searchResultsContainer.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--negative-color);">Network error occurred.</div>';
+                }
+            });
+
+            // Allow Enter key to trigger search
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    searchBtn.click();
+                }
+            });
+
+            async function addStockToWatchlist(ticker, name) {
+                try {
+                    searchResultsContainer.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-muted);">Adding to portfolio...</div>';
                     const res = await fetch('/StockMaster_01/api/watchlist', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -742,19 +852,22 @@
                     const data = await res.json();
                     if (data.success) {
                         addForm.classList.remove('active');
-                        tickerInput.value = '';
-                        nameInput.value = '';
+                        searchInput.value = '';
+                        searchResultsContainer.classList.remove('active');
+                        searchResultsContainer.innerHTML = '';
 
                         document.getElementById('watchlist-container').innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 1rem;">Updating...</div>';
                         fetchWatchlistData();
                         fetchPortfolioAnalysis(); // Re-analyze on new stock added
                     } else {
                         alert('Error: ' + data.error);
+                        searchResultsContainer.innerHTML = '';
                     }
                 } catch (e) {
                     console.error("Failed to add stock", e);
+                    alert("Failed to add stock.");
                 }
-            });
+            }
 
             window.removeStock = async function (rawTicker) {
                 // If the stock is korean, we need to append .KS for DB removal if we striped it, BUT our UI strips it before rendering.

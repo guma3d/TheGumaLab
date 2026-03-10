@@ -164,6 +164,43 @@ def remove_watchlist(ticker):
     conn.close()
     return jsonify({"success": True})
 
+@app.route("/api/search-stock", methods=["POST"])
+def search_stock():
+    data = request.json
+    query = data.get("query", "").strip()
+    if not query:
+        return jsonify({"success": False, "error": "검색어를 입력해주세요."})
+    
+    if not GEMINI_API_KEY:
+        return jsonify({"success": False, "error": "Gemini API Key가 설정되지 않아 검색 기능을 사용할 수 없습니다."})
+        
+    prompt = f"""
+사용자가 입력한 주식 검색어: '{query}'
+이 검색어에 해당하는 주식 시장의 Ticker 심볼(Yahoo Finance 기준)과 영문 공식 회사 이름을 찾아주세요.
+관련된 종목이 있다면 가장 연관성이 높은 순서대로 1개에서 최대 3개까지 찾아주세요.
+(한국 주식인 경우 KOSPI는 '.KS', 코스닥은 '.KQ'를 붙여주세요. 예: 005930.KS)
+반드시 아래와 같은 JSON 배열 형식으로만 응답해야 합니다. 다른 텍스트는 절대로 포함하지 마세요:
+[
+  {{"ticker": "TSLA", "name": "Tesla, Inc."}}
+]
+"""
+    try:
+        response = gemini_client.models.generate_content(
+            model='gemini-3.1-flash-lite-preview',
+            contents=prompt,
+        )
+        text = response.text.strip()
+        if text.startswith('```json'):
+            text = text[7:-3]
+        elif text.startswith('```'):
+            text = text[3:-3]
+            
+        results = json.loads(text.strip())
+        return jsonify({"success": True, "results": results})
+    except Exception as e:
+        print(f"Search API Error: {e}")
+        return jsonify({"success": False, "error": "종목을 검색하는 데 실패했습니다. 다시 시도해주세요."})
+
 @app.route("/api/portfolio-analysis", methods=["GET"])
 def api_portfolio_analysis():
     if not GEMINI_API_KEY:
