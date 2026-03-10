@@ -599,7 +599,13 @@
             <!-- Portfolio Watchlist Card -->
             <div class="card panel-watchlist">
                 <div class="watchlist-header">
-                    <h2><i class="fa-solid fa-star"></i> My Watchlist</h2>
+                    <div style="display:flex; flex-direction:column; gap:0.25rem;">
+                        <h2><i class="fa-solid fa-chart-pie"></i> My Portfolio</h2>
+                        <div id="portfolio-totals"
+                            style="font-size: 0.95rem; color: var(--accent-color); font-weight: 500;">
+                            <!-- dynamically filled -->
+                        </div>
+                    </div>
                     <button class="btn-add" id="btn-toggle-add"><i class="fa-solid fa-plus"></i> Add</button>
                 </div>
 
@@ -715,17 +721,26 @@
                     const container = document.getElementById('watchlist-container');
                     container.innerHTML = ''; // clear
 
+                    let totalKrw = 0;
+                    let totalUsd = 0;
+
                     data.forEach(item => {
                         const isUpStr = item.is_up ? 'positive' : 'negative';
                         const signStr = item.change > 0 ? '+' : '';
                         const changeStr = item.price === "N/A" || item.price === "Error" ? 'N/A' : `${signStr}${item.change}%`;
                         const priceStr = item.price === "N/A" || item.price === "Error" ? item.price : `${item.currency}${formatNumberWithDot(item.price)}`;
 
+                        const shares = item.shares || 0;
+                        const totalValStr = shares > 0 && item.total_value ? `<br><span style="font-size:0.85rem; color:var(--accent-color);">보유: ${formatNumberWithDot(shares)}주 (${item.currency}${formatNumberWithDot(item.total_value)})</span>` : '';
+
+                        if (item.currency === '₩' && item.total_value) totalKrw += item.total_value;
+                        else if (item.currency === '$' && item.total_value) totalUsd += item.total_value;
+
                         container.innerHTML += `
                             <div class="stock-row">
                                 <div class="stock-info">
                                     <span class="stock-ticker">${item.name}</span>
-                                    <span class="stock-company">${item.ticker}</span>
+                                    <span class="stock-company">${item.ticker}${totalValStr}</span>
                                 </div>
                                 <div style="display: flex; align-items: center;">
                                     <div class="stock-numbers ${isUpStr}">
@@ -737,6 +752,8 @@
                             </div>
                         `;
                     });
+
+                    document.getElementById('portfolio-totals').innerHTML = `총 자산: ₩${formatNumberWithDot(totalKrw)} + $${formatNumberWithDot(totalUsd)}`;
                 } catch (e) {
                     console.error("Failed to fetch watchlist data", e);
                 }
@@ -858,12 +875,16 @@
             });
 
             async function addStockToWatchlist(ticker, name) {
+                const sharesStr = prompt(`${name}의 보유 수량을 입력하세요:`, "1");
+                if (sharesStr === null) return;
+                const shares = parseFloat(sharesStr) || 1;
+
                 try {
                     searchResultsContainer.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-muted);">Adding to portfolio...</div>';
                     const res = await fetch('/StockMaster_01/api/watchlist', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ticker, name })
+                        body: JSON.stringify({ ticker, name, shares })
                     });
                     const data = await res.json();
                     if (data.success) {

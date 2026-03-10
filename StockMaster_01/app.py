@@ -29,13 +29,17 @@ def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS watchlist (ticker TEXT PRIMARY KEY, name TEXT)''')
+    try:
+        c.execute('ALTER TABLE watchlist ADD COLUMN shares REAL DEFAULT 1')
+    except sqlite3.OperationalError:
+        pass  # Column already exists
     # 기본 종목 셋팅
     c.execute('SELECT count(*) FROM watchlist')
     if c.fetchone()[0] == 0:
-        c.executemany('INSERT INTO watchlist VALUES (?, ?)', [
-            ('AAPL', 'Apple Inc.'),
-            ('005930.KS', '삼성전자'),
-            ('NVDA', 'NVIDIA')
+        c.executemany('INSERT INTO watchlist (ticker, name, shares) VALUES (?, ?, ?)', [
+            ('AAPL', 'Apple Inc.', 10),
+            ('005930.KS', '삼성전자', 100),
+            ('NVDA', 'NVIDIA', 5)
         ])
     conn.commit()
     conn.close()
@@ -48,10 +52,10 @@ latest_portfolio_analysis = "AI가 아직 관심 종목을 실시간 시장 현�
 def get_watchlist():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute('SELECT ticker, name FROM watchlist')
+    c.execute('SELECT ticker, name, shares FROM watchlist')
     rows = c.fetchall()
     conn.close()
-    return [{"ticker": r[0], "name": r[1]} for r in rows]
+    return [{"ticker": r[0], "name": r[1], "shares": r[2]} for r in rows]
 
 # 시장 지표 리스트
 INDICES = [
@@ -68,6 +72,8 @@ def fetch_stock_data(tickers, force_refresh=False):
     for item in tickers:
         ticker = item["ticker"]
         name = item["name"]
+        shares = item.get("shares", 0)
+
         
         # 캐시 확인 (만료 시간 설정 5분)
         cache_key = f"stock_data:{ticker}"
@@ -96,7 +102,9 @@ def fetch_stock_data(tickers, force_refresh=False):
                     "price": float(round(current_price, 2)),
                     "change": float(round(change_percent, 2)),
                     "is_up": bool(change_percent >= 0),
-                    "currency": "₩" if ".KS" in ticker else "$"
+                    "currency": "₩" if ".KS" in ticker else "$",
+                    "shares": shares,
+                    "total_value": round(current_price * shares, 2) if shares > 0 else 0.0
                 }
             else:
                 data = {
@@ -106,7 +114,9 @@ def fetch_stock_data(tickers, force_refresh=False):
                     "price": "N/A",
                     "change": 0.0,
                     "is_up": True,
-                    "currency": ""
+                    "currency": "",
+                    "shares": shares,
+                    "total_value": 0.0
                 }
                 
             # 캐시에 저장 (300초 = 5분 동안 유지하여 호출 제한 방어)
@@ -149,10 +159,11 @@ def add_watchlist():
     data = request.json
     ticker = data.get("ticker", "").strip().upper()
     name = data.get("name", "").strip()
+    shares = float(data.get("shares", 1))
     if ticker and name:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        c.execute('INSERT OR REPLACE INTO watchlist VALUES (?, ?)', (ticker, name))
+        c.execute('INSERT OR REPLACE INTO watchlist (ticker, name, shares) VALUES (?, ?, ?)', (ticker, name, shares))
         conn.commit()
         conn.close()
         trigger_analysis_bg()
@@ -225,10 +236,10 @@ def generate_portfolio_analysis():
         
     try:
         data = fetch_stock_data(watchlist)
-        portfolio_text = "현재 관심 종목 (My Watchlist):\n"
+        portfolio_text = "현재 보유 포트폴리오 (My Portfolio):\n"
         for item in data:
             sign = "+" if item['is_up'] else ""
-            portfolio_text += f"- {item['name']} ({item['ticker']}): 현재가 {item['currency']}{item['price']}, 등락률 {sign}{item['change']}%\n"
+            portfolio_text += f"- {item['name']} ({item['ticker']}): {item['shares']}주 보유, 현재가 {item['currency']}{item['price']}, 등락률 {sign}{item['change']}%, 총 가치: {item['currency']}{item['total_value']}\n"
             
         prompt = f"""
 다음은 사용자의 현재 주식 관심 종목 리스트와 현재가, 등락률입니다.
