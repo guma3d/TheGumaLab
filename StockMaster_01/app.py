@@ -7,6 +7,8 @@ import os
 from google import genai
 from datetime import datetime
 from flask import Flask, render_template, jsonify, request
+import threading
+from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 
@@ -39,6 +41,9 @@ def init_db():
     conn.close()
 
 init_db()
+
+# 최신 분석 텍스트 저장용 (메모리)
+latest_portfolio_analysis = "AI가 아직 관심 종목을 실시간 시장 현황을 바탕으로 분석하고 있습니다. 잠시만 기다려주세요..."
 
 def get_watchlist():
     conn = sqlite3.connect(DB_PATH)
@@ -150,6 +155,7 @@ def add_watchlist():
         c.execute('INSERT OR REPLACE INTO watchlist VALUES (?, ?)', (ticker, name))
         conn.commit()
         conn.close()
+        trigger_analysis_bg()
         return jsonify({"success": True})
     return jsonify({"success": False, "error": "잘못된 입력값입니다."}), 400
 
@@ -162,6 +168,7 @@ def remove_watchlist(ticker):
         c.execute('DELETE FROM watchlist WHERE ticker=?', (ticker + '.KS',))
     conn.commit()
     conn.close()
+    trigger_analysis_bg()
     return jsonify({"success": True})
 
 @app.route("/api/search-stock", methods=["POST"])
@@ -201,24 +208,29 @@ def search_stock():
         print(f"Search API Error: {e}")
         return jsonify({"success": False, "error": "종목을 검색하는 데 실패했습니다. 다시 시도해주세요."})
 
-@app.route("/api/portfolio-analysis", methods=["GET"])
-def api_portfolio_analysis():
+def generate_portfolio_analysis():
+    global latest_portfolio_analysis
     if not GEMINI_API_KEY:
-        return jsonify({"success": False, "error": "Gemini API Key가 설정되지 않았습니다."})
-    
+        latest_portfolio_analysis = "Gemini API Key가 설정되지 않았습니다."
+        if cache:
+            cache.set("portfolio_analysis", latest_portfolio_analysis)
+        return
+
     watchlist = get_watchlist()
     if not watchlist:
-        return jsonify({"success": True, "analysis": "관심 종목이 비어있습니다. 종목을 추가하시면 AI가 실시간으로 분석해 드립니다!"})
+        latest_portfolio_analysis = "관심 종목이 비어있습니다. 종목을 추가하시면 AI가 5분 단위로 시장을 분석해 드립니다!"
+        if cache:
+            cache.set("portfolio_analysis", latest_portfolio_analysis)
+        return
         
-    data = fetch_stock_data(watchlist)
-    
-    # AI에게 보낼 종목 현황 텍스트 생성
-    portfolio_text = "현재 관심 종목 (My Watchlist):\n"
-    for item in data:
-        sign = "+" if item['is_up'] else ""
-        portfolio_text += f"- {item['name']} ({item['ticker']}): 현재가 {item['currency']}{item['price']}, 등락률 {sign}{item['change']}%\n"
-        
-    prompt = f"""
+    try:
+        data = fetch_stock_data(watchlist)
+        portfolio_text = "현재 관심 종목 (My Watchlist):\n"
+        for item in data:
+            sign = "+" if item['is_up'] else ""
+            portfolio_text += f"- {item['name']} ({item['ticker']}): 현재가 {item['currency']}{item['price']}, 등락률 {sign}{item['change']}%\n"
+            
+        prompt = f"""
 다음은 사용자의 현재 주식 관심 종목 리스트와 현재가, 등락률입니다.
 
 {portfolio_text}
@@ -227,17 +239,43 @@ def api_portfolio_analysis():
 반드시 한국어로 자연스럽고 전문적으로 작성해주고, HTML 형태의 태그는 제외하고 평문으로 작성하세요. 너무 길지 않게 핵심만 2~3 문단(300자 내외)으로 요약해주세요.
 또한 가장 주목할만한 종목 1개를 골라서 이유와 함께 짧게 추천해주세요.
 """
-
-    try:
         response = gemini_client.models.generate_content(
             model='gemini-3.1-flash-lite-preview',
             contents=prompt,
         )
-        analysis_text = response.text
-        return jsonify({"success": True, "analysis": analysis_text})
+        
+        latest_portfolio_analysis = response.text
+        if cache:
+            cache.set("portfolio_analysis", latest_portfolio_analysis, ex=600)  # 10분 TTL
+        print("Background AI Portfolio Analysis Updated.")
     except Exception as e:
-        print(f"Gemini API Error: {e}")
-        return jsonify({"success": False, "error": "AI 분석을 가져오는데 실패했습니다."})
+        print(f"Background AI Error: {e}")
+
+# 백그라운드 스케줄러 등록 (5분 마다 AI 분석 실행)
+scheduler = BackgroundScheduler()
+scheduler.add_job(generate_portfolio_analysis, 'interval', minutes=5)
+scheduler.start()
+
+def trigger_analysis_bg():
+    # 사용자가 종목을 추가/삭제할 때만 별도 스레드로 AI 분석 즉시 업데이트
+    thread = threading.Thread(target=generate_portfolio_analysis)
+    thread.start()
+
+# 최초 1회 분석 돌려놓기
+trigger_analysis_bg()
+
+@app.route("/api/portfolio-analysis", methods=["GET"])
+def api_portfolio_analysis():
+    analysis_text = None
+    if cache:
+        cached = cache.get("portfolio_analysis")
+        if cached:
+            analysis_text = cached
+            
+    if not analysis_text:
+        analysis_text = latest_portfolio_analysis
+        
+    return jsonify({"success": True, "analysis": analysis_text})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8050)
