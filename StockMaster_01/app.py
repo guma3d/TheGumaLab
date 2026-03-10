@@ -4,6 +4,7 @@ import redis
 import json
 import sqlite3
 import os
+import google.generativeai as genai
 from datetime import datetime
 from flask import Flask, render_template, jsonify, request
 
@@ -15,6 +16,13 @@ try:
 except Exception as e:
     print(f"Redis connection error: {e}")
     cache = None
+
+# Gemini API 설정
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+# 모델 설정 (가장 가벼운 모델인 gemini-1.5-flash 권장)
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 DB_PATH = 'watchlist.db'
 
@@ -158,6 +166,41 @@ def remove_watchlist(ticker):
     conn.commit()
     conn.close()
     return jsonify({"success": True})
+
+@app.route("/api/portfolio-analysis", methods=["GET"])
+def api_portfolio_analysis():
+    if not GEMINI_API_KEY:
+        return jsonify({"success": False, "error": "Gemini API Key가 설정되지 않았습니다."})
+    
+    watchlist = get_watchlist()
+    if not watchlist:
+        return jsonify({"success": True, "analysis": "관심 종목이 비어있습니다. 종목을 추가하시면 AI가 실시간으로 분석해 드립니다!"})
+        
+    data = fetch_stock_data(watchlist)
+    
+    # AI에게 보낼 종목 현황 텍스트 생성
+    portfolio_text = "현재 관심 종목 (My Watchlist):\n"
+    for item in data:
+        sign = "+" if item['is_up'] else ""
+        portfolio_text += f"- {item['name']} ({item['ticker']}): 현재가 {item['currency']}{item['price']}, 등락률 {sign}{item['change']}%\n"
+        
+    prompt = f"""
+다음은 사용자의 현재 주식 관심 종목 리스트와 현재가, 등락률입니다.
+
+{portfolio_text}
+
+이 종목들을 포함한 관심 종목 포트폴리오의 **현재 상황 요약**과 **앞으로의 간략한 전망**을 작성해주세요. 
+반드시 한국어로 자연스럽고 전문적으로 작성해주고, HTML 형태의 태그는 제외하고 평문으로 작성하세요. 너무 길지 않게 핵심만 2~3 문단(300자 내외)으로 요약해주세요.
+또한 가장 주목할만한 종목 1개를 골라서 이유와 함께 짧게 추천해주세요.
+"""
+
+    try:
+        response = model.generate_content(prompt)
+        analysis_text = response.text
+        return jsonify({"success": True, "analysis": analysis_text})
+    except Exception as e:
+        print(f"Gemini API Error: {e}")
+        return jsonify({"success": False, "error": "AI 분석을 가져오는데 실패했습니다."})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8050)

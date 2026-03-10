@@ -9,6 +9,8 @@ services:
       - "8050:8050"
     environment:
       - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
     volumes:
       - .:/app
 

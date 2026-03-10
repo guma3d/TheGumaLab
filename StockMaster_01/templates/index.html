@@ -591,17 +591,13 @@
 
             <!-- AI News & Insight Card (Wide) -->
             <div class="card panel-ai-insight">
-                <h2><i class="fa-solid fa-wand-magic-sparkles"></i> Gemini AI Insight & Hot Trends</h2>
-                <div class="insight-content">
-                    <div class="ai-pill">Scanning Recent News Vectors...</div>
-                    <h3 class="insight-title">Semiconductor Rally Continues Amidst AI Demand</h3>
-                    <p class="insight-text">Based on the latest news flow, AI chip demand remains structurally strong.
-                        Market focus is shifting towards edge AI and advanced packaging. <strong>NVDA</strong> continues
-                        pushing all-time highs, while memory manufacturers like <strong>Samsung</strong> are adjusting
-                        utilization rates.</p>
-                    <div class="recommendation-box">
-                        <span class="label">Top AI Pick:</span>
-                        <span class="ticker">TSM</span> - Strong foundry utilization expected in Q3.
+                <h2><i class="fa-solid fa-wand-magic-sparkles"></i> Portfolio Analysis</h2>
+                <div class="insight-content" id="portfolio-analysis-container">
+                    <div class="ai-pill"><i class="fa-solid fa-robot"></i> Gemini AI</div>
+                    <div style="color: var(--text-muted); text-align: center; padding: 2rem;">
+                        <i class="fa-solid fa-spinner fa-spin"
+                            style="font-size: 2rem; margin-bottom: 1rem; color: var(--accent-color);"></i>
+                        <br>AI is analyzing your portfolio...
                     </div>
                 </div>
             </div>
@@ -701,9 +697,38 @@
                 }
             }
 
+            async function fetchPortfolioAnalysis() {
+                try {
+                    const container = document.getElementById('portfolio-analysis-container');
+
+                    const res = await fetch('/StockMaster_01/api/portfolio-analysis');
+                    const data = await res.json();
+
+                    if (data.success) {
+                        let htmlContent = data.analysis.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                        htmlContent = htmlContent.replace(/\n\n/g, '</p><p class="insight-text" style="color: var(--text-main);">');
+                        htmlContent = htmlContent.replace(/\n/g, '<br>');
+
+                        container.innerHTML = `
+                            <div class="ai-pill"><i class="fa-solid fa-robot"></i> Gemini AI</div>
+                            <h3 class="insight-title">Current Portfolio Status & Outlook</h3>
+                            <p class="insight-text" style="color: var(--text-main);">${htmlContent}</p>
+                        `;
+                    } else if (data.error) {
+                        container.innerHTML = `
+                            <div class="ai-pill"><i class="fa-solid fa-robot"></i> Gemini AI</div>
+                            <p class="insight-text" style="color: var(--negative-color);">Error: ${data.error}</p>
+                        `;
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch portfolio analysis", e);
+                }
+            }
+
             // Initialization and setup interval
             fetchMarketData();
             fetchWatchlistData();
+            fetchPortfolioAnalysis();
             setInterval(() => {
                 fetchMarketData();
                 fetchWatchlistData();
@@ -746,6 +771,7 @@
 
                         document.getElementById('watchlist-container').innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 1rem;">Updating...</div>';
                         fetchWatchlistData();
+                        fetchPortfolioAnalysis(); // Re-analyze on new stock added
                     } else {
                         alert('Error: ' + data.error);
                     }
@@ -767,6 +793,7 @@
                     if (data.success) {
                         document.getElementById('watchlist-container').innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 1rem;">Updating...</div>';
                         fetchWatchlistData();
+                        fetchPortfolioAnalysis(); // Re-analyze after removal
                     }
                 } catch (e) {
                     console.error("Failed to remove stock", e);
