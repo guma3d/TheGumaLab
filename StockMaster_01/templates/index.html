@@ -21,11 +21,11 @@
             --card-hover-bg: rgba(255, 255, 255, 0.07);
             --card-hover-border: rgba(255, 255, 255, 0.2);
 
-            --primary-glow: #6366f1;
+            --primary-glow: #10b981;
             /* Indigo */
-            --secondary-glow: #ec4899;
+            --secondary-glow: #34d399;
             /* Pink */
-            --accent-color: #00f0ff;
+            --accent-color: #10b981;
             /* Cyan */
 
             --positive-color: #10b981;
@@ -152,7 +152,7 @@
             background: var(--card-hover-bg);
             border-color: var(--accent-color);
             transform: scale(1.1) translateX(-3px);
-            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
         }
 
         h1 {
@@ -354,8 +354,8 @@
         }
 
         .btn-add:hover {
-            background: rgba(0, 240, 255, 0.1);
-            box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+            background: rgba(16, 185, 129, 0.1);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
         }
 
         .add-form-container {
@@ -391,7 +391,7 @@
         }
 
         .add-form-container button {
-            background: linear-gradient(90deg, #6366f1, #00f0ff);
+            background: linear-gradient(90deg, #10b981, #34d399);
             color: #fff;
             border: none;
             padding: 0.5rem 1rem;
@@ -467,7 +467,7 @@
         .search-result-ticker {
             font-size: 0.8rem;
             color: var(--accent-color);
-            background: rgba(0, 240, 255, 0.1);
+            background: rgba(16, 185, 129, 0.1);
             padding: 0.2rem 0.5rem;
             border-radius: 4px;
         }
@@ -604,11 +604,15 @@
                 </div>
 
                 <div class="add-form-container" id="add-form" style="flex-direction: column;">
-                    <div style="display: flex; gap: 0.5rem; width: 100%;">
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
                         <input type="text" id="input-search" placeholder="Search company (e.g., 테슬라, Apple)..."
-                            autocomplete="off">
-                        <button id="btn-search-stock"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-                        <button class="btn-cancel" id="btn-cancel-add">Cancel</button>
+                            autocomplete="off" style="width: 100%; font-size: 1rem; padding: 0.75rem;">
+                        <div style="display: flex; gap: 0.5rem; width: 100%;">
+                            <button id="btn-search-stock" style="flex: 1; padding: 0.75rem;"><i
+                                    class="fa-solid fa-magnifying-glass"></i> Search</button>
+                            <button class="btn-cancel" id="btn-cancel-add"
+                                style="flex: 1; padding: 0.75rem;">Cancel</button>
+                        </div>
                     </div>
                     <div class="search-results" id="search-results-container">
                         <!-- Search results will appear here -->
