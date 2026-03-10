@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    container_name: stockmaster_backend
+    restart: unless-stopped
+    ports:
+      - "8050:8050"
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - .:/app
+
+  redis:
+    image: redis:alpine
+    container_name: stockmaster_redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"

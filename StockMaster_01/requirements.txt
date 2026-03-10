@@ -1,0 +1,5 @@
+# basic requirements
+redis
+Flask
+requests
+pytz
