@@ -9,7 +9,438 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts for consistency -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="static/style.css">
+    <style>
+        /* 
+         * Guma Lab - StockMaster_01
+         * Premium Dark Theme, Glassmorphism, Neon Accents 
+         */
+        :root {
+            --bg-color: #050505;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --card-hover-bg: rgba(255, 255, 255, 0.07);
+            --card-hover-border: rgba(255, 255, 255, 0.2);
+
+            --primary-glow: #6366f1;
+            /* Indigo */
+            --secondary-glow: #ec4899;
+            /* Pink */
+            --accent-color: #00f0ff;
+            /* Cyan */
+
+            --positive-color: #10b981;
+            /* Green */
+            --negative-color: #ef4444;
+            /* Red */
+
+            --text-main: #ffffff;
+            --text-muted: #a1a1aa;
+
+            --transition-speed: 0.3s;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+            padding-bottom: 3rem;
+        }
+
+        /* Ambient Glows (from Portal) */
+        .ambient-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+            opacity: 0.15;
+            filter: blur(80px);
+            z-index: -1;
+            top: -100px;
+            left: 10%;
+            animation: pulse 10s infinite alternate;
+        }
+
+        .ambient-glow-2 {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, var(--accent-color) 0%, transparent 70%);
+            opacity: 0.12;
+            filter: blur(80px);
+            z-index: -1;
+            bottom: -100px;
+            right: 15%;
+            animation: pulse 8s infinite alternate-reverse;
+        }
+
+        .ambient-glow-3 {
+            position: fixed;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, var(--secondary-glow) 0%, transparent 70%);
+            opacity: 0.08;
+            filter: blur(80px);
+            z-index: -1;
+            top: 40%;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: pulse 12s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.10;
+            }
+
+            100% {
+                transform: scale(1.1);
+                opacity: 0.18;
+            }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 2rem;
+            z-index: 1;
+        }
+
+        /* Header Config */
+        header {
+            margin-bottom: 3rem;
+            margin-top: 1rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .back-button {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: all var(--transition-speed) ease;
+            padding: 0.5rem;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 50px;
+            height: 50px;
+        }
+
+        .back-button:hover {
+            color: var(--accent-color);
+            background: var(--card-hover-bg);
+            border-color: var(--accent-color);
+            transform: scale(1.1) translateX(-3px);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 0.2rem;
+            background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            font-weight: 300;
+        }
+
+        /* Base Card Style */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.8s ease-out backwards;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+            border-color: var(--card-hover-border);
+        }
+
+        .card h2 {
+            font-size: 1.4rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .card h2 i {
+            color: var(--accent-color);
+        }
+
+        /* Grid Layout */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+        }
+
+        .panel-overview {
+            grid-column: span 1;
+        }
+
+        .panel-watchlist {
+            grid-column: span 1;
+        }
+
+        .panel-ai-insight {
+            grid-column: span 2;
+        }
+
+        /* Market Indices */
+        .market-indices {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            gap: 1rem;
+        }
+
+        .index-item {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            padding: 1rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .index-name {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .index-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .index-change {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .positive .index-change,
+        .positive .change {
+            color: var(--positive-color);
+        }
+
+        .negative .index-change,
+        .negative .change {
+            color: var(--negative-color);
+        }
+
+        .card-desc {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        /* Watchlist */
+        .stock-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .stock-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            transition: background 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .stock-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .stock-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stock-ticker {
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .stock-company {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .stock-numbers {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .stock-numbers .price {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--text-main);
+        }
+
+        .stock-numbers .change {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        /* AI Panel */
+        .insight-content {
+            background: rgba(0, 240, 255, 0.03);
+            border: 1px solid rgba(0, 240, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .ai-pill {
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            background: linear-gradient(90deg, #6366f1, #00f0ff);
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.25rem 0.75rem;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+        }
+
+        .insight-title {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+
+        .insight-text {
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .insight-text strong {
+            color: #fff;
+        }
+
+        .recommendation-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .recommendation-box .label {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .recommendation-box .ticker {
+            font-weight: 700;
+            color: #fff;
+            margin: 0 0.5rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .panel-overview {
+            animation-delay: 0.1s;
+        }
+
+        .panel-watchlist {
+            animation-delay: 0.2s;
+        }
+
+        .panel-ai-insight {
+            animation-delay: 0.3s;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .panel-overview,
+            .panel-watchlist,
+            .panel-ai-insight {
+                grid-column: span 1;
+            }
+
+            .market-indices {
+                flex-direction: column;
+            }
+
+            h1 {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -112,7 +543,36 @@
         </main>
     </div>
 
-    <script src="static/script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('StockMaster UI Loaded');
+
+            // Add gentle 3D hover effects to cards matching the Portal style
+            const cards = document.querySelectorAll('.card');
+
+            cards.forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+
+                    const rotateX = ((y - centerY) / centerY) * -3;
+                    const rotateY = ((x - centerX) / centerX) * 3;
+
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.01)`;
+                    card.style.transition = 'none'; // remove transition for smooth tracking
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
+                    card.style.transition = 'all 0.4s ease'; // restore transition when leaving
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>
