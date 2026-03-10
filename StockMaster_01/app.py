@@ -4,7 +4,7 @@ import redis
 import json
 import sqlite3
 import os
-import google.generativeai as genai
+from google import genai
 from datetime import datetime
 from flask import Flask, render_template, jsonify, request
 
@@ -19,10 +19,7 @@ except Exception as e:
 
 # Gemini API 설정
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-# 모델 설정 (가장 가벼운 모델인 gemini-1.5-flash 권장)
-model = genai.GenerativeModel('gemini-1.5-flash')
+gemini_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
 DB_PATH = 'watchlist.db'
 
@@ -195,7 +192,10 @@ def api_portfolio_analysis():
 """
 
     try:
-        response = model.generate_content(prompt)
+        response = gemini_client.models.generate_content(
+            model='gemini-3.1-flash-lite-preview',
+            contents=prompt,
+        )
         analysis_text = response.text
         return jsonify({"success": True, "analysis": analysis_text})
     except Exception as e:
