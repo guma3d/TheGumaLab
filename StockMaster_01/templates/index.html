@@ -776,7 +776,8 @@
             setInterval(() => {
                 fetchMarketData();
                 fetchWatchlistData();
-            }, 60000); // 1 minute refresh period
+                fetchPortfolioAnalysis();
+            }, 300000); // 5 minute refresh period
 
             // Watchlist Add/Remove interactions
             const addForm = document.getElementById('add-form');
