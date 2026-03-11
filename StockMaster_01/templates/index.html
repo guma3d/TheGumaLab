@@ -700,7 +700,7 @@
             // Polling data functionality
             async function fetchMarketData() {
                 try {
-                    const res = await fetch('/StockMaster_01/api/market-indices');
+                    const res = await fetch(`/StockMaster_01/api/market-indices?t=${new Date().getTime()}`);
                     const data = await res.json();
 
                     const container = document.getElementById('market-indices-container');
@@ -734,7 +734,7 @@
 
             async function fetchWatchlistData() {
                 try {
-                    const res = await fetch('/StockMaster_01/api/watchlist');
+                    const res = await fetch(`/StockMaster_01/api/watchlist?t=${new Date().getTime()}`);
                     const data = await res.json();
 
                     const container = document.getElementById('watchlist-container');
@@ -784,7 +784,7 @@
                 try {
                     const container = document.getElementById('portfolio-analysis-container');
 
-                    const res = await fetch('/StockMaster_01/api/portfolio-analysis');
+                    const res = await fetch(`/StockMaster_01/api/portfolio-analysis?t=${new Date().getTime()}`);
                     const data = await res.json();
 
                     if (data.success) {
