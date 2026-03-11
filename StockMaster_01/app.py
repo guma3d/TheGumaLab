@@ -87,8 +87,9 @@ def fetch_stock_data(tickers, force_refresh=False):
                 
         try:
             stock = yf.Ticker(ticker)
-            # 가장 최근의 1일치 데이터 가져오기
-            hist = stock.history(period="2d")
+            # 5일치 데이터를 가져와서 휴일 등 결측치로 인한 데이터 부족 문제 해결
+            hist = stock.history(period="5d")
+            hist = hist.dropna(subset=['Close'])
             
             if len(hist) >= 2:
                 current_price = hist['Close'].iloc[-1]
@@ -104,7 +105,7 @@ def fetch_stock_data(tickers, force_refresh=False):
                     "price": float(round(current_price, 2)),
                     "change": float(round(change_percent, 2)),
                     "is_up": bool(change_percent >= 0),
-                    "currency": "₩" if ".KS" in ticker else "$",
+                    "currency": "₩" if any(x in ticker for x in [".KS", ".KQ", "^KS11", "^KQ11"]) else "$",
                     "shares": shares,
                     "total_value": round(current_price * shares, 2) if shares > 0 else 0.0
                 }
