@@ -9,6 +9,8 @@ from datetime import datetime
 from flask import Flask, render_template, jsonify, request
 import threading
 from apscheduler.schedulers.background import BackgroundScheduler
+import urllib.request
+import xml.etree.ElementTree as ET
 
 app = Flask(__name__)
 
@@ -222,6 +224,32 @@ def search_stock():
         print(f"Search API Error: {e}")
         return jsonify({"success": False, "error": "종목을 검색하는 데 실패했습니다. 다시 시도해주세요."})
 
+def fetch_latest_news_summary():
+    urls = {
+        "정치": "https://news.google.com/rss/headlines/section/topic/POLITICS?hl=ko&gl=KR&ceid=KR:ko",
+        "경제": "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=ko&gl=KR&ceid=KR:ko",
+        "사회": "https://news.google.com/rss/headlines/section/topic/NATION?hl=ko&gl=KR&ceid=KR:ko",
+        "주식": "https://news.google.com/rss/search?q=%EC%A3%BC%EC%8B%9D+when:24h&hl=ko&gl=KR&ceid=KR:ko",
+        "IT": "https://news.google.com/rss/headlines/section/topic/TECHNOLOGY?hl=ko&gl=KR&ceid=KR:ko"
+    }
+    
+    news_text = "최근 24시간 내 주요 뉴스 헤드라인 (각 분야별 5개, 총 25개):\n"
+    for cat, url in urls.items():
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=5) as response:
+                xml_data = response.read()
+            root = ET.fromstring(xml_data)
+            items = root.findall('.//item')[:5]
+            news_text += f"\n[{cat}]\n"
+            for item in items:
+                title = item.find('title').text
+                news_text += f"- {title}\n"
+        except Exception as e:
+            print(f"Error fetching news for {cat}: {e}")
+            news_text += f"\n[{cat}] (뉴스 데이터를 불러올 수 없습니다)\n"
+    return news_text
+
 def generate_portfolio_analysis():
     global latest_portfolio_analysis
     if not GEMINI_API_KEY:
@@ -244,19 +272,24 @@ def generate_portfolio_analysis():
             sign = "+" if item['is_up'] else ""
             portfolio_text += f"- {item['name']} ({item['ticker']}): {item['shares']}주 보유, 현재가 {item['currency']}{item['price']}, 등락률 {sign}{item['change']}%, 총 가치: {item['currency']}{item['total_value']}\n"
             
+        news_summary = fetch_latest_news_summary()
+
         prompt = f"""
-다음은 사용자의 현재 주식 관심 종목 리스트와 현재가, 등락률입니다.
+다음은 사용자의 현재 주식 관심 종목 리스트와 전체 포트폴리오 현황입니다.
 
 {portfolio_text}
 
-이 종목들을 포함한 관심 종목 포트폴리오를 분석해주세요.
+다음은 현재 24시간 내 발생한 공신력 있는 정치, 경제, 사회, 주식, IT 분야의 핵심 뉴스 헤드라인 25개입니다:
+{news_summary}
+
+이 종목들을 포함한 관심 종목 포트폴리오를 분석해주세요. 위 제공된 뉴스 데이터를 모두 꼼꼼히 읽어보고, 최신 정세와 뉴스를 바탕으로 분석 리포트에 반영해야 합니다.
 반드시 다음 세 가지 섹션으로 나누어 작성해주시고, 각 섹션의 시작은 대괄호를 사용한 지정된 제목으로 명시해주세요:
 
 [Current Portfolio Status]
 현재 상황에 대한 핵심 요약 (2~3 문단).
 
 [Market News & Portfolio Direction]
-인공지능이 파악한 최근 시장 및 관련된 최신 경제/기술 뉴스와 근황을 적극적으로 반영하여, 이 포트폴리오가 나아가야 할 방향성과 주요 이슈 분석 (2~3 문단).
+제공된 25개의 최신 경제/정치/기술/주식/사회 뉴스를 적극적으로 종합하여, 현재 이 포트폴리오가 나아가야 할 방향성과 주의해야 할 주요 거시적/미시적 이슈 분석 (2~3 문단).
 
 [Recommended Modifications]
 가장 주목할 만한 종목 1개를 골라서 핵심 이유와 함께 추천하거나, 포트폴리오의 대략적인 개선 방향을 짧게 제시.
