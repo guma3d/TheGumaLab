@@ -1,0 +1,24 @@
+#!/bin/sh
+
+COMMIT_MSG_FILE=$1
+
+# 이전에 작성된 기기 접두사가 이미 존재하는지 확인합니다. (amend 등 중복 방지)
+if grep -qE "^(\(Gram\)|\(SurfacePro\))" "$COMMIT_MSG_FILE"; then
+    exit 0
+fi
+
+# 현재 PC의 호스트 이름을 가져옵니다.
+HOSTNAME=$(hostname)
+
+# guma3d-n 이면 Gram, 그 외에는 SurfacePro 를 할당합니다.
+if [ "$HOSTNAME" = "guma3d-n" ]; then
+    PREFIX="(Gram)"
+else
+    PREFIX="(SurfacePro)"
+fi
+
+# 기존 커밋 메시지 내용의 맨 앞에 접두사를 삽입합니다.
+TEMP=$(mktemp)
+echo "$PREFIX $(cat "$COMMIT_MSG_FILE")" > "$TEMP"
+cat "$TEMP" > "$COMMIT_MSG_FILE"
+rm "$TEMP"
