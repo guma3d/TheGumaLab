@@ -487,6 +487,18 @@
             background: rgba(16, 185, 129, 0.1);
             padding: 0.2rem 0.5rem;
             border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .market-badge {
+            font-size: 0.65rem;
+            background: var(--accent-color);
+            color: #111;
+            padding: 0.15rem 0.3rem;
+            border-radius: 3px;
+            font-weight: 700;
         }
 
         /* AI Panel */
@@ -866,9 +878,10 @@
                         data.results.forEach(stock => {
                             const item = document.createElement('div');
                             item.className = 'search-result-item';
+                            const marketStr = stock.market ? `<span class="market-badge">${stock.market}</span>` : '';
                             item.innerHTML = `
                                 <span class="search-result-name">${stock.name}</span>
-                                <span class="search-result-ticker">${stock.ticker}</span>
+                                <span class="search-result-ticker">${marketStr} ${stock.ticker}</span>
                             `;
                             item.addEventListener('click', () => {
                                 addStockToWatchlist(stock.ticker, stock.name);

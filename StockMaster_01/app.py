@@ -210,13 +210,15 @@ def search_stock():
         return jsonify({"success": False, "error": "Gemini API Key가 설정되지 않아 검색 기능을 사용할 수 없습니다."})
         
     prompt = f"""
-사용자가 입력한 주식 검색어: '{query}'
-이 검색어에 해당하는 주식 시장의 Ticker 심볼(Yahoo Finance 기준)과 영문 공식 회사 이름을 찾아주세요.
+사용자가 입력한 주식 검색어 또는 주식 코드(숫자 6자리): '{query}'
+이 검색어/코드에 해당하는 주식 시장의 Ticker 심볼(Yahoo Finance 기준)과 영문 공식 회사 이름을 찾아주세요. (주식 코드가 입력되면 반드시 해당 코드를 가진 종목을 최우선으로 찾아주세요)
 관련된 종목이 있다면 가장 연관성이 높은 순서대로 1개에서 최대 3개까지 찾아주세요.
-(한국 주식인 경우 KOSPI는 '.KS', 코스닥은 '.KQ'를 붙여주세요. 예: 005930.KS)
+(한국 주식인 경우 KOSPI는 '.KS', 코스닥은 '.KQ'를 Ticker에 붙여주세요. 숫자 코드가 들어온 경우 무조건 한국 주식입니다. 예: 005930 -> 005930.KS)
+추가로 이 종목이 소속된 국가/시장을 'market' 필드에 '한국(KOR)' 또는 '미국(USA)' 등으로 명시해주세요.
 반드시 아래와 같은 JSON 배열 형식으로만 응답해야 합니다. 다른 텍스트는 절대로 포함하지 마세요:
 [
-  {{"ticker": "TSLA", "name": "Tesla, Inc."}}
+  {{"ticker": "TSLA", "name": "Tesla, Inc.", "market": "USA"}},
+  {{"ticker": "005930.KS", "name": "Samsung Electronics", "market": "KOR"}}
 ]
 """
     try:
