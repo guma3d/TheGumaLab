@@ -89,13 +89,25 @@ def fetch_stock_data(tickers, force_refresh=False):
                 
         try:
             stock = yf.Ticker(ticker)
-            # 5일치 데이터를 가져와서 휴일 등 결측치로 인한 데이터 부족 문제 해결
-            hist = stock.history(period="5d")
-            hist = hist.dropna(subset=['Close'])
+            current_price = None
+            prev_close = None
             
-            if len(hist) >= 2:
-                current_price = hist['Close'].iloc[-1]
-                prev_close = hist['Close'].iloc[-2]
+            # 1. fast_info를 통해 장전/장후(프리마켓/애프터마켓) 실시간 가격 우선 추출
+            try:
+                current_price = getattr(stock.fast_info, 'lastPrice', stock.fast_info.get('lastPrice', None))
+                prev_close = getattr(stock.fast_info, 'previousClose', stock.fast_info.get('previousClose', None))
+            except Exception:
+                pass
+                
+            # 2. fast_info 추출 실패 시 일반 history(prepost=True) 로 백업 데이터 호출
+            if current_price is None or prev_close is None:
+                hist = stock.history(period="5d", prepost=True)
+                hist = hist.dropna(subset=['Close'])
+                if len(hist) >= 2:
+                    current_price = hist['Close'].iloc[-1]
+                    prev_close = hist['Close'].iloc[-2]
+            
+            if current_price is not None and prev_close is not None:
                 
                 # 등락률 계산
                 change_percent = ((current_price - prev_close) / prev_close) * 100
