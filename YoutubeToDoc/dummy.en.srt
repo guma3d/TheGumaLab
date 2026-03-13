@@ -1,0 +1,1176 @@
+1
+00:00:00,160 --> 00:00:03,200
+In this video, I'm going to walk you
+
+2
+00:00:01,360 --> 00:00:04,799
+through the deformers that exist inside
+
+3
+00:00:03,200 --> 00:00:06,240
+of Unreal Engine. These are GPU
+
+4
+00:00:04,799 --> 00:00:08,240
+deformers, which means they're very
+
+5
+00:00:06,240 --> 00:00:09,360
+fast, very easy to work with, and we've
+
+6
+00:00:08,240 --> 00:00:11,679
+got a couple different ones to choose
+
+7
+00:00:09,360 --> 00:00:14,400
+from. Let's dive in. So, here I'm using
+
+8
+00:00:11,679 --> 00:00:16,400
+shot 80. It is a more involved shot with
+
+9
+00:00:14,400 --> 00:00:18,240
+a bunch of different characters. And
+
+10
+00:00:16,400 --> 00:00:19,840
+unlike most of the other examples I've
+
+11
+00:00:18,240 --> 00:00:21,680
+been filming so far and, you know,
+
+12
+00:00:19,840 --> 00:00:24,080
+showing you these different tools and
+
+13
+00:00:21,680 --> 00:00:26,560
+workflows, I'm not going to go into the
+
+14
+00:00:24,080 --> 00:00:28,720
+live control rigs. We totally could, but
+
+15
+00:00:26,560 --> 00:00:30,640
+in this case, I'm just going to use the
+
+16
+00:00:28,720 --> 00:00:32,399
+baked animation subsequence. I'm going
+
+17
+00:00:30,640 --> 00:00:35,040
+to jump right in here. We've got all of
+
+18
+00:00:32,399 --> 00:00:37,840
+our characters ready to go. And I'm just
+
+19
+00:00:35,040 --> 00:00:39,280
+going to grab an beta here. I'm also
+
+20
+00:00:37,840 --> 00:00:41,440
+going to add a camera cut track just so
+
+21
+00:00:39,280 --> 00:00:44,559
+I can get out of the camera view and go
+
+22
+00:00:41,440 --> 00:00:46,160
+find him over here.
+
+23
+00:00:44,559 --> 00:00:48,480
+And I'm going to show you how to add
+
+24
+00:00:46,160 --> 00:00:50,640
+deformers onto, you know, whether you
+
+25
+00:00:48,480 --> 00:00:52,320
+have a control rig or animation
+
+26
+00:00:50,640 --> 00:00:54,320
+sequence, it doesn't matter. What I'm
+
+27
+00:00:52,320 --> 00:00:56,559
+going to do is I just need to find a
+
+28
+00:00:54,320 --> 00:00:58,800
+skeletal mesh actor in my sequencer,
+
+29
+00:00:56,559 --> 00:00:59,920
+which we have here. So, for beta, so
+
+30
+00:00:58,800 --> 00:01:02,320
+here towards the beginning of the shot,
+
+31
+00:00:59,920 --> 00:01:03,840
+he's not so preoccupied. Uh, I'm going
+
+32
+00:01:02,320 --> 00:01:05,760
+to grab his character. I'm going to go
+
+33
+00:01:03,840 --> 00:01:08,720
+to add, and I'm going to add a control
+
+34
+00:01:05,760 --> 00:01:11,680
+rig, but I'm not going to add just like
+
+35
+00:01:08,720 --> 00:01:13,360
+a regular like body posing control rig.
+
+36
+00:01:11,680 --> 00:01:16,240
+I actually want to grab a deformer from
+
+37
+00:01:13,360 --> 00:01:17,759
+the control rig menu. Now you can scroll
+
+38
+00:01:16,240 --> 00:01:19,520
+around and you'll find some of them in
+
+39
+00:01:17,759 --> 00:01:20,799
+here. But if you also want to filter,
+
+40
+00:01:19,520 --> 00:01:23,840
+you can also hit this little filter
+
+41
+00:01:20,799 --> 00:01:26,479
+button and you can specify like I want
+
+42
+00:01:23,840 --> 00:01:28,240
+to find, for example, a deformer or
+
+43
+00:01:26,479 --> 00:01:29,840
+deformer utility. But if I hit the
+
+44
+00:01:28,240 --> 00:01:31,439
+little check marks for deformer, I now
+
+45
+00:01:29,840 --> 00:01:32,960
+have a little button that'll filter by
+
+46
+00:01:31,439 --> 00:01:35,439
+deformers. So that'll make it a little
+
+47
+00:01:32,960 --> 00:01:36,880
+bit quicker. So this will show some of
+
+48
+00:01:35,439 --> 00:01:38,640
+the ones we're going to cover today. I'm
+
+49
+00:01:36,880 --> 00:01:42,240
+going to show you first the sculpt
+
+50
+00:01:38,640 --> 00:01:45,280
+deformer. a sculpt deformer once I add
+
+51
+00:01:42,240 --> 00:01:46,960
+it on here will put this into my scene.
+
+52
+00:01:45,280 --> 00:01:49,280
+So right here we have CRD which stands
+
+53
+00:01:46,960 --> 00:01:51,360
+for control rig deformer sculpt
+
+54
+00:01:49,280 --> 00:01:54,880
+deformer. Twirl that open and we have a
+
+55
+00:01:51,360 --> 00:01:57,119
+few different pieces of it. Um if I make
+
+56
+00:01:54,880 --> 00:01:59,360
+sure that my uh you know my game mode
+
+57
+00:01:57,119 --> 00:02:01,119
+stuff is off. I need to back out and
+
+58
+00:01:59,360 --> 00:02:04,399
+turn off the lighting. There's a lot of
+
+59
+00:02:01,119 --> 00:02:06,640
+extra icons in the way. I also turn off
+
+60
+00:02:04,399 --> 00:02:09,039
+effects. That's going to get rid of some
+
+61
+00:02:06,640 --> 00:02:10,560
+of the spark Niagara elements. clear
+
+62
+00:02:09,039 --> 00:02:13,360
+things up a little bit. So, back to my
+
+63
+00:02:10,560 --> 00:02:15,200
+animation sequence. Um, once we add the
+
+64
+00:02:13,360 --> 00:02:17,360
+sculpt deformer, it's going to add this
+
+65
+00:02:15,200 --> 00:02:19,440
+little ball
+
+66
+00:02:17,360 --> 00:02:20,800
+around the character's waist. And the
+
+67
+00:02:19,440 --> 00:02:22,080
+sculpt deformer comes in three pieces.
+
+68
+00:02:20,800 --> 00:02:24,239
+We have the sculpt deformer, the handle,
+
+69
+00:02:22,080 --> 00:02:25,680
+and the mask. So, the sculpt deformer
+
+70
+00:02:24,239 --> 00:02:27,280
+itself, this is the thing we want to
+
+71
+00:02:25,680 --> 00:02:30,080
+move around. And this is what's going to
+
+72
+00:02:27,280 --> 00:02:31,840
+control kind of where our deformations
+
+73
+00:02:30,080 --> 00:02:34,560
+are living. So, I'm just going to place
+
+74
+00:02:31,840 --> 00:02:36,720
+this on his head for now. And I'll make
+
+75
+00:02:34,560 --> 00:02:38,959
+it a little bit smaller so you can
+
+76
+00:02:36,720 --> 00:02:40,480
+really localize the effect in just a
+
+77
+00:02:38,959 --> 00:02:42,720
+moment.
+
+78
+00:02:40,480 --> 00:02:44,959
+And then we also have the handle. Now
+
+79
+00:02:42,720 --> 00:02:46,239
+the handle is this little blue ball on
+
+80
+00:02:44,959 --> 00:02:49,360
+top. And this is the thing that's going
+
+81
+00:02:46,239 --> 00:02:51,040
+to actually make it fun. Off the bat,
+
+82
+00:02:49,360 --> 00:02:53,040
+you can see what we're doing, right? So
+
+83
+00:02:51,040 --> 00:02:55,040
+I can kind of pull this up. If I take
+
+84
+00:02:53,040 --> 00:02:57,200
+the sculpt deformer and make it larger,
+
+85
+00:02:55,040 --> 00:02:59,280
+you're going to see that it, you know,
+
+86
+00:02:57,200 --> 00:03:01,360
+it affects a lot more of his head. Grab
+
+87
+00:02:59,280 --> 00:03:03,280
+the handle again. Oops, that's not the
+
+88
+00:03:01,360 --> 00:03:07,200
+handle. This is the handle. If I could
+
+89
+00:03:03,280 --> 00:03:09,760
+grab it. Here we go. And there you go.
+
+90
+00:03:07,200 --> 00:03:12,640
+This is a sculpted deformer. It allows
+
+91
+00:03:09,760 --> 00:03:14,640
+you to just make little cosmetic changes
+
+92
+00:03:12,640 --> 00:03:17,120
+to a mesh. And what's really cool about
+
+93
+00:03:14,640 --> 00:03:20,000
+it is how fast it is, right? You can do
+
+94
+00:03:17,120 --> 00:03:21,519
+this on a metahuman. The really advanced
+
+95
+00:03:20,000 --> 00:03:23,360
+realistic characters. This works on
+
+96
+00:03:21,519 --> 00:03:24,640
+them, too.
+
+97
+00:03:23,360 --> 00:03:27,760
+So, if he gets, you know, hit in the
+
+98
+00:03:24,640 --> 00:03:30,959
+head by a robot, you can just punch his
+
+99
+00:03:27,760 --> 00:03:33,920
+head in. Very cartoony. Um, but this
+
+100
+00:03:30,959 --> 00:03:36,640
+works on any skeletal mesh character or
+
+101
+00:03:33,920 --> 00:03:38,480
+asset, period. Um, because it's
+
+102
+00:03:36,640 --> 00:03:40,480
+GPUbound, it's very fast, very
+
+103
+00:03:38,480 --> 00:03:41,680
+lightweight. You can do this. You can do
+
+104
+00:03:40,480 --> 00:03:43,599
+multiple of these. You can do all kinds
+
+105
+00:03:41,680 --> 00:03:45,840
+of cool stuff with them. Um, you can
+
+106
+00:03:43,599 --> 00:03:47,599
+also change the fall-off. So, if I go
+
+107
+00:03:45,840 --> 00:03:48,879
+back to the sculpt former itself, we
+
+108
+00:03:47,599 --> 00:03:50,560
+have some different attributes in the
+
+109
+00:03:48,879 --> 00:03:52,480
+anim.
+
+110
+00:03:50,560 --> 00:03:57,200
+For example, we have the fall-off, which
+
+111
+00:03:52,480 --> 00:04:00,159
+will adjust sort of how that handle is
+
+112
+00:03:57,200 --> 00:04:01,840
+going to propagate throughout the ball.
+
+113
+00:04:00,159 --> 00:04:04,000
+We also have the side fall-off, which is
+
+114
+00:04:01,840 --> 00:04:07,040
+sort of the outer bounds to feather the
+
+115
+00:04:04,000 --> 00:04:09,760
+change beyond the bounds of the circle
+
+116
+00:04:07,040 --> 00:04:13,280
+or the sphere. Um, things like that. We
+
+117
+00:04:09,760 --> 00:04:14,959
+have an aim mode, which is sort of uh
+
+118
+00:04:13,280 --> 00:04:16,400
+whether this thing is like pointing in
+
+119
+00:04:14,959 --> 00:04:17,440
+that direction. I can show you if I go
+
+120
+00:04:16,400 --> 00:04:22,400
+back to the sculpture former, we have
+
+121
+00:04:17,440 --> 00:04:24,880
+aim mode. So that kind of spins the
+
+122
+00:04:22,400 --> 00:04:28,240
+normal direction
+
+123
+00:04:24,880 --> 00:04:29,759
+of the deformer as a whole. So if you
+
+124
+00:04:28,240 --> 00:04:33,120
+can kind of keep what's happening here
+
+125
+00:04:29,759 --> 00:04:34,560
+in your mind, his head's like, you know,
+
+126
+00:04:33,120 --> 00:04:36,639
+boom, boom, boom, boom. He's kind of
+
+127
+00:04:34,560 --> 00:04:39,919
+doing like a headbang.
+
+128
+00:04:36,639 --> 00:04:41,759
+But if I switch the deformer back to no
+
+129
+00:04:39,919 --> 00:04:43,680
+aim mode, you can see that when I mess
+
+130
+00:04:41,759 --> 00:04:45,600
+with the handle, it's a little bit
+
+131
+00:04:43,680 --> 00:04:47,360
+different. Anyways, there's also the
+
+132
+00:04:45,600 --> 00:04:50,240
+weight, which is that if you have this
+
+133
+00:04:47,360 --> 00:04:53,199
+thing turned on like that, you can just
+
+134
+00:04:50,240 --> 00:04:54,639
+kind of deactivate the thing overall.
+
+135
+00:04:53,199 --> 00:04:56,720
+So, you just have it not active and then
+
+136
+00:04:54,639 --> 00:04:57,840
+active later. And you can do all kinds
+
+137
+00:04:56,720 --> 00:05:00,000
+of crazy stuff with this. You can have
+
+138
+00:04:57,840 --> 00:05:01,759
+the sculpt deformer, you know, you can
+
+139
+00:05:00,000 --> 00:05:03,360
+you can constrain it to stuff. You can
+
+140
+00:05:01,759 --> 00:05:04,639
+attach it to things. You can leave it
+
+141
+00:05:03,360 --> 00:05:06,639
+somewhere so that when a character's
+
+142
+00:05:04,639 --> 00:05:08,720
+hand comes into contact, things happen.
+
+143
+00:05:06,639 --> 00:05:11,199
+You can also specify, hey, you know,
+
+144
+00:05:08,720 --> 00:05:13,120
+don't affect the entire character. just
+
+145
+00:05:11,199 --> 00:05:15,280
+a fake, you know, mess with the head up
+
+146
+00:05:13,120 --> 00:05:17,520
+to the neck for example. And that's what
+
+147
+00:05:15,280 --> 00:05:20,720
+this is here. This mask bone picker via
+
+148
+00:05:17,520 --> 00:05:23,680
+space switcher. It uses spaces and uh
+
+149
+00:05:20,720 --> 00:05:26,720
+masking over here, bone masks to sort of
+
+150
+00:05:23,680 --> 00:05:28,080
+limit where this can affect things.
+
+151
+00:05:26,720 --> 00:05:29,520
+That's something that I'm covering in
+
+152
+00:05:28,080 --> 00:05:31,680
+YouTube videos on my channel. I've got
+
+153
+00:05:29,520 --> 00:05:33,440
+that in my classes. But, um, we've got
+
+154
+00:05:31,680 --> 00:05:35,120
+more deformers to go into. So, I'm going
+
+155
+00:05:33,440 --> 00:05:37,440
+to keep moving forward. Now, I can just
+
+156
+00:05:35,120 --> 00:05:39,520
+delete this deformer off the character.
+
+157
+00:05:37,440 --> 00:05:41,840
+Let's do another one. I'll take beta.
+
+158
+00:05:39,520 --> 00:05:43,600
+I'll add another control rig and this
+
+159
+00:05:41,840 --> 00:05:46,080
+time I'll filter by deformer again and
+
+160
+00:05:43,600 --> 00:05:48,160
+I'll grab a lattice. Now the lattice you
+
+161
+00:05:46,080 --> 00:05:50,320
+may have noticed in a previous shot that
+
+162
+00:05:48,160 --> 00:05:52,240
+was actually in when he grabs the door
+
+163
+00:05:50,320 --> 00:05:54,800
+and he smashes the door into the floor.
+
+164
+00:05:52,240 --> 00:05:56,880
+We get that slow motion moment. Um there
+
+165
+00:05:54,800 --> 00:06:00,080
+was a lattice on the door and this was
+
+166
+00:05:56,880 --> 00:06:02,000
+how that was done. So the deformer for
+
+167
+00:06:00,080 --> 00:06:04,319
+the lattice, same kind of thing. We have
+
+168
+00:06:02,000 --> 00:06:06,720
+the deformer as a whole. So, we have a
+
+169
+00:06:04,319 --> 00:06:08,800
+controller to be able to position the
+
+170
+00:06:06,720 --> 00:06:10,720
+whole thing and figure out where you
+
+171
+00:06:08,800 --> 00:06:12,720
+want it, which can be very, very handy
+
+172
+00:06:10,720 --> 00:06:14,639
+because you kind of want to set this
+
+173
+00:06:12,720 --> 00:06:16,880
+thing up. And then we have all the
+
+174
+00:06:14,639 --> 00:06:18,479
+individual points. And so, this is going
+
+175
+00:06:16,880 --> 00:06:21,840
+to do exactly what you'd probably
+
+176
+00:06:18,479 --> 00:06:26,000
+expect. It's going to warp and skew the
+
+177
+00:06:21,840 --> 00:06:28,800
+character based on uh, you know, where
+
+178
+00:06:26,000 --> 00:06:31,360
+they fall within the box. So, if I come
+
+179
+00:06:28,800 --> 00:06:33,520
+over here, if I just grab this, maybe
+
+180
+00:06:31,360 --> 00:06:35,280
+I'll grab this one. Um, if there's
+
+181
+00:06:33,520 --> 00:06:37,759
+nothing in that section, nothing really
+
+182
+00:06:35,280 --> 00:06:39,520
+gets affected. And if I go over here,
+
+183
+00:06:37,759 --> 00:06:41,120
+see there's the hand, there's the wrist.
+
+184
+00:06:39,520 --> 00:06:44,160
+And the crazy thing about this is like
+
+185
+00:06:41,120 --> 00:06:47,360
+this is a 3D deformer effect. And all
+
+186
+00:06:44,160 --> 00:06:49,199
+the animation still works,
+
+187
+00:06:47,360 --> 00:06:51,840
+right? So, we've got all this like weird
+
+188
+00:06:49,199 --> 00:06:54,720
+wiggly animation happening now. But it's
+
+189
+00:06:51,840 --> 00:06:56,479
+important to keep in mind, see how this
+
+190
+00:06:54,720 --> 00:06:59,199
+hand is being pulled and stretched like
+
+191
+00:06:56,479 --> 00:07:01,599
+crazy. The robot is not. The reason for
+
+192
+00:06:59,199 --> 00:07:04,080
+this, right? So they're the robots are
+
+193
+00:07:01,599 --> 00:07:05,680
+not being affected by all this because
+
+194
+00:07:04,080 --> 00:07:08,319
+the robots don't have the deformer
+
+195
+00:07:05,680 --> 00:07:10,240
+applied to them. This is applied only to
+
+196
+00:07:08,319 --> 00:07:12,080
+this one skeletal mesh. If I wanted this
+
+197
+00:07:10,240 --> 00:07:14,160
+to affect the robot, I could probably
+
+198
+00:07:12,080 --> 00:07:16,880
+copy paste this lattice onto the robot
+
+199
+00:07:14,160 --> 00:07:19,039
+or make a similar one. You I could I you
+
+200
+00:07:16,880 --> 00:07:20,880
+could add this lattice with the same
+
+201
+00:07:19,039 --> 00:07:22,080
+defformations onto different characters
+
+202
+00:07:20,880 --> 00:07:24,240
+and then you would get it on all of
+
+203
+00:07:22,080 --> 00:07:26,720
+them. But this is sort of a per
+
+204
+00:07:24,240 --> 00:07:29,360
+character control rig. So it it gives
+
+205
+00:07:26,720 --> 00:07:31,680
+you very granular control. Uh, I can
+
+206
+00:07:29,360 --> 00:07:33,840
+also mute it so I can kind of see before
+
+207
+00:07:31,680 --> 00:07:35,759
+and after. And it's important to keep in
+
+208
+00:07:33,840 --> 00:07:37,599
+mind that with a lattice, this is
+
+209
+00:07:35,759 --> 00:07:38,639
+definitely a later in the game thing.
+
+210
+00:07:37,599 --> 00:07:40,400
+You do this when you're kind of done
+
+211
+00:07:38,639 --> 00:07:42,800
+with animation because if I take the
+
+212
+00:07:40,400 --> 00:07:45,039
+lattice and move it around, I can kind
+
+213
+00:07:42,800 --> 00:07:47,680
+of move the whole character through it,
+
+214
+00:07:45,039 --> 00:07:49,360
+which is really interesting and weird.
+
+215
+00:07:47,680 --> 00:07:52,080
+Um, but that's why it's it's kind of
+
+216
+00:07:49,360 --> 00:07:53,280
+helpful to know, you know, where your
+
+217
+00:07:52,080 --> 00:07:55,599
+character's going to be and what the
+
+218
+00:07:53,280 --> 00:07:57,120
+animation is going to end up before you
+
+219
+00:07:55,599 --> 00:07:59,199
+deal with this. Because if I put this
+
+220
+00:07:57,120 --> 00:08:01,919
+here and start animating, the character
+
+221
+00:07:59,199 --> 00:08:03,120
+is going to move through it. So anyway,
+
+222
+00:08:01,919 --> 00:08:04,800
+you do the animation first, then you do
+
+223
+00:08:03,120 --> 00:08:06,560
+the lattice later, and you can see it
+
+224
+00:08:04,800 --> 00:08:08,000
+does not affect the robots. So that is a
+
+225
+00:08:06,560 --> 00:08:09,680
+lattice deformer. And then one more I
+
+226
+00:08:08,000 --> 00:08:11,919
+want to cover super super fast, and that
+
+227
+00:08:09,680 --> 00:08:15,039
+is if I go back to beta and I go to
+
+228
+00:08:11,919 --> 00:08:16,319
+control rig deformer, we have the camera
+
+229
+00:08:15,039 --> 00:08:17,919
+space lattice. Now, this is what I'm
+
+230
+00:08:16,319 --> 00:08:20,319
+just going to kind of glaze over, but we
+
+231
+00:08:17,919 --> 00:08:22,240
+have a camera space lattice, which is
+
+232
+00:08:20,319 --> 00:08:24,400
+down here at the feet. This one is
+
+233
+00:08:22,240 --> 00:08:25,680
+designed to be constrained to a camera.
+
+234
+00:08:24,400 --> 00:08:29,280
+So, if I go ahead and just say, hey,
+
+235
+00:08:25,680 --> 00:08:30,560
+constraint parent constraint camera. And
+
+236
+00:08:29,280 --> 00:08:31,919
+uh what I want to do is I want to get
+
+237
+00:08:30,560 --> 00:08:34,159
+rid of the offset. So, I can right click
+
+238
+00:08:31,919 --> 00:08:35,919
+on the constraint. I can turn off the
+
+239
+00:08:34,159 --> 00:08:38,399
+offset. Boop. So, now you can see that
+
+240
+00:08:35,919 --> 00:08:40,880
+it kind of moves with the camera as the
+
+241
+00:08:38,399 --> 00:08:43,519
+camera moves around. And if I look
+
+242
+00:08:40,880 --> 00:08:45,600
+through the camera,
+
+243
+00:08:43,519 --> 00:08:47,760
+I have this little uh this little
+
+244
+00:08:45,600 --> 00:08:50,160
+window. Now, the the scale is a little
+
+245
+00:08:47,760 --> 00:08:52,480
+bit off. I need to adjust for aspect
+
+246
+00:08:50,160 --> 00:08:54,080
+ratio and and things like that. So here
+
+247
+00:08:52,480 --> 00:08:56,480
+I have an aspect ratio and a field of
+
+248
+00:08:54,080 --> 00:08:59,360
+view slider that I can I can play with
+
+249
+00:08:56,480 --> 00:09:02,720
+to get the exact settings that I need.
+
+250
+00:08:59,360 --> 00:09:04,560
+But if I just kind of bump this up close
+
+251
+00:09:02,720 --> 00:09:06,800
+enough so that you can see it. But now
+
+252
+00:09:04,560 --> 00:09:10,080
+what I'm able to do is sort of take this
+
+253
+00:09:06,800 --> 00:09:12,320
+this lattice itself and adjust it. So
+
+254
+00:09:10,080 --> 00:09:14,640
+I'm going to grab my soft selection.
+
+255
+00:09:12,320 --> 00:09:17,120
+I'll grab some points here and I'll just
+
+256
+00:09:14,640 --> 00:09:19,680
+kind of I'll move it around. And so if I
+
+257
+00:09:17,120 --> 00:09:22,080
+want to get some squash and stretch and
+
+258
+00:09:19,680 --> 00:09:23,680
+just like, you know, smear frames
+
+259
+00:09:22,080 --> 00:09:27,920
+essentially, you can see that I'm now
+
+260
+00:09:23,680 --> 00:09:29,360
+able to sculpt the actual like rig from
+
+261
+00:09:27,920 --> 00:09:31,279
+this camera's perspective. And you can
+
+262
+00:09:29,360 --> 00:09:34,160
+see that it's a bit weird, right? He's
+
+263
+00:09:31,279 --> 00:09:36,720
+all warped and bizarre. And that is a 3D
+
+264
+00:09:34,160 --> 00:09:40,560
+effect that is actually happening to the
+
+265
+00:09:36,720 --> 00:09:42,720
+character based on that that sort of
+
+266
+00:09:40,560 --> 00:09:44,320
+projection, which is really interesting.
+
+267
+00:09:42,720 --> 00:09:46,480
+And so once again, that's only applying
+
+268
+00:09:44,320 --> 00:09:48,800
+to a single character. I'd need to do
+
+269
+00:09:46,480 --> 00:09:50,640
+the work and then apply this to other
+
+270
+00:09:48,800 --> 00:09:52,640
+rigs as well. But the deformers are
+
+271
+00:09:50,640 --> 00:09:54,160
+really, really cool. And the main one
+
+272
+00:09:52,640 --> 00:09:55,920
+that I am going to recommend that you
+
+273
+00:09:54,160 --> 00:09:58,000
+probably want to play with is if I get
+
+274
+00:09:55,920 --> 00:09:59,600
+rid of this, uh, I can just go to my
+
+275
+00:09:58,000 --> 00:10:02,000
+character, any character, and you're
+
+276
+00:09:59,600 --> 00:10:03,760
+going to just add the sculpt deformer.
+
+277
+00:10:02,000 --> 00:10:05,600
+That is probably the one you want to
+
+278
+00:10:03,760 --> 00:10:07,760
+mess with. It is the easiest one to get
+
+279
+00:10:05,600 --> 00:10:10,160
+the hang of and by far the most
+
+280
+00:10:07,760 --> 00:10:11,040
+satisfying most of the time anyways,
+
+281
+00:10:10,160 --> 00:10:13,120
+right? Because that's the one that's
+
+282
+00:10:11,040 --> 00:10:14,959
+giving you this really fun like cartoony
+
+283
+00:10:13,120 --> 00:10:17,519
+effect. Just keep in mind that you might
+
+284
+00:10:14,959 --> 00:10:19,200
+want to scale it up or down to localize
+
+285
+00:10:17,519 --> 00:10:22,560
+the effects. So, if you're trying to get
+
+286
+00:10:19,200 --> 00:10:24,000
+it to uh be some kind of fun like Looney
+
+287
+00:10:22,560 --> 00:10:25,920
+Tunes impact, you're going to want to
+
+288
+00:10:24,000 --> 00:10:29,320
+make it quite a bit smaller than it
+
+289
+00:10:25,920 --> 00:10:29,320
+comes in at
+
+290
+00:10:29,760 --> 00:10:33,600
+and then play with the handle to do all
+
+291
+00:10:31,680 --> 00:10:35,360
+the fun stuff. But yeah, between the
+
+292
+00:10:33,600 --> 00:10:37,279
+sculpt tool and the lattice, you've got
+
+293
+00:10:35,360 --> 00:10:39,680
+a lot of fun stuff to play with. So
+
+294
+00:10:37,279 --> 00:10:39,680
+enjoy.
+

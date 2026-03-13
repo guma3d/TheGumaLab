@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home Server Portal</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=4">
     <!-- 아이콘을 위한 FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -25,61 +25,44 @@
             <!-- 카드 1: 서버 상태 -->
             <a href="/ServerStatus/" class="card" id="card-status">
                 <div class="status-dot"></div>
-                <div class="icon-box">
-                    <i class="fa-solid fa-server"></i>
+                <div class="card-header">
+                    <div class="icon-box"><i class="fa-solid fa-server"></i></div>
+                    <h2 class="card-title">Server Status</h2>
                 </div>
-                <h2 class="card-title">Server Status</h2>
                 <p class="card-desc">Real-time monitoring of system resources, uptime, and performance metrics.</p>
             </a>
 
-            <!-- 카드 2: 유튜브 분석기 -->
-            <a href="/YoutubeAnalyzer/" class="card" id="card-youtube">
-                <div class="status-dot"></div>
-                <div class="icon-box">
-                    <i class="fa-brands fa-youtube"></i>
-                </div>
-                <h2 class="card-title">Youtube Analyzer</h2>
-                <p class="card-desc">AI-powered transcript extraction and analysis tool for YouTube videos.</p>
-            </a>
+
 
             <!-- 카드 3: 이미지 분석기 -->
             <a href="/ImageAnalyzer/" class="card" id="card-image">
                 <div class="status-dot"></div>
-                <div class="icon-box">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <div class="card-header">
+                    <div class="icon-box"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <h2 class="card-title">Image Analyzer</h2>
                 </div>
-                <h2 class="card-title">Image Analyzer</h2>
-                <p class="card-desc">Advanced image analysis tool extracting brightness, saturation, and other metrics.
-                </p>
+                <p class="card-desc">Advanced image analysis tool extracting brightness, saturation, and other metrics.</p>
             </a>
 
-            <!-- 카드 4: Nginx 대시보드 (추후 사용) -->
-            <a href="/Nginx/" class="card" id="card-nginx">
-                <div class="status-dot"></div> <!-- 예시: 초기에는 오프라인일 수 있음 -->
-                <div class="icon-box">
-                    <i class="fa-solid fa-network-wired"></i>
-                </div>
-                <h2 class="card-title">Nginx Controller</h2>
-                <p class="card-desc">Manage reverse proxy settings, traffic routing, and server configurations.</p>
-            </a>
+
 
             <!-- 카드 5: YoutubeToDoc -->
             <a href="/YoutubeToDoc/" class="card" id="card-youtubetodoc">
                 <div class="status-dot"></div>
-                <div class="icon-box">
-                    <i class="fa-solid fa-file-lines"></i>
+                <div class="card-header">
+                    <div class="icon-box"><i class="fa-solid fa-file-lines"></i></div>
+                    <h2 class="card-title">YoutubeToDoc</h2>
                 </div>
-                <h2 class="card-title">YoutubeToDoc</h2>
                 <p class="card-desc">Converts YouTube videos into premium organized documents automatically.</p>
             </a>
 
             <!-- 카드 6: StockMaster -->
             <a href="/StockMaster_01/" class="card" id="card-stockmaster">
                 <div class="status-dot"></div>
-                <div class="icon-box">
-                    <i class="fa-solid fa-chart-line"></i>
+                <div class="card-header">
+                    <div class="icon-box"><i class="fa-solid fa-chart-line"></i></div>
+                    <h2 class="card-title">StockMaster</h2>
                 </div>
-                <h2 class="card-title">StockMaster</h2>
                 <p class="card-desc">AI-powered personalized stock monitoring and trend analysis dashboard.</p>
             </a>
         </main>

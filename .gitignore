@@ -5,5 +5,6 @@ YoutubeToDoc/qdrant_data/
 YoutubeToDoc/yt-dlp-cache/
 YoutubeToDoc/yt-dlp
 YoutubeToDoc/__pycache__/
+YoutubeToDoc/huggingface-cache/
 *.pyc
 .env
