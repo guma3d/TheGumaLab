@@ -3,5 +3,6 @@ uvicorn
 jinja2
 qdrant-client
 pydantic
-deepface
+insightface
+onnxruntime-gpu
 python-multipart
