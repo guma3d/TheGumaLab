@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  gumaphoto:
+    build: .
+    container_name: gumaphoto_app
+    ports:
+      - "8085:8000"
+    volumes:
+      - .:/app
+      - ./data:/app/data
+    environment:
+      - QDRANT_URL=http://qdrant:6333
+    env_file:
+      - .env
+    depends_on:
+      - qdrant
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    networks:
+      - gumaphoto_network
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: gumaphoto_qdrant
+    ports:
+      - "6337:6333"
+    volumes:
+      - ./qdrant_storage:/qdrant/storage
+    restart: unless-stopped
+    networks:
+      - gumaphoto_network
+
+networks:
+  gumaphoto_network:
+    driver: bridge
