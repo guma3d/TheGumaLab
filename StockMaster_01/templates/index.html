@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts for consistency -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         /* 
          * Guma Lab - StockMaster_01
@@ -501,39 +503,74 @@
             font-weight: 700;
         }
 
-        /* AI Panel */
-        .insight-title {
-            font-size: 1.2rem;
-            margin-bottom: 0.5rem;
-            color: #fff;
+        /* AI Panel Markdown Styling */
+        .ai-markdown {
+            color: var(--text-main);
+            font-size: 1.05rem;
         }
 
-        .insight-text {
-            color: var(--text-muted);
-            line-height: 1.6;
-            margin-bottom: 1.5rem;
-        }
-
-        .insight-text strong {
-            color: #fff;
-        }
-
-        .recommendation-box {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 1rem;
-            border-radius: 8px;
-            border-left: 4px solid var(--accent-color);
-        }
-
-        .recommendation-box .label {
+        .ai-markdown h3 {
+            font-size: 1.3rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
             color: var(--accent-color);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
             font-weight: 600;
         }
 
-        .recommendation-box .ticker {
-            font-weight: 700;
+        .ai-markdown h3:first-child {
+            margin-top: 0;
+        }
+
+        .ai-markdown p {
+            margin-bottom: 1.2rem;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .ai-markdown strong {
             color: #fff;
-            margin: 0 0.5rem;
+            background: rgba(16, 185, 129, 0.15); /* Subtle glowing green background */
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 700;
+            border-bottom: 1px solid var(--accent-color);
+        }
+        
+        .ai-markdown em {
+            color: var(--secondary-glow);
+            font-style: normal;
+            font-weight: 500;
+        }
+
+        .ai-markdown ul, .ai-markdown ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .ai-markdown li {
+            margin-bottom: 0.6rem;
+            line-height: 1.6;
+        }
+        
+        .ai-markdown li::marker {
+            color: var(--accent-color);
+        }
+
+        .ai-markdown blockquote {
+            border-left: 4px solid var(--accent-color);
+            margin: 1.5rem 0;
+            background: rgba(16, 185, 129, 0.05);
+            padding: 1rem 1.2rem;
+            border-radius: 0 8px 8px 0;
+            color: var(--text-main);
+            font-style: italic;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
         }
 
         /* Animations */
@@ -800,19 +837,26 @@
                     const data = await res.json();
 
                     if (data.success) {
-                        let htmlContent = data.analysis.replace(/\[Current Portfolio Status\]/gi, '<h3 class="insight-title">Current Portfolio Status</h3>');
-                        htmlContent = htmlContent.replace(/\[Market News & Portfolio Direction\]/gi, '<h3 class="insight-title" style="margin-top: 1.5rem;">Market News & Portfolio Direction</h3>');
-                        htmlContent = htmlContent.replace(/\[Recommended Modifications\]/gi, '<h3 class="insight-title" style="margin-top: 1.5rem;">Recommended Modifications</h3>');
-                        htmlContent = htmlContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                        htmlContent = htmlContent.replace(/\n\n/g, '</p><p class="insight-text" style="color: var(--text-main); margin-bottom: 0.5rem;">');
-                        htmlContent = htmlContent.replace(/\n/g, '<br>');
+                        let rawText = data.analysis;
+                        // Pre-process section headers to markdown h3
+                        rawText = rawText.replace(/\[Current Portfolio Status\]/gi, '### 📊 Current Portfolio Status');
+                        rawText = rawText.replace(/\[Market News & Portfolio Direction\]/gi, '### 🌍 Market News & Portfolio Direction');
+                        rawText = rawText.replace(/\[Recommended Modifications\]/gi, '### 💡 Recommended Modifications');
+                        
+                        let htmlContent = rawText;
+                        if (typeof marked !== 'undefined') {
+                            htmlContent = marked.parse(rawText);
+                        } else {
+                            // Fallback just in case marked is not loaded
+                            htmlContent = rawText.replace(/\n/g, '<br>');
+                        }
 
                         container.innerHTML = `
-                            <div class="insight-text" style="color: var(--text-main); margin-top: 0;">${htmlContent}</div>
+                            <div class="ai-markdown">${htmlContent}</div>
                         `;
                     } else if (data.error) {
                         container.innerHTML = `
-                            <p class="insight-text" style="color: var(--negative-color);">Error: ${data.error}</p>
+                            <p style="color: var(--negative-color);">Error: ${data.error}</p>
                         `;
                     }
                 } catch (e) {
