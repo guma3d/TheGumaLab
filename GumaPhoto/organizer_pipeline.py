@@ -220,6 +220,14 @@ class OrganizerPipeline:
         return best_pic
 
     # ==========================
+    # 📝 4단계: 파일명 정규화 (Renaming)
+    # ==========================
+    def generate_clean_filename(self, dt_str, sequence_idx, original_ext):
+        """뒤죽박죽 원본 파일명을 '2023-10-15_01.jpg' 꼴로 예쁘게 만듦"""
+        # 시간순 정렬 후 전달받은 sequence_idx로 일련번호(_01, _02) 부여
+        return f"{dt_str}_{sequence_idx:02d}{original_ext}"
+
+    # ==========================
     # ⚙️ 실행: 파이프라인 메인루프
     # ==========================
     def run(self):
@@ -234,9 +242,10 @@ class OrganizerPipeline:
         2. Hash 체크를 통해 JUNK_DIR(쓰레기통)로 완전 복제품을 직행시킵니다.
         3. 1~2분 단위로 찍힌 유사 사진들끼리 배열(Array)에 묶습니다.
         4. get_best_cut() 을 돌려서 AI에게 점수를 매기게 하고, 우승자 1명만 뽑습니다.
-        5. 우승자 1명은 TARGET_DIR/2015/2015-10-15_Unknown_Location/ 으로 안전하게 하드링크(Hard Link) 복사합니다.
-        6. 패배한 떨거지 사진들은 SIMILAR_DIR 로 보냅니다.
-        7. SQLite DB 처리 결과 기록(Commit).
+        5. 사진들의 시간순위를 매겨서 새로운 파일명(예: 2023-10-15_01.jpg)을 생성합니다.
+        6. 우승자 1명은 TARGET_DIR/2015/2015-10-15_Unknown_Location/새이름.jpg 으로 안전하게 하드링크(Hard Link) 복사합니다.
+        7. 패배한 떨거지 B컷 사진들은 SIMILAR_DIR 로 보냅니다.
+        8. SQLite DB 처리 결과 기록(Commit).
         """)
 
 if __name__ == "__main__":
