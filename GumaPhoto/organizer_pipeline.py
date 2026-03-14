@@ -10,6 +10,7 @@ from PIL import Image
 from datetime import datetime
 import exifread
 import re
+from typing import Any
 
 # AI Models (Lazy Loading으로 필요할 때만 메모리에 올림)
 from insightface.app import FaceAnalysis
@@ -29,9 +30,11 @@ DB_PATH = "/app/data/organizer_state.db"  # Fail-Safe를 위한 체크포인트 
 class OrganizerPipeline:
     def __init__(self):
         print("[*] 파이프라인 및 안전장치(DB)를 초기화합니다...")
+        self.conn: Any = None
+        self.cursor: Any = None
+        self.face_app: Any = None # GPU 메모리 절약을 위해 지연 로딩
         self.init_db()
         self.ensure_dirs()
-        self.face_app = None # GPU 메모리 절약을 위해 지연 로딩
 
     def init_db(self):
         """대참사 방지를 위한 이어하기(Checkpoint) SQLite DB 유지"""
@@ -90,10 +93,19 @@ class OrganizerPipeline:
         # 2. 비율 확인 (폰 스크린샷은 보통 세로로 극단적으로 긺, 해상도로 판단 가능)
         img = Image.open(filepath)
         width, height = img.size
+        # PIL 이미지는 열고 닫는 것이 가벼움
         process_ratio = max(width, height) / min(width, height) if min(width, height) > 0 else 0
         
         if process_ratio > 3.0: # 세로로 너무 길면 카톡 긴 캡처 화면 
             return True, "SCREENSHOT"
+            
+        # 3. 극단적 흔들림(Extreme Blur) 파악 - 심령사진 즉시 제거
+        cv_img = cv2.imread(filepath)
+        if cv_img is not None:
+            gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
+            blur_score = cv2.Laplacian(gray, cv2.CV_64F).var()
+            if blur_score < 15.0: # 15 미만이면 형체를 거의 알아볼 수 없는 수준의 블러
+                return True, f"EXTREME_BLUR_SCORE_{blur_score:.1f}"
             
         return False, file_hash
 
