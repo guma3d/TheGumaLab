@@ -134,9 +134,14 @@ class OrganizerPipeline:
 
         # 1. 시간 EXIF 확인
         if 'EXIF DateTimeOriginal' in tags:
-            # 포맷: 2023:10:15 14:30:00 -> 2023-10-15
+            # 포맷: 2023:10:15 14:30:00 -> 2023-10
             raw_dt = str(tags['EXIF DateTimeOriginal']).split(' ')[0]
-            dt_str = raw_dt.replace(':', '-')
+            # yyyy, mm 두 가지 항목만 붙임
+            parts = raw_dt.split(':')
+            if len(parts) >= 2:
+                dt_str = f"{parts[0]}-{parts[1]}"
+            else:
+                dt_str = raw_dt.replace(':', '-') # 안전을 위한 Fallback
         else:
             # 2. 메타데이터 누락 시 -> 상위 폴더 이름에서 힌트 얻기 (예: D:\사진집\2014 겨울여행\IMG_01.jpg)
             # 폴더명에 2014 같은 4자리 숫자 연도가 있는지 정규식으로 유추
@@ -145,7 +150,7 @@ class OrganizerPipeline:
             
             match = re.search(r'(19|20)\d{2}[-._]?\d{0,2}', parent_dir + grandparent_dir)
             if match:
-                dt_str = match.group() + "_Inferred" # 추론됨을 표시
+                dt_str = match.group()
         
         # 3. GPS 정보 (여기서는 개념만 잡고 실제 파싱은 복잡하므로 스킵, 있으면 카카오API 연동 예정)
         if 'GPS GPSLatitude' in tags:
@@ -230,23 +235,100 @@ class OrganizerPipeline:
     # ==========================
     # ⚙️ 실행: 파이프라인 메인루프
     # ==========================
+    def process_file_metadata(self, filepath):
+        """1장의 파일에 대해 중복/Junk 여부를 판단하고 날짜/이름/경로를 계산"""
+        is_junk, junk_reason = self.is_junk_or_duplicate(filepath)
+        if is_junk:
+            return {"status": "JUNK", "reason": junk_reason}
+
+        dt_str, loc_str = self.extract_datetime_and_location(filepath)
+        # 예: 2023-10-15
+        return {
+            "status": "VALID",
+            "dt_str": dt_str,
+            "loc_str": loc_str,
+            "hash": junk_reason # is_junk_or_duplicate 반환값 튜플의 [1]은 False일 때 hash 반환함 
+        }
+
     def run(self):
         print("🚀 [GumaPhoto Pipeline] 데이터 정리를 시작합니다...")
         
-        # 0. 파일 스캔 (임시로 단일 파일 루프로 짰지만, 실무에선 '시간+이미지해시 그룹핑' 로직 추가)
-        # --- 여기서는 오빠가 흐름을 한 눈에 볼 수 있도록 전체 구조 뼈대만 노출해 둠 ---
+        # 1. 대상 파일 스캔
+        all_files = []
+        for root, _, files in os.walk(SOURCE_DIR):
+            for file in files:
+                ext = os.path.splitext(file)[1].lower()
+                if ext in ['.jpg', '.jpeg', '.png', '.heic', '.mp4', '.mov', '.avi', '.mkv']:
+                    all_files.append(os.path.join(root, file))
         
-        print("""
-        [파이프라인 실행 요약]
-        1. SOURCE_DIR 폴더의 사진들을 재귀적으로 전부 읽습니다.
-        2. Hash 체크를 통해 JUNK_DIR(쓰레기통)로 완전 복제품을 직행시킵니다.
-        3. 1~2분 단위로 찍힌 유사 사진들끼리 배열(Array)에 묶습니다.
-        4. get_best_cut() 을 돌려서 AI에게 점수를 매기게 하고, 우승자 1명만 뽑습니다.
-        5. 사진들의 시간순위를 매겨서 새로운 파일명(예: 2023-10-15_01.jpg)을 생성합니다.
-        6. 우승자 1명은 TARGET_DIR/2015/2015-10-15_Unknown_Location/새이름.jpg 으로 안전하게 하드링크(Hard Link) 복사합니다.
-        7. 패배한 떨거지 B컷 사진들은 SIMILAR_DIR 로 보냅니다.
-        8. SQLite DB 처리 결과 기록(Commit).
-        """)
+        print(f"[*] 총 {len(all_files)}개의 미디어 파일이 발견되었습니다.")
+        
+        # 2. 메타데이터 파싱 및 시계열 그룹핑 (날짜별 묶음)
+        # 구조: { "2023-10-15": [ {filepath, dt_str, md5...}, ... ] }
+        date_groups = {}
+        junk_count = 0
+        
+        print("[*] 1차 스캔: 메타데이터 분석 및 찌꺼기/중복 제거 중... (시간이 걸릴 수 있습니다)")
+        # --- TEST를 위해 일단 100개만 스캔해볼게 ---
+        for i, filepath in enumerate(all_files):
+            # 개발 테스트 단계이므로 10262장은 너무 많아. 10개만 샘플 테스트!
+            if i >= 10: break
+
+            meta = self.process_file_metadata(filepath)
+            
+            if meta["status"] == "JUNK":
+                print(f"   🗑️ [JUNK 삭제] {os.path.basename(filepath)} -> 사유: {meta['reason']}")
+                junk_count += 1
+                continue
+            
+            # 여기서 실제로는 시간(시:분:초)도 파싱해서 배열에 담아야 sorting이 가능함 (현재는 mock)
+            dt_key = meta["dt_str"]
+            if dt_key not in date_groups:
+                date_groups[dt_key] = []
+                
+            date_groups[dt_key].append({
+                "filepath": filepath,
+                "loc_str": meta["loc_str"]
+            })
+            
+        print(f"[*] 1차 스캔 완료. 총 {junk_count}개의 찌꺼기 파일이 무시되었습니다.")
+        
+        # 3. 그룹별 일련번호 부여 및 폴더 이동 시뮬레이션
+        print("\n[*] 2차 처리: 날짜별 정렬, 이름 변경 및 최종 이동 시뮬레이션")
+        for date, items in date_groups.items():
+            # (원래는 여기서 timestamp 기준으로 sort를 해야함)
+            
+            for index, item in enumerate(items):
+                sequence = index + 1
+                ext = os.path.splitext(item["filepath"])[1].lower()
+                
+                # 4단계: 파일명 정규화 (YYYY-MM-DD_01.jpg)
+                new_filename = self.generate_clean_filename(date, sequence, ext)
+                
+                # 연도 폴더 1뎁스 추출 (예: '2023')
+                year_folder = str(date).split('-')[0] if '-' in str(date) else 'Unknown_Year'
+                
+                # 최종 도착 경로 (예: TARGET_DIR/2023/2023-10-15_Unknown_Location/2023-10-15_01.jpg)
+                target_folder_path = os.path.join(TARGET_DIR, year_folder, f"{date}_{item['loc_str']}")
+                final_move_path = os.path.join(target_folder_path, new_filename)
+                
+                print(f"   🚚 [복사 진행] {os.path.basename(item['filepath'])} -> {os.path.relpath(final_move_path, TARGET_DIR)}")
+                
+                os.makedirs(target_folder_path, exist_ok=True)
+                
+                # 안전장치: 원본 유지(이동/삭제 없음)를 위해 메타데이터 보존 복사(copy2)
+                if not os.path.exists(final_move_path):
+                    shutil.copy2(item['filepath'], final_move_path)
+                
+                # 5단계: DB에 기록
+                file_hash_val = item.get('hash', 'UNKNOWN_HASH')
+                self.cursor.execute(
+                    "INSERT OR IGNORE INTO processed_files (filepath, file_hash, status) VALUES (?, ?, ?)",
+                    (item['filepath'], file_hash_val, 'PROCESSED')
+                )
+                
+        self.conn.commit()
+        print(f"\n✅ 샘플 자동 정리(복사)가 완료되었습니다! C:/Users/guma3/OneDrive/Pictures/OrganizedPhotos 폴더를 확인해보세요!")
 
 if __name__ == "__main__":
     organizer = OrganizerPipeline()
