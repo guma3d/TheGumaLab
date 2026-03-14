@@ -3,11 +3,13 @@ import sqlite3
 import numpy as np
 import cv2
 import time
+import hashlib
 from PIL import Image
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams, PointStruct
 from sentence_transformers import SentenceTransformer
 from insightface.app import FaceAnalysis
+from deepface import DeepFace
 
 # ==========================================
 # ⚙️ Configuration & DB Settings
@@ -73,11 +75,21 @@ class VectorIndexer:
         self.face_app.prepare(ctx_id=0, det_size=(640, 640))
         print("  [+] 모든 초거대 AI 모델 로딩 완료!")
 
-    def get_original_context(self, original_filepath):
-        """1단계에서 저장해둔 원본 문맥(가족_결혼사진 등)을 SQLite에서 빼오기"""
-        self.cursor.execute("SELECT original_context FROM processed_files WHERE filepath=?", (original_filepath,))
+    def get_original_context(self, file_hash):
+        """1단계에서 저장해둔 원본 문맥(가족_결혼사진 등)을 해시값으로 역추적하여 빼오기"""
+        self.cursor.execute("SELECT original_context FROM processed_files WHERE file_hash=?", (file_hash,))
         row = self.cursor.fetchone()
-        return row[0] if row else "Unknown_Context"
+        return row[0] if row else "Organized_Photo"
+
+    def get_file_hash(self, filepath):
+        """파일 MD5 해시 추출 (DB 연동 시 고유 조회용)"""
+        hasher = hashlib.md5()
+        with open(filepath, 'rb') as afile:
+            buf = afile.read(65536)
+            while len(buf) > 0:
+                hasher.update(buf)
+                buf = afile.read(65536)
+        return hasher.hexdigest()
 
     def is_already_processed(self, filepath):
         """이미 벡터화가 성공적으로 끝난 파일인지 검사 (Fail-safe 이어하기)"""
@@ -95,11 +107,9 @@ class VectorIndexer:
                 
             print(f"   [벡터화] 스캔 중: {os.path.basename(filepath)}")
             try:
-                # 1. 원본 파일경로를 추적하기 위해 쿼리
-                # (1단계에서 target_dir로 파일이 복사되었으므로, 파일명이 매칭되거나 해시 등을 통해 역추적 가능해야 함)
-                # 여기서는 간소화를 위해 복사된 폴더의 부모를 컨텍스트라 가정하거나, DB 구조 고도화 필요
-                # 일단은 1단계 DB랑 완벽 매치시키기 위해 임의의 "Original_Context" 를 사용
-                context_str = "Organized_Photo" 
+                # 1. 파일의 해시값을 계산하여 최초 1단계 Organizer에서 저장한 원본 DB 기록 조회
+                file_hash = self.get_file_hash(filepath)
+                context_str = self.get_original_context(file_hash)
                 
                 # --- [A] CLIP 픽셀 백터 (Scene) 추출 ---
                 pil_img = Image.open(filepath).convert('RGB')
@@ -123,9 +133,33 @@ class VectorIndexer:
                 
                 # 얼굴이 감지되었다면, 그중 가장 면적이 큰(메인 인물) 1명의 얼굴 벡터만 대표로 저장 (또는 컬렉션 구조에 따라 배열로 분리)
                 # (Qdrant는 Point 1개당 'face' 벡터를 1개만 받을 수 있으므로, 다수의 얼굴이면 개별 Point로 쪼개야 함. 여기서는 심플하게 1등 얼굴만 채택)
+                best_face_payload = {}
                 if face_count > 0:
                     best_face = sorted(faces, key=lambda f: (f.bbox[2]-f.bbox[0])*(f.bbox[3]-f.bbox[1]), reverse=True)[0]
                     vectors["face"] = best_face.normed_embedding.tolist()
+                    
+                    # --- [DeepFace: 추가 표정/나이/성별 분석] ---
+                    box = best_face.bbox.astype(int)
+                    x1, y1, x2, y2 = max(0, box[0]), max(0, box[1]), min(cv_img.shape[1], box[2]), min(cv_img.shape[0], box[3])
+                    cropped_face = cv_img[y1:y2, x1:x2]
+                    
+                    try:
+                        # DeepFace.analyze를 통해 해당 얼굴 이미지 크롭본 분석 (enforce_detection=False로 안전장치)
+                        df_res = DeepFace.analyze(img_path=cropped_face, actions=['age', 'gender', 'emotion'], enforce_detection=False, silent=True)
+                        if isinstance(df_res, list):
+                            df_res = df_res[0]
+                        
+                        best_face_payload['age'] = df_res.get('age', 0)
+                        best_face_payload['emotion'] = df_res.get('dominant_emotion', 'neutral')
+                        
+                        gender_data = df_res.get('gender', {})
+                        if isinstance(gender_data, dict):
+                            best_face_payload['gender'] = max(gender_data, key=gender_data.get)
+                        else:
+                            best_face_payload['gender'] = str(gender_data)
+                            
+                    except Exception as df_e:
+                        print(f"      ⚠️ DeepFace 분석 실패 (Skip): {df_e}")
                     
                 # --- [D] Payload 조립 및 저장 ---
                 payload = {
@@ -134,6 +168,7 @@ class VectorIndexer:
                     "original_context": context_str,
                     "face_count": face_count
                 }
+                payload.update(best_face_payload)
                 
                 points_to_upsert.append(PointStruct(id=point_id, vector=vectors, payload=payload))
                 
