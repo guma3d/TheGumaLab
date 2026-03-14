@@ -19,7 +19,8 @@ html, body {
     background-color: var(--bg-dark);
     color: var(--text-main);
     min-height: 100vh;
-    max-width: 100vw;
+    width: 100%;
+    max-width: 100%;
     overflow-x: hidden;
     overscroll-behavior-x: none;
 }
@@ -27,7 +28,7 @@ html, body {
 /* Header Layout */
 .main-layout {
     width: 100%;
-    max-width: 100vw;
+    max-width: 100%;
     overflow-x: hidden;
 }
 
@@ -112,6 +113,8 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
     margin-bottom: 2rem;
     color: var(--text-muted);
     font-size: 0.95rem;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 /* Gallery Grid (Google Photos style Grid) */
