@@ -1,0 +1,7 @@
+data/
+qdrant_storage/
+README.md
+*.md
+.git/
+__pycache__/
+*.pyc
