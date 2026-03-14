@@ -6,3 +6,9 @@ pydantic
 insightface
 onnxruntime-gpu==1.18.1
 python-multipart
+imagehash
+exifread
+deepface
+tf-keras
+SQLAlchemy
+Pillow
