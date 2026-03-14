@@ -35,6 +35,10 @@ document.getElementById('search-form').addEventListener('submit', async function
         
         const data = await res.json();
         
+        if (!res.ok) {
+            throw new Error(data.detail || data.error || `HTTP Error ${res.status}`);
+        }
+
         if (data.error) {
             metaText.innerHTML = `Error: ${data.error}`;
         } else {

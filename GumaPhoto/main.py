@@ -111,12 +111,13 @@ async def perform_search(req: SearchRequest):
     
     # [3] Search Qdrant DB ('scene' Named Vector)
     try:
-        search_res = qdrant_client.search(
+        search_res = qdrant_client.query_points(
             collection_name="gumaphoto_hybrid_kr",
-            query_vector=("scene", query_vector),
+            query=query_vector,
+            using="scene",
             limit=50,
             with_payload=True
-        )
+        ).points
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
