@@ -27,16 +27,11 @@ document.getElementById('search-form').addEventListener('submit', function(e) {
 });
 
 // 업로드 로직
-const uploadBtn = document.getElementById('upload-btn');
 const uploadInput = document.getElementById('upload-input');
 const progressContainer = document.getElementById('upload-progress-container');
 const progressFill = document.getElementById('progress-bar-fill');
 const progressPercent = document.getElementById('progress-percent');
 const progressText = document.getElementById('progress-text');
-
-uploadBtn.addEventListener('click', () => {
-    uploadInput.click();
-});
 
 uploadInput.addEventListener('change', async () => {
     const files = uploadInput.files;

@@ -40,10 +40,11 @@
 
             <!-- 업로드 섹션 -->
             <div class="upload-section">
+                <!-- iOS 아이폰(Safari)에서 강제 팝업 방지를 피하기 위해 button 대신 label 방식 사용 -->
                 <input type="file" id="upload-input" multiple accept="image/*" style="display: none;">
-                <button type="button" id="upload-btn" class="secondary-btn">
+                <label for="upload-input" id="upload-btn" class="secondary-btn" style="display: inline-block; cursor: pointer;">
                     <i class="fa-solid fa-cloud-arrow-up"></i> UploadToGumaPhoto
-                </button>
+                </label>
                 <div id="upload-progress-container" class="hidden">
                     <div class="progress-info">
                         <span id="progress-text">0 / 0 uploaded</span>
@@ -63,8 +64,8 @@
         </main>
     </div>
 
-    <!-- Custom Logic -->
-    <script src="/static/script.js"></script>
+    <!-- Custom Logic (캐시 무효화 버전 2) -->
+    <script src="/static/script.js?v=2"></script>
 </body>
 
 </html>
