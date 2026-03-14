@@ -9,7 +9,8 @@ services:
     volumes:
       - .:/app
       - ./data:/app/data
-      - C:/Users/guma3/OneDrive/Pictures/GumaPhotoTest:/app/uploads
+      - C:/Users/guma3/OneDrive/Pictures/OriginalSource:/app/data/uploads_raw
+      - C:/Users/guma3/OneDrive/Pictures/OrganizedPhotos:/app/data/organized
     environment:
       - QDRANT_URL=http://qdrant:6333
     env_file:

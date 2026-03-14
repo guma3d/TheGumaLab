@@ -11,6 +11,7 @@ from datetime import datetime
 import exifread
 import re
 from typing import Any
+from geopy.geocoders import Nominatim
 
 # AI Models (Lazy Loading으로 필요할 때만 메모리에 올림)
 from insightface.app import FaceAnalysis
@@ -33,6 +34,8 @@ class OrganizerPipeline:
         self.conn: Any = None
         self.cursor: Any = None
         self.face_app: Any = None # GPU 메모리 절약을 위해 지연 로딩
+        self.geolocator: Any = None
+        self.geocode_cache = {}
         self.init_db()
         self.ensure_dirs()
 
@@ -40,13 +43,13 @@ class OrganizerPipeline:
         """대참사 방지를 위한 이어하기(Checkpoint) SQLite DB 유지"""
         self.conn = sqlite3.connect(DB_PATH)
         self.cursor = self.conn.cursor()
-        # file_hash: 완벽한 중복 검사용 고유키
-        # status: PROCESSED, JUNK, B_CUT
+        # original_context: 나중에 AI 검색을 위해 "2005_성욱_군대" 등의 부모 폴더명을 보존
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS processed_files (
                 filepath TEXT PRIMARY KEY,
                 file_hash TEXT UNIQUE,
                 status TEXT,
+                original_context TEXT,
                 processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
@@ -152,11 +155,69 @@ class OrganizerPipeline:
             if match:
                 dt_str = match.group()
         
-        # 3. GPS 정보 (여기서는 개념만 잡고 실제 파싱은 복잡하므로 스킵, 있으면 카카오API 연동 예정)
-        if 'GPS GPSLatitude' in tags:
-            loc_str = "GPS_Found_Need_Geocoding" # 카카오 API 등으로 주소 변환 필요
+        # 3. GPS 정보 추출 및 글로벌 역지오코딩(geopy/Nominatim)
+        if 'GPS GPSLatitude' in tags and 'GPS GPSLatitudeRef' in tags and 'GPS GPSLongitude' in tags and 'GPS GPSLongitudeRef' in tags:
+            try:
+                lat = self.get_decimal_from_dms(tags['GPS GPSLatitude'].values, tags['GPS GPSLatitudeRef'].values)
+                lon = self.get_decimal_from_dms(tags['GPS GPSLongitude'].values, tags['GPS GPSLongitudeRef'].values)
+                loc_str = self.get_location_name(lat, lon)
+            except Exception as e:
+                pass
             
         return dt_str, loc_str
+
+    def get_decimal_from_dms(self, dms, ref):
+        degrees = dms[0].num / dms[0].den if dms[0].den != 0 else 0
+        minutes = dms[1].num / dms[1].den / 60.0 if dms[1].den != 0 else 0
+        seconds = dms[2].num / dms[2].den / 3600.0 if dms[2].den != 0 else 0
+
+        if ref in ['S', 'W']:
+            degrees = -degrees
+            minutes = -minutes
+            seconds = -seconds
+        
+        return degrees + minutes + seconds
+
+    def get_location_name(self, lat, lon):
+        # 좌표 소수점 3자리(약 111m) 단위 반올림으로 동네 단위 캐싱
+        cache_key = f"{round(lat, 3)},{round(lon, 3)}"
+        if cache_key in self.geocode_cache:
+            return self.geocode_cache[cache_key]
+
+        if self.geolocator is None:
+            self.geolocator = Nominatim(user_agent="guma_photo_organizer")
+            
+        try:
+            # 무료 글로벌 API인 Nominatim은 1초 1개의 요청 제한이 있음.
+            time.sleep(1.1)
+            location = self.geolocator.reverse((lat, lon), language='en', timeout=10)
+            if not location:
+                return "Unknown_Location"
+                
+            addr = location.raw.get('address', {})
+            # 도시 혹은 동네 추출
+            city = addr.get('city') or addr.get('town') or addr.get('village') or addr.get('county')
+            # 주(State) 또는 국가(Country) 추출
+            state = addr.get('state') or addr.get('country')
+            
+            if city and state:
+                raw_loc = f"{city}-{state}"
+            elif city:
+                raw_loc = city
+            elif state:
+                raw_loc = state
+            else:
+                raw_loc = "Unknown_Location"
+                
+            # 띄어쓰기는 '-'로 변경하고 대문자 캐멀케이스 처리 (예: San-Francisco-California)
+            parts = [p.capitalize() for p in raw_loc.replace(' ', '-').split('-') if p]
+            formatted_name = "-".join(parts)
+            
+            self.geocode_cache[cache_key] = formatted_name
+            return formatted_name
+        except Exception as e:
+            print(f"   ⚠️ [지오코딩 오류] {e}")
+            return "Unknown_Location"
 
     # ==========================
     # 🎯 3단계: 베스트컷 추출
@@ -242,12 +303,15 @@ class OrganizerPipeline:
             return {"status": "JUNK", "reason": junk_reason}
 
         dt_str, loc_str = self.extract_datetime_and_location(filepath)
+        original_context = os.path.basename(os.path.dirname(filepath))
+        
         # 예: 2023-10-15
         return {
             "status": "VALID",
             "dt_str": dt_str,
             "loc_str": loc_str,
-            "hash": junk_reason # is_junk_or_duplicate 반환값 튜플의 [1]은 False일 때 hash 반환함 
+            "hash": junk_reason, # is_junk_or_duplicate 반환값 튜플의 [1]은 False일 때 hash 반환함 
+            "original_context": original_context
         }
 
     def run(self):
@@ -263,16 +327,20 @@ class OrganizerPipeline:
         
         print(f"[*] 총 {len(all_files)}개의 미디어 파일이 발견되었습니다.")
         
+        # 랜덤하게 섞어서 20장 추출
+        import random
+        random.shuffle(all_files)
+        
         # 2. 메타데이터 파싱 및 시계열 그룹핑 (날짜별 묶음)
-        # 구조: { "2023-10-15": [ {filepath, dt_str, md5...}, ... ] }
+        # 구조: { "2023-10": [ {filepath, dt_str, md5...}, ... ] }
         date_groups = {}
         junk_count = 0
         
         print("[*] 1차 스캔: 메타데이터 분석 및 찌꺼기/중복 제거 중... (시간이 걸릴 수 있습니다)")
-        # --- TEST를 위해 일단 100개만 스캔해볼게 ---
+        # --- TEST를 위해 일단 20개만 랜덤 추출 스캔해볼게 ---
         for i, filepath in enumerate(all_files):
-            # 개발 테스트 단계이므로 10262장은 너무 많아. 10개만 샘플 테스트!
-            if i >= 10: break
+            # 개발 테스트 단계이므로 10262장은 너무 많아. 랜덤 20개만 샘플 테스트!
+            if i >= 20: break
 
             meta = self.process_file_metadata(filepath)
             
@@ -288,7 +356,9 @@ class OrganizerPipeline:
                 
             date_groups[dt_key].append({
                 "filepath": filepath,
-                "loc_str": meta["loc_str"]
+                "loc_str": meta["loc_str"],
+                "hash": meta["hash"],
+                "original_context": meta["original_context"]
             })
             
         print(f"[*] 1차 스캔 완료. 총 {junk_count}개의 찌꺼기 파일이 무시되었습니다.")
@@ -320,11 +390,11 @@ class OrganizerPipeline:
                 if not os.path.exists(final_move_path):
                     shutil.copy2(item['filepath'], final_move_path)
                 
-                # 5단계: DB에 기록
+                # 5단계: DB에 기록 (오리지널 문맥 포함)
                 file_hash_val = item.get('hash', 'UNKNOWN_HASH')
                 self.cursor.execute(
-                    "INSERT OR IGNORE INTO processed_files (filepath, file_hash, status) VALUES (?, ?, ?)",
-                    (item['filepath'], file_hash_val, 'PROCESSED')
+                    "INSERT OR IGNORE INTO processed_files (filepath, file_hash, status, original_context) VALUES (?, ?, ?, ?)",
+                    (item['filepath'], file_hash_val, 'PROCESSED', item['original_context'])
                 )
                 
         self.conn.commit()
