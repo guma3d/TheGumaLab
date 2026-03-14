@@ -21,7 +21,7 @@
 - **예시**:
   - `(SurfacePro) feat: add multi-device sync documentation`
   - `(Gram) fix: resolve api rate limit issue in server.py`
-  - `(HomeServer) hotfix: update docker-compose.yml for new port`
+  - `(HomeServerMain) hotfix: update docker-compose.yml for new port`
 
 ## 🔑 3. 환경변수(.env) 및 민감한 정보 동기화 규칙
 API 키, 데이터베이스 패스워드 등이 포함된 `.env` 파일은 보안상 `git status` 추적 대상에서 철저히 배제됩니다. (`.gitignore`에 추가 필수)
