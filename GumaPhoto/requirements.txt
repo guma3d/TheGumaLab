@@ -4,5 +4,5 @@ jinja2
 qdrant-client
 pydantic
 insightface
-onnxruntime-gpu
+onnxruntime-gpu==1.18.1
 python-multipart
