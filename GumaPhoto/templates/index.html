@@ -38,6 +38,23 @@
                 </div>
             </form>
 
+            <!-- 업로드 섹션 -->
+            <div class="upload-section">
+                <input type="file" id="upload-input" multiple accept="image/*" style="display: none;">
+                <button type="button" id="upload-btn" class="secondary-btn">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> UploadToGumaPhoto
+                </button>
+                <div id="upload-progress-container" class="hidden">
+                    <div class="progress-info">
+                        <span id="progress-text">0 / 0 uploaded</span>
+                        <span id="progress-percent">0%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div id="progress-bar-fill" class="progress-bar-fill"></div>
+                    </div>
+                </div>
+            </div>
+
             <!-- 결과 화면이 나타날 위치 -->
             <div id="result-container" class="result-container hidden">
                 <h3 class="result-title">Documents Found! 🎊</h3>
