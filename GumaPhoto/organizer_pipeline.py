@@ -89,15 +89,27 @@ class OrganizerPipeline:
         self.cursor.execute("SELECT filepath FROM processed_files WHERE file_hash = ?", (file_hash,))
         if self.cursor.fetchone():
             return True, "DUPLICATE"
+            
+        # --- 🎬 동영상(Video) 처리 바이패스 로직 ---
+        ext = os.path.splitext(filepath)[1].lower()
+        if ext in ['.mp4', '.mov', '.avi', '.mkv']:
+            # 화면 녹화본 찌꺼기 판단 (파일명이나 용량 등 간단한 휴리스틱)
+            if 'screenrecording' in os.path.basename(filepath).lower():
+                return True, "SCREENRECORDING_VIDEO"
+            # 정상적인 동영상 파일이라면 블러/비율 등 이미지 전용 검사를 패스(Bypass)
+            return False, file_hash
 
         # 2. 비율 확인 (폰 스크린샷은 보통 세로로 극단적으로 긺, 해상도로 판단 가능)
-        img = Image.open(filepath)
-        width, height = img.size
-        # PIL 이미지는 열고 닫는 것이 가벼움
-        process_ratio = max(width, height) / min(width, height) if min(width, height) > 0 else 0
-        
-        if process_ratio > 3.0: # 세로로 너무 길면 카톡 긴 캡처 화면 
-            return True, "SCREENSHOT"
+        try:
+            img = Image.open(filepath)
+            width, height = img.size
+            # PIL 이미지는 열고 닫는 것이 가벼움
+            process_ratio = max(width, height) / min(width, height) if min(width, height) > 0 else 0
+            
+            if process_ratio > 3.0: # 세로로 너무 길면 카톡 긴 캡처 화면 
+                return True, "SCREENSHOT"
+        except:
+            pass # 이미지 파일이 아니거나 손상된 경우 패스
             
         # 3. 극단적 흔들림(Extreme Blur) 파악 - 심령사진 즉시 제거
         cv_img = cv2.imread(filepath)
