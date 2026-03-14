@@ -49,9 +49,15 @@ uploadInput.addEventListener('change', async () => {
     }
 
     try {
+        // Nginx 리버스 프록시 (/GumaPhoto/) 와 로컬 스탠드얼론 접속 대응
+        let uploadUrl = '/upload/';
+        if (window.location.pathname.startsWith('/GumaPhoto')) {
+            uploadUrl = '/GumaPhoto/upload/';
+        }
+
         // XMLHttpRequest를 사용해 실제 진행률 트래킹
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', '/upload/', true);
+        xhr.open('POST', uploadUrl, true);
 
         // 진행률 업데이트 이벤트
         xhr.upload.onprogress = (e) => {
