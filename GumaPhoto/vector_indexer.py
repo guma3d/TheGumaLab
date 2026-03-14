@@ -28,8 +28,9 @@ class VectorIndexer:
         self.init_qdrant_collection()
         
         print("[*] SQLite (상태 관리용 DB) 접속 초기화...")
-        self.conn = sqlite3.connect(DB_PATH)
+        self.conn = sqlite3.connect(DB_PATH, timeout=60)
         self.cursor = self.conn.cursor()
+        self.cursor.execute("PRAGMA journal_mode=WAL;")
         self.init_sqlite_tables()
         
         self.load_ai_models()
@@ -66,8 +67,9 @@ class VectorIndexer:
 
     def load_ai_models(self):
         """🚀 CLIP (배경/상황) & InsightFace (얼굴) 모델 VRAM 로드"""
-        print("[*] 🌍 다국어 CLIP 멀티모달 모델 로드 중 (clip-ViT-B-32-multilingual-v1) ...")
-        self.clip_model = SentenceTransformer('clip-ViT-B-32-multilingual-v1')
+        print("[*] 🖼️ 일반 CLIP 이미지 인코더 로드 중 (clip-ViT-B-32) ...")
+        # 참고: multilingual-v1 모델은 텍스트 검색(Search) 시에만 사용하며, 사진 자체를 변환할 땐 오리지널 CLIP을 사용해야 차원(Vector Space)이 일치함
+        self.clip_model = SentenceTransformer('clip-ViT-B-32')
         
         print("[*] 👤 InsightFace 얼굴 인식 모델 로드 중 (buffalo_l) ...")
         # GPU 가용 시 CUDA 사용, 아니면 CPU 동작 (providers에서 지정)
@@ -82,8 +84,8 @@ class VectorIndexer:
         return row[0] if row else "Organized_Photo"
 
     def get_file_hash(self, filepath):
-        """파일 MD5 해시 추출 (DB 연동 시 고유 조회용)"""
-        hasher = hashlib.md5()
+        """파일 SHA256 해시 추출 (DB 연동 시 고유 조회용 - 1단계 Organizer와 통일)"""
+        hasher = hashlib.sha256()
         with open(filepath, 'rb') as afile:
             buf = afile.read(65536)
             while len(buf) > 0:
@@ -189,7 +191,11 @@ class VectorIndexer:
         print("\n🚀 [3단계: 딥러닝 벡터화 파이프라인 가동]")
         # 1. 1단계에서 정리되어 들어온 OrganizedPhotos (app/data/organized) 내의 모든 이미지 스캔
         all_targets = []
-        for root, _, files in os.walk(TARGET_DIR):
+        for root, dirs, files in os.walk(TARGET_DIR):
+            # 절대 스캔하면 안 되는 원본/격리/테스트 폴더 목록 (하위 탐색 자체를 차단)
+            blacklist = ['OriginalSource', 'junk_screenshots', 'b_cuts', 'test_images', '.git', 'uploads_raw', 'enrolled', 'test', 'unknown']
+            dirs[:] = [d for d in dirs if d not in blacklist]
+            
             for file in files:
                 ext = os.path.splitext(file)[1].lower()
                 if ext in ['.jpg', '.jpeg', '.png']:
