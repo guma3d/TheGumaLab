@@ -327,20 +327,17 @@ class OrganizerPipeline:
         
         print(f"[*] 총 {len(all_files)}개의 미디어 파일이 발견되었습니다.")
         
-        # 랜덤하게 섞어서 20장 추출
-        import random
-        random.shuffle(all_files)
-        
         # 2. 메타데이터 파싱 및 시계열 그룹핑 (날짜별 묶음)
         # 구조: { "2023-10": [ {filepath, dt_str, md5...}, ... ] }
         date_groups = {}
         junk_count = 0
         
         print("[*] 1차 스캔: 메타데이터 분석 및 찌꺼기/중복 제거 중... (시간이 걸릴 수 있습니다)")
-        # --- TEST를 위해 일단 30개만 랜덤 추출 스캔해볼게 ---
+        
         for i, filepath in enumerate(all_files):
-            # 개발 테스트 단계이므로 10262장은 너무 많아. 랜덤 30개만 샘플 테스트!
-            if i >= 30: break
+            # 진행 상황 출력 (100개마다)
+            if (i+1) % 100 == 0:
+                print(f"   ⏳ 스캔 진행 중... ({i+1}/{len(all_files)})")
 
             meta = self.process_file_metadata(filepath)
             
@@ -402,7 +399,7 @@ class OrganizerPipeline:
                 )
                 
         self.conn.commit()
-        print(f"\n✅ 샘플 자동 정리(복사)가 완료되었습니다! C:/Users/guma3/OneDrive/Pictures 폴더의 연도별 트리를 확인해보세요!")
+        print(f"\n✅ 영혼의 사진 대청소(복사)가 완벽하게 완료되었습니다! C:/Users/guma3/OneDrive/Pictures 폴더의 연도별 트리를 확인해보세요!")
 
 if __name__ == "__main__":
     organizer = OrganizerPipeline()
