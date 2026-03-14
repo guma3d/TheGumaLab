@@ -132,8 +132,8 @@ class OrganizerPipeline:
         with open(filepath, 'rb') as f:
             tags = exifread.process_file(f, details=False)
         
-        dt_str = "Unknown_Date"
-        loc_str = "Unknown_Location"
+        dt_str = "Unknown-Year"
+        loc_str = "Unknown-Location"
 
         # 1. 시간 EXIF 확인
         if 'EXIF DateTimeOriginal' in tags:
@@ -153,7 +153,7 @@ class OrganizerPipeline:
             
             match = re.search(r'(19|20)\d{2}[-._]?\d{0,2}', parent_dir + grandparent_dir)
             if match:
-                dt_str = match.group()
+                dt_str = match.group().replace('_', '-').replace('.', '-').rstrip('-')
         
         # 3. GPS 정보 추출 및 글로벌 역지오코딩(geopy/Nominatim)
         if 'GPS GPSLatitude' in tags and 'GPS GPSLatitudeRef' in tags and 'GPS GPSLongitude' in tags and 'GPS GPSLongitudeRef' in tags:
@@ -192,7 +192,7 @@ class OrganizerPipeline:
             time.sleep(1.1)
             location = self.geolocator.reverse((lat, lon), language='en', timeout=10)
             if not location:
-                return "Unknown_Location"
+                return "Unknown-Location"
                 
             addr = location.raw.get('address', {})
             # 도시 혹은 동네 추출
@@ -207,7 +207,7 @@ class OrganizerPipeline:
             elif state:
                 raw_loc = state
             else:
-                raw_loc = "Unknown_Location"
+                raw_loc = "Unknown-Location"
                 
             # 띄어쓰기는 '-'로 변경하고 대문자 캐멀케이스 처리 (예: San-Francisco-California)
             parts = [p.capitalize() for p in raw_loc.replace(' ', '-').split('-') if p]
@@ -217,7 +217,7 @@ class OrganizerPipeline:
             return formatted_name
         except Exception as e:
             print(f"   ⚠️ [지오코딩 오류] {e}")
-            return "Unknown_Location"
+            return "Unknown-Location"
 
     # ==========================
     # 🎯 3단계: 베스트컷 추출
@@ -337,10 +337,10 @@ class OrganizerPipeline:
         junk_count = 0
         
         print("[*] 1차 스캔: 메타데이터 분석 및 찌꺼기/중복 제거 중... (시간이 걸릴 수 있습니다)")
-        # --- TEST를 위해 일단 20개만 랜덤 추출 스캔해볼게 ---
+        # --- TEST를 위해 일단 30개만 랜덤 추출 스캔해볼게 ---
         for i, filepath in enumerate(all_files):
-            # 개발 테스트 단계이므로 10262장은 너무 많아. 랜덤 20개만 샘플 테스트!
-            if i >= 20: break
+            # 개발 테스트 단계이므로 10262장은 너무 많아. 랜덤 30개만 샘플 테스트!
+            if i >= 30: break
 
             meta = self.process_file_metadata(filepath)
             
@@ -376,7 +376,11 @@ class OrganizerPipeline:
                 new_filename = self.generate_clean_filename(date, sequence, ext)
                 
                 # 연도 폴더 1뎁스 추출 (예: '2023')
-                year_folder = str(date).split('-')[0] if '-' in str(date) else 'Unknown_Year'
+                date_str = str(date)
+                if re.match(r'^(19|20)\d{2}', date_str):
+                    year_folder = date_str.split('-')[0].split('_')[0] # '2014' 또는 '2023'만 추출
+                else:
+                    year_folder = 'Unknown-Year'
                 
                 # 최종 도착 경로 (예: TARGET_DIR/2023/2023-10-15_Unknown_Location/2023-10-15_01.jpg)
                 target_folder_path = os.path.join(TARGET_DIR, year_folder, f"{date}_{item['loc_str']}")
@@ -398,7 +402,7 @@ class OrganizerPipeline:
                 )
                 
         self.conn.commit()
-        print(f"\n✅ 샘플 자동 정리(복사)가 완료되었습니다! C:/Users/guma3/OneDrive/Pictures/OrganizedPhotos 폴더를 확인해보세요!")
+        print(f"\n✅ 샘플 자동 정리(복사)가 완료되었습니다! C:/Users/guma3/OneDrive/Pictures 폴더의 연도별 트리를 확인해보세요!")
 
 if __name__ == "__main__":
     organizer = OrganizerPipeline()
