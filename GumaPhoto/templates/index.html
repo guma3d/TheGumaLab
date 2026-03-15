@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="static/style.css?v=9">
+    <link rel="stylesheet" href="static/style.css?v=11">
 </head>
 
 <body>
@@ -29,6 +29,7 @@
             <form id="search-form" class="search-form">
                 <div class="input-group">
                     <input type="text" id="search-query" placeholder="Ask anything... ('비 오는 날 엄마 사진')" required autocomplete="off">
+                    <span id="clear-btn" class="clear-btn hidden" title="Clear search"><i class="fa-solid fa-circle-xmark"></i></span>
                     <button type="submit" id="submit-btn">
                         <span class="btn-text"><i class="fa-solid fa-magnifying-glass"></i></span>
                         <div class="loader" style="display: none;"></div>
@@ -79,7 +80,31 @@
         </div>
     </div>
 
-    <script src="static/script.js?v=9"></script>
+    <!-- Photo Detail Modal -->
+    <div id="photo-modal" class="modal hidden">
+        <div class="modal-content">
+            <span id="modal-close" class="modal-close">&times;</span>
+            <div class="modal-image-container">
+                <img id="modal-image" src="" alt="Full View">
+            </div>
+            <div class="modal-actions">
+                <button id="modal-download-btn" class="action-btn" title="Download"><i class="fa-solid fa-download"></i></button>
+                <button id="modal-feedback-btn" class="action-btn" title="Feedback"><i class="fa-regular fa-comment-dots"></i></button>
+                <button id="modal-delete-btn" class="action-btn danger" title="Delete"><i class="fa-regular fa-trash-can"></i></button>
+            </div>
+            <div id="feedback-container" class="feedback-container hidden">
+                <form id="feedback-form">
+                    <input type="text" id="feedback-input" placeholder="e.g. This is Sung-wook, not Song-i." required autocomplete="off">
+                    <button type="submit" id="feedback-submit-btn">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </form>
+                <div id="feedback-status" class="feedback-status hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="static/script.js?v=11"></script>
 </body>
 
 </html>

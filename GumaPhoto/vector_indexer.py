@@ -10,21 +10,24 @@ from datetime import datetime
 from PIL import Image
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams, PointStruct, PayloadSchemaType
-from sentence_transformers import SentenceTransformer
+from transformers import AutoProcessor, AutoModel, AutoModelForCausalLM
+import transformers.dynamic_module_utils
+transformers.dynamic_module_utils.check_imports = lambda x: []
 from insightface.app import FaceAnalysis
-from deepface import DeepFace
 import pickle
 import gc
 import torch
+import json
+import warnings
 
-# DeepFace(TensorFlow)가 PyTorch(YOLO) 메모리를 침범하지 못하도록 VRAM 할당량 자동조절(Allow_growth) 강제 적용
-os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
+warnings.filterwarnings("ignore")
 
 try:
-    from ultralytics import YOLO
-    HAS_YOLO = True
+    from hsemotion.facial_emotions import HSEmotionRecognizer
 except ImportError:
-    HAS_YOLO = False
+    pass
+
+# YOLO is removed, replaced by Florence-2-large
 
 # ==========================================
 # ⚙️ Configuration & DB Settings
@@ -67,6 +70,7 @@ class VectorIndexer:
             self.q_client.create_payload_index(COLLECTION_NAME, "people", field_schema=PayloadSchemaType.KEYWORD)
             self.q_client.create_payload_index(COLLECTION_NAME, "objects", field_schema=PayloadSchemaType.KEYWORD)
             self.q_client.create_payload_index(COLLECTION_NAME, "location", field_schema=PayloadSchemaType.TEXT)
+            self.q_client.create_payload_index(COLLECTION_NAME, "caption", field_schema=PayloadSchemaType.TEXT)
             print(f"  [+] 신규 Qdrant 멀티-벡터 컬렉션 '{COLLECTION_NAME}' 생성 완료.")
         else:
             print(f"  [-] 기존 Qdrant 컬렉션 '{COLLECTION_NAME}' 을 재사용합니다.")
@@ -84,15 +88,34 @@ class VectorIndexer:
         self.conn.commit()
 
     def load_ai_models(self):
-        """🚀 CLIP (배경/상황) & InsightFace (얼굴) 모델 VRAM 로드"""
-        print("[*] 🖼️ 초거대 CLIP 이미지 인코더 로드 중 (clip-ViT-L-14) ...")
-        self.clip_model = SentenceTransformer('clip-ViT-L-14')
+        """🚀 SigLIP (배경/상황) & InsightFace (얼굴) & Florence-2-large 모델 VRAM 로드"""
+        print("[*] 🖼️ 초정밀 SigLIP 이미지 인코더 로드 중 (google/siglip-base-patch16-224) ...")
+        self.siglip_processor = AutoProcessor.from_pretrained("google/siglip-base-patch16-224")
+        self.siglip_model = AutoModel.from_pretrained("google/siglip-base-patch16-224").to('cuda' if torch.cuda.is_available() else 'cpu')
+        self.siglip_model.eval()
         
         print("[*] 👤 InsightFace 얼굴 인식 모델 로드 중 (buffalo_l) ...")
         # GPU 가용 시 CUDA 사용, 아니면 CPU 동작 (providers에서 지정)
         self.face_app = FaceAnalysis(name='buffalo_l', providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
         self.face_app.prepare(ctx_id=0, det_size=(640, 640))
         
+        print("[*] ❤️ HSEmotion 표정 인식기 로드 중 (enet_b0_8_best_vgaf) ...")
+        # PyTorch 2.6 weights_only 오류 방어 패치
+        import timm.models.efficientnet
+        if hasattr(torch.serialization, 'add_safe_globals'):
+            torch.serialization.add_safe_globals([timm.models.efficientnet.EfficientNet])
+            try:
+                import timm.models.layers.conv2d_same
+                torch.serialization.add_safe_globals([timm.models.layers.conv2d_same.Conv2dSame])
+            except: pass
+        
+        _original_load = torch.load
+        torch.load = lambda *a, **k: _original_load(*a, weights_only=False, **{key:val for key,val in k.items() if key != 'weights_only'})
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.emotion_recognizer = HSEmotionRecognizer(model_name='enet_b0_8_best_vgaf', device=device)
+        torch.load = _original_load
+        
+        # === 가족 메타데이터 로드 ===
         self.known_faces = {}
         if os.path.exists("/app/data/known_faces.pkl"):
             with open("/app/data/known_faces.pkl", "rb") as f:
@@ -106,19 +129,23 @@ class VectorIndexer:
                         valid_faces += 1
             print(f"  [+] 사전에 학습된 가족 얼굴 데이터 {valid_faces}명 로드 완료.")
             
-        if HAS_YOLO:
-            print("[*] 🚗 고집적 YOLO-X 모델 로드 중 (yolo11x.pt) ...")
-            try:
-                self.yolo_model = YOLO('yolo11x.pt')
-                self.yolo_model.to('cuda')
-                print("  [+] YOLO-X CUDA 가속 활성화 완료!")
-            except Exception as e:
-                print(f"  [-] YOLO-X CUDA 연동 실패 (CPU Fallback): {e}")
-                self.yolo_model = YOLO('yolo11x.pt')
-        else:
-            self.yolo_model = None
+        self.family_meta = {}
+        if os.path.exists("/app/data/family_meta.json"):
+            with open("/app/data/family_meta.json", "r", encoding="utf-8") as f:
+                self.family_meta = json.load(f)
             
-        print("  [+] 모든 초거대 AI 모델 로딩 완료!")
+        print("[*] 📝 Florence-2-base VLM 상황 묘사 AI 로드 중 ...")
+        try:
+            florence_model_id = "microsoft/Florence-2-base"
+            self.florence_model = AutoModelForCausalLM.from_pretrained(florence_model_id, trust_remote_code=True).to("cuda" if torch.cuda.is_available() else "cpu")
+            self.florence_processor = AutoProcessor.from_pretrained(florence_model_id, trust_remote_code=True)
+            self.florence_model.eval()
+            print("  [+] Florence-2-base 로드 완료!")
+        except Exception as e:
+            print(f"  [-] Florence-2-base 로딩 실패: {e}")
+            self.florence_model = None
+            
+        print("  [+] 모든 시각 초거대 AI 모델 로딩 완료!")
 
     def get_original_context(self, file_hash):
         """1단계에서 저장해둔 원본 문맥(가족_결혼사진 등)을 해시값으로 역추적하여 빼오기"""
@@ -218,9 +245,19 @@ class VectorIndexer:
                 # 추가 컨텍스트 추출 (시간대, 계절)
                 time_of_day, season = self.extract_time_and_season(filepath)
                 
-                # --- [A] CLIP 픽셀 백터 (Scene) 추출 ---
+                # --- [A] SigLIP 픽셀 백터 (Scene) 추출 ---
                 pil_img = Image.open(filepath).convert('RGB')
-                scene_embedding = self.clip_model.encode(pil_img)
+                siglip_inputs = self.siglip_processor(images=pil_img, return_tensors="pt").to(self.siglip_model.device)
+                with torch.no_grad():
+                    out = self.siglip_model.get_image_features(**siglip_inputs)
+                    if hasattr(out, "pooler_output"):
+                        emb = out.pooler_output[0]
+                    elif hasattr(out, "shape"):
+                        emb = out[0]
+                    else:
+                        emb = out[0]
+                    emb = emb / emb.norm(p=2, dim=-1, keepdim=True)
+                    scene_embedding = emb.cpu().numpy()
                 
                 # --- [B] InsightFace (Face) 추출 ---
                 # 주의: InsightFace는 BGR(OpenCV 포맷) 이미지를 요구함
@@ -263,44 +300,106 @@ class VectorIndexer:
                     best_face = sorted(faces, key=lambda f: (f.bbox[2]-f.bbox[0])*(f.bbox[3]-f.bbox[1]), reverse=True)[0]
                     vectors["face"] = best_face.normed_embedding.tolist()
                     
-                    # --- [DeepFace: 추가 표정/나이/성별 분석] ---
+                    # --- [InsightFace -> Family Meta : 나이/성별 보정 적용] ---
+                    ai_age = int(best_face.age)
+                    ai_gender = "남성(Male)" if best_face.gender == 1 else "여성(Female)"
+                    
+                    real_name = "Unknown People"
+                    best_sim_main = -1.0
+                    for name, k_vec in self.known_faces.items():
+                        sim = np.dot(best_face.normed_embedding, k_vec)
+                        if sim > best_sim_main:
+                            best_sim_main = sim
+                            if sim >= 0.35:
+                                real_name = name
+                                
+                    real_age = ai_age
+                    real_gender = ai_gender
+                    
+                    if real_name in self.family_meta:
+                        real_gender = self.family_meta[real_name].get("gender", ai_gender)
+                        born_year = self.family_meta[real_name].get("birth_year")
+                        
+                        import re
+                        match = re.search(r'(19|20)\d{2}', filepath)
+                        if born_year and match:
+                            photo_year = int(match.group(0))
+                            real_age = photo_year - born_year
+                            
+                    best_face_payload['age'] = real_age
+                    best_face_payload['gender'] = real_gender
+                    
+                    # --- [HSEmotion: 표정 분석] ---
                     box = best_face.bbox.astype(int)
                     x1, y1, x2, y2 = max(0, box[0]), max(0, box[1]), min(cv_img.shape[1], box[2]), min(cv_img.shape[0], box[3])
-                    cropped_face = cv_img[y1:y2, x1:x2]
+                    face_img = cv_img[y1:y2, x1:x2]
                     
                     try:
-                        # DeepFace.analyze를 통해 해당 얼굴 이미지 크롭본 분석 (enforce_detection=False로 안전장치)
-                        df_res = DeepFace.analyze(img_path=cropped_face, actions=['age', 'gender', 'emotion'], enforce_detection=False, silent=True)
-                        if isinstance(df_res, list):
-                            df_res = df_res[0]
-                        
-                        best_face_payload['age'] = df_res.get('age', 0)
-                        best_face_payload['emotion'] = df_res.get('dominant_emotion', 'neutral')
-                        
-                        gender_data = df_res.get('gender', {})
-                        if isinstance(gender_data, dict):
-                            best_face_payload['gender'] = max(gender_data, key=gender_data.get)
+                        if face_img.size > 0:
+                            emotion, scores = self.emotion_recognizer.predict_emotions(face_img, logits=False)
+                            best_face_payload['emotion'] = emotion
                         else:
-                            best_face_payload['gender'] = str(gender_data)
-                            
+                            best_face_payload['emotion'] = 'neutral'
                     except Exception as df_e:
-                        print(f"      ⚠️ DeepFace 분석 실패 (Skip): {df_e}")
+                        print(f"      ⚠️ HSEmotion 분석 실패 (Skip): {df_e}")
+                        best_face_payload['emotion'] = 'neutral'
                 else:
                     found_people.append("No People")
                     
-                # --- [YOLO: 일반 사물(Object) 추출] ---
+                # --- [Florence-2: 고급 문맥 묘사(Caption) 추출 및 사물(OD) 태깅] ---
+                scene_caption = ""
                 found_objects = []
-                if self.yolo_model:
-                    # conf: 신뢰도 커트라인 팍 낮춤 (0.15 = 15% 확신만 있어도 태깅)
-                    # iou: 박스가 겹쳐있어도 다수 인식 (0.45)
-                    # imgsz: 이미지를 640 대신 1024 고해상도로 스캔 (GPU 자원 풀파워)
-                    yolo_results = self.yolo_model(cv_img, conf=0.15, iou=0.45, imgsz=1024, verbose=False)
-                    for r in yolo_results:
-                        for c in r.boxes.cls:
-                            cls_name = self.yolo_model.names[int(c)]
-                            if cls_name == "person": continue # 인물은 이미 탐지함
-                            if cls_name not in found_objects:
-                                found_objects.append(cls_name)
+                if getattr(self, "florence_model", None):
+                    try:
+                        # 1. 캡션 추출
+                        task_prompt_cap = "<MORE_DETAILED_CAPTION>"
+                        flo_inputs_cap = self.florence_processor(text=task_prompt_cap, images=pil_img, return_tensors="pt").to(self.florence_model.device)
+                        with torch.no_grad():
+                            generated_ids_cap = self.florence_model.generate(
+                                input_ids=flo_inputs_cap["input_ids"],
+                                pixel_values=flo_inputs_cap["pixel_values"],
+                                max_new_tokens=512,
+                                early_stopping=False,
+                                do_sample=False,
+                                num_beams=1,
+                            )
+                        generated_text_cap = self.florence_processor.batch_decode(generated_ids_cap, skip_special_tokens=False)[0]
+                        parsed_answer_cap = self.florence_processor.post_process_generation(
+                            generated_text_cap, 
+                            task=task_prompt_cap, 
+                            image_size=(pil_img.width, pil_img.height)
+                        )
+                        scene_caption = parsed_answer_cap.get(task_prompt_cap, "")
+                        
+                        # 2. 사물 태그(Object Detection) 추출
+                        task_prompt_od = "<OD>"
+                        flo_inputs_od = self.florence_processor(text=task_prompt_od, images=pil_img, return_tensors="pt").to(self.florence_model.device)
+                        with torch.no_grad():
+                            generated_ids_od = self.florence_model.generate(
+                                input_ids=flo_inputs_od["input_ids"],
+                                pixel_values=flo_inputs_od["pixel_values"],
+                                max_new_tokens=1024,
+                                early_stopping=False,
+                                do_sample=False,
+                                num_beams=1,
+                            )
+                        generated_text_od = self.florence_processor.batch_decode(generated_ids_od, skip_special_tokens=False)[0]
+                        parsed_answer_od = self.florence_processor.post_process_generation(
+                            generated_text_od, 
+                            task=task_prompt_od, 
+                            image_size=(pil_img.width, pil_img.height)
+                        )
+                        od_results = parsed_answer_od.get(task_prompt_od, {})
+                        if isinstance(od_results, dict) and "labels" in od_results:
+                            for label in od_results["labels"]:
+                                # 소문자화 및 공백 제거
+                                clean_label = str(label).strip().lower()
+                                # 빈 문자열이나 "person"은 스킵
+                                if clean_label and "person" not in clean_label and clean_label not in found_objects:
+                                    found_objects.append(clean_label)
+                                    
+                    except Exception as flo_e:
+                        print(f"      ⚠️ Florence-2 분석 실패 (Skip): {flo_e}")
                         
                 # --- [날짜(Date) 및 위치(Location) 파싱] ---
                 # 경로 형식: /app/data/organized/2020/2020-10_Jecheon-Si-South-Korea/2020-10_63.jpg
@@ -330,7 +429,8 @@ class VectorIndexer:
                     "location": location_str,
                     "time_of_day": time_of_day,
                     "season": season,
-                    "objects": found_objects
+                    "objects": found_objects,
+                    "caption": scene_caption
                 }
                 payload.update(best_face_payload)
                 

@@ -8,9 +8,9 @@ onnxruntime-gpu==1.18.1
 python-multipart
 imagehash
 exifread
-deepface
-tf-keras
-SQLAlchemy
+transformers==4.44.2
+einops
+sentencepiece
 Pillow
 geopy
 sentence-transformers

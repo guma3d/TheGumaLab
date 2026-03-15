@@ -16,23 +16,25 @@ import sqlite3
 import threading
 from contextlib import asynccontextmanager
 
-from sentence_transformers import SentenceTransformer
+from transformers import AutoProcessor, AutoModel
+import torch
 from qdrant_client import QdrantClient
-from qdrant_client.http.models import Filter, FieldCondition, MatchAny, MatchText
+from qdrant_client.http.models import Filter, FieldCondition, MatchAny, MatchText, MatchValue
 from google import genai
 from dotenv import load_dotenv
 
 load_dotenv()
 
 # Global Models & Clients
-clip_model = None
+siglip_processor = None
+siglip_model = None
 qdrant_client = None
 gemini_client = None
 known_faces = {}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global clip_model, qdrant_client, gemini_client, known_faces
+    global siglip_processor, siglip_model, qdrant_client, gemini_client, known_faces
     
     # 초기 SQLite 테이블 세팅 (Feedback Queue 생성)
     try:
@@ -75,12 +77,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[*] Error loading known_faces.pkl: {e}")
 
-    # Initialize standard CLIP text/image encoder for High-end queries
+    # Initialize standard SigLIP text/image encoder for High-end queries
     try:
-        print("[*] 🖼️ Loading High-End CLIP (clip-ViT-L-14)...")
-        clip_model = SentenceTransformer('clip-ViT-L-14')
+        print("[*] 🖼️ Loading High-End SigLIP (google/siglip-base-patch16-224)...")
+        siglip_processor = AutoProcessor.from_pretrained('google/siglip-base-patch16-224')
+        siglip_model = AutoModel.from_pretrained('google/siglip-base-patch16-224').to("cuda" if torch.cuda.is_available() else "cpu")
+        siglip_model.eval()
     except Exception as e:
-        print(f"[-] Failed to load CLIP model: {e}")
+        print(f"[-] Failed to load SigLIP model: {e}")
     
     print("[*] Connecting to Qdrant (http://qdrant:6333)...")
     qdrant_client = QdrantClient(url=os.getenv("QDRANT_URL", "http://qdrant:6333"))
@@ -176,7 +180,7 @@ async def upload_photos(background_tasks: BackgroundTasks, files: List[UploadFil
 
 @app.post("/api/search")
 async def perform_search(req: SearchRequest):
-    if not clip_model or not qdrant_client:
+    if not siglip_model or not qdrant_client:
         raise HTTPException(status_code=500, detail="AI Models are not loaded yet.")
         
     search_text = req.query.strip()
@@ -191,17 +195,30 @@ async def perform_search(req: SearchRequest):
     # [1] LLM Query Rewriting Layer (Gemini)
     if gemini_client and not req.is_load_more:
         try:
+            # 현재 Qdrant에서 보유중인 정확한 Location 리스트 추출 (Scroll Limit 상향 조정)
+            existing_locations = []
+            try:
+                scroll_res = qdrant_client.scroll(collection_name="gumaphoto_hybrid_kr", limit=5000, with_payload=["location"])
+                locations_set = {point.payload.get("location") for point in scroll_res[0] if point.payload.get("location")}
+                locations_set.discard("Unknown Location")
+                locations_set.discard(None)
+                existing_locations = list(locations_set)
+            except Exception as e:
+                print(f"Location Fetch Error: {e}")
+                
             prompt = (
                 f"사용자 검색어: '{search_text}'\n"
                 "당신은 스마트 갤러리의 이미지 검색 쿼리 작성 도우미입니다. "
-                f"현재 등록된 가족 이름 목록: {list(known_faces.keys())}\n"
+                "사용자가 한글로 자연어 검색을 하더라도, 반드시 우리가 서버에 '보유하고 있는 태그'를 파악하고 번역(대조)하여 JSON을 구성해야 합니다.\n"
                 "다음 규칙에 따라 응답을 반드시 유효한 JSON 형식으로만 작성하세요.\n"
-                "1) 사용자가 검색한 내용 중 '등록된 가족 이름'과 매칭되는 사람이 있다면 'people' 문자열 배열에 저장.\n"
-                "2) 사용자가 검색한 내용 중 '장소나 위치, 국가, 도시명' 등이 있다면 'location' 문자열에 저장.\n"
-                "3) 사용자가 검색한 내용 중 명확한 사물, 동물, 물건(강아지, 자동차, 안경 등)이 있다면 COCO 데이터셋 기준의 '영어 소문자 영단어'로 번역하여 'objects' 문자열 배열에 저장. (예: dog, car, tie)\n"
-                "4) 인물, 장소, 사물을 제외한 나머지 배경이나 상황, 분위기, 행동 특징 등은 최상위 품질의 '순수 영어(English)' 캡션으로 번역하여 'scene' 문자열에 저장. (오직 영어로만 작성, 예: family playing at the beach with laughter)\n"
-                "예시: {\"people\": [\"성욱\"], \"location\": \"라스베가스\", \"objects\": [\"dog\", \"car\"], \"scene\": \"family playing at the beach with laughter\"}\n"
-                "만약 파악된 인물, 장소, 사물이 없다면 빈 배열이나 빈 문자열로 두세요."
+                f"1) 사용자 검색어 중 등록된 가족 이름({list(known_faces.keys())})과 매칭되는 사람이 있다면 'people' 문자열 배열에 저장.\n"
+                "2) 사용자 검색어 중 장소/위치/국가명(예: 하와이, 제주도, 미국 등)이 포함되어 있다면, 의미를 스스로 번역/유추하여 다음 <보유 장소 목록> 중 가장 일치하는 텍스트 원본 그대로를 'location'에 문자열로 저장하세요.\n"
+                f"   <보유 장소 목록> : {existing_locations}\n"
+                "   (핵심 규칙: '하와이'를 검색하면 'Hawaii'나 'Honolulu', '엘에이'를 검색하면 'Los Angeles California' 등 위 목록에 있는 정확한 철자로만 치환해야 합니다. 포함관계에 있는 장소도 매칭 대상입니다. 정합되는 게 없으면 빈 문자열을 넣으세요.)\n"
+                "3) 명확한 사물, 옷, 색상 등이 있다면 '영어 소문자 영단어'로 번역하여 'objects' 문자열 배열에 저장. (예: dog, blue shirt, glasses)\n"
+                "4) 위 3가지를 제외한 배경, 분위기, 옷의 색, 행동 특징 등은 '순수 영어(English)' 캡션으로 상세히 번역하여 'scene' 문자열에 저장. (오직 영어로만 작성, 예: young girl wearing blue shirt opening refrigerator)\n"
+                "예시: {\"people\": [\"송이\"], \"location\": \"Honolulu Hawaii\", \"objects\": [\"dog\", \"blue shirt\"], \"scene\": \"a young girl wearing blue shirt opening refrigerator\"}\n"
+                "만약 파악된 값이 없다면 빈 배열이나 빈 문자열로 두세요."
             )
             response = gemini_client.models.generate_content(
                 model='gemini-3.1-flash-lite-preview',
@@ -261,18 +278,48 @@ async def perform_search(req: SearchRequest):
 
         search_res = []
         
-        if enhanced_query.strip():
+        if enhanced_query.strip() and siglip_processor and siglip_model:
             # 사용자가 인물/장소 외에도 "해변에서 뛰어노는"과 같은 씬(상황)을 명시한 경우
-            query_vector = clip_model.encode(enhanced_query).tolist()
-            search_res = qdrant_client.query_points(
+            with torch.no_grad():
+                inputs = siglip_processor(text=[enhanced_query], padding="max_length", return_tensors="pt").to(siglip_model.device)
+                text_features = siglip_model.get_text_features(**inputs)
+                text_features = text_features / text_features.norm(p=2, dim=-1, keepdim=True)
+                query_vector = text_features[0].cpu().numpy().tolist()
+                
+            # Hybrid Search Reranking을 위해 더 넉넉하게 추출
+            initial_limit = max(100, req.limit + req.offset)
+            raw_points = qdrant_client.query_points(
                 collection_name="gumaphoto_hybrid_kr",
                 query=query_vector,
                 using="scene",
                 query_filter=query_filter, # 필터 우선 적용
-                limit=req.limit,
-                offset=req.offset,
+                limit=initial_limit,
+                offset=0,
                 with_payload=True
             ).points
+            
+            # --- [Caption BM25-like Reranking 로직] ---
+            import re
+            query_words = set(re.findall(r'\b\w+\b', enhanced_query.lower()))
+            reranked_points = []
+            
+            for pt in raw_points:
+                caption = pt.payload.get("caption", "").lower()
+                caption_words = set(re.findall(r'\b\w+\b', caption))
+                
+                # 얼마나 많은 검색어 단어가 캡션과 겹치는가?
+                overlap_count = len(query_words & caption_words)
+                text_score = overlap_count / max(1, len(query_words)) # 0.0 ~ 1.0
+                
+                # SigLIP Vector Score (가중치 70%) + Florence Text Score (가중치 30%)
+                final_score = (pt.score * 0.7) + (text_score * 0.3)
+                reranked_points.append((final_score, pt))
+                
+            # 합산 점수(final_score) 내림차순 정렬
+            reranked_points.sort(key=lambda x: x[0], reverse=True)
+            
+            # 클라이언트가 요청한 Limit/Offset 분량만큼 자르고 Points만 추출
+            search_res = [pt for _, pt in reranked_points[req.offset : req.offset + req.limit]]
             
         else:
             # 씬(장면) 설명 없이 인물과 장소만으로 검색한 경우 (예: "성욱이 라스베가스")
@@ -383,27 +430,65 @@ async def receive_feedback(req: FeedbackRequest):
         
     print(f"📥 [피드백 수신] 사진: {req.filepath} / 내용: {req.feedback_text}")
     
-    # [1] LLM에 파싱 맡겨서 누구로 바꿔달라는 건지 추출
-    target_person = "Unknown"
+    # [1] LLM에 파싱 맡겨서 메타데이터(장소, 시간, 사람, 성별, 나이)를 종합적으로 추출
     try:
         prompt = (
-            f"사진 피드백 내용: '{req.feedback_text}'\n"
-            "이 문장에서 사용자가 이 사진의 대상을 '누구'라고 정정하거나 등록하고 싶어 하는지 등장인물의 이름(보통 2~3글자의 한국 이름)만 딱 한 단어로 말해.\n"
-            "예: '성욱'\n"
-            "만약 파악할 수 없다면 'Unknown'을 반환해."
+            f"사용자 피드백 코멘트: '{req.feedback_text}'\n"
+            "이 문장을 읽고 사용자가 정정하거나 등록하고자 하는 핵심 정보들을 파싱해줘.\n"
+            "결과는 반드시 아래의 JSON 형식으로만 반환해야 해 (다른 말이나 마크다운은 절대 쓰지 마):\n"
+            "{\n"
+            '  "target_person": "사람 이름 (보통 2~3글자 한국 이름, 없으면 null)",\n'
+            '  "target_gender": "여성 또는 남성 (없으면 null)",\n'
+            '  "target_birth_year": "태어난 연도 숫자 (예: 2018, 없으면 null)",\n'
+            '  "target_location": "장소 또는 위치 이름 (예: 제주도, 롯데월드, 없으면 null)",\n'
+            '  "target_date_month": "YYYY-MM 형태의 시간 (예: 2021-08, 1999-12, 없으면 null)"\n'
+            "}"
         )
         response = gemini_client.models.generate_content(
             model='gemini-3.1-flash-lite-preview',
             contents=prompt,
         )
-        target_person = response.text.strip().replace("'", "").replace('"', '')
+        
+        raw_text = response.text.strip()
+        # 마크다운 ```json 제거 방어코드
+        if raw_text.startswith("```json"):
+            raw_text = raw_text[7:]
+        if raw_text.endswith("```"):
+            raw_text = raw_text[:-3]
+            
+        parsed_data = json.loads(raw_text.strip())
+        target_person = parsed_data.get("target_person")
+        target_gender = parsed_data.get("target_gender")
+        target_birth = parsed_data.get("target_birth_year")
+        target_loc = parsed_data.get("target_location")
+        target_date = parsed_data.get("target_date_month")
+        
     except Exception as e:
         print(f"Gemini API Error: {e}")
+        raise HTTPException(status_code=400, detail="LLM could not parse the feedback.")
         
-    if target_person == "Unknown" or not target_person:
-        raise HTTPException(status_code=400, detail="Could not parse target person name from feedback.")
-        
-    print(f"   🎯 [LLM 타겟 인물 판단] : {target_person}")
+    print(f"   🎯 [LLM 자연어 파싱 완료] : {parsed_data}")
+    
+    # 1.5 만약 가족 생년월일이나 성별이 새롭게 피드백에 있다면 family_meta.json 즉시 업데이트
+    if target_person and (target_gender or target_birth):
+        try:
+            meta_path = "/app/data/family_meta.json"
+            family_meta = {}
+            if os.path.exists(meta_path):
+                with open(meta_path, 'r', encoding='utf-8') as f:
+                    family_meta = json.load(f)
+                    
+            if target_person not in family_meta:
+                family_meta[target_person] = {}
+                
+            if target_gender: family_meta[target_person]["gender"] = target_gender
+            if target_birth: family_meta[target_person]["birth_year"] = int(target_birth)
+            
+            with open(meta_path, 'w', encoding='utf-8') as f:
+                json.dump(family_meta, f, ensure_ascii=False, indent=4)
+            print(f"   👨‍👩‍👦 [Family Meta Data] '{target_person}'의 신원 정보가 업데이트 되었습니다.")
+        except Exception as e:
+            print(f"Family Meta Update Error: {e}")
     
     # [2] 사진에서 가장 큰 얼굴의 벡터(512d) 뽑아내기
     import cv2
@@ -467,25 +552,37 @@ async def receive_feedback(req: FeedbackRequest):
         
     # [4] Qdrant DB 해당 사진 즉각 Payload 패치 (Local Done)
     try:
-        qdrant_client.set_payload(
-            collection_name="gumaphoto_hybrid_kr",
-            payload={"people": [target_person]},
-            points=[req.point_id]
-        )
-        print(f"   ⚡ [Qdrant] 사진 1장에 대한 메타데이터가 즉시 수정되었습니다. (Point: {req.point_id})")
+        update_payload = {}
+        if target_person: update_payload["people"] = [target_person]
+        if target_loc: update_payload["location"] = target_loc
+        if target_date: update_payload["date"] = target_date
+
+        if update_payload:
+            qdrant_client.set_payload(
+                collection_name="gumaphoto_hybrid_kr",
+                payload=update_payload,
+                points=[req.point_id]
+            )
+            print(f"   ⚡ [Qdrant] 메타데이터가 UI 검색에 즉시 반영되도록 패치되었습니다.")
     except Exception as e:
         print(f"   ❌ Qdrant Patch Error: {e}")
         
     # [5] SQLite Queue 스케줄 추가 (LOCAL_DONE)
     try:
         conn = sqlite3.connect("/app/data/organizer_state.db")
+        # 컬럼에 location과 date가 없다면 추가 (마이그레이션 방어)
+        try: conn.execute("ALTER TABLE feedback_queue ADD COLUMN parsed_location TEXT")
+        except: pass
+        try: conn.execute("ALTER TABLE feedback_queue ADD COLUMN parsed_date TEXT")
+        except: pass
+        
         conn.execute(
-            "INSERT INTO feedback_queue (filepath, point_id, feedback_text, target_person, status) VALUES (?, ?, ?, ?, ?)",
-            (abs_path, req.point_id, req.feedback_text, target_person, 'LOCAL_DONE')
+            "INSERT INTO feedback_queue (filepath, point_id, feedback_text, target_person, parsed_location, parsed_date, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (abs_path, req.point_id, req.feedback_text, target_person, target_loc, target_date, 'LOCAL_DONE')
         )
         conn.commit()
         conn.close()
-        print(f"   ✅ [DB Queue] 주간 스케줄에 반영 대기 등록 완료.")
+        print(f"   ✅ [DB Queue] 주간 '시공간 전파 재학습' 스케줄에 대기 등록 완료.")
     except Exception as e:
         print(f"   ❌ SQLite Insert Error: {e}")
 
