@@ -15,7 +15,8 @@ from geopy.geocoders import Nominatim
 
 # AI Models (Lazy Loading으로 필요할 때만 메모리에 올림)
 from insightface.app import FaceAnalysis
-from deepface import DeepFace
+import torch
+from hsemotion.facial_emotions import HSEmotionRecognizer
 
 # ==========================================
 # GumaPhoto 자동 정리 & 베스트컷 파이프라인
@@ -60,16 +61,17 @@ class OrganizerPipeline:
             os.makedirs(d, exist_ok=True)
 
     def load_ai_models(self):
-        """무거운 AI 모델(InsightFace, DeepFace) 로드"""
+        """AI 모델(InsightFace, HSEmotion) 로드"""
         if self.face_app is None:
-            print("[*] 🤖 AI 스캐너 (InsightFace & DeepFace) 가동 중...")
+            print("[*] 🤖 AI 스캐너 (InsightFace & HSEmotion) 가동 중...")
             self.face_app = FaceAnalysis(name='buffalo_l', root='/root/.insightface')
             self.face_app.prepare(ctx_id=0, det_size=(640, 640))
-            # DeepFace는 호출 시 자동 로드되지만, keras/tf 설정 초기화를 위해 한 번 빈 배열 넘김
-            try:
-                DeepFace.analyze(np.zeros((224, 224, 3), dtype=np.uint8), actions=['emotion'], enforce_detection=False)
-            except:
-                pass
+            
+            _original_load = torch.load
+            torch.load = lambda *a, **k: _original_load(*a, weights_only=False, **{key:val for key,val in k.items() if key != 'weights_only'})
+            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            self.emotion_recognizer = HSEmotionRecognizer(model_name='enet_b0_8_best_vgaf', device=device)
+            torch.load = _original_load
 
     # ==========================
     # 🛡️ 1단계: Junk 필터링
@@ -263,19 +265,18 @@ class OrganizerPipeline:
                 if ear < 0.2: # 눈 감음!
                     pic_score -= 1000 # 가차없이 감점
                 
-                # 3. 표정 감성 분석 (DeepFace)
+                # 3. 표정 감성 분석 (HSEmotion)
                 x1, y1, x2, y2 = face.bbox.astype(int)
                 # 얼굴 영역 크롭
                 face_crop = img[max(0,y1):min(img.shape[0],y2), max(0,x1):min(img.shape[1],x2)]
                 
                 try:
-                    # DeepFace 감정 분석 리포트
-                    emotion_res = DeepFace.analyze(face_crop, actions=['emotion'], enforce_detection=False)
-                    dom_emotion = emotion_res[0]['dominant_emotion']
-                    if dom_emotion == 'happy':
-                        pic_score += 500  # 웃는 사진 최고 가산점 😍
-                    elif dom_emotion in ['sad', 'angry', 'fear']:
-                        pic_score -= 100  # 찡그린 표정 감점
+                    if face_crop.size > 0:
+                        emotion, scores = self.emotion_recognizer.predict_emotions(face_crop, logits=False)
+                        if emotion == 'Happiness':
+                            pic_score += 500  # 웃는 사진 최고 가산점 😍
+                        elif emotion in ['Sadness', 'Anger', 'Fear', 'Disgust', 'Contempt']:
+                            pic_score -= 100  # 찡그린 표정 감점
                 except:
                     pass
             
@@ -344,6 +345,10 @@ class OrganizerPipeline:
             if meta["status"] == "JUNK":
                 print(f"   🗑️ [JUNK 삭제] {os.path.basename(filepath)} -> 사유: {meta['reason']}")
                 junk_count += 1
+                try: 
+                    os.remove(filepath) # 쓰레기 파일 업로드 즉시 제거
+                except: 
+                    pass
                 continue
             
             # 여기서 실제로는 시간(시:분:초)도 파싱해서 배열에 담아야 sorting이 가능함 (현재는 mock)
@@ -387,9 +392,12 @@ class OrganizerPipeline:
                 
                 os.makedirs(target_folder_path, exist_ok=True)
                 
-                # 안전장치: 원본 유지(이동/삭제 없음)를 위해 메타데이터 보존 복사(copy2)
+                # 스마트폰 업로드 지원(원본 삭제): 이동(move)으로 변경하여 중복 용량 차지 방지
                 if not os.path.exists(final_move_path):
-                    shutil.copy2(item['filepath'], final_move_path)
+                    shutil.move(item['filepath'], final_move_path)
+                else:
+                    try: os.remove(item['filepath']) # 이미 목적지에 존재하면 업로드본은 그냥 삭제
+                    except: pass
                 
                 # 5단계: DB에 기록 (오리지널 문맥 포함)
                 file_hash_val = item.get('hash', 'UNKNOWN_HASH')
