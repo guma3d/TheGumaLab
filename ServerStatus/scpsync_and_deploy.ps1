@@ -1,4 +1,4 @@
-$LocalPath = "C:\Users\guma3\OneDrive\Documents\TheGumaLab\ServerStatus"
+$LocalPath = "d:\TheGumaLab\ServerStatus"
 $RemotePath = "d:/TheGumaLab/ServerStatus"
 $SSHHost = "HomeServer"
 

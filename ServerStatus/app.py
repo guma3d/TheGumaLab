@@ -51,8 +51,8 @@ def status():
             }
         except: return None
     
-    # C 드라이브 (컨테이너 루트)
-    disk_c = get_disk_data("/")
+    # C 드라이브 (호스트 마운트)
+    disk_c = get_disk_data("/mnt/c")
     
     # D 드라이브 (호스트 마운트)
     disk_d = get_disk_data("/mnt/d")

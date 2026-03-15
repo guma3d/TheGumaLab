@@ -10,5 +10,6 @@ services:
       # - LHM_URL 제거됨
       - PYTHONUNBUFFERED=1
     volumes:
+      - C:\:/mnt/c:ro
       - D:\:/mnt/d:ro
     restart: always
