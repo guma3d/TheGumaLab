@@ -37,6 +37,9 @@
                 </div>
             </form>
             <div class="header-actions">
+                <button id="progress-monitor-btn" class="secondary-btn" title="Live Progress Monitor">
+                    <i class="fa-solid fa-list-check"></i>
+                </button>
                 <input type="file" id="upload-input" multiple accept="image/*" style="display: none;">
                 <label for="upload-input" id="upload-btn" class="secondary-btn" title="Upload Photos">
                     <i class="fa-solid fa-cloud-arrow-up"></i>
@@ -103,7 +106,41 @@
         </div>
     </div>
 
-    <script src="static/script.js?v=11"></script>
+    <!-- Live Progress Monitor Modal -->
+    <div id="progress-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 500px; padding: 2rem; border-radius: 12px;">
+            <span id="progress-modal-close" class="modal-close">&times;</span>
+            <h2 style="font-size: 1.5rem; color: white; display:flex; align-items:center; gap: 10px; margin-bottom: 2rem;">
+                <i class="fa-solid fa-server" style="color: #3b82f6;"></i> 서브서버 실시간 현황 모니터
+            </h2>
+            
+            <div style="display:flex; flex-direction: column; gap: 15px;">
+                <div style="background: var(--surface-light); padding: 15px; border-radius: 8px;">
+                    <h3 style="color:var(--text-muted); font-size: 0.9em; margin-bottom: 5px;">📦 대기열 (아직 처리 안 됨)</h3>
+                    <p id="prog-raw" style="color:#ef4444; font-size: 1.4em; font-weight:bold;">Loading...</p>
+                    <small>uploads_raw 폴더에 남아있는 원본 파일</small>
+                </div>
+                
+                <div style="background: var(--surface-light); padding: 15px; border-radius: 8px;">
+                    <h3 style="color:var(--text-muted); font-size: 0.9em; margin-bottom: 5px;">🚚 사진 분류 로봇 (폴더 이사)</h3>
+                    <p id="prog-org" style="color:#f59e0b; font-size: 1.4em; font-weight:bold;">Loading...</p>
+                    <small>날짜/장소 식별 후 하드디스크 최종 정리 완료</small>
+                </div>
+                
+                <div style="background: var(--surface-light); padding: 15px; border-radius: 8px;">
+                    <h3 style="color:var(--text-muted); font-size: 0.9em; margin-bottom: 5px;">🤖 딥러닝 스캐너 로봇 (AI)</h3>
+                    <p id="prog-ai" style="color:#10b981; font-size: 1.4em; font-weight:bold;">Loading...</p>
+                    <small>검색 엔진 (얼굴/배경) 두뇌 DB 이식 완료</small>
+                </div>
+                
+                <p id="prog-status" style="font-size: 0.85em; color: var(--text-muted); text-align:right; margin-top: 10px;">
+                    실시간 동기화 중... <i class="fa-solid fa-spinner fa-spin"></i>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="static/script.js?v=12"></script>
 </body>
 
 </html>

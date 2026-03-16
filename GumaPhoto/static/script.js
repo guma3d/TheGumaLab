@@ -462,3 +462,79 @@ feedbackForm.addEventListener('submit', async (e) => {
         submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
     }
 });
+
+// ---------------------------------------------------------------------------------
+// Live Progress Monitor Logic
+// ---------------------------------------------------------------------------------
+const progressMonitorBtn = document.getElementById('progress-monitor-btn');
+const progressModal = document.getElementById('progress-modal');
+const progressModalClose = document.getElementById('progress-modal-close');
+
+let progressPollingInterval = null;
+
+if (progressMonitorBtn) {
+    progressMonitorBtn.addEventListener('click', () => {
+        progressModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        startProgressPolling();
+    });
+}
+
+if (progressModalClose) {
+    progressModalClose.addEventListener('click', closeProgressModal);
+}
+
+function closeProgressModal() {
+    progressModal.classList.add('hidden');
+    document.body.style.overflow = 'auto'; // restore body scroll
+    if (progressPollingInterval) {
+        clearInterval(progressPollingInterval);
+        progressPollingInterval = null;
+    }
+}
+
+// Close monitor modal when clicking outside
+window.addEventListener('click', (e) => {
+    if (e.target === progressModal) {
+        closeProgressModal();
+    }
+});
+
+async function fetchProgress() {
+    try {
+        // Cache buster to prevent browser from caching the JSON
+        const cb = new Date().getTime();
+        let targetUrl = '/static/progress.json?cb=' + cb;
+        if (window.location.pathname.startsWith('/GumaPhoto')) {
+            targetUrl = '/GumaPhoto' + targetUrl;
+        }
+        
+        const res = await fetch(targetUrl);
+        if (res.ok) {
+            const data = await res.json();
+            
+            // Format numbers with commas (e.g., 14,756)
+            const remaining = Number(data.remaining_raw).toLocaleString();
+            const org = Number(data.organizer_done).toLocaleString();
+            const ai = Number(data.vectorizer_done).toLocaleString();
+            
+            document.getElementById('prog-raw').innerText = `${remaining} 장`;
+            document.getElementById('prog-org').innerText = `${org} 장`;
+            document.getElementById('prog-ai').innerText = `${ai} 장`;
+            
+            document.getElementById('prog-status').innerHTML = '실시간 동기화 중... <i class="fa-solid fa-spinner fa-spin"></i>';
+        } else {
+            console.error('Failed to load progress data:', res.statusText);
+            document.getElementById('prog-status').innerText = '대기 중 (데이터 응답 없음)';
+        }
+    } catch(err) {
+        console.error('Error fetching tracker data:', err);
+    }
+}
+
+function startProgressPolling() {
+    // Immediate fetch
+    fetchProgress();
+    // Fetch every 2.5 seconds
+    progressPollingInterval = setInterval(fetchProgress, 2500);
+}
