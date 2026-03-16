@@ -101,8 +101,13 @@ async function fetchPhotos(isLoadMore) {
             }
             currentOffset += currentLimit;
 
+            let fallbackMsg = '';
+            if (data.fallback_triggered && !isLoadMore) {
+                fallbackMsg = `<br><span style="color:#ef4444; font-size: 0.9em; margin-top:5px; display:inline-block;">⚠️ '${currentLocation}' 장소에 일치하는 결과가 없어, 유사한 분위기의 사진을 찾았습니다.</span>`;
+            }
+
             metaText.innerHTML = `Found <b style="color:white">${totalHits}</b> photos loaded for: "<i style="color:var(--text-muted)">${currentQuery}</i>" <br> 
-            <small style="color:#3b82f6;">(AI parsed: ${currentScene})</small>`;
+            <small style="color:#3b82f6;">(AI parsed: ${currentScene})</small>${fallbackMsg}`;
             renderGallery(data.results, isLoadMore);
         }
         

@@ -142,7 +142,7 @@ async def read_root(request: Request):
 upload_lock = threading.Lock()
 
 def trigger_upload_pipeline():
-    """백그라운드에서 실행되는 3순환 업로드 AI 처리 파이프라인"""
+    """백그라운드에서 실행되는 3순환 업로드 AI 처리 파이프라인 + 동적 사전 생성"""
     if not upload_lock.acquire(blocking=False):
         print("⏳ [Background] 파이프라인이 이미 맹렬하게 가동 중입니다! (새 사진은 현재 파이프라인이 끝날 때, 혹은 다음 주기에 합류합니다.)")
         return
@@ -154,7 +154,12 @@ def trigger_upload_pipeline():
         print("🚀 [Background] 폴더 정리 완료. 이어서 Qdrant Vector Scan을 가동합니다...")
         # 3. 모델 기반 Vector/Payload 분석 후 실시간 DB 등록
         subprocess.run(["python", "vector_indexer.py"], check=True)
-        print("✅ [Background] 전체 업로드 파이프라인 성공! 검색 엔진이 실시간 업데이트 되었습니다.")
+        
+        # 4. (추가) 신규 사진 업로드로 새로운 장소/인물이 발견되었을 수 있으니, 태그 사전 동적 자동 업데이트!
+        print("🔄 [Background] 신규 태그가 인입되었는지 확인하고 마스터 태그 사전을 재구축(업데이트)합니다...")
+        subprocess.run(["python", "generate_tag_dict.py"], check=True)
+        
+        print("✅ [Background] 전체 업로드 파이프라인 및 사전 업데이트 성공! 검색 엔진이 실시간 최적화 상태가 되었습니다.")
     except Exception as e:
         print(f"❌ [Background] 파이프라인 가동 중 에러 발생: {e}")
     finally:
@@ -195,16 +200,15 @@ async def perform_search(req: SearchRequest):
     # [1] LLM Query Rewriting Layer (Gemini)
     if gemini_client and not req.is_load_more:
         try:
-            # 현재 Qdrant에서 보유중인 정확한 Location 리스트 추출 (Scroll Limit 상향 조정)
+            # 미리 구워진 마스터 태그 사전(JSON)에서 Location 리스트 0.01초만에 가져오기
             existing_locations = []
             try:
-                scroll_res = qdrant_client.scroll(collection_name="gumaphoto_hybrid_kr", limit=5000, with_payload=["location"])
-                locations_set = {point.payload.get("location") for point in scroll_res[0] if point.payload.get("location")}
-                locations_set.discard("Unknown Location")
-                locations_set.discard(None)
-                existing_locations = list(locations_set)
+                if os.path.exists("/app/data/available_tags.json"):
+                    with open("/app/data/available_tags.json", "r", encoding="utf-8") as f:
+                        tag_data = json.load(f)
+                        existing_locations = tag_data.get("locations", [])
             except Exception as e:
-                print(f"Location Fetch Error: {e}")
+                print(f"Tag Dictionary Load Error: {e}")
                 
             prompt = (
                 f"사용자 검색어: '{search_text}'\n"
@@ -215,9 +219,10 @@ async def perform_search(req: SearchRequest):
                 "2) 사용자 검색어 중 장소/위치/국가명(예: 하와이, 제주도, 미국 등)이 포함되어 있다면, 의미를 스스로 번역/유추하여 다음 <보유 장소 목록> 중 가장 일치하는 텍스트 원본 그대로를 'location'에 문자열로 저장하세요.\n"
                 f"   <보유 장소 목록> : {existing_locations}\n"
                 "   (핵심 규칙: '하와이'를 검색하면 'Hawaii'나 'Honolulu', '엘에이'를 검색하면 'Los Angeles California' 등 위 목록에 있는 정확한 철자로만 치환해야 합니다. 포함관계에 있는 장소도 매칭 대상입니다. 정합되는 게 없으면 빈 문자열을 넣으세요.)\n"
-                "3) 명확한 사물, 옷, 색상 등이 있다면 '영어 소문자 영단어'로 번역하여 'objects' 문자열 배열에 저장. (예: dog, blue shirt, glasses)\n"
-                "4) 위 3가지를 제외한 배경, 분위기, 옷의 색, 행동 특징 등은 '순수 영어(English)' 캡션으로 상세히 번역하여 'scene' 문자열에 저장. (오직 영어로만 작성, 예: young girl wearing blue shirt opening refrigerator)\n"
-                "예시: {\"people\": [\"송이\"], \"location\": \"Honolulu Hawaii\", \"objects\": [\"dog\", \"blue shirt\"], \"scene\": \"a young girl wearing blue shirt opening refrigerator\"}\n"
+                "3) 명확한 형태가 있는 '물리적 사물' (예: 강아지, 안경, 자동차, 빨간 셔츠)만 '영어 소문자 영단어'로 번역하여 'objects' 문자열 배열에 저장하세요. (예: dog, blue shirt, glasses)\n"
+                "   ⚠️ [경고]: '결혼식(wedding)', '생일파티', '행사', '축제' 등과 같은 추상적 이벤트나 관념적인 명사는 절대 'objects'에 넣지 마세요!\n"
+                "4) 위 3가지를 제외한 모든 내용(결혼식, 배경, 분위기, 행동 특징, 날씨 등)은 '순수 영어(English)' 문장으로 상세히 번역하여 'scene' 문자열에 저장하세요. (오직 영어로만 작성, 예: a wedding ceremony, young girl wearing blue shirt opening refrigerator)\n"
+                "예시: {\"people\": [\"송이\"], \"location\": \"Honolulu Hawaii\", \"objects\": [\"dog\", \"blue shirt\"], \"scene\": \"a young girl playing at a wedding ceremony\"}\n"
                 "만약 파악된 값이 없다면 빈 배열이나 빈 문자열로 두세요."
             )
             response = gemini_client.models.generate_content(
@@ -243,113 +248,99 @@ async def perform_search(req: SearchRequest):
             location_detected = ""
             objects_detected = []
 
-    # [2 & 3] 메타데이터 역방향 필터링 기반 검색 로직
+    # [2 & 3] 메타데이터 역방향 필터링 기반 검색 로직 (2단 기어 스마트 폴백 적용)
     try:
-        query_filter = None
-        must_conditions = []
-        
-        if people_detected:
-            must_conditions.append(
-                FieldCondition(
-                    key="people",
-                    match=MatchAny(any=people_detected)
-                )
-            )
-            
-        if location_detected:
-            must_conditions.append(
-                FieldCondition(
-                    key="location",
-                    match=MatchText(text=location_detected)
-                )
-            )
-
-        if objects_detected:
-            for obj in objects_detected:
-                must_conditions.append(
-                    FieldCondition(
-                        key="objects",
-                        match=MatchValue(value=obj)
-                    )
-                )
-            
-        if must_conditions:
-            query_filter = Filter(must=must_conditions)
-
-        search_res = []
-        
-        if enhanced_query.strip() and siglip_processor and siglip_model:
-            # 사용자가 인물/장소 외에도 "해변에서 뛰어노는"과 같은 씬(상황)을 명시한 경우
-            with torch.no_grad():
-                inputs = siglip_processor(text=[enhanced_query], padding="max_length", return_tensors="pt").to(siglip_model.device)
-                text_features = siglip_model.get_text_features(**inputs)
-                text_features = text_features / text_features.norm(p=2, dim=-1, keepdim=True)
-                query_vector = text_features[0].cpu().numpy().tolist()
+        def execute_qdrant_search(target_people, target_location):
+            must_conds = []
+            if target_people:
+                must_conds.append(FieldCondition(key="people", match=MatchAny(any=target_people)))
+            if target_location:
+                must_conds.append(FieldCondition(key="location", match=MatchText(text=target_location)))
                 
-            # Hybrid Search Reranking을 위해 더 넉넉하게 추출
-            initial_limit = max(100, req.limit + req.offset)
-            raw_points = qdrant_client.query_points(
-                collection_name="gumaphoto_hybrid_kr",
-                query=query_vector,
-                using="scene",
-                query_filter=query_filter, # 필터 우선 적용
-                limit=initial_limit,
-                offset=0,
-                with_payload=True
-            ).points
+            q_filter = Filter(must=must_conds) if must_conds else None
             
-            # --- [Caption BM25-like Reranking 로직] ---
-            import re
-            query_words = set(re.findall(r'\b\w+\b', enhanced_query.lower()))
-            reranked_points = []
-            
-            for pt in raw_points:
-                caption = pt.payload.get("caption", "").lower()
-                caption_words = set(re.findall(r'\b\w+\b', caption))
+            if enhanced_query.strip() and siglip_processor and siglip_model:
+                # 사용자가 인물/장소 외에도 "해변에서 뛰어노는"과 같은 씬(상황)을 명시한 경우
+                with torch.no_grad():
+                    inputs = siglip_processor(text=[enhanced_query], padding="max_length", return_tensors="pt").to(siglip_model.device)
+                    text_features = siglip_model.get_text_features(**inputs)
+                    text_features = text_features / text_features.norm(p=2, dim=-1, keepdim=True)
+                    query_vector = text_features[0].cpu().numpy().tolist()
+                    
+                # Hybrid Search Reranking을 위해 더 넉넉하게 추출
+                initial_limit = max(100, req.limit + req.offset)
+                raw_points = qdrant_client.query_points(
+                    collection_name="gumaphoto_hybrid_kr",
+                    query=query_vector,
+                    using="scene",
+                    query_filter=q_filter, # 필터 우선 적용
+                    limit=initial_limit,
+                    offset=0,
+                    with_payload=True
+                ).points
                 
-                # 얼마나 많은 검색어 단어가 캡션과 겹치는가?
-                overlap_count = len(query_words & caption_words)
-                text_score = overlap_count / max(1, len(query_words)) # 0.0 ~ 1.0
+                # --- [Caption BM25-like Reranking 로직] ---
+                import re
+                query_words = set(re.findall(r'\b\w+\b', enhanced_query.lower()))
+                reranked_points = []
                 
-                # SigLIP Vector Score (가중치 70%) + Florence Text Score (가중치 30%)
-                final_score = (pt.score * 0.7) + (text_score * 0.3)
-                reranked_points.append((final_score, pt))
+                for pt in raw_points:
+                    caption = pt.payload.get("caption", "").lower()
+                    caption_words = set(re.findall(r'\b\w+\b', caption))
+                    
+                    # 얼마나 많은 검색어 단어가 캡션과 겹치는가?
+                    overlap_count = len(query_words & caption_words)
+                    text_score = overlap_count / max(1, len(query_words)) # 0.0 ~ 1.0
+                    
+                    # SigLIP Vector Score (가중치 70%) + Florence Text Score (가중치 30%)
+                    final_score = (pt.score * 0.7) + (text_score * 0.3)
+                    reranked_points.append((final_score, pt))
+                    
+                # 합산 점수(final_score) 내림차순 정렬
+                reranked_points.sort(key=lambda x: x[0], reverse=True)
                 
-            # 합산 점수(final_score) 내림차순 정렬
-            reranked_points.sort(key=lambda x: x[0], reverse=True)
-            
-            # 클라이언트가 요청한 Limit/Offset 분량만큼 자르고 Points만 추출
-            search_res = [pt for _, pt in reranked_points[req.offset : req.offset + req.limit]]
-            
-        else:
-            # 씬(장면) 설명 없이 인물과 장소만으로 검색한 경우 (예: "성욱이 라스베가스")
-            if people_detected:
-                p = people_detected[0]
-                if p in known_faces:
-                    face_vector = known_faces[p]
-                    search_res = qdrant_client.query_points(
+                # 클라이언트가 요청한 Limit/Offset 분량만큼 자르고 Points만 추출
+                return [pt for _, pt in reranked_points[req.offset : req.offset + req.limit]]
+                
+            else:
+                # 씬(장면) 설명 없이 인물과 장소만으로 검색한 경우 (예: "성욱이 라스베가스")
+                if target_people:
+                    p = target_people[0]
+                    if p in known_faces:
+                        face_vector = known_faces[p]
+                        return qdrant_client.query_points(
+                            collection_name="gumaphoto_hybrid_kr",
+                            query=face_vector,
+                            using="face",
+                            query_filter=q_filter,
+                            limit=req.limit,
+                            offset=req.offset,
+                            with_payload=True
+                        ).points
+                elif q_filter:
+                    # 얼굴도 장면도 없이 장소필터만 있는 경우 (벡터 검색 대신 스크롤 조회)
+                    dummy_vector = [0.0] * 768 # ViT-L-14 dimension
+                    return qdrant_client.query_points(
                         collection_name="gumaphoto_hybrid_kr",
-                        query=face_vector,
-                        using="face",
-                        query_filter=query_filter,
+                        query=dummy_vector,
+                        using="scene",
+                        query_filter=q_filter,
                         limit=req.limit,
                         offset=req.offset,
                         with_payload=True
-                    ).points
-            elif query_filter:
-                # 얼굴도 장면도 없이 장소필터만 있는 경우 (벡터 검색 대신 스크롤 조회)
-                # Scroll uses point ID for offset, so we use vector search with dummy vector to use integer offset sorting by similarity
-                dummy_vector = [0.0] * 768 # ViT-L-14 dimension
-                search_res = qdrant_client.query_points(
-                    collection_name="gumaphoto_hybrid_kr",
-                    query=dummy_vector,
-                    using="scene",
-                    query_filter=query_filter,
-                    limit=req.limit,
-                    offset=req.offset,
-                    with_payload=True
-                ).points 
-                
+                    ).points 
+            return []
+
+        # 1. 일단 정밀 타격 (1단 기어)
+        search_res = execute_qdrant_search(people_detected, location_detected)
+        fallback_triggered = False
+        
+        # 2. [폴백 작동] 검색 결과가 0건이고, 1페이지이며, 사용한 장소 조건이 있었을 경우
+        if not search_res and location_detected and req.offset == 0:
+            print(f"⚠️ [Fallback 발동] '{location_detected}' 결과 없음. 장소 필터 해제 후 2단 기어 재검색")
+            fallback_triggered = True
+            search_res = execute_qdrant_search(people_detected, "") # 장소를 비우고 재요청
+            
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
@@ -391,6 +382,7 @@ async def perform_search(req: SearchRequest):
         "people_detected": people_detected,
         "location_detected": location_detected,
         "objects_detected": objects_detected,
+        "fallback_triggered": fallback_triggered,
         "total_hits": len(results)
     }
 
