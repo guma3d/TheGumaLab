@@ -45,7 +45,7 @@ def get_latest_results():
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        c.execute("SELECT filepath FROM vectorized_files WHERE status='DONE' ORDER BY id DESC LIMIT 2")
+        c.execute("SELECT filepath FROM vectorized_files WHERE status='DONE' ORDER BY rowid DESC LIMIT 2")
         rows = c.fetchall()
         
         if not rows:
