@@ -26,7 +26,7 @@ def get_progress():
         org_count = 0
         if os.path.exists("/app/data/organized"):
             for root, dirs, files in os.walk("/app/data/organized"):
-                org_count += len([f for f in files if f.lower().endswith(('.jpg', '.jpeg', '.png'))])
+                org_count += len([f for f in files if f.lower().endswith(('.jpg', '.jpeg', '.png', '.heic'))])
         processed_count = max(org_count, 0)
             
         c.execute("SELECT COUNT(*) FROM vectorized_files WHERE status='DONE'")

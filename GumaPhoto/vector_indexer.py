@@ -8,6 +8,11 @@ import exifread
 import re
 from datetime import datetime
 from PIL import Image
+try:
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+except ImportError:
+    pass
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams, PointStruct, PayloadSchemaType
 from transformers import AutoProcessor, AutoModel, AutoModelForCausalLM
@@ -471,7 +476,7 @@ class VectorIndexer:
             
             for file in files:
                 ext = os.path.splitext(file)[1].lower()
-                if ext in ['.jpg', '.jpeg', '.png']:
+                if ext in ['.jpg', '.jpeg', '.png', '.heic']:
                     all_targets.append(os.path.join(root, file))
                     
         # --- [테스트 모드용 로직] ---
