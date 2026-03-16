@@ -45,7 +45,7 @@ def get_latest_results():
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        c.execute("SELECT filepath, file_hash FROM vectorized_files WHERE status='DONE' ORDER BY id DESC LIMIT 2")
+        c.execute("SELECT filepath FROM vectorized_files WHERE status='DONE' ORDER BY id DESC LIMIT 2")
         rows = c.fetchall()
         
         if not rows:
@@ -53,7 +53,7 @@ def get_latest_results():
             return
 
         for row in rows:
-            filepath, fhash = row
+            filepath = row[0]
             print(f"\n📂 파일 경로: {filepath}")
             
             xmp_path = filepath + ".xmp"
