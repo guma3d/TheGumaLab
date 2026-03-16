@@ -45,19 +45,19 @@ def get_latest_results():
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        c.execute("SELECT filepath FROM vectorized_files WHERE status='DONE' ORDER BY rowid DESC LIMIT 2")
+        c.execute("SELECT filepath FROM vectorized_files WHERE status='DONE' ORDER BY rowid DESC LIMIT 50")
         rows = c.fetchall()
         
-        if not rows:
-            print("아직 AI 분석이 완료된 사진이 없습니다.")
-            return
-
+        found_xmp_count = 0
         for row in rows:
+            if found_xmp_count >= 2:
+                break
+                
             filepath = row[0]
-            print(f"\n📂 파일 경로: {filepath}")
-            
             xmp_path = filepath + ".xmp"
             if os.path.exists(xmp_path):
+                found_xmp_count += 1
+                print(f"\n📂 파일 경로: {filepath}")
                 print(f"✅ 메타데이터(XMP) 생성 확인: 성공")
                 try:
                     tree = ET.parse(xmp_path)
@@ -88,9 +88,10 @@ def get_latest_results():
                             
                 except Exception as e:
                     print(f"  ❌ XMP 파싱 에러: {e}")
-            else:
-                print(f"❌ 메타데이터(XMP) 부재 : {xmp_path}")
                 
+        if found_xmp_count == 0:
+            print("아직 XMP가 생성된 10개 이내 최근 사진이 없습니다.")
+            
     except Exception as e:
         print(f"DB 접근 오류: {e}")
     print("\n")
