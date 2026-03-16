@@ -9,7 +9,7 @@ services:
     volumes:
       - .:/app
       - ./data:/app/data
-      - D:/Pictures/OriginalSource:/app/data/uploads_raw
+      - D:/Pictures/uploads_raw:/app/data/uploads_raw
       - D:/Pictures:/app/data/organized
     environment:
       - QDRANT_URL=http://qdrant:6333
