@@ -315,98 +315,95 @@ class OrganizerPipeline:
             "original_context": original_context
         }
 
-    def run(self):
+    def run(self, batch_size=200):
         print("🚀 [GumaPhoto Pipeline] 데이터 정리를 시작합니다...")
         
-        # 1. 대상 파일 스캔
-        all_files = []
-        for root, _, files in os.walk(SOURCE_DIR):
-            for file in files:
-                ext = os.path.splitext(file)[1].lower()
-                if ext in ['.jpg', '.jpeg', '.png', '.heic', '.mp4', '.mov', '.avi', '.mkv']:
-                    all_files.append(os.path.join(root, file))
-        
-        print(f"[*] 총 {len(all_files)}개의 미디어 파일이 발견되었습니다.")
-        
-        # 2. 메타데이터 파싱 및 시계열 그룹핑 (날짜별 묶음)
-        # 구조: { "2023-10": [ {filepath, dt_str, md5...}, ... ] }
-        date_groups = {}
-        junk_count = 0
-        
-        print("[*] 1차 스캔: 메타데이터 분석 및 찌꺼기/중복 제거 중... (시간이 걸릴 수 있습니다)")
-        
-        for i, filepath in enumerate(all_files):
-            # 진행 상황 출력 (100개마다)
-            if (i+1) % 100 == 0:
-                print(f"   ⏳ 스캔 진행 중... ({i+1}/{len(all_files)})")
-
-            meta = self.process_file_metadata(filepath)
+        while True:
+            # 1. 대상 파일 스캔 (매 번 새로 스캔하여 남아있는 것 파악)
+            all_files = []
+            for root, _, files in os.walk(SOURCE_DIR):
+                for file in files:
+                    ext = os.path.splitext(file)[1].lower()
+                    if ext in ['.jpg', '.jpeg', '.png', '.heic', '.mp4', '.mov', '.avi', '.mkv']:
+                        all_files.append(os.path.join(root, file))
             
-            if meta["status"] == "JUNK":
-                print(f"   🗑️ [JUNK 삭제] {os.path.basename(filepath)} -> 사유: {meta['reason']}")
-                junk_count += 1
-                try: 
-                    os.remove(filepath) # 쓰레기 파일 업로드 즉시 제거
-                except: 
-                    pass
-                continue
+            if not all_files:
+                print("\n✅ 모든 파일 처리 완료! 대기열이 비었습니다.")
+                break
+                
+            batch_files = all_files[:batch_size]
+            print(f"\n[*] 📦 새 배치 스캔 시작: {len(batch_files)}장 / 총 남은 파일 {len(all_files)}장")
             
-            # 여기서 실제로는 시간(시:분:초)도 파싱해서 배열에 담아야 sorting이 가능함 (현재는 mock)
-            dt_key = meta["dt_str"]
-            if dt_key not in date_groups:
-                date_groups[dt_key] = []
-                
-            date_groups[dt_key].append({
-                "filepath": filepath,
-                "loc_str": meta["loc_str"],
-                "hash": meta["hash"],
-                "original_context": meta["original_context"]
-            })
+            # 2. 메타데이터 파싱 및 그룹핑
+            date_groups = {}
+            junk_count = 0
             
-        print(f"[*] 1차 스캔 완료. 총 {junk_count}개의 찌꺼기 파일이 무시되었습니다.")
-        
-        # 3. 그룹별 일련번호 부여 및 폴더 이동 시뮬레이션
-        print("\n[*] 2차 처리: 날짜별 정렬, 이름 변경 및 최종 이동 시뮬레이션")
-        for date, items in date_groups.items():
-            # (원래는 여기서 timestamp 기준으로 sort를 해야함)
+            for i, filepath in enumerate(batch_files):
+                # 프로그레스 출력 (50 단위)
+                if (i+1) % 50 == 0:
+                    print(f"   ⏳ 메타데이터 추출 중... ({i+1}/{len(batch_files)})")
+    
+                meta = self.process_file_metadata(filepath)
+                
+                if meta["status"] == "JUNK":
+                    junk_count += 1
+                    try: 
+                        os.remove(filepath)
+                    except: 
+                        pass
+                    continue
+                
+                dt_key = meta["dt_str"]
+                if dt_key not in date_groups:
+                    date_groups[dt_key] = []
+                    
+                date_groups[dt_key].append({
+                    "filepath": filepath,
+                    "loc_str": meta["loc_str"],
+                    "hash": meta["hash"],
+                    "original_context": meta["original_context"]
+                })
+                
+            print(f"[*] 스캔 완료. 찌꺼기 {junk_count}개 삭제됨. 이제 하드디스크 이동을 시작합니다.")
             
-            for index, item in enumerate(items):
-                ext = os.path.splitext(item["filepath"])[1].lower()
-                
-                # 연도 폴더 1뎁스 추출 (예: '2023')
-                date_str = str(date)
-                if re.match(r'^(19|20)\d{2}', date_str):
-                    year_folder = date_str.split('-')[0].split('_')[0] # '2014' 또는 '2023'만 추출
-                else:
-                    year_folder = 'Unknown-Year'
-                
-                # 최종 도착 경로 (예: TARGET_DIR/2023/2023-10-15_Unknown_Location)
-                target_folder_path = os.path.join(TARGET_DIR, year_folder, f"{date}_{item['loc_str']}")
-                os.makedirs(target_folder_path, exist_ok=True)
-
-                # 4단계: 파일명 정규화 - 대상 폴더에 겹치지 않는 빈 번호 자동 찾기
-                sequence = 1
-                while True:
-                    new_filename = self.generate_clean_filename(date, sequence, ext)
-                    final_move_path = os.path.join(target_folder_path, new_filename)
-                    if not os.path.exists(final_move_path):
-                        break
-                    sequence += 1
-                
-                print(f"   🚚 [이동 진행] {os.path.basename(item['filepath'])} -> {os.path.relpath(final_move_path, TARGET_DIR)}")
-                
-                # 스마트폰 업로드 지원: 빈 이름으로 안전하게 파일 이동
-                shutil.move(item['filepath'], final_move_path)
-                
-                # 5단계: DB에 기록 (오리지널 문맥 포함)
-                file_hash_val = item.get('hash', 'UNKNOWN_HASH')
-                self.cursor.execute(
-                    "INSERT OR IGNORE INTO processed_files (filepath, file_hash, status, original_context) VALUES (?, ?, ?, ?)",
-                    (final_move_path, file_hash_val, 'PROCESSED', item['original_context'])
-                )
-                
-        self.conn.commit()
-        print(f"\n✅ 영혼의 사진 대청소(복사)가 완벽하게 완료되었습니다! C:/Users/guma3/OneDrive/Pictures 폴더의 연도별 트리를 확인해보세요!")
+            # 3. 폴더 이동 및 DB 기록
+            for date, items in date_groups.items():
+                for index, item in enumerate(items):
+                    ext = os.path.splitext(item["filepath"])[1].lower()
+                    
+                    date_str = str(date)
+                    if re.match(r'^(19|20)\d{2}', date_str):
+                        year_folder = date_str.split('-')[0].split('_')[0]
+                    else:
+                        year_folder = 'Unknown-Year'
+                    
+                    target_folder_path = os.path.join(TARGET_DIR, year_folder, f"{date}_{item['loc_str']}")
+                    os.makedirs(target_folder_path, exist_ok=True)
+    
+                    sequence = 1
+                    while True:
+                        new_filename = self.generate_clean_filename(date, sequence, ext)
+                        final_move_path = os.path.join(target_folder_path, new_filename)
+                        if not os.path.exists(final_move_path):
+                            break
+                        sequence += 1
+                    
+                    # 파일 이동!
+                    try:
+                        shutil.move(item['filepath'], final_move_path)
+                    except Exception as e:
+                        print(f"   ⚠️ 이동 실패: {os.path.basename(item['filepath'])} -> {e}")
+                        continue
+                    
+                    # DB 기록
+                    file_hash_val = item.get('hash', 'UNKNOWN_HASH')
+                    self.cursor.execute(
+                        "INSERT OR IGNORE INTO processed_files (filepath, file_hash, status, original_context) VALUES (?, ?, ?, ?)",
+                        (final_move_path, file_hash_val, 'PROCESSED', item['original_context'])
+                    )
+                    
+            self.conn.commit()
+            print(f"[*] ✅ 배치 이동 및 DB 커밋 완료! (현재 배치 끝)")
 
 if __name__ == "__main__":
     organizer = OrganizerPipeline()
