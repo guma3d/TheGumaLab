@@ -183,6 +183,11 @@ async def upload_photos(background_tasks: BackgroundTasks, files: List[UploadFil
         "filenames": saved_files
     }
 
+@app.post("/api/trigger-sync")
+async def trigger_sync(background_tasks: BackgroundTasks):
+    background_tasks.add_task(trigger_upload_pipeline)
+    return {"message": "✅ 네트워크 드라이브에서 수동 스캔 지시가 접수되었습니다. 백그라운드 작업이 시작됩니다!"}
+
 @app.post("/api/search")
 async def perform_search(req: SearchRequest):
     if not siglip_model or not qdrant_client:
