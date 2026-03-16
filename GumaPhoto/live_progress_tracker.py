@@ -39,7 +39,7 @@ def get_progress():
     return {
         "remaining_raw": remaining,
         "organizer_done": processed_count,
-        "vectorizer_done": vectorized_count,
+        "vectorizer_done": max(0, vectorized_count - 13), # Subtract legacy 13 images
         "timestamp": time.time()
     }
 
