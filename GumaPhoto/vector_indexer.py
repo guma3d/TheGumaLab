@@ -172,7 +172,17 @@ class VectorIndexer:
         """이미 벡터화가 성공적으로 끝난 파일인지 검사 (Fail-safe 이어하기)"""
         self.cursor.execute("SELECT status FROM vectorized_files WHERE filepath=?", (filepath,))
         row = self.cursor.fetchone()
-        return row and row[0] == 'DONE'
+        if row and row[0] == 'DONE':
+            return True
+            
+        # SQLite DB 누락 대비 치명적 버그 수정: 실제 물리 XMP 파일이 존재하면 완료된 것으로 간주하고 DB 복구
+        if os.path.exists(filepath + ".xmp"):
+            self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status) VALUES (?, ?)", (filepath, 'DONE'))
+            self.conn.commit()
+            print(f"      [복구] DB 누락 감지, 물리 XMP 파일로 완료 상태 복원: {filepath}")
+            return True
+            
+        return False
 
     def extract_time_and_season(self, filepath):
         """EXIF나 파일명을 기반으로 시간대(Time of Day)와 계절(Season) 추출"""
