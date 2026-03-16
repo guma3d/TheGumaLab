@@ -556,6 +556,19 @@ async def receive_feedback(req: FeedbackRequest):
                 points=[req.point_id]
             )
             print(f"   ⚡ [Qdrant] 메타데이터가 UI 검색에 즉시 반영되도록 패치되었습니다.")
+            
+            # [4.5] XMP 사이드카 파일도 동기화 (원본 데이터 영구 보존)
+            try:
+                import xmp_utils
+                # 부분 업데이트(Patch)된 Qdrant의 최신 통합 Payload를 가져와서 XML로 다시 굽기
+                point_info = qdrant_client.retrieve(collection_name="gumaphoto_hybrid_kr", ids=[req.point_id])
+                if point_info:
+                    final_payload = point_info[0].payload
+                    if final_payload:
+                        xmp_utils.generate_xmp_sidecar(abs_path, final_payload)
+            except Exception as xe:
+                print(f"   ❌ XMP Sidecar Patch Error: {xe}")
+                
     except Exception as e:
         print(f"   ❌ Qdrant Patch Error: {e}")
         

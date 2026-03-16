@@ -434,6 +434,13 @@ class VectorIndexer:
                 }
                 payload.update(best_face_payload)
                 
+                # --- [E] XMP(XML) 사이드카 백업 파일 즉시 생성 ---
+                try:
+                    import xmp_utils
+                    xmp_utils.generate_xmp_sidecar(filepath, payload)
+                except Exception as xmp_e:
+                    print(f"      ⚠️ XMP 생성 실패: {xmp_e}")
+                
                 points_to_upsert.append(PointStruct(id=point_id, vector=vectors, payload=payload))
                 
                 # SQLite 진행도 마킹
