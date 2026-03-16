@@ -462,29 +462,3 @@ feedbackForm.addEventListener('submit', async (e) => {
         submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
     }
 });
-
-// Manual Sync (Trigger Sync) Logic
-const btnTriggerSync = document.getElementById('trigger-sync-btn');
-if (btnTriggerSync) {
-    btnTriggerSync.addEventListener('click', async () => {
-        const confirmSync = confirm("네트워크 위치(raw)에 대량의 사진을 복사하셨나요?\n서버 백그라운드 스캔을 강제로 시작하시겠습니까?");
-        if (!confirmSync) return;
-
-        try {
-            let syncUrl = '/api/trigger-sync';
-            if (window.location.pathname.startsWith('/GumaPhoto')) {
-                syncUrl = '/GumaPhoto/api/trigger-sync';
-            }
-            const res = await fetch(syncUrl, { method: 'POST' });
-            const data = await res.json();
-            if (res.ok) {
-                alert(data.message || "스캔 강제 시작 완료!");
-            } else {
-                alert("오류 발생: " + (data.detail || "서버 통신 실패"));
-            }
-        } catch(err) {
-            console.error(err);
-            alert("강제 스캔 트리거 실패!");
-        }
-    });
-}
