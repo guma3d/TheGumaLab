@@ -22,10 +22,12 @@ def get_progress():
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         
-        c.execute("SELECT COUNT(*) FROM processed_files")
-        res = c.fetchone()
-        if res:
-            processed_count = res[0]
+        # [MODIFIED] Use actual physical dataset count instead of DB processed tracking
+        org_count = 0
+        if os.path.exists("/app/data/organized"):
+            for root, dirs, files in os.walk("/app/data/organized"):
+                org_count += len([f for f in files if f.lower().endswith(('.jpg', '.jpeg', '.png'))])
+        processed_count = max(org_count, 0)
             
         c.execute("SELECT COUNT(*) FROM vectorized_files WHERE status='DONE'")
         res = c.fetchone()
