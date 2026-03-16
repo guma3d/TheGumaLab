@@ -518,14 +518,14 @@ async function fetchProgress() {
             const org = Number(data.organizer_done).toLocaleString();
             const ai = Number(data.vectorizer_done).toLocaleString();
             
-            document.getElementById('prog-raw').innerText = `${remaining} 장`;
-            document.getElementById('prog-org').innerText = `${org} 장`;
-            document.getElementById('prog-ai').innerText = `${ai} 장`;
+            document.getElementById('prog-raw').innerText = `Total = ${remaining}`;
+            document.getElementById('prog-org').innerText = `Total = ${org}`;
+            document.getElementById('prog-ai').innerText = `Total = ${ai}`;
             
-            document.getElementById('prog-status').innerHTML = '실시간 동기화 중... <i class="fa-solid fa-spinner fa-spin"></i>';
+            document.getElementById('prog-status').innerHTML = 'Syncing... <i class="fa-solid fa-spinner fa-spin"></i>';
         } else {
             console.error('Failed to load progress data:', res.statusText);
-            document.getElementById('prog-status').innerText = '대기 중 (데이터 응답 없음)';
+            document.getElementById('prog-status').innerText = 'Waiting (No response data)';
         }
     } catch(err) {
         console.error('Error fetching tracker data:', err);
