@@ -218,7 +218,7 @@ async def perform_search(req: SearchRequest):
                 f"1) 사용자 검색어 중 등록된 가족 이름({list(known_faces.keys())})과 매칭되는 사람이 있다면 'people' 문자열 배열에 저장.\n"
                 "2) 사용자 검색어 중 장소/위치/국가명(예: 하와이, 제주도, 미국 등)이 포함되어 있다면, 의미를 스스로 번역/유추하여 다음 <보유 장소 목록> 중 가장 일치하는 텍스트 원본 그대로를 'location'에 문자열로 저장하세요.\n"
                 f"   <보유 장소 목록> : {existing_locations}\n"
-                "   (핵심 규칙: '하와이'를 검색하면 'Hawaii'나 'Honolulu', '엘에이'를 검색하면 'Los Angeles California' 등 위 목록에 있는 정확한 철자로만 치환해야 합니다. 포함관계에 있는 장소도 매칭 대상입니다. 정합되는 게 없으면 빈 문자열을 넣으세요.)\n"
+                "   (핵심 규칙: '하와이'를 검색하면 'Hawaii', '엘에이'는 'Los Angeles California', '삼척'이나 '제천'은 'Samcheok Si South Korea', 'Jecheon Si South Korea' 등과 같이 무조건 위 목록에 있는 철자 토씨 하나 틀리지 않고 그대로 치환해야 합니다. 포함관계에 있는 장소도 매칭 대상입니다. 정합되는 게 없으면 빈 문자열을 넣으세요.)\n"
                 "3) 명확한 형태가 있는 '물리적 사물' (예: 강아지, 안경, 자동차, 빨간 셔츠)만 '영어 소문자 영단어'로 번역하여 'objects' 문자열 배열에 저장하세요. (예: dog, blue shirt, glasses)\n"
                 "   ⚠️ [경고]: '결혼식(wedding)', '생일파티', '행사', '축제' 등과 같은 추상적 이벤트나 관념적인 명사는 절대 'objects'에 넣지 마세요!\n"
                 "4) 위 3가지를 제외한 모든 내용(결혼식, 배경, 분위기, 행동 특징, 날씨 등)은 '순수 영어(English)' 문장으로 상세히 번역하여 'scene' 문자열에 저장하세요. (오직 영어로만 작성, 예: a wedding ceremony, young girl wearing blue shirt opening refrigerator)\n"
