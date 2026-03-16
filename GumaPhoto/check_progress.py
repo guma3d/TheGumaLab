@@ -30,10 +30,19 @@ def check_progress():
     print(f"✂️ B컷 보관함 (b_cuts): {b_cuts_count} 장")
     
     org_count = 0
+    ext_counts = {}
     if os.path.exists("/app/data/organized"):
         for root, dirs, files in os.walk("/app/data/organized"):
-            org_count += len([f for f in files if not f.endswith('.xmp') and not f.endswith('.json')])
+            for f in files:
+                if not f.endswith('.xmp') and not f.endswith('.json'):
+                    org_count += 1
+                    ext = os.path.splitext(f)[1].lower()
+                    ext_counts[ext] = ext_counts.get(ext, 0) + 1
+                    
     print(f"📁 정리된 최종 폴더 내 실제 남은 미디어 (organized): {org_count} 장")
+    print("   [확장자별 상세 현황]")
+    for ext, count in sorted(ext_counts.items(), key=lambda x: x[1], reverse=True):
+        print(f"   - {ext or '확장자 없음'}: {count} 장")
 
     try:
         conn = sqlite3.connect(DB_PATH)
