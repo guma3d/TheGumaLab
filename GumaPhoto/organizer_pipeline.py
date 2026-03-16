@@ -371,11 +371,7 @@ class OrganizerPipeline:
             # (원래는 여기서 timestamp 기준으로 sort를 해야함)
             
             for index, item in enumerate(items):
-                sequence = index + 1
                 ext = os.path.splitext(item["filepath"])[1].lower()
-                
-                # 4단계: 파일명 정규화 (YYYY-MM-DD_01.jpg)
-                new_filename = self.generate_clean_filename(date, sequence, ext)
                 
                 # 연도 폴더 1뎁스 추출 (예: '2023')
                 date_str = str(date)
@@ -384,26 +380,29 @@ class OrganizerPipeline:
                 else:
                     year_folder = 'Unknown-Year'
                 
-                # 최종 도착 경로 (예: TARGET_DIR/2023/2023-10-15_Unknown_Location/2023-10-15_01.jpg)
+                # 최종 도착 경로 (예: TARGET_DIR/2023/2023-10-15_Unknown_Location)
                 target_folder_path = os.path.join(TARGET_DIR, year_folder, f"{date}_{item['loc_str']}")
-                final_move_path = os.path.join(target_folder_path, new_filename)
-                
-                print(f"   🚚 [복사 진행] {os.path.basename(item['filepath'])} -> {os.path.relpath(final_move_path, TARGET_DIR)}")
-                
                 os.makedirs(target_folder_path, exist_ok=True)
+
+                # 4단계: 파일명 정규화 - 대상 폴더에 겹치지 않는 빈 번호 자동 찾기
+                sequence = 1
+                while True:
+                    new_filename = self.generate_clean_filename(date, sequence, ext)
+                    final_move_path = os.path.join(target_folder_path, new_filename)
+                    if not os.path.exists(final_move_path):
+                        break
+                    sequence += 1
                 
-                # 스마트폰 업로드 지원(원본 삭제): 이동(move)으로 변경하여 중복 용량 차지 방지
-                if not os.path.exists(final_move_path):
-                    shutil.move(item['filepath'], final_move_path)
-                else:
-                    try: os.remove(item['filepath']) # 이미 목적지에 존재하면 업로드본은 그냥 삭제
-                    except: pass
+                print(f"   🚚 [이동 진행] {os.path.basename(item['filepath'])} -> {os.path.relpath(final_move_path, TARGET_DIR)}")
+                
+                # 스마트폰 업로드 지원: 빈 이름으로 안전하게 파일 이동
+                shutil.move(item['filepath'], final_move_path)
                 
                 # 5단계: DB에 기록 (오리지널 문맥 포함)
                 file_hash_val = item.get('hash', 'UNKNOWN_HASH')
                 self.cursor.execute(
                     "INSERT OR IGNORE INTO processed_files (filepath, file_hash, status, original_context) VALUES (?, ?, ?, ?)",
-                    (item['filepath'], file_hash_val, 'PROCESSED', item['original_context'])
+                    (final_move_path, file_hash_val, 'PROCESSED', item['original_context'])
                 )
                 
         self.conn.commit()
