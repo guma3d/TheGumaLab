@@ -189,8 +189,112 @@ async def perform_search(req: SearchRequest):
         raise HTTPException(status_code=500, detail="AI Models are not loaded yet.")
         
     search_text = req.query.strip()
-    if not search_text and not req.is_load_more:
-        return {"results": []}
+    
+    # [NEW] Default Home Gallery (Timeline & Themes)
+    if not search_text:
+        dummy_vector = [0.0] * 768
+        
+        # 1. Timeline photos (Scroll)
+        try:
+            timeline_res = qdrant_client.search(
+                collection_name="gumaphoto_hybrid_kr",
+                query_vector=("scene", dummy_vector),
+                limit=req.limit,
+                offset=req.offset,
+                with_payload=True,
+                score_threshold=0.0
+            )
+        except Exception as e:
+            print(f"Timeline error: {e}")
+            timeline_res = []
+
+        results = []
+        for hit in timeline_res:
+            payload = getattr(hit, "payload", {}) or {}
+            filepath = payload.get("filepath", "")
+            photo_url = filepath.replace("/app/data/organized", "/photos")
+            photo_date = payload.get("date", "")
+            if not photo_date:
+                import re
+                date_match = re.search(r'(19|20)\d{2}-\d{2}(-\d{2})?', os.path.basename(filepath))
+                photo_date = date_match.group(0) if date_match else ""
+
+            results.append({
+                "id": hit.id,
+                "score": 1.0,
+                "url": photo_url,
+                "original_path": filepath,
+                "date": photo_date,
+                "location": payload.get("location", ""),
+                "time_of_day": payload.get("time_of_day", ""),
+                "season": payload.get("season", ""),
+                "people": payload.get("people", []),
+                "objects": payload.get("objects", []),
+                "emotion": payload.get("emotion", ""),
+                "caption": payload.get("caption", "")
+            })
+
+        # 2. Daily Themes (only on first load)
+        themes = []
+        if req.offset == 0:
+            import random
+            import datetime
+            theme_ideas = [
+                {"title": "❄️ 겨울의 추억", "filter": Filter(must=[FieldCondition(key="season", match=MatchValue(value="Winter"))])},
+                {"title": "🌸 봄날의 나들이", "filter": Filter(must=[FieldCondition(key="season", match=MatchValue(value="Spring"))])},
+                {"title": "📸 언제나 주인공", "filter": Filter(must=[FieldCondition(key="emotion", match=MatchValue(value="Happiness"))])},
+                {"title": "🍽️ 맛있는 식사", "filter": Filter(must=[FieldCondition(key="objects", match=MatchValue(value="food"))])},
+                {"title": "🐶 귀여운 동물 친구들", "filter": Filter(must=[FieldCondition(key="objects", match=MatchValue(value="dog"))])},
+                {"title": "🏝️ 해변의 여유", "filter": Filter(must=[FieldCondition(key="objects", match=MatchValue(value="beach"))])}
+            ]
+            
+            # Use today's date as random seed so theme stays for the day
+            random.seed(datetime.date.today().toordinal())
+            selected_theme = random.sample(theme_ideas, 1)[0]
+            
+            try:
+                theme_res = qdrant_client.search(
+                    collection_name="gumaphoto_hybrid_kr",
+                    query_vector=("scene", dummy_vector),
+                    query_filter=selected_theme["filter"],
+                    limit=10,
+                    with_payload=True
+                )
+                t_photos = []
+                for hit in theme_res:
+                    p = hit.payload or {}
+                    fp = p.get("filepath", "")
+                    pu = fp.replace("/app/data/organized", "/photos")
+                    t_photos.append({
+                        "id": hit.id,
+                        "url": pu,
+                        "original_path": fp,
+                        "date": p.get("date", ""),
+                        "location": p.get("location", ""),
+                        "time_of_day": p.get("time_of_day", ""),
+                        "season": p.get("season", ""),
+                        "people": p.get("people", []),
+                        "objects": p.get("objects", []),
+                        "emotion": p.get("emotion", ""),
+                        "caption": p.get("caption", ""),
+                        "score": 1.0
+                    })
+                if t_photos:
+                    themes.append({"title": selected_theme["title"], "photos": t_photos})
+            except Exception as e:
+                print(f"Theme load error: {e}")
+
+        return {
+            "original_query": "",
+            "enhanced_query": "",
+            "results": results,
+            "themes": themes,
+            "people_detected": [],
+            "location_detected": "",
+            "objects_detected": [],
+            "fallback_triggered": False,
+            "total_hits": len(results)
+        }
         
     enhanced_query = req.scene if req.is_load_more else search_text
     people_detected = req.people if req.is_load_more else []

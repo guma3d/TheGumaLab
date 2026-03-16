@@ -26,14 +26,22 @@ clearBtn.addEventListener('click', function() {
     searchInput.focus();
 });
 
+// Initialize Home Gallery on Load
+document.addEventListener('DOMContentLoaded', () => {
+    currentQuery = '';
+    currentOffset = 0;
+    hasMore = true;
+    totalHits = 0;
+    fetchPhotos(false);
+});
+
 // Search Form Handler
 document.getElementById('search-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     
     const query = document.getElementById('search-query').value.trim();
-    if (!query) return;
-
-    currentQuery = query;
+    
+    currentQuery = query; // allow empty to go back to home timeline
     currentOffset = 0;
     hasMore = true;
     totalHits = 0;
@@ -88,6 +96,7 @@ async function fetchPhotos(isLoadMore) {
 
         if (data.error) {
             metaText.innerHTML = `Error: ${data.error}`;
+            metaContainer.classList.remove('hidden');
         } else {
             if (!isLoadMore) {
                 currentPeople = data.people_detected || [];
@@ -101,17 +110,37 @@ async function fetchPhotos(isLoadMore) {
             }
             currentOffset += currentLimit;
 
-            let fallbackMsg = '';
-            if (data.fallback_triggered && !isLoadMore) {
-                fallbackMsg = `<br><span style="color:#ef4444; font-size: 0.9em; margin-top:5px; display:inline-block;">⚠️ '${currentLocation}' 장소에 일치하는 결과가 없어, 유사한 분위기의 사진을 찾았습니다.</span>`;
-            }
+            const themesContainer = document.getElementById('themes-container');
+            const timelineHeader = document.getElementById('timeline-header');
 
-            metaText.innerHTML = `Found <b style="color:white">${totalHits}</b> photos loaded for: "<i style="color:var(--text-muted)">${currentQuery}</i>" <br> 
-            <small style="color:#3b82f6;">(AI parsed: ${currentScene})</small>${fallbackMsg}`;
+            if (!currentQuery) {
+                // Home Gallery View
+                metaContainer.classList.add('hidden');
+                if (!isLoadMore && data.themes && data.themes.length > 0) {
+                    renderThemes(data.themes);
+                    themesContainer.classList.remove('hidden');
+                    timelineHeader.classList.remove('hidden');
+                } else if (!isLoadMore) {
+                    themesContainer.classList.add('hidden');
+                    timelineHeader.classList.remove('hidden');
+                }
+            } else {
+                // Search View
+                themesContainer.classList.add('hidden');
+                timelineHeader.classList.add('hidden');
+                
+                let fallbackMsg = '';
+                if (data.fallback_triggered && !isLoadMore) {
+                    fallbackMsg = `<br><span style="color:#ef4444; font-size: 0.9em; margin-top:5px; display:inline-block;">⚠️ '${currentLocation}' 장소에 일치하는 결과가 없어, 유사한 분위기의 사진을 찾았습니다.</span>`;
+                }
+
+                metaText.innerHTML = `Found <b style="color:white">${totalHits}</b> photos loaded for: "<i style="color:var(--text-muted)">${currentQuery}</i>" <br> 
+                <small style="color:#3b82f6;">(AI parsed: ${currentScene})</small>${fallbackMsg}`;
+                metaContainer.classList.remove('hidden');
+            }
+            
             renderGallery(data.results, isLoadMore);
         }
-        
-        metaContainer.classList.remove('hidden');
         
     } catch (err) {
         console.error(err);
@@ -130,11 +159,55 @@ async function fetchPhotos(isLoadMore) {
 // Infinite scroll listener
 window.addEventListener('scroll', () => {
     if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
-        if (!isFetching && hasMore && currentQuery) {
+        if (!isFetching && hasMore) {
             fetchPhotos(true);
         }
     }
 });
+
+// Render Home Themes
+function renderThemes(themes) {
+    const container = document.getElementById('themes-container');
+    container.innerHTML = '';
+    
+    themes.forEach(theme => {
+        const section = document.createElement('div');
+        section.className = 'theme-section';
+        
+        const h3 = document.createElement('h3');
+        h3.innerText = theme.title;
+        h3.className = 'theme-title';
+        section.appendChild(h3);
+        
+        const scrollBox = document.createElement('div');
+        scrollBox.className = 'theme-scroll-box';
+        
+        theme.photos.forEach(photo => {
+            const imgBtn = document.createElement('div');
+            imgBtn.className = 'theme-photo-item';
+            
+            let imgUrl = photo.url;
+            if (window.location.pathname.startsWith('/GumaPhoto')) {
+                imgUrl = '/GumaPhoto' + imgUrl;
+            }
+            
+            const img = document.createElement('img');
+            img.src = imgUrl;
+            img.loading = "lazy";
+            imgBtn.appendChild(img);
+            
+            // Add click to open modal
+            imgBtn.addEventListener('click', () => {
+                openModal(photo, imgUrl);
+            });
+            
+            scrollBox.appendChild(imgBtn);
+        });
+        
+        section.appendChild(scrollBox);
+        container.appendChild(section);
+    });
+}
 
 // Handle Gallery Rendering
 function renderGallery(photos, append = false) {
@@ -142,7 +215,7 @@ function renderGallery(photos, append = false) {
     if (!append) grid.innerHTML = '';
 
     if (photos.length === 0 && !append) {
-        grid.innerHTML = '<p style="color: var(--text-muted);">No matching photos found in the multi-modal vector space.</p>';
+        grid.innerHTML = '<p style="color: var(--text-muted);">No photos found.</p>';
         return;
     }
 
