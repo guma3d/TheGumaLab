@@ -17,6 +17,24 @@ def check_progress():
             remaining += len(files)
     print(f"⏳ 대기열 (uploads_raw) 남은 사진: {remaining} 장")
 
+    junk_count = 0
+    if os.path.exists("/app/data/junk_screenshots"):
+        for root, dirs, files in os.walk("/app/data/junk_screenshots"):
+            junk_count += len(files)
+    print(f"🗑️ 휴지통 (junk_screenshots): {junk_count} 장")
+
+    b_cuts_count = 0
+    if os.path.exists("/app/data/b_cuts"):
+        for root, dirs, files in os.walk("/app/data/b_cuts"):
+            b_cuts_count += len(files)
+    print(f"✂️ B컷 보관함 (b_cuts): {b_cuts_count} 장")
+    
+    org_count = 0
+    if os.path.exists("/app/data/organized"):
+        for root, dirs, files in os.walk("/app/data/organized"):
+            org_count += len([f for f in files if not f.endswith('.xmp') and not f.endswith('.json')])
+    print(f"📁 정리된 최종 폴더 내 실제 남은 미디어 (organized): {org_count} 장")
+
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
