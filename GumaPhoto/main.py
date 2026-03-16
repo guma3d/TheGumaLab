@@ -109,7 +109,7 @@ app.mount("/photos", StaticFiles(directory="/app/data/organized"), name="photos"
 # Jinja2 templates setup
 templates = Jinja2Templates(directory="templates")
 
-UPLOAD_DIR = "/app/uploads"
+UPLOAD_DIR = "/app/data/uploads_raw"
 ORGANIZED_DIR = "/app/data/organized"
 
 class SearchRequest(BaseModel):
