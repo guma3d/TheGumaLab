@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="static/style.css?v=12">
+    <link rel="stylesheet" href="static/style.css?v=13">
 </head>
 
 <body>
@@ -22,13 +22,12 @@
     <div class="main-layout">
         <header class="top-header">
             <div class="logo">
-                <h1>GumaPhoto</h1>
-                <p>AI Private Gallery</p>
+                <h1 style="font-size: 1.7rem; font-weight: 800; letter-spacing: -0.5px;">GumaPhoto</h1>
             </div>
             
             <form id="search-form" class="search-form">
                 <div class="input-group">
-                    <input type="text" id="search-query" placeholder="Ask anything... ('비 오는 날 엄마 사진')" required autocomplete="off">
+                    <input type="text" id="search-query" placeholder="Ask anything... (e.g. 'Mom in the rain')" required autocomplete="off">
                     <span id="clear-btn" class="clear-btn hidden" title="Clear search"><i class="fa-solid fa-circle-xmark"></i></span>
                     <button type="submit" id="submit-btn">
                         <span class="btn-text"><i class="fa-solid fa-magnifying-glass"></i></span>
@@ -70,7 +69,7 @@
             <!-- Timeline Header (Sticky) -->
             <div id="timeline-header" class="timeline-header hidden" style="flex-direction:row; justify-content:space-between; width:100%;">
                 <h3 style="white-space:nowrap; margin-right:15px;">Gallery</h3>
-                <div class="gallery-tags" style="display:flex; gap:8px; overflow-x:auto;">
+                <div class="gallery-tags" style="display:flex; gap:4px; overflow-x:auto;">
                     <button class="tag-btn tag-active" data-tag="recent">Recent</button>
                     <button class="tag-btn" data-tag="성욱">성욱</button>
                     <button class="tag-btn" data-tag="준우">준우</button>
@@ -155,7 +154,7 @@
         </div>
     </div>
 
-    <script src="static/script.js?v=15"></script>
+    <script src="static/script.js?v=17"></script>
 </body>
 
 </html>

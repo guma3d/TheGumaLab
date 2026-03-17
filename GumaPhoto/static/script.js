@@ -50,7 +50,6 @@ document.addEventListener('click', e => {
         currentOffset = 0;
         hasMore = true;
         totalHits = 0;
-        document.getElementById('gallery-grid').innerHTML = '';
         fetchPhotos(false);
     }
 });
@@ -65,7 +64,6 @@ document.getElementById('search-form').addEventListener('submit', async function
     currentOffset = 0;
     hasMore = true;
     totalHits = 0;
-    document.getElementById('gallery-grid').innerHTML = '';
 
     await fetchPhotos(false);
 });

@@ -577,13 +577,14 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
     width: 100%;
     margin-bottom: 30px;
     padding: 16px 0 6px 0;
-    background-color: rgba(30, 30, 38, 0.6);
+    background: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.02) 100%);
     border-radius: 16px;
-    border: 1px solid rgba(255,255,255,0.05);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.05);
 }
 
 .theme-section {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
 }
 
 .theme-title {
