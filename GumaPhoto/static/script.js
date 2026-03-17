@@ -585,19 +585,15 @@ async function fetchProgress() {
         const res = await fetch(targetUrl);
         if (res.ok) {
             const data = await res.json();
-            
             // Extracted raw metrics
             const totalPhotos = Number(data.total_photos || 0);
-            const xmpCount = Number(data.xmp_count || 0);
             const dbCompleted = Number(data.db_completed || 0);
 
             // Calculated true metrics
-            const aiLeft = Math.max(0, totalPhotos - xmpCount);
-            const dbCatchup = Math.max(0, xmpCount - dbCompleted);
+            const needsDb = Math.max(0, totalPhotos - dbCompleted);
             
             document.getElementById('prog-total').innerText = `${totalPhotos.toLocaleString()} 장`;
-            document.getElementById('prog-ai-left').innerText = `${aiLeft.toLocaleString()} 장`;
-            document.getElementById('prog-db-catchup').innerText = `${dbCatchup.toLocaleString()} 장`;
+            document.getElementById('prog-ai-left').innerText = `${needsDb.toLocaleString()} 장`;
             document.getElementById('prog-db').innerText = `${dbCompleted.toLocaleString()} 장`;
             
             document.getElementById('prog-status').innerHTML = 'Syncing... <i class="fa-solid fa-spinner fa-spin"></i>';

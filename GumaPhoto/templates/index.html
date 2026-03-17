@@ -130,21 +130,15 @@
                 </div>
                 
                 <div style="background: var(--surface-light); padding: 12px; border-radius: 6px;">
-                    <h3 style="color:var(--text-muted); font-size: 0.8em; margin-bottom: 3px;">🤖 AI 스캐너 (진짜 남은 물량)</h3>
+                    <h3 style="color:var(--text-muted); font-size: 0.8em; margin-bottom: 3px;">⏳ DB 생성이 필요한 전체 사진</h3>
                     <p id="prog-ai-left" style="color:#ef4444; font-size: 1.2em; font-weight:bold;">Loading...</p>
-                    <small style="font-size: 0.75em;">GPU 딥러닝 연산이 새로 필요한 사진</small>
-                </div>
-
-                <div style="background: var(--surface-light); padding: 12px; border-radius: 6px;">
-                    <h3 style="color:var(--text-muted); font-size: 0.8em; margin-bottom: 3px;">⏳ DB 자동 복구 중 (AI 연산 X)</h3>
-                    <p id="prog-db-catchup" style="color:#f59e0b; font-size: 1.2em; font-weight:bold;">Loading...</p>
-                    <small style="font-size: 0.75em;">XMP는 있으나 DB 누락되어 복구 중인 건수</small>
+                    <small style="font-size: 0.75em;">벡터 인덱싱 복구 및 신규 생성 대기 물량</small>
                 </div>
                 
                 <div style="background: var(--surface-light); padding: 12px; border-radius: 6px;">
-                    <h3 style="color:var(--text-muted); font-size: 0.8em; margin-bottom: 3px;">✅ 처리 완료 영역 (현재 검색 가능)</h3>
+                    <h3 style="color:var(--text-muted); font-size: 0.8em; margin-bottom: 3px;">✅ 처리 완료 사진</h3>
                     <p id="prog-db" style="color:#10b981; font-size: 1.2em; font-weight:bold;">Loading...</p>
-                    <small style="font-size: 0.75em;">Qdrant 벡터DB 등록까지 100% 완료된 데이터</small>
+                    <small style="font-size: 0.75em;">DB 등록이 완료되어 바로 검색 가능한 사진</small>
                 </div>
                 
                 <p id="prog-status" style="font-size: 0.75em; color: var(--text-muted); text-align:right; margin-top: 8px;">
