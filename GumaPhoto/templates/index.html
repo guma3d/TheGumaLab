@@ -21,8 +21,8 @@
 
     <div class="main-layout">
         <header class="top-header">
-            <div class="logo">
-                <h1 style="font-size: 1.7rem; font-weight: 800; letter-spacing: -0.5px;">GumaPhoto</h1>
+            <div class="logo" style="display: flex; align-items: center;">
+                <h1 style="font-size: 1.7rem; font-weight: 800; letter-spacing: -0.5px; margin: 0; line-height: 1;">GumaPhoto</h1>
             </div>
             
             <form id="search-form" class="search-form">
@@ -35,7 +35,7 @@
                     </button>
                 </div>
             </form>
-            <div class="header-actions">
+            <div class="header-actions" style="display: flex; align-items: center; gap: 8px;">
                 <input type="file" id="upload-input" multiple accept="image/*" style="display: none;">
                 <label for="upload-input" id="upload-btn" class="secondary-btn" title="Upload Photos">
                     <i class="fa-solid fa-cloud-arrow-up"></i>
@@ -63,7 +63,7 @@
             <div id="timeline-header" class="theme-section hidden" style="margin-bottom: 5px;">
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 10px; margin-bottom: 8px; max-width: 100%; overflow: hidden;">
                     <h3 class="theme-title" style="margin: 0; padding: 0; flex-shrink: 0;">Gallery</h3>
-                    <div class="gallery-tags" style="display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; background: rgba(30, 30, 38, 0.4); padding: 4px; border-radius: 16px; margin-left: auto;">
+                    <div class="gallery-tags" style="display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); padding: 4px; border-radius: 999px; margin-left: auto;">
                         <button class="tag-btn tag-active" data-tag="recent">Recent</button>
                         <button class="tag-btn" data-tag="성욱">성욱</button>
                         <button class="tag-btn" data-tag="준우">준우</button>
@@ -163,7 +163,7 @@
         </div>
     </div>
 
-    <script src="static/script.js?v=23"></script>
+    <script src="static/script.js?v=25"></script>
 </body>
 
 </html>

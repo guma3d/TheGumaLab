@@ -512,40 +512,67 @@ function renderGallery(photos, append = false, targetId = 'gallery-grid', isMaso
         item.appendChild(img);
 
         if (showMeta) {
-            // Score Badge
+            // Score Badge (Top Right)
             if (photo.score !== undefined) {
                 const badge = document.createElement('div');
                 badge.className = 'meta-badge';
-                badge.innerHTML = `<i class="fa-solid fa-bolt"></i> ${Math.round(photo.score * 100)}%`;
+                badge.style.background = 'rgba(16, 185, 129, 0.75)';
+                badge.innerHTML = `<i class="fa-solid fa-bullseye"></i> ${(photo.score * 100).toFixed(1)}%`;
                 item.appendChild(badge);
             }
             
-            // Meta Overlay (Tags)
-            if ((photo.people && photo.people.length > 0) || photo.scene_tags) {
-                const overlay = document.createElement('div');
-                overlay.className = 'meta-overlay';
-                
-                if (photo.people && photo.people.length > 0) {
-                    photo.people.forEach(p => {
-                        const t = document.createElement('span'); 
-                        t.className = 'meta-tag highlighted'; 
-                        t.innerText = p; 
-                        overlay.appendChild(t);
-                    });
-                }
-                
-                if (photo.scene_tags) {
-                    photo.scene_tags.split(',').slice(0, 3).forEach(s => {
-                        if(s.trim().length > 0) {
-                            const t = document.createElement('span'); 
-                            t.className = 'meta-tag'; 
-                            t.innerText = s.trim(); 
-                            overlay.appendChild(t);
-                        }
-                    });
-                }
-                item.appendChild(overlay);
+            // Meta Overlay (Tags - Bottom)
+            const overlay = document.createElement('div');
+            overlay.className = 'meta-overlay';
+            let metaHtml = '';
+            
+            // 1. Date
+            if (photo.date && photo.date.trim() !== '') {
+                let shortDate = photo.date.length >= 7 ? photo.date.substring(0, 7) : photo.date; 
+                metaHtml += `<span class="meta-tag"><i class="fa-regular fa-calendar"></i> ${shortDate}</span>`;
+            } else {
+                metaHtml += `<span class="meta-tag" style="color: #bbb;"><i class="fa-regular fa-calendar"></i> Unknown Date</span>`;
             }
+            
+            // 2. Time of day
+            if (photo.time_of_day && photo.time_of_day !== 'Unknown') {
+                metaHtml += `<span class="meta-tag"><i class="fa-regular fa-clock"></i> ${photo.time_of_day}</span>`;
+            } else {
+                metaHtml += `<span class="meta-tag" style="color: #bbb;"><i class="fa-regular fa-clock"></i> Unknown Time</span>`;
+            }
+
+            // 3. Season
+            if (photo.season && photo.season !== 'Unknown') {
+                metaHtml += `<span class="meta-tag"><i class="fa-solid fa-leaf"></i> ${photo.season}</span>`;
+            } else {
+                metaHtml += `<span class="meta-tag" style="color: #bbb;"><i class="fa-solid fa-leaf"></i> Unknown Season</span>`;
+            }
+            
+            // 4. Location
+            if (photo.location && photo.location.trim() !== '') {
+                let prettyLoc = photo.location.replace(/-/g, ' '); 
+                metaHtml += `<span class="meta-tag"><i class="fa-solid fa-location-dot"></i> ${prettyLoc}</span>`;
+            } else {
+                metaHtml += `<span class="meta-tag" style="color: #bbb;"><i class="fa-solid fa-location-dot"></i> Unknown Location</span>`;
+            }
+            
+            // 5. People
+            if (photo.people && photo.people.length > 0) {
+                let peopleStr = photo.people.join(', ');
+                metaHtml += `<span class="meta-tag highlighted"><i class="fa-solid fa-user-tag"></i> ${peopleStr}</span>`;
+            }
+            
+            // 6. Scene (just first 2)
+            if (photo.scene && photo.scene.trim() !== '') {
+                let scenes = photo.scene.split(',').slice(0,2).join(', ');
+                metaHtml += `<span class="meta-tag"><i class="fa-solid fa-quote-left"></i> ${scenes}</span>`;
+            } else if (photo.scene_tags) {
+                let scenes = photo.scene_tags.split(',').slice(0,2).join(', ');
+                metaHtml += `<span class="meta-tag"><i class="fa-solid fa-quote-left"></i> ${scenes}</span>`;
+            }
+            
+            overlay.innerHTML = metaHtml;
+            item.appendChild(overlay);
         }
 
         // Click Event listener logic
