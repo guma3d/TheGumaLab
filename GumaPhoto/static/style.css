@@ -576,11 +576,14 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
 .themes-container {
     width: 100%;
     margin-bottom: 30px;
-    padding-top: 10px;
+    padding: 16px 0 6px 0;
+    background-color: rgba(30, 30, 38, 0.6);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.05);
 }
 
 .theme-section {
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 
 .theme-title {

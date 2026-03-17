@@ -100,21 +100,30 @@ async function fetchPhotos(isLoadMore) {
             
             if (!isLoadMore) {
                 // Determine if we want themes
-                let fetchThemes = (currentGalleryFilter === "recent" && themesContainer.innerHTML === '');
+                let fetchThemes = (themesContainer.innerHTML === '');
                 
                 let themePromises = [];
                 if (fetchThemes) {
                     const allThemeIdeas = [
                         { title: "Winter Memories", scene: "winter snow cold" },
                         { title: "Spring Vibes", scene: "spring cherry blossom warm" },
-                        { title: "Summer Beach", scene: "summer beach ocean sand" },
+                        { title: "Summer Waves", scene: "summer beach ocean sand" },
                         { title: "Autumn Leaves", scene: "autumn fall leaves" },
                         { title: "Delicious Meals", scene: "delicious food eating meal" },
                         { title: "Animal Friends", scene: "dog pet animal" },
                         { title: "City Explorers", scene: "city street building urban" },
                         { title: "Nature Walks", scene: "forest tree mountain nature" },
                         { title: "Joyful Moments", scene: "happy smiling laughing" },
-                        { title: "Birthday Parties", scene: "birthday cake celebration party" }
+                        { title: "Birthday Parties", scene: "birthday cake celebration party" },
+                        { title: "Night Vibes", scene: "night dark lights" },
+                        { title: "Cloudy Moods", scene: "cloudy grey sky moody" },
+                        { title: "Cafe Hopping", scene: "cafe coffee drinking" },
+                        { title: "Beautiful Landscapes", scene: "landscape scenic view" },
+                        { title: "Travel Adventures", scene: "travel luggage map plane" },
+                        { title: "Peaceful Times", scene: "peaceful calm quiet resting" },
+                        { title: "Sunset Magic", scene: "sunset sun twilight orange sky" },
+                        { title: "Art & Culture", scene: "museum art gallery painting exhibition" },
+                        { title: "In the Mountains", scene: "mountain hiking trail" }
                     ];
                     const shuffled = allThemeIdeas.sort(() => 0.5 - Math.random());
                     const themeIdeas = shuffled.slice(0, 3);
@@ -166,10 +175,10 @@ async function fetchPhotos(isLoadMore) {
                     } else {
                         themesContainer.classList.add('hidden');
                     }
-                } else if (currentGalleryFilter !== "recent") {
-                    themesContainer.classList.add('hidden');
                 } else {
-                    themesContainer.classList.remove('hidden');
+                    if (themesContainer.innerHTML !== '') {
+                        themesContainer.classList.remove('hidden');
+                    }
                 }
                 
                 timelineHeader.classList.remove('hidden');
@@ -366,70 +375,9 @@ function renderGallery(photos, append = false) {
         img.src = imgUrl;
         img.loading = "lazy";
 
-        // Meta tags over image (bottom)
-        const infos = document.createElement('div');
-        infos.className = 'meta-overlay';
-        
-        let metaHtml = '';
-        
-        // 1. 날짜 가공 (YYYY-MM-DD -> YYYY-MM)
-        if (photo.date && photo.date.trim() !== '') {
-            let shortDate = photo.date;
-            if (shortDate.length >= 7) {
-                shortDate = shortDate.substring(0, 7); // yyyy-mm
-            }
-            metaHtml += `<span class="meta-badge"><i class="fa-regular fa-calendar"></i> ${shortDate}</span>`;
-        } else {
-            metaHtml += `<span class="meta-badge" style="color: #bbb;"><i class="fa-regular fa-calendar"></i> Unknown Date</span>`;
-        }
-        
-        // 2. 시간대 태그 (time_of_day)
-        if (photo.time_of_day && photo.time_of_day !== 'Unknown') {
-            metaHtml += `<span class="meta-badge"><i class="fa-regular fa-clock"></i> ${photo.time_of_day}</span>`;
-        } else {
-            metaHtml += `<span class="meta-badge" style="color: #bbb;"><i class="fa-regular fa-clock"></i> Unknown Time</span>`;
-        }
-
-        // 3. 계절 태그 (season)
-        if (photo.season && photo.season !== 'Unknown') {
-            metaHtml += `<span class="meta-badge"><i class="fa-solid fa-leaf"></i> ${photo.season}</span>`;
-        } else {
-            metaHtml += `<span class="meta-badge" style="color: #bbb;"><i class="fa-solid fa-leaf"></i> Unknown Season</span>`;
-        }
-        
-        // 4. 장소 태그 (Unknown-Location 포함)
-        if (photo.location && photo.location.trim() !== '') {
-            let prettyLoc = photo.location.replace(/-/g, ' '); // 하이픈을 띄어쓰기로 예쁘게 변환
-            metaHtml += `<span class="meta-badge"><i class="fa-solid fa-location-dot"></i> ${prettyLoc}</span>`;
-        } else {
-            metaHtml += `<span class="meta-badge" style="color: #bbb;"><i class="fa-solid fa-location-dot"></i> Unknown Location</span>`;
-        }
-        
-        // 5. 인물(가족) 태그 - 가장 눈에 띄게 (배경색 강조)
-        if (photo.people && photo.people.length > 0) {
-            let peopleStr = photo.people.join(', ');
-            metaHtml += `<span class="meta-badge" style="background: rgba(59, 130, 246, 0.55); font-weight: 500;"><i class="fa-solid fa-user-tag"></i> ${peopleStr}</span>`;
-        } else {
-            metaHtml += `<span class="meta-badge" style="background: rgba(75, 85, 99, 0.4); color: #bbb; font-weight: 500;"><i class="fa-solid fa-user-tag"></i> Unknown Person</span>`;
-        }
-
-        infos.innerHTML = metaHtml;
-
-        // Score Badge Overlay (Top Left)
-        const scoreWrapper = document.createElement('div');
-        scoreWrapper.className = 'meta-overlay';
-        scoreWrapper.style.top = '0';
-        scoreWrapper.style.bottom = 'auto';
-        scoreWrapper.style.background = 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)';
-        // pointer-events: none is already in meta-overlay from CSS
-        const scorePercent = (photo.score * 100).toFixed(1);
-        scoreWrapper.innerHTML = `<span class="meta-badge" style="background: rgba(16, 185, 129, 0.55); font-weight: 500;"><i class="fa-solid fa-bullseye"></i> Match ${scorePercent}%</span>`;
-
-        // Assembly
+        // Assembly (Pure image without meta tags)
         item.style.position = 'relative';
         item.appendChild(img);
-        item.appendChild(scoreWrapper);
-        if (metaHtml) item.appendChild(infos);
 
         // Click Event listener logic
         item.addEventListener('click', () => {
