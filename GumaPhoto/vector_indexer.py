@@ -409,7 +409,6 @@ class VectorIndexer:
                         real_gender = self.family_meta[real_name].get("gender", ai_gender)
                         born_year = self.family_meta[real_name].get("birth_year")
                         
-                        import re
                         match = re.search(r'(19|20)\d{2}', filepath)
                         if born_year and match:
                             photo_year = int(match.group(0))

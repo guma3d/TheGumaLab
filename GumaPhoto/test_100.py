@@ -13,16 +13,20 @@ indexer = VectorIndexer()
 print("== 2. Wipe existing data ==")
 try:
     indexer.q_client.delete_collection(COLLECTION_NAME)
-    indexer.init_qdrant_collection()
-    indexer.cursor.execute("DELETE FROM vectorized_files")
-    indexer.conn.commit()
-    # Find all .xmp and delete
-    for root, dirs, files in os.walk("/app/data/organized"):
-        for f in files:
-            if f.endswith('.xmp'):
-                os.remove(os.path.join(root, f))
 except Exception as e:
-    print("Cleanup err:", e)
+    print("Cleanup delete error (safe to ignore if not created):", e)
+finally:
+    try:
+        indexer.init_qdrant_collection()
+        indexer.cursor.execute("DELETE FROM vectorized_files")
+        indexer.conn.commit()
+        # Find all .xmp and delete
+        for root, dirs, files in os.walk("/app/data/organized"):
+            for f in files:
+                if f.endswith('.xmp'):
+                    os.remove(os.path.join(root, f))
+    except Exception as ie:
+        print("Initialization err:", ie)
 
 print("== 3. Run VectorIndexer ==")
 t0 = time.time()
