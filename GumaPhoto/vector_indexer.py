@@ -51,7 +51,9 @@ class VectorIndexer:
         self.init_qdrant_collection()
         
         print("[*] SQLite (상태 관리용 DB) 접속 초기화...")
-        self.conn = sqlite3.connect(DB_PATH, timeout=60)
+        import threading
+        self.db_lock = threading.Lock()
+        self.conn = sqlite3.connect(DB_PATH, timeout=60, check_same_thread=False)
         self.cursor = self.conn.cursor()
         self.cursor.execute("PRAGMA journal_mode=DELETE;")
         self.init_sqlite_tables()
@@ -160,8 +162,9 @@ class VectorIndexer:
     def get_original_context(self, file_hash):
         """1단계에서 저장해둔 원본 문맥(가족_결혼사진 등)을 해시값으로 역추적하여 빼오기"""
         try:
-            self.cursor.execute("SELECT original_context FROM processed_files WHERE file_hash=?", (file_hash,))
-            row = self.cursor.fetchone()
+            with getattr(self, "db_lock", __import__("threading").Lock()):
+                self.cursor.execute("SELECT original_context FROM processed_files WHERE file_hash=?", (file_hash,))
+                row = self.cursor.fetchone()
             return row[0] if row else "Organized_Photo"
         except sqlite3.OperationalError:
             return "Organized_Photo"
@@ -199,8 +202,9 @@ class VectorIndexer:
         
         # 완벽하게 둘 다 있는 경우에만 Skip (UI 관리용 DB 검증 생략, 상태는 업데이트 삽입만)
         if qdrant_has_vector and xmp_exists:
-            self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status) VALUES (?, ?)", (filepath, 'DONE'))
-            self.conn.commit()
+            with getattr(self, "db_lock", __import__("threading").Lock()):
+                self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status) VALUES (?, ?)", (filepath, 'DONE'))
+                self.conn.commit()
             return True
             
         # 둘 중 하나라도 누락된 경우 -> 찌꺼기 완벽 소거 후 처음부터 다시 (Full Pipeline)
@@ -279,44 +283,15 @@ class VectorIndexer:
                     
         return time_of_day, season
 
-    def process_batch(self, file_batch):
-        """배치(묶음) 단위로 10~50장의 사진을 메모리에 올려 부분 병렬로 처리함"""
+    def process_batch(self, valid_items):
+        """Pre-fetched batch 단위로 메모리에 올려 병렬 연산 (CPU/GPU 동시 가동을 위함)"""
         points_to_upsert = []
         successful_payloads = []
-        
-        valid_items = []
-        for filepath in file_batch:
-            if self.is_already_processed(filepath):
-                continue
-            
-            try:
-                pil_img = Image.open(filepath).convert('RGB')
-                cv_img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
-                
-                file_hash = self.get_file_hash(filepath)
-                context_str = self.get_original_context(file_hash)
-                time_of_day, season = self.extract_time_and_season(filepath)
-                import uuid
-                point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, filepath))
-                
-                valid_items.append({
-                    "filepath": filepath,
-                    "filename": os.path.basename(filepath),
-                    "pil_img": pil_img,
-                    "cv_img": cv_img,
-                    "context_str": context_str,
-                    "time_of_day": time_of_day,
-                    "season": season,
-                    "point_id": point_id
-                })
-            except Exception as e:
-                print(f"      ⚠️ 이미지 로드 오류 (Skip): {os.path.basename(filepath)} - {e}")
-                self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status) VALUES (?, ?)", (filepath, 'ERROR'))
         
         if not valid_items:
             return
             
-        print(f"   [배치 연산] 신규 스캔 묶음: {len(valid_items)}장 병렬 처리 중...")
+        # print(f"   [배치 연산] 신규 스캔 묶음: {len(valid_items)}장 병렬 처리 중...")
         
         pil_images = [item["pil_img"] for item in valid_items]
         scene_embeddings = [None] * len(valid_items)
@@ -443,6 +418,11 @@ class VectorIndexer:
                     best_face_payload['age'] = real_age
                     best_face_payload['gender'] = real_gender
                     
+                    age_korean_1 = f"{real_age}세"
+                    age_korean_2 = f"{real_age}살"
+                    if age_korean_1 not in found_objects: found_objects.append(age_korean_1)
+                    if age_korean_2 not in found_objects: found_objects.append(age_korean_2)
+                    
                     box = best_face.bbox.astype(int)
                     x1, y1, x2, y2 = max(0, box[0]), max(0, box[1]), min(cv_img.shape[1], box[2]), min(cv_img.shape[0], box[3])
                     face_img = cv_img[y1:y2, x1:x2]
@@ -490,13 +470,13 @@ class VectorIndexer:
                 
             except Exception as e:
                 print(f"      ⚠️ 개별 항목 payload 병합 오류 (Skip): {e}")
-                self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status) VALUES (?, ?)", (filepath, 'ERROR'))
+                with getattr(self, "db_lock", __import__("threading").Lock()):
+                    self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status) VALUES (?, ?)", (filepath, 'ERROR'))
                 
         # Qdrant에 일괄 묶음 사격 (배치 Upsert)
         if points_to_upsert:
             try:
                 self.q_client.upsert(collection_name=COLLECTION_NAME, points=points_to_upsert)
-                self.conn.commit()
                 
                 # 성공적으로 Qdrant에 저장된 사진들만 원자성(Atomicity)을 보장하며 물리 XMP 및 SQLite 기록 생성
                 import xmp_utils
@@ -506,13 +486,16 @@ class VectorIndexer:
                     except Exception as xmp_e:
                         print(f"      ⚠️ XMP 생성 실패: {xmp_e}")
                         
-                    self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status, face_count) VALUES (?, ?, ?)",
-                                      (filepath, 'DONE', face_count))
-                self.conn.commit()
+                    with getattr(self, "db_lock", __import__("threading").Lock()):
+                        self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status, face_count) VALUES (?, ?, ?)",
+                                          (filepath, 'DONE', face_count))
+                with getattr(self, "db_lock", __import__("threading").Lock()):
+                    self.conn.commit()
                 
             except Exception as qdrant_err:
                 print(f"    🚨 Qdrant 배치 업서트 치명적 실패: {qdrant_err}")
-                self.conn.rollback()
+                with getattr(self, "db_lock", __import__("threading").Lock()):
+                    self.conn.rollback()
             
         # VRAM 메모리 단편화 및 좀비 텐서를 해제하여 장시간 가동 시의 쿠다 OOM 다운 방어
         torch.cuda.empty_cache()
@@ -542,11 +525,67 @@ class VectorIndexer:
         total = len(all_targets)
         print(f"[*] 총 {total}장의 대상 사진을 발견했습니다. (동영상 제외)")
         
-        # 2. BATCH_SIZE 묶음 단위로 끊어서 진행
-        for i in range(0, total, BATCH_SIZE):
-            batch = all_targets[i : i + BATCH_SIZE]
-            print(f"\n[*] 📦 배치 처리 중: {i+1} ~ {i+len(batch)} / {total}")
-            self.process_batch(batch)
+        # 2. CPU + GPU 멀티스레딩 파이프라인 (Producer-Consumer)
+        import threading
+        import queue
+        import concurrent.futures
+
+        batch_queue = queue.Queue(maxsize=3) # 메모리 버퍼: 최대 3개 묶음 선로딩 대기
+
+        def cpu_producer():
+            with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+                for i in range(0, total, BATCH_SIZE):
+                    batch_paths = all_targets[i : i + BATCH_SIZE]
+                    
+                    def prep(filepath):
+                        # DB Check 
+                        if self.is_already_processed(filepath):
+                            return None
+                        
+                        try:
+                            # 디스크 병목 구역 (멀티스레딩 효과 극대화)
+                            pil_img = Image.open(filepath).convert('RGB')
+                            cv_img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+                            file_hash = self.get_file_hash(filepath)
+                            context_str = self.get_original_context(file_hash)
+                            time_of_day, season = self.extract_time_and_season(filepath)
+                            import uuid
+                            point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, filepath))
+                            
+                            return {
+                                "filepath": filepath,
+                                "filename": os.path.basename(filepath),
+                                "pil_img": pil_img,
+                                "cv_img": cv_img,
+                                "context_str": context_str,
+                                "time_of_day": time_of_day,
+                                "season": season,
+                                "point_id": point_id
+                            }
+                        except Exception as e:
+                            print(f"      ⚠️ 이미지 로드 오류 (Skip): {os.path.basename(filepath)} - {e}")
+                            with getattr(self, "db_lock", __import__("threading").Lock()):
+                                self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status) VALUES (?, ?)", (filepath, 'ERROR'))
+                            return None
+                            
+                    results = list(executor.map(prep, batch_paths))
+                    valid_items = [r for r in results if r is not None]
+                    batch_queue.put((i, valid_items))
+                    
+            batch_queue.put(None) # 작업 종료 마커
+            
+        prod_thread = threading.Thread(target=cpu_producer)
+        prod_thread.start()
+        
+        while True:
+            item = batch_queue.get()
+            if item is None:
+                break
+            i, valid_items = item
+            print(f"\n[*] 📦 배치 진행 중 (CPU+GPU 풀가동): {i+1} ~ {min(i+BATCH_SIZE, total)} / {total}")
+            self.process_batch(valid_items)
+            
+        prod_thread.join()
             
         print("\n✅ 모든 사진의 [얼굴 + 배경 상황] 벡터 데이터베이스 컴파일이 완료되었습니다!")
 
