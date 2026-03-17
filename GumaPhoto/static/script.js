@@ -119,7 +119,7 @@ async function fetchPhotos(isLoadMore) {
                 
                 let themePromises = [];
                 if (fetchThemes) {
-                    const allThemeIdeas = [
+                    const generalIdeas = [
                         { title: "Winter Memories", scene: "winter snow cold" },
                         { title: "Spring Vibes", scene: "spring cherry blossom warm" },
                         { title: "Summer Waves", scene: "summer beach ocean sand" },
@@ -138,15 +138,19 @@ async function fetchPhotos(isLoadMore) {
                         { title: "Peaceful Times", scene: "peaceful calm quiet resting" },
                         { title: "Sunset Magic", scene: "sunset sun twilight orange sky" },
                         { title: "Art & Culture", scene: "museum art gallery painting exhibition" },
-                        { title: "In the Mountains", scene: "mountain hiking trail" },
+                        { title: "In the Mountains", scene: "mountain hiking trail" }
+                    ];
+                    const locationIdeas = [
                         { title: "Trip to Jeju", location: "Jeju Si South Korea" },
                         { title: "Memories in San Francisco", location: "San Francisco California" },
                         { title: "Las Vegas Nights", location: "Las Vegas Nevada" },
                         { title: "Incheon Stops", location: "Incheon South Korea" },
                         { title: "Seoul City Life", location: "Seoul South Korea" }
                     ];
-                    const shuffled = allThemeIdeas.sort(() => 0.5 - Math.random());
-                    const themeIdeas = shuffled.slice(0, 3);
+                    
+                    const shuffledGeneral = generalIdeas.sort(() => 0.5 - Math.random()).slice(0, 5);
+                    const shuffledLocation = locationIdeas.sort(() => 0.5 - Math.random()).slice(0, 1);
+                    const themeIdeas = [...shuffledGeneral, ...shuffledLocation].sort(() => 0.5 - Math.random());
                     
                     themePromises = themeIdeas.map(t => fetch(apiUrl, {
                         method: 'POST',
@@ -183,7 +187,17 @@ async function fetchPhotos(isLoadMore) {
                         query: t_query, offset: currentOffset, limit: t_limit, is_load_more: true,
                         people: t_people, location: "", scene: t_scene
                     })
-                }).then(r => r.json()).catch(err => { if (err.name !== 'AbortError') throw err; return {results: []}; });
+                }).then(async r => {
+                    if (!r.ok) {
+                        const errText = await r.text();
+                        console.error("Timeline backend error:", r.status, errText);
+                        return { results: [] };
+                    }
+                    return r.json();
+                }).catch(err => { 
+                    if (err.name !== 'AbortError') console.error("Timeline fetch error:", err); 
+                    return {results: []}; 
+                });
 
                 const responses = await Promise.all([...(fetchThemes ? themePromises : []), timelinePromise]);
                 const timelineRes = responses[responses.length - 1];
@@ -309,8 +323,8 @@ async function fetchPhotos(isLoadMore) {
         if (err.name === 'AbortError') {
             return; // Expected abort, do nothing
         }
-        console.error(err);
-        metaText.innerHTML = 'An expected error occurred while fetching photos.';
+        console.error("fetchPhotos error:", err);
+        metaText.innerHTML = `⚠️ Temporarily failed to fetch. <small>(${err.message})</small>`;
         metaContainer.classList.remove('hidden');
     } finally {
         isFetching = false;
