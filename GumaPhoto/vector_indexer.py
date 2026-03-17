@@ -47,7 +47,7 @@ BATCH_SIZE = 50 # 한 번에 처리할 사진 수 (GPU 메모리 고려)
 class VectorIndexer:
     def __init__(self):
         print(f"[*] 벡터 DB (Qdrant) 접속 초기화... ({QDRANT_URL})")
-        self.q_client = QdrantClient(url=QDRANT_URL)
+        self.q_client = QdrantClient(url=QDRANT_URL, timeout=60)
         self.init_qdrant_collection()
         
         print("[*] SQLite (상태 관리용 DB) 접속 초기화...")
