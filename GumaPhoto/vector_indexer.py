@@ -117,7 +117,12 @@ class VectorIndexer:
         _original_load = torch.load
         torch.load = lambda *a, **k: _original_load(*a, weights_only=False, **{key:val for key,val in k.items() if key != 'weights_only'})
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.emotion_recognizer = HSEmotionRecognizer(model_name='enet_b0_8_best_vgaf', device=device)
+        try:
+            self.emotion_recognizer = HSEmotionRecognizer(model_name='enet_b0_8_best_vgaf', device=device)
+        except Exception as e:
+            print(f"  [!] ⚠️ HSEmotion 모델 다운로드 또는 초기화 실패 (GitHub 429 등): {e}. 감정 인식 기능이 임시 비활성화됩니다.")
+            self.emotion_recognizer = None
+            
         torch.load = _original_load
         
         # === 가족 메타데이터 로드 ===
@@ -382,7 +387,7 @@ class VectorIndexer:
                     face_img = cv_img[y1:y2, x1:x2]
                     
                     try:
-                        if face_img.size > 0:
+                        if face_img.size > 0 and getattr(self, "emotion_recognizer", None):
                             emotion, scores = self.emotion_recognizer.predict_emotions(face_img, logits=False)
                             best_face_payload['emotion'] = emotion
                         else:
