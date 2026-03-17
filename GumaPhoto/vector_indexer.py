@@ -42,7 +42,7 @@ TARGET_DIR = "/app/data/organized"
 DB_PATH = "/app/data/organizer_state.db"
 QDRANT_URL = os.environ.get("QDRANT_URL", "http://qdrant:6333")
 COLLECTION_NAME = "gumaphoto_hybrid_kr"
-BATCH_SIZE = 50 # 한 번에 처리할 사진 수 (GPU 메모리 고려)
+BATCH_SIZE = 30 # 한 번에 처리할 사진 수 (GPU, RAM 메모리 고려)
 
 class VectorIndexer:
     def __init__(self):
@@ -529,10 +529,10 @@ class VectorIndexer:
         import queue
         import concurrent.futures
 
-        batch_queue = queue.Queue(maxsize=3) # 메모리 버퍼: 최대 3개 묶음 선로딩 대기
+        batch_queue = queue.Queue(maxsize=1) # 메모리 버퍼: 너무 많으면 RAM OOM 발생! 최대 1개 선로딩
 
         def cpu_producer():
-            with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
                 for i in range(0, total, BATCH_SIZE):
                     batch_paths = all_targets[i : i + BATCH_SIZE]
                     
