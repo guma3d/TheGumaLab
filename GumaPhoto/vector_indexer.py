@@ -277,65 +277,127 @@ class VectorIndexer:
         return time_of_day, season
 
     def process_batch(self, file_batch):
-        """배치(묶음) 단위로 10~50장의 사진을 메모리에 올려 병렬로 처리함"""
+        """배치(묶음) 단위로 10~50장의 사진을 메모리에 올려 부분 병렬로 처리함"""
         points_to_upsert = []
         successful_payloads = []
         
+        valid_items = []
         for filepath in file_batch:
             if self.is_already_processed(filepath):
                 continue
-                
-            print(f"   [벡터화] 신규 스캔 중: {os.path.basename(filepath)}")
-                
+            
             try:
-                # 1. 파일의 해시값을 계산하여 최초 1단계 Organizer에서 저장한 원본 DB 기록 조회
+                pil_img = Image.open(filepath).convert('RGB')
+                cv_img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+                
                 file_hash = self.get_file_hash(filepath)
                 context_str = self.get_original_context(file_hash)
-                
-                # 추가 컨텍스트 추출 (시간대, 계절) -> 나중에 XMP 로드 시 덮어써짐
                 time_of_day, season = self.extract_time_and_season(filepath)
-                
-                # --- [A] SigLIP 픽셀 백터 (Scene) 추출 ---
-                pil_img = Image.open(filepath).convert('RGB')
-                siglip_inputs = self.siglip_processor(images=pil_img, return_tensors="pt").to(self.siglip_model.device)
-                with torch.no_grad():
-                    out = self.siglip_model.get_image_features(**siglip_inputs)
-                    if hasattr(out, "pooler_output"):
-                        emb = out.pooler_output[0]
-                    elif hasattr(out, "shape"):
-                        emb = out[0]
-                    else:
-                        emb = out[0]
-                    emb = emb / emb.norm(p=2, dim=-1, keepdim=True)
-                    scene_embedding = emb.cpu().numpy()
-                
-                # --- [B] InsightFace (Face) 추출 ---
-                # 주의: InsightFace는 BGR(OpenCV 포맷) 이미지를 요구함
-                cv_img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
-                faces = self.face_app.get(cv_img)
-                
-                face_count = len(faces)
-                
-                # Qdrant 고유 ID는 문자열 해시나 유니크 정수가 필요 (여기선 파일경로 해시로 대체)
                 import uuid
                 point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, filepath))
                 
-                # --- [C] 다중 벡터(MultiVector) 조립 ---
-                vectors = {
-                    "scene": scene_embedding.tolist()
-                }
+                valid_items.append({
+                    "filepath": filepath,
+                    "filename": os.path.basename(filepath),
+                    "pil_img": pil_img,
+                    "cv_img": cv_img,
+                    "context_str": context_str,
+                    "time_of_day": time_of_day,
+                    "season": season,
+                    "point_id": point_id
+                })
+            except Exception as e:
+                print(f"      ⚠️ 이미지 로드 오류 (Skip): {os.path.basename(filepath)} - {e}")
+                self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status) VALUES (?, ?)", (filepath, 'ERROR'))
+        
+        if not valid_items:
+            return
+            
+        print(f"   [배치 연산] 신규 스캔 묶음: {len(valid_items)}장 병렬 처리 중...")
+        
+        pil_images = [item["pil_img"] for item in valid_items]
+        scene_embeddings = [None] * len(valid_items)
+        captions_batch = [""] * len(valid_items)
+        objects_batch = [[] for _ in valid_items]
+        
+        # --- [A] SigLIP 다중 배치 추론 ---
+        try:
+            siglip_inputs = self.siglip_processor(images=pil_images, return_tensors="pt").to(self.siglip_model.device)
+            with torch.no_grad():
+                out = self.siglip_model.get_image_features(**siglip_inputs)
+                emb = out / out.norm(p=2, dim=-1, keepdim=True)
+                scene_embeddings = emb.cpu().numpy()
+        except Exception as e:
+            print(f"      🚨 SigLIP 연산 오류: {e}")
+            
+        # --- [B] Florence-2 다중 배치 추론 ---
+        if getattr(self, "florence_model", None):
+            try:
+                # 캡션 다중 배치
+                task_prompt_cap = "<MORE_DETAILED_CAPTION>"
+                flo_inputs_cap = self.florence_processor(text=[task_prompt_cap]*len(valid_items), images=pil_images, return_tensors="pt").to(self.florence_model.device)
+                with torch.no_grad():
+                    generated_ids_cap = self.florence_model.generate(
+                        input_ids=flo_inputs_cap["input_ids"],
+                        pixel_values=flo_inputs_cap["pixel_values"],
+                        max_new_tokens=512,
+                        early_stopping=False,
+                        do_sample=False,
+                        num_beams=1,
+                    )
+                generated_texts_cap = self.florence_processor.batch_decode(generated_ids_cap, skip_special_tokens=False)
+                for idx, text in enumerate(generated_texts_cap):
+                    parsed = self.florence_processor.post_process_generation(text, task=task_prompt_cap, image_size=(pil_images[idx].width, pil_images[idx].height))
+                    captions_batch[idx] = parsed.get(task_prompt_cap, "")
+                    
+                # 사물 태그 다중 배치
+                task_prompt_od = "<OD>"
+                flo_inputs_od = self.florence_processor(text=[task_prompt_od]*len(valid_items), images=pil_images, return_tensors="pt").to(self.florence_model.device)
+                with torch.no_grad():
+                    generated_ids_od = self.florence_model.generate(
+                        input_ids=flo_inputs_od["input_ids"],
+                        pixel_values=flo_inputs_od["pixel_values"],
+                        max_new_tokens=1024,
+                        early_stopping=False,
+                        do_sample=False,
+                        num_beams=1,
+                    )
+                generated_texts_od = self.florence_processor.batch_decode(generated_ids_od, skip_special_tokens=False)
+                for idx, text in enumerate(generated_texts_od):
+                    parsed = self.florence_processor.post_process_generation(text, task=task_prompt_od, image_size=(pil_images[idx].width, pil_images[idx].height))
+                    od_res = parsed.get(task_prompt_od, {})
+                    obj_list = []
+                    if isinstance(od_res, dict) and "labels" in od_res:
+                        for label in od_res["labels"]:
+                            clean_label = str(label).strip().lower()
+                            if clean_label and "person" not in clean_label and clean_label not in obj_list:
+                                obj_list.append(clean_label)
+                    objects_batch[idx] = obj_list
+            except Exception as e:
+                print(f"      ⚠️ Florence-2 다중 배치 처리 중 오류: {e}")
+
+        # --- [C] 개별 연산 (InsightFace) 및 페이로드 조립 ---
+        for i, item in enumerate(valid_items):
+            try:
+                filepath = item["filepath"]
+                cv_img = item["cv_img"]
+                point_id = item["point_id"]
+                scene_embedding = scene_embeddings[i] if scene_embeddings[i] is not None else np.zeros(768)
+                scene_caption = captions_batch[i]
+                found_objects = objects_batch[i]
                 
-                # 얼굴이 감지되었다면, 그중 가장 면적이 큰(메인 인물) 1명의 얼굴 벡터만 대표로 저장 (또는 컬렉션 구조에 따라 배열로 분리)
-                # (Qdrant는 Point 1개당 'face' 벡터를 1개만 받을 수 있으므로, 다수의 얼굴이면 개별 Point로 쪼개야 함. 여기서는 심플하게 1등 얼굴만 채택)
+                faces = self.face_app.get(cv_img)
+                face_count = len(faces)
+                
+                vectors = {"scene": scene_embedding.tolist()}
                 best_face_payload = {}
                 found_people = []
                 
                 if face_count > 0:
-                    # 모든 감지된 얼굴에 대해 known_faces와 비교하여 인물 태그 추출
                     for face in faces:
                         norm_emb = face.normed_embedding
                         best_match_name = None
-                        best_sim = 0.40 # 코사인 유사도 커트라인
+                        best_sim = 0.40
                         for name, known_vec in self.known_faces.items():
                             sim = np.dot(norm_emb, known_vec)
                             if sim > best_sim:
@@ -350,7 +412,6 @@ class VectorIndexer:
                     best_face = sorted(faces, key=lambda f: (f.bbox[2]-f.bbox[0])*(f.bbox[3]-f.bbox[1]), reverse=True)[0]
                     vectors["face"] = best_face.normed_embedding.tolist()
                     
-                    # --- [InsightFace -> Family Meta : 나이/성별 보정 적용] ---
                     ai_age = int(best_face.age)
                     ai_gender = "남성(Male)" if best_face.gender == 1 else "여성(Female)"
                     
@@ -379,7 +440,6 @@ class VectorIndexer:
                     best_face_payload['age'] = real_age
                     best_face_payload['gender'] = real_gender
                     
-                    # --- [HSEmotion: 표정 분석] ---
                     box = best_face.bbox.astype(int)
                     x1, y1, x2, y2 = max(0, box[0]), max(0, box[1]), min(cv_img.shape[1], box[2]), min(cv_img.shape[0], box[3])
                     face_img = cv_img[y1:y2, x1:x2]
@@ -395,92 +455,28 @@ class VectorIndexer:
                         best_face_payload['emotion'] = 'neutral'
                 else:
                     found_people.append("No People")
-                    
-                # --- [Florence-2: 고급 문맥 묘사(Caption) 추출 및 사물(OD) 태깅] ---
-                scene_caption = ""
-                found_objects = []
 
-                if getattr(self, "florence_model", None):
-                    try:
-                        # 1. 캡션 추출
-                        task_prompt_cap = "<MORE_DETAILED_CAPTION>"
-                        flo_inputs_cap = self.florence_processor(text=task_prompt_cap, images=pil_img, return_tensors="pt").to(self.florence_model.device)
-                        with torch.no_grad():
-                            generated_ids_cap = self.florence_model.generate(
-                                input_ids=flo_inputs_cap["input_ids"],
-                                pixel_values=flo_inputs_cap["pixel_values"],
-                                max_new_tokens=512,
-                                early_stopping=False,
-                                do_sample=False,
-                                num_beams=1,
-                            )
-                        generated_text_cap = self.florence_processor.batch_decode(generated_ids_cap, skip_special_tokens=False)[0]
-                        parsed_answer_cap = self.florence_processor.post_process_generation(
-                            generated_text_cap, 
-                            task=task_prompt_cap, 
-                            image_size=(pil_img.width, pil_img.height)
-                        )
-                        scene_caption = parsed_answer_cap.get(task_prompt_cap, "")
-                        
-                        # 2. 사물 태그(Object Detection) 추출
-                        task_prompt_od = "<OD>"
-                        flo_inputs_od = self.florence_processor(text=task_prompt_od, images=pil_img, return_tensors="pt").to(self.florence_model.device)
-                        with torch.no_grad():
-                            generated_ids_od = self.florence_model.generate(
-                                input_ids=flo_inputs_od["input_ids"],
-                                pixel_values=flo_inputs_od["pixel_values"],
-                                max_new_tokens=1024,
-                                early_stopping=False,
-                                do_sample=False,
-                                num_beams=1,
-                            )
-                        generated_text_od = self.florence_processor.batch_decode(generated_ids_od, skip_special_tokens=False)[0]
-                        parsed_answer_od = self.florence_processor.post_process_generation(
-                            generated_text_od, 
-                            task=task_prompt_od, 
-                            image_size=(pil_img.width, pil_img.height)
-                        )
-                        od_results = parsed_answer_od.get(task_prompt_od, {})
-                        if isinstance(od_results, dict) and "labels" in od_results:
-                            for label in od_results["labels"]:
-                                # 소문자화 및 공백 제거
-                                clean_label = str(label).strip().lower()
-                                # 빈 문자열이나 "person"은 스킵
-                                if clean_label and "person" not in clean_label and clean_label not in found_objects:
-                                    found_objects.append(clean_label)
-                                    
-                    except Exception as flo_e:
-                        print(f"      ⚠️ Florence-2 분석 실패 (Skip): {flo_e}")
-
-                        
-                # --- [날짜(Date) 및 위치(Location) 파싱] ---
-                # 경로 형식: /app/data/organized/2020/2020-10_Jecheon-Si-South-Korea/2020-10_63.jpg
                 parent_dir = os.path.basename(os.path.dirname(filepath))
                 location_str = "Unknown Location"
                 date_str = "Unknown Date"
                 
                 if "_" in parent_dir:
                     parts = parent_dir.split("_", 1)
-                    
-                    # 1. 2020-10 연월 단위 날짜 추출
                     if re.match(r'^(19|20)\d{2}', parts[0]):
                         date_str = parts[0]
-                        
-                    # 2. 장소/위치명 추출
                     if len(parts) > 1 and parts[1] != "Unknown-Location" and parts[1] != "Unknown-Year":
                         location_str = parts[1].replace("-", " ")
                     
-                # --- [D] Payload 조립 및 저장 ---
                 payload = {
                     "filepath": filepath,
-                    "filename": os.path.basename(filepath),
-                    "original_context": context_str,
+                    "filename": item["filename"],
+                    "original_context": item["context_str"],
                     "face_count": face_count,
                     "people": found_people,
                     "date": date_str,
                     "location": location_str,
-                    "time_of_day": time_of_day,
-                    "season": season,
+                    "time_of_day": item["time_of_day"],
+                    "season": item["season"],
                     "objects": found_objects,
                     "caption": scene_caption
                 }
@@ -490,7 +486,7 @@ class VectorIndexer:
                 points_to_upsert.append(PointStruct(id=point_id, vector=vectors, payload=payload))
                 
             except Exception as e:
-                print(f"      ⚠️ 오류 발생 (Skip): {e}")
+                print(f"      ⚠️ 개별 항목 payload 병합 오류 (Skip): {e}")
                 self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status) VALUES (?, ?)", (filepath, 'ERROR'))
                 
         # Qdrant에 일괄 묶음 사격 (배치 Upsert)
