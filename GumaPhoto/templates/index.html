@@ -86,6 +86,11 @@
             <!-- Themes Container (Now BELOW the main gallery) -->
             <div id="themes-container" class="themes-container hidden"></div>
 
+            <!-- Search Results Grid (Masonry Grid) -->
+            <div id="search-grid" class="gallery-grid hidden" style="margin-top: 10px;">
+                <!-- Image cards will be injected here via JS -->
+            </div>
+
         </main>
     </div>
 
@@ -126,13 +131,13 @@
 
     <!-- Live Progress Monitor Modal -->
     <div id="progress-modal" class="modal hidden">
-        <div class="modal-content" style="background: rgba(20, 20, 25, 0.98); width: 90%; max-width: 320px; margin: auto; box-sizing: border-box; padding: 1.5rem; border-radius: 10px; border: 2px solid #10b981; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);">
-            <span id="progress-modal-close" class="modal-close">&times;</span>
-            <h2 style="font-size: 1.2rem; color: white; display:flex; align-items:center; gap: 8px; margin-bottom: 1.5rem;">
-                <i class="fa-solid fa-server" style="color: #3b82f6;"></i> Live Monitoring
+        <div class="modal-content" style="background: rgba(20, 20, 25, 0.98); width: 90%; max-width: 320px; margin: auto; box-sizing: border-box; padding: 1.5rem; border-radius: 10px; border: 2px solid #10b981; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); text-align: center;">
+            <span id="progress-modal-close" class="modal-close" style="right: 15px; top: 15px;">&times;</span>
+            <h2 style="font-size: 1.2rem; color: white; display:flex; justify-content:center; align-items:center; gap: 8px; margin-bottom: 1.5rem;">
+                DB Status
             </h2>
             
-            <div style="display:flex; flex-direction: column; gap: 8px;">
+            <div style="display:flex; flex-direction: column; gap: 8px; text-align: center;">
                 <div style="background: var(--surface-light); padding: 12px; border-radius: 6px;">
                     <h3 style="color:var(--text-muted); font-size: 0.8em; margin-bottom: 3px;">Total Server Photos</h3>
                     <p id="prog-total" style="color:#3b82f6; font-size: 1.2em; font-weight:bold;">Loading...</p>
@@ -151,14 +156,14 @@
                     <small style="font-size: 0.75em;">Photos fully analyzed and searchable</small>
                 </div>
                 
-                <p id="prog-status" style="font-size: 0.75em; color: var(--text-muted); text-align:right; margin-top: 8px;">
-                    Syncing... <i class="fa-solid fa-spinner fa-spin"></i>
+                <p id="prog-status" style="font-size: 0.75em; color: var(--text-muted); text-align:center; margin-top: 8px;">
+                    Syncing...
                 </p>
             </div>
         </div>
     </div>
 
-    <script src="static/script.js?v=22"></script>
+    <script src="static/script.js?v=23"></script>
 </body>
 
 </html>

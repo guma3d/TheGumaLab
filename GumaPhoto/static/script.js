@@ -62,7 +62,8 @@ document.addEventListener('click', e => {
              totalHits = c.totalHits;
              
              document.getElementById('gallery-grid').innerHTML = '';
-             renderGallery(c.results, false);
+             document.getElementById('search-grid').innerHTML = '';
+             renderGallery(c.results, false, 'gallery-grid', false, false);
              return; // fully resolved from memory
         }
 
@@ -174,7 +175,11 @@ async function fetchPhotos(isLoadMore) {
             // UI HOTFIX: Bypass backend empty query bug via dynamic frontend calls
             const themesContainer = document.getElementById('themes-container');
             const timelineHeader = document.getElementById('timeline-header');
+            const sliderGrid = document.getElementById('gallery-grid');
+            const searchGrid = document.getElementById('search-grid');
             metaContainer.classList.add('hidden');
+            searchGrid.classList.add('hidden');
+            sliderGrid.classList.remove('hidden');
             
             if (!isLoadMore) {
                 // Determine if we want themes
@@ -299,9 +304,10 @@ async function fetchPhotos(isLoadMore) {
                             hasMore: hasMore
                         };
                     }
-                    document.getElementById('gallery-grid').innerHTML = '';
+                    sliderGrid.innerHTML = '';
+                    searchGrid.innerHTML = '';
                 }
-                renderGallery(results, isLoadMore);
+                renderGallery(results, isLoadMore, 'gallery-grid', false, false);
                 
                 // Kickoff preloading in background
                 if (!window._tagsPreloaded) {
@@ -341,7 +347,7 @@ async function fetchPhotos(isLoadMore) {
                 totalHits += results.length;
                 if (timelineRes.results && timelineRes.results.length < t_limit) hasMore = false;
                 currentOffset += t_limit;
-                renderGallery(results, true);
+                renderGallery(results, true, 'gallery-grid', false, false);
             }
         } else {
             // Normal Search
@@ -380,8 +386,12 @@ async function fetchPhotos(isLoadMore) {
     
                 const themesContainer = document.getElementById('themes-container');
                 const timelineHeader = document.getElementById('timeline-header');
+                const sliderGrid = document.getElementById('gallery-grid');
+                const searchGrid = document.getElementById('search-grid');
                 themesContainer.classList.add('hidden');
                 timelineHeader.classList.add('hidden');
+                sliderGrid.classList.add('hidden');
+                searchGrid.classList.remove('hidden');
                 
                 let fallbackMsg = '';
                 if (data.fallback_triggered && !isLoadMore) {
@@ -392,8 +402,8 @@ async function fetchPhotos(isLoadMore) {
                 <small style="color:#3b82f6;">(AI concept: ${currentScene})</small>${fallbackMsg}`;
                 metaContainer.classList.remove('hidden');
                 
-                if (!isLoadMore) document.getElementById('gallery-grid').innerHTML = '';
-                renderGallery(data.results, isLoadMore);
+                if (!isLoadMore) searchGrid.innerHTML = '';
+                renderGallery(data.results, isLoadMore, 'search-grid', true, true);
             }
         }
         
@@ -468,8 +478,8 @@ function renderThemes(themes) {
 }
 
 // Handle Gallery Rendering
-function renderGallery(photos, append = false) {
-    const grid = document.getElementById('gallery-grid');
+function renderGallery(photos, append = false, targetId = 'gallery-grid', isMasonry = false, showMeta = false) {
+    const grid = document.getElementById(targetId);
     // Note: We don't automatically clear grid here because we clear it before render now to prevent layout jump
     // if (!append) grid.innerHTML = '';
 
@@ -479,9 +489,9 @@ function renderGallery(photos, append = false) {
     }
 
     photos.forEach(photo => {
-        // Create Item as a Slider Item
+        // Create Item as a Slider Item or Masonry Item
         const item = document.createElement('div');
-        item.className = 'theme-photo-item';
+        item.className = isMasonry ? 'image-item' : 'theme-photo-item';
         // Add URL data to dataset
         item.dataset.url = photo.url;
 
@@ -497,9 +507,46 @@ function renderGallery(photos, append = false) {
         img.src = imgUrl;
         img.loading = "lazy";
 
-        // Assembly (Pure image without meta tags)
+        // Assembly
         item.style.position = 'relative';
         item.appendChild(img);
+
+        if (showMeta) {
+            // Score Badge
+            if (photo.score !== undefined) {
+                const badge = document.createElement('div');
+                badge.className = 'meta-badge';
+                badge.innerHTML = `<i class="fa-solid fa-bolt"></i> ${Math.round(photo.score * 100)}%`;
+                item.appendChild(badge);
+            }
+            
+            // Meta Overlay (Tags)
+            if ((photo.people && photo.people.length > 0) || photo.scene_tags) {
+                const overlay = document.createElement('div');
+                overlay.className = 'meta-overlay';
+                
+                if (photo.people && photo.people.length > 0) {
+                    photo.people.forEach(p => {
+                        const t = document.createElement('span'); 
+                        t.className = 'meta-tag highlighted'; 
+                        t.innerText = p; 
+                        overlay.appendChild(t);
+                    });
+                }
+                
+                if (photo.scene_tags) {
+                    photo.scene_tags.split(',').slice(0, 3).forEach(s => {
+                        if(s.trim().length > 0) {
+                            const t = document.createElement('span'); 
+                            t.className = 'meta-tag'; 
+                            t.innerText = s.trim(); 
+                            overlay.appendChild(t);
+                        }
+                    });
+                }
+                item.appendChild(overlay);
+            }
+        }
 
         // Click Event listener logic
         item.addEventListener('click', () => {
