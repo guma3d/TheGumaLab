@@ -548,8 +548,6 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
     flex-direction: column;
     align-items: flex-start;
     gap: 3px;
-    transform: scale(0.8);
-    transform-origin: bottom left;
 }
 
 .meta-badge {
@@ -563,11 +561,9 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
     align-items: center;
     gap: 2px;
     width: fit-content;
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     font-weight: 600;
     z-index: 5;
-    transform: scale(0.8);
-    transform-origin: top left;
 }
 
 .meta-tag {
@@ -575,7 +571,7 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
     color: #e5e7eb;
     padding: 2px 4px;
     border-radius: 4px;
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     display: inline-flex;
     align-items: center;
     gap: 2px;
