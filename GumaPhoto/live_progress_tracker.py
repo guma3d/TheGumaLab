@@ -28,15 +28,12 @@ def get_progress():
                 elif f_lower.endswith('.xmp'):
                     xmp_count += 1
     
-    # 3. DB 작업 완료 수 (SQLite)
+    # 3. DB 작업 완료 수 (Qdrant 벡터DB에서 직접 초고속 리얼타임 조회)
     try:
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute("SELECT COUNT(*) FROM vectorized_files WHERE status='DONE'")
-        res = c.fetchone()
-        if res:
-            db_completed = res[0]
-        conn.close()
+        from qdrant_client import QdrantClient
+        q_client = QdrantClient("http://qdrant:6333")
+        collection_info = q_client.get_collection("gumaphoto_hybrid_kr")
+        db_completed = collection_info.points_count
     except Exception as e:
         pass
         
