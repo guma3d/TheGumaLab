@@ -8,40 +8,36 @@ UPLOADS_DIR = "/app/data/uploads_raw"
 JSON_OUTPUT = "/app/static/progress.json"
 
 def get_progress():
-    # 1. 파일 검증 대기열 조회
-    remaining = 0
+    # 1. 파일 검증 대기열 조회 (Queue)
+    queue_count = 0
     if os.path.exists(UPLOADS_DIR):
         for root, dirs, files in os.walk(UPLOADS_DIR):
-            remaining += len(files)
+            queue_count += len(files)
             
-    processed_count = 0
-    vectorized_count = 0
+    total_photos = 0
+    db_completed = 0
     
-    # 2. SQLite 결과 조회
+    # 2. 전체 파일 수 (organized 내)
+    if os.path.exists("/app/data/organized"):
+        for root, dirs, files in os.walk("/app/data/organized"):
+            total_photos += len([f for f in files if f.lower().endswith(('.jpg', '.jpeg', '.png', '.heic'))])
+    
+    # 3. DB 작업 완료 수 (SQLite)
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        
-        # [MODIFIED] Use actual physical dataset count instead of DB processed tracking
-        org_count = 0
-        if os.path.exists("/app/data/organized"):
-            for root, dirs, files in os.walk("/app/data/organized"):
-                org_count += len([f for f in files if f.lower().endswith(('.jpg', '.jpeg', '.png', '.heic'))])
-        processed_count = max(org_count, 0)
-            
         c.execute("SELECT COUNT(*) FROM vectorized_files WHERE status='DONE'")
         res = c.fetchone()
         if res:
-            vectorized_count = res[0]
-            
+            db_completed = res[0]
         conn.close()
     except Exception as e:
         pass
         
     return {
-        "remaining_raw": remaining,
-        "organizer_done": processed_count,
-        "vectorizer_done": max(0, vectorized_count - 13), # Subtract legacy 13 images
+        "queue_count": queue_count,
+        "total_photos": total_photos,
+        "db_completed": db_completed,
         "timestamp": time.time()
     }
 

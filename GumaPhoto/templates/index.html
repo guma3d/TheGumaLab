@@ -124,21 +124,21 @@
             
             <div style="display:flex; flex-direction: column; gap: 10px;">
                 <div style="background: var(--surface-light); padding: 12px; border-radius: 6px;">
-                    <h3 style="color:var(--text-muted); font-size: 0.8em; margin-bottom: 3px;">📦 Queue (Pending)</h3>
-                    <p id="prog-raw" style="color:#ef4444; font-size: 1.2em; font-weight:bold;">Loading...</p>
-                    <small style="font-size: 0.75em;">Files waiting in uploads_raw</small>
+                    <h3 style="color:var(--text-muted); font-size: 0.8em; margin-bottom: 3px;">📥 예정된 큐 </h3>
+                    <p id="prog-queue" style="color:#ef4444; font-size: 1.2em; font-weight:bold;">Loading...</p>
+                    <small style="font-size: 0.75em;">현재 대기열(Queue)에 남은 사진</small>
                 </div>
                 
                 <div style="background: var(--surface-light); padding: 12px; border-radius: 6px;">
-                    <h3 style="color:var(--text-muted); font-size: 0.8em; margin-bottom: 3px;">🚚 Organizer Bot</h3>
-                    <p id="prog-org" style="color:#f59e0b; font-size: 1.2em; font-weight:bold;">Loading...</p>
-                    <small style="font-size: 0.75em;">Successfully categorized & moved</small>
+                    <h3 style="color:var(--text-muted); font-size: 0.8em; margin-bottom: 3px;">📁 전체 작업량</h3>
+                    <p id="prog-total" style="color:#f59e0b; font-size: 1.2em; font-weight:bold;">Loading...</p>
+                    <small style="font-size: 0.75em;">서버에 저장된 총 사진 개수</small>
                 </div>
                 
                 <div style="background: var(--surface-light); padding: 12px; border-radius: 6px;">
-                    <h3 style="color:var(--text-muted); font-size: 0.8em; margin-bottom: 3px;">🤖 AI Scanner Bot</h3>
-                    <p id="prog-ai" style="color:#10b981; font-size: 1.2em; font-weight:bold;">Loading...</p>
-                    <small style="font-size: 0.75em;">Indexed by Vector DB (Faces/Scenes)</small>
+                    <h3 style="color:var(--text-muted); font-size: 0.8em; margin-bottom: 3px;">✅ DB 완료 작업</h3>
+                    <p id="prog-db" style="color:#10b981; font-size: 1.2em; font-weight:bold;">Loading...</p>
+                    <small style="font-size: 0.75em;">엔진 벡터DB(Qdrant) 작업 완료 개수</small>
                 </div>
                 
                 <p id="prog-status" style="font-size: 0.75em; color: var(--text-muted); text-align:right; margin-top: 8px;">

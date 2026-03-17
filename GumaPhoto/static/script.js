@@ -587,13 +587,13 @@ async function fetchProgress() {
             const data = await res.json();
             
             // Format numbers with commas (e.g., 14,756)
-            const remaining = Number(data.remaining_raw).toLocaleString();
-            const org = Number(data.organizer_done).toLocaleString();
-            const ai = Number(data.vectorizer_done).toLocaleString();
+            const queueCount = Number(data.queue_count || 0).toLocaleString();
+            const totalCount = Number(data.total_photos || 0).toLocaleString();
+            const dbCount = Number(data.db_completed || 0).toLocaleString();
             
-            document.getElementById('prog-raw').innerText = `Total = ${remaining}`;
-            document.getElementById('prog-org').innerText = `Total = ${org}`;
-            document.getElementById('prog-ai').innerText = `Total = ${ai}`;
+            document.getElementById('prog-queue').innerText = `${queueCount} 장`;
+            document.getElementById('prog-total').innerText = `${totalCount} 장`;
+            document.getElementById('prog-db').innerText = `${dbCount} 장`;
             
             document.getElementById('prog-status').innerHTML = 'Syncing... <i class="fa-solid fa-spinner fa-spin"></i>';
         } else {
