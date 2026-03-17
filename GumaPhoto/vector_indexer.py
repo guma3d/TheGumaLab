@@ -204,15 +204,10 @@ class VectorIndexer:
             
         # [B] 치명적 오류 (XMP는 있으나 벡터를 잃어버린 경우)
         if xmp_exists and not qdrant_has_vector:
-            # 벡터가 없으므로 모델 연산을 피할 수 없음 -> 깡통 XMP는 파기하고 강제 재작업
-            try:
-                os.remove(filepath + ".xmp")
-                print(f"    🚨 [강제 재작업] 벡터 엔진 누락 감지! 빈 껍데기 XMP 삭제 후 재연산: {filepath}")
-            except:
-                pass
-            return False
+            # Qdrant Crash로 인해 벡터 정보만 날아가고 XMP 백업본이 남아있는 경우!
+            return "NEEDS_RECOVERY"
             
-        return False
+        return "PROCESS"
 
     def extract_time_and_season(self, filepath):
         """EXIF나 파일명을 기반으로 시간대(Time of Day)와 계절(Season) 추출"""
@@ -279,16 +274,22 @@ class VectorIndexer:
         successful_payloads = []
         
         for filepath in file_batch:
-            if self.is_already_processed(filepath):
+            status = self.is_already_processed(filepath)
+            if status is True:
                 continue
                 
-            print(f"   [벡터화] 스캔 중: {os.path.basename(filepath)}")
+            needs_recovery = (status == "NEEDS_RECOVERY")
+            if needs_recovery:
+                print(f"   [초고속 복구] XMP 태그 재활용 (Florence 스킵): {os.path.basename(filepath)}")
+            else:
+                print(f"   [벡터화] 신규 스캔 중: {os.path.basename(filepath)}")
+                
             try:
                 # 1. 파일의 해시값을 계산하여 최초 1단계 Organizer에서 저장한 원본 DB 기록 조회
                 file_hash = self.get_file_hash(filepath)
                 context_str = self.get_original_context(file_hash)
                 
-                # 추가 컨텍스트 추출 (시간대, 계절)
+                # 추가 컨텍스트 추출 (시간대, 계절) -> 나중에 XMP 로드 시 덮어써짐
                 time_of_day, season = self.extract_time_and_season(filepath)
                 
                 # --- [A] SigLIP 픽셀 백터 (Scene) 추출 ---
@@ -395,57 +396,83 @@ class VectorIndexer:
                 # --- [Florence-2: 고급 문맥 묘사(Caption) 추출 및 사물(OD) 태깅] ---
                 scene_caption = ""
                 found_objects = []
-                if getattr(self, "florence_model", None):
+
+                if needs_recovery:
+                    # [XMP 복구 모드] 무거운 Florence-2 구동을 스킵하고 XMP 물리 파일에서 태그만 파싱
                     try:
-                        # 1. 캡션 추출
-                        task_prompt_cap = "<MORE_DETAILED_CAPTION>"
-                        flo_inputs_cap = self.florence_processor(text=task_prompt_cap, images=pil_img, return_tensors="pt").to(self.florence_model.device)
-                        with torch.no_grad():
-                            generated_ids_cap = self.florence_model.generate(
-                                input_ids=flo_inputs_cap["input_ids"],
-                                pixel_values=flo_inputs_cap["pixel_values"],
-                                max_new_tokens=512,
-                                early_stopping=False,
-                                do_sample=False,
-                                num_beams=1,
-                            )
-                        generated_text_cap = self.florence_processor.batch_decode(generated_ids_cap, skip_special_tokens=False)[0]
-                        parsed_answer_cap = self.florence_processor.post_process_generation(
-                            generated_text_cap, 
-                            task=task_prompt_cap, 
-                            image_size=(pil_img.width, pil_img.height)
-                        )
-                        scene_caption = parsed_answer_cap.get(task_prompt_cap, "")
+                        import xml.etree.ElementTree as ET
+                        tree = ET.parse(filepath + ".xmp")
+                        root = tree.getroot()
+                        namespace = {'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'}
                         
-                        # 2. 사물 태그(Object Detection) 추출
-                        task_prompt_od = "<OD>"
-                        flo_inputs_od = self.florence_processor(text=task_prompt_od, images=pil_img, return_tensors="pt").to(self.florence_model.device)
-                        with torch.no_grad():
-                            generated_ids_od = self.florence_model.generate(
-                                input_ids=flo_inputs_od["input_ids"],
-                                pixel_values=flo_inputs_od["pixel_values"],
-                                max_new_tokens=1024,
-                                early_stopping=False,
-                                do_sample=False,
-                                num_beams=1,
-                            )
-                        generated_text_od = self.florence_processor.batch_decode(generated_ids_od, skip_special_tokens=False)[0]
-                        parsed_answer_od = self.florence_processor.post_process_generation(
-                            generated_text_od, 
-                            task=task_prompt_od, 
-                            image_size=(pil_img.width, pil_img.height)
-                        )
-                        od_results = parsed_answer_od.get(task_prompt_od, {})
-                        if isinstance(od_results, dict) and "labels" in od_results:
-                            for label in od_results["labels"]:
-                                # 소문자화 및 공백 제거
-                                clean_label = str(label).strip().lower()
-                                # 빈 문자열이나 "person"은 스킵
-                                if clean_label and "person" not in clean_label and clean_label not in found_objects:
-                                    found_objects.append(clean_label)
+                        # 1. Caption 파싱
+                        for alt in root.findall('.//rdf:Alt', namespace):
+                            for li in alt.findall('rdf:li', namespace):
+                                if li.text:
+                                    scene_caption = li.text.strip()
                                     
-                    except Exception as flo_e:
-                        print(f"      ⚠️ Florence-2 분석 실패 (Skip): {flo_e}")
+                        # 2. 범용 태그 파싱 -> found_objects 에 통합
+                        for bag_li in root.findall('.//rdf:Bag/rdf:li', namespace):
+                            if bag_li.text:
+                                tag_val = bag_li.text.strip()
+                                if tag_val and tag_val not in found_objects:
+                                    found_objects.append(tag_val)
+                                    
+                    except Exception as xmp_parse_err:
+                        print(f"      ⚠️ XMP 파싱 오류. 일부 태그가 유실될 수 있습니다: {xmp_parse_err}")
+                else:
+                    # [정상 분석 모드] Florence-2 딥러닝 구동
+                    if getattr(self, "florence_model", None):
+                        try:
+                            # 1. 캡션 추출
+                            task_prompt_cap = "<MORE_DETAILED_CAPTION>"
+                            flo_inputs_cap = self.florence_processor(text=task_prompt_cap, images=pil_img, return_tensors="pt").to(self.florence_model.device)
+                            with torch.no_grad():
+                                generated_ids_cap = self.florence_model.generate(
+                                    input_ids=flo_inputs_cap["input_ids"],
+                                    pixel_values=flo_inputs_cap["pixel_values"],
+                                    max_new_tokens=512,
+                                    early_stopping=False,
+                                    do_sample=False,
+                                    num_beams=1,
+                                )
+                            generated_text_cap = self.florence_processor.batch_decode(generated_ids_cap, skip_special_tokens=False)[0]
+                            parsed_answer_cap = self.florence_processor.post_process_generation(
+                                generated_text_cap, 
+                                task=task_prompt_cap, 
+                                image_size=(pil_img.width, pil_img.height)
+                            )
+                            scene_caption = parsed_answer_cap.get(task_prompt_cap, "")
+                            
+                            # 2. 사물 태그(Object Detection) 추출
+                            task_prompt_od = "<OD>"
+                            flo_inputs_od = self.florence_processor(text=task_prompt_od, images=pil_img, return_tensors="pt").to(self.florence_model.device)
+                            with torch.no_grad():
+                                generated_ids_od = self.florence_model.generate(
+                                    input_ids=flo_inputs_od["input_ids"],
+                                    pixel_values=flo_inputs_od["pixel_values"],
+                                    max_new_tokens=1024,
+                                    early_stopping=False,
+                                    do_sample=False,
+                                    num_beams=1,
+                                )
+                            generated_text_od = self.florence_processor.batch_decode(generated_ids_od, skip_special_tokens=False)[0]
+                            parsed_answer_od = self.florence_processor.post_process_generation(
+                                generated_text_od, 
+                                task=task_prompt_od, 
+                                image_size=(pil_img.width, pil_img.height)
+                            )
+                            od_results = parsed_answer_od.get(task_prompt_od, {})
+                            if isinstance(od_results, dict) and "labels" in od_results:
+                                for label in od_results["labels"]:
+                                    # 소문자화 및 공백 제거
+                                    clean_label = str(label).strip().lower()
+                                    # 빈 문자열이나 "person"은 스킵
+                                    if clean_label and "person" not in clean_label and clean_label not in found_objects:
+                                        found_objects.append(clean_label)
+                                        
+                        except Exception as flo_e:
+                            print(f"      ⚠️ Florence-2 분석 실패 (Skip): {flo_e}")
                         
                 # --- [날짜(Date) 및 위치(Location) 파싱] ---
                 # 경로 형식: /app/data/organized/2020/2020-10_Jecheon-Si-South-Korea/2020-10_63.jpg
