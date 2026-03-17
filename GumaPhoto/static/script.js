@@ -512,11 +512,10 @@ function renderGallery(photos, append = false, targetId = 'gallery-grid', isMaso
         item.appendChild(img);
 
         if (showMeta) {
-            // Score Badge (Top Right)
+            // Score Badge (Top Left)
             if (photo.score !== undefined) {
                 const badge = document.createElement('div');
                 badge.className = 'meta-badge';
-                badge.style.background = 'rgba(16, 185, 129, 0.75)';
                 badge.innerHTML = `<i class="fa-solid fa-bullseye"></i> ${(photo.score * 100).toFixed(1)}%`;
                 item.appendChild(badge);
             }

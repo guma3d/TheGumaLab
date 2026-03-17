@@ -131,39 +131,39 @@
 
     <!-- Live Progress Monitor Modal -->
     <div id="progress-modal" class="modal hidden">
-        <div class="modal-content" style="background: rgba(20, 20, 25, 0.98); width: 90%; max-width: 320px; margin: auto; box-sizing: border-box; padding: 1.5rem; border-radius: 10px; border: 2px solid #10b981; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); text-align: center;">
+        <div class="modal-content" style="background: rgba(20, 20, 25, 0.98); width: 90%; max-width: 400px; margin: auto; box-sizing: border-box; padding: 2rem; border-radius: 12px; border: 2px solid #10b981; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); text-align: center;">
             <span id="progress-modal-close" class="modal-close" style="right: 15px; top: 15px;">&times;</span>
-            <h2 style="font-size: 1.2rem; color: white; display:flex; justify-content:center; align-items:center; gap: 8px; margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.8rem; color: white; display:flex; justify-content:center; align-items:center; gap: 8px; margin-bottom: 1.8rem; font-weight: 800;">
                 DB Status
             </h2>
             
-            <div style="display:flex; flex-direction: column; gap: 8px; text-align: center;">
-                <div style="background: var(--surface-light); padding: 12px; border-radius: 6px;">
-                    <h3 style="color:var(--text-muted); font-size: 0.8em; margin-bottom: 3px;">Total Server Photos</h3>
-                    <p id="prog-total" style="color:#3b82f6; font-size: 1.2em; font-weight:bold;">Loading...</p>
-                    <small style="font-size: 0.75em;">Total pure image files stored in server</small>
+            <div style="display:flex; flex-direction: column; gap: 12px; text-align: center;">
+                <div style="background: var(--surface-light); padding: 16px; border-radius: 8px;">
+                    <h3 style="color:var(--text-muted); font-size: 1.2rem; margin-bottom: 6px;">Total Server Photos</h3>
+                    <p id="prog-total" style="color:#3b82f6; font-size: 1.5rem; font-weight:bold;">Loading...</p>
+                    <small style="font-size: 0.9rem; color: #aaa;">Total pure image files stored in server</small>
                 </div>
                 
-                <div style="background: var(--surface-light); padding: 12px; border-radius: 6px;">
-                    <h3 style="color:var(--text-muted); font-size: 0.8em; margin-bottom: 3px;">Pending DB Generation</h3>
-                    <p id="prog-ai-left" style="color:#ef4444; font-size: 1.2em; font-weight:bold;">Loading...</p>
-                    <small style="font-size: 0.75em;">Images waiting for AI vector indexing</small>
+                <div style="background: var(--surface-light); padding: 16px; border-radius: 8px;">
+                    <h3 style="color:var(--text-muted); font-size: 1.2rem; margin-bottom: 6px;">Pending DB Generation</h3>
+                    <p id="prog-ai-left" style="color:#ef4444; font-size: 1.5rem; font-weight:bold;">Loading...</p>
+                    <small style="font-size: 0.9rem; color: #aaa;">Images waiting for AI vector indexing</small>
                 </div>
                 
-                <div style="background: var(--surface-light); padding: 12px; border-radius: 6px;">
-                    <h3 style="color:var(--text-muted); font-size: 0.8em; margin-bottom: 3px;">Completed Photos</h3>
-                    <p id="prog-db" style="color:#10b981; font-size: 1.2em; font-weight:bold;">Loading...</p>
-                    <small style="font-size: 0.75em;">Photos fully analyzed and searchable</small>
+                <div style="background: var(--surface-light); padding: 16px; border-radius: 8px;">
+                    <h3 style="color:var(--text-muted); font-size: 1.2rem; margin-bottom: 6px;">Completed Photos</h3>
+                    <p id="prog-db" style="color:#10b981; font-size: 1.5rem; font-weight:bold;">Loading...</p>
+                    <small style="font-size: 0.9rem; color: #aaa;">Photos fully analyzed and searchable</small>
                 </div>
                 
-                <p id="prog-status" style="font-size: 0.75em; color: var(--text-muted); text-align:center; margin-top: 8px;">
+                <p id="prog-status" style="font-size: 0.85rem; color: var(--text-muted); text-align:center; margin-top: 10px;">
                     Syncing...
                 </p>
             </div>
         </div>
     </div>
 
-    <script src="static/script.js?v=25"></script>
+    <script src="static/script.js?v=26"></script>
 </body>
 
 </html>
