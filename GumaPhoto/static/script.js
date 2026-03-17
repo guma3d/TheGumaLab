@@ -9,6 +9,7 @@ let isFetching = false;
 let abortController = null;
 let hasMore = true;
 let totalHits = 0;
+let cachedTags = {};
 
 // Text Clear Logic
 const searchInput = document.getElementById('search-query');
@@ -51,17 +52,79 @@ document.addEventListener('click', e => {
             abortController.abort();
         }
         
-        // Reset and load tag timeline or random home
         currentQuery = '';
+        
+        // Check cache!
+        if (cachedTags[currentGalleryFilter]) {
+             const c = cachedTags[currentGalleryFilter];
+             currentOffset = c.offset;
+             hasMore = c.hasMore;
+             totalHits = c.totalHits;
+             
+             document.getElementById('gallery-grid').innerHTML = '';
+             renderGallery(c.results, false);
+             return; // fully resolved from memory
+        }
+
+        // Reset and load tag timeline
         currentOffset = 0;
         hasMore = true;
         totalHits = 0;
         
-        // Immediately clear for fresh loading visually, since we canceled the previous
-        document.getElementById('gallery-grid').innerHTML = '';
+        // Keep height stable and show loading
+        const grid = document.getElementById('gallery-grid');
+        grid.style.minHeight = '144px';
+        grid.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:140px; width:100%;"><i class="fa-solid fa-spinner fa-spin" style="color:var(--text-muted);"></i></div>';
+        
         fetchPhotos(false);
     }
 });
+
+// Preload other tags into memory
+async function preloadTags() {
+    const tagsToPreload = ["성욱", "준우", "지우", "송이", "recent"];
+    let apiUrl = '/api/search';
+    if (window.location.pathname.startsWith('/GumaPhoto')) {
+        apiUrl = '/GumaPhoto/api/search';
+    }
+    
+    for (let tag of tagsToPreload) {
+        if (cachedTags[tag]) continue;
+        try {
+            let t_query = "tag_dummy";
+            let t_scene = "";
+            let t_people = [tag];
+            let t_limit = 50; 
+            if (tag === "recent") {
+                t_query = "timeline_dummy";
+                t_scene = "photo";
+                t_people = [];
+                t_limit = 20;
+            }
+            const res = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    query: t_query, offset: 0, limit: t_limit, is_load_more: true,
+                    people: t_people, location: "", scene: t_scene
+                })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                let results = data.results || [];
+                if (tag !== "recent") {
+                    results = results.filter(p => p.people && p.people.length === 1 && p.people.includes(tag));
+                }
+                cachedTags[tag] = {
+                    results: results,
+                    offset: t_limit,
+                    totalHits: results.length,
+                    hasMore: (data.results && data.results.length >= t_limit)
+                };
+            }
+        } catch(e) {}
+    }
+}
 
 // Search Form Handler
 document.getElementById('search-form').addEventListener('submit', async function(e) {
@@ -216,7 +279,6 @@ async function fetchPhotos(isLoadMore) {
                         themesContainer.classList.remove('hidden');
                     }
                 }
-                
                 timelineHeader.classList.remove('hidden');
                 
                 let results = timelineRes.results || [];
@@ -228,8 +290,24 @@ async function fetchPhotos(isLoadMore) {
                 if (timelineRes.results && timelineRes.results.length < t_limit) hasMore = false;
                 currentOffset += t_limit;
                 
-                if (!isLoadMore) grid.innerHTML = '';
-                renderGallery(results, false);
+                if (!isLoadMore) {
+                    if (!cachedTags[currentGalleryFilter]) {
+                        cachedTags[currentGalleryFilter] = {
+                            results: results,
+                            offset: currentOffset,
+                            totalHits: totalHits,
+                            hasMore: hasMore
+                        };
+                    }
+                    document.getElementById('gallery-grid').innerHTML = '';
+                }
+                renderGallery(results, isLoadMore);
+                
+                // Kickoff preloading in background
+                if (!window._tagsPreloaded) {
+                    window._tagsPreloaded = true;
+                    setTimeout(preloadTags, 1500);
+                }
             } else {
                 // Loading more for home timeline or tag
                 let t_query = "timeline_dummy";
