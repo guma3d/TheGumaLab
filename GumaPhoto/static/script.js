@@ -6,6 +6,7 @@ let currentPeople = [];
 let currentLocation = '';
 let currentScene = '';
 let isFetching = false;
+let abortController = null;
 let hasMore = true;
 let totalHits = 0;
 
@@ -45,11 +46,19 @@ document.addEventListener('click', e => {
         
         currentGalleryFilter = e.target.dataset.tag;
         
+        // Cancel any ongoing fetches
+        if (abortController) {
+            abortController.abort();
+        }
+        
         // Reset and load tag timeline or random home
         currentQuery = '';
         currentOffset = 0;
         hasMore = true;
         totalHits = 0;
+        
+        // Immediately clear for fresh loading visually, since we canceled the previous
+        document.getElementById('gallery-grid').innerHTML = '';
         fetchPhotos(false);
     }
 });
@@ -70,6 +79,14 @@ document.getElementById('search-form').addEventListener('submit', async function
 
 async function fetchPhotos(isLoadMore) {
     if (isFetching || !hasMore) return;
+    
+    // Setup new abort controller
+    if (!isLoadMore) {
+        if (abortController) abortController.abort();
+    }
+    abortController = new AbortController();
+    const signal = abortController.signal;
+    
     isFetching = true;
 
     const btnText = document.querySelector('.btn-text');
@@ -121,7 +138,12 @@ async function fetchPhotos(isLoadMore) {
                         { title: "Peaceful Times", scene: "peaceful calm quiet resting" },
                         { title: "Sunset Magic", scene: "sunset sun twilight orange sky" },
                         { title: "Art & Culture", scene: "museum art gallery painting exhibition" },
-                        { title: "In the Mountains", scene: "mountain hiking trail" }
+                        { title: "In the Mountains", scene: "mountain hiking trail" },
+                        { title: "Trip to Jeju", location: "Jeju Si South Korea" },
+                        { title: "Memories in San Francisco", location: "San Francisco California" },
+                        { title: "Las Vegas Nights", location: "Las Vegas Nevada" },
+                        { title: "Incheon Stops", location: "Incheon South Korea" },
+                        { title: "Seoul City Life", location: "Seoul South Korea" }
                     ];
                     const shuffled = allThemeIdeas.sort(() => 0.5 - Math.random());
                     const themeIdeas = shuffled.slice(0, 3);
@@ -129,14 +151,15 @@ async function fetchPhotos(isLoadMore) {
                     themePromises = themeIdeas.map(t => fetch(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
+                        signal,
                         body: JSON.stringify({
                             query: "theme_dummy", offset: 0, limit: 12, is_load_more: true,
-                            people: [], location: "", scene: t.scene
+                            people: [], location: t.location || "", scene: t.scene || ""
                         })
                     }).then(r => r.json()).then(data => ({
                         title: t.title,
                         photos: data.results || []
-                    })));
+                    })).catch(err => { if (err.name !== 'AbortError') console.error(err); return {title: t.title, photos: []}; }));
                 }
                 
                 // Timeline Fetch
@@ -155,11 +178,12 @@ async function fetchPhotos(isLoadMore) {
                 const timelinePromise = fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    signal,
                     body: JSON.stringify({
                         query: t_query, offset: currentOffset, limit: t_limit, is_load_more: true,
                         people: t_people, location: "", scene: t_scene
                     })
-                }).then(r => r.json());
+                }).then(r => r.json()).catch(err => { if (err.name !== 'AbortError') throw err; return {results: []}; });
 
                 const responses = await Promise.all([...(fetchThemes ? themePromises : []), timelinePromise]);
                 const timelineRes = responses[responses.length - 1];
@@ -190,6 +214,7 @@ async function fetchPhotos(isLoadMore) {
                 if (timelineRes.results && timelineRes.results.length < t_limit) hasMore = false;
                 currentOffset += t_limit;
                 
+                if (!isLoadMore) grid.innerHTML = '';
                 renderGallery(results, false);
             } else {
                 // Loading more for home timeline or tag
@@ -208,6 +233,7 @@ async function fetchPhotos(isLoadMore) {
                 const res = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    signal,
                     body: JSON.stringify({
                         query: t_query, offset: currentOffset, limit: t_limit, is_load_more: true,
                         people: t_people, location: "", scene: t_scene
@@ -240,6 +266,7 @@ async function fetchPhotos(isLoadMore) {
             const res = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                signal,
                 body: JSON.stringify(requestPayload)
             });
             const data = await res.json();
@@ -273,11 +300,15 @@ async function fetchPhotos(isLoadMore) {
                 <small style="color:#3b82f6;">(AI concept: ${currentScene})</small>${fallbackMsg}`;
                 metaContainer.classList.remove('hidden');
                 
+                if (!isLoadMore) document.getElementById('gallery-grid').innerHTML = '';
                 renderGallery(data.results, isLoadMore);
             }
         }
         
     } catch (err) {
+        if (err.name === 'AbortError') {
+            return; // Expected abort, do nothing
+        }
         console.error(err);
         metaText.innerHTML = 'An expected error occurred while fetching photos.';
         metaContainer.classList.remove('hidden');
@@ -347,9 +378,10 @@ function renderThemes(themes) {
 // Handle Gallery Rendering
 function renderGallery(photos, append = false) {
     const grid = document.getElementById('gallery-grid');
-    if (!append) grid.innerHTML = '';
+    // Note: We don't automatically clear grid here because we clear it before render now to prevent layout jump
+    // if (!append) grid.innerHTML = '';
 
-    if (photos.length === 0 && !append) {
+    if (photos.length === 0 && !append && grid.innerHTML === '') {
         grid.innerHTML = '<p style="color: var(--text-muted);">No photos found.</p>';
         return;
     }
