@@ -516,7 +516,7 @@ function renderGallery(photos, append = false, targetId = 'gallery-grid', isMaso
             if (photo.score !== undefined) {
                 const badge = document.createElement('div');
                 badge.className = 'meta-badge';
-                badge.innerHTML = `<i class="fa-solid fa-bullseye"></i> ${(photo.score * 100).toFixed(1)}%`;
+                badge.innerHTML = `<i class="fa-solid fa-bullseye"></i> 유사도 = ${(photo.score * 100).toFixed(1)}%`;
                 item.appendChild(badge);
             }
             
