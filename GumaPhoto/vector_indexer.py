@@ -170,17 +170,47 @@ class VectorIndexer:
 
     def is_already_processed(self, filepath):
         """이미 벡터화가 성공적으로 끝난 파일인지 검사 (Fail-safe 이어하기)"""
+        # 고유 ID 계산
+        import uuid
+        point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, filepath))
+        
+        # 1. Qdrant 벡터DB 실존 검사 (with_payload/vectors=False 로 초고속 존재 검증)
+        try:
+            records = self.q_client.retrieve(
+                collection_name=COLLECTION_NAME,
+                ids=[point_id],
+                with_payload=False,
+                with_vectors=False
+            )
+            qdrant_has_vector = len(records) > 0
+        except Exception:
+            qdrant_has_vector = False
+            
+        # 2. XMP 물리 파일 검사
+        xmp_exists = os.path.exists(filepath + ".xmp")
+        
+        # 3. SQLite UI 트래커 검사
         self.cursor.execute("SELECT status FROM vectorized_files WHERE filepath=?", (filepath,))
         row = self.cursor.fetchone()
-        if row and row[0] == 'DONE':
+        sqlite_has_done = row and row[0] == 'DONE'
+
+        # [A] Qdrant 벡터 연산과 XMP가 모두 완벽한 경우 -> 완전 Skip
+        if qdrant_has_vector and xmp_exists:
+            if not sqlite_has_done:
+                self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status) VALUES (?, ?)", (filepath, 'DONE'))
+                self.conn.commit()
+                # print(f"      [Auto-Repair] XMP 및 벡터DB 검증 완료, UI 누락분 동기화: {filepath}")
             return True
             
-        # SQLite DB 누락 대비 치명적 버그 수정: 실제 물리 XMP 파일이 존재하면 완료된 것으로 간주하고 DB 복구
-        if os.path.exists(filepath + ".xmp"):
-            self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status) VALUES (?, ?)", (filepath, 'DONE'))
-            self.conn.commit()
-            print(f"      [복구] DB 누락 감지, 물리 XMP 파일로 완료 상태 복원: {filepath}")
-            return True
+        # [B] 치명적 오류 (XMP는 있으나 벡터를 잃어버린 경우)
+        if xmp_exists and not qdrant_has_vector:
+            # 벡터가 없으므로 모델 연산을 피할 수 없음 -> 깡통 XMP는 파기하고 강제 재작업
+            try:
+                os.remove(filepath + ".xmp")
+                print(f"    🚨 [강제 재작업] 벡터 엔진 누락 감지! 빈 껍데기 XMP 삭제 후 재연산: {filepath}")
+            except:
+                pass
+            return False
             
         return False
 
