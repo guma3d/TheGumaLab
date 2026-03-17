@@ -196,14 +196,15 @@ async def perform_search(req: SearchRequest):
         
         # 1. Timeline photos (Scroll)
         try:
-            timeline_res = qdrant_client.search(
+            timeline_res = qdrant_client.query_points(
                 collection_name="gumaphoto_hybrid_kr",
-                query_vector=("scene", dummy_vector),
+                query=dummy_vector,
+                using="scene",
                 limit=req.limit,
                 offset=req.offset,
                 with_payload=True,
                 score_threshold=0.0
-            )
+            ).points
         except Exception as e:
             print(f"Timeline error: {e}")
             timeline_res = []
@@ -253,13 +254,14 @@ async def perform_search(req: SearchRequest):
             selected_theme = random.sample(theme_ideas, 1)[0]
             
             try:
-                theme_res = qdrant_client.search(
+                theme_res = qdrant_client.query_points(
                     collection_name="gumaphoto_hybrid_kr",
-                    query_vector=("scene", dummy_vector),
+                    query=dummy_vector,
+                    using="scene",
                     query_filter=selected_theme["filter"],
                     limit=10,
                     with_payload=True
-                )
+                ).points
                 t_photos = []
                 for hit in theme_res:
                     p = hit.payload or {}
