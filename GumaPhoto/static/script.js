@@ -387,9 +387,9 @@ function renderGallery(photos, append = false) {
     }
 
     photos.forEach(photo => {
-        // Create Item
+        // Create Item as a Slider Item
         const item = document.createElement('div');
-        item.className = 'image-item';
+        item.className = 'theme-photo-item';
         // Add URL data to dataset
         item.dataset.url = photo.url;
 
@@ -418,6 +418,14 @@ function renderGallery(photos, append = false) {
     });
 }
 
+// Infinite Scroll for Horizontal Slider Grid
+document.getElementById('gallery-grid').addEventListener('scroll', (e) => {
+    const el = e.target;
+    // Check if scrolled near the right end
+    if (el.scrollWidth - el.scrollLeft - el.clientWidth < 300) {
+        fetchPhotos(true);
+    }
+});
 
 // Upload Logic (Maintained unchanged)
 const uploadInput = document.getElementById('upload-input');

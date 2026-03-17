@@ -66,20 +66,22 @@
                 <p id="meta-text"></p>
             </div>
             
-            <!-- Timeline Header (Sticky) -->
-            <div id="timeline-header" class="timeline-header hidden" style="flex-direction:column; align-items:flex-start; width:100%;">
-                <h3 style="white-space:nowrap; margin-bottom:12px;">Gallery</h3>
-                <div class="gallery-tags" style="display:flex; gap:4px; overflow-x:auto; width: 100%; padding-bottom: 4px;">
-                    <button class="tag-btn tag-active" data-tag="recent">Recent</button>
-                    <button class="tag-btn" data-tag="성욱">성욱</button>
-                    <button class="tag-btn" data-tag="준우">준우</button>
-                    <button class="tag-btn" data-tag="지우">지우</button>
-                    <button class="tag-btn" data-tag="송이">송이</button>
+            <!-- Timeline Header (Now a Slider Header) -->
+            <div id="timeline-header" class="theme-section hidden" style="margin-bottom: 5px;">
+                <div style="display: flex; align-items: center; justify-content: flex-start; gap: 8px; padding: 0 10px; margin-bottom: 8px; max-width: 100%; overflow: hidden;">
+                    <h3 class="theme-title" style="margin: 0; padding: 0; flex-shrink: 0;">Gallery</h3>
+                    <div class="gallery-tags" style="display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; flex: 1;">
+                        <button class="tag-btn tag-active" data-tag="recent">Recent</button>
+                        <button class="tag-btn" data-tag="성욱">성욱</button>
+                        <button class="tag-btn" data-tag="준우">준우</button>
+                        <button class="tag-btn" data-tag="지우">지우</button>
+                        <button class="tag-btn" data-tag="송이">송이</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Gallery Grid -->
-            <div id="gallery-grid" class="gallery-grid">
+            <!-- Gallery Slider Content -->
+            <div id="gallery-grid" class="theme-scroll-box" style="padding-bottom: 20px;">
                 <!-- Image cards will be injected here via JS -->
             </div>
         </main>
@@ -154,7 +156,7 @@
         </div>
     </div>
 
-    <script src="static/script.js?v=18"></script>
+    <script src="static/script.js?v=19"></script>
 </body>
 
 </html>
