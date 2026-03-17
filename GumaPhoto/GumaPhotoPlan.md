@@ -24,7 +24,7 @@
 2. **표정 분석 (HSEmotion)**: 안면 영역만 따로초경량 PyTorch 모델로 분석하여 'Happiness', 'Sadness', 'Contempt' 등 다채로운 감정 상태 분류. (과거 DeepFace 대체)
 3. **분위기 & 배경 분석 (최신 SigLIP)**: `google/siglip-base-patch16-224` 모델을 가동하여 사진의 전반적인 분위기와 피사체 정보를 최첨단 다국어 기반 벡터(768차원)로 합축. (기존 CLIP 한계 돌파)
 4. **정밀 객체 탐지 및 캡션 묘사 (Florence-2-base)**: 단순히 사물(car, dog)만 뽑던 YOLO를 퇴역시키고, 마이크로소프트의 VLM을 토대로 이미지의 구체적인 상황 묘사(Caption) 문장과 핵심 사물 태그(OD)를 동시에 추출.
-5. **Qdrant 멀티-인덱스 하이브리드 아키텍처**: "scene(배경)", "face(얼굴)" 벡터 분리 및 JSON 형태의 캡션/위치/감정 메타데이터 페이로드를 조립하여 DB에 실시간 꽂아 넣음.
+5. **Qdrant 멀티-인덱스 하이브리드 아키텍처**: "scene(배경)", "face(얼굴)" 벡터 분리 및 JSON 형태의 캡션/위치/감정 메타데이터 페이로드를 조립하여 DB에 실시간 꽂아 넣음. (총 11,820장 백그라운드 벡터 인덱싱 완료 목표 달성!)
 
 ## ✅ 4단계: FastAPI 백엔드 검색 엔진 및 UI/UX 고도화 (완료)
 1. **LLM 기반 하이브리드 마법 검색 엔진**: 사용자가 자연어로 입력한 검색어를 Gemini가 `people(인물)`, `location(보유 장소 목록과 대조한 정확한 지명)`, `objects(명확한 영어 사물)`, `scene(순수 영어 캡션)`으로 똑똑하게 파싱함. 이후 Qdrant의 Hard Filter(장소/객체 문자열) + SigLIP Vector Search(상황 공간벡터 70% 가중치) + BM25 Caption Overlap Score(캡션 단어 일치율 30% 가중치)를 합산하여 리랭킹(Re-ranking) 하는 극강의 하이브리드 아키텍처 달성.
