@@ -246,6 +246,7 @@ class VectorIndexer:
     def process_batch(self, file_batch):
         """배치(묶음) 단위로 10~50장의 사진을 메모리에 올려 병렬로 처리함"""
         points_to_upsert = []
+        successful_payloads = []
         
         for filepath in file_batch:
             if self.is_already_processed(filepath):
@@ -449,18 +450,8 @@ class VectorIndexer:
                 }
                 payload.update(best_face_payload)
                 
-                # --- [E] XMP(XML) 사이드카 백업 파일 즉시 생성 ---
-                try:
-                    import xmp_utils
-                    xmp_utils.generate_xmp_sidecar(filepath, payload)
-                except Exception as xmp_e:
-                    print(f"      ⚠️ XMP 생성 실패: {xmp_e}")
-                
+                successful_payloads.append((filepath, payload, face_count))
                 points_to_upsert.append(PointStruct(id=point_id, vector=vectors, payload=payload))
-                
-                # SQLite 진행도 마킹
-                self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status, face_count) VALUES (?, ?, ?)",
-                                  (filepath, 'DONE', face_count))
                 
             except Exception as e:
                 print(f"      ⚠️ 오류 발생 (Skip): {e}")
@@ -468,8 +459,25 @@ class VectorIndexer:
                 
         # Qdrant에 일괄 묶음 사격 (배치 Upsert)
         if points_to_upsert:
-            self.q_client.upsert(collection_name=COLLECTION_NAME, points=points_to_upsert)
-            self.conn.commit()
+            try:
+                self.q_client.upsert(collection_name=COLLECTION_NAME, points=points_to_upsert)
+                self.conn.commit()
+                
+                # 성공적으로 Qdrant에 저장된 사진들만 원자성(Atomicity)을 보장하며 물리 XMP 및 SQLite 기록 생성
+                import xmp_utils
+                for filepath, payload, face_count in successful_payloads:
+                    try:
+                        xmp_utils.generate_xmp_sidecar(filepath, payload)
+                    except Exception as xmp_e:
+                        print(f"      ⚠️ XMP 생성 실패: {xmp_e}")
+                        
+                    self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status, face_count) VALUES (?, ?, ?)",
+                                      (filepath, 'DONE', face_count))
+                self.conn.commit()
+                
+            except Exception as qdrant_err:
+                print(f"    🚨 Qdrant 배치 업서트 치명적 실패: {qdrant_err}")
+                self.conn.rollback()
             
         # VRAM 메모리 단편화 및 좀비 텐서를 해제하여 장시간 가동 시의 쿠다 OOM 다운 방어
         torch.cuda.empty_cache()
