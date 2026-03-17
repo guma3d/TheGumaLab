@@ -122,23 +122,29 @@
                 <i class="fa-solid fa-server" style="color: #3b82f6;"></i> Live Monitoring
             </h2>
             
-            <div style="display:flex; flex-direction: column; gap: 10px;">
+            <div style="display:flex; flex-direction: column; gap: 8px;">
                 <div style="background: var(--surface-light); padding: 12px; border-radius: 6px;">
-                    <h3 style="color:var(--text-muted); font-size: 0.8em; margin-bottom: 3px;">📥 예정된 큐 </h3>
-                    <p id="prog-queue" style="color:#ef4444; font-size: 1.2em; font-weight:bold;">Loading...</p>
-                    <small style="font-size: 0.75em;">현재 대기열(Queue)에 남은 사진</small>
+                    <h3 style="color:var(--text-muted); font-size: 0.8em; margin-bottom: 3px;">📁 홈서버 전체 사진</h3>
+                    <p id="prog-total" style="color:#3b82f6; font-size: 1.2em; font-weight:bold;">Loading...</p>
+                    <small style="font-size: 0.75em;">서버에 저장된 순수 이미지 총 개수</small>
                 </div>
                 
                 <div style="background: var(--surface-light); padding: 12px; border-radius: 6px;">
-                    <h3 style="color:var(--text-muted); font-size: 0.8em; margin-bottom: 3px;">📁 전체 작업량</h3>
-                    <p id="prog-total" style="color:#f59e0b; font-size: 1.2em; font-weight:bold;">Loading...</p>
-                    <small style="font-size: 0.75em;">서버에 저장된 총 사진 개수</small>
+                    <h3 style="color:var(--text-muted); font-size: 0.8em; margin-bottom: 3px;">🤖 AI 스캐너 (진짜 남은 물량)</h3>
+                    <p id="prog-ai-left" style="color:#ef4444; font-size: 1.2em; font-weight:bold;">Loading...</p>
+                    <small style="font-size: 0.75em;">GPU 딥러닝 연산이 새로 필요한 사진</small>
+                </div>
+
+                <div style="background: var(--surface-light); padding: 12px; border-radius: 6px;">
+                    <h3 style="color:var(--text-muted); font-size: 0.8em; margin-bottom: 3px;">⏳ DB 자동 복구 중 (AI 연산 X)</h3>
+                    <p id="prog-db-catchup" style="color:#f59e0b; font-size: 1.2em; font-weight:bold;">Loading...</p>
+                    <small style="font-size: 0.75em;">XMP는 있으나 DB 누락되어 복구 중인 건수</small>
                 </div>
                 
                 <div style="background: var(--surface-light); padding: 12px; border-radius: 6px;">
-                    <h3 style="color:var(--text-muted); font-size: 0.8em; margin-bottom: 3px;">✅ DB 완료 작업</h3>
+                    <h3 style="color:var(--text-muted); font-size: 0.8em; margin-bottom: 3px;">✅ 처리 완료 영역 (현재 검색 가능)</h3>
                     <p id="prog-db" style="color:#10b981; font-size: 1.2em; font-weight:bold;">Loading...</p>
-                    <small style="font-size: 0.75em;">엔진 벡터DB(Qdrant) 작업 완료 개수</small>
+                    <small style="font-size: 0.75em;">Qdrant 벡터DB 등록까지 100% 완료된 데이터</small>
                 </div>
                 
                 <p id="prog-status" style="font-size: 0.75em; color: var(--text-muted); text-align:right; margin-top: 8px;">

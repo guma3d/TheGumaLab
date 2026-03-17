@@ -586,14 +586,19 @@ async function fetchProgress() {
         if (res.ok) {
             const data = await res.json();
             
-            // Format numbers with commas (e.g., 14,756)
-            const queueCount = Number(data.queue_count || 0).toLocaleString();
-            const totalCount = Number(data.total_photos || 0).toLocaleString();
-            const dbCount = Number(data.db_completed || 0).toLocaleString();
+            // Extracted raw metrics
+            const totalPhotos = Number(data.total_photos || 0);
+            const xmpCount = Number(data.xmp_count || 0);
+            const dbCompleted = Number(data.db_completed || 0);
+
+            // Calculated true metrics
+            const aiLeft = Math.max(0, totalPhotos - xmpCount);
+            const dbCatchup = Math.max(0, xmpCount - dbCompleted);
             
-            document.getElementById('prog-queue').innerText = `${queueCount} 장`;
-            document.getElementById('prog-total').innerText = `${totalCount} 장`;
-            document.getElementById('prog-db').innerText = `${dbCount} 장`;
+            document.getElementById('prog-total').innerText = `${totalPhotos.toLocaleString()} 장`;
+            document.getElementById('prog-ai-left').innerText = `${aiLeft.toLocaleString()} 장`;
+            document.getElementById('prog-db-catchup').innerText = `${dbCatchup.toLocaleString()} 장`;
+            document.getElementById('prog-db').innerText = `${dbCompleted.toLocaleString()} 장`;
             
             document.getElementById('prog-status').innerHTML = 'Syncing... <i class="fa-solid fa-spinner fa-spin"></i>';
         } else {

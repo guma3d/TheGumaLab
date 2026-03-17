@@ -16,11 +16,17 @@ def get_progress():
             
     total_photos = 0
     db_completed = 0
+    xmp_count = 0
     
     # 2. 전체 파일 수 (organized 내)
     if os.path.exists("/app/data/organized"):
         for root, dirs, files in os.walk("/app/data/organized"):
-            total_photos += len([f for f in files if f.lower().endswith(('.jpg', '.jpeg', '.png', '.heic'))])
+            for f in files:
+                f_lower = f.lower()
+                if f_lower.endswith(('.jpg', '.jpeg', '.png', '.heic')):
+                    total_photos += 1
+                elif f_lower.endswith('.xmp'):
+                    xmp_count += 1
     
     # 3. DB 작업 완료 수 (SQLite)
     try:
@@ -37,6 +43,7 @@ def get_progress():
     return {
         "queue_count": queue_count,
         "total_photos": total_photos,
+        "xmp_count": xmp_count,
         "db_completed": db_completed,
         "timestamp": time.time()
     }
