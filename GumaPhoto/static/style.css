@@ -555,13 +555,13 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
     top: 6px;
     left: 6px;
     background: rgba(16, 185, 129, 0.75);
-    padding: 2px 4px; 
+    padding: 1px 3px; 
     border-radius: 4px;
     display: inline-flex;
     align-items: center;
     gap: 2px;
     width: fit-content;
-    font-size: 0.65rem;
+    font-size: 0.55rem;
     font-weight: 600;
     z-index: 5;
 }
@@ -569,9 +569,9 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
 .meta-tag {
     background: rgba(255, 255, 255, 0.1);
     color: #e5e7eb;
-    padding: 2px 4px;
+    padding: 1px 3px;
     border-radius: 4px;
-    font-size: 0.65rem;
+    font-size: 0.55rem;
     display: inline-flex;
     align-items: center;
     gap: 2px;
