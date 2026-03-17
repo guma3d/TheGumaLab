@@ -159,9 +159,12 @@ class VectorIndexer:
 
     def get_original_context(self, file_hash):
         """1단계에서 저장해둔 원본 문맥(가족_결혼사진 등)을 해시값으로 역추적하여 빼오기"""
-        self.cursor.execute("SELECT original_context FROM processed_files WHERE file_hash=?", (file_hash,))
-        row = self.cursor.fetchone()
-        return row[0] if row else "Organized_Photo"
+        try:
+            self.cursor.execute("SELECT original_context FROM processed_files WHERE file_hash=?", (file_hash,))
+            row = self.cursor.fetchone()
+            return row[0] if row else "Organized_Photo"
+        except sqlite3.OperationalError:
+            return "Organized_Photo"
 
     def get_file_hash(self, filepath):
         """파일 SHA256 해시 추출 (DB 연동 시 고유 조회용 - 1단계 Organizer와 통일)"""
