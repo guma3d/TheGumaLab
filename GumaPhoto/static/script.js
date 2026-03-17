@@ -72,60 +72,112 @@ async function fetchPhotos(isLoadMore) {
             apiUrl = '/GumaPhoto/api/search';
         }
 
-        const requestPayload = {
-            query: currentQuery,
-            offset: currentOffset,
-            limit: currentLimit,
-            is_load_more: isLoadMore,
-            people: currentPeople,
-            location: currentLocation,
-            scene: currentScene
-        };
-
-        const res = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestPayload)
-        });
-        
-        const data = await res.json();
-        
-        if (!res.ok) {
-            throw new Error(data.detail || data.error || `HTTP Error ${res.status}`);
-        }
-
-        if (data.error) {
-            metaText.innerHTML = `Error: ${data.error}`;
-            metaContainer.classList.remove('hidden');
-        } else {
-            if (!isLoadMore) {
-                currentPeople = data.people_detected || [];
-                currentLocation = data.location_detected || "";
-                currentScene = data.enhanced_query || "";
-            }
-            totalHits += data.results.length;
-
-            if (data.results.length < currentLimit) {
-                hasMore = false;
-            }
-            currentOffset += currentLimit;
-
+        if (!currentQuery) {
+            // UI HOTFIX: Bypass backend empty query bug via dynamic frontend calls
             const themesContainer = document.getElementById('themes-container');
             const timelineHeader = document.getElementById('timeline-header');
+            metaContainer.classList.add('hidden');
+            
+            if (!isLoadMore) {
+                // Generate Dynamic Themes
+                const themeIdeas = [
+                    { title: "❄️ 겨울의 추억", scene: "winter" },
+                    { title: "🌸 봄날의 나들이", scene: "spring" },
+                    { title: "📸 언제나 주인공", scene: "family matching outfit" }
+                ];
+                
+                const themePromises = themeIdeas.map(t => fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: "theme_dummy", offset: 0, limit: 10, is_load_more: true,
+                        people: [], location: "", scene: t.scene
+                    })
+                }).then(r => r.json()).then(data => ({
+                    title: t.title,
+                    photos: data.results || []
+                })));
+                
+                // Timeline
+                const timelinePromise = fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: "timeline_dummy", offset: currentOffset, limit: currentLimit, is_load_more: true,
+                        people: [], location: "", scene: "photo"
+                    })
+                }).then(r => r.json());
 
-            if (!currentQuery) {
-                // Home Gallery View
-                metaContainer.classList.add('hidden');
-                if (!isLoadMore && data.themes && data.themes.length > 0) {
-                    renderThemes(data.themes);
+                const [res1, res2, res3, timelineRes] = await Promise.all([...themePromises, timelinePromise]);
+                const themes = [res1, res2, res3].filter(t => t.photos && t.photos.length > 0);
+                
+                if (themes.length > 0) {
+                    renderThemes(themes);
                     themesContainer.classList.remove('hidden');
-                    timelineHeader.classList.remove('hidden');
-                } else if (!isLoadMore) {
+                } else {
                     themesContainer.classList.add('hidden');
-                    timelineHeader.classList.remove('hidden');
                 }
+                timelineHeader.classList.remove('hidden');
+                
+                const results = timelineRes.results || [];
+                totalHits += results.length;
+                if (results.length < currentLimit) hasMore = false;
+                currentOffset += currentLimit;
+                
+                renderGallery(results, false);
             } else {
-                // Search View
+                // Loading more for home timeline
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: "timeline_dummy", offset: currentOffset, limit: currentLimit, is_load_more: true,
+                        people: [], location: "", scene: "photo"
+                    })
+                });
+                const timelineRes = await res.json();
+                const results = timelineRes.results || [];
+                totalHits += results.length;
+                if (results.length < currentLimit) hasMore = false;
+                currentOffset += currentLimit;
+                renderGallery(results, true);
+            }
+        } else {
+            // Normal Search
+            const requestPayload = {
+                query: currentQuery,
+                offset: currentOffset,
+                limit: currentLimit,
+                is_load_more: isLoadMore,
+                people: currentPeople,
+                location: currentLocation,
+                scene: currentScene
+            };
+    
+            const res = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestPayload)
+            });
+            const data = await res.json();
+    
+            if (!res.ok) throw new Error(data.detail || data.error || `HTTP Error ${res.status}`);
+            
+            if (data.error) {
+                metaText.innerHTML = `Error: ${data.error}`;
+                metaContainer.classList.remove('hidden');
+            } else {
+                if (!isLoadMore) {
+                    currentPeople = data.people_detected || [];
+                    currentLocation = data.location_detected || "";
+                    currentScene = data.enhanced_query || "";
+                }
+                totalHits += data.results.length;
+                if (data.results.length < currentLimit) hasMore = false;
+                currentOffset += currentLimit;
+    
+                const themesContainer = document.getElementById('themes-container');
+                const timelineHeader = document.getElementById('timeline-header');
                 themesContainer.classList.add('hidden');
                 timelineHeader.classList.add('hidden');
                 
@@ -133,13 +185,13 @@ async function fetchPhotos(isLoadMore) {
                 if (data.fallback_triggered && !isLoadMore) {
                     fallbackMsg = `<br><span style="color:#ef4444; font-size: 0.9em; margin-top:5px; display:inline-block;">⚠️ '${currentLocation}' 장소에 일치하는 결과가 없어, 유사한 분위기의 사진을 찾았습니다.</span>`;
                 }
-
+    
                 metaText.innerHTML = `Found <b style="color:white">${totalHits}</b> photos loaded for: "<i style="color:var(--text-muted)">${currentQuery}</i>" <br> 
                 <small style="color:#3b82f6;">(AI parsed: ${currentScene})</small>${fallbackMsg}`;
                 metaContainer.classList.remove('hidden');
+                
+                renderGallery(data.results, isLoadMore);
             }
-            
-            renderGallery(data.results, isLoadMore);
         }
         
     } catch (err) {
