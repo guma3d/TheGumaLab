@@ -1,4 +1,5 @@
 let currentQuery = '';
+let currentGalleryFilter = "recent";
 let currentOffset = 0;
 let currentLimit = 20;
 let currentPeople = [];
@@ -30,9 +31,28 @@ clearBtn.addEventListener('click', function() {
 document.addEventListener('DOMContentLoaded', () => {
     currentQuery = '';
     currentOffset = 0;
+    currentGalleryFilter = "recent";
     hasMore = true;
     totalHits = 0;
     fetchPhotos(false);
+});
+
+// Tags Logic
+document.addEventListener('click', e => {
+    if (e.target.classList.contains('tag-btn')) {
+        document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('tag-active', 'active'));
+        e.target.classList.add('tag-active', 'active');
+        
+        currentGalleryFilter = e.target.dataset.tag;
+        
+        // Reset and load tag timeline or random home
+        currentQuery = '';
+        currentOffset = 0;
+        hasMore = true;
+        totalHits = 0;
+        document.getElementById('gallery-grid').innerHTML = '';
+        fetchPhotos(false);
+    }
 });
 
 // Search Form Handler
@@ -79,67 +99,123 @@ async function fetchPhotos(isLoadMore) {
             metaContainer.classList.add('hidden');
             
             if (!isLoadMore) {
-                // Generate Dynamic Themes
-                const themeIdeas = [
-                    { title: "❄️ 겨울의 추억", scene: "winter" },
-                    { title: "🌸 봄날의 나들이", scene: "spring" },
-                    { title: "📸 언제나 주인공", scene: "family matching outfit" }
-                ];
+                // Determine if we want themes
+                let fetchThemes = (currentGalleryFilter === "recent" && themesContainer.innerHTML === '');
                 
-                const themePromises = themeIdeas.map(t => fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        query: "theme_dummy", offset: 0, limit: 10, is_load_more: true,
-                        people: [], location: "", scene: t.scene
-                    })
-                }).then(r => r.json()).then(data => ({
-                    title: t.title,
-                    photos: data.results || []
-                })));
+                let themePromises = [];
+                if (fetchThemes) {
+                    const allThemeIdeas = [
+                        { title: "Winter Memories", scene: "winter snow cold" },
+                        { title: "Spring Vibes", scene: "spring cherry blossom warm" },
+                        { title: "Summer Beach", scene: "summer beach ocean sand" },
+                        { title: "Autumn Leaves", scene: "autumn fall leaves" },
+                        { title: "Delicious Meals", scene: "delicious food eating meal" },
+                        { title: "Animal Friends", scene: "dog pet animal" },
+                        { title: "City Explorers", scene: "city street building urban" },
+                        { title: "Nature Walks", scene: "forest tree mountain nature" },
+                        { title: "Joyful Moments", scene: "happy smiling laughing" },
+                        { title: "Birthday Parties", scene: "birthday cake celebration party" }
+                    ];
+                    const shuffled = allThemeIdeas.sort(() => 0.5 - Math.random());
+                    const themeIdeas = shuffled.slice(0, 3);
+                    
+                    themePromises = themeIdeas.map(t => fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            query: "theme_dummy", offset: 0, limit: 12, is_load_more: true,
+                            people: [], location: "", scene: t.scene
+                        })
+                    }).then(r => r.json()).then(data => ({
+                        title: t.title,
+                        photos: data.results || []
+                    })));
+                }
                 
-                // Timeline
+                // Timeline Fetch
+                let t_query = "timeline_dummy";
+                let t_scene = "photo";
+                let t_people = [];
+                let t_limit = currentLimit;
+                
+                if (currentGalleryFilter !== "recent") {
+                    t_query = "tag_dummy";
+                    t_scene = "";
+                    t_people = [currentGalleryFilter];
+                    t_limit = 50; // Over-fetch to filter solo shots
+                }
+
                 const timelinePromise = fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        query: "timeline_dummy", offset: currentOffset, limit: currentLimit, is_load_more: true,
-                        people: [], location: "", scene: "photo"
+                        query: t_query, offset: currentOffset, limit: t_limit, is_load_more: true,
+                        people: t_people, location: "", scene: t_scene
                     })
                 }).then(r => r.json());
 
-                const [res1, res2, res3, timelineRes] = await Promise.all([...themePromises, timelinePromise]);
-                const themes = [res1, res2, res3].filter(t => t.photos && t.photos.length > 0);
+                const responses = await Promise.all([...(fetchThemes ? themePromises : []), timelinePromise]);
+                const timelineRes = responses[responses.length - 1];
                 
-                if (themes.length > 0) {
-                    renderThemes(themes);
-                    themesContainer.classList.remove('hidden');
-                } else {
+                if (fetchThemes) {
+                    const rawThemes = responses.slice(0, responses.length - 1);
+                    const themes = rawThemes.filter(t => t && t.photos && t.photos.length > 0);
+                    if (themes.length > 0) {
+                        renderThemes(themes);
+                        themesContainer.classList.remove('hidden');
+                    } else {
+                        themesContainer.classList.add('hidden');
+                    }
+                } else if (currentGalleryFilter !== "recent") {
                     themesContainer.classList.add('hidden');
+                } else {
+                    themesContainer.classList.remove('hidden');
                 }
+                
                 timelineHeader.classList.remove('hidden');
                 
-                const results = timelineRes.results || [];
+                let results = timelineRes.results || [];
+                if (currentGalleryFilter !== "recent") {
+                    results = results.filter(p => p.people && p.people.length === 1 && p.people.includes(currentGalleryFilter));
+                }
+                
                 totalHits += results.length;
-                if (results.length < currentLimit) hasMore = false;
-                currentOffset += currentLimit;
+                if (timelineRes.results && timelineRes.results.length < t_limit) hasMore = false;
+                currentOffset += t_limit;
                 
                 renderGallery(results, false);
             } else {
-                // Loading more for home timeline
+                // Loading more for home timeline or tag
+                let t_query = "timeline_dummy";
+                let t_scene = "photo";
+                let t_people = [];
+                let t_limit = currentLimit;
+                
+                if (currentGalleryFilter !== "recent") {
+                    t_query = "tag_dummy";
+                    t_scene = "";
+                    t_people = [currentGalleryFilter];
+                    t_limit = 50; 
+                }
+
                 const res = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        query: "timeline_dummy", offset: currentOffset, limit: currentLimit, is_load_more: true,
-                        people: [], location: "", scene: "photo"
+                        query: t_query, offset: currentOffset, limit: t_limit, is_load_more: true,
+                        people: t_people, location: "", scene: t_scene
                     })
                 });
                 const timelineRes = await res.json();
-                const results = timelineRes.results || [];
+                let results = timelineRes.results || [];
+                
+                if (currentGalleryFilter !== "recent") {
+                    results = results.filter(p => p.people && p.people.length === 1 && p.people.includes(currentGalleryFilter));
+                }
+                
                 totalHits += results.length;
-                if (results.length < currentLimit) hasMore = false;
-                currentOffset += currentLimit;
+                if (timelineRes.results && timelineRes.results.length < t_limit) hasMore = false;
+                currentOffset += t_limit;
                 renderGallery(results, true);
             }
         } else {
@@ -183,11 +259,11 @@ async function fetchPhotos(isLoadMore) {
                 
                 let fallbackMsg = '';
                 if (data.fallback_triggered && !isLoadMore) {
-                    fallbackMsg = `<br><span style="color:#ef4444; font-size: 0.9em; margin-top:5px; display:inline-block;">⚠️ '${currentLocation}' 장소에 일치하는 결과가 없어, 유사한 분위기의 사진을 찾았습니다.</span>`;
+                    fallbackMsg = `<br><span style="color:#ef4444; font-size: 0.9em; margin-top:5px; display:inline-block;">⚠️ No exact match for '${currentLocation}', showing photos with similar atmosphere instead.</span>`;
                 }
     
-                metaText.innerHTML = `Found <b style="color:white">${totalHits}</b> photos loaded for: "<i style="color:var(--text-muted)">${currentQuery}</i>" <br> 
-                <small style="color:#3b82f6;">(AI parsed: ${currentScene})</small>${fallbackMsg}`;
+                metaText.innerHTML = `Loaded <b style="color:white">${totalHits}</b> photos for: "<i style="color:var(--text-muted)">${currentQuery}</i>" <br> 
+                <small style="color:#3b82f6;">(AI concept: ${currentScene})</small>${fallbackMsg}`;
                 metaContainer.classList.remove('hidden');
                 
                 renderGallery(data.results, isLoadMore);
@@ -347,7 +423,7 @@ function renderGallery(photos, append = false) {
         scoreWrapper.style.background = 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)';
         // pointer-events: none is already in meta-overlay from CSS
         const scorePercent = (photo.score * 100).toFixed(1);
-        scoreWrapper.innerHTML = `<span class="meta-badge" style="background: rgba(16, 185, 129, 0.55); font-weight: 500;"><i class="fa-solid fa-bullseye"></i> 유사율 ${scorePercent}%</span>`;
+        scoreWrapper.innerHTML = `<span class="meta-badge" style="background: rgba(16, 185, 129, 0.55); font-weight: 500;"><i class="fa-solid fa-bullseye"></i> Match ${scorePercent}%</span>`;
 
         // Assembly
         item.style.position = 'relative';
@@ -491,7 +567,7 @@ downloadBtn.addEventListener('click', () => {
 deleteBtn.addEventListener('click', async () => {
     if (!currentModalPhoto) return;
     
-    if (confirm("🚨 경고: 정말 이 사진을 영구 삭제하시겠습니까?\n서버 원본 파일과 AI DB 흔적까지 모두 파기됩니다.")) {
+    if (confirm("Warning: Are you sure you want to permanently delete this photo?\nServer files and AI traces will be completely destroyed.")) {
         try {
             let apiUrl = '/api/photos';
             if (window.location.pathname.startsWith('/GumaPhoto')) {
@@ -521,11 +597,11 @@ deleteBtn.addEventListener('click', async () => {
             });
             
             closeModal();
-            alert("✅ 완벽하게 삭제(폭파)되었습니다.");
+            alert("Successfully deleted.");
             
         } catch (err) {
             console.error(err);
-            alert("❌ 삭제에 실패했습니다. 서버 관리자에게 문의하세요.");
+            alert("Failed to delete. Please contact system administrator.");
         } finally {
             deleteBtn.disabled = false;
             deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
