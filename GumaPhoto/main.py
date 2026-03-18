@@ -703,7 +703,7 @@ async def delete_photo(req: DeleteRequest):
     프론트엔드 모달 기능: 사진 완전 파기 (Hard Delete)
     1. 물리적 파일 삭제
     2. Qdrant 벡터 포인트 삭제
-    3. SQLite 스캔 처리 마킹 삭제/DELETED 기록
+    3. SQLite 스캔 처리 기록 완벽 삭제 (DELETE FROM)
     """
     abs_path = req.filepath
     if abs_path.startswith("/videos/"):
@@ -740,14 +740,15 @@ async def delete_photo(req: DeleteRequest):
     except Exception as e:
         print(f"   ❌ [2/3] Qdrant DB 삭제 중 오류 발생: {e}")
         
-    # [3] SQLite 상태 초기화 (DELETED 묘비 세우기)
+    # [3] SQLite 상태 초기화 (물리적 레코드 완벽 삭제)
     try:
         conn = sqlite3.connect("/app/data/organizer_state.db")
-        # 벡터라이저가 다시 스캔하는 걸 원천 차단하기 위해 DELETED 로 남겨둠
-        conn.execute("UPDATE vectorized_files SET status='DELETED' WHERE filepath=?", (abs_path,))
+        # 벡터 DB 스캔 봇과 분류 봇 모두에서 흔적 완전 소거
+        conn.execute("DELETE FROM vectorized_files WHERE filepath=?", (abs_path,))
+        conn.execute("DELETE FROM processed_files WHERE filepath=?", (abs_path,))
         conn.commit()
         conn.close()
-        print(f"   ✅ [3/3] SQLite DB 유령 스캔 방지 처리 완료")
+        print(f"   ✅ [3/3] SQLite DB 유령 스캔 방지 및 레코드 완전 삭제 완료")
     except Exception as e:
         print(f"   ❌ [3/3] SQLite 갱신 중 오류 발생: {e}")
         
