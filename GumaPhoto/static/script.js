@@ -756,10 +756,14 @@ document.getElementById('confirm-delete-btn')?.addEventListener('click', async (
         if (!res.ok) throw new Error("Delete failed");
         
         // DOM에서 방금 지운 사진 타일을 즉시 제거 (새로고침 안 해도 사라지도록)
-        const allImages = document.querySelectorAll('.theme-photo-item img, .image-item img');
+        // 타일/Masonry 공통: wrapper 요소를 같이 삭제해야 빈칸이 안 생깁니다.
+        const allImages = document.querySelectorAll('.theme-photo-item img, .image-wrapper img, .image-item img');
         allImages.forEach(img => {
             if(img.src.includes(currentModalPhoto.url)) {
-                img.parentElement.remove();
+                // img -> image-wrapper -> image-item (Masonry 경우)
+                // closest() 를 사용해서 가장 최상위 컨테이너를 도려냅니다.
+                const topContainer = img.closest('.theme-photo-item') || img.closest('.image-item') || img.parentElement;
+                if(topContainer) topContainer.remove();
             }
         });
         
