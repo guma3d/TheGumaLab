@@ -358,7 +358,7 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
 }
 
 /* Photo Modal Styles */
-#photo-modal, #progress-modal {
+#photo-modal, #progress-modal, #delete-confirm-modal {
     position: fixed;
     top: 0;
     left: 0;
@@ -374,9 +374,13 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
     transition: opacity 0.3s ease;
 }
 
-#photo-modal.hidden, #progress-modal.hidden {
+#photo-modal.hidden, #progress-modal.hidden, #delete-confirm-modal.hidden {
     display: none !important;
     opacity: 0;
+}
+
+#delete-confirm-modal {
+    z-index: 2000;
 }
 
 .modal-content {
