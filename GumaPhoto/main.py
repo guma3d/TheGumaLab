@@ -210,7 +210,7 @@ async def perform_search(req: SearchRequest):
                 collection_name="gumaphoto_hybrid_kr",
                 limit=req.limit,
                 with_payload=True,
-                order_by=OrderBy(key="date", direction=Direction.DESC)
+                order_by=OrderBy(key="sort_date", direction=Direction.DESC)
             )
             # Since scroll uses PointId cursor internally, integer offset must be sliced manually if used without cursor. 
             # We slice the results if offset is provided (basic pagination for scrolling)
@@ -220,7 +220,7 @@ async def perform_search(req: SearchRequest):
                 collection_name="gumaphoto_hybrid_kr",
                 limit=req.offset + req.limit,
                 with_payload=True,
-                order_by=OrderBy(key="date", direction=Direction.DESC)
+                order_by=OrderBy(key="sort_date", direction=Direction.DESC)
             )
             timeline_res = timeline_res[req.offset:]
         except Exception as e:
@@ -244,6 +244,7 @@ async def perform_search(req: SearchRequest):
                 "url": photo_url,
                 "original_path": filepath,
                 "date": photo_date,
+                "sort_date": payload.get("sort_date", 0),
                 "location": payload.get("location", ""),
                 "time_of_day": payload.get("time_of_day", ""),
                 "season": payload.get("season", ""),
@@ -290,6 +291,7 @@ async def perform_search(req: SearchRequest):
                         "url": pu,
                         "original_path": fp,
                         "date": p.get("date", ""),
+                        "sort_date": p.get("sort_date", 0),
                         "location": p.get("location", ""),
                         "time_of_day": p.get("time_of_day", ""),
                         "season": p.get("season", ""),

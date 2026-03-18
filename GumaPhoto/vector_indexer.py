@@ -78,6 +78,7 @@ class VectorIndexer:
             self.q_client.create_payload_index(COLLECTION_NAME, "objects", field_schema=PayloadSchemaType.KEYWORD)
             self.q_client.create_payload_index(COLLECTION_NAME, "location", field_schema=PayloadSchemaType.TEXT)
             self.q_client.create_payload_index(COLLECTION_NAME, "caption", field_schema=PayloadSchemaType.TEXT)
+            self.q_client.create_payload_index(COLLECTION_NAME, "sort_date", field_schema=PayloadSchemaType.INTEGER)
             print(f"  [+] 신규 Qdrant 멀티-벡터 컬렉션 '{COLLECTION_NAME}' 생성 완료.")
         else:
             print(f"  [-] 기존 Qdrant 컬렉션 '{COLLECTION_NAME}' 을 재사용합니다.")
@@ -448,6 +449,24 @@ class VectorIndexer:
                         date_str = parts[0]
                     if len(parts) > 1 and parts[1] != "Unknown-Location" and parts[1] != "Unknown-Year":
                         location_str = parts[1].replace("-", " ")
+                        
+                sort_date = 0
+                if date_str != "Unknown Date":
+                    match_sd = re.search(r'(19|20)\d{2}(-\d{2})?(-\d{2})?', date_str)
+                    if match_sd:
+                        sd_full = match_sd.group(0)
+                        sd_parts = sd_full.split('-')
+                        sd_yr = int(sd_parts[0])
+                        sd_mo = int(sd_parts[1]) if len(sd_parts) > 1 else 1
+                        sd_dy = int(sd_parts[2]) if len(sd_parts) > 2 else 1
+                        sort_date = sd_yr * 10000 + sd_mo * 100 + sd_dy
+                if sort_date == 0:
+                    try:
+                        import datetime
+                        dt = datetime.datetime.fromtimestamp(os.path.getmtime(filepath))
+                        sort_date = dt.year * 10000 + dt.month * 100 + dt.day
+                    except Exception:
+                        sort_date = 0
                     
                 payload = {
                     "filepath": filepath,
@@ -456,6 +475,7 @@ class VectorIndexer:
                     "face_count": face_count,
                     "people": found_people,
                     "date": date_str,
+                    "sort_date": sort_date,
                     "location": location_str,
                     "time_of_day": item["time_of_day"],
                     "season": item["season"],
