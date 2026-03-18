@@ -453,6 +453,7 @@ function renderThemes(themes) {
         theme.photos.forEach(photo => {
             const imgBtn = document.createElement('div');
             imgBtn.className = 'theme-photo-item';
+            imgBtn.dataset.id = photo.id;
             
             let imgUrl = photo.url;
             if (window.location.pathname.startsWith('/GumaPhoto')) {
@@ -492,8 +493,8 @@ function renderGallery(photos, append = false, targetId = 'gallery-grid', isMaso
         // Create Item as a Slider Item or Masonry Item
         const item = document.createElement('div');
         item.className = isMasonry ? 'image-item' : 'theme-photo-item';
-        // Add URL data to dataset
-        item.dataset.url = photo.url;
+        // 고유 ID 맵핑 (DOM 삭제 최적화)
+        item.dataset.id = photo.id;
 
         // Base Image
         // Handling paths via Nginx proxy as well
@@ -756,16 +757,9 @@ document.getElementById('confirm-delete-btn')?.addEventListener('click', async (
         if (!res.ok) throw new Error("Delete failed");
         
         // DOM에서 방금 지운 사진 타일을 즉시 제거 (새로고침 안 해도 사라지도록)
-        // 타일/Masonry 공통: wrapper 요소를 같이 삭제해야 빈칸이 안 생깁니다.
-        const allImages = document.querySelectorAll('.theme-photo-item img, .image-wrapper img, .image-item img');
-        allImages.forEach(img => {
-            if(img.src.includes(currentModalPhoto.url)) {
-                // img -> image-wrapper -> image-item (Masonry 경우)
-                // closest() 를 사용해서 가장 최상위 컨테이너를 도려냅니다.
-                const topContainer = img.closest('.theme-photo-item') || img.closest('.image-item') || img.parentElement;
-                if(topContainer) topContainer.remove();
-            }
-        });
+        // URL 인코딩 등 특수문자 이슈 방지를 위해 고유 Point ID(data-id) 기반으로 타겟팅 및 삭제
+        const elementsToRemove = document.querySelectorAll(`[data-id="${currentModalPhoto.id}"]`);
+        elementsToRemove.forEach(el => el.remove());
         
         closeModal(); // 부모 모달도 완전히 닫기
         // alert("Successfully deleted."); // premium design에서는 성공 알림이 번거로울 수 있으므로 제거 또는 유지
