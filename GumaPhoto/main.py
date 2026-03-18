@@ -143,32 +143,50 @@ class DeleteRequest(BaseModel):
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-# 전역 락(Lock)을 생성하여 여러 사용자가 동시에 사진을 올려도 스캔 파이프라인이 겹치지 않게 방어
+# 전역 상태를 통해 여러 사용자가 동시에 사진을 지속적으로 올릴 때 루프 처리 방어
 upload_lock = threading.Lock()
+pipeline_running = False
+needs_rerun = False
 
 def trigger_upload_pipeline():
     """백그라운드에서 실행되는 3순환 업로드 AI 처리 파이프라인 + 동적 사전 생성"""
-    if not upload_lock.acquire(blocking=False):
-        print("⏳ [Background] 파이프라인이 이미 맹렬하게 가동 중입니다! (새 사진은 현재 파이프라인이 끝날 때, 혹은 다음 주기에 합류합니다.)")
-        return
+    global pipeline_running, needs_rerun
+    
+    with upload_lock:
+        if pipeline_running:
+            needs_rerun = True
+            print("⏳ [Background] 파이프라인이 이미 맹렬하게 가동 중입니다! (새 사진은 현재 파이프라인 종료 즉시 이어서 연쇄 처리됩니다.)")
+            return
+        pipeline_running = True
+        needs_rerun = False
         
     try:
-        print("🚀 [Background] 새 사진 업로드 감지! Organizer 파이프라인을 가동합니다...")
-        # 1-2. 자동 날짜 및 장소 인식, 폴더 정리
-        subprocess.run(["python", "organizer_pipeline.py"], check=True)
-        print("🚀 [Background] 폴더 정리 완료. 이어서 Qdrant Vector Scan을 가동합니다...")
-        # 3. 모델 기반 Vector/Payload 분석 후 실시간 DB 등록
-        subprocess.run(["python", "vector_indexer.py"], check=True)
-        
-        # 4. (추가) 신규 사진 업로드로 새로운 장소/인물이 발견되었을 수 있으니, 태그 사전 동적 자동 업데이트!
-        print("🔄 [Background] 신규 태그가 인입되었는지 확인하고 마스터 태그 사전을 재구축(업데이트)합니다...")
-        subprocess.run(["python", "generate_tag_dict.py"], check=True)
-        
-        print("✅ [Background] 전체 업로드 파이프라인 및 사전 업데이트 성공! 검색 엔진이 실시간 최적화 상태가 되었습니다.")
+        while True:
+            print("🚀 [Background] 새 사진 업로드 감지! Organizer 파이프라인을 가동합니다...")
+            # 1-2. 자동 날짜 및 장소 인식, 폴더 정리
+            subprocess.run(["python", "organizer_pipeline.py"], check=True)
+            print("🚀 [Background] 폴더 정리 완료. 이어서 Qdrant Vector Scan을 가동합니다...")
+            # 3. 모델 기반 Vector/Payload 분석 후 실시간 DB 등록
+            subprocess.run(["python", "vector_indexer.py"], check=True)
+            
+            # 4. (추가) 신규 사진 업로드로 새로운 장소/인물이 발견되었을 수 있으니, 태그 사전 동적 자동 업데이트!
+            print("🔄 [Background] 신규 태그가 인입되었는지 확인하고 마스터 태그 사전을 재구축(업데이트)합니다...")
+            subprocess.run(["python", "generate_tag_dict.py"], check=True)
+            
+            with upload_lock:
+                if needs_rerun:
+                    needs_rerun = False
+                    print("🔄 [Background] 순환 중 새로운 사진이 지속적으로 도착했습니다! 파이프라인을 다시 한 번 가동합니다...")
+                    continue
+                else:
+                    pipeline_running = False
+                    print("✅ [Background] 더 이상 밀린 업로드가 없습니다. 파이프라인 슬립 모드로 전환합니다.")
+                    break
     except Exception as e:
         print(f"❌ [Background] 파이프라인 가동 중 에러 발생: {e}")
-    finally:
-        upload_lock.release()
+        with upload_lock:
+            pipeline_running = False
+            needs_rerun = False
 
 @app.post("/upload/")
 async def upload_photos(background_tasks: BackgroundTasks, files: List[UploadFile] = File(...)):
