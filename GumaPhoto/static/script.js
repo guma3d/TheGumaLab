@@ -715,49 +715,63 @@ downloadBtn.addEventListener('click', () => {
 });
 
 // 삭제 (Hard Delete) 모달 휴지통 버튼 누를 시 발생
-deleteBtn.addEventListener('click', async () => {
+deleteBtn.addEventListener('click', () => {
+    if (!currentModalPhoto) return;
+    const confirmModal = document.getElementById('delete-confirm-modal');
+    if (confirmModal) confirmModal.classList.remove('hidden');
+});
+
+// 취소 버튼
+document.getElementById('cancel-delete-btn')?.addEventListener('click', () => {
+    const confirmModal = document.getElementById('delete-confirm-modal');
+    if (confirmModal) confirmModal.classList.add('hidden');
+});
+
+// 실제 삭제 승인 버튼
+document.getElementById('confirm-delete-btn')?.addEventListener('click', async () => {
     if (!currentModalPhoto) return;
     
-    if (confirm("Warning: Are you sure you want to permanently delete this photo?\nServer files and AI traces will be completely destroyed.")) {
-        try {
-            let apiUrl = '/api/photos';
-            if (window.location.pathname.startsWith('/GumaPhoto')) {
-                apiUrl = '/GumaPhoto/api/photos';
-            }
-            
-            deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-            deleteBtn.disabled = true;
-            
-            const res = await fetch(apiUrl, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    filepath: currentModalPhoto.original_path || currentModalPhoto.url,
-                    point_id: currentModalPhoto.id
-                })
-            });
-            
-            if (!res.ok) throw new Error("Delete failed");
-            
-            // DOM에서 방금 지운 사진 타일을 즉시 제거 (새로고침 안 해도 사라지도록)
-            const allImages = document.querySelectorAll('.theme-photo-item img, .image-item img');
-            allImages.forEach(img => {
-                // img.src usually contains full URL, so .includes() check is great
-                if(img.src.includes(currentModalPhoto.url)) {
-                    img.parentElement.remove();
-                }
-            });
-            
-            closeModal();
-            alert("Successfully deleted.");
-            
-        } catch (err) {
-            console.error(err);
-            alert("Failed to delete. Please contact system administrator.");
-        } finally {
-            deleteBtn.disabled = false;
-            deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+    // 모달 즉시 닫기
+    document.getElementById('delete-confirm-modal').classList.add('hidden');
+    
+    try {
+        let apiUrl = '/api/photos';
+        if (window.location.pathname.startsWith('/GumaPhoto')) {
+            apiUrl = '/GumaPhoto/api/photos';
         }
+        
+        deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        deleteBtn.disabled = true;
+        
+        const res = await fetch(apiUrl, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                filepath: currentModalPhoto.original_path || currentModalPhoto.url,
+                point_id: currentModalPhoto.id
+            })
+        });
+        
+        // 에러를 던져서 catch 로 넘김
+        if (!res.ok) throw new Error("Delete failed");
+        
+        // DOM에서 방금 지운 사진 타일을 즉시 제거 (새로고침 안 해도 사라지도록)
+        const allImages = document.querySelectorAll('.theme-photo-item img, .image-item img');
+        allImages.forEach(img => {
+            if(img.src.includes(currentModalPhoto.url)) {
+                img.parentElement.remove();
+            }
+        });
+        
+        closeModal(); // 부모 모달도 완전히 닫기
+        // alert("Successfully deleted."); // premium design에서는 성공 알림이 번거로울 수 있으므로 제거 또는 유지
+        
+    } catch (err) {
+        console.error(err);
+        alert("Failed to delete. Please contact system administrator.");
+    } finally {
+        deleteBtn.disabled = false;
+        deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
     }
 });
 
