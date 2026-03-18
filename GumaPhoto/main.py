@@ -36,6 +36,9 @@ known_faces = {}
 async def lifespan(app: FastAPI):
     global siglip_processor, siglip_model, qdrant_client, gemini_client, known_faces
     
+    # 1. Start background live monitor for JSON progress
+    tracker_process = subprocess.Popen(["python", "live_progress_tracker.py"])
+    
     # 초기 SQLite 테이블 세팅 (Feedback Queue 생성)
     try:
         os.makedirs("/app/data", exist_ok=True)
@@ -98,6 +101,7 @@ async def lifespan(app: FastAPI):
         
     yield
     print("[*] Shutting down GumaPhoto logic...")
+    tracker_process.terminate()
 
 app = FastAPI(title="GumaPhoto API", lifespan=lifespan)
 
@@ -721,9 +725,16 @@ async def delete_photo(req: DeleteRequest):
         else:
             print(f"   ⚠️ [1/3] 서버에 원본 파일이 존재하지 않아 파일 삭제는 패스함")
             
-        xmp_path = abs_path + ".xmp"
-        if os.path.exists(xmp_path):
-            os.remove(xmp_path)
+        xmp_path_1 = abs_path + ".xmp"
+        xmp_path_2 = os.path.splitext(abs_path)[0] + ".xmp"
+        deleted_xmp = False
+        
+        for xp in [xmp_path_1, xmp_path_2]:
+            if os.path.exists(xp):
+                os.remove(xp)
+                deleted_xmp = True
+                
+        if deleted_xmp:
             print(f"   ✅ [1/3-XMP] 서버 XMP 메타데이터 파일 영구 삭제 완료")
     except Exception as e:
         print(f"   ❌ [1/3] 파일 삭제 중 오류 발생: {e}")
