@@ -198,8 +198,9 @@ class VectorIndexer:
         except Exception:
             qdrant_has_vector = False
             
-        # 2. XMP 물리 파일 검사
-        xmp_exists = os.path.exists(filepath + ".xmp")
+        # 2. XMP 물리 파일 검사 (.jpg.xmp 와 .xmp 두 가지 네이밍 컨벤션 모두 확인)
+        base_name = os.path.splitext(filepath)[0]
+        xmp_exists = os.path.exists(filepath + ".xmp") or os.path.exists(base_name + ".xmp")
         
         # 완벽하게 둘 다 있는 경우에만 Skip (UI 관리용 DB 검증 생략, 상태는 업데이트 삽입만)
         if qdrant_has_vector and xmp_exists:
@@ -218,7 +219,10 @@ class VectorIndexer:
                 
         if xmp_exists:
             try:
-                os.remove(filepath + ".xmp")
+                if os.path.exists(filepath + ".xmp"):
+                    os.remove(filepath + ".xmp")
+                if os.path.exists(base_name + ".xmp"):
+                    os.remove(base_name + ".xmp")
             except:
                 pass
                 
