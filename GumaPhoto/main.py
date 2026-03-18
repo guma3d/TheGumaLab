@@ -199,7 +199,7 @@ async def perform_search(req: SearchRequest):
     search_text = req.query.strip()
     
     # [NEW] Default Home Gallery (Timeline & Themes)
-    if not search_text:
+    if not search_text or search_text == "timeline_dummy":
         dummy_vector = [0.0] * 768
         
         # 1. Timeline photos (Scroll with OrderBy Date)
