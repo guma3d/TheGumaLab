@@ -33,6 +33,26 @@ qdrant_client = None
 gemini_client = None
 known_faces = {}
 
+async def scheduled_scan(interval_seconds: int = 3600):
+    """지정된 시간(기본 1시간)마다 주기적으로 uploads_raw 폴더를 스캔하여 파이프라인 무인 가동"""
+    print(f"⏱️ [Scheduler] 자동 스캐너가 백그라운드에 장착되었습니다. ({interval_seconds // 60}분마다 무인 정찰)")
+    while True:
+        await asyncio.sleep(interval_seconds)
+        try:
+            if not os.path.exists(UPLOAD_DIR):
+                continue
+            # 숨김 파일(._)이나 디렉토리를 제외한 실제 업로드 대기 파일이 있는지 확인
+            files_exist = any(os.path.isfile(os.path.join(UPLOAD_DIR, f)) for f in os.listdir(UPLOAD_DIR) if not f.startswith('.'))
+            if files_exist:
+                print(f"⏱️ [Scheduler] 무인 정기 스캔 중 미처리된 사진을 발견했습니다! 자동 파이프라인 가동...")
+                import threading
+                # trigger_upload_pipeline 함수는 FastAPI 실행 중 호출되므로 나중에 선언되어도 문제없음
+                threading.Thread(target=trigger_upload_pipeline, daemon=True).start()
+        except asyncio.CancelledError:
+            break
+        except Exception as e:
+            pass
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global siglip_processor, siglip_model, qdrant_client, gemini_client, known_faces
@@ -100,8 +120,12 @@ async def lifespan(app: FastAPI):
     else:
         print("[!] No GEMINI_API_KEY found. LLM Natural Language Parser is disabled.")
         
+    # 정기 백그라운드 스캐너 가동 (예: 1시간 = 3600초)
+    scan_task = asyncio.create_task(scheduled_scan(3600))
+        
     yield
     print("[*] Shutting down GumaPhoto logic...")
+    scan_task.cancel()
     tracker_process.terminate()
 
 app = FastAPI(title="GumaPhoto API", lifespan=lifespan)
