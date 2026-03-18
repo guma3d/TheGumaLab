@@ -713,13 +713,18 @@ async def delete_photo(req: DeleteRequest):
         
     print(f"🗑️ [완전 삭제 요청] 파일: {abs_path} / Point: {req.point_id}")
     
-    # [1] 서버 스토리지 디스크 파일 폭파
+    # [1] 서버 스토리지 디스크 파일 및 XMP 폭파
     try:
         if os.path.exists(abs_path):
             os.remove(abs_path)
             print(f"   ✅ [1/3] 서버 원본 파일 영구 삭제 완료")
         else:
-            print(f"   ⚠️ [1/3] 서버에 파일이 존재하지 않아 파일 삭제는 패스함")
+            print(f"   ⚠️ [1/3] 서버에 원본 파일이 존재하지 않아 파일 삭제는 패스함")
+            
+        xmp_path = abs_path + ".xmp"
+        if os.path.exists(xmp_path):
+            os.remove(xmp_path)
+            print(f"   ✅ [1/3-XMP] 서버 XMP 메타데이터 파일 영구 삭제 완료")
     except Exception as e:
         print(f"   ❌ [1/3] 파일 삭제 중 오류 발생: {e}")
         # 파일이 꼬였더라도 유령 데이터를 지우기 위해 2~3단계는 계속 진행합니다.

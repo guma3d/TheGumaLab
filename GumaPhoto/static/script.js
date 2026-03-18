@@ -740,8 +740,9 @@ deleteBtn.addEventListener('click', async () => {
             if (!res.ok) throw new Error("Delete failed");
             
             // DOM에서 방금 지운 사진 타일을 즉시 제거 (새로고침 안 해도 사라지도록)
-            const allImages = document.querySelectorAll('.gallery-item img');
+            const allImages = document.querySelectorAll('.theme-photo-item img, .image-item img');
             allImages.forEach(img => {
+                // img.src usually contains full URL, so .includes() check is great
                 if(img.src.includes(currentModalPhoto.url)) {
                     img.parentElement.remove();
                 }
