@@ -15,6 +15,7 @@ from pydantic import BaseModel
 import sqlite3
 import threading
 from contextlib import asynccontextmanager
+import uuid
 
 from transformers import AutoProcessor, AutoModel
 import torch
@@ -174,10 +175,13 @@ async def upload_photos(background_tasks: BackgroundTasks, files: List[UploadFil
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     saved_files = []
     for file in files:
-        file_path = os.path.join(UPLOAD_DIR, file.filename)
+        # Prevent mobile upload filename collision (e.g. multiple "image.jpg")
+        base, ext = os.path.splitext(file.filename)
+        unique_filename = f"{base}_{uuid.uuid4().hex[:6]}{ext}"
+        file_path = os.path.join(UPLOAD_DIR, unique_filename)
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-        saved_files.append(file.filename)
+        saved_files.append(unique_filename)
         
     # 방금 올라온 파일들을 백그라운드 봇이 알아서 치우고 스캔하도록 트리거 발동!
     background_tasks.add_task(trigger_upload_pipeline)
@@ -198,17 +202,27 @@ async def perform_search(req: SearchRequest):
     if not search_text:
         dummy_vector = [0.0] * 768
         
-        # 1. Timeline photos (Scroll)
+        # 1. Timeline photos (Scroll with OrderBy Date)
         try:
-            timeline_res = qdrant_client.query_points(
+            from qdrant_client.http.models import OrderBy, Direction
+            # Timeline uses scroll to support strict date ordering for "Recent" view
+            timeline_res, _ = qdrant_client.scroll(
                 collection_name="gumaphoto_hybrid_kr",
-                query=dummy_vector,
-                using="scene",
                 limit=req.limit,
-                offset=req.offset,
                 with_payload=True,
-                score_threshold=0.0
-            ).points
+                order_by=OrderBy(key="date", direction=Direction.DESC)
+            )
+            # Since scroll uses PointId cursor internally, integer offset must be sliced manually if used without cursor. 
+            # We slice the results if offset is provided (basic pagination for scrolling)
+            # Note: For large scale, passing a scroll_id is better, but since limit is small and offset usually <100, this works.
+            # actually scroll() only returns up to `limit`. If req.offset is used in UI, we fetch max(offset+limit) and slice.
+            timeline_res, _ = qdrant_client.scroll(
+                collection_name="gumaphoto_hybrid_kr",
+                limit=req.offset + req.limit,
+                with_payload=True,
+                order_by=OrderBy(key="date", direction=Direction.DESC)
+            )
+            timeline_res = timeline_res[req.offset:]
         except Exception as e:
             print(f"Timeline error: {e}")
             timeline_res = []
