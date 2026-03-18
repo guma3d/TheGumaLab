@@ -182,22 +182,21 @@ class VectorIndexer:
 
     def is_already_processed(self, filepath):
         """이미 벡터화가 성공적으로 끝난 파일인지 검사 (Fail-safe 이어하기)"""
-        # 0. 빠른 SQLite 조회 (디스크 I/O Write Lock 방지 및 네트워크/Qdrant 트래픽 절약)
+        import uuid
+        point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, filepath))
+        base_name = os.path.splitext(filepath)[0]
+        
+        # 0. 빠른 SQLite 조회 (UI 전용 상태)
         try:
             with getattr(self, "db_lock", __import__("threading").Lock()):
                 self.cursor.execute("SELECT status FROM vectorized_files WHERE filepath=?", (filepath,))
                 row = self.cursor.fetchone()
                 if row and row[0] == 'DONE':
                     return True
-        except sqlite3.OperationalError as e:
-            # 병목으로 실패하면 Qdrant 딥체크로 폴백
+        except sqlite3.OperationalError:
             pass
             
-        # 고유 ID 계산
-        import uuid
-        point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, filepath))
-        
-        # 1. Qdrant 벡터DB 실존 검사 (with_payload/vectors=False 로 초고속 존재 검증)
+        # 1. Qdrant 실존 검사
         try:
             records = self.q_client.retrieve(
                 collection_name=COLLECTION_NAME,
@@ -209,21 +208,20 @@ class VectorIndexer:
         except Exception:
             qdrant_has_vector = False
             
-        # 2. XMP 물리 파일 검사 (.jpg.xmp 와 .xmp 두 가지 네이밍 컨벤션 모두 확인)
-        base_name = os.path.splitext(filepath)[0]
+        # 2. XMP 실존 검사
         xmp_exists = os.path.exists(filepath + ".xmp") or os.path.exists(base_name + ".xmp")
         
-        # 완벽하게 둘 다 있는 경우에만 Skip (상태는 업데이트 삽입하되 오류 무시)
+        # 완벽 무결성 체크: Qdrant와 XMP가 모두 있으면 SQLite에 벌크로 DONE 채워넣고 패스
         if qdrant_has_vector and xmp_exists:
             try:
                 with getattr(self, "db_lock", __import__("threading").Lock()):
                     self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status) VALUES (?, ?)", (filepath, 'DONE'))
                     self.conn.commit()
             except sqlite3.OperationalError:
-                pass # disk I/O error 방어
+                pass 
             return True
             
-        # 둘 중 하나라도 누락된 경우 -> 찌꺼기 완벽 소거 후 처음부터 다시 (Full Pipeline)
+        # 둘 중 하나라도 없으면 원자성 실패로 간주, 기존 찌꺼기 싹 지우고 처음부터
         if qdrant_has_vector:
             try:
                 from qdrant_client.http.models import PointIdsList
@@ -511,28 +509,35 @@ class VectorIndexer:
                     self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status) VALUES (?, ?)", (filepath, 'ERROR'))
                 
         # Qdrant에 일괄 묶음 사격 (배치 Upsert)
+        # Qdrant에 일괄 묶음 사격 (배치 Upsert)
         if points_to_upsert:
             try:
+                # 1. 가장 중요한 AI 뇌(Qdrant)에 먼저 때려 넣기
                 self.q_client.upsert(collection_name=COLLECTION_NAME, points=points_to_upsert)
                 
-                # 성공적으로 Qdrant에 저장된 사진들만 원자성(Atomicity)을 보장하며 물리 XMP 및 SQLite 기록 생성
+                # 2. XMP 생성 및 SQLite Bulk Insert (성공 시에만)
                 import xmp_utils
+                db_records = []
                 for filepath, payload, face_count in successful_payloads:
                     try:
                         xmp_utils.generate_xmp_sidecar(filepath, payload)
+                        db_records.append((filepath, 'DONE', face_count))
                     except Exception as xmp_e:
                         print(f"      ⚠️ XMP 생성 실패: {xmp_e}")
-                        
-                    with getattr(self, "db_lock", __import__("threading").Lock()):
-                        self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status, face_count) VALUES (?, ?, ?)",
-                                          (filepath, 'DONE', face_count))
-                with getattr(self, "db_lock", __import__("threading").Lock()):
-                    self.conn.commit()
+                        db_records.append((filepath, 'ERROR', face_count))
                 
+                # Bulk DB commit으로 디스크 I/O 최적화
+                if db_records:
+                    with getattr(self, "db_lock", __import__("threading").Lock()):
+                        self.cursor.executemany(
+                            "INSERT OR REPLACE INTO vectorized_files (filepath, status, face_count) VALUES (?, ?, ?)",
+                            db_records
+                        )
+                        self.conn.commit()
+                        
             except Exception as qdrant_err:
                 print(f"    🚨 Qdrant 배치 업서트 치명적 실패: {qdrant_err}")
-                with getattr(self, "db_lock", __import__("threading").Lock()):
-                    self.conn.rollback()
+                # AI DB 기록에 실패했으므로 아무 것도 남기지 않고 다음 번에 처음부터 재시도하도록 냅둠 (Rollback 기조)
             
         # VRAM 메모리 단편화 및 좀비 텐서를 해제하여 장시간 가동 시의 쿠다 OOM 다운 방어
         torch.cuda.empty_cache()
