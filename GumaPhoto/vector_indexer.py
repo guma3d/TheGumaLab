@@ -624,8 +624,9 @@ class VectorIndexer:
             if item is None:
                 break
             i, valid_items = item
-            print(f"\n[*] 📦 배치 진행 중 (CPU+GPU 풀가동): {i+1} ~ {min(i+BATCH_SIZE, total)} / {total}")
-            self.process_batch(valid_items)
+            if valid_items:
+                print(f"\n[*] 📦 배치 진행 중 (CPU+GPU 풀가동): {i+1} ~ {min(i+BATCH_SIZE, total)} / {total} (실제 처리: {len(valid_items)}장)")
+                self.process_batch(valid_items)
             
         prod_thread.join()
             
