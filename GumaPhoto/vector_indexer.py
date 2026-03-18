@@ -182,6 +182,17 @@ class VectorIndexer:
 
     def is_already_processed(self, filepath):
         """이미 벡터화가 성공적으로 끝난 파일인지 검사 (Fail-safe 이어하기)"""
+        # 0. 빠른 SQLite 조회 (디스크 I/O Write Lock 방지 및 네트워크/Qdrant 트래픽 절약)
+        try:
+            with getattr(self, "db_lock", __import__("threading").Lock()):
+                self.cursor.execute("SELECT status FROM vectorized_files WHERE filepath=?", (filepath,))
+                row = self.cursor.fetchone()
+                if row and row[0] == 'DONE':
+                    return True
+        except sqlite3.OperationalError as e:
+            # 병목으로 실패하면 Qdrant 딥체크로 폴백
+            pass
+            
         # 고유 ID 계산
         import uuid
         point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, filepath))
@@ -202,11 +213,14 @@ class VectorIndexer:
         base_name = os.path.splitext(filepath)[0]
         xmp_exists = os.path.exists(filepath + ".xmp") or os.path.exists(base_name + ".xmp")
         
-        # 완벽하게 둘 다 있는 경우에만 Skip (UI 관리용 DB 검증 생략, 상태는 업데이트 삽입만)
+        # 완벽하게 둘 다 있는 경우에만 Skip (상태는 업데이트 삽입하되 오류 무시)
         if qdrant_has_vector and xmp_exists:
-            with getattr(self, "db_lock", __import__("threading").Lock()):
-                self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status) VALUES (?, ?)", (filepath, 'DONE'))
-                self.conn.commit()
+            try:
+                with getattr(self, "db_lock", __import__("threading").Lock()):
+                    self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status) VALUES (?, ?)", (filepath, 'DONE'))
+                    self.conn.commit()
+            except sqlite3.OperationalError:
+                pass # disk I/O error 방어
             return True
             
         # 둘 중 하나라도 누락된 경우 -> 찌꺼기 완벽 소거 후 처음부터 다시 (Full Pipeline)
