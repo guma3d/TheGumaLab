@@ -732,7 +732,7 @@ deleteBtn.addEventListener('click', async () => {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    filepath: currentModalPhoto.original_path,
+                    filepath: currentModalPhoto.original_path || currentModalPhoto.url,
                     point_id: currentModalPhoto.id
                 })
             });

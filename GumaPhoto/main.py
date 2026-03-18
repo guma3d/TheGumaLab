@@ -746,6 +746,8 @@ async def delete_photo(req: DeleteRequest):
         # 벡터 DB 스캔 봇과 분류 봇 모두에서 흔적 완전 소거
         conn.execute("DELETE FROM vectorized_files WHERE filepath=?", (abs_path,))
         conn.execute("DELETE FROM processed_files WHERE filepath=?", (abs_path,))
+        try: conn.execute("DELETE FROM feedback_queue WHERE filepath=?", (abs_path,))
+        except: pass # 혹시 테이블이 없는 아주 예전 상태일 수 있으므로 방어 코드 추가
         conn.commit()
         conn.close()
         print(f"   ✅ [3/3] SQLite DB 유령 스캔 방지 및 레코드 완전 삭제 완료")
