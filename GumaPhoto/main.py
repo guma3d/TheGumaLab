@@ -151,7 +151,7 @@ class SearchRequest(BaseModel):
     scene: str = ""
     is_load_more: bool = False
     date: str = ""
-    sort: str = "asc"
+    sort: str = "desc"
 
 class DownloadRequest(BaseModel):
     files: List[str]
@@ -252,8 +252,8 @@ async def perform_search(req: SearchRequest):
         
     search_text = req.query.strip()
     
-    # [NEW] Default Home Gallery (Timeline & Themes)
-    if not search_text or search_text == "timeline_dummy":
+    # [NEW] Default Home Gallery (Timeline & Themes & Tags)
+    if not search_text or search_text in ("timeline_dummy", "tag_dummy"):
         dummy_vector = [0.0] * 768
         
         # 1. Timeline photos (Scroll with OrderBy Date)
