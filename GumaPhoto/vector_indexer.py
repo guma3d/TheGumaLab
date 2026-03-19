@@ -659,8 +659,28 @@ class VectorIndexer:
                 self.process_batch(valid_items)
             
         prod_thread.join()
+        
+        self.generate_available_tags_json()
             
         print("\n✅ 모든 사진의 [얼굴 + 배경 상황] 벡터 데이터베이스 컴파일이 완료되었습니다!")
+
+    def generate_available_tags_json(self):
+        """AI 자연어 검색기(Gemini)에 주입할 마스터 장소 사전 자동 생성 및 연동"""
+        print("\n[*] 🗺️ AI 자연어 검색기(Gemini)를 위한 장소 마스터 사전 자동 생성 중...")
+        locs = set()
+        for y in os.listdir(TARGET_DIR):
+            yp = os.path.join(TARGET_DIR, y)
+            if os.path.isdir(yp):
+                for d in os.listdir(yp):
+                    if '_' in d:
+                        locs.add(d.split('_', 1)[1])
+        try:
+            import json
+            with open("/app/data/available_tags.json", "w", encoding="utf-8") as f:
+                json.dump({"locations": list(locs)}, f, ensure_ascii=False)
+            print(f"  [+] 총 {len(locs)}개의 공식 한국어 지역명이 검색 사전에 성공적으로 주입(Export) 되었습니다!")
+        except Exception as e:
+            print(f"  [-] 장소 사전 생성 중 에러 발생: {e}")
 
 if __name__ == "__main__":
     import sys
