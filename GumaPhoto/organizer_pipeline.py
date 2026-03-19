@@ -192,9 +192,9 @@ class OrganizerPipeline:
         try:
             # 무료 글로벌 API인 Nominatim은 1초 1개의 요청 제한이 있음.
             time.sleep(1.1)
-            location = self.geolocator.reverse((lat, lon), language='en', timeout=10)
+            location = self.geolocator.reverse((lat, lon), language='ko', timeout=10)
             if not location:
-                return "Unknown-Location"
+                return "위치정보없음"
                 
             addr = location.raw.get('address', {})
             # 도시 혹은 동네 추출
@@ -202,24 +202,24 @@ class OrganizerPipeline:
             # 주(State) 또는 국가(Country) 추출
             state = addr.get('state') or addr.get('country')
             
+            # 한국 정식 명칭 포맷 (도/특광역시 - 시/군/구)
             if city and state:
-                raw_loc = f"{city}-{state}"
-            elif city:
-                raw_loc = city
+                raw_loc = f"{state}-{city}"
             elif state:
                 raw_loc = state
+            elif city:
+                raw_loc = city
             else:
-                raw_loc = "Unknown-Location"
+                raw_loc = "위치정보없음"
                 
-            # 띄어쓰기는 '-'로 변경하고 대문자 캐멀케이스 처리 (예: San-Francisco-California)
-            parts = [p.capitalize() for p in raw_loc.replace(' ', '-').split('-') if p]
-            formatted_name = "-".join(parts)
+            # 빈칸을 '-'로 연결
+            formatted_name = raw_loc.replace(' ', '-')
             
             self.geocode_cache[cache_key] = formatted_name
             return formatted_name
         except Exception as e:
             print(f"   ⚠️ [지오코딩 오류] {e}")
-            return "Unknown-Location"
+            return "위치정보없음"
 
     # ==========================
     # 🎯 3단계: 베스트컷 추출
