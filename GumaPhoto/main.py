@@ -897,11 +897,11 @@ async def get_unknown_photo():
             
             issue = ""
             if "위치정보없음" in loc or not loc:
-                issue = "장소 정보 누락"
+                issue = "Location Data Missing"
             elif any("Unknown" in p for p in people):
-                issue = "이름 정보 누락 (Unknown)"
+                issue = "People Data Missing"
             elif "Unknown" in date_val or not date_val:
-                issue = "시간 정보 누락"
+                issue = "Date Data Missing"
                 
             if issue:
                 url_path = r.payload.get("filepath", "")
@@ -924,7 +924,7 @@ async def get_unknown_photo():
 @app.post("/api/feedback_v2/submit")
 async def submit_feedback_v2(req: FeedbackV2Request):
     import sqlite3
-    fb_type = "face" if "이름" in req.issue_type else "time_loc"
+    fb_type = "face" if "People" in req.issue_type else "time_loc"
     
     try:
         conn = sqlite3.connect("/app/data/organizer_state.db")

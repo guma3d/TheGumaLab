@@ -559,12 +559,16 @@ function renderGallery(photos, append = false, targetId = 'gallery-grid', isMaso
                 const scoreText = (photo.score * 100).toFixed(1) + '%';
                 const scoreBadge = document.createElement('div');
                 scoreBadge.className = 'meta-badge';
+                scoreBadge.style.left = '5px';
+                scoreBadge.style.top = '5px';
                 scoreBadge.innerHTML = `<i class="fa-solid fa-bullseye"></i> 유사도 = ${scoreText}`;
                 item.appendChild(scoreBadge);
             }
 
             const overlay = document.createElement('div');
             overlay.className = 'info-badges-overlay';
+            overlay.style.left = '5px';
+            overlay.style.bottom = '5px';
             // 크기 30% 축소 (transform-origin 적용하여 왼쪽 아래 기준으로 축소)
             overlay.style.transform = 'scale(0.7)';
             overlay.style.transformOrigin = 'left bottom';
@@ -1029,7 +1033,7 @@ async function loadUnknownPhoto() {
     inputVal.value = '';
     inputDate.value = '';
     submitBtn.disabled = false;
-    submitBtn.innerHTML = '<i class="fa-solid fa-check"></i> 자율 전파(Propagation) 승인';
+    submitBtn.innerHTML = 'Send';
     
     try {
         let apiUrl = '/api/feedback_v2/unknown';
@@ -1049,9 +1053,9 @@ async function loadUnknownPhoto() {
             });
             const sData = await res.json();
             const unknownList = sData.results.filter(p => {
-                if(!p.location || p.location.includes("위치정보없음")) { p.issue = "장소 정보 누락"; return true; }
-                if(p.people && p.people.some(x => x.includes("Unknown"))) { p.issue = "이름 정보 누락 (Unknown People)"; return true; }
-                if(!p.date || p.date.includes("Unknown")) { p.issue = "시간 정보 누락"; return true; }
+                if(!p.location || p.location.includes("위치정보없음")) { p.issue = "Location Data Missing"; return true; }
+                if(p.people && p.people.some(x => x.includes("Unknown"))) { p.issue = "People Data Missing"; return true; }
+                if(!p.date || p.date.includes("Unknown")) { p.issue = "Date Data Missing"; return true; }
                 return false;
             });
             
@@ -1066,7 +1070,7 @@ async function loadUnknownPhoto() {
                 if (!mockUrl.startsWith('/GumaPhoto') && window.location.pathname.startsWith('/GumaPhoto')) mockUrl = '/GumaPhoto' + mockUrl;
                 selectedFeedbackTarget = { id: randomChoice.id, url: mockUrl, issue: randomChoice.issue };
             } else {
-                throw new Error("분류 대기 중인 빈칸(Unknown) 사진이 더 이상 없습니다!");
+                throw new Error("No pending photos left to categorize!");
             }
         } else {
             const data = await res.json();
@@ -1074,7 +1078,7 @@ async function loadUnknownPhoto() {
                 let mockUrl = data.url;
                 if (!mockUrl.startsWith('/GumaPhoto') && window.location.pathname.startsWith('/GumaPhoto')) mockUrl = '/GumaPhoto' + mockUrl;
                 selectedFeedbackTarget = { id: data.id, url: mockUrl, issue: data.issue };
-            } else throw new Error("모든 사진이 완벽합니다!");
+            } else throw new Error("All photos are perfectly categorized!");
         }
         
         // 추출된 사진 렌더링
@@ -1087,14 +1091,14 @@ async function loadUnknownPhoto() {
         issueTag.style.display = 'inline-block';
         
         // 이슈 종류에 따른 폼 UI 전환
-        if(selectedFeedbackTarget.issue.includes('시간')) {
+        if(selectedFeedbackTarget.issue.includes('Date')) {
             inputVal.style.display = 'none';
             inputDate.style.display = 'block';
         } else {
             inputDate.style.display = 'none';
             inputVal.style.display = 'block';
-            if(selectedFeedbackTarget.issue.includes('이름')) inputVal.placeholder = "예: 성욱 (누락된 해당 인물의 이름)";
-            else inputVal.placeholder = "예: 대한민국-제주특별자치도 (장소 형식)";
+            if(selectedFeedbackTarget.issue.includes('People')) inputVal.placeholder = "e.g., Mom (Missing Person's name)";
+            else inputVal.placeholder = "e.g., California (Location format)";
         }
         
     } catch (err) {

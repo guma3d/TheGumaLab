@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="static/style.css?v=47">
+    <link rel="stylesheet" href="static/style.css?v=48">
 </head>
 
 <body>
@@ -99,12 +99,8 @@
             <!-- Premium Feedback Tab -->
             <div id="feedback" class="hidden" style="max-width: 500px; margin: 0 auto; box-sizing: border-box; padding: 2.5rem 1rem;">
                 <div style="text-align: center; margin-bottom: 2rem;">
-                    <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(59, 130, 246, 0.2)); color: #10b981; font-size: 2rem; margin-bottom: 1rem;">
-                        <i class="fa-solid fa-graduation-cap"></i>
-                    </div>
-                    <h2 style="font-size: 1.6rem; margin-bottom: 0.5rem; color: white; font-weight: 800; letter-spacing: -0.5px;">자율 진화 학습</h2>
-                    <p style="color: #9ca3af; font-size: 0.95rem; line-height: 1.5; margin: 0 auto; max-width: 380px;">
-                        누락된 메타데이터를 교정해주세요.<br>AI가 비슷한 사진들을 스스로 찾아내 일괄 학습합니다.
+                    <p style="color: #9ca3af; font-size: 1rem; line-height: 1.5; margin: 0 auto; max-width: 380px;">
+                        Please provide the missing information.<br>The AI will learn and apply it to similar photos.
                     </p>
                 </div>
 
@@ -118,20 +114,20 @@
 
                     <!-- Issue Type Tag -->
                     <div id="fb-target-issue" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 8px 16px; border-radius: 999px; font-weight: 600; font-size: 0.9rem; margin-top: -5px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.1); display: none;">
-                        <i class="fa-solid fa-circle-exclamation"></i> 장소 정보 누락
+                        <i class="fa-solid fa-circle-exclamation"></i> Location Data Missing
                     </div>
 
                     <!-- Input area -->
                     <div id="fb-single-input-area" style="width: 100%; display: flex; flex-direction: column; gap: 12px;">
-                        <input type="text" id="fb-input-val" placeholder="정답을 입력하세요 (예: 성욱, 인천)" style="padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.4); color: white; font-size: 1.05rem; width: 100%; box-sizing: border-box; transition: border-color 0.2s;" autocomplete="off">
+                        <input type="text" id="fb-input-val" placeholder="Enter answer (e.g. Hawaii)" style="padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.4); color: white; font-size: 1.05rem; width: 100%; box-sizing: border-box; transition: border-color 0.2s;" autocomplete="off">
                         <input type="month" id="fb-input-date" style="padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.4); color: white; font-size: 1.05rem; width: 100%; box-sizing: border-box; display: none;">
                         
                         <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
                             <button id="fb-submit-btn" style="padding: 16px; font-weight: 700; background: linear-gradient(135deg, #10b981, #059669); border: none; font-size: 1.1rem; border-radius: 12px; color: #ffffff; cursor: pointer; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); transition: transform 0.2s, box-shadow 0.2s;">
-                                <i class="fa-solid fa-wand-magic-sparkles"></i> AI 자율 전파 승인
+                                Send
                             </button>
                             <button id="fb-skip-btn" style="padding: 16px; font-size: 1rem; color: #9ca3af; background: transparent; border: none; font-weight: 600; border-radius: 12px; cursor: pointer; transition: color 0.2s;">
-                                모르겠어요 (Skip)
+                                Skip
                             </button>
                         </div>
                     </div>
@@ -282,7 +278,7 @@
         </div>
     </div>
 
-    <script src="static/script.js?v=68"></script>
+    <script src="static/script.js?v=69"></script>
 </body>
 
 </html>
