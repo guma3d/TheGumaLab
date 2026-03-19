@@ -7,11 +7,11 @@ GumaPhoto 프로젝트에 오신 것을 환영합니다!
 
 ## 📖 1. 필수 정독 문서 (Core Documentation)
 
-1. **[GumaPhotoPlan.md](./GumaPhotoPlan.md) (프로젝트 마스터 플랜)**
+1. **[GumaPhotoPlan.md](./Docs/GumaPhotoPlan.md) (프로젝트 마스터 플랜)**
    - 프로젝트의 궁극적 목표, 현재 완료된 로드맵 단계, 그리고 핵심 인프라 구축의 큰 그림을 설명합니다. (전체 숲을 보는 용도)
-2. **[GumaPhotoTechnicalSpecs.md](./GumaPhotoTechnicalSpecs.md) (모듈별 핵심 기술 명세서 및 아키텍처)**
+2. **[GumaPhotoTechnicalSpecs.md](./Docs/GumaPhotoTechnicalSpecs.md) (모듈별 핵심 기술 명세서 및 아키텍처)**
    - 앱 내부에서 5대 코어 프로세스(업로드, 폴더정리, 벡터인덱싱, 검색엔진, 삭제처리)가 어떻게 작동하고 예외를 처리하는지 기술적인 명세서를 담고 있습니다. "알래스카에서 노는 송이"를 검색했을 때, 앱 내부에서 어떻게 LLM과 벡터 DB가 맞물려 돌아가는지의 하이브리드 수학적 작동 원리를 파악할 수 있습니다. 
-3. **[GumaPhotoProgress.md](./GumaPhotoProgress.md) (프로젝트 진행 상황 및 기술 트러블슈팅 내역)**
+3. **[GumaPhotoProgress.md](./Docs/GumaPhotoProgress.md) (프로젝트 진행 상황 및 기술 트러블슈팅 내역)**
    - 과거부터 지금까지 어떤 기술적 난관(중복 이름 처리, 썸네일 유령 파일 버그, 폴더 한국어 정식 확립 등)이 있었으며 그 문제들을 어떤 논리와 코드로 해결해 왔는지 상세한 개발 히스토리가 기록되어 있습니다. (버그 방지 및 레거시 파악용)
 
 ---
@@ -26,15 +26,17 @@ GumaPhoto 프로젝트에 오신 것을 환영합니다!
     *   `organizer_pipeline.py`: 업로드된 사진을 연월/지역 폴더로 분류 및 찌꺼기 처리하는 정리 봇
     *   `vector_indexer.py`: AI 모델들을 대량 가동하여 벡터 DB(Qdrant)에 지식을 삽입하는 인덱싱 봇
     *   `xmp_utils.py`: 파생 메타데이터 XMP 스니펫 관리자
-    *   기타 `docker-compose.yml`, `requirements.txt`, `Dockerfile`, `.env` 등 글로벌 세팅 파일
+    *   기타 `Starting.md` 온보딩 가이드와 `.env`, `docker-compose` 등만 루트에 위치합니다.
+*   `📁 Docs/`
+    *   루트 폴더 정리화 작업의 일환으로 신설된 기술 문서 전용 폴더.
+    *   플랜, 진행 상황, 기술 명세서(Architecture) 등 코어 기술 관련 Markdown 문서들이 이곳에 100% 통합되어 보관됩니다.
 *   `📁 DebugTool/`
-    *   시스템 진단, DB 조회, Qdrant 체크, 타입 에러 테스트 등을 위해 1회성으로 사용되는 각종 `check_*.py`, `remote_*.py`, `test_*.py` 스크립트 전용 방.
+    *   시스템 진단, DB 조회, Qdrant 체크 등을 위해 1회성으로 사용되는 각종 `check_*.py`, `test_*.py` 스크립트 전용 방.
 *   `📁 Scripts/`
     *   정기적으로 수동 실행이 필요하거나 유용한 배치(Batch) 관리자 도구.
     *   예: `enroll_batch.py`(얼굴 추가 학습), `generate_thumbnails_batch.py`, `bump_version.py` 등
 *   `📁 OneTimeFixes/`
-    *   과거에 시스템 대규모 리팩토링이나 데이터 교정을 위해 사용했던 일회성 스크립트 모음.
-    *   예: `compress_sequence.py`(구멍 난 파일 번호 당기기), `translate_folders.py`(영어 위치명 한글 번역기)
+    *   과거 시스템 교정을 위해 사용했던 일회성 스크립트 모음. (예: `compress_sequence.py`)
 
 ---
 
