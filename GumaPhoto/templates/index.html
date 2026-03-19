@@ -171,31 +171,32 @@
 
     <!-- Self-Healing Feedback Modal v2 -->
     <div id="feedback-hub-modal" class="modal hidden">
-        <div class="modal-content" style="max-width: 500px; padding: 2rem;">
+        <div class="modal-content" style="max-width: 500px; padding: 2rem; width: 90%;">
             <span id="feedback-hub-close" class="modal-close">&times;</span>
-            <h2 style="font-size: 1.8rem; margin-bottom: 1rem;"><i class="fa-solid fa-wand-magic-sparkles"></i> AI 자율 피드백 (Self-Healing)</h2>
-            <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem; line-height: 1.5;">Unknown 정보가 있는 사진을 단 1장만 선택하여 교정해 주시면, AI가 해당 시각 벡터(SigLIP/Face)를 분석하여 주변의 파편화된 사진들을 자동으로 쓸어 담아 100% 무결점으로 재구축(Re-Index)합니다.</p>
-            
-            <div style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
-                <button id="fb-btn-time" class="secondary-btn" style="flex: 1; padding: 12px; font-weight: 600; color: #3b82f6; border-color: #3b82f6;"><i class="fa-regular fa-clock"></i> 시간/장소 교정</button>
-                <button id="fb-btn-face" class="secondary-btn" style="flex: 1; padding: 12px; font-weight: 600; color: #10b981; border-color: #10b981;"><i class="fa-solid fa-user-tag"></i> 안면 학습(이름)</button>
-            </div>
+            <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: #10b981; font-weight: 800;"><i class="fa-solid fa-wand-magic-sparkles"></i> 자율 진화 학습 (1장 교정)</h2>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; line-height: 1.4;">정보가 누락된 단 1장의 사진입니다. 정답을 적어주시면 AI가 주변 상황을 파악해 나머지 사진들까지 스스로 고칩니다!</p>
 
-            <!-- 미분류 사진 표출 프레임 -->
-            <div id="fb-unknown-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-height: 300px; overflow-y: auto; margin-bottom: 1.5rem; background: var(--surface-light); padding: 10px; border-radius: 8px;">
-                <p id="fb-grid-msg" style="color: var(--text-muted); grid-column: 1 / -1; text-align: center; padding: 20px;">위 버튼을 눌러 작업을 스캔하세요.</p>
-            </div>
+            <div id="fb-unknown-photo-container" style="display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%;">
+                
+                <!-- 1 Photo Showcase -->
+                <div style="width: 100%; border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border); display: flex; justify-content: center; align-items: center; min-height: 250px;">
+                    <img id="fb-target-img" src="" alt="Unknown Photo" style="max-width: 100%; max-height: 350px; object-fit: contain; display: none;">
+                    <span id="fb-loading-spinner" style="font-size: 2.5rem; color: #10b981;"><i class="fa-solid fa-spinner fa-spin"></i></span>
+                </div>
+                
+                <!-- Issue Type Tag -->
+                <div id="fb-target-issue" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); color: #fca5a5; padding: 6px 12px; border-radius: 999px; font-weight: bold; font-size: 0.9rem; display: none;">
+                    <i class="fa-solid fa-circle-exclamation"></i> 장소 정보 누락
+                </div>
 
-            <!-- 입력 활성화 폼 -->
-            <div id="fb-input-area" class="hidden" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.4); padding: 15px; border-radius: 8px; margin-bottom: 1rem;">
-                <h3 id="fb-input-title" style="margin-bottom: 12px; font-size: 1.1rem; font-weight: bold; color: #10b981;">수정 정보 입력</h3>
-                <div style="display:flex; flex-direction: column; gap: 12px;">
-                    <input type="text" id="fb-input-text" placeholder="예: 송이 (이름), 또는 미국-하와이 (장소)" style="padding: 12px; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--surface-dark); color: white;" autocomplete="off">
-                    <input type="month" id="fb-input-date" style="padding: 12px; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--surface-dark); color: white; display: none;">
-                    <button id="fb-submit-btn" class="primary-btn" style="padding: 12px; width: 100%; margin-top: 5px; background: #10b981; color: #000; font-weight: 800; font-size: 1.1rem;"><i class="fa-solid fa-rocket"></i> 자율 전파(Propagation) 승인!</button>
+                <!-- Input area -->
+                <div id="fb-single-input-area" style="width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 5px;">
+                    <input type="text" id="fb-input-val" placeholder="정답을 입력하세요 (예: 성욱, 미국-하와이)" style="padding: 14px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-dark); color: white; font-size: 1rem;" autocomplete="off">
+                    <input type="month" id="fb-input-date" style="padding: 14px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-dark); color: white; font-size: 1rem; display: none;">
+                    <button id="fb-submit-btn" class="primary-btn" style="padding: 12px; font-weight: 800; background: #10b981; border: none; font-size: 1.1rem; border-radius: 8px; color: #000; margin-top: 5px;"><i class="fa-solid fa-check"></i> 자율 전파(Propagation) 승인</button>
+                    <button id="fb-skip-btn" class="secondary-btn" style="padding: 10px; font-size: 0.95rem; color: var(--text-muted); background: transparent; border: 1px solid var(--glass-border); border-radius: 8px;">모르겠어요 (다음 사진)</button>
                 </div>
             </div>
-            <p id="fb-status-text" class="hidden" style="text-align: center; margin-top: 10px; font-weight: bold; color: #fff;"></p>
         </div>
     </div>
 
