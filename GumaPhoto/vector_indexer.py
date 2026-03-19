@@ -150,7 +150,7 @@ class VectorIndexer:
         print("[*] 📝 Florence-2-base VLM 상황 묘사 AI 로드 중 ...")
         try:
             florence_model_id = "microsoft/Florence-2-base"
-            self.florence_model = AutoModelForCausalLM.from_pretrained(florence_model_id, trust_remote_code=True, torch_dtype=torch.bfloat16, attn_implementation="sdpa").to("cuda" if torch.cuda.is_available() else "cpu")
+            self.florence_model = AutoModelForCausalLM.from_pretrained(florence_model_id, trust_remote_code=True, torch_dtype=torch.bfloat16).to("cuda" if torch.cuda.is_available() else "cpu")
             self.florence_processor = AutoProcessor.from_pretrained(florence_model_id, trust_remote_code=True)
             self.florence_model.eval()
             print("  [+] Florence-2-base 로드 완료!")
@@ -346,10 +346,11 @@ class VectorIndexer:
                     generated_ids_cap = self.florence_model.generate(
                         input_ids=flo_inputs_cap["input_ids"],
                         pixel_values=flo_inputs_cap["pixel_values"],
-                        max_new_tokens=512,
-                        early_stopping=False,
+                        max_new_tokens=256,
+                        early_stopping=True,
                         do_sample=False,
                         num_beams=1,
+                        repetition_penalty=1.5,
                     )
                 generated_texts_cap = self.florence_processor.batch_decode(generated_ids_cap, skip_special_tokens=False)
                 for idx, text in enumerate(generated_texts_cap):
@@ -364,10 +365,11 @@ class VectorIndexer:
                     generated_ids_od = self.florence_model.generate(
                         input_ids=flo_inputs_od["input_ids"],
                         pixel_values=flo_inputs_od["pixel_values"],
-                        max_new_tokens=1024,
-                        early_stopping=False,
+                        max_new_tokens=256,
+                        early_stopping=True,
                         do_sample=False,
                         num_beams=1,
+                        repetition_penalty=1.5,
                     )
                 generated_texts_od = self.florence_processor.batch_decode(generated_ids_od, skip_special_tokens=False)
                 for idx, text in enumerate(generated_texts_od):
