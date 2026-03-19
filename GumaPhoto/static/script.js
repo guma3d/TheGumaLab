@@ -1067,6 +1067,7 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
 // 📱 Mobile Bottom Navigation Bar Logic
 // =========================================================================
 const bottomNav = document.getElementById('bottom-nav');
+const topHeader = document.querySelector('.top-header');
 let lastScrollY = window.scrollY;
 
 if (bottomNav) {
@@ -1076,12 +1077,15 @@ if (bottomNav) {
         // 아이폰 바운스 스크롤 효과 방어용
         if (currentScrollY <= 0) {
             bottomNav.classList.remove('nav-hidden');
+            if (topHeader) topHeader.classList.remove('header-hidden');
         } else if (currentScrollY > lastScrollY && currentScrollY > 60) {
-            // 스크롤 다운 (화면을 위로 쓸어 올릴 때) -> 내비 숨김
+            // 스크롤 다운 (화면을 위로 쓸어 올릴 때) -> 내비 숨김 & 헤더 숨김
             bottomNav.classList.add('nav-hidden');
+            if (topHeader) topHeader.classList.add('header-hidden');
         } else if (currentScrollY < lastScrollY) {
-            // 스크롤 업 (화면을 아래로 쓸어 내릴 때) -> 내비 즉시 보이게
+            // 스크롤 업 (화면을 아래로 쓸어 내릴 때) -> 내비 즉시 보이게 & 헤더 보이게
             bottomNav.classList.remove('nav-hidden');
+            if (topHeader) topHeader.classList.remove('header-hidden');
         }
         
         lastScrollY = currentScrollY;
