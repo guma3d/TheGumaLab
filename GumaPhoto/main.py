@@ -58,7 +58,7 @@ async def lifespan(app: FastAPI):
     global siglip_processor, siglip_model, qdrant_client, gemini_client, known_faces
     
     # 1. Start background live monitor for JSON progress
-    tracker_process = subprocess.Popen(["python", "live_progress_tracker.py"])
+    tracker_process = subprocess.Popen(["python", "Scripts/live_progress_tracker.py"])
     
     # 초기 SQLite 테이블 세팅 (Feedback Queue 생성)
     try:
