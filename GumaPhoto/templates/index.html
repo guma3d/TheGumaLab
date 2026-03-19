@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="static/style.css?v=50">
+    <link rel="stylesheet" href="static/style.css?v=51">
 </head>
 
 <body>
@@ -27,16 +27,16 @@
             </div>
             
             <div class="header-actions" style="display: flex; align-items: center; gap: 8px;">
+                <input type="file" id="upload-input" multiple accept="image/*" style="display: none;">
+                <label for="upload-input" id="upload-btn" class="secondary-btn" title="Upload Photos">
+                    <i class="fa-solid fa-cloud-arrow-up" style="color: #3b82f6;"></i>
+                </label>
                 <button id="open-search-modal-btn" class="secondary-btn" title="AI Search">
                     <i class="fa-solid fa-magnifying-glass" style="color: #3b82f6;"></i>
                 </button>
                 <button id="feedback-hub-btn" class="secondary-btn hide-on-mobile" title="Self-Healing Feedback Hub">
                     <i class="fa-solid fa-wand-magic-sparkles"></i>
                 </button>
-                <input type="file" id="upload-input" multiple accept="image/*" style="display: none;">
-                <label for="upload-input" id="upload-btn" class="secondary-btn hide-on-mobile" title="Upload Photos">
-                    <i class="fa-solid fa-cloud-arrow-up"></i>
-                </label>
                 <button id="progress-monitor-btn" class="secondary-btn hide-on-mobile" title="Live Progress Monitor">
                     <i class="fa-solid fa-list-check"></i>
                 </button>
@@ -119,11 +119,11 @@
                         <input type="text" id="fb-input-val" placeholder="정답을 입력하세요 (예: 미국-하와이)" style="padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.4); color: white; font-size: 1.05rem; width: 100%; box-sizing: border-box; transition: border-color 0.2s;" autocomplete="off">
                         <input type="month" id="fb-input-date" style="padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.4); color: white; font-size: 1.05rem; width: 100%; box-sizing: border-box; display: none;">
                         
-                        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
-                            <button id="fb-submit-btn" style="padding: 16px; font-weight: 700; background: linear-gradient(135deg, #10b981, #059669); border: none; font-size: 1.1rem; border-radius: 12px; color: #ffffff; cursor: pointer; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); transition: transform 0.2s, box-shadow 0.2s;">
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 8px;">
+                            <button id="fb-submit-btn" style="width: 70%; padding: 14px; font-weight: 700; background: linear-gradient(135deg, #10b981, #059669); border: none; font-size: 1.1rem; border-radius: 12px; color: #ffffff; cursor: pointer; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); transition: transform 0.2s, box-shadow 0.2s;">
                                 Send
                             </button>
-                            <button id="fb-skip-btn" style="padding: 16px; font-size: 1rem; color: #9ca3af; background: transparent; border: none; font-weight: 600; border-radius: 12px; cursor: pointer; transition: color 0.2s;">
+                            <button id="fb-skip-btn" style="padding: 8px; font-size: 1rem; color: #9ca3af; background: transparent; border: none; font-weight: 600; border-radius: 12px; cursor: pointer; transition: color 0.2s;">
                                 Skip
                             </button>
                         </div>
@@ -131,30 +131,9 @@
                 </div>
             </div>
 
-            <!-- Upload Tab -->
-            <div id="upload" class="hidden" style="display:flex; flex-direction:column; align-items:center; padding-top: 10vh; gap: 20px;">
-                <i class="fa-solid fa-cloud-arrow-up" style="font-size: 4rem; color: #3b82f6;"></i>
-                <h2 style="color: white; font-size: 1.5rem; margin: 0;">사진 데스크 업로드</h2>
-                <p style="color: var(--text-muted); text-align: center;">휴대폰에 저장된 새로운 사진들을 GumaPhoto로 전송합니다.</p>
-                <div id="local-upload-preview" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width: 600px; max-height: 40vh; overflow-y: auto;">
-                    <!-- JS renders selected local photos here -->
-                </div>
-                <button class="primary-btn" onclick="document.getElementById('upload-input').click()" style="padding: 14px 24px; font-size: 1.1rem; border-radius: 999px; margin-top: 20px; font-weight: 800;">
-                    <i class="fa-solid fa-folder-open"></i> 스마트폰 갤러리 열기
-                </button>
-            </div>
-
             <!-- Premium System Tab -->
             <div id="system" class="hidden" style="max-width: 500px; margin: 0 auto; box-sizing: border-box; padding: 2.5rem 1rem;">
-                <div style="text-align: center; margin-bottom: 2rem;">
-                    <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2)); color: #60a5fa; font-size: 2rem; margin-bottom: 1rem;">
-                        <i class="fa-solid fa-server"></i>
-                    </div>
-                    <h2 style="font-size: 1.6rem; margin-bottom: 0.5rem; color: white; font-weight: 800; letter-spacing: -0.5px;">System Overview</h2>
-                    <p style="color: #9ca3af; font-size: 0.95rem; line-height: 1.5; margin: 0 auto;">
-                        Real-time AI pipeline & Database health
-                    </p>
-                </div>
+
 
                 <div style="display: flex; flex-direction: column; gap: 16px;">
                     
@@ -205,10 +184,6 @@
         <a href="#" class="nav-item" id="nav-feedback-btn">
             <i class="fa-solid fa-graduation-cap"></i>
             <span>Feedback</span>
-        </a>
-        <a href="#" class="nav-item" id="nav-upload-btn">
-            <i class="fa-solid fa-cloud-arrow-up"></i>
-            <span>Upload</span>
         </a>
         <a href="#" class="nav-item" id="nav-system-btn">
             <i class="fa-solid fa-server"></i>
@@ -301,7 +276,7 @@
         </div>
     </div>
 
-    <script src="static/script.js?v=71"></script>
+    <script src="static/script.js?v=72"></script>
 </body>
 
 </html>

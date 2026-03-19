@@ -1178,7 +1178,7 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
 // =========================================================================
 // 📱 Mobile Bottom Navigation Bar & View Router Logic
 // =========================================================================
-const views = ['home', 'feedback', 'upload', 'system'];
+const views = ['home', 'feedback', 'system'];
 
 function switchView(target) {
     if (target !== 'system' && window.progressPollingInterval) {
@@ -1250,71 +1250,15 @@ if (bottomNav) {
 // =========================================================================
 // Upload View Local Preview & Execution
 // =========================================================================
-document.getElementById('upload-input')?.addEventListener('change', function(e) {
+document.getElementById('upload-input')?.addEventListener('change', async function(e) {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
-    switchView('upload'); // Switch to upload view if trigged externally
+    // 파일이 선택되면 화면 전환이나 프리뷰 없이 즉시 서버로 업로드 파이프라인 가동
+    await executeUpload(files);
     
-    const previewContainer = document.getElementById('local-upload-preview');
-    if (previewContainer) {
-        previewContainer.innerHTML = '';
-        const limit = Math.min(files.length, 12);
-        for (let i = 0; i < limit; i++) {
-            const file = files[i];
-            const imgUrl = URL.createObjectURL(file);
-            const imgElement = document.createElement('img');
-            imgElement.src = imgUrl;
-            imgElement.style.width = '100px';
-            imgElement.style.height = '100px';
-            imgElement.style.objectFit = 'cover';
-            imgElement.style.borderRadius = '8px';
-            imgElement.style.border = '1px solid rgba(255,255,255,0.1)';
-            previewContainer.appendChild(imgElement);
-        }
-        if (files.length > limit) {
-            const moreIndicator = document.createElement('div');
-            moreIndicator.style.width = '100px';
-            moreIndicator.style.height = '100px';
-            moreIndicator.style.borderRadius = '8px';
-            moreIndicator.style.background = 'rgba(255,255,255,0.1)';
-            moreIndicator.style.display = 'flex';
-            moreIndicator.style.alignItems = 'center';
-            moreIndicator.style.justifyContent = 'center';
-            moreIndicator.style.color = '#fff';
-            moreIndicator.style.fontWeight = 'bold';
-            moreIndicator.innerHTML = `+${files.length - limit}`;
-            previewContainer.appendChild(moreIndicator);
-        }
-        
-        let existingBtn = document.getElementById('execute-upload-btn');
-        if (existingBtn) existingBtn.remove();
-        
-        const startBtn = document.createElement('button');
-        startBtn.id = 'execute-upload-btn';
-        startBtn.className = 'primary-btn';
-        startBtn.style.padding = '12px 24px';
-        startBtn.style.background = '#10b981';
-        startBtn.style.borderRadius = '999px';
-        startBtn.style.border = 'none';
-        startBtn.style.marginTop = '20px';
-        startBtn.style.fontSize = '1.1rem';
-        startBtn.style.fontWeight = 'bold';
-        startBtn.style.cursor = 'pointer';
-        startBtn.style.color = '#000';
-        startBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> 선택된 사진 보내기 (' + files.length + '장)';
-        
-        previewContainer.parentElement.appendChild(startBtn);
-        
-        startBtn.onclick = async () => {
-             startBtn.disabled = true;
-             startBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 업로드 진행 중...';
-             await executeUpload(files); 
-             startBtn.innerHTML = '<i class="fa-solid fa-check"></i> 전송 완료';
-             setTimeout(() => {
-                 switchView('home'); 
-                 location.reload(); // Refresh to show new photos!
-             }, 1500);
-        };
-    }
+    // 업로드가 끝나면 무조건 홈 화면으로 리셋 (새로 추가된 사진 반영)
+    setTimeout(() => {
+        location.reload(); 
+    }, 1000);
 });
