@@ -768,11 +768,37 @@ downloadBtn?.addEventListener('click', () => {
     document.body.removeChild(a);
 });
 
-// 공유 버튼 (Web Share API 지원)
-shareBtn?.addEventListener('click', async () => {
+// ==========================================
+// iOS Action Sheet (공유 버튼 클릭 시)
+// ==========================================
+const iosShareSheet = document.getElementById('ios-share-sheet');
+const sheetShareBtn = document.getElementById('sheet-share');
+const sheetSaveBtn = document.getElementById('sheet-save');
+const sheetCopyBtn = document.getElementById('sheet-copy');
+const sheetCancelBtn = document.getElementById('sheet-cancel');
+
+// 1. 하단 액션 시트 모달 띄우기
+shareBtn?.addEventListener('click', () => {
     if (!currentModalPhoto) return;
+    iosShareSheet.classList.remove('hidden');
+});
+
+// 2. 배경 터치 혹은 취소 시트 닫기
+iosShareSheet?.addEventListener('click', (e) => {
+    if (e.target === iosShareSheet) {
+        iosShareSheet.classList.add('hidden');
+    }
+});
+sheetCancelBtn?.addEventListener('click', () => {
+    iosShareSheet.classList.add('hidden');
+});
+
+// 3. 액션: 공유 (Native Share)
+sheetShareBtn?.addEventListener('click', async () => {
+    iosShareSheet.classList.add('hidden');
+    if (!currentModalPhoto) return;
+    const fileUrl = modalImage.src;
     try {
-        const fileUrl = modalImage.src;
         if (navigator.share) {
             await navigator.share({
                 title: 'GumaPhoto',
@@ -780,11 +806,38 @@ shareBtn?.addEventListener('click', async () => {
                 url: fileUrl
             });
         } else {
-            await navigator.clipboard.writeText(fileUrl);
-            alert("사진 링크가 클립보드에 복사되었습니다!");
+            alert('현재 브라우저에서는 이 공유 방식을 지원하지 않습니다.');
         }
     } catch(err) {
         console.error("공유 취소 또는 오류:", err);
+    }
+});
+
+// 4. 액션: 기기에 직접 저장 (Download)
+sheetSaveBtn?.addEventListener('click', () => {
+    iosShareSheet.classList.add('hidden');
+    if (!currentModalPhoto) return;
+    const fileUrl = modalImage.src;
+    const a = document.createElement('a');
+    a.href = fileUrl;
+    let filename = fileUrl.split('/').pop().split('?')[0]; 
+    if (!filename) filename = `GumaPhoto_${currentModalPhoto.id}.jpg`;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+});
+
+// 5. 액션: 클립보드 복사
+sheetCopyBtn?.addEventListener('click', async () => {
+    iosShareSheet.classList.add('hidden');
+    if (!currentModalPhoto) return;
+    const fileUrl = modalImage.src;
+    try {
+        await navigator.clipboard.writeText(fileUrl);
+        alert("사진 링크가 클립보드에 복사되었습니다!");
+    } catch(err) {
+        console.error("복사 오류:", err);
     }
 });
 
@@ -1172,6 +1225,8 @@ if (bottomNav) {
     document.getElementById('nav-upload-btn')?.addEventListener('click', (e) => {
         e.preventDefault();
         switchView('upload');
+        // 사용자가 탭을 누르자마자 즉시 사진 앱(파일 선택창)이 열리도록 트리거
+        document.getElementById('upload-input')?.click();
     });
     
     document.getElementById('nav-system-btn')?.addEventListener('click', (e) => {
