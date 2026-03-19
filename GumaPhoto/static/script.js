@@ -127,9 +127,28 @@ async function preloadTags() {
     }
 }
 
+// Search Modal Toggle
+const searchModalBtn = document.getElementById('open-search-modal-btn');
+const searchModal = document.getElementById('search-modal');
+const searchModalClose = document.getElementById('search-modal-close');
+
+if (searchModalBtn && searchModal && searchModalClose) {
+    searchModalBtn.addEventListener('click', () => {
+        searchModal.classList.remove('hidden');
+        setTimeout(() => document.getElementById('search-query').focus(), 100);
+    });
+    
+    searchModalClose.addEventListener('click', () => searchModal.classList.add('hidden'));
+    
+    searchModal.addEventListener('click', (e) => {
+        if (e.target === searchModal) searchModal.classList.add('hidden');
+    });
+}
+
 // Search Form Handler
 document.getElementById('search-form').addEventListener('submit', async function(e) {
     e.preventDefault();
+    if (searchModal) searchModal.classList.add('hidden'); // 검색 실행 시 팝업 닫기
     
     const query = document.getElementById('search-query').value.trim();
     

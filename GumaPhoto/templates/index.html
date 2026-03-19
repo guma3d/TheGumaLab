@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="static/style.css?v=27">
+    <link rel="stylesheet" href="static/style.css?v=32">
 </head>
 
 <body>
@@ -26,28 +26,21 @@
                 <h1 style="font-size: 1.7rem; font-weight: 800; letter-spacing: -0.5px; margin: 0; line-height: 1;">GumaPhoto</h1>
             </div>
             
-            <form id="search-form" class="search-form">
-                <div class="input-group">
-                    <input type="text" id="search-query" placeholder="Ask anything... (e.g. 'Mom in the rain')" required autocomplete="off">
-                    <span id="clear-btn" class="clear-btn hidden" title="Clear search"><i class="fa-solid fa-circle-xmark"></i></span>
-                    <button type="submit" id="submit-btn">
-                        <span class="btn-text"><i class="fa-solid fa-magnifying-glass"></i></span>
-                        <div class="loader" style="display: none;"></div>
-                    </button>
-                </div>
-            </form>
             <div class="header-actions" style="display: flex; align-items: center; gap: 8px;">
                 <button id="refresh-btn" class="secondary-btn" title="Refresh App" onclick="location.reload()">
                     <i class="fa-solid fa-rotate-right"></i>
                 </button>
-                <button id="feedback-hub-btn" class="secondary-btn" title="Self-Healing Feedback Hub">
+                <button id="open-search-modal-btn" class="secondary-btn" title="AI Search">
+                    <i class="fa-solid fa-magnifying-glass" style="color: #3b82f6;"></i>
+                </button>
+                <button id="feedback-hub-btn" class="secondary-btn hide-on-mobile" title="Self-Healing Feedback Hub">
                     <i class="fa-solid fa-wand-magic-sparkles"></i>
                 </button>
                 <input type="file" id="upload-input" multiple accept="image/*" style="display: none;">
-                <label for="upload-input" id="upload-btn" class="secondary-btn" title="Upload Photos">
+                <label for="upload-input" id="upload-btn" class="secondary-btn hide-on-mobile" title="Upload Photos">
                     <i class="fa-solid fa-cloud-arrow-up"></i>
                 </label>
-                <button id="progress-monitor-btn" class="secondary-btn" title="Live Progress Monitor">
+                <button id="progress-monitor-btn" class="secondary-btn hide-on-mobile" title="Live Progress Monitor">
                     <i class="fa-solid fa-list-check"></i>
                 </button>
             </div>
@@ -120,6 +113,24 @@
             <span>System</span>
         </a>
     </nav>
+
+    <!-- AI Search Modal -->
+    <div id="search-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 600px; width: 90vw; background: rgba(20, 20, 20, 0.9); padding: 24px; border-radius: 12px; border: 1px solid var(--glass-border);">
+            <span id="search-modal-close" class="modal-close" style="top: 10px; right: 10px;">&times;</span>
+            <h2 style="color: white; margin-top: 0; margin-bottom: 20px; font-size: 1.3rem;">AI 자연어 검색</h2>
+            <form id="search-form" class="search-form" style="width: 100%; margin: 0; max-width: none;">
+                <div class="input-group">
+                    <input type="text" id="search-query" placeholder="Ask anything... (e.g. 'Mom in the rain')" required autocomplete="off">
+                    <span id="clear-btn" class="clear-btn hidden" title="Clear search"><i class="fa-solid fa-circle-xmark"></i></span>
+                    <button type="submit" id="submit-btn">
+                        <span class="btn-text"><i class="fa-solid fa-magnifying-glass"></i></span>
+                        <div class="loader" style="display: none;"></div>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Photo Detail Modal -->
     <div id="photo-modal" class="modal hidden">
@@ -225,7 +236,7 @@
         </div>
     </div>
 
-    <script src="static/script.js?v=48"></script>
+    <script src="static/script.js?v=53"></script>
 </body>
 
 </html>

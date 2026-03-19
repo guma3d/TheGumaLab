@@ -11,8 +11,7 @@ GumaPhoto(`index.html`)의 프론트엔드는 모바일과 데스크톱 모두�
  ┃   ┃
  ┃   ┣━ 🟢 <header class="top-header"> (상단 내비게이션 바 / 스크롤 시 화면 상단 고정, z-index: 100)
  ┃   ┃   ┣━ 로고 영역 (<i class="fa-solid fa-camera-retro"></i> + GumaPhoto)
- ┃   ┃   ┣━ 🔍 검색창 (자연어 기반 AI Search 폼)
- ┃   ┃   ┗━ 🎛️ 모바일 우측 상단 버튼 (새로고침 전용 / 나머지 버튼들은 모바일 뷰에서 하단으로 이동)
+ ┃   ┃   ┗━ 🎛️ 우측 상단 버튼 모음 (파란색 AI 검색 돋보기 & 새로고침 아이콘 / 나머지 버튼들은 모바일 뷰에서 하단으로 이동)
  ┃   ┃
  ┃   ┣━ ☁️ <div id="upload-progress-container"> (대량 업로드 진행률 바 / 평소에는 숨김)
  ┃   ┃
@@ -28,6 +27,7 @@ GumaPhoto(`index.html`)의 프론트엔드는 모바일과 데스크톱 모두�
  ┃   ┗━ 📱 모바일 환경 상단에서 내려온 필수 기능 3대장 (자율 피드백, 로컬 업로드, DB 모니터링) 전담 배치.
  ┃
  ┗━ ⬛ [3] 팝업 모달 레이어 (클릭 시 화면 전체를 덮는 컴포넌트 / z-index: 1000+)
+     ┣━ 🔍 <div id="search-modal"> (우측 상단 돋보기 아이콘 클릭 시 뜨는 AI 자연어 검색 전용 모달 창)
      ┣━ 📸 <div id="photo-modal"> (사진 상세 뷰. 사진 내부 좌측 하단엔 AI 추출 데이터 뱃지들이 오버레이(Overlay)로 떠 있고, 사진 바깥 10px 아래 정중앙엔 녹색 프리미엄 휴지통이 배치된 구조)
      ┣━ 📊 <div id="progress-modal"> (2만 장 단위의 VRAM 벡터 스캔 상태를 퍼센트로 보여주는 모니터링 창)
      ┣━ 🪄 <div id="feedback-hub-modal"> (Unknown 단일 사진에 집중하여 피드백을 전달하는 '자율 리인덱스 v2' 창)
