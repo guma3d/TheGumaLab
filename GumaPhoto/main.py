@@ -871,6 +871,78 @@ async def get_filters():
         "names": ["All Names", "송이", "성욱", "준우", "지우"]
     }
 
+# --- Self-Healing Feedback v2.0 API Endpoints ---
+class FeedbackV2Request(BaseModel):
+    point_id: str
+    issue_type: str
+    correct_value: str
+
+@app.get("/api/feedback_v2/unknown")
+async def get_unknown_photo():
+    import random
+    if not qdrant_client: return {"error": "Qdrant not loaded"}
+    
+    try:
+        res, _ = qdrant_client.scroll(
+            collection_name="gumaphoto_hybrid_kr", 
+            limit=500, 
+            with_payload=True
+        )
+        
+        unknowns = []
+        for r in res:
+            loc = r.payload.get("location", "")
+            people = r.payload.get("people", [])
+            date_val = r.payload.get("date", "")
+            
+            issue = ""
+            if "위치정보없음" in loc or not loc:
+                issue = "장소 정보 누락"
+            elif any("Unknown" in p for p in people):
+                issue = "이름 정보 누락 (Unknown)"
+            elif "Unknown" in date_val or not date_val:
+                issue = "시간 정보 누락"
+                
+            if issue:
+                url_path = r.payload.get("filepath", "")
+                if url_path.startswith("/app/data/organized"):
+                    url_path = url_path.replace("/app/data/organized", "/photos")
+                    
+                unknowns.append({
+                    "id": r.id,
+                    "url": url_path,
+                    "issue": issue
+                })
+                
+        if not unknowns:
+            return {"id": None, "message": "모든 사진이 완벽하게 분류되었습니다!"}
+            
+        return random.choice(unknowns)
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.post("/api/feedback_v2/submit")
+async def submit_feedback_v2(req: FeedbackV2Request):
+    import subprocess
+    
+    fb_type = "face" if "이름" in req.issue_type else "time_loc"
+    
+    cmd = [
+        "python", "Scripts/feedback_processor_v2.py",
+        "--type", fb_type,
+        "--doc_id", req.point_id
+    ]
+    
+    if fb_type == "face":
+        cmd.extend(["--name", req.correct_value])
+    else:
+        cmd.extend(["--loc", req.correct_value, "--date", ""])
+        
+    print(f"🚀 [Feedback v2.0] Triggering Self-Healing: {cmd}")
+    subprocess.Popen(cmd, cwd="/app")
+    
+    return {"message": "자율 전파 학습이 백그라운드에서 백지상태로 가동되었습니다!"}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
