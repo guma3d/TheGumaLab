@@ -196,7 +196,7 @@ class VectorIndexer:
         except sqlite3.OperationalError:
             pass
             
-        # 1. Qdrant 실존 검사
+        # 1. Qdrant 실존 검사 (원본 사진은 파일 시스템 스캔으로 이미 보장됨)
         try:
             records = self.q_client.retrieve(
                 collection_name=COLLECTION_NAME,
@@ -208,11 +208,9 @@ class VectorIndexer:
         except Exception:
             qdrant_has_vector = False
             
-        # 2. XMP 실존 검사
-        xmp_exists = os.path.exists(filepath + ".xmp") or os.path.exists(base_name + ".xmp")
-        
-        # 완벽 무결성 체크: Qdrant와 XMP가 모두 있으면 SQLite에 벌크로 DONE 채워넣고 패스
-        if qdrant_has_vector and xmp_exists:
+        # 2. XMP 파일 누락을 이유로 비싼 AI Qdrant 벡터를 연대 자폭시키는 위험을 제거
+        # 원본 사진(스캐너) + Qdrant DB 벡터가 존재하면 무조건 안전지대로 판정하여 Skip
+        if qdrant_has_vector:
             try:
                 with getattr(self, "db_lock", __import__("threading").Lock()):
                     self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status) VALUES (?, ?)", (filepath, 'DONE'))
@@ -221,23 +219,7 @@ class VectorIndexer:
                 pass 
             return True
             
-        # 둘 중 하나라도 없으면 원자성 실패로 간주, 기존 찌꺼기 싹 지우고 처음부터
-        if qdrant_has_vector:
-            try:
-                from qdrant_client.http.models import PointIdsList
-                self.q_client.delete(collection_name=COLLECTION_NAME, points_selector=PointIdsList(points=[point_id]))
-            except:
-                pass
-                
-        if xmp_exists:
-            try:
-                if os.path.exists(filepath + ".xmp"):
-                    os.remove(filepath + ".xmp")
-                if os.path.exists(base_name + ".xmp"):
-                    os.remove(base_name + ".xmp")
-            except:
-                pass
-                
+        # Qdrant에 없는 경우에만 진행
         return False
 
 
