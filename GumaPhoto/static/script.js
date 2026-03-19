@@ -150,6 +150,9 @@ document.getElementById('search-form').addEventListener('submit', async function
     e.preventDefault();
     if (searchModal) searchModal.classList.add('hidden'); // 검색 실행 시 팝업 닫기
     
+    // 어느 탭에 있든 검색을 시작하면 무조건 Home(메인 갤러리 뷰) 탭으로 강제 이동
+    switchView('home');
+    
     const query = document.getElementById('search-query').value.trim();
     
     currentQuery = query; // allow empty to go back to home timeline
@@ -414,12 +417,15 @@ async function fetchPhotos(isLoadMore) {
                 
                 let fallbackMsg = '';
                 if (data.fallback_triggered && !isLoadMore) {
-                    fallbackMsg = `<br><span style="color:#ef4444; font-size: 0.9em; margin-top:5px; display:inline-block;">⚠️ No exact match for '${currentLocation}', showing photos with similar atmosphere instead.</span>`;
+                    fallbackMsg = `<span style="color:#ef4444; font-size: 0.9em; margin-top:5px; display:inline-block;">⚠️ No exact match for '${currentLocation}', showing photos with similar atmosphere instead.</span>`;
                 }
     
-                metaText.innerHTML = `Loaded <b style="color:white">${totalHits}</b> photos for: "<i style="color:var(--text-muted)">${currentQuery}</i>" <br> 
-                <small style="color:#3b82f6;">(AI concept: ${currentScene})</small>${fallbackMsg}`;
-                metaContainer.classList.remove('hidden');
+                if (fallbackMsg) {
+                    metaText.innerHTML = fallbackMsg;
+                    metaContainer.classList.remove('hidden');
+                } else {
+                    metaContainer.classList.add('hidden');
+                }
                 
                 if (!isLoadMore) searchGrid.innerHTML = '';
                 renderGallery(data.results, isLoadMore, 'search-grid', true, true);
