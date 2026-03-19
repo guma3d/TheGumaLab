@@ -883,11 +883,31 @@ async def get_unknown_photo():
     if not qdrant_client: return {"error": "Qdrant not loaded"}
     
     try:
-        res, _ = qdrant_client.scroll(
-            collection_name="gumaphoto_hybrid_kr", 
-            limit=500, 
-            with_payload=True
-        )
+        # 날짜 결손(Date Missing) 우선 검색 강제
+        from qdrant_client import models
+        
+        date_res = []
+        try:
+            date_res = qdrant_client.search(
+                collection_name="gumaphoto_hybrid_kr", 
+                query_vector=("v_scene", [0]*768), 
+                query_filter=models.Filter(
+                    must=[models.FieldCondition(key="date", match=models.MatchText(text="Unknown"))]
+                ),
+                limit=50,
+                with_payload=True
+            )
+        except Exception as e:
+            pass
+            
+        if not date_res:
+            res, _ = qdrant_client.scroll(
+                collection_name="gumaphoto_hybrid_kr", 
+                limit=500, 
+                with_payload=True
+            )
+        else:
+            res = date_res
         
         unknowns = []
         for r in res:
