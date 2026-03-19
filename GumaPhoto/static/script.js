@@ -1083,26 +1083,35 @@ async function loadUnknownPhoto() {
         
         const fbBadgesContainer = document.getElementById('fb-info-badges');
         if (fbBadgesContainer) {
-            fbBadgesContainer.innerHTML = '';
+            const createBadge = (icon, text, isHighlight = false) => {
+                if (!text || text.trim() === '') text = 'Unknown';
+                const cls = isHighlight ? 'info-badge highlight' : 'info-badge';
+                return `<div class="${cls}"><i class="${icon}"></i> ${text}</div>`;
+            };
+            
+            let badgesHtml = '';
             const t = selectedFeedbackTarget;
-            if (t.date && t.date !== 'Unknown Date' && t.date.trim() !== '') {
-                const b = document.createElement('div'); b.className = 'info-badge';
-                b.innerHTML = `<i class="fa-regular fa-calendar" style="color:#d1d5db;"></i> <span>${t.date.split(' ')[0]}</span>`;
-                fbBadgesContainer.appendChild(b);
-            }
-            if (t.location && !t.location.includes('위치정보없음') && t.location.trim() !== '') {
-                const b = document.createElement('div'); b.className = 'info-badge location-badge';
-                b.innerHTML = `<i class="fa-solid fa-location-dot" style="color:#60a5fa;"></i> <span>${t.location}</span>`;
-                fbBadgesContainer.appendChild(b);
-            }
+            
+            // 1. Date
+            let dateVal = (t.date && t.date.trim() !== '') ? t.date : 'Unknown';
+            if (dateVal === 'Unknown Date') dateVal = 'Unknown';
+            if (dateVal.length > 10 && dateVal !== 'Unknown') dateVal = dateVal.substring(0, 10);
+            badgesHtml += createBadge('fa-regular fa-calendar', dateVal);
+            
+            // 2. Location
+            let locVal = (t.location && t.location.trim() !== '') ? t.location.replace(/-/g, ' ') : 'Unknown';
+            if (locVal.includes('위치정보없음')) locVal = 'Unknown';
+            badgesHtml += createBadge('fa-solid fa-location-dot', locVal);
+            
+            // 3. People
+            let peopleVal = 'Unknown';
             if (t.people && Array.isArray(t.people) && t.people.length > 0) {
-                const filteredPeople = t.people.filter(p => !p.includes('Unknown'));
-                if (filteredPeople.length > 0) {
-                    const b = document.createElement('div'); b.className = 'info-badge people-badge';
-                    b.innerHTML = `<i class="fa-solid fa-user" style="color:#fbbf24;"></i> <span>${filteredPeople.join(', ')}</span>`;
-                    fbBadgesContainer.appendChild(b);
-                }
+                let pStr = t.people.filter(p => !p.includes('Unknown')).join(', ');
+                if (pStr) peopleVal = pStr;
             }
+            badgesHtml += createBadge('fa-solid fa-user-tag', peopleVal, true);
+            
+            fbBadgesContainer.innerHTML = badgesHtml;
         }
         
         // 이슈 종류에 따른 폼 UI 전환
