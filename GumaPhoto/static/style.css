@@ -113,15 +113,17 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
 .secondary-btn {
     background: rgba(255, 255, 255, 0.1);
     color: #fff;
-    padding: 12px;
     border-radius: 50%;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 45px;
-    height: 45px;
+    width: 34px;  /* 로고 높이 1.7rem(약 27px)에 조화롭게 맞춤 */
+    height: 34px;
+    font-size: 1.05rem;
     transition: all 0.2s;
+    border: none;
+    padding: 0;
 }
 .secondary-btn:hover { background: rgba(255, 255, 255, 0.2); transform: scale(1.05); }
 
