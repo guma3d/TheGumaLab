@@ -548,8 +548,21 @@ function renderGallery(photos, append = false, targetId = 'gallery-grid', isMaso
         item.appendChild(img);
 
         if (showMeta) {
+            // 0. 유사도 (AI 검색 결과 전용) - Top Left 분리
+            if (photo.score !== undefined) {
+                const scoreText = (photo.score * 100).toFixed(1) + '%';
+                const scoreBadge = document.createElement('div');
+                scoreBadge.className = 'meta-badge';
+                scoreBadge.innerHTML = `<i class="fa-solid fa-bullseye"></i> 유사도 = ${scoreText}`;
+                item.appendChild(scoreBadge);
+            }
+
             const overlay = document.createElement('div');
             overlay.className = 'info-badges-overlay';
+            // 크기 30% 축소 (transform-origin 적용하여 왼쪽 아래 기준으로 축소)
+            overlay.style.transform = 'scale(0.7)';
+            overlay.style.transformOrigin = 'left bottom';
+            
             // 모달과 완전히 동일한 스타일을 적용하기 위해 뱃지 생성 헬퍼 함수 정의
             const createBadge = (icon, text, isHighlight = false) => {
                 if (!text || text.trim() === '') text = 'Unknown';
@@ -558,13 +571,6 @@ function renderGallery(photos, append = false, targetId = 'gallery-grid', isMaso
             };
             
             let badgesHtml = '';
-            
-            // 0. 유사도 (AI 검색 결과 전용)
-            if (photo.score !== undefined) {
-                const scoreText = (photo.score * 100).toFixed(1) + '%';
-                // 유사도는 파란색 또는 돋보이는 색상을 위해 일반 뱃지 사용 후 스타일 오버라이딩 가능 (여기선 highlight 사용)
-                badgesHtml += createBadge('fa-solid fa-bullseye', `유사도 = ${scoreText}`, true);
-            }
             
             // 1. Date
             let dateVal = (photo.date && photo.date.trim() !== '') ? photo.date : 'Unknown';
@@ -591,9 +597,6 @@ function renderGallery(photos, append = false, targetId = 'gallery-grid', isMaso
             // 5. Time of Day
             let timeVal = photo.time_of_day ? photo.time_of_day : 'Unknown';
             badgesHtml += createBadge('fa-regular fa-clock', timeVal);
-            
-            // 6. Scene / Objects (모달에선 뺐지만, 원한다면 검색결과에는 넣을 수도 있음. 
-            // 여기서는 '모달과 동일한 뱃지 구성'을 요구했으므로 생략)
             
             overlay.innerHTML = badgesHtml;
             // image-item(masonry 컨테이너)에 오버레이 부착
