@@ -1223,7 +1223,8 @@ if (bottomNav) {
     
     document.getElementById('nav-home-btn')?.addEventListener('click', (e) => {
         e.preventDefault();
-        switchView('home');
+        // 애플리케이션 초기 화면으로 완벽하게 되돌아가기 위해 페이지 하드 리로드 실행
+        location.reload();
     });
     
     document.getElementById('nav-feedback-btn')?.addEventListener('click', (e) => {

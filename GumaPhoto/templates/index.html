@@ -14,22 +14,19 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="static/style.css?v=48">
+    <link rel="stylesheet" href="static/style.css?v=49">
 </head>
 
 <body>
 
     <div class="main-layout">
         <header class="top-header">
-            <div class="logo" style="display: flex; align-items: center;">
+            <div class="logo" style="display: flex; align-items: center; cursor: pointer;" onclick="location.reload()" title="Go to Home (Reload)">
                 <i class="fa-solid fa-camera-retro" style="color: #10b981; margin-right: 10px; font-size: 1.6rem; transform: translateY(-1px);"></i>
                 <h1 style="font-size: 1.7rem; font-weight: 800; letter-spacing: -0.5px; margin: 0; line-height: 1;">GumaPhoto</h1>
             </div>
             
             <div class="header-actions" style="display: flex; align-items: center; gap: 8px;">
-                <button id="refresh-btn" class="secondary-btn" title="Refresh App" onclick="location.reload()">
-                    <i class="fa-solid fa-rotate-right"></i>
-                </button>
                 <button id="open-search-modal-btn" class="secondary-btn" title="AI Search">
                     <i class="fa-solid fa-magnifying-glass" style="color: #3b82f6;"></i>
                 </button>
@@ -147,26 +144,52 @@
                 </button>
             </div>
 
-            <!-- System Tab -->
-            <div id="system" class="hidden" style="max-width: 400px; margin: 0 auto; box-sizing: border-box; padding: 2rem 0; text-align: center;">
-                <div style="display:flex; flex-direction: column; gap: 12px; text-align: center;">
-                    <div style="background: var(--surface-light); padding: 20px 16px; border-radius: 8px;">
-                        <h3 style="color:var(--text-muted); font-size: 1.1rem; margin-top: 0; margin-bottom: 4px;">Total Server Photos</h3>
-                        <small style="font-size: 0.85rem; color: #888; display: block; margin-bottom: 12px;">Total pure image files stored in server</small>
-                        <p id="prog-total" style="color:#3b82f6; font-size: 2rem; font-weight:800; margin: 0;">Loading...</p>
+            <!-- Premium System Tab -->
+            <div id="system" class="hidden" style="max-width: 500px; margin: 0 auto; box-sizing: border-box; padding: 2.5rem 1rem;">
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2)); color: #60a5fa; font-size: 2rem; margin-bottom: 1rem;">
+                        <i class="fa-solid fa-server"></i>
                     </div>
-                    <div style="background: var(--surface-light); padding: 20px 16px; border-radius: 8px;">
-                        <h3 style="color:var(--text-muted); font-size: 1.1rem; margin-top: 0; margin-bottom: 4px;">Pending DB Generation</h3>
-                        <small style="font-size: 0.85rem; color: #888; display: block; margin-bottom: 12px;">Images waiting for AI vector indexing</small>
-                        <p id="prog-ai-left" style="color:#ef4444; font-size: 2rem; font-weight:800; margin: 0;">Loading...</p>
+                    <h2 style="font-size: 1.6rem; margin-bottom: 0.5rem; color: white; font-weight: 800; letter-spacing: -0.5px;">System Overview</h2>
+                    <p style="color: #9ca3af; font-size: 0.95rem; line-height: 1.5; margin: 0 auto;">
+                        Real-time AI pipeline & Database health
+                    </p>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    
+                    <!-- Server Photos Card -->
+                    <div style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 24px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #3b82f6;"></div>
+                        <div>
+                            <h3 style="color: white; font-size: 1.1rem; margin: 0 0 4px 0; font-weight: 700; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-hard-drive" style="color:#3b82f6"></i> Server Storage</h3>
+                            <small style="color: #6b7280; font-size: 0.85rem;">Total raw images hosted</small>
+                        </div>
+                        <p id="prog-total" style="color: #60a5fa; font-size: 2rem; font-weight: 800; margin: 0; text-shadow: 0 0 15px rgba(59, 130, 246, 0.4);">...</p>
                     </div>
-                    <div style="background: var(--surface-light); padding: 20px 16px; border-radius: 8px;">
-                        <h3 style="color:var(--text-muted); font-size: 1.1rem; margin-top: 0; margin-bottom: 4px;">Completed Photos</h3>
-                        <small style="font-size: 0.85rem; color: #888; display: block; margin-bottom: 12px;">Photos fully analyzed and searchable</small>
-                        <p id="prog-db" style="color:#10b981; font-size: 2rem; font-weight:800; margin: 0;">Loading...</p>
+
+                    <!-- Pending Indexing Card -->
+                    <div style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 24px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #f59e0b;"></div>
+                        <div>
+                            <h3 style="color: white; font-size: 1.1rem; margin: 0 0 4px 0; font-weight: 700; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-microchip" style="color:#f59e0b"></i> AI Pipeline Queue</h3>
+                            <small style="color: #6b7280; font-size: 0.85rem;">Pending vector embeddings</small>
+                        </div>
+                        <p id="prog-ai-left" style="color: #fbbf24; font-size: 2rem; font-weight: 800; margin: 0; text-shadow: 0 0 15px rgba(245, 158, 11, 0.4);">...</p>
                     </div>
-                    <p id="prog-status" style="font-size: 0.85rem; color: var(--text-muted); text-align:center; margin-top: 10px;">
-                        Syncing...
+
+                    <!-- DB Matrix Card -->
+                    <div style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 24px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #10b981;"></div>
+                        <div>
+                            <h3 style="color: white; font-size: 1.1rem; margin: 0 0 4px 0; font-weight: 700; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-database" style="color:#10b981"></i> Vector Database</h3>
+                            <small style="color: #6b7280; font-size: 0.85rem;">Fully searchable assets</small>
+                        </div>
+                        <p id="prog-db" style="color: #34d399; font-size: 2rem; font-weight: 800; margin: 0; text-shadow: 0 0 15px rgba(16, 185, 129, 0.4);">...</p>
+                    </div>
+
+                    <p id="prog-status" style="font-size: 0.85rem; color: #9ca3af; text-align:center; margin-top: 10px; display:flex; align-items:center; justify-content:center; gap: 8px;">
+                        Loading Matrix Details...
                     </p>
                 </div>
             </div>
@@ -278,7 +301,7 @@
         </div>
     </div>
 
-    <script src="static/script.js?v=69"></script>
+    <script src="static/script.js?v=70"></script>
 </body>
 
 </html>

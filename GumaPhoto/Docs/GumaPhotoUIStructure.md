@@ -1,48 +1,50 @@
-# 📱 GumaPhoto 프론트엔드 UI 계층 구조도 (UI Structure)
+# 📱 GumaPhoto 프론트엔드 UI 계층 구조도 (SPA Architecture)
 
-GumaPhoto(`index.html`)의 프론트엔드는 모바일과 데스크톱 모두에서 부드럽게 렌더링되도록 고도의 '구역 분리(Isolation)' 및 '독립적 Z-인덱스 팝업(Modal)' 체계로 설계되어 있습니다.
+GumaPhoto(`index.html`)의 프론트엔드는 모바일과 데스크톱 모두에서 부드럽게 렌더링되도록 **SPA (Single Page Application)** 탭 라우팅 체계 및 '독립적 Z-인덱스 모달(Modal)' 체계로 완전히 진화했습니다.
 
 ## 🌳 1. 전체 화면 DOM 트리 (Hierarchy Tree)
 
 ```text
 📦 <body> (전체 화면의 컨테이너)
  ┃
- ┣━ 🗂️ [1] <div class="main-layout"> (메인 레이아웃 및 뼈대)
+ ┣━ 🗂️ [1] <div class="main-layout"> (메인 레이아웃 뼈대)
  ┃   ┃
- ┃   ┣━ 🟢 <header class="top-header"> (상단 내비게이션 바 / 스크롤 시 화면 상단 고정, z-index: 100)
- ┃   ┃   ┣━ 로고 영역 (<i class="fa-solid fa-camera-retro"></i> + GumaPhoto)
- ┃   ┃   ┗━ 🎛️ 우측 상단 버튼 모음 (파란색 AI 검색 돋보기 & 새로고침 아이콘 / 나머지 버튼들은 모바일 뷰에서 하단으로 이동)
+ ┃   ┣━ 🟢 <header class="top-header"> (상단 내비게이션 바 / 스크롤 시 고정, z-index: 100)
+ ┃   ┃   ┣━ 🔄 로고 영역 (<i class="fa-solid fa-camera-retro"></i> + GumaPhoto) - 클릭 시 앱 초기화(하드 리로드)
+ ┃   ┃   ┗━ 🎛️ 우측 상단 버튼 (파란색 AI 검색 돋보기)
  ┃   ┃
- ┃   ┣━ ☁️ <div id="upload-progress-container"> (대량 업로드 진행률 바 / 평소에는 숨김)
+ ┃   ┣━ ☁️ <div id="upload-progress-container"> (대량 업로드 진행률 바 / 팝업 애니메이션 처리)
  ┃   ┃
- ┃   ┗━ 🖼️ <main class="gallery-main"> (본문: 갤러리 메인 뷰)
- ┃       ┣━ [기본 뷰] 🏷️ <div id="timeline-header"> (초상단 가로형 태그 슬라이더: Recent, 성욱, 준우 등)
- ┃       ┣━ [기본 뷰] 🧱 <div id="gallery-grid"> (최근 검색/클릭된 태그 기반의 기본 갤러리 사진 배열)
+ ┃   ┗━ 🖼️ <main class="gallery-main"> (SPA 컨텐츠 렌더링 뷰)
+ ┃       ┣━ 📸 <div id="home"> (메인 갤러리 및 검색 결과 탭)
+ ┃       ┃   ┣━ 🏷️ <div id="timeline-header"> (상단 가로형 즐겨찾기 태그 슬라이더)
+ ┃       ┃   ┣━ 🧱 <div id="gallery-grid"> (최신/태그 기반 기본 갤러리)
+ ┃       ┃   ┗━ 🧱 <div id="search-grid"> (AI 자연어 검색 결과 Masonry 진열대)
  ┃       ┃
- ┃       ┣━ [검색 뷰] 텍스트 <div id="search-meta"> (검색 시 몇 장이 탐색되었는지 알려주는 메타 텍스트)
- ┃       ┗━ [검색 뷰] 🧱 <div id="search-grid"> (자연어 검색 결과가 나열되는 비대칭 Masonry 스타일 진열대)
+ ┃       ┣━ 🪄 <div id="feedback"> (프리미엄 자율 진화 학습 탭 - 글라스모피즘 카드 레이아웃)
+ ┃       ┃
+ ┃       ┣━ 📤 <div id="upload"> (사진 데스크 업로드 탭 - 네이티브 파일 피커 바로가기 트리거 포함)
+ ┃       ┃
+ ┃       ┗━ 📊 <div id="system"> (프리미엄 시스템 모니터링 탭 - 네온 카드 디자인의 AI/DB 헬스 체크)
  ┃
  ┣━ 🛠️ [2] <nav id="bottom-nav"> (모바일 전용 하단 내비게이션 바 / z-index: 150)
- ┃   ┣━ 스크롤 다운(화면을 올릴 때) 시 스르륵 사라지고, 스크롤 업 시 다시 등장하는 반응형 모션 탑재
- ┃   ┗━ 📱 모바일 환경 상단에서 내려온 필수 기능 3대장 (자율 피드백, 로컬 업로드, DB 모니터링) 전담 배치.
+ ┃   ┣━ 스크롤 감지 반응형 (내리면 숨기고 올리면 등장)
+ ┃   ┗━ 📱 Home, Feedback, Upload, System 4개 탭 브릿지 버튼
  ┃
- ┗━ ⬛ [3] 팝업 모달 레이어 (클릭 시 화면 전체를 덮는 컴포넌트 / z-index: 1000+)
-     ┣━ 🔍 <div id="search-modal"> (우측 상단 돋보기 아이콘 클릭 시 뜨는 AI 자연어 검색 전용 모달 창)
-     ┣━ 📸 <div id="photo-modal"> (사진 상세 뷰. 사진 내부 좌측 하단엔 AI 추출 데이터 뱃지들이 오버레이(Overlay)로 떠 있고, 사진 바깥 10px 아래 정중앙엔 녹색 프리미엄 휴지통이 배치된 구조)
-     ┣━ 📊 <div id="progress-modal"> (2만 장 단위의 VRAM 벡터 스캔 상태를 퍼센트로 보여주는 모니터링 창)
-     ┣━ 🪄 <div id="feedback-hub-modal"> (Unknown 단일 사진에 집중하여 피드백을 전달하는 '자율 리인덱스 v2' 창)
-     ┗━ 🚨 <div id="delete-confirm-modal"> ("정말 사진을 강제로 파기하시겠습니까?" 재확인 경고창 / z-index: 2000)
+ ┗━ ⬛ [3] 팝업 모달 레이어 (클릭 시 화면 전체를 덮는 오버레이 컴포넌트 / z-index: 1000+)
+     ┣━ 🔍 <div id="search-modal"> (자연어 검색 전용 입력 팝업)
+     ┣━ 📸 <div id="photo-modal"> (사진 상세 뷰 / 다운로드, 삭제 기능 통합 모달)
+     ┣━ 📱 <div id="ios-share-sheet"> (iOS 사파리 스타일의 터치 최적화 네이티브 액션 시트 - 공유/저장/복사)
+     ┗━ 🚨 <div id="delete-confirm-modal"> (삭제 재확인 경고창 / z-index: 2000)
 ```
 
-## 💡 2. 프론트엔드 아키텍처 특장점 핵심 요약
+## 💡 2. 넥스트레벨 아키텍처 특장점 핵심 요약
 
-### 1) 섹션 교대근무 (View Swapping)
-`<main>` 태그 안에는 **"기본 갤러리 뷰(태그 기반)"** 와 **"자연어 검색 결과 뷰"** 가 한 지붕 아래 같이 살고 있습니다.
-그러나 사용자의 검색 버튼 탭 한 번에 의해 한쪽은 `.hidden` 클래스가 부여되어 즉시 사라지고, 반대쪽은 즉시 렌더링을 시작하는 가볍고 빠른 DOM 교체 전술을 사용합니다. 리액트(React) 수준의 부드러움을 의존성 없는 바닐라 자바스크립트로 확보했습니다.
+### 1) SPA 라우팅 교대근무 (View Swapping)
+과거 각종 모달로 띄우던 복잡한 도구들(피드백, 업로드, 시스템 뷰)을 메인 `<main>` 내부의 독립된 `#home`, `#feedback`, `#upload`, `#system` 탭(Div)으로 이주시키고 부드러운 자바스크립트 View Router(`switchView`)를 도입했습니다. 어떤 탭을 누르거나 검색을 실행하더라도, 즉각적으로 기존 탭이 `.hidden` 처리되며 React 수준의 부드러운 페이지 전환 창을 완성했습니다.
 
-### 2) 팝업 계층 최적화 (Z-Index Isolation)
-무거운 작업 창이나 경고 창(모달)들은 아예 메인 뼈대 레이아웃(`main-layout`) 바깥 라인인 `<body>` 최하단에 몰아두었습니다.
-이로 인해 평소 스크롤을 할 때는 브라우저 렌더링 자원(CPU)을 단 1%도 갉아먹지 않으며(`display: none`), 특정 버튼을 누르는 순간 1,000 이상의 강력한 Z-Index로 기존 화면을 완전히 압도하며 덮쳐버리도록(Overlay) 코딩되어 있습니다.
+### 2) 글라스모피즘 & 프리미엄 테마 (Premium SaaS UX)
+투박하던 텍스트 위주의 `System` 탭과 `Feedback` 탭을 고급 SaaS 대시보드 형식으로 전면 재설계했습니다. 반투명한 블러 컨테이너(`backdrop-filter: blur(20px)`), 두꺼운 그림자, 유기적인 애플리케이션 그라디언트 및 모서리 곡률(`border-radius`)을 아낌없이 사용하여 네이티브 모바일 애플리케이션 급의 시각적 즐거움과 안정감을 부여했습니다.
 
-### 3) 독립적인 클라이언트 바이패스 (Client Bypass for Beta)
-도커 컨테이너를 절대 끌 수 없는 현재의 하드코어한 상황 속에서도 프론트엔드가 자체적으로 기존 API(`/api/search`)를 몰래 파싱해 와서 필요한 UI를 출력하는 **가상 우회 통신 모드**가 `script.js` 내부에 자가 수복용으로 이식되어 있습니다. 향후 서버가 재시작되면 코루틴 없이 자동으로 빠르고 거대한 정식 API로 통신망을 복구합니다.
+### 3) 네이티브 액션 융합 (Native Function Injection)
+상단 로고와 하단 Home 탭 터치 한 번으로 복잡한 캐시를 파괴하고 가장 깨끗한 초기 상태(`location.reload()`)로 돌아갈 수 있으며, `Upload` 탭을 누르는 순간 탭 이동과 동시에 사용자의 기기 "사진 보관함(Native Upload Picker)"이 즉시 로드되는 원스텝 숏컷 기술까지 통합해 두었습니다. 공유(`Share`) 트레이 역시 브라우저 호환성을 넘어설 수 있도록 기기 내장 다운로드 트리거용 앵커(`<a>`)를 활용, 사파리 하단 액션 시트를 완벽히 재현(`ios-share-sheet`)합니다.
