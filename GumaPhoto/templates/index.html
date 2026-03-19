@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="static/style.css?v=51">
+    <link rel="stylesheet" href="static/style.css?v=52">
 </head>
 
 <body>
@@ -29,10 +29,10 @@
             <div class="header-actions" style="display: flex; align-items: center; gap: 8px;">
                 <input type="file" id="upload-input" multiple accept="image/*" style="display: none;">
                 <label for="upload-input" id="upload-btn" class="secondary-btn" title="Upload Photos">
-                    <i class="fa-solid fa-cloud-arrow-up" style="color: #3b82f6;"></i>
+                    <i class="fa-solid fa-cloud-arrow-up" style="color: white;"></i>
                 </label>
                 <button id="open-search-modal-btn" class="secondary-btn" title="AI Search">
-                    <i class="fa-solid fa-magnifying-glass" style="color: #3b82f6;"></i>
+                    <i class="fa-solid fa-magnifying-glass" style="color: #10b981;"></i>
                 </button>
                 <button id="feedback-hub-btn" class="secondary-btn hide-on-mobile" title="Self-Healing Feedback Hub">
                     <i class="fa-solid fa-wand-magic-sparkles"></i>
@@ -61,7 +61,7 @@
                 <!-- Timeline Header (Now a Slider Header at the VERY TOP) -->
                 <div id="timeline-header" class="theme-section hidden" style="margin-bottom: 5px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 10px; margin-bottom: 8px; max-width: 100%; overflow: hidden;">
-                        <h3 class="theme-title" style="margin: 0; padding: 0; flex-shrink: 0;">Gallery</h3>
+                        <h3 class="theme-title" style="margin: 0; padding: 0; flex-shrink: 0;">Guma Family</h3>
                         <div class="gallery-tags" style="display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); padding: 4px; border-radius: 999px; margin-left: auto;">
                             <button class="tag-btn tag-active" data-tag="recent">Recent</button>
                             <button class="tag-btn" data-tag="성욱">성욱</button>
@@ -225,9 +225,7 @@
                     <button id="modal-share-btn" class="action-btn premium-share-btn" title="Share Photo">
                         <i class="fa-solid fa-share-nodes"></i>
                     </button>
-                    <button id="modal-download-btn" class="action-btn premium-download-btn" title="Download Photo">
-                        <i class="fa-solid fa-cloud-arrow-down"></i>
-                    </button>
+
                     <button id="modal-delete-btn" class="action-btn premium-trash-btn" title="Delete Photo">
                         <i class="fa-regular fa-trash-can"></i>
                     </button>
@@ -276,7 +274,7 @@
         </div>
     </div>
 
-    <script src="static/script.js?v=72"></script>
+    <script src="static/script.js?v=73"></script>
 </body>
 
 </html>

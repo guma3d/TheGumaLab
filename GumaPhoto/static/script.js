@@ -761,22 +761,6 @@ photoModal.addEventListener('click', (e) => {
     if (e.target === photoModal) closeModal();
 });
 
-// 다운로드 버튼 (기기 직접 저장)
-downloadBtn?.addEventListener('click', () => {
-    if (!currentModalPhoto) return;
-    const fileUrl = modalImage.src;
-    const a = document.createElement('a');
-    a.href = fileUrl;
-    
-    // URL 매개변수를 떼고 순수 파일명만 추출
-    let filename = fileUrl.split('/').pop().split('?')[0]; 
-    if (!filename) filename = `GumaPhoto_${currentModalPhoto.id}.jpg`;
-    
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-});
 
 // ==========================================
 // iOS Action Sheet (공유 버튼 클릭 시)
