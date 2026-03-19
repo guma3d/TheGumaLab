@@ -360,7 +360,7 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
 }
 
 /* Photo Modal Styles */
-#photo-modal, #progress-modal, #delete-confirm-modal, #feedback-hub-modal {
+#photo-modal, #progress-modal, #delete-confirm-modal, #feedback-hub-modal, #search-modal {
     position: fixed;
     top: 0;
     left: 0;
@@ -376,7 +376,7 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
     transition: opacity 0.3s ease;
 }
 
-#photo-modal.hidden, #progress-modal.hidden, #delete-confirm-modal.hidden, #feedback-hub-modal.hidden {
+#photo-modal.hidden, #progress-modal.hidden, #delete-confirm-modal.hidden, #feedback-hub-modal.hidden, #search-modal.hidden {
     display: none !important;
     opacity: 0;
 }
