@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="static/style.css?v=36">
+    <link rel="stylesheet" href="static/style.css?v=39">
 </head>
 
 <body>
@@ -73,7 +73,9 @@
                 </div>
             </div>
 
-            <!-- Gallery Slider Content (Now directly under header) -->
+            <!-- Home Tab -->
+            <div id="home">
+                <!-- Gallery Slider Content (Now directly under header) -->
             <div id="gallery-grid" class="theme-scroll-box" style="padding-bottom: 4px;">
                 <!-- Image cards will be injected here via JS -->
             </div>
@@ -91,24 +93,91 @@
                 <!-- Image cards will be injected here via JS -->
             </div>
 
+        
+            </div>
+
+            <!-- Feedback Tab -->
+            <div id="feedback" class="hidden" style="max-width: 500px; margin: 0 auto; padding-top: 2rem;">
+                <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: #10b981; font-weight: 800;"><i class="fa-solid fa-graduation-cap"></i> 자율 진화 학습 (1장 교정)</h2>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; line-height: 1.4;">정보가 누락된 단 1장의 사진입니다. 정답을 적어주시면 AI가 주변 상황을 파악해 나머지 사진들까지 스스로 고칩니다!</p>
+
+                <div id="fb-unknown-photo-container" style="display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%;">
+                    <!-- 1 Photo Showcase -->
+                    <div style="width: 100%; border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border); display: flex; justify-content: center; align-items: center; min-height: 250px;">
+                        <img id="fb-target-img" src="" alt="Unknown Photo" style="max-width: 100%; max-height: 350px; object-fit: contain; display: none;">
+                        <span id="fb-loading-spinner" style="font-size: 2.5rem; color: #10b981;"><i class="fa-solid fa-spinner fa-spin"></i></span>
+                    </div>
+                    <!-- Issue Type Tag -->
+                    <div id="fb-target-issue" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); color: #fca5a5; padding: 6px 12px; border-radius: 999px; font-weight: bold; font-size: 0.9rem; display: none;">
+                        <i class="fa-solid fa-circle-exclamation"></i> 장소 정보 누락
+                    </div>
+                    <!-- Input area -->
+                    <div id="fb-single-input-area" style="width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 5px;">
+                        <input type="text" id="fb-input-val" placeholder="정답을 입력하세요 (예: 성욱, 미국-하와이)" style="padding: 14px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-dark); color: white; font-size: 1rem;" autocomplete="off">
+                        <input type="month" id="fb-input-date" style="padding: 14px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-dark); color: white; font-size: 1rem; display: none;">
+                        <button id="fb-submit-btn" class="primary-btn" style="padding: 12px; font-weight: 800; background: #10b981; border: none; font-size: 1.1rem; border-radius: 8px; color: #000; margin-top: 5px;"><i class="fa-solid fa-check"></i> 자율 전파(Propagation) 승인</button>
+                        <button id="fb-skip-btn" class="secondary-btn" style="padding: 10px; font-size: 0.95rem; color: var(--text-muted); background: transparent; border: 1px solid var(--glass-border); border-radius: 8px;">모르겠어요 (다음 사진)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Tab -->
+            <div id="upload" class="hidden" style="display:flex; flex-direction:column; align-items:center; padding-top: 10vh; gap: 20px;">
+                <i class="fa-solid fa-cloud-arrow-up" style="font-size: 4rem; color: #3b82f6;"></i>
+                <h2 style="color: white; font-size: 1.5rem; margin: 0;">사진 데스크 업로드</h2>
+                <p style="color: var(--text-muted); text-align: center;">휴대폰에 저장된 새로운 사진들을 GumaPhoto로 전송합니다.</p>
+                <div id="local-upload-preview" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width: 600px; max-height: 40vh; overflow-y: auto;">
+                    <!-- JS renders selected local photos here -->
+                </div>
+                <button class="primary-btn" onclick="document.getElementById('upload-input').click()" style="padding: 14px 24px; font-size: 1.1rem; border-radius: 999px; margin-top: 20px; font-weight: 800;">
+                    <i class="fa-solid fa-folder-open"></i> 스마트폰 갤러리 열기
+                </button>
+            </div>
+
+            <!-- System Tab -->
+            <div id="system" class="hidden" style="max-width: 400px; margin: 0 auto; box-sizing: border-box; padding: 2rem 0; text-align: center;">
+                <h2 style="font-size: 1.8rem; color: white; display:flex; justify-content:center; align-items:center; gap: 8px; margin-bottom: 1.8rem; font-weight: 800;">
+                    <i class="fa-solid fa-server"></i> DB Status
+                </h2>
+                <div style="display:flex; flex-direction: column; gap: 12px; text-align: center;">
+                    <div style="background: var(--surface-light); padding: 16px; border-radius: 8px;">
+                        <h3 style="color:var(--text-muted); font-size: 1.2rem; margin-bottom: 6px;">Total Server Photos</h3>
+                        <p id="prog-total" style="color:#3b82f6; font-size: 1.5rem; font-weight:bold;">Loading...</p>
+                        <small style="font-size: 0.9rem; color: #aaa;">Total pure image files stored in server</small>
+                    </div>
+                    <div style="background: var(--surface-light); padding: 16px; border-radius: 8px;">
+                        <h3 style="color:var(--text-muted); font-size: 1.2rem; margin-bottom: 6px;">Pending DB Generation</h3>
+                        <p id="prog-ai-left" style="color:#ef4444; font-size: 1.5rem; font-weight:bold;">Loading...</p>
+                        <small style="font-size: 0.9rem; color: #aaa;">Images waiting for AI vector indexing</small>
+                    </div>
+                    <div style="background: var(--surface-light); padding: 16px; border-radius: 8px;">
+                        <h3 style="color:var(--text-muted); font-size: 1.2rem; margin-bottom: 6px;">Completed Photos</h3>
+                        <p id="prog-db" style="color:#10b981; font-size: 1.5rem; font-weight:bold;">Loading...</p>
+                        <small style="font-size: 0.9rem; color: #aaa;">Photos fully analyzed and searchable</small>
+                    </div>
+                    <p id="prog-status" style="font-size: 0.85rem; color: var(--text-muted); text-align:center; margin-top: 10px;">
+                        Syncing...
+                    </p>
+                </div>
+            </div>
         </main>
     </div>
 
     <!-- Bottom Navigation Bar (Mobile) -->
     <nav id="bottom-nav" class="bottom-nav">
-        <a href="#" class="nav-item active" onclick="location.reload(); return false;">
+        <a href="#" class="nav-item active" id="nav-home-btn">
             <i class="fa-solid fa-house"></i>
             <span>Home</span>
         </a>
-        <a href="#" class="nav-item" id="nav-magic-btn">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-            <span>Magic</span>
+        <a href="#" class="nav-item" id="nav-feedback-btn">
+            <i class="fa-solid fa-graduation-cap"></i>
+            <span>Feedback</span>
         </a>
         <a href="#" class="nav-item" id="nav-upload-btn">
             <i class="fa-solid fa-cloud-arrow-up"></i>
             <span>Upload</span>
         </a>
-        <a href="#" class="nav-item" id="nav-server-btn">
+        <a href="#" class="nav-item" id="nav-system-btn">
             <i class="fa-solid fa-server"></i>
             <span>System</span>
         </a>
@@ -153,71 +222,6 @@
         </div>
     </div>
 
-    <!-- Live Progress Monitor Modal -->
-    <div id="progress-modal" class="modal hidden">
-        <div class="modal-content" style="background: rgba(20, 20, 25, 0.98); width: 90%; max-width: 400px; margin: auto; box-sizing: border-box; padding: 2rem; border-radius: 12px; border: 2px solid #10b981; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); text-align: center;">
-            <span id="progress-modal-close" class="modal-close" style="right: 15px; top: 15px;">&times;</span>
-            <h2 style="font-size: 1.8rem; color: white; display:flex; justify-content:center; align-items:center; gap: 8px; margin-bottom: 1.8rem; font-weight: 800;">
-                DB Status
-            </h2>
-            
-            <div style="display:flex; flex-direction: column; gap: 12px; text-align: center;">
-                <div style="background: var(--surface-light); padding: 16px; border-radius: 8px;">
-                    <h3 style="color:var(--text-muted); font-size: 1.2rem; margin-bottom: 6px;">Total Server Photos</h3>
-                    <p id="prog-total" style="color:#3b82f6; font-size: 1.5rem; font-weight:bold;">Loading...</p>
-                    <small style="font-size: 0.9rem; color: #aaa;">Total pure image files stored in server</small>
-                </div>
-                
-                <div style="background: var(--surface-light); padding: 16px; border-radius: 8px;">
-                    <h3 style="color:var(--text-muted); font-size: 1.2rem; margin-bottom: 6px;">Pending DB Generation</h3>
-                    <p id="prog-ai-left" style="color:#ef4444; font-size: 1.5rem; font-weight:bold;">Loading...</p>
-                    <small style="font-size: 0.9rem; color: #aaa;">Images waiting for AI vector indexing</small>
-                </div>
-                
-                <div style="background: var(--surface-light); padding: 16px; border-radius: 8px;">
-                    <h3 style="color:var(--text-muted); font-size: 1.2rem; margin-bottom: 6px;">Completed Photos</h3>
-                    <p id="prog-db" style="color:#10b981; font-size: 1.5rem; font-weight:bold;">Loading...</p>
-                    <small style="font-size: 0.9rem; color: #aaa;">Photos fully analyzed and searchable</small>
-                </div>
-                
-                <p id="prog-status" style="font-size: 0.85rem; color: var(--text-muted); text-align:center; margin-top: 10px;">
-                    Syncing...
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Self-Healing Feedback Modal v2 -->
-    <div id="feedback-hub-modal" class="modal hidden">
-        <div class="modal-content" style="max-width: 500px; padding: 2rem; width: 90%;">
-            <span id="feedback-hub-close" class="modal-close">&times;</span>
-            <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: #10b981; font-weight: 800;"><i class="fa-solid fa-wand-magic-sparkles"></i> 자율 진화 학습 (1장 교정)</h2>
-            <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; line-height: 1.4;">정보가 누락된 단 1장의 사진입니다. 정답을 적어주시면 AI가 주변 상황을 파악해 나머지 사진들까지 스스로 고칩니다!</p>
-
-            <div id="fb-unknown-photo-container" style="display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%;">
-                
-                <!-- 1 Photo Showcase -->
-                <div style="width: 100%; border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border); display: flex; justify-content: center; align-items: center; min-height: 250px;">
-                    <img id="fb-target-img" src="" alt="Unknown Photo" style="max-width: 100%; max-height: 350px; object-fit: contain; display: none;">
-                    <span id="fb-loading-spinner" style="font-size: 2.5rem; color: #10b981;"><i class="fa-solid fa-spinner fa-spin"></i></span>
-                </div>
-                
-                <!-- Issue Type Tag -->
-                <div id="fb-target-issue" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); color: #fca5a5; padding: 6px 12px; border-radius: 999px; font-weight: bold; font-size: 0.9rem; display: none;">
-                    <i class="fa-solid fa-circle-exclamation"></i> 장소 정보 누락
-                </div>
-
-                <!-- Input area -->
-                <div id="fb-single-input-area" style="width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 5px;">
-                    <input type="text" id="fb-input-val" placeholder="정답을 입력하세요 (예: 성욱, 미국-하와이)" style="padding: 14px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-dark); color: white; font-size: 1rem;" autocomplete="off">
-                    <input type="month" id="fb-input-date" style="padding: 14px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-dark); color: white; font-size: 1rem; display: none;">
-                    <button id="fb-submit-btn" class="primary-btn" style="padding: 12px; font-weight: 800; background: #10b981; border: none; font-size: 1.1rem; border-radius: 8px; color: #000; margin-top: 5px;"><i class="fa-solid fa-check"></i> 자율 전파(Propagation) 승인</button>
-                    <button id="fb-skip-btn" class="secondary-btn" style="padding: 10px; font-size: 0.95rem; color: var(--text-muted); background: transparent; border: 1px solid var(--glass-border); border-radius: 8px;">모르겠어요 (다음 사진)</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Custom Delete Confirmation Modal -->
     <div id="delete-confirm-modal" class="modal hidden">
         <div class="modal-content" style="background: rgba(20, 20, 25, 0.98); width: 90%; max-width: 350px; margin: auto; box-sizing: border-box; padding: 2.5rem 1.5rem; border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.3); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); text-align: center; display: flex; flex-direction: column; align-items: center;">
@@ -236,7 +240,7 @@
         </div>
     </div>
 
-    <script src="static/script.js?v=57"></script>
+    <script src="static/script.js?v=60"></script>
 </body>
 
 </html>

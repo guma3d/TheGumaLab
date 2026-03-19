@@ -635,9 +635,8 @@ const progressFill = document.getElementById('progress-bar-fill');
 const progressPercent = document.getElementById('progress-percent');
 const progressText = document.getElementById('progress-text');
 
-uploadInput.addEventListener('change', async () => {
-    const files = uploadInput.files;
-    if (files.length === 0) return;
+async function executeUpload(files) {
+    if (!files || files.length === 0) return;
 
     progressContainer.classList.remove('hidden');
     progressFill.style.width = '0%';
@@ -686,7 +685,7 @@ uploadInput.addEventListener('change', async () => {
         console.error(err);
         progressText.innerText = 'Error occurred.';
     }
-});
+}
 
 // ==========================================
 // Photo Modal & Feedback Logic
@@ -822,13 +821,12 @@ const progressMonitorBtn = document.getElementById('progress-monitor-btn');
 const progressModal = document.getElementById('progress-modal');
 const progressModalClose = document.getElementById('progress-modal-close');
 
-let progressPollingInterval = null;
+window.progressPollingInterval = null;
 
 if (progressMonitorBtn) {
     progressMonitorBtn.addEventListener('click', () => {
-        progressModal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-        startProgressPolling();
+        updateProgressMonitor();
+        switchView('system');
     });
 }
 
@@ -885,11 +883,12 @@ async function fetchProgress() {
     }
 }
 
-function startProgressPolling() {
-    // Immediate fetch
+function updateProgressMonitor() {
+    if (window.progressPollingInterval) {
+        clearInterval(window.progressPollingInterval);
+    }
     fetchProgress();
-    // Fetch every 2.5 seconds
-    progressPollingInterval = setInterval(fetchProgress, 2500);
+    window.progressPollingInterval = setInterval(fetchProgress, 2500);
 }
 
 // ---------------------------------------------------------------------------------
@@ -904,7 +903,7 @@ let selectedFeedbackTarget = null; // 타겟 사진의 Qdrant Payload 정보 대
 
 if (feedbackHubBtn) {
     feedbackHubBtn.addEventListener('click', () => {
-        feedbackHubModal.classList.remove('hidden');
+        switchView('feedback');
         loadUnknownPhoto();
     });
 }
@@ -1083,44 +1082,142 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
 });
 
 // =========================================================================
-// 📱 Mobile Bottom Navigation Bar Logic
+// 📱 Mobile Bottom Navigation Bar & View Router Logic
 // =========================================================================
+const views = ['home', 'feedback', 'upload', 'system'];
+
+function switchView(target) {
+    if (target !== 'system' && window.progressPollingInterval) {
+        clearInterval(window.progressPollingInterval);
+        window.progressPollingInterval = null;
+    }
+
+    // When switching back to home, always scroll gently up
+    if (target === 'home') window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    views.forEach(v => {
+        const el = document.getElementById(v);
+        if (el) {
+            if (v === target) el.classList.remove('hidden');
+            else el.classList.add('hidden');
+        }
+    });
+
+    document.querySelectorAll('.bottom-nav .nav-item').forEach(item => {
+        if (item.id === `nav-${target}-btn`) item.classList.add('active');
+        else item.classList.remove('active');
+    });
+}
+
 const bottomNav = document.getElementById('bottom-nav');
-const topHeader = document.querySelector('.top-header');
 let lastScrollY = window.scrollY;
 
 if (bottomNav) {
     window.addEventListener('scroll', () => {
         const currentScrollY = window.scrollY;
         
-        // 아이폰 바운스 스크롤 효과 방어용
         if (currentScrollY <= 0) {
             bottomNav.classList.remove('nav-hidden');
         } else if (currentScrollY > lastScrollY && currentScrollY > 25) {
-            // 스크롤 다운 (화면을 위로 쓸어 올릴 때) -> 즉시 내비 숨김 (빠릿하게 25px 버퍼만 허용)
             bottomNav.classList.add('nav-hidden');
         } else if (currentScrollY < lastScrollY) {
-            // 스크롤 업 (화면을 아래로 쓸어 내릴 때) -> 내비 즉시 보이게
             bottomNav.classList.remove('nav-hidden');
         }
         
         lastScrollY = currentScrollY;
     }, { passive: true });
     
-    // 네비 아이콘 클릭 이벤트 와이어링 (기존 상단 버튼들과 100% 동일하게 동작)
-    document.getElementById('nav-magic-btn')?.addEventListener('click', (e) => {
+    document.getElementById('nav-home-btn')?.addEventListener('click', (e) => {
         e.preventDefault();
-        document.getElementById('feedback-hub-btn').click();
+        switchView('home');
+    });
+    
+    document.getElementById('nav-feedback-btn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchView('feedback');
+        loadUnknownPhoto(); // Changed from loadFeedbackTarget to loadUnknownPhoto
     });
     
     document.getElementById('nav-upload-btn')?.addEventListener('click', (e) => {
         e.preventDefault();
-        // file input을 트리거
-        document.getElementById('upload-input').click();
+        switchView('upload');
     });
     
-    document.getElementById('nav-server-btn')?.addEventListener('click', (e) => {
+    document.getElementById('nav-system-btn')?.addEventListener('click', (e) => {
         e.preventDefault();
-        document.getElementById('progress-monitor-btn').click();
+        switchView('system');
+        updateProgressMonitor(); // fetch system status when tab is opened
     });
 }
+
+// =========================================================================
+// Upload View Local Preview & Execution
+// =========================================================================
+document.getElementById('upload-input')?.addEventListener('change', function(e) {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    switchView('upload'); // Switch to upload view if trigged externally
+    
+    const previewContainer = document.getElementById('local-upload-preview');
+    if (previewContainer) {
+        previewContainer.innerHTML = '';
+        const limit = Math.min(files.length, 12);
+        for (let i = 0; i < limit; i++) {
+            const file = files[i];
+            const imgUrl = URL.createObjectURL(file);
+            const imgElement = document.createElement('img');
+            imgElement.src = imgUrl;
+            imgElement.style.width = '100px';
+            imgElement.style.height = '100px';
+            imgElement.style.objectFit = 'cover';
+            imgElement.style.borderRadius = '8px';
+            imgElement.style.border = '1px solid rgba(255,255,255,0.1)';
+            previewContainer.appendChild(imgElement);
+        }
+        if (files.length > limit) {
+            const moreIndicator = document.createElement('div');
+            moreIndicator.style.width = '100px';
+            moreIndicator.style.height = '100px';
+            moreIndicator.style.borderRadius = '8px';
+            moreIndicator.style.background = 'rgba(255,255,255,0.1)';
+            moreIndicator.style.display = 'flex';
+            moreIndicator.style.alignItems = 'center';
+            moreIndicator.style.justifyContent = 'center';
+            moreIndicator.style.color = '#fff';
+            moreIndicator.style.fontWeight = 'bold';
+            moreIndicator.innerHTML = `+${files.length - limit}`;
+            previewContainer.appendChild(moreIndicator);
+        }
+        
+        let existingBtn = document.getElementById('execute-upload-btn');
+        if (existingBtn) existingBtn.remove();
+        
+        const startBtn = document.createElement('button');
+        startBtn.id = 'execute-upload-btn';
+        startBtn.className = 'primary-btn';
+        startBtn.style.padding = '12px 24px';
+        startBtn.style.background = '#10b981';
+        startBtn.style.borderRadius = '999px';
+        startBtn.style.border = 'none';
+        startBtn.style.marginTop = '20px';
+        startBtn.style.fontSize = '1.1rem';
+        startBtn.style.fontWeight = 'bold';
+        startBtn.style.cursor = 'pointer';
+        startBtn.style.color = '#000';
+        startBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> 선택된 사진 보내기 (' + files.length + '장)';
+        
+        previewContainer.parentElement.appendChild(startBtn);
+        
+        startBtn.onclick = async () => {
+             startBtn.disabled = true;
+             startBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 업로드 진행 중...';
+             await executeUpload(files); 
+             startBtn.innerHTML = '<i class="fa-solid fa-check"></i> 전송 완료';
+             setTimeout(() => {
+                 switchView('home'); 
+                 location.reload(); // Refresh to show new photos!
+             }, 1500);
+        };
+    }
+});
