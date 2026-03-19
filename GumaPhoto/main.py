@@ -931,7 +931,10 @@ async def get_unknown_photo():
                 unknowns.append({
                     "id": r.id,
                     "url": url_path,
-                    "issue": issue
+                    "issue": issue,
+                    "date": date_val,
+                    "location": loc,
+                    "people": people
                 })
                 
         if not unknowns:

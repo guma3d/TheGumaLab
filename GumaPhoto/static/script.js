@@ -1056,7 +1056,7 @@ async function loadUnknownPhoto() {
                 mockUrl = dotIndex !== -1 ? mockUrl.substring(0, dotIndex) + '_' + mockUrl.substring(dotIndex + 1).toLowerCase() + '.webp' : mockUrl;
                 
                 if (!mockUrl.startsWith('/GumaPhoto') && window.location.pathname.startsWith('/GumaPhoto')) mockUrl = '/GumaPhoto' + mockUrl;
-                selectedFeedbackTarget = { id: randomChoice.id, url: mockUrl, issue: randomChoice.issue };
+                selectedFeedbackTarget = { id: randomChoice.id, url: mockUrl, issue: randomChoice.issue, date: randomChoice.date, location: randomChoice.location, people: randomChoice.people };
             } else {
                 throw new Error("No pending photos left to categorize!");
             }
@@ -1065,7 +1065,7 @@ async function loadUnknownPhoto() {
             if (data.id) {
                 let mockUrl = data.url;
                 if (!mockUrl.startsWith('/GumaPhoto') && window.location.pathname.startsWith('/GumaPhoto')) mockUrl = '/GumaPhoto' + mockUrl;
-                selectedFeedbackTarget = { id: data.id, url: mockUrl, issue: data.issue };
+                selectedFeedbackTarget = { id: data.id, url: mockUrl, issue: data.issue, date: data.date, location: data.location, people: data.people };
             } else throw new Error("All photos are perfectly categorized!");
         }
         
@@ -1075,8 +1075,35 @@ async function loadUnknownPhoto() {
             spinner.style.display = 'none';
             imgEl.style.display = 'block';
         };
-        issueTag.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ' + selectedFeedbackTarget.issue;
+        let issueIcon = '<i class="fa-solid fa-circle-exclamation"></i>';
+        if (selectedFeedbackTarget.issue.includes('Date')) issueIcon = '<i class="fa-regular fa-calendar-xmark" style="color: #f87171;"></i>';
+        if (selectedFeedbackTarget.issue.includes('Location')) issueIcon = '<i class="fa-solid fa-location-dot" style="color: #f87171;"></i>';
+        issueTag.innerHTML = issueIcon + ' ' + selectedFeedbackTarget.issue;
         issueTag.style.display = 'inline-block';
+        
+        const fbBadgesContainer = document.getElementById('fb-info-badges');
+        if (fbBadgesContainer) {
+            fbBadgesContainer.innerHTML = '';
+            const t = selectedFeedbackTarget;
+            if (t.date && t.date !== 'Unknown Date' && t.date.trim() !== '') {
+                const b = document.createElement('div'); b.className = 'info-badge';
+                b.innerHTML = `<i class="fa-regular fa-calendar" style="color:#d1d5db;"></i> <span>${t.date.split(' ')[0]}</span>`;
+                fbBadgesContainer.appendChild(b);
+            }
+            if (t.location && !t.location.includes('위치정보없음') && t.location.trim() !== '') {
+                const b = document.createElement('div'); b.className = 'info-badge location-badge';
+                b.innerHTML = `<i class="fa-solid fa-location-dot" style="color:#60a5fa;"></i> <span>${t.location}</span>`;
+                fbBadgesContainer.appendChild(b);
+            }
+            if (t.people && Array.isArray(t.people) && t.people.length > 0) {
+                const filteredPeople = t.people.filter(p => !p.includes('Unknown'));
+                if (filteredPeople.length > 0) {
+                    const b = document.createElement('div'); b.className = 'info-badge people-badge';
+                    b.innerHTML = `<i class="fa-solid fa-user" style="color:#fbbf24;"></i> <span>${filteredPeople.join(', ')}</span>`;
+                    fbBadgesContainer.appendChild(b);
+                }
+            }
+        }
         
         // 이슈 종류에 따른 폼 UI 전환
         if(selectedFeedbackTarget.issue.includes('Date')) {
