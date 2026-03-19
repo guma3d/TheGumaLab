@@ -795,6 +795,15 @@ async def delete_photo(req: DeleteRequest):
                 
         if deleted_xmp:
             print(f"   ✅ [1/3-XMP] 서버 XMP 메타데이터 파일 영구 삭제 완료")
+            
+        # [NEW] WEBP 썸네일 완전 삭제 (유령 썸네일 방지)
+        orig_ext = abs_path.rsplit('.', 1)[-1].lower() if '.' in abs_path else ""
+        base_name = os.path.splitext(abs_path)[0]
+        thumb_path = f"{base_name}_{orig_ext}.webp"
+        if os.path.exists(thumb_path):
+            os.remove(thumb_path)
+            print(f"   ✅ [1/3-WEBP] 서버 썸네일 파일 영구 삭제 완료")
+            
     except Exception as e:
         print(f"   ❌ [1/3] 파일 삭제 중 오류 발생: {e}")
         # 파일이 꼬였더라도 유령 데이터를 지우기 위해 2~3단계는 계속 진행합니다.
