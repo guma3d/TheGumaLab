@@ -479,21 +479,25 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
 }
 
 .info-badge {
-    background: #18181b; /* 불투명한 진한 배경으로 변경하여 가독성 확보 */
+    background: #18181b; /* 투명도 0 */
     color: #e5e7eb;
-    padding: 5px 10px;
+    padding: 4px 8px; /* 크기 20% 축소 */
     border-radius: 6px;
-    font-size: 0.8rem;
+    font-size: 0.65rem; /* 사이즈 20% 축소 */
     display: flex;
     align-items: center;
-    gap: 6px;
-    border: 1px solid #3f3f46; /* 경계선 불투명 변경 */
+    gap: 4px;
+    border: 1px solid #3f3f46;
+}
+
+.info-badge i {
+    font-size: 0.70rem; /* 아이콘 축소 */
 }
 
 .info-badge.highlight {
-    background: rgba(59, 130, 246, 0.15); /* 인물 등 돋보여야 할 태그용 (블루) */
-    border-color: rgba(59, 130, 246, 0.4);
-    color: #93c5fd;
+    background: #18181b; /* 투명 제거 */
+    border-color: #10b981; /* 파란색에서 쨍한 초록색으로 변경 */
+    color: #34d399; /* 밝은 녹색 텍스트 */
 }
 
 .modal-actions-center {
@@ -790,7 +794,7 @@ img {
 
 /* 📱 모바일에선 상단 액션 아이콘 숨기기, 데스크탑에선 하단바 숨기기 분리 */
 @media (max-width: 768px) {
-    .header-actions { display: none !important; }
+    .hide-on-mobile { display: none !important; }
 }
 @media (min-width: 769px) {
     .bottom-nav { display: none !important; }

@@ -689,7 +689,7 @@ function openModal(photo, imgUrl) {
         modalInfoBadges.innerHTML = ''; // 초기화
         
         const createBadge = (icon, text, isHighlight = false) => {
-            if (!text || text === 'Unknown') return '';
+            if (!text || text.trim() === '') text = 'Unknown';
             const cls = isHighlight ? 'info-badge highlight' : 'info-badge';
             return `<div class="${cls}"><i class="${icon}"></i> ${text}</div>`;
         };
@@ -697,39 +697,30 @@ function openModal(photo, imgUrl) {
         let badgesHtml = '';
         
         // 1. Date
-        if (photo.date && photo.date.trim() !== '') {
-            let shortDate = photo.date.length > 10 ? photo.date.substring(0, 10) : photo.date;
-            if (shortDate !== 'Unknown') badgesHtml += createBadge('fa-regular fa-calendar', shortDate);
-        }
+        let dateVal = (photo.date && photo.date.trim() !== '') ? photo.date : 'Unknown';
+        if (dateVal.length > 10 && dateVal !== 'Unknown') dateVal = dateVal.substring(0, 10);
+        badgesHtml += createBadge('fa-regular fa-calendar', dateVal);
         
-        // 2. Time & Season (묶어서 하나로 표현하거나 따로 표현)
-        if (photo.time_of_day && photo.time_of_day !== 'Unknown') {
-            badgesHtml += createBadge('fa-regular fa-clock', photo.time_of_day);
-        }
-        if (photo.season && photo.season !== 'Unknown') {
-            badgesHtml += createBadge('fa-solid fa-leaf', photo.season);
-        }
+        // 2. Location
+        let locVal = (photo.location && photo.location.trim() !== '') ? photo.location.replace(/-/g, ' ') : 'Unknown';
+        if (locVal.includes('위치정보없음')) locVal = 'Unknown';
+        badgesHtml += createBadge('fa-solid fa-location-dot', locVal);
         
-        // 3. Location
-        if (photo.location && photo.location.trim() !== '') {
-            let prettyLoc = photo.location.replace(/-/g, ' ');
-            if (!prettyLoc.includes("위치정보없음")) badgesHtml += createBadge('fa-solid fa-location-dot', prettyLoc);
-        }
-        
-        // 4. People (Highlight)
+        // 3. People (Highlight)
+        let peopleVal = 'Unknown';
         if (photo.people && photo.people.length > 0) {
-            let peopleStr = photo.people.filter(p => !p.includes('Unknown')).join(', ');
-            if (peopleStr) badgesHtml += createBadge('fa-solid fa-user-tag', peopleStr, true);
+            let pStr = photo.people.filter(p => !p.includes('Unknown')).join(', ');
+            if (pStr) peopleVal = pStr;
         }
+        badgesHtml += createBadge('fa-solid fa-user-tag', peopleVal, true);
         
-        // 5. Scene Objects
-        if (photo.scene && photo.scene.trim() !== '') {
-            let scenes = photo.scene.split(',').slice(0, 2).join(', ');
-            badgesHtml += createBadge('fa-solid fa-quote-left', scenes);
-        } else if (photo.scene_tags) {
-            let scenes = photo.scene_tags.split(',').slice(0, 2).join(', ');
-            badgesHtml += createBadge('fa-solid fa-quote-left', scenes);
-        }
+        // 4. Season
+        let seasonVal = photo.season ? photo.season : 'Unknown';
+        badgesHtml += createBadge('fa-solid fa-leaf', seasonVal);
+
+        // 5. Time of Day
+        let timeVal = photo.time_of_day ? photo.time_of_day : 'Unknown';
+        badgesHtml += createBadge('fa-regular fa-clock', timeVal);
         
         modalInfoBadges.innerHTML = badgesHtml;
     }
@@ -802,61 +793,6 @@ document.getElementById('confirm-delete-btn')?.addEventListener('click', async (
     } finally {
         deleteBtn.disabled = false;
         deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-    }
-});
-
-feedbackForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const text = feedbackInput.value.trim();
-    if (!text || !currentModalPhoto) return;
-
-    // 현재 사진 경로 (Payload에서 가져온 original_path 우선)
-    const photoPath = currentModalPhoto.original_path || currentModalPhoto.url;
-    
-    // UI 로딩 처리
-    feedbackInput.disabled = true;
-    const submitBtn = document.getElementById('feedback-submit-btn');
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-    
-    feedbackStatus.classList.remove('hidden');
-    feedbackStatus.style.color = 'var(--text-muted)';
-    feedbackStatus.innerText = 'AI is analyzing your feedback...';
-
-    try {
-        let apiUrl = '/api/feedback';
-        if (window.location.pathname.startsWith('/GumaPhoto')) {
-            apiUrl = '/GumaPhoto/api/feedback';
-        }
-        
-        const res = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                filepath: photoPath,
-                point_id: currentModalPhoto.id,
-                feedback_text: text
-            })
-        });
-        
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Feedback failed");
-
-        feedbackStatus.style.color = '#10b981'; // Green
-        feedbackStatus.innerText = 'Feedback stored in Queue! The global model will learn from this later.';
-        
-        setTimeout(() => {
-            closeModal();
-            // 실시간 DB 업데이트를 UI에 반영하기 위해 새로고침하거나 UI 상태를 업데이트 해야 할 수 있지만 일단 모달만 닫음
-        }, 2200);
-
-    } catch (err) {
-        console.error(err);
-        feedbackStatus.style.color = '#ef4444'; // Red
-        feedbackStatus.innerText = 'Failed to submit feedback: ' + (err.message || "Try again");
-        feedbackInput.disabled = false;
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
     }
 });
 
