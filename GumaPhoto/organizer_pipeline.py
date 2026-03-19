@@ -385,13 +385,10 @@ class OrganizerPipeline:
                         new_filename = self.generate_clean_filename(date, sequence, ext)
                         base_filename = os.path.splitext(new_filename)[0] # e.g. 2026-02_01
                         
-                        # 미래의 충돌 방지: 확장자와 상관없이 베이스 네임이 이미 쓰였는지 100% 검사
-                        collision = False
-                        common_exts = ['.jpg', '.jpeg', '.png', '.heic', '.mp4', '.mov', '.avi', '.mkv']
-                        for test_ext in common_exts:
-                            if os.path.exists(os.path.join(target_folder_path, base_filename + test_ext)):
-                                collision = True
-                                break
+                        # 미래의 충돌 방지: 대소문자나 특이 확장자와 상관없이 베이스 네임이 이미 쓰였는지 100% 검사
+                        import glob
+                        matching_files = glob.glob(os.path.join(target_folder_path, f"{base_filename}.*"))
+                        collision = len(matching_files) > 0
                                 
                         if not collision:
                             final_move_path = os.path.join(target_folder_path, new_filename)
