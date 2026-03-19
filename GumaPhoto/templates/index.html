@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="static/style.css?v=24">
+    <link rel="stylesheet" href="static/style.css?v=25">
 </head>
 
 <body>
@@ -101,7 +101,25 @@
         </main>
     </div>
 
-
+    <!-- Bottom Navigation Bar (Mobile) -->
+    <nav id="bottom-nav" class="bottom-nav">
+        <a href="#" class="nav-item active" onclick="location.reload(); return false;">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </a>
+        <a href="#" class="nav-item" id="nav-magic-btn">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span>Magic</span>
+        </a>
+        <a href="#" class="nav-item" id="nav-upload-btn">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span>Upload</span>
+        </a>
+        <a href="#" class="nav-item" id="nav-server-btn">
+            <i class="fa-solid fa-server"></i>
+            <span>System</span>
+        </a>
+    </nav>
 
     <!-- Photo Detail Modal -->
     <div id="photo-modal" class="modal hidden">
@@ -210,7 +228,7 @@
         </div>
     </div>
 
-    <script src="static/script.js?v=45"></script>
+    <script src="static/script.js?v=46"></script>
 </body>
 
 </html>

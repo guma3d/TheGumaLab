@@ -735,3 +735,65 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
         margin: 1rem 0 0 0;
     }
 }
+
+/* -------------------------------------------------------------
+   📱 iOS Native Touch Block & Mobile View Customisations 
+   ------------------------------------------------------------- */
+img {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* 하단 내비게이션 바 (진한 그레이 배경) */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 65px;
+    background: #1a1a1a; 
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 150;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* 스크롤을 ⬇️ 내릴 때(화면 위로 올릴때) 숨겨버리는 트리거용 클래스 */
+.bottom-nav.nav-hidden {
+    transform: translateY(110%);
+}
+
+.bottom-nav .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.70rem;
+    gap: 4px;
+    flex: 1;
+    height: 100%;
+    transition: color 0.2s;
+    cursor: pointer;
+}
+
+.bottom-nav .nav-item i {
+    font-size: 1.15rem;
+}
+
+.bottom-nav .nav-item.active {
+    color: #10b981;
+}
+
+/* 📱 모바일에선 상단 액션 아이콘 숨기기, 데스크탑에선 하단바 숨기기 분리 */
+@media (max-width: 768px) {
+    .header-actions { display: none !important; }
+}
+@media (min-width: 769px) {
+    .bottom-nav { display: none !important; }
+}

@@ -1110,3 +1110,45 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
         submitBtn.innerHTML = '<i class="fa-solid fa-check"></i> 자율 전파(Propagation) 승인';
     }
 });
+
+// =========================================================================
+// 📱 Mobile Bottom Navigation Bar Logic
+// =========================================================================
+const bottomNav = document.getElementById('bottom-nav');
+let lastScrollY = window.scrollY;
+
+if (bottomNav) {
+    window.addEventListener('scroll', () => {
+        const currentScrollY = window.scrollY;
+        
+        // 아이폰 바운스 스크롤 효과 방어용
+        if (currentScrollY <= 0) {
+            bottomNav.classList.remove('nav-hidden');
+        } else if (currentScrollY > lastScrollY && currentScrollY > 60) {
+            // 스크롤 다운 (화면을 위로 쓸어 올릴 때) -> 내비 숨김
+            bottomNav.classList.add('nav-hidden');
+        } else if (currentScrollY < lastScrollY) {
+            // 스크롤 업 (화면을 아래로 쓸어 내릴 때) -> 내비 즉시 보이게
+            bottomNav.classList.remove('nav-hidden');
+        }
+        
+        lastScrollY = currentScrollY;
+    }, { passive: true });
+    
+    // 네비 아이콘 클릭 이벤트 와이어링 (기존 상단 버튼들과 100% 동일하게 동작)
+    document.getElementById('nav-magic-btn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('feedback-hub-btn').click();
+    });
+    
+    document.getElementById('nav-upload-btn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        // file input을 트리거
+        document.getElementById('upload-input').click();
+    });
+    
+    document.getElementById('nav-server-btn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('progress-monitor-btn').click();
+    });
+}
