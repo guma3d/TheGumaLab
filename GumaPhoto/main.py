@@ -915,14 +915,13 @@ async def get_unknown_photo():
             people = r.payload.get("people", [])
             date_val = r.payload.get("date", "")
             
-            issues = []
-            if "위치정보없음" in loc or not loc:
-                issues.append("Location Data Missing")
+            issue = ""
             if "Unknown" in date_val or not date_val:
-                issues.append("Date Data Missing")
+                issue = "Date Data Missing"
+            elif "위치정보없음" in loc or not loc:
+                issue = "Location Data Missing"
                 
-            if issues:
-                issue = random.choice(issues)
+            if issue:
                 url_path = r.payload.get("filepath", "")
                 if url_path.startswith("/app/data/organized"):
                     url_path = url_path.replace("/app/data/organized", "/photos")
