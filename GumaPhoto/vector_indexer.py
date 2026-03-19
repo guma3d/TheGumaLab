@@ -524,15 +524,36 @@ class VectorIndexer:
                 # 1. 가장 중요한 AI 뇌(Qdrant)에 먼저 때려 넣기
                 self.q_client.upsert(collection_name=COLLECTION_NAME, points=points_to_upsert)
                 
-                # 2. XMP 생성 및 SQLite Bulk Insert (성공 시에만)
+                # 2. XMP 및 WEBP 생성, 그리고 SQLite Bulk Insert (성공 시에만)
                 import xmp_utils
+                from PIL import Image, ImageOps
+                try:
+                    from pillow_heif import register_heif_opener
+                    register_heif_opener()
+                except ImportError:
+                    pass
+                    
                 db_records = []
                 for filepath, payload, face_count in successful_payloads:
                     try:
+                        # [A] XMP 메타데이터 생성
                         xmp_utils.generate_xmp_sidecar(filepath, payload)
+                        
+                        # [B] WEBP 썸네일 새로/다시 굽기 (기존 것 삭제된 상태에서 쾌속 로딩용 재생산)
+                        orig_ext = filepath.rsplit('.', 1)[-1].lower() if '.' in filepath else ""
+                        base_name = os.path.splitext(filepath)[0]
+                        thumb_path = f"{base_name}_{orig_ext}.webp"
+                        if not os.path.exists(thumb_path):
+                            with Image.open(filepath) as t_img:
+                                t_img = ImageOps.exif_transpose(t_img)
+                                t_img.thumbnail((300, 300))
+                                if t_img.mode in ("RGBA", "P"):
+                                    t_img = t_img.convert("RGB")
+                                t_img.save(thumb_path, "WEBP", quality=75)
+                                
                         db_records.append((filepath, 'DONE', face_count))
                     except Exception as xmp_e:
-                        print(f"      ⚠️ XMP 생성 실패: {xmp_e}")
+                        print(f"      ⚠️ XMP/WEBP 파생 데이터 재생산 실패 (사이드카 누락): {xmp_e}")
                         db_records.append((filepath, 'ERROR', face_count))
                 
                 # Bulk DB commit으로 디스크 I/O 최적화
