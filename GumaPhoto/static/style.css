@@ -632,12 +632,9 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
 }
 
 .theme-scroll-box {
-    display: grid;
-    grid-template-rows: repeat(2, 100px);
-    grid-auto-flow: column;
-    grid-auto-columns: 100px;
-    gap: 8px;
+    display: flex;
     overflow-x: auto;
+    gap: 12px;
     padding: 0 10px 10px 10px;
     scrollbar-width: none; /* Firefox */
 }
@@ -647,14 +644,31 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
 }
 
 .theme-photo-item {
-    width: 100%;
-    height: 100%;
-    border-radius: 10px;
+    flex: 0 0 140px;
+    height: 140px;
+    border-radius: 12px;
     overflow: hidden;
     cursor: pointer;
     border: 1px solid var(--glass-border);
     transition: transform 0.2s;
     background: var(--glass-bg);
+}
+
+/* 상단 메인 갤러리 전용 컴팩트 2줄 오버라이드 */
+#gallery-grid.theme-scroll-box {
+    display: grid;
+    grid-template-rows: repeat(2, 100px);
+    grid-auto-flow: column;
+    grid-auto-columns: 100px;
+    gap: 8px;
+    padding: 0 10px; 
+}
+
+#gallery-grid .theme-photo-item {
+    flex: none;
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
 }
 
 .theme-photo-item:hover {
