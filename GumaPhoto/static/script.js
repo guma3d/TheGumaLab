@@ -676,28 +676,63 @@ let currentModalPhoto = null;
 const photoModal = document.getElementById('photo-modal');
 const modalImage = document.getElementById('modal-image');
 const modalClose = document.getElementById('modal-close');
-const feedbackBtn = document.getElementById('modal-feedback-btn');
-const feedbackContainer = document.getElementById('feedback-container');
-const feedbackForm = document.getElementById('feedback-form');
-const feedbackInput = document.getElementById('feedback-input');
-const feedbackStatus = document.getElementById('feedback-status');
-const downloadBtn = document.getElementById('modal-download-btn');
 const deleteBtn = document.getElementById('modal-delete-btn');
+const modalInfoBadges = document.getElementById('modal-info-badges');
 
 function openModal(photo, imgUrl) {
     currentModalPhoto = photo;
     modalImage.src = imgUrl;
     photoModal.classList.remove('hidden');
     
-    // Reset feedback UI
-    feedbackContainer.classList.add('hidden');
-    feedbackInput.value = '';
-    feedbackInput.disabled = false;
-    feedbackStatus.classList.add('hidden');
-    
-    const submitBtn = document.getElementById('feedback-submit-btn');
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+    // 모달창 좌측 하단의 Semantic Badges 생성
+    if (modalInfoBadges) {
+        modalInfoBadges.innerHTML = ''; // 초기화
+        
+        const createBadge = (icon, text, isHighlight = false) => {
+            if (!text || text === 'Unknown') return '';
+            const cls = isHighlight ? 'info-badge highlight' : 'info-badge';
+            return `<div class="${cls}"><i class="${icon}"></i> ${text}</div>`;
+        };
+        
+        let badgesHtml = '';
+        
+        // 1. Date
+        if (photo.date && photo.date.trim() !== '') {
+            let shortDate = photo.date.length > 10 ? photo.date.substring(0, 10) : photo.date;
+            if (shortDate !== 'Unknown') badgesHtml += createBadge('fa-regular fa-calendar', shortDate);
+        }
+        
+        // 2. Time & Season (묶어서 하나로 표현하거나 따로 표현)
+        if (photo.time_of_day && photo.time_of_day !== 'Unknown') {
+            badgesHtml += createBadge('fa-regular fa-clock', photo.time_of_day);
+        }
+        if (photo.season && photo.season !== 'Unknown') {
+            badgesHtml += createBadge('fa-solid fa-leaf', photo.season);
+        }
+        
+        // 3. Location
+        if (photo.location && photo.location.trim() !== '') {
+            let prettyLoc = photo.location.replace(/-/g, ' ');
+            if (!prettyLoc.includes("위치정보없음")) badgesHtml += createBadge('fa-solid fa-location-dot', prettyLoc);
+        }
+        
+        // 4. People (Highlight)
+        if (photo.people && photo.people.length > 0) {
+            let peopleStr = photo.people.filter(p => !p.includes('Unknown')).join(', ');
+            if (peopleStr) badgesHtml += createBadge('fa-solid fa-user-tag', peopleStr, true);
+        }
+        
+        // 5. Scene Objects
+        if (photo.scene && photo.scene.trim() !== '') {
+            let scenes = photo.scene.split(',').slice(0, 2).join(', ');
+            badgesHtml += createBadge('fa-solid fa-quote-left', scenes);
+        } else if (photo.scene_tags) {
+            let scenes = photo.scene_tags.split(',').slice(0, 2).join(', ');
+            badgesHtml += createBadge('fa-solid fa-quote-left', scenes);
+        }
+        
+        modalInfoBadges.innerHTML = badgesHtml;
+    }
 }
 
 function closeModal() {
@@ -710,25 +745,6 @@ modalClose.addEventListener('click', closeModal);
 photoModal.addEventListener('click', (e) => {
     // 배경(dimmed) 바깥 부분 클릭 시 즉시 닫힘
     if (e.target === photoModal) closeModal();
-});
-
-// Feedback 토글 작동
-feedbackBtn.addEventListener('click', () => {
-    feedbackContainer.classList.toggle('hidden');
-    if (!feedbackContainer.classList.contains('hidden')) {
-        feedbackInput.focus();
-    }
-});
-
-// 단일 사진 다운로드 기능
-downloadBtn.addEventListener('click', () => {
-    if (!currentModalPhoto) return;
-    const a = document.createElement('a');
-    a.href = modalImage.src;
-    a.download = currentModalPhoto.id + '.jpg'; 
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
 });
 
 // 삭제 (Hard Delete) 모달 휴지통 버튼 누를 시 발생

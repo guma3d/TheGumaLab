@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="static/style.css?v=25">
+    <link rel="stylesheet" href="static/style.css?v=26">
 </head>
 
 <body>
@@ -128,19 +128,15 @@
             <div class="modal-image-container">
                 <img id="modal-image" src="" alt="Full View">
             </div>
-            <div class="modal-actions">
-                <button id="modal-download-btn" class="action-btn" title="Download"><i class="fa-solid fa-download"></i></button>
-                <button id="modal-feedback-btn" class="action-btn" title="Feedback"><i class="fa-regular fa-comment-dots"></i></button>
-                <button id="modal-delete-btn" class="action-btn danger" title="Delete"><i class="fa-regular fa-trash-can"></i></button>
-            </div>
-            <div id="feedback-container" class="feedback-container hidden">
-                <form id="feedback-form">
-                    <input type="text" id="feedback-input" placeholder="e.g. This is Sung-wook, not Song-i." required autocomplete="off">
-                    <button type="submit" id="feedback-submit-btn">
-                        <i class="fa-solid fa-paper-plane"></i>
+            <div class="modal-info-panel">
+                <div id="modal-info-badges" class="info-badges-column">
+                    <!-- 뱃지들이 자바스크립트로 이곳에 세로로 인젝션됩니다 -->
+                </div>
+                <div class="modal-actions-right">
+                    <button id="modal-delete-btn" class="action-btn premium-trash-btn" title="Delete Photo">
+                        <i class="fa-regular fa-trash-can"></i>
                     </button>
-                </form>
-                <div id="feedback-status" class="feedback-status hidden"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -228,7 +224,7 @@
         </div>
     </div>
 
-    <script src="static/script.js?v=46"></script>
+    <script src="static/script.js?v=47"></script>
 </body>
 
 </html>
