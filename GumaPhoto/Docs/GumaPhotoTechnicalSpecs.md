@@ -36,9 +36,9 @@
     2.  **다중 모델 컨베이어 벨트 (CPU-GPU 멀티스레드 분산):** 
         - **InsightFace:** 이미지 속 가족 얼굴 위치와 특징점(512D) 추출
         - **HSEmotion:** 추출된 얼굴의 표정을 읽어 감정 텍스트 할당
-        - **Florence-2-base:** 원본 이미지를 통째로 읽어 구체적인 영단어 나열(objects)과 소설 같은 긴 영어 묘사(caption) 생성
+        - **Florence-2-base:** 원본 이미지를 통째로 읽어 구체적인 영단어 나열(objects)과 소설 같은 긴 영어 묘사(caption) 생성 (`bfloat16` 정밀도 및 Eager 모드 최적화로 속도/VRAM 극대화. 할루시네이션 방지를 위한 `repetition_penalty=1.5`, `max_new_tokens=256` 제한 적용)
         - **SigLIP:** 이미지를 보고 다국어적 시각 분위기를 압축하여 고밀도(768D) 공간 벡터 생성
-    3.  위 4개의 거대 모델이 8GB VRAM이라는 좁은 풀 안에서 터지지 않고 매끄럽게 돌아가도록 한 치의 오차도 없이 직렬(Sequential) 메모리 점유 구조로 설계되어 있습니다.
+    3.  위 4개의 거대 모델이 8GB VRAM이라는 좁은 풀 안에서 터지지 않고 OOM(Out of Memory) 스파이크를 완벽히 버텨내도록, **BATCH_SIZE를 10장** 단위로 강력하게 조율한 안정적인 직렬(Sequential) 메모리 점유 구조로 설계되어 있습니다.
     4.  **마스터 사전(Dictionary) 자동 교체:** 루프를 돌며 발견된 모든 사진의 폴더 지역명칭들을 리스트로 모조리 취합하여 나중에 Gemini 파서 엔진이 커닝할 수 있도록 `/app/data/available_tags.json` 파일에 자가 업데이트 합니다.
 
 ## 4. 🪦 3단 연속 하드 딜리트 파이프라인 (Hard Delete)
