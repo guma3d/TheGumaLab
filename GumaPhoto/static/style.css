@@ -459,18 +459,23 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
 
 .modal-info-panel {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
+    justify-content: center;
+    align-items: center;
     width: 100%;
-    margin-top: 16px;
+    margin-top: 10px;
     max-width: 800px;
 }
 
-.info-badges-column {
+.info-badges-overlay {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 6px;
+    z-index: 20;
+    pointer-events: none; /* 이미지 클릭을 방해하지 않게 */
 }
 
 .info-badge {
@@ -492,9 +497,9 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
     color: #93c5fd;
 }
 
-.modal-actions-right {
+.modal-actions-center {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
 }
 
 .premium-trash-btn {

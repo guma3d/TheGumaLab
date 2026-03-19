@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="static/style.css?v=26">
+    <link rel="stylesheet" href="static/style.css?v=27">
 </head>
 
 <body>
@@ -125,14 +125,15 @@
     <div id="photo-modal" class="modal hidden">
         <div class="modal-content">
             <span id="modal-close" class="modal-close">&times;</span>
-            <div class="modal-image-container">
+            <div class="modal-image-container" style="position: relative;">
                 <img id="modal-image" src="" alt="Full View">
+                <!-- 사진 안쪽에 뜰 뱃지 패널 (오버레이) -->
+                <div id="modal-info-badges" class="info-badges-overlay">
+                    <!-- 뱃지들이 이곳에 세로로 인젝션됩니다 -->
+                </div>
             </div>
             <div class="modal-info-panel">
-                <div id="modal-info-badges" class="info-badges-column">
-                    <!-- 뱃지들이 자바스크립트로 이곳에 세로로 인젝션됩니다 -->
-                </div>
-                <div class="modal-actions-right">
+                <div class="modal-actions-center">
                     <button id="modal-delete-btn" class="action-btn premium-trash-btn" title="Delete Photo">
                         <i class="fa-regular fa-trash-can"></i>
                     </button>
@@ -224,7 +225,7 @@
         </div>
     </div>
 
-    <script src="static/script.js?v=47"></script>
+    <script src="static/script.js?v=48"></script>
 </body>
 
 </html>
