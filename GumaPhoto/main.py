@@ -888,16 +888,18 @@ async def get_unknown_photo():
         
         date_res = []
         try:
-            date_res = qdrant_client.search(
+            scroll_res, _ = qdrant_client.scroll(
                 collection_name="gumaphoto_hybrid_kr", 
-                query_vector=("v_scene", [0]*768), 
-                query_filter=models.Filter(
-                    must=[models.FieldCondition(key="date", match=models.MatchText(text="Unknown"))]
+                scroll_filter=models.Filter(
+                    must=[models.FieldCondition(key="date", match=models.MatchValue(value="Unknown Date"))]
                 ),
                 limit=50,
                 with_payload=True
             )
+            if scroll_res:
+                date_res = scroll_res
         except Exception as e:
+            print(f"[Error in Feedback Date query]: {e}")
             pass
             
         if not date_res:
