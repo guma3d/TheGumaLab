@@ -17,7 +17,6 @@ import threading
 import asyncio
 from contextlib import asynccontextmanager
 import uuid
-
 from transformers import AutoProcessor, AutoModel
 import torch
 from qdrant_client import QdrantClient
@@ -133,7 +132,7 @@ app = FastAPI(title="GumaPhoto API", lifespan=lifespan)
 
 # Mount static files correctly
 app.mount("/static", StaticFiles(directory="static"), name="static")
-# Mount organized photos directory to serve images directly
+# Mount organized photos directory to serve images directly (Originals)
 app.mount("/photos", StaticFiles(directory="/app/data/organized"), name="photos")
 
 # Jinja2 templates setup
@@ -143,7 +142,7 @@ UPLOAD_DIR = "/app/data/uploads_raw"
 ORGANIZED_DIR = "/app/data/organized"
 
 class SearchRequest(BaseModel):
-    query: str
+    query: str = ""
     offset: int = 0
     limit: int = 20
     people: List[str] = []
@@ -151,6 +150,8 @@ class SearchRequest(BaseModel):
     objects: List[str] = []
     scene: str = ""
     is_load_more: bool = False
+    date: str = ""
+    sort: str = "asc"
 
 class DownloadRequest(BaseModel):
     files: List[str]
@@ -167,6 +168,16 @@ class DeleteRequest(BaseModel):
 @app.get("/")
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+from fastapi.responses import FileResponse
+
+@app.get("/sw.js")
+async def serve_sw():
+    return FileResponse("static/sw.js", media_type="application/javascript")
+
+@app.get("/manifest.json")
+async def serve_manifest():
+    return FileResponse("static/manifest.json", media_type="application/json")
 
 # 전역 상태를 통해 여러 사용자가 동시에 사진을 지속적으로 올릴 때 루프 처리 방어
 upload_lock = threading.Lock()
@@ -247,23 +258,23 @@ async def perform_search(req: SearchRequest):
         
         # 1. Timeline photos (Scroll with OrderBy Date)
         try:
-            from qdrant_client.http.models import OrderBy, Direction
-            # Timeline uses scroll to support strict date ordering for "Recent" view
+            from qdrant_client.http.models import OrderBy, Direction, Filter, FieldCondition, MatchAny, MatchText
+            must_conds = []
+            if req.people:
+                must_conds.append(FieldCondition(key="people", match=MatchAny(any=req.people)))
+            if req.location:
+                must_conds.append(FieldCondition(key="location", match=MatchText(text=req.location)))
+            if req.date:
+                must_conds.append(FieldCondition(key="date", match=MatchText(text=req.date)))
+                
+            s_filter = Filter(must=must_conds) if must_conds else None
+            direct = Direction.ASC if req.sort == "asc" else Direction.DESC
             timeline_res, _ = qdrant_client.scroll(
                 collection_name="gumaphoto_hybrid_kr",
-                limit=req.limit,
-                with_payload=True,
-                order_by=OrderBy(key="sort_date", direction=Direction.DESC)
-            )
-            # Since scroll uses PointId cursor internally, integer offset must be sliced manually if used without cursor. 
-            # We slice the results if offset is provided (basic pagination for scrolling)
-            # Note: For large scale, passing a scroll_id is better, but since limit is small and offset usually <100, this works.
-            # actually scroll() only returns up to `limit`. If req.offset is used in UI, we fetch max(offset+limit) and slice.
-            timeline_res, _ = qdrant_client.scroll(
-                collection_name="gumaphoto_hybrid_kr",
+                scroll_filter=s_filter,
                 limit=req.offset + req.limit,
                 with_payload=True,
-                order_by=OrderBy(key="sort_date", direction=Direction.DESC)
+                order_by=OrderBy(key="sort_date", direction=direct)
             )
             timeline_res = timeline_res[req.offset:]
         except Exception as e:
@@ -419,14 +430,19 @@ async def perform_search(req: SearchRequest):
 
     # [2 & 3] 메타데이터 역방향 필터링 기반 검색 로직 (2단 기어 스마트 폴백 적용)
     try:
-        def execute_qdrant_search(target_people, target_location):
+        def execute_qdrant_search(target_people, target_location, target_date):
             must_conds = []
             if target_people:
                 must_conds.append(FieldCondition(key="people", match=MatchAny(any=target_people)))
             if target_location:
                 must_conds.append(FieldCondition(key="location", match=MatchText(text=target_location)))
+            if target_date:
+                must_conds.append(FieldCondition(key="date", match=MatchText(text=target_date)))
                 
             q_filter = Filter(must=must_conds) if must_conds else None
+            
+            from qdrant_client.http.models import OrderBy, Direction
+            direct = Direction.ASC if req.sort == "asc" else Direction.DESC
             
             if enhanced_query.strip() and siglip_processor and siglip_model:
                 # 사용자가 인물/장소 외에도 "해변에서 뛰어노는"과 같은 씬(상황)을 명시한 경우
@@ -472,43 +488,27 @@ async def perform_search(req: SearchRequest):
                 return [pt for _, pt in reranked_points[req.offset : req.offset + req.limit]]
                 
             else:
-                # 씬(장면) 설명 없이 인물과 장소만으로 검색한 경우 (예: "성욱이 라스베가스")
-                if target_people:
-                    p = target_people[0]
-                    if p in known_faces:
-                        face_vector = known_faces[p]
-                        return qdrant_client.query_points(
-                            collection_name="gumaphoto_hybrid_kr",
-                            query=face_vector,
-                            using="face",
-                            query_filter=q_filter,
-                            limit=req.limit,
-                            offset=req.offset,
-                            with_payload=True
-                        ).points
-                elif q_filter:
-                    # 얼굴도 장면도 없이 장소필터만 있는 경우 (벡터 검색 대신 스크롤 조회)
-                    dummy_vector = [0.0] * 768 # ViT-L-14 dimension
-                    return qdrant_client.query_points(
-                        collection_name="gumaphoto_hybrid_kr",
-                        query=dummy_vector,
-                        using="scene",
-                        query_filter=q_filter,
-                        limit=req.limit,
-                        offset=req.offset,
-                        with_payload=True
-                    ).points 
+                # 씬(장면) 설명이나 자연어 검색이 없고 오직 필터 조합만 있는 경우 (스크롤 & 정렬 완벽 대응)
+                res_scroll, _ = qdrant_client.scroll(
+                    collection_name="gumaphoto_hybrid_kr",
+                    scroll_filter=q_filter,
+                    limit=req.offset + req.limit,
+                    with_payload=True,
+                    order_by=OrderBy(key="sort_date", direction=direct)
+                )
+                return res_scroll[req.offset:]
+                
             return []
 
         # 1. 일단 정밀 타격 (1단 기어)
-        search_res = execute_qdrant_search(people_detected, location_detected)
+        search_res = execute_qdrant_search(people_detected, location_detected, req.date)
         fallback_triggered = False
         
-        # 2. [폴백 작동] 검색 결과가 0건이고, 1페이지이며, 사용한 장소 조건이 있었을 경우
-        if not search_res and location_detected and req.offset == 0:
-            print(f"⚠️ [Fallback 발동] '{location_detected}' 결과 없음. 장소 필터 해제 후 2단 기어 재검색")
+        # 2. [폴백 작동] 검색 결과가 0건이고 필터(장소/날짜/사람)가 있었을 경우
+        if not search_res and (location_detected or people_detected or req.date) and req.offset == 0:
+            print(f"⚠️ [Fallback 발동] 필터 결과 없음. 필터 해제 후 2단 기어 (벡터만) 재검색")
             fallback_triggered = True
-            search_res = execute_qdrant_search(people_detected, "") # 장소를 비우고 재요청
+            search_res = execute_qdrant_search([], "", "") # 조건 비우고 재요청
             
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -826,6 +826,41 @@ async def delete_photo(req: DeleteRequest):
         print(f"   ❌ [3/3] SQLite 갱신 중 오류 발생: {e}")
         
     return {"message": "Successfully completely deleted the photo.", "deleted_id": req.point_id}
+
+@app.get("/api/filters")
+async def get_filters():
+    import os, re
+    # Return distinct dates and locations for the Scrollbar (Select) UI
+    locations = []
+    dates = []
+    try:
+        if os.path.exists("/app/data/available_tags.json"):
+            import json
+            with open("/app/data/available_tags.json", "r", encoding="utf-8") as f:
+                tag_data = json.load(f)
+                locations = sorted(tag_data.get("locations", []))
+                
+        # SQLite 대신 물리적 폴더를 직접 스캔하여 모든 과거 사진의 날짜를 100% 누락 없이 가져옵니다.
+        organized_dir = "/app/data/organized"
+        if os.path.exists(organized_dir):
+            for year_folder in os.listdir(organized_dir):
+                year_path = os.path.join(organized_dir, year_folder)
+                if os.path.isdir(year_path):
+                    for tag_folder in os.listdir(year_path):
+                        # 폴더 포맷 예: 2026-03_라스베가스
+                        match = re.search(r'^(\d{4}-\d{2})_', tag_folder)
+                        if match:
+                            dates.append(match.group(1))
+                            
+        dates = sorted(list(set(dates)), reverse=True)
+    except Exception as e:
+        print(f"Filter fetch error: {e}")
+
+    return {
+        "dates": ["All Dates"] + dates,
+        "locations": ["All Locations"] + locations,
+        "names": ["All Names", "송이", "성욱", "준우", "지우"]
+    }
 
 if __name__ == "__main__":
     import uvicorn

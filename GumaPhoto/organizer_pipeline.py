@@ -383,14 +383,47 @@ class OrganizerPipeline:
                     sequence = 1
                     while True:
                         new_filename = self.generate_clean_filename(date, sequence, ext)
-                        final_move_path = os.path.join(target_folder_path, new_filename)
-                        if not os.path.exists(final_move_path):
+                        base_filename = os.path.splitext(new_filename)[0] # e.g. 2026-02_01
+                        
+                        # 미래의 충돌 방지: 확장자와 상관없이 베이스 네임이 이미 쓰였는지 100% 검사
+                        collision = False
+                        common_exts = ['.jpg', '.jpeg', '.png', '.heic', '.mp4', '.mov', '.avi', '.mkv']
+                        for test_ext in common_exts:
+                            if os.path.exists(os.path.join(target_folder_path, base_filename + test_ext)):
+                                collision = True
+                                break
+                                
+                        if not collision:
+                            final_move_path = os.path.join(target_folder_path, new_filename)
                             break
                         sequence += 1
                     
                     # 파일 이동!
                     try:
                         shutil.move(item['filepath'], final_move_path)
+                        
+                        # 🔹 [NEW] 썸네일 즉시 굽기 (실시간 로딩 속도 향상)
+                        try:
+                            from PIL import Image
+                            from pillow_heif import register_heif_opener
+                            register_heif_opener()
+                            
+                            # 기존: thumb_path = os.path.splitext(final_move_path)[0] + ".webp"
+                            # 패치: 원본의 확장자(ext)를 이름에 박아서 썸네일 완전 격리 (e.g. _heic.webp)
+                            orig_ext = ext.replace('.', '').lower()
+                            thumb_path = os.path.splitext(final_move_path)[0] + f"_{orig_ext}.webp"
+                            
+                            if not os.path.exists(thumb_path):
+                                with Image.open(final_move_path) as img:
+                                    from PIL import ImageOps
+                                    img = ImageOps.exif_transpose(img)
+                                    img.thumbnail((300, 300)) # 가로세로 최대 300px 비율축소
+                                    if img.mode in ("RGBA", "P"):
+                                        img = img.convert("RGB")
+                                    img.save(thumb_path, "WEBP", quality=75) # 최고효율 WEBP
+                        except Exception as thumb_e:
+                            print(f"   ⚠️ 썸네일 생성 실패: {thumb_e}")
+                            
                     except Exception as e:
                         print(f"   ⚠️ 이동 실패: {os.path.basename(item['filepath'])} -> {e}")
                         continue

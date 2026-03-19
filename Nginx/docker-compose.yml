@@ -7,3 +7,9 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
     restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: HomeServer_Cloudflared
+    command: tunnel --no-autoupdate run --token eyJhIjoiNDVlNDdjOGI3ODQzZjk1MWU4MjAwOTM1NWViYjFiMmYiLCJ0IjoiZmRkNWJlY2ItMTNhMy00ZTRkLWE2YjEtYjcxNDgwZGM1NTYzIiwicyI6Ik0yRTVPVFUwWmpZdFpUYzNPQzAwWWpFeExXSmlNekV0Wm1SbVpETXdObU0zWlRRNCJ9
+    restart: unless-stopped

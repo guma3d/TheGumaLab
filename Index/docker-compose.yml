@@ -1,9 +1,11 @@
 services:
   index-service:
-    image: nginx:alpine
+    build: .
     container_name: Index_Page
     ports:
       - "8081:80"
     volumes:
-      - .:/usr/share/nginx/html
+      - .:/app
+    env_file:
+      - .env
     restart: always

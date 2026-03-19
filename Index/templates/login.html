@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Guma Lab | Access Restricted</title>
+    <link rel="stylesheet" href="/static/style.css?v=5">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- WebAuthn JS Helper -->
+    <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
+    <style>
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding-top: 15vh; /* Push down without collapsing on keyboard */
+        }
+
+        .login-card {
+            background: rgba(45, 50, 60, 0.5);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .login-card i.fa-lock {
+            font-size: 3rem;
+            color: #4a90e2;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(74, 144, 226, 0.5);
+        }
+
+        input[type="password"] {
+            width: 100%;
+            padding: 15px;
+            margin-top: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            outline: none;
+            transition: border-color 0.3s;
+            text-align: center;
+            font-family: inherit;
+        }
+
+        input:focus {
+            border-color: #4a90e2;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            margin-top: 20px;
+            background: linear-gradient(135deg, #4a90e2, #50e3c2);
+            color: #1a1e24;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.3s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+
+        .error-msg {
+            color: #ff6b6b;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        .success-msg {
+            color: #50e3c2;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        .faceid-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .faceid-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .instructions {
+            margin-top: 20px;
+            font-size: 0.85rem;
+            color: #ccc;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="ambient-glow"></div>
+    <div class="ambient-glow-2"></div>
+
+    <div class="container">
+        <header style="position: absolute; top: 14vh; left: 0; width: 100%; text-align: center;">
+            <h1>The Guma Lab</h1>
+        </header>
+
+        <main class="login-container">
+            <div class="login-card">
+                <i class="fa-solid fa-lock" id="lock-icon"></i>
+                <h2>Authorization</h2>
+                <form action="/login" method="POST" id="loginForm">
+                    <input type="hidden" name="redirect_url" value="{{ redirect_url }}">
+
+                    <!-- FaceID Sign In Button (Primary) -->
+                    <button type="button" class="faceid-btn" onclick="handleFaceIDClick()"
+                        style="font-size: 1.2rem; padding: 18px; background: linear-gradient(135deg, #4a90e2, #50e3c2); color: #1a1e24; border: none;">
+                        <i class="fa-solid fa-face-smile" style="margin-right:8px;"></i> Sign in with FaceID
+                    </button>
+
+                    <div
+                        style="margin: 25px 0; color: rgba(255,255,255,0.4); font-size: 0.9rem; display: flex; align-items: center; justify-content: center;">
+                        <span style="flex:1; height:1px; background:rgba(255,255,255,0.1);"></span>
+                        <span style="margin:0 15px;">or use password</span>
+                        <span style="flex:1; height:1px; background:rgba(255,255,255,0.1);"></span>
+                    </div>
+
+                    <input type="password" id="pw_input" name="password" placeholder="Master Password">
+
+                    {% if error %}
+                    <div class="error-msg" id="server-error"><i class="fa-solid fa-triangle-exclamation"></i> {{ error
+                        }}</div>
+                    {% endif %}
+                    <div class="error-msg" id="client-error" style="display:none;"></div>
+                    <div class="success-msg" id="client-success" style="display:none;"></div>
+
+                    <button type="submit" id="btn-login-pw"
+                        style="background:transparent; border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.5); font-size: 0.9rem; margin-top:10px;">
+                        Login with Password
+                    </button>
+
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const { startRegistration, startAuthentication } = SimpleWebAuthnBrowser;
+
+        function showStatus(msg, isError) {
+            const errDiv = document.getElementById('client-error');
+            const succDiv = document.getElementById('client-success');
+            if (document.getElementById('server-error')) document.getElementById('server-error').style.display = 'none';
+            if (isError) {
+                succDiv.style.display = 'none';
+                errDiv.style.display = 'block';
+                errDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + msg;
+            } else {
+                errDiv.style.display = 'none';
+                succDiv.style.display = 'block';
+                succDiv.innerHTML = '<i class="fa-solid fa-check"></i> ' + msg;
+            }
+        }
+
+        async function handleFaceIDClick() {
+            const password = document.getElementById("pw_input").value;
+            // 빈칸이면 로그인 시도, 비밀번호가 있으면 기기 등록 시도
+            if (password.trim() === "") {
+                await executeLogin();
+            } else {
+                await executeRegistration(password);
+            }
+        }
+
+        async function executeRegistration(password) {
+            try {
+                // 1. Get options from server
+                showStatus("Requesting registration...", false);
+                const resp = await fetch("/webauthn/register/begin", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ password: password })
+                });
+
+                if (!resp.ok) {
+                    const data = await resp.json();
+                    throw new Error(data.detail || "Setup failed. Wrong password?");
+                }
+                const options = await resp.json();
+                const internalUsername = options.internal_username;
+
+                // 2. Talk to FaceID
+                showStatus("Waiting for FaceID...", false);
+                const attResp = await startRegistration(options);
+
+                // 3. Verify
+                const verifyResp = await fetch("/webauthn/register/verify", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username: internalUsername, response: attResp })
+                });
+
+                if (!verifyResp.ok) throw new Error("Verification failed.");
+
+                showStatus("FaceID Registered Successfully! Now verifying...", false);
+                document.getElementById("pw_input").value = "";
+
+                // Directly login after registration
+                setTimeout(() => { executeLogin(); }, 1000);
+            } catch (err) {
+                console.error(err);
+                if (err.message.includes("cancelled")) {
+                    showStatus("FaceID cancelled by user.", true);
+                } else {
+                    showStatus("Registration Failed: " + err.message, true);
+                }
+            }
+        }
+
+        async function executeLogin() {
+            try {
+                showStatus("Waking up FaceID...", false);
+                const resp = await fetch("/webauthn/login/begin", {
+                    method: "POST", headers: { "Content-Type": "application/json" }
+                });
+
+                if (!resp.ok) throw new Error("Failed to initialize FaceID login.");
+                const options = await resp.json();
+                const challengeHex = options.challenge_hex;
+
+                // 2. Trigger FaceID
+                const asseResp = await startAuthentication(options);
+
+                // 3. Verify and get cookie
+                const verifyResp = await fetch("/webauthn/login/verify", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ challenge_hex: challengeHex, response: asseResp })
+                });
+
+                if (!verifyResp.ok) throw new Error("FaceID Not Recognized.");
+
+                showStatus("Access Granted!", false);
+                document.getElementById("lock-icon").classList.remove("fa-lock");
+                document.getElementById("lock-icon").classList.add("fa-lock-open");
+                document.getElementById("lock-icon").style.color = "#50e3c2";
+
+                const redirectUrl = document.querySelector('input[name="redirect_url"]').value;
+                setTimeout(() => { window.location.href = redirectUrl; }, 500);
+
+            } catch (err) {
+                console.error(err);
+                if (err.message.includes("cancelled")) {
+                    showStatus("", false); // clear if just cancelled
+                } else {
+                    showStatus("Login Failed: " + err.message, true);
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

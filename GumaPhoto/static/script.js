@@ -460,9 +460,17 @@ function renderThemes(themes) {
                 imgUrl = '/GumaPhoto' + imgUrl;
             }
             
+            const dotIndex = imgUrl.lastIndexOf('.');
+            const thumbUrl = dotIndex !== -1 ? 
+                imgUrl.substring(0, dotIndex) + '_' + imgUrl.substring(dotIndex + 1).toLowerCase() + '.webp' : imgUrl;
+            
             const img = document.createElement('img');
-            img.src = imgUrl;
+            img.src = thumbUrl;
             img.loading = "lazy";
+            
+            img.onerror = function() {
+                if (this.src !== imgUrl) this.src = imgUrl;
+            };
             imgBtn.appendChild(img);
             
             // Add click to open modal
@@ -503,10 +511,18 @@ function renderGallery(photos, append = false, targetId = 'gallery-grid', isMaso
             imgUrl = '/GumaPhoto' + imgUrl;
         }
 
+        const dotIndex = imgUrl.lastIndexOf('.');
+        const thumbUrl = dotIndex !== -1 ? 
+            imgUrl.substring(0, dotIndex) + '_' + imgUrl.substring(dotIndex + 1).toLowerCase() + '.webp' : imgUrl;
+
         // Img tag
         const img = document.createElement('img');
-        img.src = imgUrl;
+        img.src = thumbUrl;
         img.loading = "lazy";
+        
+        img.onerror = function() {
+            if (this.src !== imgUrl) this.src = imgUrl;
+        };
 
         // Assembly
         item.style.position = 'relative';
