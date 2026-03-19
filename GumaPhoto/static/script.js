@@ -1036,11 +1036,15 @@ async function loadUnknownPhoto() {
                 body: JSON.stringify({ query: "", date: "", sort: "desc", size: 300 })
             });
             const sData = await res.json();
-            const unknownList = sData.results.filter(p => {
-                if(!p.location || p.location.includes("위치정보없음")) { p.issue = "Location Data Missing"; return true; }
-                if(p.people && p.people.some(x => x.includes("Unknown"))) { p.issue = "People Data Missing"; return true; }
-                if(!p.date || p.date.includes("Unknown")) { p.issue = "Date Data Missing"; return true; }
-                return false;
+            const unknownList = [];
+            sData.results.forEach(p => {
+                let issues = [];
+                if(!p.location || p.location.includes("위치정보없음")) issues.push("Location Data Missing");
+                if(!p.date || p.date.includes("Unknown")) issues.push("Date Data Missing");
+                if(issues.length > 0) {
+                    p.issue = issues[Math.floor(Math.random() * issues.length)];
+                    unknownList.push(p);
+                }
             });
             
             if(unknownList.length > 0) {
