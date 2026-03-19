@@ -920,3 +920,35 @@ function startProgressPolling() {
     // Fetch every 2.5 seconds
     progressPollingInterval = setInterval(fetchProgress, 2500);
 }
+
+// ---------------------------------------------------------------------------------
+// Self-Healing Feedback v2.0 Logic
+// ---------------------------------------------------------------------------------
+const feedbackHubBtn = document.getElementById('feedback-hub-btn');
+const feedbackHubModal = document.getElementById('feedback-hub-modal');
+const feedbackHubClose = document.getElementById('feedback-hub-close');
+
+let currentFeedbackMode = null; // 'time_loc' or 'face'
+let selectedFeedbackTarget = null; // 타겟 사진의 Qdrant Payload 정보 대기열
+
+if (feedbackHubBtn) {
+    feedbackHubBtn.addEventListener('click', () => {
+        feedbackHubModal.classList.remove('hidden');
+        // Reset state
+        document.getElementById('fb-unknown-grid').innerHTML = '<p id="fb-grid-msg" style="color: var(--text-muted); grid-column: 1 / -1; text-align: center; padding: 20px;">위 버튼을 눌러 작업을 스캔하세요.</p>';
+        document.getElementById('fb-input-area').classList.add('hidden');
+        document.getElementById('fb-status-text').classList.add('hidden');
+    });
+}
+
+if (feedbackHubClose) {
+    feedbackHubClose.addEventListener('click', () => {
+        feedbackHubModal.classList.add('hidden');
+    });
+}
+
+window.addEventListener('click', (e) => {
+    if (e.target === feedbackHubModal) {
+        feedbackHubModal.classList.add('hidden');
+    }
+});
