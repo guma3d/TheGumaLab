@@ -42,7 +42,7 @@ TARGET_DIR = "/app/data/organized"
 DB_PATH = "/app/data/organizer_state.db"
 QDRANT_URL = os.environ.get("QDRANT_URL", "http://qdrant:6333")
 COLLECTION_NAME = "gumaphoto_hybrid_kr"
-BATCH_SIZE = 15 # 한 번에 처리할 사진 수 (GPU, RAM 메모리 고려)
+BATCH_SIZE = 10 # 한 번에 처리할 사진 수 (GPU, RAM 메모리 고려)
 
 class VectorIndexer:
     def __init__(self):
