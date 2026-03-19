@@ -695,6 +695,7 @@ const photoModal = document.getElementById('photo-modal');
 const modalImage = document.getElementById('modal-image');
 const modalClose = document.getElementById('modal-close');
 const deleteBtn = document.getElementById('modal-delete-btn');
+const shareBtn = document.getElementById('modal-share-btn');
 const modalInfoBadges = document.getElementById('modal-info-badges');
 
 function openModal(photo, imgUrl) {
@@ -757,6 +758,26 @@ photoModal.addEventListener('click', (e) => {
 });
 
 // 삭제 (Hard Delete) 모달 휴지통 버튼 누를 시 발생
+// 공유 버튼 (Web Share API 지원)
+shareBtn?.addEventListener('click', async () => {
+    if (!currentModalPhoto) return;
+    try {
+        const fileUrl = modalImage.src;
+        if (navigator.share) {
+            await navigator.share({
+                title: 'GumaPhoto',
+                text: '이 사진 어때요?',
+                url: fileUrl
+            });
+        } else {
+            await navigator.clipboard.writeText(fileUrl);
+            alert("사진 링크가 클립보드에 복사되었습니다!");
+        }
+    } catch(err) {
+        console.error("공유 취소 또는 오류:", err);
+    }
+});
+
 deleteBtn.addEventListener('click', () => {
     if (!currentModalPhoto) return;
     const confirmModal = document.getElementById('delete-confirm-modal');

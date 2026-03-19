@@ -507,10 +507,32 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
     justify-content: center;
 }
 
-.premium-trash-btn {
+.premium-share-btn {
     background: rgba(16, 185, 129, 0.15); /* 에메랄드 그린 배경 */
     border: 1px solid rgba(16, 185, 129, 0.4);
-    color: #10b981; /* 100% 동일한 그린 컬러 */
+    color: #10b981; 
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    font-size: 1.4rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+}
+
+.premium-share-btn:hover {
+    background: rgba(16, 185, 129, 0.3);
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+}
+
+.premium-trash-btn {
+    background: rgba(239, 68, 68, 0.15); /* 레드 배경 */
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #ef4444; 
     width: 55px;
     height: 55px;
     border-radius: 50%;
@@ -524,9 +546,9 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
 }
 
 .premium-trash-btn:hover {
-    background: rgba(16, 185, 129, 0.3);
+    background: rgba(239, 68, 68, 0.3);
     transform: scale(1.1);
-    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2);
 }
 .modal-tags {
     width: 100%;
