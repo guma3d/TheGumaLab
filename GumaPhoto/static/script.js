@@ -548,65 +548,55 @@ function renderGallery(photos, append = false, targetId = 'gallery-grid', isMaso
         item.appendChild(img);
 
         if (showMeta) {
-            // Score Badge (Top Left)
-            if (photo.score !== undefined) {
-                const badge = document.createElement('div');
-                badge.className = 'meta-badge';
-                badge.innerHTML = `<i class="fa-solid fa-bullseye"></i> 유사도 = ${(photo.score * 100).toFixed(1)}%`;
-                item.appendChild(badge);
-            }
-            
-            // Meta Overlay (Tags - Bottom)
             const overlay = document.createElement('div');
-            overlay.className = 'meta-overlay';
-            let metaHtml = '';
+            overlay.className = 'info-badges-overlay';
+            // 모달과 완전히 동일한 스타일을 적용하기 위해 뱃지 생성 헬퍼 함수 정의
+            const createBadge = (icon, text, isHighlight = false) => {
+                if (!text || text.trim() === '') text = 'Unknown';
+                const cls = isHighlight ? 'info-badge highlight' : 'info-badge';
+                return `<div class="${cls}"><i class="${icon}"></i> ${text}</div>`;
+            };
+            
+            let badgesHtml = '';
+            
+            // 0. 유사도 (AI 검색 결과 전용)
+            if (photo.score !== undefined) {
+                const scoreText = (photo.score * 100).toFixed(1) + '%';
+                // 유사도는 파란색 또는 돋보이는 색상을 위해 일반 뱃지 사용 후 스타일 오버라이딩 가능 (여기선 highlight 사용)
+                badgesHtml += createBadge('fa-solid fa-bullseye', `유사도 = ${scoreText}`, true);
+            }
             
             // 1. Date
-            if (photo.date && photo.date.trim() !== '') {
-                let shortDate = photo.date.length >= 7 ? photo.date.substring(0, 7) : photo.date; 
-                metaHtml += `<span class="meta-tag"><i class="fa-regular fa-calendar"></i> ${shortDate}</span>`;
-            } else {
-                metaHtml += `<span class="meta-tag" style="color: #bbb;"><i class="fa-regular fa-calendar"></i> Unknown Date</span>`;
-            }
+            let dateVal = (photo.date && photo.date.trim() !== '') ? photo.date : 'Unknown';
+            if (dateVal.length > 10 && dateVal !== 'Unknown') dateVal = dateVal.substring(0, 10);
+            badgesHtml += createBadge('fa-regular fa-calendar', dateVal);
             
-            // 2. Time of day
-            if (photo.time_of_day && photo.time_of_day !== 'Unknown') {
-                metaHtml += `<span class="meta-tag"><i class="fa-regular fa-clock"></i> ${photo.time_of_day}</span>`;
-            } else {
-                metaHtml += `<span class="meta-tag" style="color: #bbb;"><i class="fa-regular fa-clock"></i> Unknown Time</span>`;
-            }
-
-            // 3. Season
-            if (photo.season && photo.season !== 'Unknown') {
-                metaHtml += `<span class="meta-tag"><i class="fa-solid fa-leaf"></i> ${photo.season}</span>`;
-            } else {
-                metaHtml += `<span class="meta-tag" style="color: #bbb;"><i class="fa-solid fa-leaf"></i> Unknown Season</span>`;
-            }
+            // 2. Location
+            let locVal = (photo.location && photo.location.trim() !== '') ? photo.location.replace(/-/g, ' ') : 'Unknown';
+            if (locVal.includes('위치정보없음')) locVal = 'Unknown';
+            badgesHtml += createBadge('fa-solid fa-location-dot', locVal);
             
-            // 4. Location
-            if (photo.location && photo.location.trim() !== '') {
-                let prettyLoc = photo.location.replace(/-/g, ' '); 
-                metaHtml += `<span class="meta-tag"><i class="fa-solid fa-location-dot"></i> ${prettyLoc}</span>`;
-            } else {
-                metaHtml += `<span class="meta-tag" style="color: #bbb;"><i class="fa-solid fa-location-dot"></i> Unknown Location</span>`;
-            }
-            
-            // 5. People
+            // 3. People (Highlight)
+            let peopleVal = 'Unknown';
             if (photo.people && photo.people.length > 0) {
-                let peopleStr = photo.people.join(', ');
-                metaHtml += `<span class="meta-tag highlighted"><i class="fa-solid fa-user-tag"></i> ${peopleStr}</span>`;
+                let pStr = photo.people.filter(p => !p.includes('Unknown')).join(', ');
+                if (pStr) peopleVal = pStr;
             }
+            badgesHtml += createBadge('fa-solid fa-user-tag', peopleVal, true);
             
-            // 6. Scene (just first 2)
-            if (photo.scene && photo.scene.trim() !== '') {
-                let scenes = photo.scene.split(',').slice(0,2).join(', ');
-                metaHtml += `<span class="meta-tag"><i class="fa-solid fa-quote-left"></i> ${scenes}</span>`;
-            } else if (photo.scene_tags) {
-                let scenes = photo.scene_tags.split(',').slice(0,2).join(', ');
-                metaHtml += `<span class="meta-tag"><i class="fa-solid fa-quote-left"></i> ${scenes}</span>`;
-            }
+            // 4. Season
+            let seasonVal = photo.season ? photo.season : 'Unknown';
+            badgesHtml += createBadge('fa-solid fa-leaf', seasonVal);
+
+            // 5. Time of Day
+            let timeVal = photo.time_of_day ? photo.time_of_day : 'Unknown';
+            badgesHtml += createBadge('fa-regular fa-clock', timeVal);
             
-            overlay.innerHTML = metaHtml;
+            // 6. Scene / Objects (모달에선 뺐지만, 원한다면 검색결과에는 넣을 수도 있음. 
+            // 여기서는 '모달과 동일한 뱃지 구성'을 요구했으므로 생략)
+            
+            overlay.innerHTML = badgesHtml;
+            // image-item(masonry 컨테이너)에 오버레이 부착
             item.appendChild(overlay);
         }
 
