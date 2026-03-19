@@ -3,7 +3,7 @@ import os
 
 # 스크립트 파일이 위치한 경로를 기준으로 절대 경로 생성 (터미널 위치 상관없이 무조건 100% 동작)
 script_dir = os.path.dirname(os.path.abspath(__file__))
-filepath = os.path.join(script_dir, 'templates', 'index.html')
+filepath = os.path.join(script_dir, '..', 'templates', 'index.html')
 
 if not os.path.exists(filepath):
     print(f"오류: {filepath} 파일을 찾을 수 없습니다.")
