@@ -219,7 +219,34 @@ class VectorIndexer:
                 pass 
             return True
             
-        # Qdrant에 없는 경우에만 진행
+        # === [진행 판정 시: 원본 사진을 제외한 모든 파생 파일/데이터 완벽 초기화(Clean State)] ===
+        # 1. 꼬여있을지 모를 Qdrant 레코드 강제 삭제
+        try:
+            from qdrant_client.http.models import PointIdsList
+            self.q_client.delete(collection_name=COLLECTION_NAME, points_selector=PointIdsList(points=[point_id]))
+        except Exception: pass
+        
+        # 2. XMP 사이드카 파일 완전 삭제
+        for p in [filepath + ".xmp", base_name + ".xmp"]:
+            if os.path.exists(p):
+                try: os.remove(p)
+                except Exception: pass
+                
+        # 3. WEBP 썸네일 완전 삭제
+        orig_ext = filepath.rsplit('.', 1)[-1].lower() if '.' in filepath else ""
+        thumb_path = f"{base_name}_{orig_ext}.webp"
+        if os.path.exists(thumb_path):
+            try: os.remove(thumb_path)
+            except Exception: pass
+            
+        # 4. SQLite 처리 기록 초기화
+        try:
+            with getattr(self, "db_lock", __import__("threading").Lock()):
+                self.cursor.execute("DELETE FROM vectorized_files WHERE filepath=?", (filepath,))
+                self.conn.commit()
+        except Exception: pass
+        
+        # 위 과정을 거쳐 세상에서 파생 데이터가 싹 지워진 클린한 상태로 새 연산 진행
         return False
 
 
