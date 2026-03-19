@@ -1013,7 +1013,7 @@ async function loadUnknownPhoto() {
     // UI 초기화
     imgEl.style.display = 'none';
     spinner.style.display = 'block';
-    issueTag.style.display = 'none';
+    issueTag.style.opacity = '0';
     inputVal.value = '';
     inputDate.value = '';
     submitBtn.disabled = false;
@@ -1079,7 +1079,7 @@ async function loadUnknownPhoto() {
         if (selectedFeedbackTarget.issue.includes('Date')) issueIcon = '<i class="fa-regular fa-calendar-xmark" style="color: #f87171;"></i>';
         if (selectedFeedbackTarget.issue.includes('Location')) issueIcon = '<i class="fa-solid fa-location-dot" style="color: #f87171;"></i>';
         issueTag.innerHTML = issueIcon + ' ' + selectedFeedbackTarget.issue;
-        issueTag.style.display = 'inline-block';
+        issueTag.style.opacity = '1';
         
         const fbBadgesContainer = document.getElementById('fb-info-badges');
         if (fbBadgesContainer) {
@@ -1128,7 +1128,7 @@ async function loadUnknownPhoto() {
     } catch (err) {
         spinner.style.display = 'none';
         issueTag.innerHTML = '<i class="fa-solid fa-check-circle"></i> ' + err.message;
-        issueTag.style.display = 'inline-block';
+        issueTag.style.opacity = '1';
         issueTag.style.color = '#10b981';
         issueTag.style.background = 'transparent';
         issueTag.style.border = 'none';
