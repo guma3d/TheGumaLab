@@ -99,7 +99,7 @@ class VectorIndexer:
         """🚀 SigLIP (배경/상황) & InsightFace (얼굴) & Florence-2-large 모델 VRAM 로드"""
         print("[*] 🖼️ 초정밀 SigLIP 이미지 인코더 로드 중 (google/siglip-base-patch16-224) ...")
         self.siglip_processor = AutoProcessor.from_pretrained("google/siglip-base-patch16-224")
-        self.siglip_model = AutoModel.from_pretrained("google/siglip-base-patch16-224").to('cuda' if torch.cuda.is_available() else 'cpu')
+        self.siglip_model = AutoModel.from_pretrained("google/siglip-base-patch16-224", torch_dtype=torch.float16).to('cuda' if torch.cuda.is_available() else 'cpu')
         self.siglip_model.eval()
         
         print("[*] 👤 InsightFace 얼굴 인식 모델 로드 중 (buffalo_l) ...")
@@ -150,7 +150,7 @@ class VectorIndexer:
         print("[*] 📝 Florence-2-base VLM 상황 묘사 AI 로드 중 ...")
         try:
             florence_model_id = "microsoft/Florence-2-base"
-            self.florence_model = AutoModelForCausalLM.from_pretrained(florence_model_id, trust_remote_code=True).to("cuda" if torch.cuda.is_available() else "cpu")
+            self.florence_model = AutoModelForCausalLM.from_pretrained(florence_model_id, trust_remote_code=True, torch_dtype=torch.bfloat16, attn_implementation="sdpa").to("cuda" if torch.cuda.is_available() else "cpu")
             self.florence_processor = AutoProcessor.from_pretrained(florence_model_id, trust_remote_code=True)
             self.florence_model.eval()
             print("  [+] Florence-2-base 로드 완료!")
@@ -327,6 +327,7 @@ class VectorIndexer:
         # --- [A] SigLIP 다중 배치 추론 ---
         try:
             siglip_inputs = self.siglip_processor(images=pil_images, return_tensors="pt").to(self.siglip_model.device)
+            siglip_inputs = {k: v.to(torch.float16) if v.dtype in (torch.float32, torch.float) else v for k, v in siglip_inputs.items()}
             with torch.no_grad():
                 out = self.siglip_model.get_image_features(**siglip_inputs)
                 emb = out / out.norm(p=2, dim=-1, keepdim=True)
@@ -340,6 +341,7 @@ class VectorIndexer:
                 # 캡션 다중 배치
                 task_prompt_cap = "<MORE_DETAILED_CAPTION>"
                 flo_inputs_cap = self.florence_processor(text=[task_prompt_cap]*len(valid_items), images=pil_images, return_tensors="pt").to(self.florence_model.device)
+                flo_inputs_cap = {k: v.to(torch.bfloat16) if v.dtype in (torch.float32, torch.float) else v for k, v in flo_inputs_cap.items()}
                 with torch.no_grad():
                     generated_ids_cap = self.florence_model.generate(
                         input_ids=flo_inputs_cap["input_ids"],
@@ -357,6 +359,7 @@ class VectorIndexer:
                 # 사물 태그 다중 배치
                 task_prompt_od = "<OD>"
                 flo_inputs_od = self.florence_processor(text=[task_prompt_od]*len(valid_items), images=pil_images, return_tensors="pt").to(self.florence_model.device)
+                flo_inputs_od = {k: v.to(torch.bfloat16) if v.dtype in (torch.float32, torch.float) else v for k, v in flo_inputs_od.items()}
                 with torch.no_grad():
                     generated_ids_od = self.florence_model.generate(
                         input_ids=flo_inputs_od["input_ids"],
