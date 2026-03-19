@@ -923,25 +923,36 @@ async def get_unknown_photo():
 
 @app.post("/api/feedback_v2/submit")
 async def submit_feedback_v2(req: FeedbackV2Request):
-    import subprocess
-    
+    import sqlite3
     fb_type = "face" if "이름" in req.issue_type else "time_loc"
     
-    cmd = [
-        "python", "Scripts/feedback_processor_v2.py",
-        "--type", fb_type,
-        "--doc_id", req.point_id
-    ]
-    
-    if fb_type == "face":
-        cmd.extend(["--name", req.correct_value])
-    else:
-        cmd.extend(["--loc", req.correct_value, "--date", ""])
+    try:
+        conn = sqlite3.connect("/app/data/organizer_state.db")
+        # 단일 통제소 테이블이 아직 없다면 즉시 생성 보장 (방어코드)
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS feedback_tasks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                doc_id TEXT NOT NULL,
+                fb_type TEXT NOT NULL,
+                correct_value TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                status TEXT DEFAULT 'PENDING'
+            )
+        ''')
+        # Queue 장부에 유저의 지시서만 조용히 툭 던져넣음(Insert)
+        conn.execute(
+            "INSERT INTO feedback_tasks (doc_id, fb_type, correct_value) VALUES (?, ?, ?)",
+            (req.point_id, fb_type, req.correct_value)
+        )
+        conn.commit()
+        conn.close()
         
-    print(f"🚀 [Feedback v2.0] Triggering Self-Healing: {cmd}")
-    subprocess.Popen(cmd, cwd="/app")
-    
-    return {"message": "자율 전파 학습이 백그라운드에서 백지상태로 가동되었습니다!"}
+        print(f"🚀 [Feedback v2.0] 단일 통제소 대기열(Queue) 장부에 지시서 예약 완료! (ID: {req.point_id})")
+        return {"message": "정답이 중앙 통제소(Queue) 대기열에 무사히 배달되었습니다! 봇이 순서대로 안전하게 스캔합니다."}
+        
+    except Exception as e:
+        print(f"❌ [Feedback v2.0] 대기열 등록 실패: {e}")
+        return {"error": str(e)}
 
 if __name__ == "__main__":
     import uvicorn
