@@ -473,7 +473,7 @@ class VectorIndexer:
                     if re.match(r'^(19|20)\d{2}', parts[0]):
                         date_str = parts[0]
                     if len(parts) > 1 and parts[1] != "Unknown-Location" and parts[1] != "Unknown-Year":
-                        location_str = parts[1].replace("-", " ")
+                        location_str = parts[1]
                         
                 sort_date = 0
                 if date_str != "Unknown Date":
