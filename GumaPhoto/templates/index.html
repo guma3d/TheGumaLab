@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="static/style.css?v=42">
+    <link rel="stylesheet" href="static/style.css?v=43">
 </head>
 
 <body>
@@ -136,24 +136,21 @@
 
             <!-- System Tab -->
             <div id="system" class="hidden" style="max-width: 400px; margin: 0 auto; box-sizing: border-box; padding: 2rem 0; text-align: center;">
-                <h2 style="font-size: 1.8rem; color: white; display:flex; justify-content:center; align-items:center; gap: 8px; margin-bottom: 1.8rem; font-weight: 800;">
-                    <i class="fa-solid fa-server"></i> DB Status
-                </h2>
                 <div style="display:flex; flex-direction: column; gap: 12px; text-align: center;">
-                    <div style="background: var(--surface-light); padding: 16px; border-radius: 8px;">
-                        <h3 style="color:var(--text-muted); font-size: 1.2rem; margin-bottom: 6px;">Total Server Photos</h3>
-                        <p id="prog-total" style="color:#3b82f6; font-size: 1.5rem; font-weight:bold;">Loading...</p>
-                        <small style="font-size: 0.9rem; color: #aaa;">Total pure image files stored in server</small>
+                    <div style="background: var(--surface-light); padding: 20px 16px; border-radius: 8px;">
+                        <h3 style="color:var(--text-muted); font-size: 1.1rem; margin-top: 0; margin-bottom: 4px;">Total Server Photos</h3>
+                        <small style="font-size: 0.85rem; color: #888; display: block; margin-bottom: 12px;">Total pure image files stored in server</small>
+                        <p id="prog-total" style="color:#3b82f6; font-size: 2rem; font-weight:800; margin: 0;">Loading...</p>
                     </div>
-                    <div style="background: var(--surface-light); padding: 16px; border-radius: 8px;">
-                        <h3 style="color:var(--text-muted); font-size: 1.2rem; margin-bottom: 6px;">Pending DB Generation</h3>
-                        <p id="prog-ai-left" style="color:#ef4444; font-size: 1.5rem; font-weight:bold;">Loading...</p>
-                        <small style="font-size: 0.9rem; color: #aaa;">Images waiting for AI vector indexing</small>
+                    <div style="background: var(--surface-light); padding: 20px 16px; border-radius: 8px;">
+                        <h3 style="color:var(--text-muted); font-size: 1.1rem; margin-top: 0; margin-bottom: 4px;">Pending DB Generation</h3>
+                        <small style="font-size: 0.85rem; color: #888; display: block; margin-bottom: 12px;">Images waiting for AI vector indexing</small>
+                        <p id="prog-ai-left" style="color:#ef4444; font-size: 2rem; font-weight:800; margin: 0;">Loading...</p>
                     </div>
-                    <div style="background: var(--surface-light); padding: 16px; border-radius: 8px;">
-                        <h3 style="color:var(--text-muted); font-size: 1.2rem; margin-bottom: 6px;">Completed Photos</h3>
-                        <p id="prog-db" style="color:#10b981; font-size: 1.5rem; font-weight:bold;">Loading...</p>
-                        <small style="font-size: 0.9rem; color: #aaa;">Photos fully analyzed and searchable</small>
+                    <div style="background: var(--surface-light); padding: 20px 16px; border-radius: 8px;">
+                        <h3 style="color:var(--text-muted); font-size: 1.1rem; margin-top: 0; margin-bottom: 4px;">Completed Photos</h3>
+                        <small style="font-size: 0.85rem; color: #888; display: block; margin-bottom: 12px;">Photos fully analyzed and searchable</small>
+                        <p id="prog-db" style="color:#10b981; font-size: 2rem; font-weight:800; margin: 0;">Loading...</p>
                     </div>
                     <p id="prog-status" style="font-size: 0.85rem; color: var(--text-muted); text-align:center; margin-top: 10px;">
                         Syncing...
@@ -217,6 +214,9 @@
                     <button id="modal-share-btn" class="action-btn premium-share-btn" title="Share Photo">
                         <i class="fa-solid fa-share-nodes"></i>
                     </button>
+                    <button id="modal-download-btn" class="action-btn premium-download-btn" title="Download Photo">
+                        <i class="fa-solid fa-cloud-arrow-down"></i>
+                    </button>
                     <button id="modal-delete-btn" class="action-btn premium-trash-btn" title="Delete Photo">
                         <i class="fa-regular fa-trash-can"></i>
                     </button>
@@ -243,7 +243,7 @@
         </div>
     </div>
 
-    <script src="static/script.js?v=63"></script>
+    <script src="static/script.js?v=64"></script>
 </body>
 
 </html>

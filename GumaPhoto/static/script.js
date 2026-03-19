@@ -686,6 +686,7 @@ const modalImage = document.getElementById('modal-image');
 const modalClose = document.getElementById('modal-close');
 const deleteBtn = document.getElementById('modal-delete-btn');
 const shareBtn = document.getElementById('modal-share-btn');
+const downloadBtn = document.getElementById('modal-download-btn');
 const modalInfoBadges = document.getElementById('modal-info-badges');
 
 function openModal(photo, imgUrl) {
@@ -747,7 +748,23 @@ photoModal.addEventListener('click', (e) => {
     if (e.target === photoModal) closeModal();
 });
 
-// 삭제 (Hard Delete) 모달 휴지통 버튼 누를 시 발생
+// 다운로드 버튼 (기기 직접 저장)
+downloadBtn?.addEventListener('click', () => {
+    if (!currentModalPhoto) return;
+    const fileUrl = modalImage.src;
+    const a = document.createElement('a');
+    a.href = fileUrl;
+    
+    // URL 매개변수를 떼고 순수 파일명만 추출
+    let filename = fileUrl.split('/').pop().split('?')[0]; 
+    if (!filename) filename = `GumaPhoto_${currentModalPhoto.id}.jpg`;
+    
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+});
+
 // 공유 버튼 (Web Share API 지원)
 shareBtn?.addEventListener('click', async () => {
     if (!currentModalPhoto) return;
@@ -880,9 +897,9 @@ async function fetchProgress() {
             // Calculated true metrics
             const needsDb = Math.max(0, totalPhotos - dbCompleted);
             
-            document.getElementById('prog-total').innerText = `${totalPhotos.toLocaleString()} 장`;
-            document.getElementById('prog-ai-left').innerText = `${needsDb.toLocaleString()} 장`;
-            document.getElementById('prog-db').innerText = `${dbCompleted.toLocaleString()} 장`;
+            document.getElementById('prog-total').innerText = `${totalPhotos.toLocaleString()}`;
+            document.getElementById('prog-ai-left').innerText = `${needsDb.toLocaleString()}`;
+            document.getElementById('prog-db').innerText = `${dbCompleted.toLocaleString()}`;
             
             document.getElementById('prog-status').innerHTML = 'Syncing... <i class="fa-solid fa-spinner fa-spin"></i>';
         } else {

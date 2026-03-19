@@ -529,6 +529,28 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
     box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
 }
 
+.premium-download-btn {
+    background: rgba(255, 255, 255, 0.15); /* 하얀색 배경 */
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #ffffff; /* 하얀색 */
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    font-size: 1.4rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+}
+
+.premium-download-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+}
+
 .premium-trash-btn {
     background: rgba(239, 68, 68, 0.15); /* 레드 배경 */
     border: 1px solid rgba(239, 68, 68, 0.4);
