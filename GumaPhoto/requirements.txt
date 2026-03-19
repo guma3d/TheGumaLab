@@ -18,3 +18,5 @@ pillow-heif
 
 python-dotenv
 google-genai
+timm
+hsemotion
