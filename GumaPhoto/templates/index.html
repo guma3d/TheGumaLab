@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="static/style.css?v=45">
+    <link rel="stylesheet" href="static/style.css?v=46">
 </head>
 
 <body>
@@ -96,27 +96,44 @@
         
             </div>
 
-            <!-- Feedback Tab -->
-            <div id="feedback" class="hidden" style="max-width: 500px; margin: 0 auto; padding-top: 2rem;">
-                <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: #10b981; font-weight: 800;"><i class="fa-solid fa-graduation-cap"></i> 자율 진화 학습 (1장 교정)</h2>
-                <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; line-height: 1.4;">정보가 누락된 단 1장의 사진입니다. 정답을 적어주시면 AI가 주변 상황을 파악해 나머지 사진들까지 스스로 고칩니다!</p>
-
-                <div id="fb-unknown-photo-container" style="display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%;">
-                    <!-- 1 Photo Showcase -->
-                    <div style="width: 100%; border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border); display: flex; justify-content: center; align-items: center; min-height: 250px;">
-                        <img id="fb-target-img" src="" alt="Unknown Photo" style="max-width: 100%; max-height: 350px; object-fit: contain; display: none;">
-                        <span id="fb-loading-spinner" style="font-size: 2.5rem; color: #10b981;"><i class="fa-solid fa-spinner fa-spin"></i></span>
+            <!-- Premium Feedback Tab -->
+            <div id="feedback" class="hidden" style="max-width: 500px; margin: 0 auto; box-sizing: border-box; padding: 2.5rem 1rem;">
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(59, 130, 246, 0.2)); color: #10b981; font-size: 2rem; margin-bottom: 1rem;">
+                        <i class="fa-solid fa-graduation-cap"></i>
                     </div>
+                    <h2 style="font-size: 1.6rem; margin-bottom: 0.5rem; color: white; font-weight: 800; letter-spacing: -0.5px;">자율 진화 학습</h2>
+                    <p style="color: #9ca3af; font-size: 0.95rem; line-height: 1.5; margin: 0 auto; max-width: 380px;">
+                        누락된 메타데이터를 교정해주세요.<br>AI가 비슷한 사진들을 스스로 찾아내 일괄 학습합니다.
+                    </p>
+                </div>
+
+                <div id="fb-unknown-photo-container" style="background: rgba(30, 30, 35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; box-sizing: border-box;">
+                    
+                    <!-- 1 Photo Showcase -->
+                    <div style="width: 100%; border-radius: 14px; overflow: hidden; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; min-height: 280px; position: relative;">
+                        <img id="fb-target-img" src="" alt="Unknown Photo" style="max-width: 100%; max-height: 350px; object-fit: contain; display: none;">
+                        <span id="fb-loading-spinner" style="font-size: 2.5rem; color: #10b981; position: absolute;"><i class="fa-solid fa-spinner fa-spin"></i></span>
+                    </div>
+
                     <!-- Issue Type Tag -->
-                    <div id="fb-target-issue" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); color: #fca5a5; padding: 6px 12px; border-radius: 999px; font-weight: bold; font-size: 0.9rem; display: none;">
+                    <div id="fb-target-issue" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 8px 16px; border-radius: 999px; font-weight: 600; font-size: 0.9rem; margin-top: -5px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.1); display: none;">
                         <i class="fa-solid fa-circle-exclamation"></i> 장소 정보 누락
                     </div>
+
                     <!-- Input area -->
-                    <div id="fb-single-input-area" style="width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 5px;">
-                        <input type="text" id="fb-input-val" placeholder="정답을 입력하세요 (예: 성욱, 미국-하와이)" style="padding: 14px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-dark); color: white; font-size: 1rem;" autocomplete="off">
-                        <input type="month" id="fb-input-date" style="padding: 14px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--surface-dark); color: white; font-size: 1rem; display: none;">
-                        <button id="fb-submit-btn" class="primary-btn" style="padding: 12px; font-weight: 800; background: #10b981; border: none; font-size: 1.1rem; border-radius: 8px; color: #000; margin-top: 5px;"><i class="fa-solid fa-check"></i> 자율 전파(Propagation) 승인</button>
-                        <button id="fb-skip-btn" class="secondary-btn" style="padding: 10px; font-size: 0.95rem; color: var(--text-muted); background: transparent; border: 1px solid var(--glass-border); border-radius: 8px;">모르겠어요 (다음 사진)</button>
+                    <div id="fb-single-input-area" style="width: 100%; display: flex; flex-direction: column; gap: 12px;">
+                        <input type="text" id="fb-input-val" placeholder="정답을 입력하세요 (예: 성욱, 인천)" style="padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.4); color: white; font-size: 1.05rem; width: 100%; box-sizing: border-box; transition: border-color 0.2s;" autocomplete="off">
+                        <input type="month" id="fb-input-date" style="padding: 16px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.4); color: white; font-size: 1.05rem; width: 100%; box-sizing: border-box; display: none;">
+                        
+                        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+                            <button id="fb-submit-btn" style="padding: 16px; font-weight: 700; background: linear-gradient(135deg, #10b981, #059669); border: none; font-size: 1.1rem; border-radius: 12px; color: #ffffff; cursor: pointer; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); transition: transform 0.2s, box-shadow 0.2s;">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> AI 자율 전파 승인
+                            </button>
+                            <button id="fb-skip-btn" style="padding: 16px; font-size: 1rem; color: #9ca3af; background: transparent; border: none; font-weight: 600; border-radius: 12px; cursor: pointer; transition: color 0.2s;">
+                                모르겠어요 (Skip)
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -265,7 +282,7 @@
         </div>
     </div>
 
-    <script src="static/script.js?v=66"></script>
+    <script src="static/script.js?v=67"></script>
 </body>
 
 </html>
