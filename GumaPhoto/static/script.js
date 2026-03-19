@@ -1097,8 +1097,8 @@ async function loadUnknownPhoto() {
         } else {
             inputDate.style.display = 'none';
             inputVal.style.display = 'block';
-            if(selectedFeedbackTarget.issue.includes('People')) inputVal.placeholder = "e.g., Mom (Missing Person's name)";
-            else inputVal.placeholder = "e.g., California (Location format)";
+            if(selectedFeedbackTarget.issue.includes('People')) inputVal.placeholder = "예: 성욱 (누락된 인물의 이름)";
+            else inputVal.placeholder = "예: 대한민국-인천광역시 (장소 포맷)";
         }
         
     } catch (err) {
