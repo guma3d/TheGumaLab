@@ -934,10 +934,7 @@ let selectedFeedbackTarget = null; // 타겟 사진의 Qdrant Payload 정보 대
 if (feedbackHubBtn) {
     feedbackHubBtn.addEventListener('click', () => {
         feedbackHubModal.classList.remove('hidden');
-        // Reset state
-        document.getElementById('fb-unknown-grid').innerHTML = '<p id="fb-grid-msg" style="color: var(--text-muted); grid-column: 1 / -1; text-align: center; padding: 20px;">위 버튼을 눌러 작업을 스캔하세요.</p>';
-        document.getElementById('fb-input-area').classList.add('hidden');
-        document.getElementById('fb-status-text').classList.add('hidden');
+        loadUnknownPhoto();
     });
 }
 
@@ -947,8 +944,106 @@ if (feedbackHubClose) {
     });
 }
 
+document.getElementById('fb-skip-btn')?.addEventListener('click', () => {
+    loadUnknownPhoto();
+});
+
 window.addEventListener('click', (e) => {
     if (e.target === feedbackHubModal) {
         feedbackHubModal.classList.add('hidden');
     }
 });
+
+async function loadUnknownPhoto() {
+    const imgEl = document.getElementById('fb-target-img');
+    const spinner = document.getElementById('fb-loading-spinner');
+    const issueTag = document.getElementById('fb-target-issue');
+    const inputVal = document.getElementById('fb-input-val');
+    const inputDate = document.getElementById('fb-input-date');
+    const submitBtn = document.getElementById('fb-submit-btn');
+
+    // UI 초기화
+    imgEl.style.display = 'none';
+    spinner.style.display = 'block';
+    issueTag.style.display = 'none';
+    inputVal.value = '';
+    inputDate.value = '';
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i class="fa-solid fa-check"></i> 자율 전파(Propagation) 승인';
+    
+    try {
+        let apiUrl = '/api/feedback_v2/unknown';
+        if (window.location.pathname.startsWith('/GumaPhoto')) apiUrl = '/GumaPhoto' + apiUrl;
+        
+        let res = await fetch(apiUrl);
+        
+        // 핫-픽스: 도커 재부팅 불가 상태 시 기존 Search API를 호출하여 프론트엔드단에서 자체 Unknown 필터링 수행 (우회 트릭)
+        if (res.status === 404 || res.status === 405) {
+            console.log("[우회 접속] 백엔드 API가 아직 눈을 뜨지 않아 기존 Search API로 파싱합니다.");
+            let sUrl = '/api/search';
+            if (window.location.pathname.startsWith('/GumaPhoto')) sUrl = '/GumaPhoto' + sUrl;
+            res = await fetch(sUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ query: "", date: "", sort: "desc", size: 300 })
+            });
+            const sData = await res.json();
+            const unknownList = sData.results.filter(p => {
+                if(!p.location || p.location.includes("위치정보없음")) { p.issue = "장소 정보 누락"; return true; }
+                if(p.people && p.people.some(x => x.includes("Unknown"))) { p.issue = "이름 정보 누락 (Unknown People)"; return true; }
+                if(!p.date || p.date.includes("Unknown")) { p.issue = "시간 정보 누락"; return true; }
+                return false;
+            });
+            
+            if(unknownList.length > 0) {
+                // 무작위 1장 추출
+                const randomChoice = unknownList[Math.floor(Math.random() * unknownList.length)];
+                let mockUrl = randomChoice.url;
+                // 고해상도 말고 빠른 로딩을 위해 webp 썸네일 변환
+                const dotIndex = mockUrl.lastIndexOf('.');
+                mockUrl = dotIndex !== -1 ? mockUrl.substring(0, dotIndex) + '_' + mockUrl.substring(dotIndex + 1).toLowerCase() + '.webp' : mockUrl;
+                
+                if (!mockUrl.startsWith('/GumaPhoto') && window.location.pathname.startsWith('/GumaPhoto')) mockUrl = '/GumaPhoto' + mockUrl;
+                selectedFeedbackTarget = { id: randomChoice.id, url: mockUrl, issue: randomChoice.issue };
+            } else {
+                throw new Error("분류 대기 중인 빈칸(Unknown) 사진이 더 이상 없습니다!");
+            }
+        } else {
+            const data = await res.json();
+            if (data.id) {
+                let mockUrl = data.url;
+                if (!mockUrl.startsWith('/GumaPhoto') && window.location.pathname.startsWith('/GumaPhoto')) mockUrl = '/GumaPhoto' + mockUrl;
+                selectedFeedbackTarget = { id: data.id, url: mockUrl, issue: data.issue };
+            } else throw new Error("모든 사진이 완벽합니다!");
+        }
+        
+        // 추출된 사진 렌더링
+        imgEl.src = selectedFeedbackTarget.url;
+        imgEl.onload = () => {
+            spinner.style.display = 'none';
+            imgEl.style.display = 'block';
+        };
+        issueTag.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ' + selectedFeedbackTarget.issue;
+        issueTag.style.display = 'inline-block';
+        
+        // 이슈 종류에 따른 폼 UI 전환
+        if(selectedFeedbackTarget.issue.includes('시간')) {
+            inputVal.style.display = 'none';
+            inputDate.style.display = 'block';
+        } else {
+            inputDate.style.display = 'none';
+            inputVal.style.display = 'block';
+            if(selectedFeedbackTarget.issue.includes('이름')) inputVal.placeholder = "예: 성욱 (누락된 해당 인물의 이름)";
+            else inputVal.placeholder = "예: 대한민국-제주특별자치도 (장소 형식)";
+        }
+        
+    } catch (err) {
+        spinner.style.display = 'none';
+        issueTag.innerHTML = '<i class="fa-solid fa-check-circle"></i> ' + err.message;
+        issueTag.style.display = 'inline-block';
+        issueTag.style.color = '#10b981';
+        issueTag.style.background = 'transparent';
+        issueTag.style.border = 'none';
+        submitBtn.disabled = true;
+    }
+}
