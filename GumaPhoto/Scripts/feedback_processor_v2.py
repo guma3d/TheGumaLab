@@ -41,11 +41,68 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
         
     print(f"  [+] 동일 시간/장소 집단 {len(similar_files)}장 처리 준비 완료.")
     
-    # 3. EXIF 불변의 데이터 하드코딩 (향후 piexif 모듈 개발 구간)
-    print("  [+] EXIF Hardcoding 준비 중...")
+    import subprocess
+    from geopy.geocoders import Nominatim
+    
+    # 3. EXIF 불변의 데이터 하드코딩
+    print("  [+] EXIF Hardcoding (ExifTool / Geocoding) 구동...")
+    lat, lon = None, None
+    if target_location and target_location != "Unknown":
+        geolocator = Nominatim(user_agent="guma_photo_organizer")
+        
+        # 하이픈 기준 분리 전략: [국가명] - [지역명]
+        parts = target_location.split("-", 1)
+        if len(parts) == 2:
+            query = {"country": parts[0].strip(), "city": parts[1].strip()}
+        else:
+            query = {"q": target_location.replace("-", " ")}
+            
+        try:
+            loc_data = geolocator.geocode(query, language='ko', timeout=10)
+            if not loc_data and len(parts) == 2: # 2차 시도 (통검색 우회)
+                query_fallback = {"q": target_location.replace("-", " ")}
+                loc_data = geolocator.geocode(query_fallback, language='ko', timeout=10)
+                
+            if loc_data:
+                lat = loc_data.latitude
+                lon = loc_data.longitude
+                print(f"      -> Geocoding 정확도 향상 매칭 선공: '{target_location}' -> 위도 {lat}, 경도 {lon}")
+            else:
+                print(f"      -> Geocoding 실패: '{target_location}' 검색 결과 없음.")
+        except Exception as e:
+            print(f"      -> Geocoding 오류: {e}")
+
     for fpath in similar_files:
-        # TODO: piexif.load -> date/location 수정 -> piexif.insert 반영
-        pass
+        if not os.path.exists(fpath):
+            continue
+            
+        cmd = ["exiftool"]
+        has_update = False
+        
+        if lat is not None and lon is not None:
+            lat_ref = 'N' if lat >= 0 else 'S'
+            lon_ref = 'E' if lon >= 0 else 'W'
+            cmd.extend([
+                f"-GPSLatitude={abs(lat)}",
+                f"-GPSLatitudeRef={lat_ref}",
+                f"-GPSLongitude={abs(lon)}",
+                f"-GPSLongitudeRef={lon_ref}"
+            ])
+            has_update = True
+            
+        if target_date and target_date != "Unknown":
+            parts = target_date.split("-")
+            yyyy = parts[0]
+            mm = parts[1] if len(parts) > 1 else "01"
+            dd = parts[2] if len(parts) > 2 else "01"
+            exif_time = f"{yyyy}:{mm}:{dd} 12:00:00"
+            cmd.extend([f"-DateTimeOriginal={exif_time}"])
+            has_update = True
+        
+        if has_update:
+            cmd.extend(["-overwrite_original", fpath])
+            print(f"      -> ExifTool 쓰기 진행: {os.path.basename(fpath)}")
+            subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     # 4. 기존 데이터 100% 비우고 Clean Re-index를 위해 찌꺼기 삭제
     conn = sqlite3.connect(DB_PATH)
