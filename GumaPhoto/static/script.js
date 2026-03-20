@@ -1061,6 +1061,13 @@ document.getElementById('fb-temptest-btn')?.addEventListener('click', async () =
 
         if (!res.ok) throw new Error("시뮬레이션 서버 데이터를 가져오지 못했습니다.");
         const data = await res.json();
+        
+        if (data.error) {
+            alert("서버 에러 발생: " + data.error);
+            btn.innerHTML = ogHtml;
+            btn.disabled = false;
+            return;
+        }
 
         if (data.results && data.results.length > 0) {
             const grid = document.getElementById('fb-temptest-grid');
@@ -1076,7 +1083,7 @@ document.getElementById('fb-temptest-btn')?.addEventListener('click', async () =
                 document.getElementById('fb-temptest-results').scrollIntoView({ behavior: 'smooth' });
             }, 100);
         } else {
-            alert("유사도 임계값(0.5)을 넘는 수정 대상 사진이 없습니다.");
+            alert("유사도 임계값(0.1)을 넘는 수정 대상 사진이 0장 입니다.");
         }
     } catch (err) {
         console.error(err);
