@@ -883,12 +883,12 @@ class FeedbackV2Request(BaseModel):
 @app.get("/api/feedback_v2/unknown")
 async def get_unknown_photo():
     import random
-    if not qdrant_client: return {"error": "Qdrant not loaded"}
-    
     try:
+        # Qdrant에서 처음 500개만 가져오면 최신 업로드본이 누락될 수 있으므로
+        # 전체를 다 가져온 뒤 파이썬에서 물리적 시간 정렬을 수행하도록 limit 확장
         res, _ = qdrant_client.scroll(
             collection_name="gumaphoto_hybrid_kr", 
-            limit=500, 
+            limit=10000, 
             with_payload=True
         )
         
