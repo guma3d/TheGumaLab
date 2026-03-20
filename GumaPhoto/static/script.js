@@ -1272,11 +1272,13 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
 
                 gridHtml += `
                 <div style="position: relative; width: 100%; aspect-ratio: 1/1; border-radius: 8px; overflow: hidden; background: #111;">
-                    <img src="${item.url}" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
+                    <img src="${item.url}" style="width: 100%; height: 100%; object-fit: cover; transition: filter 0.3s ease;" loading="lazy">
                     
                     <div class="meta-badge" style="position: absolute; left: 5px; top: 5px;">
                         <i class="fa-solid fa-bullseye"></i> ${scoreText}
                     </div>
+                    
+                    <input type="checkbox" checked style="position: absolute; right: 8px; top: 8px; width: 22px; height: 22px; cursor: pointer; z-index: 20; accent-color: #10b981; box-shadow: 0 0 5px rgba(0,0,0,0.5);" onchange="this.parentElement.querySelector('img').style.filter = this.checked ? 'none' : 'grayscale(100%)';">
                     
                     <div class="info-badges-overlay" style="position: absolute; left: 5px; bottom: 5px; transform: scale(0.65); transform-origin: left bottom; margin: 0; display: flex; flex-direction: column; gap: 4px; z-index: 10;">
                         ${badgesHtml}
