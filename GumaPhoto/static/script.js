@@ -1070,6 +1070,7 @@ document.getElementById('fb-temptest-btn')?.addEventListener('click', async () =
         }
 
         if (data.results && data.results.length > 0) {
+            const grid = document.getElementById('fb-temptest-grid');
             let gridHtml = '';
             data.results.forEach(item => {
                 const scoreText = (item.score * 100).toFixed(1) + '%';
