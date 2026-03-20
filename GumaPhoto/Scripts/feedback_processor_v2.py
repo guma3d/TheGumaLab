@@ -16,21 +16,28 @@ def process_time_location_feedback(qdrant_id, target_date, target_location):
     print(f"[*] 시간/장소 피드백 가동: 타겟 UUID {qdrant_id}, 새로운 시간: {target_date}, 새로운 장소: {target_location}")
     client = QdrantClient(QDRANT_URL)
     
-    # 1. 1장 원본의 시각 분위기 공간 벡터(v_scene/SigLIP) 획득
-    records, _ = client.scroll(COLLECTION_NAME, scroll_filter={"must": [{"key": "id", "match": {"value": qdrant_id}}]}, limit=1, with_vectors=True, with_payload=True)
+    # 1. 1장 원본의 시각 분위기 공간 벡터(scene/SigLIP) 획득
+    records = client.retrieve(
+        collection_name=COLLECTION_NAME,
+        ids=[qdrant_id],
+        with_vectors=True,
+        with_payload=True
+    )
     if not records:
         print("[-] 대상 사진을 Qdrant에서 찾을 수 없습니다.")
         return
         
-    scene_vector = records[0].vector.get("v_scene")
+    pt = records[0]
+    vecs = pt.vector
+    scene_vector = vecs.get("scene") if isinstance(vecs, dict) else vecs
     if not scene_vector:
-        print("[-] v_scene (SigLIP) 벡터가 없습니다.")
+        print("[-] scene (SigLIP) 벡터가 없습니다.")
         return
         
     # 2. Qdrant 벡터 서치를 통해 동일한 시공간(유사도 90% 이상)의 그룹핑 N장 추출
     search_res = client.search(
         collection_name=COLLECTION_NAME,
-        query_vector=("v_scene", scene_vector),
+        query_vector=("scene", scene_vector) if isinstance(vecs, dict) else scene_vector,
         limit=50,
         score_threshold=0.88,
         with_payload=True
