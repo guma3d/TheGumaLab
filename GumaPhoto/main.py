@@ -908,8 +908,12 @@ async def get_unknown_photo():
             if issues:
                 issue = random.choice(issues)
                 
-            if issue:
-                url_path = r.payload.get("filepath", "")
+                original_path = r.payload.get("filepath", "")
+                mtime = 0
+                if os.path.exists(original_path):
+                    mtime = os.path.getmtime(original_path)
+                    
+                url_path = original_path
                 if url_path.startswith("/app/data/organized"):
                     url_path = url_path.replace("/app/data/organized", "/photos")
                     
@@ -919,13 +923,16 @@ async def get_unknown_photo():
                     "issue": issue,
                     "date": date_val,
                     "location": loc,
-                    "people": people
+                    "people": people,
+                    "mtime": mtime
                 })
                 
         if not unknowns:
             return {"id": None, "message": "모든 사진이 완벽하게 분류되었습니다!"}
             
-        return random.choice(unknowns)
+        # 임시 요건: 최근 업로드된 사진(mtime 최신)이 우선적으로 피드백 메뉴에 뜨도록 정렬
+        unknowns.sort(key=lambda x: x["mtime"], reverse=True)
+        return unknowns[0]
     except Exception as e:
         return {"error": str(e)}
 
