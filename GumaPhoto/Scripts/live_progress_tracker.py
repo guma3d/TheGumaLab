@@ -44,8 +44,8 @@ def get_progress():
         from qdrant_client import QdrantClient
         # 너무 긴 타임아웃 방지를 위해 슬림한 타임아웃 세팅
         q_client = QdrantClient("http://qdrant:6333", timeout=3)
-        collection_info = q_client.get_collection("gumaphoto_hybrid_kr")
-        db_completed = collection_info.points_count
+        count_info = q_client.count(collection_name="gumaphoto_hybrid_kr", exact=True)
+        db_completed = count_info.count
     except Exception as e:
         pass
         
