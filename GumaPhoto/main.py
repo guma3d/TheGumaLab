@@ -60,6 +60,9 @@ async def lifespan(app: FastAPI):
     # 1. Start background live monitor for JSON progress
     tracker_process = subprocess.Popen(["python", "Scripts/live_progress_tracker.py"])
     
+    # 2. 피드백 액션 감시 및 수술 관장을 위한 단일 봇(Daemon) 상시 데몬 스레드 가동
+    daemon_process = subprocess.Popen(["python", "Scripts/feedback_daemon.py"])
+    
     # 초기 SQLite 테이블 세팅 (Feedback Queue 생성)
     try:
         os.makedirs("/app/data", exist_ok=True)
