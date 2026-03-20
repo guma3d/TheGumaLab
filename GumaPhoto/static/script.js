@@ -996,6 +996,45 @@ document.getElementById('fb-skip-btn')?.addEventListener('click', () => {
     loadUnknownPhoto();
 });
 
+document.getElementById('fb-remove-btn')?.addEventListener('click', async () => {
+    if (!selectedFeedbackTarget) return;
+
+    if (!confirm("이 사진을 DB와 스토리지에서 영구히 삭제하시겠습니까?")) return;
+    
+    const btn = document.getElementById('fb-remove-btn');
+    const ogHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    btn.disabled = true;
+    
+    try {
+        let apiUrl = '/api/photos';
+        if (window.location.pathname.startsWith('/GumaPhoto')) {
+            apiUrl = '/GumaPhoto/api/photos';
+        }
+        
+        const res = await fetch(apiUrl, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                filepath: selectedFeedbackTarget.url,
+                point_id: selectedFeedbackTarget.id
+            })
+        });
+        
+        if (!res.ok) throw new Error("서버에서 사진을 삭제하지 못했습니다.");
+        
+        // 삭제 성공 시 바로 다음 타겟 불러오기
+        loadUnknownPhoto();
+        
+    } catch (err) {
+        console.error(err);
+        alert("삭제 실패: " + err.message);
+    } finally {
+        btn.innerHTML = ogHtml;
+        btn.disabled = false;
+    }
+});
+
 window.addEventListener('click', (e) => {
     if (e.target === feedbackHubModal) {
         feedbackHubModal.classList.add('hidden');
