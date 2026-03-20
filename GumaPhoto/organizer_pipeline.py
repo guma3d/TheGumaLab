@@ -130,55 +130,57 @@ class OrganizerPipeline:
     # ⏱️ 2단계: 메타데이터 추출 (Fallback 포함)
     # ==========================
     def extract_datetime_and_location(self, filepath):
-        """EXIF 우선 -> 상위 2단계 폴더명 추론 -> Unknown_Date/Location"""
-        with open(filepath, 'rb') as f:
-            tags = exifread.process_file(f, details=False)
+        """exiftool을 호출하여 포맷 텍스처 의존성 제거 및 완벽한 데이터 추출 (HEIC, PNG, MP4 포함)"""
+        import subprocess
+        import json
         
         dt_str = "Unknown-Year"
         loc_str = "Unknown-Location"
+        lat, lon = None, None
 
-        # 1. 시간 EXIF 확인
-        if 'EXIF DateTimeOriginal' in tags:
-            # 포맷: 2023:10:15 14:30:00 -> 2023-10
-            raw_dt = str(tags['EXIF DateTimeOriginal']).split(' ')[0]
-            # yyyy, mm 두 가지 항목만 붙임
-            parts = raw_dt.split(':')
-            if len(parts) >= 2:
-                dt_str = f"{parts[0]}-{parts[1]}"
-            else:
-                dt_str = raw_dt.replace(':', '-') # 안전을 위한 Fallback
-        else:
-            # 2. 메타데이터 누락 시 -> 상위 폴더 이름에서 힌트 얻기 (예: D:\사진집\2014 겨울여행\IMG_01.jpg)
-            # 폴더명에 2014 같은 4자리 숫자 연도가 있는지 정규식으로 유추
+        try:
+            # -c "%+.6f" 옵션으로 GPS 좌표를 십진수 float 형태로 깔끔하게 반환 (ExifTool의 사기적 기능)
+            cmd = ["exiftool", "-j", "-c", "%+.6f", "-DateTimeOriginal", "-GPSLatitude", "-GPSLongitude", filepath]
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+            
+            if res.returncode == 0 and res.stdout.strip():
+                data = json.loads(res.stdout)[0]
+                
+                # 1. 시간 EXIF 확인
+                if 'DateTimeOriginal' in data:
+                    raw_dt = str(data['DateTimeOriginal']).split(' ')[0]
+                    parts = raw_dt.split(':')
+                    if len(parts) >= 2:
+                        dt_str = f"{parts[0]}-{parts[1]}"
+                    else:
+                        dt_str = raw_dt.replace(':', '-')
+                        
+                # 2. GPS 확인 (-c "%+.6f" 덕분에 곧바로 숫자로 파싱 가능)
+                if 'GPSLatitude' in data and 'GPSLongitude' in data:
+                    lat_str = str(data['GPSLatitude']).replace('+', '')
+                    lon_str = str(data['GPSLongitude']).replace('+', '')
+                    lat = float(lat_str)
+                    lon = float(lon_str)
+        except Exception as e:
+            print(f"   ⚠️ [ExifTool 추출 에러] {e}")
+
+        # 3. 메타데이터 누락 시 -> 상위 폴더 이름에서 힌트 얻기 (예: D:\사진집\2014 겨울여행\IMG_01.jpg)
+        if dt_str == "Unknown-Year":
             parent_dir = os.path.basename(os.path.dirname(filepath))
             grandparent_dir = os.path.basename(os.path.dirname(os.path.dirname(filepath)))
-            
+            import re
             match = re.search(r'(19|20)\d{2}[-._]?\d{0,2}', parent_dir + grandparent_dir)
             if match:
                 dt_str = match.group().replace('_', '-').replace('.', '-').rstrip('-')
-        
-        # 3. GPS 정보 추출 및 글로벌 역지오코딩(geopy/Nominatim)
-        if 'GPS GPSLatitude' in tags and 'GPS GPSLatitudeRef' in tags and 'GPS GPSLongitude' in tags and 'GPS GPSLongitudeRef' in tags:
+                
+        # 4. GPS 역지오코딩
+        if lat is not None and lon is not None:
             try:
-                lat = self.get_decimal_from_dms(tags['GPS GPSLatitude'].values, tags['GPS GPSLatitudeRef'].values)
-                lon = self.get_decimal_from_dms(tags['GPS GPSLongitude'].values, tags['GPS GPSLongitudeRef'].values)
                 loc_str = self.get_location_name(lat, lon)
             except Exception as e:
                 pass
-            
+                
         return dt_str, loc_str
-
-    def get_decimal_from_dms(self, dms, ref):
-        degrees = dms[0].num / dms[0].den if dms[0].den != 0 else 0
-        minutes = dms[1].num / dms[1].den / 60.0 if dms[1].den != 0 else 0
-        seconds = dms[2].num / dms[2].den / 3600.0 if dms[2].den != 0 else 0
-
-        if ref in ['S', 'W']:
-            degrees = -degrees
-            minutes = -minutes
-            seconds = -seconds
-        
-        return degrees + minutes + seconds
 
     def get_location_name(self, lat, lon):
         # 좌표 소수점 3자리(약 111m) 단위 반올림으로 동네 단위 캐싱
