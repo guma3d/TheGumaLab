@@ -883,33 +883,11 @@ async def get_unknown_photo():
     if not qdrant_client: return {"error": "Qdrant not loaded"}
     
     try:
-        # 날짜 결손(Date Missing) 우선 검색 강제
-        from qdrant_client import models
-        
-        date_res = []
-        try:
-            scroll_res, _ = qdrant_client.scroll(
-                collection_name="gumaphoto_hybrid_kr", 
-                scroll_filter=models.Filter(
-                    must=[models.FieldCondition(key="date", match=models.MatchValue(value="Unknown Date"))]
-                ),
-                limit=50,
-                with_payload=True
-            )
-            if scroll_res:
-                date_res = scroll_res
-        except Exception as e:
-            print(f"[Error in Feedback Date query]: {e}")
-            pass
-            
-        if not date_res:
-            res, _ = qdrant_client.scroll(
-                collection_name="gumaphoto_hybrid_kr", 
-                limit=500, 
-                with_payload=True
-            )
-        else:
-            res = date_res
+        res, _ = qdrant_client.scroll(
+            collection_name="gumaphoto_hybrid_kr", 
+            limit=500, 
+            with_payload=True
+        )
         
         unknowns = []
         for r in res:
@@ -917,11 +895,15 @@ async def get_unknown_photo():
             people = r.payload.get("people", [])
             date_val = r.payload.get("date", "")
             
-            issue = ""
+            issues = []
             if "Unknown" in date_val or not date_val:
-                issue = "Date"
-            elif "위치정보없음" in loc or not loc:
-                issue = "Location"
+                issues.append("Date")
+            if "위치정보없음" in loc or not loc:
+                issues.append("Location")
+                
+            issue = ""
+            if issues:
+                issue = random.choice(issues)
                 
             if issue:
                 url_path = r.payload.get("filepath", "")
