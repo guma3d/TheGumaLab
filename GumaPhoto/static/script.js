@@ -1084,8 +1084,8 @@ async function loadUnknownPhoto() {
             const unknownList = [];
             sData.results.forEach(p => {
                 let issues = [];
-                if(!p.location || p.location.includes("위치정보없음")) issues.push("Location Missing");
-                if(!p.date || p.date.includes("Unknown")) issues.push("Date Missing");
+                if(!p.location || p.location.includes("위치정보없음")) issues.push("Location");
+                if(!p.date || p.date.includes("Unknown")) issues.push("Date");
                 if(issues.length > 0) {
                     p.issue = issues[Math.floor(Math.random() * issues.length)];
                     unknownList.push(p);
@@ -1134,7 +1134,11 @@ async function loadUnknownPhoto() {
         }
         
         let restText = selectedFeedbackTarget.issue.replace(issueWord, '').trim();
-        issueTag.innerHTML = `<span style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; padding: 4px 8px; border-radius: 6px;">${badgeType}</span> <span style="color: #9ca3af; margin-left: 4px;">${restText}</span>`;
+        if (restText) {
+            issueTag.innerHTML = `<span style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; padding: 6px 12px; border-radius: 8px;">${badgeType}</span> <span style="color: #9ca3af; margin-left: 6px;">${restText}</span>`;
+        } else {
+            issueTag.innerHTML = `<span style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; padding: 6px 12px; border-radius: 8px;">${badgeType}</span>`;
+        }
         issueTag.style.opacity = '1';
         
         const fbBadgesContainer = document.getElementById('fb-info-badges');
