@@ -134,7 +134,22 @@
                                     <i class="fa-solid fa-trash-can" style="margin-right: 4px;"></i> Remove
                                 </button>
                             </div>
+                            
+                            <button id="fb-temptest-btn" style="width: 100%; padding: 10px; font-weight: 600; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); font-size: 1rem; border-radius: 12px; color: #3b82f6; cursor: pointer; transition: all 0.2s; margin-top: 4px;">
+                                <i class="fa-solid fa-flask" style="margin-right: 4px;"></i> TempTest (Simulate)
+                            </button>
                         </div>
+                    </div>
+                </div>
+                
+                <!-- TempTest Results Area -->
+                <div id="fb-temptest-results" style="display: none; width: 100%; margin-top: 24px; box-sizing: border-box;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h3 style="color: #9ca3af; font-size: 0.95rem; margin: 0;"><i class="fa-solid fa-microscope"></i> 시뮬레이션 감지 타겟: <span id="fb-temptest-count" style="color: #3b82f6; font-weight: 700;">0</span>장</h3>
+                        <button id="fb-temptest-close" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; padding: 4px 10px; border-radius: 8px; cursor: pointer; font-size: 0.8rem;">닫기</button>
+                    </div>
+                    <div id="fb-temptest-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; width: 100%;">
+                        <!-- Images injected here -->
                     </div>
                 </div>
             </div>
@@ -282,7 +297,7 @@
         </div>
     </div>
 
-    <script src="static/script.js?v=81"></script>
+    <script src="static/script.js?v=82"></script>
 </body>
 
 </html>

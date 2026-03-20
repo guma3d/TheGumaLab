@@ -1041,6 +1041,56 @@ window.addEventListener('click', (e) => {
     }
 });
 
+document.getElementById('fb-temptest-btn')?.addEventListener('click', async () => {
+    if (!selectedFeedbackTarget) return;
+
+    const btn = document.getElementById('fb-temptest-btn');
+    const ogHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 시뮬레이션 가동 중...';
+    btn.disabled = true;
+
+    try {
+        let apiUrl = '/api/feedback_v2/temptest';
+        if (window.location.pathname.startsWith('/GumaPhoto')) apiUrl = '/GumaPhoto' + apiUrl;
+
+        const res = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ point_id: selectedFeedbackTarget.id })
+        });
+
+        if (!res.ok) throw new Error("시뮬레이션 서버 데이터를 가져오지 못했습니다.");
+        const data = await res.json();
+
+        if (data.results && data.results.length > 0) {
+            const grid = document.getElementById('fb-temptest-grid');
+            grid.innerHTML = '';
+            data.results.forEach(item => {
+                grid.innerHTML += `<div style="width: 100%; aspect-ratio: 1/1; border-radius: 8px; overflow: hidden; background: #111;"><img src="${item.url}" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy"></div>`;
+            });
+            document.getElementById('fb-temptest-count').textContent = data.results.length;
+            document.getElementById('fb-temptest-results').style.display = 'block';
+            
+            // Scroll down automatically
+            setTimeout(() => {
+                document.getElementById('fb-temptest-results').scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        } else {
+            alert("유사도 임계값(0.88)을 넘는 수정 대상 사진이 없습니다.");
+        }
+    } catch (err) {
+        console.error(err);
+        alert("시뮬레이션 실패: " + err.message);
+    } finally {
+        btn.innerHTML = ogHtml;
+        btn.disabled = false;
+    }
+});
+
+document.getElementById('fb-temptest-close')?.addEventListener('click', () => {
+    document.getElementById('fb-temptest-results').style.display = 'none';
+});
+
 async function loadUnknownPhoto() {
     const imgEl = document.getElementById('fb-target-img');
     const spinner = document.getElementById('fb-loading-spinner');
@@ -1063,6 +1113,10 @@ async function loadUnknownPhoto() {
     
     submitBtn.disabled = false;
     submitBtn.innerHTML = 'Send';
+    
+    // TempTest UI 초기화
+    const tempTestResults = document.getElementById('fb-temptest-results');
+    if(tempTestResults) tempTestResults.style.display = 'none';
     
     try {
         let apiUrl = '/api/feedback_v2/unknown';

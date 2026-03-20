@@ -977,6 +977,59 @@ async def submit_feedback_v2(req: FeedbackV2Request):
         print(f"❌ [Feedback v2.0] 대기열 등록 실패: {e}")
         return {"error": str(e)}
 
+class TempTestRequest(BaseModel):
+    point_id: str
+
+@app.post("/api/feedback_v2/temptest")
+async def temptest_feedback_v2(req: TempTestRequest):
+    try:
+        from qdrant_client.http import models as qdrant_models
+        # 1. Fetch vector
+        points, _ = qdrant_client.scroll(
+            collection_name="gumaphoto_hybrid_kr",
+            scroll_filter=qdrant_models.Filter(must=[qdrant_models.FieldCondition(key="id", match=qdrant_models.MatchValue(value=req.point_id))]),
+            limit=1,
+            with_vectors=True,
+            with_payload=True
+        )
+        if not points:
+            return {"error": "Point not found"}
+        
+        pt = points[0]
+        vecs = pt.vector
+        scene_vector = vecs.get("v_scene") if isinstance(vecs, dict) else vecs
+        
+        if not scene_vector:
+            return {"error": "Target photo has no valid scene vector"}
+            
+        # 2. Search
+        search_res = qdrant_client.search(
+            collection_name="gumaphoto_hybrid_kr",
+            query_vector=("v_scene", scene_vector) if isinstance(vecs, dict) else scene_vector,
+            limit=50,
+            score_threshold=0.88,
+            with_payload=True
+        )
+        
+        results = []
+        for r in search_res:
+            filepath = r.payload.get("filepath", "")
+            orig_ext = filepath.rsplit('.', 1)[-1].lower() if '.' in filepath else ""
+            base_name = os.path.splitext(filepath)[0]
+            url_path = filepath.replace("/app/data/organized", "/photos")
+            if os.path.exists(f"{base_name}_{orig_ext}.webp"):
+                url_path = url_path.rsplit('.', 1)[0] + f"_{orig_ext}.webp"
+            
+            results.append({
+                "id": r.id,
+                "url": url_path,
+                "score": r.score
+            })
+            
+        return {"results": results}
+    except Exception as e:
+        return {"error": str(e)}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
