@@ -66,7 +66,7 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
     # 5. Qdrant 데이터 일괄 파기 (Payload 삭제 등)
     # TODO: delete from Qdrant by payloads
     
-    print("[*] 향후 vector_indexer.py 가 이 폴더들을 신선하게 재스캔 할 것입니다.")
+    print("[*] 피드백 이동 처리가 끝나면 연계된 vector_indexer.py 가 즉시 구동되어 족보(DB)를 최신화할 것입니다.")
 
 def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
     import json
