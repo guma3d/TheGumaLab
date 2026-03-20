@@ -1076,7 +1076,7 @@ document.getElementById('fb-temptest-btn')?.addEventListener('click', async () =
                 document.getElementById('fb-temptest-results').scrollIntoView({ behavior: 'smooth' });
             }, 100);
         } else {
-            alert("유사도 임계값(0.88)을 넘는 수정 대상 사진이 없습니다.");
+            alert("유사도 임계값(0.5)을 넘는 수정 대상 사진이 없습니다.");
         }
     } catch (err) {
         console.error(err);

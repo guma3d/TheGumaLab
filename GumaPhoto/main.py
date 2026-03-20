@@ -989,7 +989,7 @@ async def temptest_feedback_v2(req: TempTestRequest):
             collection_name="gumaphoto_hybrid_kr",
             query_vector=("v_scene", scene_vector) if isinstance(vecs, dict) else scene_vector,
             limit=50,
-            score_threshold=0.88,
+            score_threshold=0.5,
             with_payload=True
         )
         
