@@ -1070,11 +1070,50 @@ document.getElementById('fb-temptest-btn')?.addEventListener('click', async () =
         }
 
         if (data.results && data.results.length > 0) {
-            const grid = document.getElementById('fb-temptest-grid');
-            grid.innerHTML = '';
+            let gridHtml = '';
             data.results.forEach(item => {
-                grid.innerHTML += `<div style="width: 100%; aspect-ratio: 1/1; border-radius: 8px; overflow: hidden; background: #111;"><img src="${item.url}" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy"></div>`;
+                const scoreText = (item.score * 100).toFixed(1) + '%';
+                
+                const createBadge = (icon, text, isHighlight = false) => {
+                    if (!text || text.trim() === '') text = 'Unknown';
+                    const cls = isHighlight ? 'info-badge highlight' : 'info-badge';
+                    return `<div class="${cls}"><i class="${icon}"></i> ${text}</div>`;
+                };
+
+                let badgesHtml = '';
+                // 1. Date
+                let dateVal = (item.date && item.date.trim() !== '') ? item.date : 'Unknown';
+                if (dateVal === 'Unknown Date') dateVal = 'Unknown';
+                if (dateVal.length > 10 && dateVal !== 'Unknown') dateVal = dateVal.substring(0, 10);
+                badgesHtml += createBadge('fa-regular fa-calendar', dateVal);
+                
+                // 2. Location
+                let locVal = (item.location && item.location.trim() !== '') ? item.location.replace(/-/g, ' ') : 'Unknown';
+                if (locVal.includes('위치정보없음')) locVal = 'Unknown';
+                badgesHtml += createBadge('fa-solid fa-location-dot', locVal);
+                
+                // 3. People
+                let peopleVal = 'Unknown';
+                if (item.people && item.people.length > 0) {
+                    let pStr = item.people.filter(p => !p.includes('Unknown')).join(', ');
+                    if (pStr) peopleVal = pStr;
+                }
+                badgesHtml += createBadge('fa-solid fa-user-tag', peopleVal, true);
+
+                gridHtml += `
+                <div style="position: relative; width: 100%; aspect-ratio: 1/1; border-radius: 8px; overflow: hidden; background: #111;">
+                    <img src="${item.url}" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
+                    
+                    <div class="meta-badge" style="position: absolute; left: 5px; top: 5px;">
+                        <i class="fa-solid fa-bullseye"></i> ${scoreText}
+                    </div>
+                    
+                    <div class="info-badges-overlay" style="position: absolute; left: 5px; bottom: 5px; transform: scale(0.65); transform-origin: left bottom; margin: 0; display: flex; flex-direction: column; gap: 4px; z-index: 10;">
+                        ${badgesHtml}
+                    </div>
+                </div>`;
             });
+            grid.innerHTML = gridHtml;
             document.getElementById('fb-temptest-count').textContent = data.results.length;
             document.getElementById('fb-temptest-results').style.display = 'block';
             
@@ -1083,7 +1122,7 @@ document.getElementById('fb-temptest-btn')?.addEventListener('click', async () =
                 document.getElementById('fb-temptest-results').scrollIntoView({ behavior: 'smooth' });
             }, 100);
         } else {
-            alert("유사도 임계값(0.1)을 넘는 수정 대상 사진이 0장 입니다.");
+            alert("유사도 임계값(0.5)을 넘는 수정 대상 사진이 0장 입니다.");
         }
     } catch (err) {
         console.error(err);

@@ -991,7 +991,7 @@ async def temptest_feedback_v2(req: TempTestRequest):
             query=scene_vector,
             using="scene",
             limit=50,
-            score_threshold=0.1,
+            score_threshold=0.5,
             with_payload=True
         ).points
         
@@ -1007,7 +1007,10 @@ async def temptest_feedback_v2(req: TempTestRequest):
             results.append({
                 "id": r.id,
                 "url": url_path,
-                "score": r.score
+                "score": r.score,
+                "date": r.payload.get("date", ""),
+                "location": r.payload.get("location", ""),
+                "people": r.payload.get("people", [])
             })
             
         return {"results": results}
