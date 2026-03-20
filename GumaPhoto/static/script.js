@@ -1054,7 +1054,13 @@ async function loadUnknownPhoto() {
     spinner.style.display = 'block';
     issueTag.style.opacity = '0';
     inputVal.value = '';
-    inputDate.value = '';
+    
+    // 달력 선택 시 기본(Default) 시작점을 오늘 날짜 기준으로 설정
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    inputDate.value = `${yyyy}-${mm}`;
+    
     submitBtn.disabled = false;
     submitBtn.innerHTML = 'Send';
     
