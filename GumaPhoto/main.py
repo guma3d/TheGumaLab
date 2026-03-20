@@ -872,8 +872,10 @@ async def get_filters():
     }
 
 # --- Self-Healing Feedback v2.0 API Endpoints ---
+import typing
+
 class FeedbackV2Request(BaseModel):
-    point_id: str
+    point_id: typing.Union[int, str]
     issue_type: str
     correct_value: str
 
@@ -960,17 +962,16 @@ async def submit_feedback_v2(req: FeedbackV2Request):
         return {"error": str(e)}
 
 class TempTestRequest(BaseModel):
-    point_id: str
+    point_id: typing.Union[int, str]
 
 @app.post("/api/feedback_v2/temptest")
 async def temptest_feedback_v2(req: TempTestRequest):
     try:
         from qdrant_client.http import models as qdrant_models
-        # 1. Fetch vector
-        points, _ = qdrant_client.scroll(
+        # 1. Fetch vector by direct Point ID retrieval
+        points = qdrant_client.retrieve(
             collection_name="gumaphoto_hybrid_kr",
-            scroll_filter=qdrant_models.Filter(must=[qdrant_models.FieldCondition(key="id", match=qdrant_models.MatchValue(value=req.point_id))]),
-            limit=1,
+            ids=[req.point_id],
             with_vectors=True,
             with_payload=True
         )
