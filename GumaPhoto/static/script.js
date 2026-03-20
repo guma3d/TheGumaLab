@@ -1275,6 +1275,16 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
             data.results.forEach(item => {
                 const scoreText = (item.score * 100).toFixed(1) + '%';
                 
+                // --- Preview Override Logic ---
+                if (selectedFeedbackTarget.issue.includes('Date') || selectedFeedbackTarget.issue.includes('날짜')) {
+                    item.date = finalStr;
+                } else if (selectedFeedbackTarget.issue.includes('Location')) {
+                    item.location = finalStr;
+                } else if (selectedFeedbackTarget.issue.includes('People')) {
+                    item.people = [finalStr];
+                }
+                // ------------------------------
+
                 const createBadge = (icon, text, isHighlight = false) => {
                     if (!text || text.trim() === '') text = 'Unknown';
                     const cls = isHighlight ? 'info-badge highlight' : 'info-badge';
@@ -1291,7 +1301,7 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
                 // 2. Location
                 let locVal = (item.location && item.location.trim() !== '') ? item.location.replace(/-/g, ' ') : 'Unknown';
                 if (locVal.includes('위치정보없음')) locVal = 'Unknown';
-                badgesHtml += createBadge('fa-solid fa-location-dot', locVal);
+                badgesHtml += createBadge('fa-solid fa-location-dot', locVal, selectedFeedbackTarget.issue.includes('Location'));
                 
                 // 3. People
                 let peopleVal = 'Unknown';
@@ -1299,7 +1309,7 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
                     let pStr = item.people.filter(p => !p.includes('Unknown')).join(', ');
                     if (pStr) peopleVal = pStr;
                 }
-                badgesHtml += createBadge('fa-solid fa-user-tag', peopleVal, true);
+                badgesHtml += createBadge('fa-solid fa-user-tag', peopleVal, selectedFeedbackTarget.issue.includes('People'));
 
                 gridHtml += `
                 <div style="position: relative; width: 100%; aspect-ratio: 1/1; border-radius: 8px; overflow: hidden; background: #111;">
