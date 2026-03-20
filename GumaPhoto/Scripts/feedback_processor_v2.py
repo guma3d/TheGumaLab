@@ -35,13 +35,14 @@ def process_time_location_feedback(qdrant_id, target_date, target_location):
         return
         
     # 2. Qdrant 벡터 서치를 통해 동일한 시공간(유사도 90% 이상)의 그룹핑 N장 추출
-    search_res = client.search(
+    search_res = client.query_points(
         collection_name=COLLECTION_NAME,
-        query_vector=("scene", scene_vector) if isinstance(vecs, dict) else scene_vector,
+        query=scene_vector,
+        using="scene",
         limit=50,
         score_threshold=0.88,
         with_payload=True
-    )
+    ).points
     
     similar_files = [res.payload.get("filepath") for res in search_res if res.payload.get("filepath")]
     print(f"  [+] 동일 시간/장소 집단 {len(similar_files)}장 클러스터링 감지 완료.")

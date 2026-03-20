@@ -985,14 +985,15 @@ async def temptest_feedback_v2(req: TempTestRequest):
         if not scene_vector:
             return {"error": f"Target photo has no valid scene vector. pt.vector type: {type(vecs)}, value: {vecs}"}
             
-        # 2. Search
-        search_res = qdrant_client.search(
+        # 2. Search using query_points
+        search_res = qdrant_client.query_points(
             collection_name="gumaphoto_hybrid_kr",
-            query_vector=("scene", scene_vector) if isinstance(vecs, dict) else scene_vector,
+            query=scene_vector,
+            using="scene",
             limit=50,
             score_threshold=0.1,
             with_payload=True
-        )
+        ).points
         
         results = []
         for r in search_res:
