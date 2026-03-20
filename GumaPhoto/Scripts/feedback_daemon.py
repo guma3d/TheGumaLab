@@ -100,11 +100,12 @@ def run_daemon():
                     
                     # 릴레이 처리: 메타데이터 변경 후 폴더이동/XMP삭제 완료된 파일들을 
                     # 원본 파이프라인 태워서 다시 꽂아넣고 Qdrant 에 최종 반영
+                    import sys
                     print(f"🚀 [Daemon] 후속 처리 1단계: organizer_pipeline.py 가동")
-                    subprocess.run(["python", "/app/organizer_pipeline.py"], cwd=project_root)
+                    subprocess.run(["python", "/app/organizer_pipeline.py"], cwd=project_root, stdout=sys.stdout, stderr=sys.stderr)
                     
                     print(f"🚀 [Daemon] 후속 처리 2단계: vector_indexer.py 가동")
-                    subprocess.run(["python", "/app/Scripts/vector_indexer.py"], cwd=project_root)
+                    subprocess.run(["python", "/app/vector_indexer.py"], cwd=project_root, stdout=sys.stdout, stderr=sys.stderr)
                     print(f"✅ [Daemon] 모든 피드백 릴레이 작업 완료!")
                 else:
                     print(f"❌ [Daemon] Task {task_id} 프로세서에서 치명적 에러 반환:\n{result.stderr}")
