@@ -105,25 +105,45 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
             subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     # 4. 기존 데이터 100% 비우고 Clean Re-index를 위해 찌꺼기 삭제
+    import shutil
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
+    
+    # uploads_raw 디렉토리 보장
+    uploads_dir = "/app/data/uploads_raw"
+    os.makedirs(uploads_dir, exist_ok=True)
+    
     for fpath in similar_files:
-        print(f"  [+] 파생 찌꺼기 추적 삭제 진행: {fpath}")
+        print(f"  [+] 파생 찌꺼기 추적 삭제 및 DB 초기화: {fpath}")
         cur.execute("DELETE FROM vectorized_files WHERE filepath=?", (fpath,))
-        xmp_path = os.path.splitext(fpath)[0] + ".xmp"
-        webp_path = os.path.splitext(fpath)[0] + "_heic.webp"
-        if os.path.exists(xmp_path): os.remove(xmp_path)
-        if os.path.exists(webp_path): os.remove(webp_path)
+        cur.execute("DELETE FROM processed_files WHERE filepath=?", (fpath,))
         
-        # 새로운 폴더 구조로 `shutil.move` 이동 로직 적용 필요
+        xmp_path = os.path.splitext(fpath)[0] + ".xmp"
+        webp_path_heic = os.path.splitext(fpath)[0] + "_heic.webp"
+        webp_path_png = os.path.splitext(fpath)[0] + "_png.webp"
+        
+        if os.path.exists(xmp_path): os.remove(xmp_path)
+        if os.path.exists(webp_path_heic): os.remove(webp_path_heic)
+        if os.path.exists(webp_path_png): os.remove(webp_path_png)
+        
+        # 5. 폴더 이동 (다시 uploads_raw 로 보내서 organizer_pipeline 이 EXIF 기반으로 새 폴더에 꽂도록 릴레이)
+        if os.path.exists(fpath):
+            target_dest = os.path.join(uploads_dir, os.path.basename(fpath))
+            shutil.move(fpath, target_dest)
+            print(f"      -> 릴레이 이동 완료: {target_dest}")
     
     conn.commit()
     conn.close()
     
-    # 5. Qdrant 데이터 일괄 파기 (Payload 삭제 등)
-    # TODO: delete from Qdrant by payloads
+    # 6. Qdrant 데이터 일괄 파기 (선택된 타겟 UUID들)
+    if target_points:
+        print(f"  [+] Qdrant 고스트 포인트 일괄 삭제 (파편화 방지)...")
+        client.delete(
+            collection_name=COLLECTION_NAME,
+            points_selector=target_points
+        )
     
-    print("[*] 피드백 이동 처리가 끝나면 연계된 vector_indexer.py 가 즉시 구동되어 족보(DB)를 최신화할 것입니다.")
+    print("[*] 피드백 이동 처리가 끝났습니다. 이제 백그라운드 데몬이 organizer_pipeline.py 와 vector_indexer.py 를 즉시 릴레이 가동하여 업데이트를 완료할 것입니다.")
 
 def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
     import json

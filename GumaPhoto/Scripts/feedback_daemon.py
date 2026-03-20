@@ -83,7 +83,12 @@ def run_daemon():
                 if fb_type == "face":
                     cmd.extend(["--name", correct_value])
                 else:
-                    cmd.extend(["--loc", correct_value, "--date", ""]) # 날짜는 아직 UI에서 넘겨받지 않음
+                    if correct_value.startswith("DATE|"):
+                        cmd.extend(["--loc", "", "--date", correct_value.split("|", 1)[1]])
+                    elif correct_value.startswith("LOC|"):
+                        cmd.extend(["--loc", correct_value.split("|", 1)[1], "--date", ""])
+                    else:
+                        cmd.extend(["--loc", correct_value, "--date", ""]) # 호환성 유지
                 
                 # check=True 를 통해 자식 프로세스가 완벽히 다 끝날 때까지 여기서 철벽 방어 대기(Block)
                 print(f"🚀 [Daemon] feedback_processor_v2.py 가동 시작")
@@ -92,6 +97,15 @@ def run_daemon():
                 if result.returncode == 0:
                     print(f"✅ [Daemon] Task {task_id} 완벽 성공!")
                     mark_task(task_id, 'DONE')
+                    
+                    # 릴레이 처리: 메타데이터 변경 후 폴더이동/XMP삭제 완료된 파일들을 
+                    # 원본 파이프라인 태워서 다시 꽂아넣고 Qdrant 에 최종 반영
+                    print(f"🚀 [Daemon] 후속 처리 1단계: organizer_pipeline.py 가동")
+                    subprocess.run(["python", "/app/organizer_pipeline.py"], cwd=project_root)
+                    
+                    print(f"🚀 [Daemon] 후속 처리 2단계: vector_indexer.py 가동")
+                    subprocess.run(["python", "/app/Scripts/vector_indexer.py"], cwd=project_root)
+                    print(f"✅ [Daemon] 모든 피드백 릴레이 작업 완료!")
                 else:
                     print(f"❌ [Daemon] Task {task_id} 프로세서에서 치명적 에러 반환:\n{result.stderr}")
                     mark_task(task_id, 'FAILED')

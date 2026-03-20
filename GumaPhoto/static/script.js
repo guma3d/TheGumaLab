@@ -1399,14 +1399,19 @@ document.getElementById('fb-temptest-send-btn')?.addEventListener('click', async
             if (!res.ok) throw new Error(data.error || "제출 실패");
         }
         
-        // 제출 성공 시 다음 사진 로드 준비 및 화면 롤백
+        // 제출 성공 알림 및 피드백 화면 종료 유도 (재귀 로딩 중복 충돌 방지)
         document.getElementById('fb-temptest-results').style.display = 'none';
-        const mainContainer = document.getElementById('fb-unknown-photo-container');
-        if (mainContainer) mainContainer.style.display = 'flex';
-        const infoTextContainer = document.getElementById('fb-info-text-container');
-        if (infoTextContainer) infoTextContainer.style.display = 'block';
-
-        loadUnknownPhoto();
+        
+        const feedbackHubModal = document.getElementById('feedback-hub-modal');
+        if (feedbackHubModal) feedbackHubModal.classList.add('hidden');
+        
+        // 홈 탭으로 자동 복귀
+        switchView('home');
+        
+        // 브라우저 렌더링 충돌을 막기 위해 0.1초 딜레이 후 Alert 띄움
+        setTimeout(() => {
+            alert("🚀 피드백 전송 완료!\n\n현재 백그라운드 봇(Daemon)이 사진 메타데이터 수술, 구형 DB 말소, 폴더 강제 이동, 그리고 Qdrant 신규 인덱싱까지 연쇄 파도타기(릴레이) 작업을 수행 중입니다.\n잠시 후 홈 화면에서 새로고침하여 수술된 사진의 새 위치를 확인하세요!");
+        }, 100);
         
     } catch (err) {
         console.error(err);

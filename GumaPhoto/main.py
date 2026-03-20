@@ -956,9 +956,11 @@ async def submit_feedback_v2(req: FeedbackV2Request):
     fb_type = "face" if "People" in req.issue_type else "time_loc"
     
     final_correct_value = req.correct_value
+    prefix = ""
     
-    # 장소(Location) 피드백인 경우, Search API와 동일하게 Gemini를 호출하여 표준 영토 명칭으로 역산(Geocoding/Standardization)
+    # 1. Location 피드백인 경우
     if fb_type == "time_loc" and "Location" in req.issue_type and gemini_client:
+        prefix = "LOC|"
         try:
             existing_locations = []
             if os.path.exists("/app/data/available_tags.json"):
@@ -971,8 +973,8 @@ async def submit_feedback_v2(req: FeedbackV2Request):
                 "당신은 스마트 갤러리의 위치 정보 표준화 매니저입니다.\n"
                 "사용자가 구어체나 부분 약어로 장소를 입력하더라도, 다음의 <보유 장소 목록> 중에서 가장 정확히 일치하는 '국가명-지역명' 형태로 교정(Parsing)해주세요.\n"
                 f"<보유 장소 목록>: {existing_locations}\n"
-                "규칙 1: 목록에 정규화된 이름이 존재한다면, 목록의 텍스트와 100% 동일한 문자열을 반환하세요. (예: 사용자 입력이 '제주도' 거나 '제주시'라도, 목록에 '대한민국-제주특별자치도'가 있다면 그걸로 반환)\n"
-                "규칙 2: 목록에 아예 없는 완전한 신규 국가/도시라면, '국가명-지역명' 포맷을 유지하여 새로 창조하세요. (예: 미국-시애틀)\n"
+                "규칙 1: 목록에 정규화된 이름이 존재한다면, 목록의 텍스트와 100% 동일한 문자열을 반환하세요.\n"
+                "규칙 2: 목록에 아예 없는 완전한 신규 국가/도시라면, '국가명-지역명' 포맷을 유지하여 새로 창조하세요.\n"
                 "규칙 3: 불필요한 부연 설명이나 마크다운 없이 오직 교정된 '문자열 1줄'만 반환하세요."
             )
             response = gemini_client.models.generate_content(
@@ -982,9 +984,34 @@ async def submit_feedback_v2(req: FeedbackV2Request):
             parsed_loc = response.text.strip().replace("\n", "").replace("\"", "")
             if parsed_loc and len(parsed_loc) < 50:
                 final_correct_value = parsed_loc
-                print(f"[Gemini 위치 피드백 교정] 원본: '{req.correct_value}' -> 교정결과: '{final_correct_value}'")
+                print(f"[Gemini 장소 교정] 원본: '{req.correct_value}' -> 결과: '{final_correct_value}'")
         except Exception as e:
             print(f"[Gemini 위치 파싱 오류] {e}")
+
+    # 2. Date 피드백인 경우
+    elif fb_type == "time_loc" and ("Date" in req.issue_type or "날짜" in req.issue_type) and gemini_client:
+        prefix = "DATE|"
+        try:
+            prompt_date = (
+                f"사용자 입력 날짜: '{req.correct_value}'\n"
+                "당신은 스마트 갤러리 날짜 교정기입니다.\n"
+                "사용자의 한글 구어체 입력을 'YYYY-MM' 포맷(숫자와 하이픈만)으로 변환하세요.\n"
+                "예: '25년 3월' -> '2025-03', '작년 겨울' -> '2025년 기준 작년 12월이므로 2024-12'\n"
+                "절대로 다른 부연 설명을 섞지 말고 오직 'YYYY-MM' 1줄만 반환하세요."
+            )
+            response_date = gemini_client.models.generate_content(
+                model='gemini-3.1-flash-lite-preview',
+                contents=prompt_date,
+            )
+            parsed_date = response_date.text.strip().replace("\n", "").replace("\"", "")
+            if parsed_date and "-" in parsed_date:
+                final_correct_value = parsed_date
+                print(f"[Gemini 날짜 교정] 원본: '{req.correct_value}' -> 결과: '{final_correct_value}'")
+        except Exception as e:
+            print(f"[Gemini 날짜 파싱 오류] {e}")
+
+    # DB에 안전하게 타입 태깅하여 저장
+    db_correct_value = f"{prefix}{final_correct_value}" if prefix else final_correct_value
     
     try:
         conn = sqlite3.connect("/app/data/organizer_state.db")
@@ -1010,7 +1037,7 @@ async def submit_feedback_v2(req: FeedbackV2Request):
         tp_json = json.dumps(req.target_points) if req.target_points else "[]"
         conn.execute(
             "INSERT INTO feedback_tasks (doc_id, fb_type, correct_value, target_points) VALUES (?, ?, ?, ?)",
-            (str(req.point_id), fb_type, final_correct_value, tp_json)
+            (str(req.point_id), fb_type, db_correct_value, tp_json)
         )
         conn.commit()
         conn.close()

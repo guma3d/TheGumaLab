@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y --fix-missing \
     build-essential \
     g++ \
     curl \
+    libimage-exiftool-perl \
     && add-apt-repository ppa:deadsnakes/ppa -y \
     && apt-get update \
     && apt-get install -y python3.11 python3.11-dev python3.11-distutils \
