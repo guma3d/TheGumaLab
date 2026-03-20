@@ -1045,6 +1045,8 @@ document.getElementById('fb-temptest-close')?.addEventListener('click', () => {
     document.getElementById('fb-temptest-results').style.display = 'none';
     const mainContainer = document.getElementById('fb-unknown-photo-container');
     if (mainContainer) mainContainer.style.display = 'flex';
+    const infoTextContainer = document.getElementById('fb-info-text-container');
+    if (infoTextContainer) infoTextContainer.style.display = 'block';
 });
 
 async function loadUnknownPhoto() {
@@ -1068,13 +1070,15 @@ async function loadUnknownPhoto() {
     inputDate.value = `${yyyy}-${mm}`;
     
     submitBtn.disabled = false;
-    submitBtn.innerHTML = 'Send';
+    submitBtn.innerHTML = 'Search by Similarity';
     
     // TempTest UI 초기화 및 메인 컨테이너 복구
     const tempTestResults = document.getElementById('fb-temptest-results');
     if(tempTestResults) tempTestResults.style.display = 'none';
     const mainContainer = document.getElementById('fb-unknown-photo-container');
     if(mainContainer) mainContainer.style.display = 'flex';
+    const infoTextContainer = document.getElementById('fb-info-text-container');
+    if(infoTextContainer) infoTextContainer.style.display = 'block';
     
     try {
         let apiUrl = '/api/feedback_v2/unknown';
@@ -1291,6 +1295,8 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
             // 메인 타겟 사진 컨테이너를 숨기고 그 자리에 검색결과 교체 표출
             const mainContainer = document.getElementById('fb-unknown-photo-container');
             if(mainContainer) mainContainer.style.display = 'none';
+            const infoTextContainer = document.getElementById('fb-info-text-container');
+            if(infoTextContainer) infoTextContainer.style.display = 'none';
             document.getElementById('fb-temptest-results').style.display = 'block';
         } else {
             alert("유사도 임계값(0.85)을 넘는 수정 대상 사진이 0장 입니다.");

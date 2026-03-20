@@ -95,7 +95,7 @@
 
             <!-- Premium Feedback Tab -->
             <div id="feedback" class="hidden" style="max-width: 500px; margin: 0 auto; box-sizing: border-box; padding: 0.5rem 1rem 1rem 1rem;">
-                <div style="text-align: center; margin-bottom: 0.8rem; margin-top: -5px;">
+                <div id="fb-info-text-container" style="text-align: center; margin-bottom: 0.8rem; margin-top: -5px;">
                     <p style="color: #9ca3af; font-size: 0.95rem; line-height: 1.4; margin: 0 auto; max-width: 380px;">
                         Please provide the missing information.<br>The AI will learn and apply it to similar photos.
                     </p>
@@ -123,7 +123,7 @@
                         
                         <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 8px; width: 100%;">
                             <button id="fb-submit-btn" style="width: 100%; padding: 11px; font-weight: 700; background: linear-gradient(135deg, #10b981, #059669); border: none; font-size: 1.15rem; border-radius: 12px; color: #ffffff; cursor: pointer; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); transition: transform 0.2s, box-shadow 0.2s;">
-                                Send
+                                Search by Similarity
                             </button>
                             
                             <div style="display: flex; gap: 10px; width: 100%;">
@@ -140,6 +140,9 @@
                 
                 <!-- TempTest Results Area -->
                 <div id="fb-temptest-results" style="display: none; width: 100%; margin-top: 0px; box-sizing: border-box;">
+                    <button id="fb-temptest-send-btn" style="width: 100%; padding: 11px; margin-bottom: 12px; font-weight: 700; background: linear-gradient(135deg, #10b981, #059669); border: none; font-size: 1.15rem; border-radius: 12px; color: #ffffff; cursor: pointer; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); transition: transform 0.2s, box-shadow 0.2s;">
+                        Send
+                    </button>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                         <h3 style="color: #9ca3af; font-size: 0.95rem; margin: 0;"><i class="fa-solid fa-microscope"></i> Vector Similarity Targets: <span id="fb-temptest-count" style="color: #3b82f6; font-weight: 700;">0</span></h3>
                         <button id="fb-temptest-close" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; padding: 4px 10px; border-radius: 8px; cursor: pointer; font-size: 0.8rem;">닫기</button>
@@ -293,7 +296,7 @@
         </div>
     </div>
 
-    <script src="static/script.js?v=90"></script>
+    <script src="static/script.js?v=91"></script>
 </body>
 
 </html>
