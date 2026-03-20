@@ -983,7 +983,7 @@ async def temptest_feedback_v2(req: TempTestRequest):
         scene_vector = vecs.get("v_scene") if isinstance(vecs, dict) else vecs
         
         if not scene_vector:
-            return {"error": "Target photo has no valid scene vector"}
+            return {"error": f"Target photo has no valid scene vector. pt.vector type: {type(vecs)}, value: {vecs}"}
             
         # 2. Search
         search_res = qdrant_client.search(
