@@ -3,7 +3,10 @@ import json
 import subprocess
 import shutil
 from geopy.geocoders import Nominatim
-import google.generativeai as genai
+from google import genai
+from dotenv import load_dotenv
+
+load_dotenv("/app/.env")
 
 # =========================================================================
 # 1. 04 폴더 환경 / Result 폴더 기본 세팅 선언
@@ -43,9 +46,11 @@ def simulate_gemini_parsing(input_str):
         "규칙 3: 불필요한 부연 설명이나 마크다운 없이 오직 교정된 '문자열 1줄'만 반환하세요."
     )
     
-    # Gemini API 초기화 (환경변수나 키 필요 시 세팅됨. 시스템에 이미 GEMINI_API_KEY 존재)
-    model = genai.GenerativeModel('gemini-3.1-flash-lite-preview')
-    response = model.generate_content(prompt)
+    client = genai.Client()
+    response = client.models.generate_content(
+        model='gemini-3.1-flash-lite-preview',
+        contents=prompt
+    )
     
     parsed_loc = response.text.strip().replace("\n", "").replace("\"", "")
     return parsed_loc
