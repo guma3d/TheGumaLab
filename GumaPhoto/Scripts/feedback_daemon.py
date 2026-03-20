@@ -31,16 +31,28 @@ def pop_task():
     cur = conn.cursor()
     
     # 락(Lock)을 피하기 위해 최우선 1개만 조회
-    cur.execute('''
-        SELECT id, doc_id, fb_type, correct_value 
-        FROM feedback_tasks 
-        WHERE status = 'PENDING' 
-        ORDER BY created_at ASC LIMIT 1
-    ''')
-    row = cur.fetchone()
-    
+    # SQLite ALTER COLUMN 추가 전후 하위 호환성을 위해 pragma table_info 등으로 동청 확인하지 않고 에러 핸들링
+    try:
+        cur.execute('''
+            SELECT id, doc_id, fb_type, correct_value, target_points
+            FROM feedback_tasks 
+            WHERE status = 'PENDING' 
+            ORDER BY created_at ASC LIMIT 1
+        ''')
+        row = cur.fetchone()
+    except sqlite3.OperationalError:
+        # target_points 가 없는 구형 테이블인 경우
+        cur.execute('''
+            SELECT id, doc_id, fb_type, correct_value 
+            FROM feedback_tasks 
+            WHERE status = 'PENDING' 
+            ORDER BY created_at ASC LIMIT 1
+        ''')
+        row_raw = cur.fetchone()
+        row = (*row_raw, '[]') if row_raw else None
+        
     if row:
-        task_id, doc_id, fb_type, correct_value = row
+        task_id = row[0]
         # 가져오자마자 곧바로 진행 중(PROCESSING) 상태로 덮어쓰기 완료하여 다른 쓰레드 간섭 배제
         cur.execute("UPDATE feedback_tasks SET status = 'PROCESSING' WHERE id = ?", (task_id,))
         conn.commit()
@@ -63,11 +75,11 @@ def run_daemon():
         try:
             task = pop_task()
             if task:
-                task_id, doc_id, fb_type, correct_value = task
-                print(f"📥 [Queue] 새 작업 획득: Task {task_id} (타입: {fb_type}, ID: {doc_id}) -> {correct_value}")
+                task_id, doc_id, fb_type, correct_value, tp_json = task
+                print(f"📥 [Queue] 새 작업 획득: Task {task_id} (타입: {fb_type}, ID: {doc_id}) -> {correct_value} (타겟 수동 지정 여부: {len(tp_json) > 5})")
                 
                 # feedback_processor_v2.py 동기 호출 명령 구성
-                cmd = ["python", processor_script, "--type", fb_type, "--doc_id", doc_id]
+                cmd = ["python", processor_script, "--type", fb_type, "--doc_id", doc_id, "--target_points", tp_json]
                 if fb_type == "face":
                     cmd.extend(["--name", correct_value])
                 else:

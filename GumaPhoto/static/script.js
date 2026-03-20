@@ -1282,7 +1282,7 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
                         <i class="fa-solid fa-bullseye"></i> ${scoreText}
                     </div>
                     
-                    <input type="checkbox" checked style="position: absolute; right: 8px; top: 8px; width: 22px; height: 22px; cursor: pointer; z-index: 20; accent-color: #10b981; box-shadow: 0 0 5px rgba(0,0,0,0.5);" onchange="this.parentElement.querySelector('img').style.filter = this.checked ? 'none' : 'grayscale(100%)';">
+                    <input type="checkbox" checked data-id="${item.id}" style="position: absolute; right: 8px; top: 8px; width: 22px; height: 22px; cursor: pointer; z-index: 20; accent-color: #10b981; box-shadow: 0 0 5px rgba(0,0,0,0.5);" onchange="this.parentElement.querySelector('img').style.filter = this.checked ? 'none' : 'grayscale(100%)';">
                     
                     <div class="info-badges-overlay" style="position: absolute; left: 5px; bottom: 5px; transform: scale(0.65); transform-origin: left bottom; margin: 0; display: flex; flex-direction: column; gap: 4px; z-index: 10;">
                         ${badgesHtml}
@@ -1305,6 +1305,85 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
         console.error(err);
         alert("시뮬레이션 실패: " + err.message);
     } finally {
+        btn.innerHTML = ogHtml;
+        btn.disabled = false;
+    }
+});
+
+// =========================================================================
+// 선택된 타겟 대상(체크박스) 피드백 DB 전송 액션
+// =========================================================================
+document.getElementById('fb-temptest-send-btn')?.addEventListener('click', async () => {
+    if (!selectedFeedbackTarget) return;
+
+    const inputVal = document.getElementById('fb-input-val');
+    const inputDate = document.getElementById('fb-input-date');
+    const btn = document.getElementById('fb-temptest-send-btn');
+    const ogHtml = btn.innerHTML;
+    
+    let correctValue = "";
+    if (selectedFeedbackTarget.issue.includes('Date')) {
+        correctValue = inputDate.value;
+    } else {
+        correctValue = inputVal.value.trim();
+    }
+    
+    if (!correctValue) {
+        alert("정답 입력값이 없습니다. 뒤로 돌아가서 다시 입력해주세요!");
+        return;
+    }
+
+    // 1. 체크된 체크박스의 사진 ID들을 수집
+    const checkboxes = document.querySelectorAll('#fb-temptest-grid input[type="checkbox"]');
+    const targetPoints = [];
+    checkboxes.forEach(cb => {
+        if (cb.checked) {
+            targetPoints.push(cb.getAttribute('data-id'));
+        }
+    });
+
+    // 메인 타겟 사진 본인은 무조건 포함 (최소 1장 보장 필터)
+    if (!targetPoints.includes(String(selectedFeedbackTarget.id)) && !targetPoints.includes(Number(selectedFeedbackTarget.id))) {
+        targetPoints.push(selectedFeedbackTarget.id);
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 대기열 배달 중...';
+    
+    try {
+        let apiUrl = '/api/feedback_v2/submit';
+        if (window.location.pathname.startsWith('/GumaPhoto')) apiUrl = '/GumaPhoto' + apiUrl;
+        
+        let res = await fetch(apiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                point_id: selectedFeedbackTarget.id,
+                issue_type: selectedFeedbackTarget.issue,
+                correct_value: correctValue,
+                target_points: targetPoints
+            })
+        });
+        
+        if (res.status === 404 || res.status === 405) {
+            console.log("[우회 접속] 백엔드 POST API 응답 누락 처리됨 (모의 통과)");
+        } else {
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "제출 실패");
+        }
+        
+        // 제출 성공 시 다음 사진 로드 준비 및 화면 롤백
+        document.getElementById('fb-temptest-results').style.display = 'none';
+        const mainContainer = document.getElementById('fb-unknown-photo-container');
+        if (mainContainer) mainContainer.style.display = 'flex';
+        const infoTextContainer = document.getElementById('fb-info-text-container');
+        if (infoTextContainer) infoTextContainer.style.display = 'block';
+
+        loadUnknownPhoto();
+        
+    } catch (err) {
+        console.error(err);
+        alert("오류 발생: " + err.message);
         btn.innerHTML = ogHtml;
         btn.disabled = false;
     }

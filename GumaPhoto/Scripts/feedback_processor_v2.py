@@ -12,39 +12,59 @@ COLLECTION_NAME = "gumaphoto_hybrid_kr"
 KNOWN_FACES_PATH = "/app/data/known_faces.pkl"
 ORGANIZED_DIR = "/app/data/organized"
 
-def process_time_location_feedback(qdrant_id, target_date, target_location):
+def process_time_location_feedback(qdrant_id, target_date, target_location, target_points_str="[]"):
+    import json
     print(f"[*] 시간/장소 피드백 가동: 타겟 UUID {qdrant_id}, 새로운 시간: {target_date}, 새로운 장소: {target_location}")
     client = QdrantClient(QDRANT_URL)
     
-    # 1. 1장 원본의 시각 분위기 공간 벡터(scene/SigLIP) 획득
-    records = client.retrieve(
-        collection_name=COLLECTION_NAME,
-        ids=[qdrant_id],
-        with_vectors=True,
-        with_payload=True
-    )
-    if not records:
-        print("[-] 대상 사진을 Qdrant에서 찾을 수 없습니다.")
-        return
+    target_points = []
+    try:
+        if target_points_str:
+            target_points = json.loads(target_points_str)
+    except Exception:
+        pass
         
-    pt = records[0]
-    vecs = pt.vector
-    scene_vector = vecs.get("scene") if isinstance(vecs, dict) else vecs
-    if not scene_vector:
-        print("[-] scene (SigLIP) 벡터가 없습니다.")
-        return
-        
-    # 2. Qdrant 벡터 서치를 통해 동일한 시공간(유사도 90% 이상)의 그룹핑 N장 추출
-    search_res = client.query_points(
-        collection_name=COLLECTION_NAME,
-        query=scene_vector,
-        using="scene",
-        limit=50,
-        score_threshold=0.85,
-        with_payload=True
-    ).points
+    similar_files = []
     
-    similar_files = [res.payload.get("filepath") for res in search_res if res.payload.get("filepath")]
+    # 1. 만약 프론트엔드에서 사용자가 명시적으로 타겟 ID 리스트를 확정하여 보냈다면 자체 스캔 알고리즘 건너뜀 (Bypass)
+    if target_points and len(target_points) > 0:
+        print(f"  [+] 사용자가 명시적으로 체크한 {len(target_points)}장의 타겟 리스트를 수신했습니다. 시뮬레이션 결과를 그대로 사용합니다.")
+        points_data = client.retrieve(
+            collection_name=COLLECTION_NAME,
+            ids=target_points,
+            with_payload=True
+        )
+        similar_files = [res.payload.get("filepath") for res in points_data if res.payload.get("filepath")]
+    else:
+        # 기존: 배경 자동 스캔 로직
+        records = client.retrieve(
+            collection_name=COLLECTION_NAME,
+            ids=[qdrant_id],
+            with_vectors=True,
+            with_payload=True
+        )
+        if not records:
+            print("[-] 대상 사진을 Qdrant에서 찾을 수 없습니다.")
+            return
+            
+        pt = records[0]
+        vecs = pt.vector
+        scene_vector = vecs.get("scene") if isinstance(vecs, dict) else vecs
+        if not scene_vector:
+            print("[-] scene (SigLIP) 벡터가 없습니다.")
+            return
+            
+        search_res = client.query_points(
+            collection_name=COLLECTION_NAME,
+            query=scene_vector,
+            using="scene",
+            limit=50,
+            score_threshold=0.85,
+            with_payload=True
+        ).points
+        
+        similar_files = [res.payload.get("filepath") for res in search_res if res.payload.get("filepath")]
+        
     print(f"  [+] 동일 시간/장소 집단 {len(similar_files)}장 클러스터링 감지 완료.")
     
     # 3. EXIF 불변의 데이터 하드코딩 (향후 piexif 모듈 개발 구간)
@@ -74,28 +94,47 @@ def process_time_location_feedback(qdrant_id, target_date, target_location):
     
     print("[*] 향후 vector_indexer.py 가 이 폴더들을 신선하게 재스캔 할 것입니다.")
 
-def process_face_enrollment(qdrant_id, known_name):
-    print(f"[*] 인물 피드백 가동: 타겟 얼굴 UUID {qdrant_id}, 새로운 이름: {known_name}")
+def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
+    import json
+    print(f"[*] 인물 학습 가동: 타겟 UUID {qdrant_id}, 학습 지정 이름: {known_name}")
     client = QdrantClient(QDRANT_URL)
     
-    # 1. Unknown 얼굴 벡터(v_face/InsightFace 512D) 획득
-    records, _ = client.scroll(COLLECTION_NAME, scroll_filter={"must": [{"key": "id", "match": {"value": qdrant_id}}]}, limit=1, with_vectors=True, with_payload=True)
-    if not records: return
+    target_points = []
+    try:
+        if target_points_str:
+            target_points = json.loads(target_points_str)
+    except Exception:
+        pass
+        
+    face_vectors = []
     
-    face_vector = records[0].vector.get("v_face")
-    if not face_vector: return
-    
-    # 2. 가장 똑같은 512D 벡터를 지닌 여러 Unknown 얼굴 사진 추출 
-    search_res = client.search(
-        collection_name=COLLECTION_NAME,
-        query_vector=("v_face", face_vector),
-        limit=50,
-        score_threshold=0.85, # 85% 이상 비슷한 얼굴
-        with_payload=True
-    )
-    
-    face_vectors = [res.vector.get("v_face") for res in search_res if "v_face" in res.vector]
-    
+    if target_points and len(target_points) > 0:
+        print(f"  [+] 사용자가 명시적으로 큐레이팅한 {len(target_points)}장의 얼굴 리스트를 바탕으로 학습을 진행합니다.")
+        points_data = client.retrieve(
+            collection_name=COLLECTION_NAME,
+            ids=target_points,
+            with_vectors=True
+        )
+        for res in points_data:
+            if isinstance(res.vector, dict) and "v_face" in res.vector:
+                face_vectors.append(res.vector.get("v_face"))
+    else:
+        # 기존: 배경 자동 스캔 로직
+        records, _ = client.scroll(COLLECTION_NAME, scroll_filter={"must": [{"key": "id", "match": {"value": qdrant_id}}]}, limit=1, with_vectors=True, with_payload=True)
+        if not records: return
+        
+        face_vector = records[0].vector.get("v_face")
+        if not face_vector: return
+        
+        search_res = client.search(
+            collection_name=COLLECTION_NAME,
+            query_vector=("v_face", face_vector),
+            limit=50,
+            score_threshold=0.85, # 85% 이상 비슷한 얼굴
+            with_payload=True
+        )
+        face_vectors = [res.vector.get("v_face") for res in search_res if isinstance(res.vector, dict) and "v_face" in res.vector]
+        
     # 3. 얼굴 벡터 평균화 연산 (Average) -> known_faces.pkl 온디맨드 즉각 반영
     if face_vectors:
         import numpy as np
@@ -124,9 +163,10 @@ if __name__ == "__main__":
     parser.add_argument("--name", type=str)
     parser.add_argument("--date", type=str)
     parser.add_argument("--loc", type=str)
+    parser.add_argument("--target_points", type=str, default="[]")
     args = parser.parse_args()
     
     if args.type == "time_loc":
-        process_time_location_feedback(args.doc_id, args.date, args.loc)
+        process_time_location_feedback(args.doc_id, args.date, args.loc, args.target_points)
     elif args.type == "face":
-        process_face_enrollment(args.doc_id, args.name)
+        process_face_enrollment(args.doc_id, args.name, args.target_points)
