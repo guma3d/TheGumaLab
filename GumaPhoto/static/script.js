@@ -1078,8 +1078,8 @@ async function loadUnknownPhoto() {
             const unknownList = [];
             sData.results.forEach(p => {
                 let issues = [];
-                if(!p.location || p.location.includes("위치정보없음")) issues.push("Location Data Missing");
-                if(!p.date || p.date.includes("Unknown")) issues.push("Date Data Missing");
+                if(!p.location || p.location.includes("위치정보없음")) issues.push("Location Missing");
+                if(!p.date || p.date.includes("Unknown")) issues.push("Date Missing");
                 if(issues.length > 0) {
                     p.issue = issues[Math.floor(Math.random() * issues.length)];
                     unknownList.push(p);
@@ -1114,10 +1114,21 @@ async function loadUnknownPhoto() {
             spinner.style.display = 'none';
             imgEl.style.display = 'block';
         };
-        let issueIcon = '<i class="fa-solid fa-circle-exclamation"></i>';
-        if (selectedFeedbackTarget.issue.includes('Date')) issueIcon = '<i class="fa-regular fa-calendar-xmark" style="color: #f87171;"></i>';
-        if (selectedFeedbackTarget.issue.includes('Location')) issueIcon = '<i class="fa-solid fa-location-dot" style="color: #f87171;"></i>';
-        issueTag.innerHTML = issueIcon + ' ' + selectedFeedbackTarget.issue;
+        let badgeType = '';
+        let issueWord = '';
+        if (selectedFeedbackTarget.issue.includes('Date')) {
+            issueWord = 'Date';
+            badgeType = `<i class="fa-regular fa-calendar-xmark" style="margin-right: 4px;"></i> Date`;
+        } else if (selectedFeedbackTarget.issue.includes('Location')) {
+            issueWord = 'Location';
+            badgeType = `<i class="fa-solid fa-location-dot" style="margin-right: 4px;"></i> Location`;
+        } else {
+            issueWord = 'Unknown';
+            badgeType = `<i class="fa-solid fa-circle-exclamation" style="margin-right: 4px;"></i> ${selectedFeedbackTarget.issue}`;
+        }
+        
+        let restText = selectedFeedbackTarget.issue.replace(issueWord, '').trim();
+        issueTag.innerHTML = `<span style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; padding: 4px 8px; border-radius: 6px;">${badgeType}</span> <span style="color: #9ca3af; margin-left: 4px;">${restText}</span>`;
         issueTag.style.opacity = '1';
         
         const fbBadgesContainer = document.getElementById('fb-info-badges');

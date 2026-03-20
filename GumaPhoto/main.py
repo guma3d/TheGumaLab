@@ -919,9 +919,9 @@ async def get_unknown_photo():
             
             issue = ""
             if "Unknown" in date_val or not date_val:
-                issue = "Date Data Missing"
+                issue = "Date Missing"
             elif "위치정보없음" in loc or not loc:
-                issue = "Location Data Missing"
+                issue = "Location Missing"
                 
             if issue:
                 url_path = r.payload.get("filepath", "")
