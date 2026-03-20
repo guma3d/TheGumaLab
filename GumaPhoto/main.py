@@ -882,57 +882,69 @@ class FeedbackV2Request(BaseModel):
 
 @app.get("/api/feedback_v2/unknown")
 async def get_unknown_photo():
+    import os
     import random
+    from qdrant_client.http.models import Filter, FieldCondition, MatchValue
+    
+    if not qdrant_client: return {"error": "Qdrant not loaded"}
+    
+    # 1. 무식한 1만 장 Qdrant 로드 대신, 파이썬으로 물리적 폴더를 0.01초만에 스캔
+    organized_dir = "/app/data/organized"
+    candidate_files = []
+    
     try:
-        # Qdrant에서 처음 500개만 가져오면 최신 업로드본이 누락될 수 있으므로
-        # 전체를 다 가져온 뒤 파이썬에서 물리적 시간 정렬을 수행하도록 limit 확장
-        res, _ = qdrant_client.scroll(
-            collection_name="gumaphoto_hybrid_kr", 
-            limit=10000, 
-            with_payload=True
-        )
-        
-        unknowns = []
-        for r in res:
-            loc = r.payload.get("location", "")
-            people = r.payload.get("people", [])
-            date_val = r.payload.get("date", "")
-            
-            issues = []
-            if "Unknown" in date_val or not date_val:
-                issues.append("Date")
-            if "위치정보없음" in loc or not loc:
-                issues.append("Location")
-                
-            issue = ""
-            if issues:
-                issue = random.choice(issues)
-                
-                original_path = r.payload.get("filepath", "")
-                mtime = 0
-                if os.path.exists(original_path):
-                    mtime = os.path.getmtime(original_path)
-                    
-                url_path = original_path
-                if url_path.startswith("/app/data/organized"):
-                    url_path = url_path.replace("/app/data/organized", "/photos")
-                    
-                unknowns.append({
-                    "id": r.id,
-                    "url": url_path,
-                    "issue": issue,
-                    "date": date_val,
-                    "location": loc,
-                    "people": people,
-                    "mtime": mtime
-                })
-                
-        if not unknowns:
+        if os.path.exists(organized_dir):
+            for root, _, files in os.walk(organized_dir):
+                # 미분류 혐의점이 있는 폴더만 타겟팅 (Unknown-Year 이나 위치정보없음)
+                if "Unknown" in root or "위치정보없음" in root:
+                    for f in files:
+                        if f.lower().endswith(('.jpg', '.jpeg', '.png', '.heic', '.webp', '.mp4', '.mov')):
+                            # 프론트 표출용 파생 이미지(.webp, .xmp 등) 제외하고 원본만 담음
+                            if '_heic.webp' in f or '_png.webp' in f: continue
+                            candidate_files.append(os.path.join(root, f))
+                            
+        if not candidate_files:
             return {"id": None, "message": "모든 사진이 완벽하게 분류되었습니다!"}
             
-        # 임시 요건: 최근 업로드된 사진(mtime 최신)이 우선적으로 피드백 메뉴에 뜨도록 정렬
-        unknowns.sort(key=lambda x: x["mtime"], reverse=True)
-        return unknowns[0]
+        # 2. 물리적 mtime(최근 추가된 파일) 기준으로 내림차순 정렬
+        candidate_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+        
+        # 3. 가장 최신 파일부터 Qdrant 에 단건(1개) 조회하여 정확한 Payload(이슈) 획득
+        for target_path in candidate_files[:50]: # 안정성을 위해 상위 50개까지만 검사
+            search_res, _ = qdrant_client.scroll(
+                collection_name="gumaphoto_hybrid_kr",
+                scroll_filter=Filter(
+                    must=[FieldCondition(key="filepath", match=MatchValue(value=target_path))]
+                ),
+                limit=1,
+                with_payload=True
+            )
+            
+            if search_res:
+                r = search_res[0]
+                loc = r.payload.get("location", "")
+                people = r.payload.get("people", [])
+                date_val = r.payload.get("date", "")
+                
+                issues = []
+                if "Unknown" in date_val or not date_val:
+                    issues.append("Date")
+                if "위치정보없음" in loc or not loc:
+                    issues.append("Location")
+                    
+                if issues:
+                    issue = random.choice(issues)
+                    url_path = target_path.replace("/app/data/organized", "/photos")
+                    return {
+                        "id": r.id,
+                        "url": url_path,
+                        "issue": issue,
+                        "date": date_val,
+                        "location": loc,
+                        "people": people
+                    }
+                    
+        return {"id": None, "message": "미분류된 최신 사진들을 Qdrant DB에서 찾지 못했습니다."}
     except Exception as e:
         return {"error": str(e)}
 
