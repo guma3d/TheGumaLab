@@ -40,7 +40,7 @@ def process_time_location_feedback(qdrant_id, target_date, target_location):
         query=scene_vector,
         using="scene",
         limit=50,
-        score_threshold=0.8,
+        score_threshold=0.85,
         with_payload=True
     ).points
     

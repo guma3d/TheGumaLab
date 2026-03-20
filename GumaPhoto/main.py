@@ -991,7 +991,7 @@ async def temptest_feedback_v2(req: TempTestRequest):
             query=scene_vector,
             using="scene",
             limit=50,
-            score_threshold=0.8,
+            score_threshold=0.85,
             with_payload=True
         ).points
         

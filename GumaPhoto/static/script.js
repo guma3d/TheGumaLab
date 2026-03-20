@@ -1041,99 +1041,6 @@ window.addEventListener('click', (e) => {
     }
 });
 
-document.getElementById('fb-temptest-btn')?.addEventListener('click', async () => {
-    if (!selectedFeedbackTarget) return;
-
-    const btn = document.getElementById('fb-temptest-btn');
-    const ogHtml = btn.innerHTML;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 시뮬레이션 가동 중...';
-    btn.disabled = true;
-
-    try {
-        let apiUrl = '/api/feedback_v2/temptest';
-        if (window.location.pathname.startsWith('/GumaPhoto')) apiUrl = '/GumaPhoto' + apiUrl;
-
-        const res = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ point_id: selectedFeedbackTarget.id })
-        });
-
-        if (!res.ok) throw new Error("시뮬레이션 서버 데이터를 가져오지 못했습니다.");
-        const data = await res.json();
-        
-        if (data.error) {
-            alert("서버 에러 발생: " + data.error);
-            btn.innerHTML = ogHtml;
-            btn.disabled = false;
-            return;
-        }
-
-        if (data.results && data.results.length > 0) {
-            const grid = document.getElementById('fb-temptest-grid');
-            let gridHtml = '';
-            data.results.forEach(item => {
-                const scoreText = (item.score * 100).toFixed(1) + '%';
-                
-                const createBadge = (icon, text, isHighlight = false) => {
-                    if (!text || text.trim() === '') text = 'Unknown';
-                    const cls = isHighlight ? 'info-badge highlight' : 'info-badge';
-                    return `<div class="${cls}"><i class="${icon}"></i> ${text}</div>`;
-                };
-
-                let badgesHtml = '';
-                // 1. Date
-                let dateVal = (item.date && item.date.trim() !== '') ? item.date : 'Unknown';
-                if (dateVal === 'Unknown Date') dateVal = 'Unknown';
-                if (dateVal.length > 10 && dateVal !== 'Unknown') dateVal = dateVal.substring(0, 10);
-                badgesHtml += createBadge('fa-regular fa-calendar', dateVal);
-                
-                // 2. Location
-                let locVal = (item.location && item.location.trim() !== '') ? item.location.replace(/-/g, ' ') : 'Unknown';
-                if (locVal.includes('위치정보없음')) locVal = 'Unknown';
-                badgesHtml += createBadge('fa-solid fa-location-dot', locVal);
-                
-                // 3. People
-                let peopleVal = 'Unknown';
-                if (item.people && item.people.length > 0) {
-                    let pStr = item.people.filter(p => !p.includes('Unknown')).join(', ');
-                    if (pStr) peopleVal = pStr;
-                }
-                badgesHtml += createBadge('fa-solid fa-user-tag', peopleVal, true);
-
-                gridHtml += `
-                <div style="position: relative; width: 100%; aspect-ratio: 1/1; border-radius: 8px; overflow: hidden; background: #111;">
-                    <img src="${item.url}" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
-                    
-                    <div class="meta-badge" style="position: absolute; left: 5px; top: 5px;">
-                        <i class="fa-solid fa-bullseye"></i> ${scoreText}
-                    </div>
-                    
-                    <div class="info-badges-overlay" style="position: absolute; left: 5px; bottom: 5px; transform: scale(0.65); transform-origin: left bottom; margin: 0; display: flex; flex-direction: column; gap: 4px; z-index: 10;">
-                        ${badgesHtml}
-                    </div>
-                </div>`;
-            });
-            grid.innerHTML = gridHtml;
-            document.getElementById('fb-temptest-count').textContent = data.results.length;
-            document.getElementById('fb-temptest-results').style.display = 'block';
-            
-            // Scroll down automatically
-            setTimeout(() => {
-                document.getElementById('fb-temptest-results').scrollIntoView({ behavior: 'smooth' });
-            }, 100);
-        } else {
-            alert("유사도 임계값(0.8)을 넘는 수정 대상 사진이 0장 입니다.");
-        }
-    } catch (err) {
-        console.error(err);
-        alert("시뮬레이션 실패: " + err.message);
-    } finally {
-        btn.innerHTML = ogHtml;
-        btn.disabled = false;
-    }
-});
-
 document.getElementById('fb-temptest-close')?.addEventListener('click', () => {
     document.getElementById('fb-temptest-results').style.display = 'none';
 });
@@ -1298,65 +1205,97 @@ async function loadUnknownPhoto() {
 }
 
 // 사용자 제출 로직 (백엔드 우회 테스트 모드 지원)
+// Send 버튼 시뮬레이션 통합 적용 (수정 제출 API 가동 중단 상태)
 document.getElementById('fb-submit-btn')?.addEventListener('click', async () => {
     if (!selectedFeedbackTarget) return;
-    
-    const inputVal = document.getElementById('fb-input-val');
-    const inputDate = document.getElementById('fb-input-date');
-    const submitBtn = document.getElementById('fb-submit-btn');
-    
-    let correctValue = "";
-    if (selectedFeedbackTarget.issue.includes('시간')) {
-        correctValue = inputDate.value;
-    } else {
-        correctValue = inputVal.value.trim();
-    }
-    
-    if (!correctValue) {
-        alert("정답을 입력해주세요!");
-        return;
-    }
-    
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 대기열 봇(Queue)에 위임 중...';
-    
+
+    const btn = document.getElementById('fb-submit-btn');
+    const ogHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 시뮬레이션 가동 중...';
+    btn.disabled = true;
+
     try {
-        let apiUrl = '/api/feedback_v2/submit';
+        let apiUrl = '/api/feedback_v2/temptest';
         if (window.location.pathname.startsWith('/GumaPhoto')) apiUrl = '/GumaPhoto' + apiUrl;
-        
-        let res = await fetch(apiUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                point_id: selectedFeedbackTarget.id,
-                issue_type: selectedFeedbackTarget.issue,
-                correct_value: correctValue
-            })
+
+        const res = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ point_id: selectedFeedbackTarget.id })
         });
+
+        if (!res.ok) throw new Error("시뮬레이션 서버 데이터를 가져오지 못했습니다.");
+        const data = await res.json();
         
-        // 핫-픽스: 서버 재부팅 전 도커 락다운 상태 우회용 클라이언트 사이드 임시 성공 처리 (테스트 모드)
-        if (res.status === 404 || res.status === 405) {
-            console.log("[우회 접속] 백엔드 POST API가 아직 눈을 뜨지 않아, 프론트엔드 모의 테스트 성공으로 강제 통과시킵니다.");
-            const issueTag = document.getElementById('fb-target-issue');
-            issueTag.innerHTML = '<i class="fa-solid fa-check-circle"></i> 단일 통제소로 접수 완료 (모의 테스트)';
-            issueTag.style.color = '#10b981';
-            issueTag.style.background = 'transparent';
-            issueTag.style.border = 'none';
-        } else {
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || "제출 실패");
+        if (data.error) {
+            alert("서버 에러 발생: " + data.error);
+            btn.innerHTML = ogHtml;
+            btn.disabled = false;
+            return;
         }
-        
-        // 연속 피드백의 재미(Gamification)를 위해 0.6초 뒤 바로 다음 미분류 사진을 렌더링!
-        setTimeout(() => {
-            loadUnknownPhoto();
-        }, 600);
-        
+
+        if (data.results && data.results.length > 0) {
+            const grid = document.getElementById('fb-temptest-grid');
+            let gridHtml = '';
+            data.results.forEach(item => {
+                const scoreText = (item.score * 100).toFixed(1) + '%';
+                
+                const createBadge = (icon, text, isHighlight = false) => {
+                    if (!text || text.trim() === '') text = 'Unknown';
+                    const cls = isHighlight ? 'info-badge highlight' : 'info-badge';
+                    return `<div class="${cls}"><i class="${icon}"></i> ${text}</div>`;
+                };
+
+                let badgesHtml = '';
+                // 1. Date
+                let dateVal = (item.date && item.date.trim() !== '') ? item.date : 'Unknown';
+                if (dateVal === 'Unknown Date') dateVal = 'Unknown';
+                if (dateVal.length > 10 && dateVal !== 'Unknown') dateVal = dateVal.substring(0, 10);
+                badgesHtml += createBadge('fa-regular fa-calendar', dateVal);
+                
+                // 2. Location
+                let locVal = (item.location && item.location.trim() !== '') ? item.location.replace(/-/g, ' ') : 'Unknown';
+                if (locVal.includes('위치정보없음')) locVal = 'Unknown';
+                badgesHtml += createBadge('fa-solid fa-location-dot', locVal);
+                
+                // 3. People
+                let peopleVal = 'Unknown';
+                if (item.people && item.people.length > 0) {
+                    let pStr = item.people.filter(p => !p.includes('Unknown')).join(', ');
+                    if (pStr) peopleVal = pStr;
+                }
+                badgesHtml += createBadge('fa-solid fa-user-tag', peopleVal, true);
+
+                gridHtml += `
+                <div style="position: relative; width: 100%; aspect-ratio: 1/1; border-radius: 8px; overflow: hidden; background: #111;">
+                    <img src="${item.url}" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
+                    
+                    <div class="meta-badge" style="position: absolute; left: 5px; top: 5px;">
+                        <i class="fa-solid fa-bullseye"></i> ${scoreText}
+                    </div>
+                    
+                    <div class="info-badges-overlay" style="position: absolute; left: 5px; bottom: 5px; transform: scale(0.65); transform-origin: left bottom; margin: 0; display: flex; flex-direction: column; gap: 4px; z-index: 10;">
+                        ${badgesHtml}
+                    </div>
+                </div>`;
+            });
+            grid.innerHTML = gridHtml;
+            document.getElementById('fb-temptest-count').textContent = data.results.length;
+            document.getElementById('fb-temptest-results').style.display = 'block';
+            
+            // Scroll down automatically
+            setTimeout(() => {
+                document.getElementById('fb-temptest-results').scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        } else {
+            alert("유사도 임계값(0.85)을 넘는 수정 대상 사진이 0장 입니다.");
+        }
     } catch (err) {
         console.error(err);
-        alert("오류 발생: " + err.message);
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fa-solid fa-check"></i> 자율 전파(Propagation) 승인';
+        alert("시뮬레이션 실패: " + err.message);
+    } finally {
+        btn.innerHTML = ogHtml;
+        btn.disabled = false;
     }
 });
 
