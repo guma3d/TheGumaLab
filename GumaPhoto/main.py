@@ -892,7 +892,50 @@ async def get_unknown_photo():
     
     if not qdrant_client: return {"error": "Qdrant not loaded"}
     
-    # 1. 무식한 1만 장 Qdrant 로드 대신, 파이썬으로 물리적 폴더를 0.01초만에 스캔
+    # === [본래의 Qdrant 랜덤 500 탐색 로직 (우선 동작)] ===
+    try:
+        search_res, _ = qdrant_client.scroll(
+            collection_name="gumaphoto_hybrid_kr",
+            scroll_filter=Filter(
+                should=[
+                    FieldCondition(key="date", match=MatchValue(value="Unknown-Year")),
+                    FieldCondition(key="location", match=MatchValue(value="위치정보없음")),
+                    FieldCondition(key="location", match=MatchValue(value="Unknown-Location"))
+                ]
+            ),
+            limit=500,
+            with_payload=True
+        )
+        
+        if search_res:
+            raw_target = random.choice(search_res)
+            loc = raw_target.payload.get("location", "")
+            people = raw_target.payload.get("people", [])
+            date_val = raw_target.payload.get("date", "")
+            filepath = raw_target.payload.get("filepath", "")
+            
+            issues = []
+            if "Unknown" in date_val or not date_val:
+                issues.append("Date")
+            if "위치정보없음" in loc or "Unknown" in loc or not loc:
+                issues.append("Location")
+                
+            if issues:
+                issue = random.choice(issues)
+                url_path = filepath.replace("/app/data/organized", "/photos")
+                return {
+                    "id": raw_target.id,
+                    "url": url_path,
+                    "issue": issue,
+                    "date": date_val,
+                    "location": loc,
+                    "people": people
+                }
+    except Exception as e:
+        print(f"Qdrant Scroll 예외 발생: {e}")
+
+    # === [테스트용: 물리적 최신순 탐색 로직 (내일 테스트를 위해 보존)] ===
+    """
     organized_dir = "/app/data/organized"
     candidate_files = []
     
@@ -903,18 +946,15 @@ async def get_unknown_photo():
                 if "Unknown" in root or "위치정보없음" in root:
                     for f in files:
                         if f.lower().endswith(('.jpg', '.jpeg', '.png', '.heic', '.webp', '.mp4', '.mov')):
-                            # 프론트 표출용 파생 이미지(.webp, .xmp 등) 제외하고 원본만 담음
                             if '_heic.webp' in f or '_png.webp' in f: continue
                             candidate_files.append(os.path.join(root, f))
                             
         if not candidate_files:
             return {"id": None, "message": "모든 사진이 완벽하게 분류되었습니다!"}
             
-        # 2. 물리적 mtime(최근 추가된 파일) 기준으로 내림차순 정렬
         candidate_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
         
-        # 3. 가장 최신 파일부터 Qdrant 에 단건(1개) 조회하여 정확한 Payload(이슈) 획득
-        for target_path in candidate_files[:50]: # 안정성을 위해 상위 50개까지만 검사
+        for target_path in candidate_files[:50]:
             search_res, _ = qdrant_client.scroll(
                 collection_name="gumaphoto_hybrid_kr",
                 scroll_filter=Filter(
@@ -933,7 +973,7 @@ async def get_unknown_photo():
                 issues = []
                 if "Unknown" in date_val or not date_val:
                     issues.append("Date")
-                if "위치정보없음" in loc or not loc:
+                if "위치정보없음" in loc or "Unknown" in loc or not loc:
                     issues.append("Location")
                     
                 if issues:
@@ -947,10 +987,9 @@ async def get_unknown_photo():
                         "location": loc,
                         "people": people
                     }
-                    
-        return {"id": None, "message": "미분류된 최신 사진들을 Qdrant DB에서 찾지 못했습니다."}
-    except Exception as e:
-        return {"error": str(e)}
+    """
+    
+    return {"id": None, "message": "현재 피드백이 필요한 사진을 찾지 못했습니다."}
 
 @app.post("/api/feedback_v2/submit")
 async def submit_feedback_v2(req: FeedbackV2Request):
