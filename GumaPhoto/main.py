@@ -1005,9 +1005,45 @@ async def submit_feedback_v2(req: FeedbackV2Request):
 
 class TempTestRequest(BaseModel):
     point_id: typing.Union[int, str]
+    issue_type: str = ""
+    correct_value: str = ""
 
 @app.post("/api/feedback_v2/temptest")
 async def temptest_feedback_v2(req: TempTestRequest):
+    import json
+    import os
+    
+    # [Pre-parse] UI에 보여줄 최종 Gemini 파싱값 확보 수행
+    parsed_value = req.correct_value
+    fb_type = "face" if "People" in req.issue_type else "time_loc"
+    
+    if fb_type == "time_loc" and "Location" in req.issue_type and gemini_client and req.correct_value:
+        try:
+            existing_locations = []
+            if os.path.exists("/app/data/available_tags.json"):
+                with open("/app/data/available_tags.json", "r", encoding="utf-8") as f:
+                    tag_data = json.load(f)
+                    existing_locations = tag_data.get("locations", [])
+                    
+            prompt = (
+                f"사용자 입력 장소: '{req.correct_value}'\n"
+                "당신은 스마트 갤러리의 위치 정보 표준화 매니저입니다.\n"
+                "사용자가 구어체나 약어로 장소를 입력하더라도, 다음의 <보유 장소 목록> 중 가장 정확히 일치하는 '국가명-지역명' 형태로 교정해주세요.\n"
+                f"<보유 장소 목록>: {existing_locations}\n"
+                "규칙 1: 목록에 존재한다면 100% 동일한 문자열로 반환.\n"
+                "규칙 2: 아예 없는 처음 보는 장소라면, '국가명-지역명' 포맷을 유지하여 새로 생성.\n"
+                "규칙 3: 설명 없이 오직 교정된 '문자열 1줄'만 반환."
+            )
+            response = gemini_client.models.generate_content(
+                model='gemini-3.1-flash-lite-preview',
+                contents=prompt,
+            )
+            parsed_loc = response.text.strip().replace("\n", "").replace("\"", "")
+            if parsed_loc and len(parsed_loc) < 50:
+                parsed_value = parsed_loc
+        except Exception as e:
+            print(f"[Gemini TempTest 파싱 오류] {e}")
+
     try:
         from qdrant_client.http import models as qdrant_models
         # 1. Fetch vector by direct Point ID retrieval
@@ -1055,7 +1091,7 @@ async def temptest_feedback_v2(req: TempTestRequest):
                 "people": r.payload.get("people", [])
             })
             
-        return {"results": results}
+        return {"results": results, "parsed_value": parsed_value}
     except Exception as e:
         return {"error": str(e)}
 

@@ -1217,9 +1217,24 @@ async function loadUnknownPhoto() {
 document.getElementById('fb-submit-btn')?.addEventListener('click', async () => {
     if (!selectedFeedbackTarget) return;
 
+    const inputVal = document.getElementById('fb-input-val');
+    const inputDate = document.getElementById('fb-input-date');
+    let correctValue = "";
+    
+    if (selectedFeedbackTarget.issue.includes('Date') || selectedFeedbackTarget.issue.includes('날짜')) {
+        correctValue = inputDate.value;
+    } else {
+        correctValue = inputVal.value.trim();
+    }
+    
+    if (!correctValue) {
+        alert("Please provide the correct information first!");
+        return;
+    }
+
     const btn = document.getElementById('fb-submit-btn');
     const ogHtml = btn.innerHTML;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 시뮬레이션 가동 중...';
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Scanning...';
     btn.disabled = true;
 
     try {
@@ -1229,10 +1244,14 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
         const res = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ point_id: selectedFeedbackTarget.id })
+            body: JSON.stringify({ 
+                point_id: selectedFeedbackTarget.id,
+                issue_type: selectedFeedbackTarget.issue,
+                correct_value: correctValue
+            })
         });
 
-        if (!res.ok) throw new Error("시뮬레이션 서버 데이터를 가져오지 못했습니다.");
+        if (!res.ok) throw new Error("Could not fetch simulation data from server.");
         const data = await res.json();
         
         if (data.error) {
@@ -1243,6 +1262,14 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
         }
 
         if (data.results && data.results.length > 0) {
+            // 결과창 안내명 Inject
+            const parsedSpan = document.getElementById('fb-temptest-parsed-val');
+            if (parsedSpan) {
+                // Return parsed_value (from Gemini) or fallback to raw
+                const finalStr = data.parsed_value || correctValue;
+                parsedSpan.textContent = `"${finalStr}"`;
+            }
+
             const grid = document.getElementById('fb-temptest-grid');
             let gridHtml = '';
             data.results.forEach(item => {
