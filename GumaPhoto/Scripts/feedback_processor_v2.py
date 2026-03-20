@@ -26,7 +26,7 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
         
     similar_files = []
     
-    # 1. 만약 프론트엔드에서 사용자가 명시적으로 타겟 ID 리스트를 확정하여 보냈다면 자체 스캔 알고리즘 건너뜀 (Bypass)
+    # 무조건 프론트엔드에서 사용자가 명시적으로 타겟 ID 리스트를 확정하여 보낸 것만 처리
     if target_points and len(target_points) > 0:
         print(f"  [+] 사용자가 명시적으로 체크한 {len(target_points)}장의 타겟 리스트를 수신했습니다. 시뮬레이션 결과를 그대로 사용합니다.")
         points_data = client.retrieve(
@@ -36,36 +36,10 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
         )
         similar_files = [res.payload.get("filepath") for res in points_data if res.payload.get("filepath")]
     else:
-        # 기존: 배경 자동 스캔 로직
-        records = client.retrieve(
-            collection_name=COLLECTION_NAME,
-            ids=[qdrant_id],
-            with_vectors=True,
-            with_payload=True
-        )
-        if not records:
-            print("[-] 대상 사진을 Qdrant에서 찾을 수 없습니다.")
-            return
-            
-        pt = records[0]
-        vecs = pt.vector
-        scene_vector = vecs.get("scene") if isinstance(vecs, dict) else vecs
-        if not scene_vector:
-            print("[-] scene (SigLIP) 벡터가 없습니다.")
-            return
-            
-        search_res = client.query_points(
-            collection_name=COLLECTION_NAME,
-            query=scene_vector,
-            using="scene",
-            limit=50,
-            score_threshold=0.85,
-            with_payload=True
-        ).points
+        print("[-] 지정된 타겟 포인트 리스트가 없습니다. (AI 자율 스캔 전면 금지 정책에 의해 아무것도 하지 않고 종료합니다)")
+        return
         
-        similar_files = [res.payload.get("filepath") for res in search_res if res.payload.get("filepath")]
-        
-    print(f"  [+] 동일 시간/장소 집단 {len(similar_files)}장 클러스터링 감지 완료.")
+    print(f"  [+] 동일 시간/장소 집단 {len(similar_files)}장 처리 준비 완료.")
     
     # 3. EXIF 불변의 데이터 하드코딩 (향후 piexif 모듈 개발 구간)
     print("  [+] EXIF Hardcoding 준비 중...")
@@ -119,21 +93,8 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
             if isinstance(res.vector, dict) and "v_face" in res.vector:
                 face_vectors.append(res.vector.get("v_face"))
     else:
-        # 기존: 배경 자동 스캔 로직
-        records, _ = client.scroll(COLLECTION_NAME, scroll_filter={"must": [{"key": "id", "match": {"value": qdrant_id}}]}, limit=1, with_vectors=True, with_payload=True)
-        if not records: return
-        
-        face_vector = records[0].vector.get("v_face")
-        if not face_vector: return
-        
-        search_res = client.search(
-            collection_name=COLLECTION_NAME,
-            query_vector=("v_face", face_vector),
-            limit=50,
-            score_threshold=0.85, # 85% 이상 비슷한 얼굴
-            with_payload=True
-        )
-        face_vectors = [res.vector.get("v_face") for res in search_res if isinstance(res.vector, dict) and "v_face" in res.vector]
+        print("[-] 지정된 타겟 포인트 리스트가 없습니다. (AI 자율 얼굴 스캔 전면 금지 정책에 의해 아무것도 하지 않고 종료합니다)")
+        return
         
     # 3. 얼굴 벡터 평균화 연산 (Average) -> known_faces.pkl 온디맨드 즉각 반영
     if face_vectors:
