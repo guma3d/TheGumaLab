@@ -1043,6 +1043,8 @@ window.addEventListener('click', (e) => {
 
 document.getElementById('fb-temptest-close')?.addEventListener('click', () => {
     document.getElementById('fb-temptest-results').style.display = 'none';
+    const mainContainer = document.getElementById('fb-unknown-photo-container');
+    if (mainContainer) mainContainer.style.display = 'flex';
 });
 
 async function loadUnknownPhoto() {
@@ -1068,9 +1070,11 @@ async function loadUnknownPhoto() {
     submitBtn.disabled = false;
     submitBtn.innerHTML = 'Send';
     
-    // TempTest UI 초기화
+    // TempTest UI 초기화 및 메인 컨테이너 복구
     const tempTestResults = document.getElementById('fb-temptest-results');
     if(tempTestResults) tempTestResults.style.display = 'none';
+    const mainContainer = document.getElementById('fb-unknown-photo-container');
+    if(mainContainer) mainContainer.style.display = 'flex';
     
     try {
         let apiUrl = '/api/feedback_v2/unknown';
@@ -1281,12 +1285,11 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
             });
             grid.innerHTML = gridHtml;
             document.getElementById('fb-temptest-count').textContent = data.results.length;
-            document.getElementById('fb-temptest-results').style.display = 'block';
             
-            // Scroll down automatically
-            setTimeout(() => {
-                document.getElementById('fb-temptest-results').scrollIntoView({ behavior: 'smooth' });
-            }, 100);
+            // 메인 타겟 사진 컨테이너를 숨기고 그 자리에 검색결과 교체 표출
+            const mainContainer = document.getElementById('fb-unknown-photo-container');
+            if(mainContainer) mainContainer.style.display = 'none';
+            document.getElementById('fb-temptest-results').style.display = 'block';
         } else {
             alert("유사도 임계값(0.85)을 넘는 수정 대상 사진이 0장 입니다.");
         }
