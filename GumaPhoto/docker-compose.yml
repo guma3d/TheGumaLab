@@ -13,6 +13,7 @@ services:
       - D:/Pictures:/app/data/organized
     environment:
       - QDRANT_URL=http://qdrant:6333
+      - REDIS_URL=redis://redis:6379/0
     env_file:
       - .env
     depends_on:
@@ -25,6 +26,43 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [ gpu ]
+    networks:
+      - gumaphoto_network
+
+  celery_worker:
+    build: .
+    container_name: gumaphoto_celery
+    command: celery -A core.celery_app worker --loglevel=info --concurrency=1 --max-tasks-per-child=1
+    volumes:
+      - .:/app
+      - ./data:/app/data
+      - D:/Pictures/uploads_raw:/app/data/uploads_raw
+      - D:/Pictures:/app/data/organized
+    environment:
+      - QDRANT_URL=http://qdrant:6333
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - qdrant
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    networks:
+      - gumaphoto_network
+
+  redis:
+    image: redis:alpine
+    container_name: gumaphoto_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
     networks:
       - gumaphoto_network
 

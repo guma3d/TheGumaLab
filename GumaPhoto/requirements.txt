@@ -20,3 +20,6 @@ python-dotenv
 google-genai
 timm
 hsemotion
+celery
+redis
+sqlalchemy

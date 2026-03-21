@@ -3,7 +3,9 @@ FROM nvidia/cuda:12.2.2-cudnn8-runtime-ubuntu22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # 필요한 시스템 패키지 및 Python 3.11 설치 (deadsnakes PPA 사용)
-RUN apt-get update && apt-get install -y --fix-missing \
+RUN sed -i 's/archive.ubuntu.com/mirror.kakao.com/g' /etc/apt/sources.list && \
+    sed -i 's/security.ubuntu.com/mirror.kakao.com/g' /etc/apt/sources.list && \
+    apt-get update && apt-get install -y --fix-missing \
     software-properties-common \
     ffmpeg \
     libglib2.0-0 \

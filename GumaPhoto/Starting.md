@@ -10,46 +10,55 @@ GumaPhoto 프로젝트에 오신 것을 환영합니다!
 1. **[GumaPhotoPlan.md](./Docs/GumaPhotoPlan.md) (프로젝트 마스터 플랜)**
    - 프로젝트의 궁극적 목표, 현재 완료된 로드맵 단계, 그리고 핵심 인프라 구축의 큰 그림을 설명합니다. (전체 숲을 보는 용도)
 2. **[GumaPhotoTechnicalSpecs.md](./Docs/GumaPhotoTechnicalSpecs.md) (모듈별 핵심 기술 명세서 및 아키텍처)**
-   - 앱 내부에서 5대 코어 프로세스(업로드, 폴더정리, 벡터인덱싱, 검색엔진, 삭제처리)가 어떻게 작동하고 예외를 처리하는지 기술적인 명세서를 담고 있습니다. "알래스카에서 노는 송이"를 검색했을 때, 앱 내부에서 어떻게 LLM과 벡터 DB가 맞물려 돌아가는지의 하이브리드 수학적 작동 원리를 파악할 수 있습니다. 
+   - 앱 내부에서 5대 코어 프로세스(업로드, 폴더정리, 벡터인덱싱, 검색엔진, 삭제처리)가 어떻게 작동하고 통합 DB(SQLAlchemy)와 연동되어 예외를 처리하는지 기술적인 명세서를 담고 있습니다. 
 3. **[GumaPhotoProgress.md](./Docs/GumaPhotoProgress.md) (프로젝트 진행 상황 및 기술 트러블슈팅 내역)**
-   - 과거부터 지금까지 어떤 기술적 난관(중복 이름 처리, 썸네일 유령 파일 버그, 폴더 한국어 정식 확립 등)이 있었으며 그 문제들을 어떤 논리와 코드로 해결해 왔는지 상세한 개발 히스토리가 기록되어 있습니다. (버그 방지 및 레거시 파악용)
+   - 과거부터 지금까지 어떤 기술적 난관이 있었으며 그 문제들을 어떤 논리와 코드로 해결해 왔는지 상세한 개발 히스토리가 기록되어 있습니다. (버그 방지 및 레거시 파악용)
 
 ---
 
 ## 📂 2. 완벽하게 압축된 디렉토리 구조 (Clean Architecture)
 
-저희 시스템은 극도로 정돈된 상태를 유지해야 합니다. 새로운 스크립트를 짤 계획이라면 반드시 아래의 폴더 룰을 따르십시오. Root 폴더는 메인 심장부에만 내어줍니다.
+본 시스템은 극도로 정돈된 마이크로서비스 형태의 클린 아키텍처를 유지합니다. 어지러운 테스트 스크립트나 루트 폴더 오염은 절대 금지됩니다.
 
 *   `📁 GumaPhoto/` (Root)
     *   **핵심 뼈대 파일만 존재합니다.**
-    *   `main.py`: FastAPI 백엔드 API 및 프론트엔드 라우팅 라우터
-    *   `organizer_pipeline.py`: 업로드된 사진을 연월/지역 폴더로 분류 및 찌꺼기 처리하는 정리 봇
-    *   `vector_indexer.py`: AI 모델들을 대량 가동하여 벡터 DB(Qdrant)에 지식을 삽입하는 인덱싱 봇
-    *   `xmp_utils.py`: 파생 메타데이터 XMP 스니펫 관리자
-    *   기타 `Starting.md` 온보딩 가이드와 `.env`, `docker-compose` 등만 루트에 위치합니다.
+    *   `main.py`: FastAPI 백엔드 API 라이프사이클 관리 및 라우터 주입, SQLAlchemy DB 엔진 동기화(`Base.metadata.create_all`)
+    *   `docker-compose.yml`: Redis, Celery, Qdrant 등 메시지 브로커와 AI DB 묶음 체인
+    *   `Starting.md` 등 온보딩 가이드, `.env`, `requirements.txt`
+*   `📁 core/` (핵심 공통 데이터베이스 및 상태)
+    *   `database.py`: SQLAlchemy 연결 엔진 및 세션 관리자(`SessionLocal`)
+    *   `models.py`: 통합 마스터 피스 DB 클래스 모델(`Photo`) 설계도
+    *   `state.py`: 런타임 전역 변수 스테이트 저장소
+*   `📁 api/` (Domain-Driven API & Services)
+    *   `routers/`: `upload`, `search`, `organizer`, `feedback` 등 주제별로 완전히 쪼개진 FastAPI 라우터 모음.
+    *   `services/`: `indexer/` (AI 추론 엔진룸), `feedback_service.py` (비즈니스 로직) 등 구체적인 하위 모듈.
+    *   `tasks.py`: Celery 비동기 큐 작업 레지스트리 (Redis 연동).
+*   `📁 frontend/` (정적 파일 및 UI 에셋)
+    *   앱의 시각을 담당하는 `style.css`, 인텔리전트 프론트엔드 라우팅 `script.js` 및 UI 에셋 모음.
 *   `📁 Docs/`
-    *   루트 폴더 정리화 작업의 일환으로 신설된 기술 문서 전용 폴더.
-    *   플랜, 진행 상황, 기술 명세서(Architecture) 등 코어 기술 관련 Markdown 문서들이 이곳에 100% 통합되어 보관됩니다.
-*   `📁 DebugTool/`
-    *   시스템 진단, DB 조회, Qdrant 체크 등을 위해 1회성으로 사용되는 각종 `check_*.py`, `test_*.py` 스크립트 전용 방.
-*   `📁 Scripts/`
-    *   정기적으로 수동 실행이 필요하거나 유용한 배치(Batch) 관리자 도구.
-    *   예: `enroll_batch.py`(얼굴 추가 학습), `generate_thumbnails_batch.py`, `bump_version.py` 등
-*   `📁 OneTimeFixes/`
-    *   과거 시스템 교정을 위해 사용했던 일회성 스크립트 모음. (예: `compress_sequence.py`)
+    *   플랜, 진행 상황, 기술 명세서(Architecture) 등 코어 기술 관련 Markdown 문서 전용 보관소.
 
 ---
 
-## 🛡️ 3. 개발 제 1원칙 및 형상 관리 룰 (The Golden Rules)
+## 🛡️ 3. 개발 5대 원칙 및 코드 작성 룰 (The Golden Rules)
 
 > **[규칙 1. 원본 무결성 유지]**
-> 어떠한 로직 개편이 있더라도, 사용자의 **원본 사진 및 내부 EXIF 메타데이터는 1%도 훼손되거나 조작되어서는 안 됩니다.**
-> 데이터 무결성이 최우선입니다. 기존 사진 포맷(.heic, .jpg)을 압축 손실을 감수해가며 강제 단일 변환하거나, 파일 내부 픽셀/메타 헥스를 고치는 짓은 엄격히 금지됩니다. 모든 검색과 재배치는 오직 '디렉토리 Rename'과 '안전하게 파생된 DB 공간' 혹은 '비파괴적 XMP, WebP 동반 생성' 영역 안에서만 놀아야 합니다. 
+> 어떠한 로직 개편이 있더라도, 사용자의 **원본 사진 및 내부 EXIF 메타데이터는 1%도 훼손되거나 조작되어서는 안 됩니다.** 데이터 무결성이 최우선입니다. 
 
 > **[규칙 2. 문서 자기 주도 업데이트 엄수 (Self-Healing Docs)]**
-> 코드를 작성하는 AI 에이전트(혹은 개발자)는 각 기술이나 기능에 대해 **수정/추가 내용이 발생하면, 관련된 모든 Markdown 문서(Plan, Progress, Architecture, Specs 등)를 스스로 먼저 스캔하여 즉시 최신 내용으로 동기화(업데이트)** 해두어야 합니다. 문서를 과거의 유산으로 방치하지 마십시오.
+> 변경사항이 발생하면 관련된 모든 Markdown 문서를 스스로 먼저 스캔하여 즉시 최신 내용으로 동기화(업데이트) 해두어야 합니다.
 
 > **[규칙 3. 100% 롤백 보장 기조 (Zero-Risk Commit)]**
-> 어떠한 사소한 작업이라도 **종료되는 그 즉시 해당 변경사항을 Git으로 Commit하고 Push** 하십시오. 치명적인 오류가 발생했을 때 언제든지 단 몇 초 만에 이전 상태로 안전하게 롤백(Rollback) 할 수 있는 안정성 버퍼를 항시 확보해 두어야 합니다.
+> 오류가 발생했을 때 언제든지 단 몇 초 만에 이전 상태로 안전하게 롤백(Rollback) 할 수 있는 안정성 버퍼를 항시 확보해 두어야 합니다.
 
-위 가이드를 완벽히 습득하셨다면, 이제 가장 우수한 개발 지능을 통해 GumaPhoto 프로젝트에 기여해 주세요!
+> **[규칙 4. 마이크로서비스 모듈화 (Domain-Driven API) 준수 강력 권고]** 🚨
+> 새로운 기능을 추가하거나 기존 로직을 수정할 때, 거대한 단일 스크립트에 잡다한 기능을 때려 박는 스파게티성 코딩을 엄격히 금지합니다. 반드시 `api/routers/` 내의 해당 분야 라우터 모듈(예: search, upload, organizer)에 API 엔드포인트를 매핑하고, 실제 무거운 AI 연산이나 복잡한 비즈니스 로직은 `api/services/` 의 독립된 컴포넌트로 분리 배치하십시오.
+
+> **[규칙 5. 통합 ORM DB 스키마 준수 (Single Source of Truth)]** 🚨
+> `upload`, `remove`, `vectorindexer` 등 어떠한 파이프라인에서 작업하든, 사진의 상태를 기록하거나 찾을 때 절대로 쌩(Raw) SQLite 쿼리(`sqlite3.connect()`)나 새로운 테이블을 파편화시켜 생성하지 마십시오. 
+> 반드시 **`core.models.Photo`** 모듈에 정의된 **SQLAlchemy ORM 단일 객체를 로드**하여 작업해야 합니다.
+> - 데이터 중복 및 기입 누락 방지를 위해, 우리가 정규화 해둔 파라미터 규격명(`filepath`, `file_hash`, `width`, `height`, `file_size_bytes` 등)을 철저히 준수하여 값을 기입(`add()`) 하거나 갱신(`commit()`) 하십시오.
+> - 파일의 **생애주기 이력(Lifecycle) 추적**은 오직 **`status` 단일 컬럼 변경 (`UPLOADED` -> `ORGANIZED` -> `VECTORIZED` -> `DELETED`)** 이라는 깔끔한 상태머신(State Machine) 방식으로만 통제하여 DB의 완전한 무결성을 지켜내야 합니다.
+
+> **[규칙 6. 마일스톤 달성 시 즉각적인 깃허브 푸시 (Continuous GitHub Sync)]** 🚨
+> 의미 있는 리팩토링이나 새로운 기능 구조가 컨테이너에서 정상적으로 구동됨이 확인되었다면, 작업을 멈추지 말고 즉각적으로 프로젝트 루트의 `sync_github.ps1` 스크립트를 가동(또는 `/sync_github` 워크플로우 실행)하여, 코드가 유실되지 않도록 **반드시 원격 GitHub 저장소에 영구 보존(Commit & Push)** 해야 합니다.
