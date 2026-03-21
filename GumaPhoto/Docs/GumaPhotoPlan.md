@@ -36,6 +36,13 @@
 1. **분산 메시지 브로커 (Redis + Celery) 독립 큐**: 파일 시스템의 수십/수백 장 폭주 스파이크와 AI 모델의 VRAM 붕괴를 완벽히 막기 위해, 백그라운드 딥러닝 전용 장갑차(`celery_worker`) 컨테이너를 가동하여 완전 분산 처리 (`max_tasks_per_child=1` 로 GPU 메모리 영구 0% 스왑화 달성).
 2. **통합 ORM 데이터베이스 단일 규격화 (SQLAlchemy)**: 과거 사방에 흩어져있던 날것(Raw)의 SQLite 쿼리와 `processed_files`, `vectorized_files` 잔재를 싹 지우고, 사진 1장에 대한 모든 스펙(`filepath`, 해상도 `width/height`, 용량 `bytes`)과 생사 여부(`status`) 추적을 **`Photo` 라는 단일 ORM 객체 속성 하나로 완전히 흡수 통합(Single Source of Truth)**.
 
-## 🚀 진행 중: 6단계: 사용자 참여형 자율 진화 피드백 시스템 v2.0
+## ✅ 6단계: 사용자 참여형 자율 진화 피드백 시스템 v2.0 (완료)
 1. **1:N 무결점 클린 리빌드**: 사용자가 단 1장의 미분류 사진을 수선하면, AI가 벡터 유사도를 바탕으로 수십 장을 끌어모아 교정. (재인덱싱을 위해 파일 시스템 이주시 DB에 구 `Tombstone(DELETED)` 각인)
 2. **Redis Celery 대기열 보호 구조**: 다수의 사용자가 피드백을 수십 번 연타하더라도 파일 이동 충돌(`FileNotFoundError`)이나 SQLite 동시성 락(Database is locked) 버그가 나지 않도록, 모든 무거운 변경과 이주를 ORM 풀링(Connection Pool)이 탑재된 단일 큐 워커가 안전하게 순차 지휘함.
+3. **완전 독립형 코어 유틸리티 2종 분리 (`PhotoPurger`, `MetadataEditor`)**: 복잡하고 위험한 물리적 파쇄/삭제(Tombstone) 로직을 `PhotoPurger`로, ExifTool 지오코딩/메타데이터 주입을 `MetadataEditor` 클래스로 완벽히 격리(Decoupling)하여 범용 재사용성을 극대화.
+4. **유령 폴더 영구 박멸 (Ghost Scavenger)**: 피드백으로 인해 사진이 모조리 빠져나가 텅 비어버린 껍데기 폴더들을 서버 런타임 종료 시 OS 단(`os.walk(topdown=False)`)에서 알아서 파쇄하는 백그라운드 청소망 구축.
+
+## ✅ 7단계: 모바일 네이티브 UX 최적화 및 롤백 무결성 보장 (완료)
+1. **Ghost Rollback (유령 크롭 파기)**: 오분류된 사용자의 피드백을 재수정(Re-Tag) 할 때, 과거 폴더에 잘못 저장된 `point_id.jpg` 얼굴 크롭들을 파이프라인에서 우선적으로 글로벌 서치(`glob.glob`)하여 사전 파쇄함으로써 AI 데이터셋 오염률 0% 달성.
+2. **Pinch-to-Zoom 및 Focus View**: `Panzoom.js` 이식 및 터치 스크린의 `Tap-Highlight` 무효화를 결합하여, 모달 내 사진 더블탭/핀치 시 브라우저 UI 붕괴 없는 진정한 앱스토어 급 이미지 감상 환경 구현.
+3. **Web Share API Level 2 (순수 물리 전송)**: Web PWA상에서 사진의 URL 링크가 공유되는 HTTP 태생적 한계를 극복. 런타임에 Blob Fetch -> File Type 캐스팅 후 넘겨주어 카카오톡, 라인 등 외부 커뮤니티 앱으로 사진 "원본 덩어리" 100% 직배송.

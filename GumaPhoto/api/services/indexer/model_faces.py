@@ -43,7 +43,13 @@ class FaceEngine:
                 valid_faces = 0
                 for name, vectors in raw_faces.items():
                     if vectors:
-                        mean_vec = np.mean(vectors, axis=0)
+                        vec_array = np.array(vectors)
+                        if vec_array.ndim == 1:
+                            mean_vec = vec_array
+                        else:
+                            mean_vec = np.mean(vec_array, axis=0)
+                            
+                        # 안전하게 유닛 벡터로 정규화
                         mean_vec = mean_vec / np.linalg.norm(mean_vec)
                         self.known_faces[name] = mean_vec
                         valid_faces += 1
@@ -110,6 +116,10 @@ class FaceEngine:
             
             box = best_face.bbox.astype(int)
             x1, y1, x2, y2 = max(0, box[0]), max(0, box[1]), min(cv_img.shape[1], box[2]), min(cv_img.shape[0], box[3])
+            
+            # [UI 고해상도 Crop 뷰용 BBox 기록] UI에서 CSS로 자를 수 있도록 박스 위치 원본 저장!
+            best_face_payload['face_bbox'] = [int(x1), int(y1), int(x2), int(y2)]
+            
             face_img = cv_img[y1:y2, x1:x2]
             
             try:

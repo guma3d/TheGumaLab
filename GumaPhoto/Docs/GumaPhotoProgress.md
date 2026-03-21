@@ -38,8 +38,22 @@
 *   `vector_indexer.py`, `organizer_pipeline.py` 처럼 500줄이 넘어가던 모놀리식 뚱뚱한 코드 전체를 썰어 `api/routers/` (서빙 API) 와 `api/services/` (비즈니스 AI 공장) 내부의 파츠 6개로 쪼개고 완전히 분리 매핑 완료.
 *   **Redis + Celery 로드 밸런싱 통제:** `worker_max_tasks_per_child=1` GPU 캐시 스왑을 강제 적용해 평생 무한히 사진을 구워도 PyTorch OOM 버그가 생기지 않는 기적 달성.
 
-## 📌 [10단계] 전역 데이터베이스 단일 객체화 (SQLAlchemy ORM 도입) (완료 🎯)
+## 📌 [10단계] 전역 데이터베이스 단일 객체화 (SQLAlchemy ORM 도입) (완료)
 *   **Raw SQLite 장부 전면 폐기:** 라우터와 인덱서 모듈 사방에 "INSERT OR REPLACE" 등 지저분하게 흩날리며 락다운 에러(DB is Locked)를 유발하던 낡은 하드코딩 쿼리를 영구 소각했습니다.
 *   **단일의 객체 진실 공급원 (Single Source of Truth) 마련:** SQLite의 복잡한 테이블(`processed_files`, `vectorized_files` 등)을 뭉쳐내어, `core.models.py` 안에 **`Photo`** 라는 완벽한 마스터 객체 하나로 통합 설계했습니다.
     *   **정규 파라미터 매칭:** 사진 하나가 정리(Organize)될 때, 즉시 `width`, `height`, `file_size_bytes` 해상도 규격을 측정해 DB 객체에 미리 박아넣어, 추후 프론트엔드가 모바일 스크롤 잔상 현상(CLS) 없이 찰떡같이 렌더링되게 엮었습니다.
     *   **통합 Status 추적기:** 파편화 테이블 삭제 기록이 아닌, 단지 **`status='UPLOADED' -> 'ORGANIZED' -> 'VECTORIZED' -> 'DELETED'`** 속성 하나의 변경에 따라 시스템의 배턴 터치 흐름이 부드럽게 이어지는 극강의 OOP적 유지보수를 이룩했습니다.
+
+## 📌 [11단계] 도메인 로직(Utils) 순수 분리 및 UI 버그 헌팅 (완료 🎯)
+*   **`PhotoPurger` (데이터 말소 전담팀) 신설:** `delete.py` 및 피드백 모듈 내부에서 날것으로 굴러다니던 위험한 쓰레기 하드 딜리트(Qdrant, XMP, SQLite) 코드를 하나의 순수 유틸리티(Utility)로 100% 분리. `keep_original` 플래그 하나로 완전 파쇄 vs 피드백 보존을 마법처럼 통제 처리.
+*   **`MetadataEditor` (Exif 전담팀) 신설:** 피드백이 내려찍히면 무지성으로 EXIF와 지오코딩만 수행하는 독립 모듈을 만들어 기존 거대 라우터를 수십 줄 다이어트 성공.
+*   **프론트엔드 Scan 블로킹 오류 완벽 타파:** Qdrant 벡터 검색 시 자기 자신을 제외하거나 유사도 임계점 이하라서 화면이 먹통이 되던 버그를 고치기 위해, 타겟 백엔드에서 원본 사진 1장을 Index 0 에 무조건 강제 주입하도록 덮어씌움 처리.
+*   **유령 깡통 폴더 영구 청소망 구축:** 피드백/삭제 메커니즘으로 인해 파일이 다 스왑되어 생기는 `2025-10` 같은 비어있는 고스트 폴더들을 오거나이저 동작 직후 `os.walk(topdown=False)` 로 가장 아랫바닥부터 훑으며 무자비하게 OS 단에서 삭제하도록 방어 로직 전개.
+*   **풀-듀플렉스(Full-Duplex) 로깅 디스플레이 탑재:** Windows 사용자 친화적인 `View_Live_Logs.bat` 를 새롭게 개조하여, `gumaphoto_app` (FastAPI 통신망) 과 `celery_worker` (AI 기계실) 이 내뱉는 로그를 동일 프레임(터미널)에 시각적으로 태그를 붙여 통합 생중계 가능하도록 배포 완료.
+
+## 📌 [12단계] 디테일 UX 고도화 및 네이티브 모바일 최적화 (완료 🎯)
+*   **Web Share API Level 2 (물리적 파일 공유):** iOS/Android에서 사진 공유 시 단순 URL 텍스트가 전송되어 카카오톡 등에서 접근 권한 에러가 나던 현상을 타파. 클라이언트에서 Blob 데이터를 즉각 Fetch하여 `File` 객체로 물리적 패키징 후 네이티브 공유 시트에 던지는 방식으로 카카오톡 원본 직배송 완벽 호환 구현.
+*   **PWA 및 네이티브 터치 블록(iOS 최적화):** 사파리의 고질적인 꾹 누르기 드래그(Lift) 효과나 하이라이트 발생 시 모서리 곡률(`border-radius`)이 날아가는 버그를 `-webkit-user-drag: none;` 단에서 완전 봉인.
+*   **Pinch-to-Zoom 뷰어 탑재:** `Panzoom.js` 프레임워크를 이식하여 두 손가락 부드러운 줌인/아웃 구현 + 화면 단일 탭 시 거추장스러운 UI들만 스르르 사라지는(Fade 오파시티 토글) 영화 같은 몰입 뷰(Focus Mode) 완성.
+*   **자동 고스트 롤백(Ghost Rollback) 방어 체계:** 사용자가 피드백 UI에서 동명이인이나 엉뚱한 인물로 잘못 태깅하고 재교정을 시도할 때, 구 폴더에 떨어져 있던 가짜 얼굴 크롭(`{point_id}.jpg`)을 `glob`로 글로벌 추적 후 원천 소각하는 롤백 메커니즘을 융합 완료.
+*   **Windows 배치 스크립트 인코딩 가드:** 한글을 포함해 `chcp 65001` 선언 시 Windows `cmd.exe` 버그로 인해 `docker` 명령어나 변수가 바이트 밀림으로 잘리던 고질적 버그(`aphoto_app`)를 100% 영문 ASCII 변환을 통해 영구 해결.

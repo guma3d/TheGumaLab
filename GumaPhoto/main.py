@@ -20,7 +20,7 @@ from core.state import state
 from services.background_tasks import trigger_upload_pipeline, scheduled_scan
 
 # Import Refactored Routers
-from api.routers import views, upload, search, download, feedback, face_training, organizer, ai_indexer, delete, system
+from api.routers import views, upload, search, download, feedback, organizer, ai_indexer, delete, system
 
 load_dotenv()
 
@@ -99,7 +99,6 @@ app.include_router(upload.router, tags=["Upload"])
 app.include_router(search.router, tags=["Search"])
 app.include_router(download.router, tags=["Download"])
 app.include_router(feedback.router, tags=["Feedback"])
-app.include_router(face_training.router, tags=["Face_Training"])
 app.include_router(organizer.router, tags=["Organizer"])
 app.include_router(ai_indexer.router, tags=["AI_Indexer"])
 app.include_router(delete.router, tags=["Delete_Photo"])

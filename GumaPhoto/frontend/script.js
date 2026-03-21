@@ -1059,7 +1059,7 @@ document.getElementById('fb-temptest-close')?.addEventListener('click', () => {
     if (infoTextContainer) infoTextContainer.style.display = 'block';
 });
 
-async function loadUnknownPhoto() {
+async function loadUnknownPhoto(manualTargetPayload = null) {
     const imgEl = document.getElementById('fb-target-img');
     const spinner = document.getElementById('fb-loading-spinner');
     const issueTag = document.getElementById('fb-target-issue');
@@ -1091,61 +1091,79 @@ async function loadUnknownPhoto() {
     if(infoTextContainer) infoTextContainer.style.display = 'block';
     
     try {
-        let apiUrl = '/api/feedback_v2/unknown';
-        if (window.location.pathname.startsWith('/GumaPhoto')) apiUrl = '/GumaPhoto' + apiUrl;
-        
-        let res = await fetch(apiUrl);
-        
-        // 핫-픽스: 도커 재부팅 불가 상태 시 기존 Search API를 호출하여 프론트엔드단에서 자체 Unknown 필터링 수행 (우회 트릭)
-        if (res.status === 404 || res.status === 405) {
-            console.log("[우회 접속] 백엔드 API가 아직 눈을 뜨지 않아 기존 Search API로 파싱합니다.");
-            let sUrl = '/api/search';
-            if (window.location.pathname.startsWith('/GumaPhoto')) sUrl = '/GumaPhoto' + sUrl;
-            res = await fetch(sUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ query: "", date: "", sort: "desc", size: 300 })
-            });
-            const sData = await res.json();
-            const unknownList = [];
-            sData.results.forEach(p => {
-                let issues = [];
-                if(!p.location || p.location.includes("위치정보없음")) issues.push("Location");
-                if(!p.date || p.date.includes("Unknown")) issues.push("Date");
-                if(issues.length > 0) {
-                    p.issue = issues[Math.floor(Math.random() * issues.length)];
-                    unknownList.push(p);
-                }
-            });
-            
-            if(unknownList.length > 0) {
-                // 무작위 1장 추출
-                const randomChoice = unknownList[Math.floor(Math.random() * unknownList.length)];
-                let mockUrl = randomChoice.url;
-                // 고해상도 말고 빠른 로딩을 위해 webp 썸네일 변환
-                const dotIndex = mockUrl.lastIndexOf('.');
-                mockUrl = dotIndex !== -1 ? mockUrl.substring(0, dotIndex) + '_' + mockUrl.substring(dotIndex + 1).toLowerCase() + '.webp' : mockUrl;
-                
-                if (!mockUrl.startsWith('/GumaPhoto') && window.location.pathname.startsWith('/GumaPhoto')) mockUrl = '/GumaPhoto' + mockUrl;
-                selectedFeedbackTarget = { id: randomChoice.id, url: mockUrl, issue: randomChoice.issue, date: randomChoice.date, location: randomChoice.location, people: randomChoice.people };
-            } else {
-                throw new Error("No pending photos left to categorize!");
-            }
+        if (manualTargetPayload) {
+            selectedFeedbackTarget = manualTargetPayload;
         } else {
-            const data = await res.json();
-            if (data.id) {
-                let mockUrl = data.url;
-                if (!mockUrl.startsWith('/GumaPhoto') && window.location.pathname.startsWith('/GumaPhoto')) mockUrl = '/GumaPhoto' + mockUrl;
-                selectedFeedbackTarget = { id: data.id, url: mockUrl, issue: data.issue, date: data.date, location: data.location, people: data.people };
-            } else throw new Error("All photos are perfectly categorized!");
+            let apiUrl = '/api/feedback_v2/unknown';
+            if (window.location.pathname.startsWith('/GumaPhoto')) apiUrl = '/GumaPhoto' + apiUrl;
+            
+            let res = await fetch(apiUrl);
+            
+            // 핫-픽스: 도커 재부팅 불가 상태 시 기존 Search API를 호출하여 프론트엔드단에서 자체 Unknown 필터링 수행 (우회 트릭)
+            if (res.status === 404 || res.status === 405) {
+                console.log("[우회 접속] 백엔드 API가 아직 눈을 뜨지 않아 기존 Search API로 파싱합니다.");
+                let sUrl = '/api/search';
+                if (window.location.pathname.startsWith('/GumaPhoto')) sUrl = '/GumaPhoto' + sUrl;
+                res = await fetch(sUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query: "", date: "", sort: "desc", size: 300 })
+                });
+                const sData = await res.json();
+                const unknownList = [];
+                sData.results.forEach(p => {
+                    let issues = [];
+                    if(!p.location || p.location.includes("위치정보없음")) issues.push("Location");
+                    if(!p.date || p.date.includes("Unknown")) issues.push("Date");
+                    if(issues.length > 0) {
+                        p.issue = issues[Math.floor(Math.random() * issues.length)];
+                        unknownList.push(p);
+                    }
+                });
+                
+                if(unknownList.length > 0) {
+                    // 무작위 1장 추출
+                    const randomChoice = unknownList[Math.floor(Math.random() * unknownList.length)];
+                    let mockUrl = randomChoice.url;
+                    const ogUrl = mockUrl;
+                    // 고해상도 말고 빠른 로딩을 위해 webp 썸네일 변환
+                    const dotIndex = mockUrl.lastIndexOf('.');
+                    mockUrl = dotIndex !== -1 ? mockUrl.substring(0, dotIndex) + '_' + mockUrl.substring(dotIndex + 1).toLowerCase() + '.webp' : mockUrl;
+                    
+                    if (!mockUrl.startsWith('/GumaPhoto') && window.location.pathname.startsWith('/GumaPhoto')) mockUrl = '/GumaPhoto' + mockUrl;
+                    selectedFeedbackTarget = { id: randomChoice.id, url: mockUrl, originalUrl: ogUrl, issue: randomChoice.issue, date: randomChoice.date, location: randomChoice.location, people: randomChoice.people, face_bbox: randomChoice.face_bbox };
+                } else {
+                    throw new Error("No pending photos left to categorize!");
+                }
+            } else {
+                const data = await res.json();
+                if (data.id) {
+                    let mockUrl = data.url;
+                    const ogUrl = mockUrl;
+                    const dotIndex = mockUrl.lastIndexOf('.');
+                    mockUrl = dotIndex !== -1 ? mockUrl.substring(0, dotIndex) + '_' + mockUrl.substring(dotIndex + 1).toLowerCase() + '.webp' : mockUrl;
+                    
+                    if (!mockUrl.startsWith('/GumaPhoto') && window.location.pathname.startsWith('/GumaPhoto')) mockUrl = '/GumaPhoto' + mockUrl;
+                    selectedFeedbackTarget = { id: data.id, url: mockUrl, originalUrl: ogUrl, issue: data.issue, date: data.date, location: data.location, people: data.people, face_bbox: data.face_bbox };
+                } else throw new Error("All photos are perfectly categorized!");
+            }
         }
-        
+
         // 추출된 사진 렌더링
-        imgEl.src = selectedFeedbackTarget.url;
+        // 얼굴 피드백일 경우 원본 해상도에서 Crop하기 위해 고화질 원본 매핑
+        let finalSrc = selectedFeedbackTarget.url;
+        if (selectedFeedbackTarget.issue === "People" && selectedFeedbackTarget.face_bbox) {
+            finalSrc = selectedFeedbackTarget.originalUrl; // Use original full-res
+        }
+        if (!finalSrc.startsWith('/GumaPhoto') && window.location.pathname.startsWith('/GumaPhoto')) finalSrc = '/GumaPhoto' + finalSrc;
+        
+        imgEl.src = finalSrc;
+        
         imgEl.onload = () => {
             spinner.style.display = 'none';
             imgEl.style.display = 'block';
         };
+        
         let badgeType = '';
         let issueWord = '';
         if (selectedFeedbackTarget.issue.includes('Date')) {
@@ -1154,6 +1172,9 @@ async function loadUnknownPhoto() {
         } else if (selectedFeedbackTarget.issue.includes('Location')) {
             issueWord = 'Location';
             badgeType = `<i class="fa-solid fa-location-dot" style="margin-right: 4px;"></i> Location`;
+        } else if (selectedFeedbackTarget.issue.includes('People')) {
+            issueWord = 'People';
+            badgeType = `<i class="fa-solid fa-user-tag" style="margin-right: 4px;"></i> People`;
         } else {
             issueWord = 'Unknown';
             badgeType = `<i class="fa-solid fa-circle-exclamation" style="margin-right: 4px;"></i> ${selectedFeedbackTarget.issue}`;
@@ -1191,11 +1212,25 @@ async function loadUnknownPhoto() {
             
             // 3. People
             let peopleVal = 'Unknown';
+            let isYellow = false;
             if (t.people && Array.isArray(t.people) && t.people.length > 0) {
-                let pStr = t.people.filter(p => !p.includes('Unknown')).join(', ');
-                if (pStr) peopleVal = pStr;
+                if (t.people.includes('Unidentifiable Person')) {
+                    peopleVal = 'Unidentifiable Person';
+                    isYellow = true;
+                } else if (t.people.includes('No People')) {
+                    peopleVal = 'No People';
+                    isYellow = true;
+                } else {
+                    let pStr = t.people.filter(p => !p.includes('Unknown')).join(', ');
+                    if (pStr) peopleVal = pStr;
+                }
             }
-            badgesHtml += createBadge('fa-solid fa-user-tag', peopleVal, true);
+            
+            if (isYellow) {
+                badgesHtml += `<div class="info-badge" style="background: rgba(245, 158, 11, 0.2); border: 1px solid rgba(245, 158, 11, 0.4); color: #f59e0b;"><i class="fa-solid fa-user-tag"></i> ${peopleVal}</div>`;
+            } else {
+                badgesHtml += createBadge('fa-solid fa-user-tag', peopleVal, true);
+            }
             
             fbBadgesContainer.innerHTML = badgesHtml;
         }
@@ -1221,6 +1256,7 @@ async function loadUnknownPhoto() {
         submitBtn.disabled = true;
     }
 }
+
 
 // 사용자 제출 로직 (백엔드 우회 테스트 모드 지원)
 // Send 버튼 시뮬레이션 통합 적용 (수정 제출 API 가동 중단 상태)
@@ -1434,7 +1470,7 @@ document.getElementById('fb-temptest-send-btn')?.addEventListener('click', async
 // =========================================================================
 // 📱 Mobile Bottom Navigation Bar & View Router Logic
 // =========================================================================
-const views = ['home', 'feedback', 'system'];
+const views = ['home', 'feedback', 'map', 'system'];
 
 function switchView(target) {
     if (target !== 'system' && window.progressPollingInterval) {
@@ -1457,6 +1493,17 @@ function switchView(target) {
         if (item.id === `nav-${target}-btn`) item.classList.add('active');
         else item.classList.remove('active');
     });
+    
+    // 맵 뷰 진입 시 핀치/줌/스크롤로 인해 메뉴가 튕기거나 사라지지 않도록 UI를 고정 (하드 락)
+    const bottomNavRef = document.getElementById('bottom-nav');
+    if (target === 'map') {
+        document.body.style.overflow = 'hidden';
+        if (bottomNavRef) bottomNavRef.classList.remove('nav-hidden');
+        window.isMapViewActive = true;
+    } else {
+        document.body.style.overflow = 'auto';
+        window.isMapViewActive = false;
+    }
 }
 
 const bottomNav = document.getElementById('bottom-nav');
@@ -1464,6 +1511,8 @@ let lastScrollY = window.scrollY;
 
 if (bottomNav) {
     window.addEventListener('scroll', () => {
+        if (window.isMapViewActive) return; // 맵 화면에서는 메뉴가 숨겨지지 않도록 이벤트 강제 패스
+        
         const currentScrollY = window.scrollY;
         
         if (currentScrollY <= 0) {
@@ -1496,6 +1545,11 @@ if (bottomNav) {
         document.getElementById('upload-input')?.click();
     });
     
+    document.getElementById('nav-map-btn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchView('map');
+    });
+    
     document.getElementById('nav-system-btn')?.addEventListener('click', (e) => {
         e.preventDefault();
         switchView('system');
@@ -1517,4 +1571,75 @@ document.getElementById('upload-input')?.addEventListener('change', async functi
     setTimeout(() => {
         location.reload(); 
     }, 1000);
+});
+
+
+// ---------------------------------------------------------------------------------
+// Manual Feedback Trigger Flow (수동 피드백 진입 모달창 연결)
+// ---------------------------------------------------------------------------------
+document.getElementById('modal-manual-feedback-btn')?.addEventListener('click', () => {
+    if (!currentModalPhoto) return;
+
+    // 모바일 친화적인 Z-인덱스 팝업 생성
+    const modalOverlay = document.createElement('div');
+    modalOverlay.style.position = 'fixed';
+    modalOverlay.style.top = '0'; modalOverlay.style.left = '0';
+    modalOverlay.style.width = '100%'; modalOverlay.style.height = '100%';
+    modalOverlay.style.background = 'rgba(0,0,0,0.85)';
+    modalOverlay.style.zIndex = '9999';
+    modalOverlay.style.display = 'flex';
+    modalOverlay.style.justifyContent = 'center';
+    modalOverlay.style.alignItems = 'center';
+    
+    modalOverlay.innerHTML = `
+        <div style="background: #1f242d; border: 1px solid #374151; border-radius: 12px; padding: 24px; text-align: center; width: 80%; max-width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <h3 style="color: white; margin-top: 0; font-size: 1.2rem; margin-bottom: 5px;"><i class="fa-solid fa-pen-to-square"></i> Manual Feedback</h3>
+            <p style="color: #9ca3af; font-size: 0.85rem; margin-bottom: 20px; line-height: 1.4;">어떤 정보를 수동으로 교정하시겠습니까?<br><small>(선택 시 피드백 화면으로 강제 이동합니다)</small></p>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button id="manual-loc-btn" style="padding: 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s;"><i class="fa-solid fa-location-dot"></i> 장소 (Location)</button>
+                <button id="manual-date-btn" style="padding: 12px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); color: #3b82f6; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s;"><i class="fa-regular fa-calendar-xmark"></i> 날짜 (Date)</button>
+                <button id="manual-cancel-btn" style="padding: 12px; margin-top: 10px; background: transparent; border: 1px solid #4b5563; color: #9ca3af; border-radius: 8px; cursor: pointer; transition: 0.2s;">취소 (Cancel)</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modalOverlay);
+
+    // 이벤트 리스너 바인딩 헬퍼
+    const cleanupAndGo = (mode) => {
+        document.body.removeChild(modalOverlay);
+        if (!mode) return;
+
+        // 메모리에 글로벌 복사본을 먼저 떠둠 (closeModal 시 currentModalPhoto가 null로 타버리기 때문)
+        const targetPhoto = Object.assign({}, currentModalPhoto);
+
+        // 사진 모달창 완전 닫기
+        closeModal();
+        
+        let mockUrl = targetPhoto.url;
+        const ogUrl = targetPhoto.original_path || mockUrl;
+        const dotIndex = mockUrl.lastIndexOf('.');
+        mockUrl = dotIndex !== -1 ? mockUrl.substring(0, dotIndex) + '_' + mockUrl.substring(dotIndex + 1).toLowerCase() + '.webp' : mockUrl;
+        if (!mockUrl.startsWith('/GumaPhoto') && window.location.pathname.startsWith('/GumaPhoto')) mockUrl = '/GumaPhoto' + mockUrl;
+
+        // 타겟 객체 포장
+        const manualTargetPayload = { 
+            id: targetPhoto.id, 
+            url: mockUrl, 
+            originalUrl: ogUrl, 
+            issue: mode, 
+            date: targetPhoto.date, 
+            location: targetPhoto.location, 
+            people: targetPhoto.people, 
+            face_bbox: targetPhoto.face_bbox || [] 
+        };
+
+        // 피드백 뷰 전환 및 주입식 화면 렌더링 호출
+        switchView('feedback');
+        loadUnknownPhoto(manualTargetPayload);
+    };
+
+    document.getElementById('manual-loc-btn').onclick = () => cleanupAndGo('Location');
+    document.getElementById('manual-date-btn').onclick = () => cleanupAndGo('Date');
+    document.getElementById('manual-cancel-btn').onclick = () => cleanupAndGo(null);
 });

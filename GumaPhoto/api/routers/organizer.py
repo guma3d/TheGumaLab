@@ -139,7 +139,6 @@ class OrganizerPipeline:
         if dt_str == "Unknown-Year":
             parent_dir = os.path.basename(os.path.dirname(filepath))
             grandparent_dir = os.path.basename(os.path.dirname(os.path.dirname(filepath)))
-            import re
             match = re.search(r'(19|20)\d{2}[-._]?\d{0,2}', parent_dir + grandparent_dir)
             if match:
                 dt_str = match.group().replace('_', '-').replace('.', '-').rstrip('-')
@@ -351,3 +350,24 @@ async def trigger_run_organizer_task():
     from api.tasks import run_organizer_job
     run_organizer_job.delay()
     return {"message": "✅ Organizer background job queued successfully via Celery."}
+
+def run_organizer_task():
+    pipeline = OrganizerPipeline()
+    pipeline.run()
+    
+    # [백엔드 자동 청소 로직] 이삿짐 이동이 모두 끝난 후 생긴 '빈 깡통 폴더들'을 OS 단에서 파쇄
+    cleanup_dirs = ["/app/data/uploads_raw", "/app/data/organized"]
+    for cln_dir in cleanup_dirs:
+        if not os.path.exists(cln_dir): continue
+        for dirpath, dirnames, filenames in os.walk(cln_dir, topdown=False):
+            # 루트 폴더 자체는 지워지지 않도록 완벽한 절대경로 보호막(Shield) 구축
+            if os.path.abspath(cln_dir) == os.path.abspath(dirpath): continue 
+            
+            # [도커 볼륨 구조 치명타 방어] organized 내부를 뒤지다가 발견된 uploads_raw도 삭제 금지!
+            if os.path.basename(dirpath) == "uploads_raw": continue
+            
+            if not os.listdir(dirpath):
+                try:
+                    os.rmdir(dirpath)
+                    print(f"🧹 [청소 완료] 텅 빈 깡통 폴더 영구 파쇄: {os.path.basename(dirpath)}")
+                except: pass

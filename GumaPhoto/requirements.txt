@@ -4,7 +4,7 @@ jinja2
 qdrant-client
 pydantic
 insightface
-onnxruntime-gpu==1.18.1
+onnxruntime-gpu>=1.19.2
 python-multipart
 imagehash
 exifread

@@ -30,8 +30,9 @@ GumaPhoto 프로젝트에 오신 것을 환영합니다!
     *   `models.py`: 통합 마스터 피스 DB 클래스 모델(`Photo`) 설계도
     *   `state.py`: 런타임 전역 변수 스테이트 저장소
 *   `📁 api/` (Domain-Driven API & Services)
-    *   `routers/`: `upload`, `search`, `organizer`, `feedback` 등 주제별로 완전히 쪼개진 FastAPI 라우터 모음.
-    *   `services/`: `indexer/` (AI 추론 엔진룸), `feedback_service.py` (비즈니스 로직) 등 구체적인 하위 모듈.
+    *   `routers/`: `upload`, `search`, `organizer`, `feedback`, `delete` 등 주제별로 완전히 쪼개진 FastAPI 엔드포인트 모음.
+    *   `services/`: `indexer/` (AI 딥러닝 엔진룸), `feedback_service.py` (조율 및 비즈니스 로직) 등 중(Heavy) 처리 모듈.
+    *   `utils/`: `photo_purger.py`, `metadata_editor.py` 등 범용 무상태(Stateless) 도구.
     *   `tasks.py`: Celery 비동기 큐 작업 레지스트리 (Redis 연동).
 *   `📁 frontend/` (정적 파일 및 UI 에셋)
     *   앱의 시각을 담당하는 `style.css`, 인텔리전트 프론트엔드 라우팅 `script.js` 및 UI 에셋 모음.

@@ -3,7 +3,10 @@ from pydantic import BaseModel
 import typing
 import os
 import json
-import sqlite3
+from sqlalchemy import func
+import uuid
+from core.database import SessionLocal
+from core.models import Photo
 from core.state import state
 from qdrant_client.http.models import Filter, FieldCondition, MatchValue
 import random
@@ -16,52 +19,244 @@ class FeedbackV2Request(BaseModel):
     correct_value: str
     target_points: typing.Optional[typing.List[typing.Union[int, str]]] = []
 
+@router.post("/api/feedback_v2/ignore_face")
+async def ignore_face_feedback(req: FeedbackV2Request):
+    if not state.qdrant_client: return {"error": "Qdrant not loaded"}
+    try:
+        # 뒤통수(오탐지) 랜드마크 제거 로직: Qdrant에서 'face_bbox'를 찢어버리고 'Unidentifiable Person' 명찰을 섬세하게 붙임
+        state.qdrant_client.delete_payload(
+            collection_name="gumaphoto_hybrid_kr",
+            keys=["face_bbox"],
+            points=[str(req.point_id)]
+        )
+        state.qdrant_client.set_payload(
+            collection_name="gumaphoto_hybrid_kr",
+            payload={"people": ["Unidentifiable Person"]},
+            points=[str(req.point_id)]
+        )
+        return {"message": "Ignored successfully."}
+    except Exception as e:
+        return {"error": str(e)}
+
+@router.post("/api/feedback_v2/no_person")
+async def no_person_feedback(req: FeedbackV2Request):
+    if not state.qdrant_client: return {"error": "Qdrant not loaded"}
+    try:
+        # 인형/포스터 등 '진짜 사람이 아님(No Person)' 케이스
+        state.qdrant_client.delete_payload(
+            collection_name="gumaphoto_hybrid_kr",
+            keys=["face_bbox"],
+            points=[str(req.point_id)]
+        )
+        state.qdrant_client.set_payload(
+            collection_name="gumaphoto_hybrid_kr",
+            payload={"people": ["No Person"]},
+            points=[str(req.point_id)]
+        )
+        return {"message": "Ignored successfully as No Person."}
+    except Exception as e:
+        return {"error": str(e)}
+
+@router.post("/api/feedback_v2/temptest")
+async def temptest_feedback(req: FeedbackV2Request):
+    if not state.qdrant_client: return {"error": "Qdrant not loaded"}
+    
+    # "People"이면 face 벡터 참조, 그 외는 scene 벡터
+    fb_type = "face" if "People" in req.issue_type else "scene"
+    
+    try:
+        recommend_res = state.qdrant_client.query_points(
+            collection_name="gumaphoto_hybrid_kr",
+            query=str(req.point_id),
+            using=fb_type,
+            limit=100,
+            with_payload=True
+        ).points
+        
+        # 사용자가 명시적으로 선택한 '메인 원본 피드백 타겟'을 강제로 최우선 순위로 끌어옵니다.
+        target_point = state.qdrant_client.retrieve(
+            collection_name="gumaphoto_hybrid_kr",
+            ids=[str(req.point_id)],
+            with_payload=True
+        )
+        
+        similars = []
+        if target_point:
+            p = target_point[0].payload or {}
+            similars.append({
+                "id": target_point[0].id,
+                "url": p.get("filepath", "").replace("/app/data/organized", "/photos"),
+                "score": 1.0,
+                "date": p.get("date", "Unknown"),
+                "location": p.get("location", "Unknown Location"),
+                "people": p.get("people", []),
+                "face_bbox": p.get("face_bbox", None)
+            })
+            
+        for hit in recommend_res:
+            if str(hit.id) == str(req.point_id): continue
+            
+            # 사용자 지시사항: "해당 얼굴과 유사한 얼굴벡터를 가진 사진들을 유사율 0.8 기준으로 보여줘야 함"
+            cutoff = 0.80 if fb_type == "face" else 0.85
+            if hit.score < cutoff: continue
+            
+            payload = hit.payload or {}
+            filepath = payload.get("filepath", "")
+            if not filepath: continue
+            
+            if fb_type == "scene":
+                if "Date" in req.issue_type:
+                    dt = payload.get("date", "")
+                    if dt and "Unknown" not in dt: continue
+                elif "Location" in req.issue_type:
+                    loc = payload.get("location", "")
+                    if loc and "Unknown" not in loc and "위치정보없음" not in loc: continue
+            elif fb_type == "face":
+                ppl = payload.get("people", [])
+                # 다른 이름으로 이미 매칭되었다면 일단 스킵할지 여부 고민 가능하나, 오탐일수 있으므로 일단 보려면 열어둠.
+            
+            url_path = filepath.replace("/app/data/organized", "/photos")
+            similars.append({
+                "id": hit.id,
+                "url": url_path,
+                "score": round(hit.score, 3),
+                "date": payload.get("date", "Unknown"),
+                "location": payload.get("location", "Unknown Location"),
+                "people": payload.get("people", []),
+                "face_bbox": payload.get("face_bbox", None)
+            })
+            
+        return {"results": similars}
+    except Exception as e:
+        print(f"❌ TempTest (Simulation) 에러: {e}")
+        return {"error": str(e), "results": []}
+
 @router.get("/api/feedback_v2/unknown")
 async def get_unknown_photo():
     if not state.qdrant_client: return {"error": "Qdrant not loaded"}
     
+    db = SessionLocal()
     try:
-        search_res = state.qdrant_client.scroll(
-            collection_name="gumaphoto_hybrid_kr",
-            scroll_filter=Filter(
-                should=[
-                    FieldCondition(key="date", match=MatchValue(value="Unknown-Year")),
-                    FieldCondition(key="location", match=MatchValue(value="위치정보없음")),
-                    FieldCondition(key="location", match=MatchValue(value="Unknown-Location"))
-                ]
-            ),
-            limit=500,
-            with_payload=True
-        )[0]
+        import random
+        import numpy as np
+        import pickle
+        import os
+        from qdrant_client.http.models import Filter, FieldCondition, MatchValue
         
-        if search_res:
-            raw_target = random.choice(search_res)
-            loc = raw_target.payload.get("location", "")
-            people = raw_target.payload.get("people", [])
-            date_val = raw_target.payload.get("date", "")
-            filepath = raw_target.payload.get("filepath", "")
-            
-            issues = []
-            if "Unknown" in date_val or not date_val:
-                issues.append("Date")
-            if "위치정보없음" in loc or "Unknown" in loc or not loc:
-                issues.append("Location")
+        check_people = True if random.random() < 0.6 else False
+        
+        if check_people:
+            # 1. '낮은 정확도(Low Accuracy)' 얼굴 사진 탐색 로직 (사용자 MLOps 지시사항 반영)
+            # Qdrant에 랜덤 노이즈 768차원 벡터를 던져서, 은하계 전역에서 진정한 무작위 100장을 가져옴
+            random_vec = np.random.randn(768).tolist()
+            try:
+                # `search()`를 통해 무작위 샘플링 및 Face 벡터 반환 요청 (with_vectors=["face"])
+                random_hits = state.qdrant_client.search(
+                    collection_name="gumaphoto_hybrid_kr",
+                    query_vector=("scene", random_vec),
+                    limit=100,
+                    with_payload=True,
+                    with_vectors=["face"]
+                )
                 
-            if issues:
-                issue = random.choice(issues)
-                url_path = filepath.replace("/app/data/organized", "/photos")
+                # known_faces.pkl 로드하여 즉석 유사도 검증 준비
+                known_faces_path = "/app/data/known_faces.pkl" # Docker volume
+                known_faces = {}
+                if os.path.exists(known_faces_path):
+                    with open(known_faces_path, "rb") as f:
+                        known_faces = pickle.load(f)
+                        
+                if known_faces:
+                    # 무작위 샘플 중 얼굴 벡터가 존재하며, 정확도가 0.55 밑으로 떨어지는 타겟 찾기
+                    for hit in random_hits:
+                        face_vec = hit.vector.get("face") if hit.vector else None
+                        p_people = hit.payload.get("people", [])
+                        
+                        # 완전히 알 수 없다고 판정된 'Unknown People'은 기존 로직에서 잡을 것이므로 패스
+                        if face_vec and "Unknown People" not in p_people:
+                            best_sim = -1.0
+                            for k_name, k_vec in known_faces.items():
+                                sim = np.dot(face_vec, k_vec)
+                                if sim > best_sim:
+                                    best_sim = sim
+                            
+                            # 정확도가 현저히 낮은 사진(0.55 이하) 발견 시, 억지 채점된 사진이므로 피드백 타겟으로 즉시 반환
+                            if 0.0 < best_sim <= 0.55:
+                                p = hit.payload or {}
+                                url_path = p.get("filepath", "").replace("/app/data/organized", "/photos")
+                                return {
+                                    "id": hit.id,
+                                    "url": url_path,
+                                    "issue": "People",
+                                    "date": p.get("date", "Unknown"),
+                                    "location": p.get("location", "Unknown"),
+                                    "people": p.get("people", []),
+                                    "face_bbox": p.get("face_bbox", None)
+                                }
+            except Exception as rand_err:
+                print(f"      [!] 랜덤 샘플링 유사도 채점 실패: {rand_err}")
+
+            # 2. '완전 인식 실패(Unknown People)' 사진 탐색 로직 (기존)
+            res, _ = state.qdrant_client.scroll(
+                collection_name="gumaphoto_hybrid_kr",
+                scroll_filter=Filter(must=[FieldCondition(key="people", match=MatchValue(value="Unknown People"))]),
+                limit=100,
+                with_payload=True
+            )
+            if res:
+                raw_target = random.choice(res)
+                p = raw_target.payload or {}
+                url_path = p.get("filepath", "").replace("/app/data/organized", "/photos")
                 return {
                     "id": raw_target.id,
                     "url": url_path,
-                    "issue": issue,
-                    "date": date_val,
-                    "location": loc,
-                    "people": people
+                    "issue": "People",
+                    "date": p.get("date", "Unknown"),
+                    "location": p.get("location", "Unknown"),
+                    "people": p.get("people", []),
+                    "face_bbox": p.get("face_bbox", None)
                 }
+                
+        # [초고속 탐색 🚀] 기존 통합 SQLite 기반 장소/시간 피드백
+        target_photo = db.query(Photo).filter(
+            (Photo.status == 'VECTORIZED') &
+            (Photo.filepath.like('%Unknown%') | Photo.filepath.like('%위치정보없음%'))
+        ).order_by(func.random()).first()
+        
+        if target_photo and target_photo.filepath:
+            deterministic_qdrant_id = str(uuid.uuid5(uuid.NAMESPACE_URL, target_photo.filepath))
+            points_data = state.qdrant_client.retrieve(
+                collection_name="gumaphoto_hybrid_kr", ids=[deterministic_qdrant_id], with_payload=True
+            )
+            if points_data:
+                raw_target = points_data[0]
+                p = raw_target.payload or {}
+                loc = p.get("location", "")
+                date_val = p.get("date", "")
+                
+                issues = []
+                if "Unknown" in date_val or not date_val: issues.append("Date")
+                if "위치정보없음" in loc or "Unknown" in loc or not loc: issues.append("Location")
+                    
+                if issues:
+                    issue = random.choice(issues)
+                    url_path = p.get("filepath", "").replace("/app/data/organized", "/photos")
+                    return {
+                        "id": raw_target.id,
+                        "url": url_path,
+                        "issue": issue,
+                        "date": date_val,
+                        "location": loc,
+                        "people": p.get("people", []),
+                        "face_bbox": p.get("face_bbox", None)
+                    }
+                    
     except Exception as e:
-        print(f"Qdrant Scroll 예외 발생: {e}")
+        print(f"❌ 피드백 고속 혼합 탐색 중 예외 발생: {e}")
+    finally:
+        db.close()
 
-    return {"id": None, "message": "현재 피드백이 필요한 사진을 찾지 못했습니다."}
+    return {"id": None, "message": "No photos require feedback at this time."}
 
 @router.post("/api/feedback_v2/submit")
 async def submit_feedback_v2(req: FeedbackV2Request):
@@ -144,8 +339,8 @@ async def submit_feedback_v2(req: FeedbackV2Request):
                 run_feedback_time_loc_job.delay(str(req.point_id), "Unknown", db_correct_value, tp_json)
                 
         print(f"🚀 [Feedback v2.0 -> Redis] Celery 대기열에 지시서 발송 완료! (ID: {req.point_id})")
-        return {"message": "정답이 Redis 대기열 큐로 즉각 발송되었습니다! 순차 처리 봇이 안전하게 스캔합니다."}
+        return {"message": "Feedback submitted successfully. Processing in background."}
         
     except Exception as e:
         print(f"❌ [Feedback v2.0 -> Redis] 큐 발송 실패: {e}")
-        return {"error": str(e)}
+        return {"error": "Failed to submit feedback."}

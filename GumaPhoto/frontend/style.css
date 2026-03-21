@@ -534,6 +534,28 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
     box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
 }
 
+/* 수동 피드백 강제 트리거 아이콘 (Amber/Yellow 포스) */
+.premium-feedback-btn {
+    background: rgba(234, 179, 8, 0.15); 
+    border: 1px solid rgba(234, 179, 8, 0.4);
+    color: #eab308; 
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(5px);
+}
+.premium-feedback-btn:hover {
+    background: rgba(234, 179, 8, 0.3);
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba(234, 179, 8, 0.2);
+}
+
 .premium-download-btn {
     background: rgba(255, 255, 255, 0.15); /* 하얀색 배경 */
     border: 1px solid rgba(255, 255, 255, 0.4);
@@ -813,6 +835,25 @@ img {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
+}
+
+/* UI 토글 (스르르 페이드 효과) */
+.opacity-0 {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+#modal-info-badges {
+    transition: opacity 0.3s ease;
+}
+
+#modal-image, .modal-image-container {
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-user-drag: none !important;
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+    outline: none !important;
 }
 
 /* 하단 내비게이션 바 (진한 그레이 배경) */

@@ -23,7 +23,7 @@ GumaPhoto(`index.html`)의 프론트엔드는 모바일과 데스크톱 모두�
  ┃       ┃
  ┃       ┣━ 🪄 <div id="feedback"> (프리미엄 자율 진화 학습 탭 - 글라스모피즘 1단 집중뷰 카드 레이아웃)
  ┃       ┃   ┣━ 🎯 <div id="fb-unknown-photo-container"> (미분류 사진 1장 집중 뷰 및 정답 폼)
- ┃       ┃   ┗━ 🔲 <div id="fb-temptest-results"> (임계치 85% 이상의 유사 사진 체크박스 그리드 선택 레이어)
+ ┃       ┃   ┗━ 🔲 <div id="fb-temptest-results"> (임계치 85% 이상의 유사 사진 체크박스 그리드 레이어 + 원본 타겟 1장은 무조건 0순위로 강제 포함시켜 Send 블로킹 방어)
  ┃       ┗━ 📊 <div id="system"> (프리미엄 시스템 모니터링 탭 - 네온 카드 디자인의 AI/DB 헬스 체크)
  ┃
  ┣━ 🛠️ [2] <nav id="bottom-nav"> (모바일 전용 하단 내비게이션 바 / z-index: 150)
@@ -32,8 +32,7 @@ GumaPhoto(`index.html`)의 프론트엔드는 모바일과 데스크톱 모두�
  ┃
  ┗━ ⬛ [3] 팝업 모달 레이어 (클릭 시 화면 전체를 덮는 오버레이 컴포넌트 / z-index: 1000+)
      ┣━ 🔍 <div id="search-modal"> (자연어 검색 전용 입력 팝업)
-     ┣━ 📸 <div id="photo-modal"> (사진 상세 뷰 / 다운로드, 삭제 기능 통합 모달)
-     ┣━ 📱 <div id="ios-share-sheet"> (iOS 사파리 스타일의 터치 최적화 네이티브 액션 시트)
+     ┣━ 📸 <div id="photo-modal"> (사진 상세 뷰 / 삭제 및 Blob 변환 네이티브 물리 공유 모달, Panzoom 핀치줌 엔진 적용)
      ┗━ 🚨 <div id="delete-confirm-modal"> (삭제 재확인 경고창 / z-index: 2000)
 ```
 
@@ -47,3 +46,6 @@ GumaPhoto(`index.html`)의 프론트엔드는 모바일과 데스크톱 모두�
 
 ### 3) 가로형 10개 강제 보장 및 네이티브 액션 융합
 메인 화면 상단의 테마 슬라이더를 무작위로 호출하되, 결과가 미달되더라도 **최종 통과 슬라이더 10개가 무조건 화면을 꽉 채우도록 비동기 풀링(Promise.all) 크기를 증설**해 시각적 여백의 틈을 메웠습니다. 로고와 하단 탭 터치로 즉각적인 프론트엔드 캐시 파괴(리로드)를 수행할 뿐 아니라, "Upload" 구름 버튼 클릭 시 OS 사진 보관함(Native Upload Picker)이 곧바로 튀어나오는 원스텝 UX를 통합해 두었습니다.
+
+### 4) 완벽한 네이티브 모바일 애플리케이션 감성 (PWA + Panzoom + Blob Share)
+PWA 스펙의 `apple-touch-icon.png` (다크모드 스파이키 조리개 에디션) 연동을 통해 홈 화면에 완벽한 사이즈로 인스톨을 지원합니다. 또한, `Panzoom.js`를 사용해 사파리 고유의 앱 튕김 현상 없는 핀치줌(두 손가락 확대)을 제공하며, 카카오톡 등에 사진을 공유할 때 의미 없는 링크(URL)가 전송되는 현상을 막기 위해 내부적으로 Fetch-Blob 컨버전을 거친 후 `navigator.share({files})` 규격으로 완벽한 고해상도 물리 원본 파일 다이렉트 전송을 달성했습니다.

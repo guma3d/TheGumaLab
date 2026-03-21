@@ -148,12 +148,12 @@ class VectorIndexerOrchestrator:
                 }
                 payload.update(best_face_payload)
                 
-                successful_payloads.append((filepath, payload, face_count))
+                successful_payloads.append((filepath, payload, point_id))
                 points_to_upsert.append(PointStruct(id=point_id, vector=vectors, payload=payload))
                 
             except Exception as e:
                 print(f"      ⚠️ 개별 항목 payload 병합 오류 (Skip): {e}")
-                self.tracker.mark_error(filepath)
+                self.tracker.mark_error(filepath, str(e))
                 
         # 3. Qdrant & DB Updates
         if points_to_upsert:
@@ -161,7 +161,7 @@ class VectorIndexerOrchestrator:
                 self.qdrant.upsert_batch(points_to_upsert)
                 
                 db_records = []
-                for filepath, payload, face_count in successful_payloads:
+                for filepath, payload, point_id in successful_payloads:
                     try:
                         generate_xmp_sidecar(filepath, payload)
                         
@@ -175,10 +175,10 @@ class VectorIndexerOrchestrator:
                                 if t_img.mode in ("RGBA", "P"): t_img = t_img.convert("RGB")
                                 t_img.save(thumb_path, "WEBP", quality=75)
                                 
-                        db_records.append((filepath, 'DONE', face_count))
+                        db_records.append((filepath, 'DONE', point_id))
                     except Exception as xmp_e:
                         print(f"      ⚠️ XMP/WEBP 발생오류: {xmp_e}")
-                        db_records.append((filepath, 'ERROR', face_count))
+                        db_records.append((filepath, 'ERROR', point_id))
                         
                 self.tracker.bulk_mark(db_records)
             except Exception as qdrant_err:
@@ -214,7 +214,7 @@ class VectorIndexerOrchestrator:
                             
                         point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, filepath))
                         if self.qdrant.point_exists(point_id):
-                            self.tracker.mark_done(filepath)
+                            self.tracker.mark_done(filepath, point_id)
                             return None
                             
                         self.qdrant.delete_point(point_id)
@@ -234,7 +234,7 @@ class VectorIndexerOrchestrator:
                                 "season": season, "point_id": point_id
                             }
                         except Exception as e:
-                            self.tracker.mark_error(filepath)
+                            self.tracker.mark_error(filepath, str(e))
                             return None
                             
                     results = list(executor.map(prep, batch_paths))
