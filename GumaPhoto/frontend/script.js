@@ -759,7 +759,7 @@ function openModal(photo, imgUrl) {
         
         // 1. Date
         let dateVal = (photo.date && photo.date.trim() !== '') ? photo.date : 'Unknown';
-        if (dateVal.length > 10 && dateVal !== 'Unknown') dateVal = dateVal.substring(0, 10);
+        if (dateVal.length > 10 && !dateVal.includes('Unknown')) dateVal = dateVal.substring(0, 10);
         badgesHtml += createBadge('fa-regular fa-calendar', dateVal);
         
         // 2. Location
@@ -1249,8 +1249,7 @@ async function loadUnknownPhoto(manualTargetPayload = null) {
             
             // 1. Date
             let dateVal = (t.date && t.date.trim() !== '') ? t.date : 'Unknown';
-            if (dateVal === 'Unknown Date') dateVal = 'Unknown';
-            if (dateVal.length > 10 && dateVal !== 'Unknown') dateVal = dateVal.substring(0, 10);
+            if (dateVal.length > 10 && !dateVal.includes('Unknown')) dateVal = dateVal.substring(0, 10);
             badgesHtml += createBadge('fa-regular fa-calendar', dateVal);
             
             // 2. Location
@@ -1390,8 +1389,7 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
                 let badgesHtml = '';
                 // 1. Date
                 let dateVal = (item.date && item.date.trim() !== '') ? item.date : 'Unknown';
-                if (dateVal === 'Unknown Date') dateVal = 'Unknown';
-                if (dateVal.length > 10 && dateVal !== 'Unknown') dateVal = dateVal.substring(0, 10);
+                if (dateVal.length > 10 && !dateVal.includes('Unknown')) dateVal = dateVal.substring(0, 10);
                 badgesHtml += createBadge('fa-regular fa-calendar', dateVal);
                 
                 // 2. Location
