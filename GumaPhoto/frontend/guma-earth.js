@@ -67,6 +67,8 @@ const GumaEarth = (function() {
             viewer.scene.highDynamicRange = true; // HDR tone mapping
             viewer.scene.postProcessStages.fxaa.enabled = true; // Smooth edge anti-aliasing (High Quality)
             viewer.scene.globe.enableLighting = false; // Disable stark sun shadows for a clean UI map look
+            viewer.scene.globe.depthTestAgainstTerrain = false; // Prevent markers from being hidden behind terrain
+
             
             // Tweaking the Earth's glowing halo (Atmosphere) to have a subtle Emerald/Blue tint
             if (viewer.scene.skyAtmosphere) {
@@ -100,6 +102,36 @@ const GumaEarth = (function() {
                 destination: Cesium.Cartesian3.fromDegrees(127.5, 36.0, MAX_ALTITUDE),
                 duration: 0 // Instant snap to prevent animation weirdness if hidden
             });
+            
+            // --- NEW: Load GeoJSON Markers ---
+            try {
+                const geoJsonUrl = window.location.pathname.startsWith('/GumaPhoto') ? '/GumaPhoto/frontend/photos_map.geojson' : '/frontend/photos_map.geojson';
+                const response = await fetch(geoJsonUrl);
+                if (response.ok) {
+                    const params = {
+                        markerSize: 28,
+                        markerColor: Cesium.Color.fromCssColorString('#f43f5e'), // Red-pink marker
+                        markerSymbol: 'camera'
+                    };
+                    const data = await response.json();
+                    const ds = await Cesium.GeoJsonDataSource.load(data, params);
+                    
+                    const entities = ds.entities.values;
+                    // Force billboards to clamp to ground so they don't float or sink oddly
+                    for (let i = 0; i < entities.length; i++) {
+                        const evt = entities[i];
+                        if (evt.billboard) {
+                            evt.billboard.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND;
+                        }
+                    }
+                    viewer.dataSources.add(ds);
+                    console.log(`[GumaEarth] Successfully loaded ${entities.length} GeoJSON markers!`);
+                } else {
+                    console.warn(`[GumaEarth] Map markers not found at ${geoJsonUrl} yet.`);
+                }
+            } catch(e) {
+                console.error("[GumaEarth] Error loading GeoJSON map markers:", e);
+            }
             
             console.log("[GumaEarth] WebGL Engine successfully booted!");
             

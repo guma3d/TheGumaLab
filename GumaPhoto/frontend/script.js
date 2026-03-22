@@ -1245,6 +1245,10 @@ async function preloadFeedbackQueue(count = 5) {
         if (data && !data.error && data.id) {
             // Avoid duplicates in queue
             if (!window.feedbackQueue.find(item => item.id === data.id)) {
+                // [프리미엄 최적화] 사진 URL 자체를 브라우저 백그라운드 캐시에 은밀히 올려둡니다. (진정한 Zero-Delay)
+                const preloadImg = new Image();
+                preloadImg.src = data.url;
+                
                 window.feedbackQueue.push(data);
             }
         }
