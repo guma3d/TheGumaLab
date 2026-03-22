@@ -26,15 +26,15 @@
 
 ## 3. 구현 로드맵 (액션 아이템 기반 페이즈)
 
-### **Phase 1: 인프라 연동 및 3D 엔진 부트스트래핑**
-1. **정적 파일 서빙 최적화:** 지도 파이프라인만을 위한 무거운 Nginx 컨테이너 신설 대안으로, 현재 동작 중인 FastAPI GumaPhoto App 라우터 내부에 `/map` 엔드포인트를 열고 CesiumJS 에셋을 정적으로(Static) 서빙.
-2. **로컬 베이스 지구본 렌더링:** 홈 서버 클라이언트 망에서 빈 CesiumJS 3D 지구와 컨트롤 UI를 렌더링하여 기본 카메라 조작 테스트.
-3. **외부망 라우팅 검증:** 기존 Cloudflared/Nginx 아키텍처를 통해 `home.guma3d.com/map` 접속 무결성 테스트.
+### **✅ Phase 1: 인프라 연동 및 3D 엔진 부트스트래핑 (완료)**
+1. **정적 파일 서빙 최적화:** 지도 파이프라인만을 위한 무거운 Nginx 컨테이너 신설 대안으로, 현재 동작 중인 FastAPI GumaPhoto App 라우터 내부에 `/map` 엔드포인트를 열고 CesiumJS 에셋을 정적으로(Static) 서빙. (완료)
+2. **로컬 베이스 지구본 렌더링:** 홈 서버 클라이언트 망에서 빈 CesiumJS 3D 지구와 컨트롤 UI를 렌더링하여 기본 카메라 조작 테스트. (완료)
+3. **외부망 라우팅 검증:** 기존 Cloudflared/Nginx 아키텍처를 통해 `home.guma3d.com/map` 접속 무결성 테스트. (완료)
 
-### **Phase 2: 백그라운드 GPS 추출 파이프라인 (Data Pipeline)**
-1. **Python GPS 추출 툴 통합:** 기존 `Florence-2` 및 날짜 전처리(Preprocess)가 돌아가는 워커 스레드 내부에, Pillow/ExifRead를 이용한 EXIF 위도(Lat)/경도(Lon) 패치 로직 병합.
-2. **DMS to WGS84 표준화:** 사진의 원시 도분초(DMS) 포맷을 십진법(Decimal Degrees) 기반 `WGS84` 공간정보로 변환.
-3. **GeoJSON 스키마 적재:** 렌더링 퍼포먼스 극대화를 위해 프론트엔드가 한 번에 Parse 가능한 초경량 GeoJSON 규격을 백엔드에 캐싱(혹은 파일덤프)하여 오버헤드 최소화.
+### **✅ Phase 2: 백그라운드 GPS 추출 파이프라인 (Data Pipeline) (완료)**
+1. **Python GPS 추출 툴 통합:** 기존 `Florence-2` 및 날짜 전처리(Preprocess)가 돌아가는 워커 스레드 내부에, Pillow/ExifRead를 이용한 EXIF 위도(Lat)/경도(Lon) 패치 로직 병합. (완료)
+2. **DMS to WGS84 표준화:** 사진의 원시 도분초(DMS) 포맷을 십진법(Decimal Degrees) 기반 `WGS84` 공간정보로 변환. (완료)
+3. **GeoJSON 스키마 적재:** 렌더링 퍼포먼스 극대화를 위해 프론트엔드가 한 번에 Parse 가능한 초경량 GeoJSON 규격을 백엔드에 캐싱(혹은 파일덤프)하여 오버헤드 최소화. (완료)
 
 ### **Phase 3: 하이브리드 공간 레이어링 (Map Layering)**
 1. **VWorld 베이스 적용:** CesiumJS의 `ImageryProvider` 인스턴스를 올려 대한민국 지형 구간에 브이월드 타일 맵을 덮어씌움.
