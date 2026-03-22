@@ -185,6 +185,28 @@ class VectorIndexerOrchestrator:
                 db_records = []
                 for filepath, payload, point_id in successful_payloads:
                     try:
+                        print(f"  [🕵️‍♂️ AUDIT-AFTER] File: {filepath} | Loc: {payload.get('location')} | Date: {payload.get('date')} | People: {payload.get('people')}")
+                        
+                        try:
+                            import json, os
+                            trace_file = "/app/data/audit_trace.json"
+                            trace_id = payload.get("original_context", "")
+                            if trace_id.startswith("fbtrace_") and os.path.exists(trace_file):
+                                with open(trace_file, "r", encoding="utf-8") as tf:
+                                    lines = tf.readlines()
+                                for line in reversed(lines):
+                                    data = json.loads(line)
+                                    if data.get("trace_id") == trace_id:
+                                        print("\n========================================================")
+                                        print(f"  📊 [피드백 실시간 비교 결과 (Before vs After)]")
+                                        print(f"  > 파일명: {os.path.basename(data.get('filepath'))}  ➡️  {os.path.basename(filepath)}")
+                                        print(f"  > 장  소: [{data.get('location')}]  ➡️  [{payload.get('location')}]")
+                                        print(f"  > 인  물: {data.get('people')}  ➡️  {payload.get('people')}")
+                                        print("========================================================\n")
+                                        break
+                        except Exception as trace_err:
+                            print(f"    [-] Audit Trace Exception: {trace_err}")
+                            
                         generate_xmp_sidecar(filepath, payload)
                         
                         orig_ext = filepath.rsplit('.', 1)[-1].lower() if '.' in filepath else ""

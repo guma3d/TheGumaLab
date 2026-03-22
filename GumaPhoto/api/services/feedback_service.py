@@ -33,7 +33,17 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
             ids=target_points,
             with_payload=True
         )
-        similar_files = [res.payload.get("filepath") for res in points_data if getattr(res, 'payload', {}).get("filepath")]
+        for res in points_data:
+            p = getattr(res, 'payload', {})
+            fpath = p.get("filepath")
+            if fpath:
+                similar_files.append(fpath)
+                print(f"  [🕵️‍♂️ AUDIT-BEFORE (Time/Loc)] File: {fpath} | Loc: {p.get('location')} | Date: {p.get('date')} | People: {p.get('people')}")
+                try:
+                    import json, os
+                    with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
+                        tf.write(json.dumps({"type": "BEFORE", "hash_key": os.path.basename(fpath)[:15], "filepath": fpath, "location": p.get('location'), "date": p.get('date'), "people": p.get('people')}, ensure_ascii=False) + "\n")
+                except: pass
     else:
         print("[-] 지정된 타겟 포인트 리스트가 없습니다. 종료합니다.")
         return
@@ -61,10 +71,19 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
         # 껍데기만 무사히 남은 원본 파일을 물리적으로 uploads_raw 이주
         if os.path.exists(fpath):
             base, ext = os.path.splitext(os.path.basename(fpath))
+            trace_id = f"fbtrace_{uuid.uuid4().hex[:8]}"
+            trace_dir = os.path.join(uploads_dir, trace_id)
+            os.makedirs(trace_dir, exist_ok=True)
             safe_new_name = f"{base}_fbpass_{uuid.uuid4().hex[:8]}{ext}"
-            new_fpath = os.path.join(uploads_dir, safe_new_name)
+            new_fpath = os.path.join(trace_dir, safe_new_name)
             shutil.move(fpath, new_fpath)
             moved_files.append(new_fpath)
+            
+            try:
+                import json
+                with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
+                    tf.write(json.dumps({"type": "BEFORE", "trace_id": trace_id, "filepath": fpath, "location": p.get('location'), "date": p.get('date'), "people": p.get('people')}, ensure_ascii=False) + "\n")
+            except: pass
             
     print(f"  [+] 총 {len(moved_files)}개의 원본 파일이 과거 기록을 청산하고 uploads_raw로 무사히 대피했습니다.")
 
@@ -104,6 +123,11 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
             filepath = res.payload.get("filepath")
             face_bbox = res.payload.get("face_bbox")
             if filepath and os.path.exists(filepath):
+                print(f"  [🕵️‍♂️ AUDIT-BEFORE (Face)] File: {filepath} | Loc: {res.payload.get('location')} | Date: {res.payload.get('date')} | People: {res.payload.get('people')}")
+                try:
+                    with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
+                        tf.write(json.dumps({"type": "BEFORE", "hash_key": os.path.basename(filepath)[:15], "filepath": filepath, "location": res.payload.get('location'), "date": res.payload.get('date'), "people": res.payload.get('people')}, ensure_ascii=False) + "\n")
+                except: pass
                 target_filepaths.append({
                     "filepath": filepath,
                     "face_bbox": face_bbox,
@@ -183,11 +207,21 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
         except Exception as e: print(f"  [!] Photo purge failed: {e}")
         
         # 1-3. 유령 파일(Ghost)이 되지 않도록 새 생명을 부여하며 uploads_raw 큐로 이주
-        raw_dest = os.path.join("/app/data/uploads_raw", os.path.basename(filepath))
+        # 비교 로그 추적을 위해 특수 trace 폴더에 담아서 보냅니다.
+        trace_id = f"fbtrace_{uuid.uuid4().hex[:8]}"
+        trace_dir = os.path.join("/app/data/uploads_raw", trace_id)
+        os.makedirs(trace_dir, exist_ok=True)
+        raw_dest = os.path.join(trace_dir, os.path.basename(filepath))
         if os.path.exists(filepath):
             shutil.move(filepath, raw_dest)
             print(f"  [+] 타겟 사진 재인덱싱 대기열 이동 완료: {raw_dest}")
             moved_files.append(raw_dest)
+            
+            # Trace DB 기록 (AUDIT 용)
+            try:
+                with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
+                    tf.write(json.dumps({"type": "BEFORE", "trace_id": trace_id, "filepath": filepath, "location": res.payload.get('location'), "date": res.payload.get('date'), "people": res.payload.get('people')}, ensure_ascii=False) + "\n")
+            except: pass
             
     if target_filepaths:
         # 2. 얼굴 도감 정밀 리빌드 (InsightFace)
