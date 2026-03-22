@@ -802,35 +802,64 @@ photoModal.addEventListener('click', (e) => {
 
 
 // ==========================================
-// Native Web Share API (원래 로직으로 리롤백)
+// Native Web Share API (파일 직접 끌어오기 방식)
 // ==========================================
 shareBtn?.addEventListener('click', async () => {
     if (!currentModalPhoto) return;
     
+    const ogHtml = shareBtn.innerHTML;
+    
     try {
         const fileUrl = modalImage.src;
+        
         // Web Share API (모바일 네이티브 공유 우선)
         if (navigator.share) {
-            await navigator.share({
-                title: 'GumaPhoto',
-                text: '이 사진을 확인해보세요!',
-                url: fileUrl 
-            });
+            shareBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            shareBtn.disabled = true;
+            
+            // 파일 리소스를 네이티브로 직접 끌어오기 (Blob Fetch)
+            const response = await fetch(fileUrl);
+            const blob = await response.blob();
+            let ext = "jpg";
+            if (blob.type === "image/png") ext = "png";
+            else if (blob.type === "image/webp") ext = "webp";
+            else if (blob.type === "video/mp4") ext = "mp4";
+            
+            const file = new File([blob], `GumaPhoto_Shared_${currentModalPhoto.id}.${ext}`, { type: blob.type });
+
+            // 브라우저가 파일 공유를 지원하는지 점검 후 전송
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    title: 'GumaPhoto 공유',
+                    files: [file]
+                });
+            } else {
+                // 파일 공유 미지원 브라우저 폴백 (URL 공유)
+                await navigator.share({
+                    title: 'GumaPhoto',
+                    text: '이 사진을 확인해보세요!',
+                    url: fileUrl 
+                });
+            }
+            
+            shareBtn.innerHTML = ogHtml;
+            shareBtn.disabled = false;
         } else {
             // PC 브라우저 데스크탑 환경 폴백
             await navigator.clipboard.writeText(fileUrl);
             
-            const originalHtml = shareBtn.innerHTML;
             shareBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
             shareBtn.style.color = '#10b981';
             
             setTimeout(() => {
-                shareBtn.innerHTML = originalHtml;
+                shareBtn.innerHTML = ogHtml;
                 shareBtn.style.color = '';
             }, 2000);
         }
     } catch (err) {
         console.log('Share canceled or failed', err);
+        shareBtn.innerHTML = ogHtml;
+        shareBtn.disabled = false;
     }
 });
 
