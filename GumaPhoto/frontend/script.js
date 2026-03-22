@@ -1558,6 +1558,7 @@ document.getElementById('fb-temptest-send-btn')?.addEventListener('click', async
     } catch (err) {
         console.error(err);
         alert("오류 발생: " + err.message);
+    } finally {
         btn.innerHTML = ogHtml;
         btn.disabled = false;
     }
