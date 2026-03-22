@@ -163,8 +163,8 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
             
         # 1-2. 기존 찌꺼기 완전 파기 (Qdrant & SQLite DELETED)
         # 여러 얼굴이 하나의 사진에 있을 수 있으므로 동일 파일의 중복 처리를 방지하기 위해 try-except로 무시
-        try: PhotoPurger.purge_photo_data(filepath, keep_original=True)
-        except: pass
+        try: PhotoPurger.purge_photo_data(filepath, point_id=point_id, keep_original=True)
+        except Exception as e: print(f"  [!] Photo purge failed: {e}")
         
         # 1-3. 유령 파일(Ghost)이 되지 않도록 새 생명을 부여하며 uploads_raw 큐로 이주
         raw_dest = os.path.join("/app/data/uploads_raw", os.path.basename(filepath))
