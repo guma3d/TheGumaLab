@@ -89,10 +89,19 @@ def get_advanced_system_stats():
             "people": Counter()
         }
         
+        min_date = "9999-99"
+        max_date = "0000-00"
+        
         for pt in all_points:
             p = pt.payload or {}
             
             p_date = p.get("date", "Unknown Date")
+            if p_date != "Unknown Date" and len(p_date) >= 7:
+                ym = p_date[:7]
+                if ym >= "1900-01" and ym <= "2100-12":
+                    if ym < min_date: min_date = ym
+                    if ym > max_date: max_date = ym
+                    
             if p_date != "Unknown Date" and len(p_date) >= 4:
                 # YYYY-MM 등에서 연도(YYYY)만 추출
                 p_date = p_date[:4]
@@ -126,6 +135,8 @@ def get_advanced_system_stats():
             
         return {
             "total_photos": total_photos,
+            "min_date": min_date if min_date != "9999-99" else None,
+            "max_date": max_date if max_date != "0000-00" else None,
             "known_faces_count": len(known_faces_names),
             "known_faces_names": list(known_faces_names),
             "dates": format_counter(counts["dates"]),

@@ -984,12 +984,29 @@ async function fetchAdvancedStats() {
             advancedStatsData = await res.json();
             
             const actualLocs = advancedStatsData.locations ? advancedStatsData.locations.filter(l => !l.name.includes("Unknown") && l.name !== "위치정보없음").length : 0;
-            const actualDates = advancedStatsData.dates ? advancedStatsData.dates.filter(d => !d.name.includes("Unknown")).length : 0;
+            
+            let dateSpanStr = "-";
+            if (advancedStatsData.min_date && advancedStatsData.max_date) {
+                const parts1 = advancedStatsData.min_date.split("-");
+                const parts2 = advancedStatsData.max_date.split("-");
+                if (parts1.length >= 2 && parts2.length >= 2) {
+                    const y1 = parseInt(parts1[0]); const m1 = parseInt(parts1[1]);
+                    const y2 = parseInt(parts2[0]); const m2 = parseInt(parts2[1]);
+                    const totalMonths = (y2 - y1) * 12 + (m2 - m1) + 1;
+                    if (totalMonths > 0) {
+                        const spanYears = Math.floor(totalMonths / 12);
+                        const spanMonths = totalMonths % 12;
+                        if (spanYears > 0 && spanMonths > 0) dateSpanStr = `${spanYears}년 ${spanMonths}개월`;
+                        else if (spanYears > 0) dateSpanStr = `${spanYears}년`;
+                        else dateSpanStr = `${spanMonths}개월`;
+                    }
+                }
+            }
             
             document.getElementById('stat-total-photos').innerText = advancedStatsData.total_photos.toLocaleString();
             document.getElementById('stat-total-people').innerText = advancedStatsData.known_faces_count.toLocaleString();
             document.getElementById('stat-total-locations').innerText = actualLocs.toLocaleString();
-            document.getElementById('stat-total-dates').innerText = actualDates.toLocaleString();
+            document.getElementById('stat-total-dates').innerText = dateSpanStr;
         }
     } catch(err) {
         console.error('Error fetching advanced stats:', err);
