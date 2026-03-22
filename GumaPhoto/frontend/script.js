@@ -30,13 +30,25 @@ clearBtn.addEventListener('click', function() {
 });
 
 // Initialize Home Gallery on Load
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     currentQuery = '';
     currentOffset = 0;
     currentGalleryFilter = "recent";
     hasMore = true;
     totalHits = 0;
-    fetchPhotos(false);
+    
+    // 1. 홈 갤러리 메인 데이터 로딩 및 피드백 큐 5개 자동 장전 (Parallel)
+    await Promise.all([
+        fetchPhotos(false),
+        preloadFeedbackQueue(5)
+    ]);
+    
+    // 2. 프리패치가 완료되면 스플래시 화면을 페이드아웃하며 제거
+    const splashScreen = document.getElementById('splash-screen');
+    if (splashScreen) {
+        splashScreen.style.opacity = '0';
+        setTimeout(() => splashScreen.remove(), 600);
+    }
 });
 
 // Tags Logic
@@ -1213,6 +1225,32 @@ document.getElementById('fb-temptest-close')?.addEventListener('click', () => {
     if (infoTextContainer) infoTextContainer.style.display = 'block';
 });
 
+window.feedbackQueue = [];
+
+async function preloadFeedbackQueue(count = 5) {
+    if (window.feedbackQueue.length >= count) return;
+    
+    let apiUrl = '/api/feedback_v2/unknown';
+    if (window.location.pathname.startsWith('/GumaPhoto')) apiUrl = '/GumaPhoto' + apiUrl;
+    
+    // Load concurrently up to the needed amount
+    const needed = count - window.feedbackQueue.length;
+    const promises = [];
+    for (let i = 0; i < needed; i++) {
+        promises.push(fetch(apiUrl).then(r => r.json()).catch(e => null));
+    }
+    
+    const results = await Promise.all(promises);
+    results.forEach(data => {
+        if (data && !data.error && data.id) {
+            // Avoid duplicates in queue
+            if (!window.feedbackQueue.find(item => item.id === data.id)) {
+                window.feedbackQueue.push(data);
+            }
+        }
+    });
+}
+
 async function loadUnknownPhoto(manualTargetPayload = null) {
     const imgEl = document.getElementById('fb-target-img');
     const spinner = document.getElementById('fb-loading-spinner');
@@ -1247,10 +1285,13 @@ async function loadUnknownPhoto(manualTargetPayload = null) {
     try {
         if (manualTargetPayload) {
             selectedFeedbackTarget = manualTargetPayload;
+        } else if (window.feedbackQueue && window.feedbackQueue.length > 0) {
+            selectedFeedbackTarget = window.feedbackQueue.shift(); // 큐에서 빛의 속도로 팝(Pop)
+            // 비동기로 큐 탄창 재장전
+            preloadFeedbackQueue(5);
         } else {
             let apiUrl = '/api/feedback_v2/unknown';
             if (window.location.pathname.startsWith('/GumaPhoto')) apiUrl = '/GumaPhoto' + apiUrl;
-            
             let res = await fetch(apiUrl);
             
             // 핫-픽스: 도커 재부팅 불가 상태 시 기존 Search API를 호출하여 프론트엔드단에서 자체 Unknown 필터링 수행 (우회 트릭)

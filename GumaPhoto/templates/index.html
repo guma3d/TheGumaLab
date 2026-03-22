@@ -21,11 +21,23 @@
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="frontend/style.css?v=128">
+    <link rel="stylesheet" href="frontend/style.css?v=129">
 </head>
 
 <body>
+    <!-- App Splash Screen (Prefetch Loading Cache) -->
+    <div id="splash-screen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #000; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.6s ease-out;">
+        <div style="width: 80px; height: 80px; margin-bottom: 20px; animation: pulseLogo 1.5s infinite; border-radius: 20px; overflow: hidden; box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);">
+            <!-- Icon/Logo replacing image with a styling block -->
+            <div style="width:100%; height:100%; background: linear-gradient(135deg, #3b82f6, #10b981); display:flex; align-items:center; justify-content:center;">
+                <i class="fa-solid fa-map-location-dot" style="color: white; font-size: 2.2rem;"></i>
+            </div>
+        </div>
+        <h1 style="color: white; font-family: 'Outfit', sans-serif; font-size: 1.8rem; font-weight: 700; margin: 0; letter-spacing: 1px;">Guma<span style="color: #3b82f6">Photo</span></h1>
+        <p style="color: #9ca3af; font-size: 0.9rem; margin-top: 8px;">스마트 갤러리 프리패치 중...</p>
+    </div>
 
+    <!-- App Container -->
     <div class="main-layout">
         <header class="top-header">
             <div class="logo" style="display: flex; align-items: center; cursor: pointer;" onclick="document.getElementById('nav-home-btn').click();" title="Go to Home">
@@ -317,8 +329,8 @@
 
     <!-- UI Interaction Library (Zoom) -->
     <script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
-    <script src="frontend/guma-earth.js?v=33"></script>
-    <script src="frontend/script.js?v=180"></script>
+    <script src="frontend/guma-earth.js?v=34"></script>
+    <script src="frontend/script.js?v=182"></script>
 </body>
 
 </html>
