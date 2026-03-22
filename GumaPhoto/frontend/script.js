@@ -37,10 +37,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     hasMore = true;
     totalHits = 0;
     
-    // 1. 홈 갤러리 메인 데이터 로딩 및 피드백 큐 5개 자동 장전 (Parallel)
+    // 1. 홈 갤러리 메인 데이터 로딩 및 피드백 큐 10개 자동 장전 (Parallel)
     await Promise.all([
         fetchPhotos(false),
-        preloadFeedbackQueue(5)
+        preloadFeedbackQueue(10)
     ]);
     
     // 2. 프리패치가 완료되면 스플래시 화면을 페이드아웃하며 제거
@@ -1288,7 +1288,7 @@ async function loadUnknownPhoto(manualTargetPayload = null) {
         } else if (window.feedbackQueue && window.feedbackQueue.length > 0) {
             selectedFeedbackTarget = window.feedbackQueue.shift(); // 큐에서 빛의 속도로 팝(Pop)
             // 비동기로 큐 탄창 재장전
-            preloadFeedbackQueue(5);
+            preloadFeedbackQueue(10);
         } else {
             let apiUrl = '/api/feedback_v2/unknown';
             if (window.location.pathname.startsWith('/GumaPhoto')) apiUrl = '/GumaPhoto' + apiUrl;
