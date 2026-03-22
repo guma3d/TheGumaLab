@@ -188,7 +188,21 @@ class VectorIndexerOrchestrator:
                         print(f"  [🕵️‍♂️ AUDIT-AFTER] File: {filepath} | Loc: {payload.get('location')} | Date: {payload.get('date')} | People: {payload.get('people')}")
                         
                         try:
-                            import json, os
+                            import json, os, subprocess
+                            
+                            def get_exif_str(f_path):
+                                try:
+                                    if not os.path.exists(f_path): return "File Not Found"
+                                    r = subprocess.run(["exiftool", "-j", "-c", "%+.6f", "-DateTimeOriginal", "-Location", "-GPSLatitude", "-GPSLongitude", f_path], capture_output=True, text=True, timeout=5)
+                                    if r.returncode == 0 and r.stdout.strip():
+                                        d = json.loads(r.stdout)[0]
+                                        lat = d.get("GPSLatitude", "None")
+                                        lon = d.get("GPSLongitude", "None")
+                                        gps = f"({lat}, {lon})" if lat != "None" else "No GPS"
+                                        return f"Loc: {d.get('Location', 'None')} | GPS: {gps} | Date: {d.get('DateTimeOriginal', 'None')}"
+                                except: pass
+                                return "EXIF: Parse Error"
+
                             trace_file = "/app/data/audit_trace.json"
                             trace_id = payload.get("original_context", "")
                             if trace_id.startswith("fbtrace_") and os.path.exists(trace_file):
@@ -200,8 +214,11 @@ class VectorIndexerOrchestrator:
                                         print("\n========================================================")
                                         print(f"  📊 [피드백 실시간 비교 결과 (Before vs After)]")
                                         print(f"  > 파일명: {os.path.basename(data.get('filepath'))}  ➡️  {os.path.basename(filepath)}")
+                                        print(f"  > 날  짜: [{data.get('date')}]  ➡️  [{payload.get('date')}]")
                                         print(f"  > 장  소: [{data.get('location')}]  ➡️  [{payload.get('location')}]")
                                         print(f"  > 인  물: {data.get('people')}  ➡️  {payload.get('people')}")
+                                        print(f"  > 물리적 메타데이터 [BEFORE]: {data.get('exif')}")
+                                        print(f"  > 물리적 메타데이터  [AFTER]: {get_exif_str(filepath)}")
                                         print("========================================================\n")
                                         break
                         except Exception as trace_err:

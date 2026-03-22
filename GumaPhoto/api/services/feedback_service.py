@@ -16,6 +16,19 @@ QDRANT_URL = os.environ.get("QDRANT_URL", "http://qdrant:6333")
 COLLECTION_NAME = "gumaphoto_hybrid_kr"
 KNOWN_FACES_PATH = "/app/data/known_faces.pkl"
 
+def get_physical_metadata_str(filepath):
+    try:
+        if not os.path.exists(filepath): return "EXIF: File Not Found"
+        res = subprocess.run(["exiftool", "-j", "-c", "%+.6f", "-DateTimeOriginal", "-Location", "-GPSLatitude", "-GPSLongitude", filepath], capture_output=True, text=True, timeout=5)
+        if res.returncode == 0 and res.stdout.strip():
+            d = json.loads(res.stdout)[0]
+            lat = d.get("GPSLatitude", "None")
+            lon = d.get("GPSLongitude", "None")
+            gps = f"({lat}, {lon})" if lat != "None" else "No GPS"
+            return f"Loc: {d.get('Location', 'None')} | GPS: {gps} | Date: {d.get('DateTimeOriginal', 'None')}"
+    except Exception as e: pass
+    return "EXIF: Parse Error or Empty"
+
 def process_time_location_feedback(qdrant_id, target_date, target_location, target_points_str="[]"):
     print(f"[*] 시간/장소 피드백 가동: 타겟 UUID {qdrant_id}, 새로운 시간: {target_date}, 새로운 장소: {target_location}")
     client = QdrantClient(QDRANT_URL)
@@ -38,11 +51,13 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
             fpath = p.get("filepath")
             if fpath:
                 similar_files.append(fpath)
+                exif_str = get_physical_metadata_str(fpath)
                 print(f"  [🕵️‍♂️ AUDIT-BEFORE (Time/Loc)] File: {fpath} | Loc: {p.get('location')} | Date: {p.get('date')} | People: {p.get('people')}")
+                print(f"      ㄴ [메타데이터-BEFORE]: {exif_str}")
                 try:
                     import json, os
                     with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
-                        tf.write(json.dumps({"type": "BEFORE", "hash_key": os.path.basename(fpath)[:15], "filepath": fpath, "location": p.get('location'), "date": p.get('date'), "people": p.get('people')}, ensure_ascii=False) + "\n")
+                        tf.write(json.dumps({"type": "BEFORE", "hash_key": os.path.basename(fpath)[:15], "filepath": fpath, "location": p.get('location'), "date": p.get('date'), "people": p.get('people'), "exif": exif_str}, ensure_ascii=False) + "\n")
                 except: pass
     else:
         print("[-] 지정된 타겟 포인트 리스트가 없습니다. 종료합니다.")
@@ -123,15 +138,17 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
             filepath = res.payload.get("filepath")
             face_bbox = res.payload.get("face_bbox")
             if filepath and os.path.exists(filepath):
+                exif_str = get_physical_metadata_str(filepath)
                 print(f"  [🕵️‍♂️ AUDIT-BEFORE (Face)] File: {filepath} | Loc: {res.payload.get('location')} | Date: {res.payload.get('date')} | People: {res.payload.get('people')}")
-                try:
-                    with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
-                        tf.write(json.dumps({"type": "BEFORE", "hash_key": os.path.basename(filepath)[:15], "filepath": filepath, "location": res.payload.get('location'), "date": res.payload.get('date'), "people": res.payload.get('people')}, ensure_ascii=False) + "\n")
-                except: pass
+                print(f"      ㄴ [메타데이터-BEFORE]: {exif_str}")
                 target_filepaths.append({
                     "filepath": filepath,
                     "face_bbox": face_bbox,
-                    "point_id": res.id
+                    "point_id": res.id,
+                    "location": res.payload.get('location'),
+                    "date": res.payload.get('date'),
+                    "people": res.payload.get('people'),
+                    "exif": exif_str
                 })
                 
     if not target_filepaths:
@@ -220,7 +237,7 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
             # Trace DB 기록 (AUDIT 용)
             try:
                 with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
-                    tf.write(json.dumps({"type": "BEFORE", "trace_id": trace_id, "filepath": filepath, "location": res.payload.get('location'), "date": res.payload.get('date'), "people": res.payload.get('people')}, ensure_ascii=False) + "\n")
+                    tf.write(json.dumps({"type": "BEFORE", "trace_id": trace_id, "filepath": filepath, "location": target.get("location"), "date": target.get("date"), "people": target.get("people"), "exif": target.get("exif", "")}, ensure_ascii=False) + "\n")
             except: pass
             
     if target_filepaths:
