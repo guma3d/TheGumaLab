@@ -37,13 +37,7 @@ def get_system_progress():
             except Exception as e:
                 print(f"[System Stats Error] Qdrant metrics: {e}")
                 
-        known_faces_count = 0
-        kf_path = "/app/data/known_faces.pkl"
-        if os.path.exists(kf_path):
-            try:
-                with open(kf_path, "rb") as f:
-                    known_faces_count = len(pickle.load(f))
-            except: pass
+        known_faces_count = len(state.known_faces) if hasattr(state, 'known_faces') and state.known_faces else 0
             
         return {
             "total_photos": total_photos,
@@ -57,10 +51,21 @@ def get_system_progress():
     finally:
         db.close()
 
+import time
+_CACHED_ADVANCED_STATS = None
+_CACHED_STATS_TIME = 0
+
 @router.get("/advanced")
 def get_advanced_system_stats():
+    global _CACHED_ADVANCED_STATS, _CACHED_STATS_TIME
+    
     if not state.qdrant_client:
         return {"error": "Qdrant not loaded"}
+        
+    # [Cache 🚀] 10분 단위 캐시를 두어 매번 2.3만 장 풀스캔하는 현상을 종식시킵니다.
+    current_time = time.time()
+    if _CACHED_ADVANCED_STATS and (current_time - _CACHED_STATS_TIME < 600):
+        return _CACHED_ADVANCED_STATS
     
     try:
         qc = state.qdrant_client
