@@ -1175,19 +1175,42 @@ async function loadUnknownPhoto(manualTargetPayload = null) {
         }
 
         // 추출된 사진 렌더링
-        // 얼굴 피드백일 경우 원본 해상도에서 Crop하기 위해 고화질 원본 매핑
         let finalSrc = selectedFeedbackTarget.url;
-        if (selectedFeedbackTarget.issue === "People" && selectedFeedbackTarget.face_bbox) {
-            finalSrc = selectedFeedbackTarget.originalUrl; // Use original full-res
+        if ((selectedFeedbackTarget.issue.includes('Person') || selectedFeedbackTarget.issue.includes('People')) && selectedFeedbackTarget.face_bbox) {
+            finalSrc = selectedFeedbackTarget.originalUrl || selectedFeedbackTarget.url;
         }
         if (!finalSrc.startsWith('/GumaPhoto') && window.location.pathname.startsWith('/GumaPhoto')) finalSrc = '/GumaPhoto' + finalSrc;
         
-        imgEl.src = finalSrc;
-        
-        imgEl.onload = () => {
-            spinner.style.display = 'none';
-            imgEl.style.display = 'block';
-        };
+        if ((selectedFeedbackTarget.issue.includes('Person') || selectedFeedbackTarget.issue.includes('People')) && selectedFeedbackTarget.face_bbox && selectedFeedbackTarget.face_bbox.length === 4) {
+            const tempImg = new Image();
+            tempImg.crossOrigin = "Anonymous";
+            tempImg.src = finalSrc;
+            tempImg.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                let [x1, y1, x2, y2] = selectedFeedbackTarget.face_bbox;
+                const w = x2 - x1; const h = y2 - y1;
+                const margin = Math.max(w, h) * 0.4;
+                x1 = Math.max(0, x1 - margin); y1 = Math.max(0, y1 - margin);
+                x2 = Math.min(tempImg.naturalWidth, x2 + margin); y2 = Math.min(tempImg.naturalHeight, y2 + margin);
+                const cropW = x2 - x1; const cropH = y2 - y1;
+                if(cropW > 0 && cropH > 0) {
+                    canvas.width = cropW; canvas.height = cropH;
+                    ctx.drawImage(tempImg, x1, y1, cropW, cropH, 0, 0, cropW, cropH);
+                    imgEl.src = canvas.toDataURL('image/jpeg', 0.85);
+                } else { 
+                    imgEl.src = tempImg.src; 
+                }
+                spinner.style.display = 'none';
+                imgEl.style.display = 'block';
+            };
+        } else {
+            imgEl.src = finalSrc;
+            imgEl.onload = () => {
+                spinner.style.display = 'none';
+                imgEl.style.display = 'block';
+            };
+        }
         
         let badgeType = '';
         let issueWord = '';
@@ -1384,9 +1407,10 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
                 }
                 badgesHtml += createBadge('fa-solid fa-user-tag', peopleVal, true);
 
+                const bboxStr = item.face_bbox_target ? JSON.stringify(item.face_bbox_target) : '';
                 gridHtml += `
                 <div style="position: relative; width: 100%; aspect-ratio: 1/1; border-radius: 8px; overflow: hidden; background: #111;">
-                    <img src="${item.url}" style="width: 100%; height: 100%; object-fit: cover; transition: filter 0.3s ease;" loading="lazy">
+                    <img class="temp-crop-img" src="" data-src="${item.original_path || item.url}" data-bbox='${bboxStr}' style="width: 100%; height: 100%; object-fit: cover; transition: filter 0.3s ease;" loading="lazy">
                     
                     <div class="meta-badge" style="position: absolute; left: 5px; top: 5px;">
                         <i class="fa-solid fa-bullseye"></i> ${scoreText}
@@ -1400,6 +1424,41 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
                 </div>`;
             });
             grid.innerHTML = gridHtml;
+            
+            // 후속 처리: 인물 피드백일 경우 캔버스를 통해 얼굴만 Crop하여 표시
+            document.querySelectorAll('.temp-crop-img').forEach(img => {
+                const src = img.getAttribute('data-src');
+                const bboxStr = img.getAttribute('data-bbox');
+                
+                if (bboxStr && (selectedFeedbackTarget.issue.includes('Person') || selectedFeedbackTarget.issue.includes('People'))) {
+                    const bbox = JSON.parse(bboxStr);
+                    const tempImg = new Image();
+                    tempImg.crossOrigin = "Anonymous";
+                    tempImg.src = window.location.pathname.startsWith('/GumaPhoto') && !src.startsWith('/GumaPhoto') ? '/GumaPhoto' + src : src;
+                    
+                    tempImg.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        let [x1, y1, x2, y2] = bbox;
+                        const w = x2 - x1; const h = y2 - y1;
+                        const margin = Math.max(w, h) * 0.4;
+                        x1 = Math.max(0, x1 - margin); y1 = Math.max(0, y1 - margin);
+                        x2 = Math.min(tempImg.naturalWidth, x2 + margin); y2 = Math.min(tempImg.naturalHeight, y2 + margin);
+                        const cropW = x2 - x1; const cropH = y2 - y1;
+                        
+                        if(cropW > 0 && cropH > 0) {
+                            canvas.width = cropW; canvas.height = cropH;
+                            ctx.drawImage(tempImg, x1, y1, cropW, cropH, 0, 0, cropW, cropH);
+                            img.src = canvas.toDataURL('image/jpeg', 0.85);
+                        } else {
+                            img.src = tempImg.src;
+                        }
+                    };
+                } else {
+                    img.src = window.location.pathname.startsWith('/GumaPhoto') && !src.startsWith('/GumaPhoto') ? '/GumaPhoto' + src : src;
+                }
+            });
+            
             document.getElementById('fb-temptest-count').textContent = data.results.length;
             
             // 메인 타겟 사진 컨테이너를 숨기고 그 자리에 검색결과 교체 표출
