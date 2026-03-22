@@ -21,7 +21,7 @@
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="frontend/style.css?v=127">
+    <link rel="stylesheet" href="frontend/style.css?v=128">
 </head>
 
 <body>
@@ -179,6 +179,11 @@
 
             <!-- Premium System Tab -->
             <div id="system" class="hidden" style="max-width: 600px; margin: 0 auto; box-sizing: border-box; padding: 1.5rem 1rem 2.5rem 1rem;">
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+                    <button onclick="window.fetchAdvancedStats(true)" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #e5e7eb; padding: 8px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 500; backdrop-filter: blur(10px); transition: all 0.2s;">
+                        <i class="fa-solid fa-rotate-right" id="stats-refresh-icon"></i> 최신화
+                    </button>
+                </div>
                 <div style="display: flex; flex-direction: column; gap: 16px;">
                     <!-- Photo Stats Card -->
                     <div onclick="window.showStatsModal('photo')" style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); cursor: pointer; transition: transform 0.2s;">
@@ -311,7 +316,7 @@
     <!-- UI Interaction Library (Zoom) -->
     <script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
     <script src="frontend/guma-earth.js?v=33"></script>
-    <script src="frontend/script.js?v=179"></script>
+    <script src="frontend/script.js?v=180"></script>
 </body>
 
 </html>

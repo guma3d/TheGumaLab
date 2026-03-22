@@ -966,13 +966,18 @@ window.addEventListener('click', (e) => {
 
 let advancedStatsData = null;
 
-async function fetchAdvancedStats() {
+window.fetchAdvancedStats = async function(forceRefresh = false) {
     try {
         const cb = new Date().getTime();
-        let targetUrl = '/api/system/advanced?cb=' + cb;
+        let query = '?cb=' + cb;
+        if (forceRefresh) query += '&force_refresh=true';
+        let targetUrl = '/api/system/advanced' + query;
         if (window.location.pathname.startsWith('/GumaPhoto')) {
             targetUrl = '/GumaPhoto' + targetUrl;
         }
+        
+        const refreshIcon = document.getElementById('stats-refresh-icon');
+        if (refreshIcon && forceRefresh) refreshIcon.classList.add('fa-spin');
         
         document.getElementById('stat-total-photos').innerText = '...';
         document.getElementById('stat-total-people').innerText = '...';
@@ -980,6 +985,8 @@ async function fetchAdvancedStats() {
         document.getElementById('stat-total-dates').innerText = '...';
         
         const res = await fetch(targetUrl);
+        
+        if (refreshIcon && forceRefresh) refreshIcon.classList.remove('fa-spin');
         if (res.ok) {
             advancedStatsData = await res.json();
             
@@ -1010,6 +1017,8 @@ async function fetchAdvancedStats() {
         }
     } catch(err) {
         console.error('Error fetching advanced stats:', err);
+        const refreshIcon = document.getElementById('stats-refresh-icon');
+        if (refreshIcon && forceRefresh) refreshIcon.classList.remove('fa-spin');
     }
 }
 
