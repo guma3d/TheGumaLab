@@ -996,9 +996,9 @@ async function fetchAdvancedStats() {
                     if (totalMonths > 0) {
                         const spanYears = Math.floor(totalMonths / 12);
                         const spanMonths = totalMonths % 12;
-                        if (spanYears > 0 && spanMonths > 0) dateSpanStr = `${spanYears}년 ${spanMonths}개월`;
-                        else if (spanYears > 0) dateSpanStr = `${spanYears}년`;
-                        else dateSpanStr = `${spanMonths}개월`;
+                        if (spanYears > 0 && spanMonths > 0) dateSpanStr = `${spanYears}년 ${spanMonths}개월 (총 ${totalMonths.toLocaleString()}개월)`;
+                        else if (spanYears > 0) dateSpanStr = `${spanYears}년 (총 ${totalMonths.toLocaleString()}개월)`;
+                        else dateSpanStr = `총 ${totalMonths.toLocaleString()}개월`;
                     }
                 }
             }
