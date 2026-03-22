@@ -181,65 +181,47 @@
             <div id="system" class="hidden" style="max-width: 600px; margin: 0 auto; box-sizing: border-box; padding: 2.5rem 1rem;">
                 <div style="display: flex; flex-direction: column; gap: 16px;">
                     <div style="text-align: center; margin-bottom: 10px;">
-                        <h2 style="color: white; margin: 0; font-size: 1.5rem; font-weight: 700;"><i class="fa-solid fa-chart-pie" style="color: #3b82f6;"></i> Database Statistics</h2>
-                        <p style="color: #9ca3af; margin: 4px 0 0 0; font-size: 0.95rem;">Real-time AI Indexing Health</p>
+                        <h2 style="color: white; margin: 0; font-size: 1.5rem; font-weight: 700;"><i class="fa-solid fa-chart-pie" style="color: #3b82f6;"></i> GumaPhoto Statistics</h2>
+                        <p style="color: #9ca3af; margin: 4px 0 0 0; font-size: 0.95rem;">Detailed AI Knowledge Analytics</p>
                     </div>
 
-                    <!-- Unknown Date Card -->
-                    <div style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #f43f5e;"></div>
-                        <div style="flex: 1;">
-                            <h3 style="color: white; font-size: 1.05rem; margin: 0 0 4px 0; font-weight: 600; display:flex; align-items:center; gap:8px;"><i class="fa-regular fa-calendar-xmark" style="color:#f43f5e"></i> Unknown Date</h3>
-                            <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 8px; overflow: hidden;">
-                                <div id="prog-date-bar" style="height: 100%; width: 0%; background: #f43f5e; border-radius: 4px; transition: width 0.5s;"></div>
-                            </div>
-                        </div>
-                        <div style="text-align: right; margin-left: 20px;">
-                            <p id="prog-date-val" style="color: #f43f5e; font-size: 1.4rem; font-weight: 700; margin: 0;">-</p>
-                            <small id="prog-date-pct" style="color: #9ca3af; font-size: 0.8rem;">- %</small>
-                        </div>
+                    <!-- Photo Stats Card -->
+                    <div style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                        <h3 style="color: white; font-size: 1.1rem; margin: 0 0 10px 0; font-weight: 600;"><i class="fa-solid fa-images" style="color:#3b82f6"></i> 사진 통계</h3>
+                        <p style="color: #9ca3af; margin: 0 0 15px 0; font-size: 0.95rem;">전체 보유 사진 수: <strong id="stat-total-photos" style="color: white; font-size: 1.4rem;">-</strong> 장</p>
+                        <button onclick="window.showStatsModal('photo')" style="width: 100%; padding: 10px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); color: #3b82f6; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;">Detail Statistic</button>
                     </div>
 
-                    <!-- Unknown Location Card -->
-                    <div style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #eab308;"></div>
-                        <div style="flex: 1;">
-                            <h3 style="color: white; font-size: 1.05rem; margin: 0 0 4px 0; font-weight: 600; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-location-question" style="color:#eab308"></i> Unknown Location</h3>
-                            <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 8px; overflow: hidden;">
-                                <div id="prog-loc-bar" style="height: 100%; width: 0%; background: #eab308; border-radius: 4px; transition: width 0.5s;"></div>
-                            </div>
-                        </div>
-                        <div style="text-align: right; margin-left: 20px;">
-                            <p id="prog-loc-val" style="color: #eab308; font-size: 1.4rem; font-weight: 700; margin: 0;">-</p>
-                            <small id="prog-loc-pct" style="color: #9ca3af; font-size: 0.8rem;">- %</small>
-                        </div>
+                    <!-- Person Stats Card -->
+                    <div style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                        <h3 style="color: white; font-size: 1.1rem; margin: 0 0 10px 0; font-weight: 600;"><i class="fa-solid fa-users" style="color:#10b981"></i> 인물 통계</h3>
+                        <p style="color: #9ca3af; margin: 0 0 15px 0; font-size: 0.95rem;">등록 완료된 인물 수: <strong id="stat-total-people" style="color: white; font-size: 1.4rem;">-</strong> 명</p>
+                        <button onclick="window.showStatsModal('person')" style="width: 100%; padding: 10px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;">Detail Statistic</button>
                     </div>
 
-                    <!-- Unknown Person Card -->
-                    <div style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #a855f7;"></div>
-                        <div style="flex: 1;">
-                            <h3 style="color: white; font-size: 1.05rem; margin: 0 0 4px 0; font-weight: 600; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-user-secret" style="color:#a855f7"></i> Unknown Person</h3>
-                            <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 8px; overflow: hidden;">
-                                <div id="prog-person-bar" style="height: 100%; width: 0%; background: #a855f7; border-radius: 4px; transition: width 0.5s;"></div>
-                            </div>
-                        </div>
-                        <div style="text-align: right; margin-left: 20px;">
-                            <p id="prog-person-val" style="color: #a855f7; font-size: 1.4rem; font-weight: 700; margin: 0;">-</p>
-                            <small id="prog-person-pct" style="color: #9ca3af; font-size: 0.8rem;">- %</small>
-                        </div>
+                    <!-- Location Stats Card -->
+                    <div style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                        <h3 style="color: white; font-size: 1.1rem; margin: 0 0 10px 0; font-weight: 600;"><i class="fa-solid fa-location-dot" style="color:#eab308"></i> 장소 통계</h3>
+                        <p style="color: #9ca3af; margin: 0 0 15px 0; font-size: 0.95rem;">고유 장소 개수: <strong id="stat-total-locations" style="color: white; font-size: 1.4rem;">-</strong> 곳</p>
+                        <button onclick="window.showStatsModal('location')" style="width: 100%; padding: 10px; background: rgba(234, 179, 8, 0.15); border: 1px solid rgba(234, 179, 8, 0.4); color: #eab308; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;">Detail Statistic</button>
                     </div>
 
-                    <!-- Total Known Faces Card -->
-                    <div style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #10b981;"></div>
-                        <div>
-                            <h3 style="color: white; font-size: 1.05rem; margin: 0 0 4px 0; font-weight: 600; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-users" style="color:#10b981"></i> Enrolled People</h3>
-                            <small style="color: #9ca3af; font-size: 0.85rem;">Family & Friends completely registered</small>
-                        </div>
-                        <div style="text-align: right;">
-                            <p id="prog-known-faces" style="color: #10b981; font-size: 1.6rem; font-weight: 800; margin: 0; text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);">- 명</p>
-                        </div>
+                    <!-- Date Stats Card -->
+                    <div style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                        <h3 style="color: white; font-size: 1.1rem; margin: 0 0 10px 0; font-weight: 600;"><i class="fa-regular fa-calendar-check" style="color:#f43f5e"></i> 날짜 통계</h3>
+                        <p style="color: #9ca3af; margin: 0 0 15px 0; font-size: 0.95rem;">고유 날짜(연-월) 개수: <strong id="stat-total-dates" style="color: white; font-size: 1.4rem;">-</strong> 달</p>
+                        <button onclick="window.showStatsModal('date')" style="width: 100%; padding: 10px; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); color: #f43f5e; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;">Detail Statistic</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Detail Modal -->
+            <div id="stats-modal" class="modal hidden" style="z-index: 10000; background-color: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center;">
+                <div class="modal-content" style="max-width: 500px; width: 90vw; background: rgba(20, 20, 20, 0.95); padding: 24px; border-radius: 16px; border: 1px solid var(--glass-border); max-height: 80vh; display: flex; flex-direction: column;">
+                    <span class="modal-close" style="top: 10px; right: 15px; font-size: 28px;" onclick="document.getElementById('stats-modal').classList.add('hidden')">&times;</span>
+                    <h2 id="stats-modal-title" style="color: white; margin-top: 0; margin-bottom: 20px; font-size: 1.3rem;">Detail Statistic</h2>
+                    <div id="stats-modal-body" style="flex: 1; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 12px;">
+                        <!-- Content goes here -->
                     </div>
                 </div>
             </div>

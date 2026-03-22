@@ -956,53 +956,132 @@ window.addEventListener('click', (e) => {
     }
 });
 
-async function fetchProgress() {
+let advancedStatsData = null;
+
+async function fetchAdvancedStats() {
     try {
         const cb = new Date().getTime();
-        let targetUrl = '/api/system/progress?cb=' + cb;
+        let targetUrl = '/api/system/advanced?cb=' + cb;
         if (window.location.pathname.startsWith('/GumaPhoto')) {
             targetUrl = '/GumaPhoto' + targetUrl;
         }
         
+        document.getElementById('stat-total-photos').innerText = '...';
+        document.getElementById('stat-total-people').innerText = '...';
+        document.getElementById('stat-total-locations').innerText = '...';
+        document.getElementById('stat-total-dates').innerText = '...';
+        
         const res = await fetch(targetUrl);
         if (res.ok) {
-            const data = await res.json();
-            const total = Number(data.total_photos || 1); // zero division 방지
+            advancedStatsData = await res.json();
             
-            const ukDate = Number(data.unknown_date || 0);
-            const ukLoc = Number(data.unknown_loc || 0);
-            const ukPerson = Number(data.unknown_person || 0);
-            const kfCount = Number(data.known_faces_count || 0);
+            const actualLocs = advancedStatsData.locations ? advancedStatsData.locations.filter(l => !l.name.includes("Unknown") && l.name !== "위치정보없음").length : 0;
+            const actualDates = advancedStatsData.dates ? advancedStatsData.dates.filter(d => !d.name.includes("Unknown")).length : 0;
             
-            const datePct = ((ukDate / total) * 100).toFixed(1);
-            const locPct = ((ukLoc / total) * 100).toFixed(1);
-            const personPct = ((ukPerson / total) * 100).toFixed(1);
-
-            document.getElementById('prog-date-val').innerText = ukDate.toLocaleString();
-            document.getElementById('prog-loc-val').innerText = ukLoc.toLocaleString();
-            document.getElementById('prog-person-val').innerText = ukPerson.toLocaleString();
-            document.getElementById('prog-known-faces').innerText = kfCount.toLocaleString() + ' 명';
-
-            document.getElementById('prog-date-pct').innerText = `${datePct}%`;
-            document.getElementById('prog-loc-pct').innerText = `${locPct}%`;
-            document.getElementById('prog-person-pct').innerText = `${personPct}%`;
-
-            document.getElementById('prog-date-bar').style.width = `${datePct}%`;
-            document.getElementById('prog-loc-bar').style.width = `${locPct}%`;
-            document.getElementById('prog-person-bar').style.width = `${personPct}%`;
+            document.getElementById('stat-total-photos').innerText = advancedStatsData.total_photos.toLocaleString();
+            document.getElementById('stat-total-people').innerText = advancedStatsData.known_faces_count.toLocaleString();
+            document.getElementById('stat-total-locations').innerText = actualLocs.toLocaleString();
+            document.getElementById('stat-total-dates').innerText = actualDates.toLocaleString();
         }
     } catch(err) {
-        console.error('Error fetching system stats:', err);
+        console.error('Error fetching advanced stats:', err);
     }
 }
 
-function updateProgressMonitor() {
-    if (window.progressPollingInterval) {
-        clearInterval(window.progressPollingInterval);
+window.showStatsModal = function(type) {
+    if (!advancedStatsData) {
+        alert("데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+        return;
     }
-    fetchProgress();
-    window.progressPollingInterval = setInterval(fetchProgress, 2500);
-}
+    const modal = document.getElementById('stats-modal');
+    const title = document.getElementById('stats-modal-title');
+    const body = document.getElementById('stats-modal-body');
+    
+    body.innerHTML = '';
+    
+    let items = [];
+    if (type === 'photo') {
+        title.innerHTML = '<i class="fa-solid fa-images" style="color:#3b82f6;"></i> 사진 통계 세부';
+        
+        const ukDate = advancedStatsData.dates.find(d => d.name === "Unknown Date")?.count || 0;
+        const ukLoc1 = advancedStatsData.locations.find(d => d.name === "Unknown Location")?.count || 0;
+        const ukLoc2 = advancedStatsData.locations.find(d => d.name === "Unknown")?.count || 0;
+        const ukLoc = ukLoc1 + ukLoc2;
+        
+        const ukP1 = advancedStatsData.people.find(p => p.name === "Unknown People")?.count || 0;
+        const ukP2 = advancedStatsData.people.find(p => p.name === "Unknown Person")?.count || 0;
+        const ukP3 = advancedStatsData.people.find(p => p.name === "Unidentifiable Person")?.count || 0;
+        const ukP4 = advancedStatsData.people.find(p => p.name === "No Person")?.count || 0;
+        const ukPerson = ukP1 + ukP2 + ukP3 + ukP4;
+        
+        items = [
+            { name: "Unknown Date", count: ukDate, pct: ((ukDate / advancedStatsData.total_photos) * 100).toFixed(1) + "%", color: "#f43f5e" },
+            { name: "Unknown Location", count: ukLoc, pct: ((ukLoc / advancedStatsData.total_photos) * 100).toFixed(1) + "%", color: "#eab308" },
+            { name: "Unknown Person", count: ukPerson, pct: ((ukPerson / advancedStatsData.total_photos) * 100).toFixed(1) + "%", color: "#a855f7" },
+            { name: "보유 인물 데이터 총 사람수", count: advancedStatsData.known_faces_count, pct: "-", color: "#10b981", isAbs: true }
+        ];
+        
+    } else if (type === 'person') {
+        title.innerHTML = '<i class="fa-solid fa-users" style="color:#10b981;"></i> 인물 통계 세부';
+        // Exclude unknown placeholders from person detailed stats
+        items = advancedStatsData.people
+            .filter(p => !p.name.includes("Unknown") && p.name !== "No Person" && p.name !== "Unidentifiable Person")
+            .map(p => ({
+                name: p.name,
+                count: p.count,
+                pct: p.pct + "%",
+                color: "#10b981"
+            }));
+            
+    } else if (type === 'location') {
+        title.innerHTML = '<i class="fa-solid fa-location-dot" style="color:#eab308;"></i> 장소 통계 세부';
+        items = advancedStatsData.locations
+            .filter(l => !l.name.includes("Unknown") && l.name !== "위치정보없음")
+            .map(l => ({
+                name: l.name,
+                count: l.count,
+                pct: l.pct + "%",
+                color: "#eab308"
+            }));
+            
+    } else if (type === 'date') {
+        title.innerHTML = '<i class="fa-regular fa-calendar-check" style="color:#f43f5e;"></i> 날짜 통계 세부';
+        items = advancedStatsData.dates
+            .filter(d => !d.name.includes("Unknown"))
+            .map(d => ({
+                name: d.name,
+                count: d.count,
+                pct: d.pct + "%",
+                color: "#f43f5e"
+            }));
+    }
+    
+    if (items.length === 0) {
+        body.innerHTML = '<p style="color:#9ca3af; text-align:center; padding: 20px;">등록된 데이터가 없습니다.</p>';
+    } else {
+        items.forEach(item => {
+            const row = document.createElement('div');
+            row.style.cssText = `display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 4px solid ${item.color || '#3b82f6'};`;
+            
+            const nameEl = document.createElement('span');
+            nameEl.style.cssText = 'color: white; font-weight: 500; font-size: 1rem;';
+            nameEl.innerText = item.name;
+            
+            const valEl = document.createElement('div');
+            valEl.style.cssText = 'text-align: right; display: flex; flex-direction: column;';
+            
+            const countStr = item.isAbs ? `${item.count.toLocaleString()} 명` : `총 ${item.count.toLocaleString()}장 / 전체 사진 수(${item.pct})`;
+            
+            valEl.innerHTML = `<span style="color: ${item.color || '#3b82f6'}; font-weight: 700; font-size: 1.05rem;">${countStr}</span>`;
+            
+            row.appendChild(nameEl);
+            row.appendChild(valEl);
+            body.appendChild(row);
+        });
+    }
+    
+    modal.classList.remove('hidden');
+};
 
 // ---------------------------------------------------------------------------------
 // Self-Healing Feedback v2.0 Logic
@@ -1719,7 +1798,7 @@ if (bottomNav) {
     document.getElementById('nav-system-btn')?.addEventListener('click', (e) => {
         e.preventDefault();
         switchView('system');
-        updateProgressMonitor(); // fetch system status when tab is opened
+        fetchAdvancedStats(); // fetch system status when tab is opened
     });
 }
 
