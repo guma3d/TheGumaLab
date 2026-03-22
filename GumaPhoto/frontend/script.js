@@ -1061,18 +1061,18 @@ window.showStatsModal = function(type) {
     } else {
         items.forEach(item => {
             const row = document.createElement('div');
-            row.style.cssText = `display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 4px solid ${item.color || '#3b82f6'};`;
+            row.style.cssText = `display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 4px solid ${item.color || '#3b82f6'};`;
             
             const nameEl = document.createElement('span');
-            nameEl.style.cssText = 'color: white; font-weight: 500; font-size: 1rem;';
+            nameEl.style.cssText = 'color: white; font-weight: 500; font-size: 0.9rem; flex: 1; margin-right: 10px; word-break: keep-all;';
             nameEl.innerText = item.name;
             
             const valEl = document.createElement('div');
-            valEl.style.cssText = 'text-align: right; display: flex; flex-direction: column;';
+            valEl.style.cssText = 'text-align: right; display: flex; flex-direction: column; white-space: nowrap;';
             
-            const countStr = item.isAbs ? `${item.count.toLocaleString()} 명` : `총 ${item.count.toLocaleString()}장 / 전체 사진 수(${item.pct})`;
+            const countStr = item.isAbs ? `${item.count.toLocaleString()} 명` : `총 ${item.count.toLocaleString()}장 / ${item.pct}`;
             
-            valEl.innerHTML = `<span style="color: ${item.color || '#3b82f6'}; font-weight: 700; font-size: 1.05rem;">${countStr}</span>`;
+            valEl.innerHTML = `<span style="color: ${item.color || '#3b82f6'}; font-weight: 600; font-size: 0.85rem;">${countStr}</span>`;
             
             row.appendChild(nameEl);
             row.appendChild(valEl);
