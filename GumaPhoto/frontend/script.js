@@ -956,6 +956,14 @@ window.addEventListener('click', (e) => {
     }
 });
 
+window.addEventListener('click', (e) => {
+    const statsModal = document.getElementById('stats-modal');
+    if (e.target === statsModal) {
+        statsModal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+});
+
 let advancedStatsData = null;
 
 async function fetchAdvancedStats() {
@@ -993,6 +1001,9 @@ window.showStatsModal = function(type) {
         alert("데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
         return;
     }
+    
+    document.body.style.overflow = 'hidden'; // 화면 뒤 터치(스크롤) 차단
+    
     const modal = document.getElementById('stats-modal');
     const title = document.getElementById('stats-modal-title');
     const body = document.getElementById('stats-modal-body');
@@ -1023,15 +1034,20 @@ window.showStatsModal = function(type) {
         
     } else if (type === 'person') {
         title.innerHTML = '<i class="fa-solid fa-users" style="color:#10b981;"></i> 인물 통계 세부';
-        // Exclude unknown placeholders from person detailed stats
         items = advancedStatsData.people
-            .filter(p => !p.name.includes("Unknown") && p.name !== "No Person" && p.name !== "Unidentifiable Person")
-            .map(p => ({
-                name: p.name,
-                count: p.count,
-                pct: p.pct + "%",
-                color: "#10b981"
-            }));
+            .map(p => {
+                // Unknown 계열의 색상 및 이름을 조정
+                let color = "#10b981";
+                if (p.name.includes("Unknown") || p.name.includes("Person") || p.name.includes("People")) {
+                    color = "#a855f7"; 
+                }
+                return {
+                    name: p.name,
+                    count: p.count,
+                    pct: p.pct + "%",
+                    color: color
+                };
+            });
             
     } else if (type === 'location') {
         title.innerHTML = '<i class="fa-solid fa-location-dot" style="color:#eab308;"></i> 장소 통계 세부';

@@ -93,6 +93,9 @@ def get_advanced_system_stats():
             p = pt.payload or {}
             
             p_date = p.get("date", "Unknown Date")
+            if p_date != "Unknown Date" and len(p_date) >= 4:
+                # YYYY-MM 등에서 연도(YYYY)만 추출
+                p_date = p_date[:4]
             counts["dates"][p_date] += 1
             
             p_loc = p.get("location", "Unknown Location")
