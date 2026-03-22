@@ -37,23 +37,24 @@ router = APIRouter()
 class FeedbackV2Request(BaseModel):
     point_id: typing.Union[int, str]
     issue_type: str
-    correct_value: str
+    correct_value: typing.Optional[str] = ""
     target_points: typing.Optional[typing.List[typing.Union[int, str]]] = []
 
 @router.post("/api/feedback_v2/ignore_face")
 async def ignore_face_feedback(req: FeedbackV2Request):
     if not state.qdrant_client: return {"error": "Qdrant not loaded"}
+    real_point_id = get_uuid_from_id(req.point_id)
     try:
         # 뒤통수(오탐지) 랜드마크 제거 로직: Qdrant에서 'face_bbox'를 찢어버리고 'Unidentifiable Person' 명찰을 섬세하게 붙임
         state.qdrant_client.delete_payload(
             collection_name="gumaphoto_hybrid_kr",
             keys=["face_bbox"],
-            points=[str(req.point_id)]
+            points=[real_point_id]
         )
         state.qdrant_client.set_payload(
             collection_name="gumaphoto_hybrid_kr",
             payload={"people": ["Unidentifiable Person"]},
-            points=[str(req.point_id)]
+            points=[real_point_id]
         )
         return {"message": "Ignored successfully."}
     except Exception as e:
@@ -62,17 +63,18 @@ async def ignore_face_feedback(req: FeedbackV2Request):
 @router.post("/api/feedback_v2/no_person")
 async def no_person_feedback(req: FeedbackV2Request):
     if not state.qdrant_client: return {"error": "Qdrant not loaded"}
+    real_point_id = get_uuid_from_id(req.point_id)
     try:
         # 인형/포스터 등 '진짜 사람이 아님(No Person)' 케이스
         state.qdrant_client.delete_payload(
             collection_name="gumaphoto_hybrid_kr",
             keys=["face_bbox"],
-            points=[str(req.point_id)]
+            points=[real_point_id]
         )
         state.qdrant_client.set_payload(
             collection_name="gumaphoto_hybrid_kr",
             payload={"people": ["No Person"]},
-            points=[str(req.point_id)]
+            points=[real_point_id]
         )
         return {"message": "Ignored successfully as No Person."}
     except Exception as e:
