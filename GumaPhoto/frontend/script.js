@@ -996,9 +996,9 @@ async function fetchAdvancedStats() {
                     if (totalMonths > 0) {
                         const spanYears = Math.floor(totalMonths / 12);
                         const spanMonths = totalMonths % 12;
-                        if (spanYears > 0 && spanMonths > 0) dateSpanStr = `${spanYears}년 ${spanMonths}개월 (총 ${totalMonths.toLocaleString()}개월)`;
-                        else if (spanYears > 0) dateSpanStr = `${spanYears}년 (총 ${totalMonths.toLocaleString()}개월)`;
-                        else dateSpanStr = `총 ${totalMonths.toLocaleString()}개월`;
+                        if (spanYears > 0 && spanMonths > 0) dateSpanStr = `${spanYears}년 ${spanMonths}개월`;
+                        else if (spanYears > 0) dateSpanStr = `${spanYears}년`;
+                        else dateSpanStr = `${spanMonths}개월`;
                     }
                 }
             }
@@ -1070,13 +1070,22 @@ window.showStatsModal = function(type) {
         title.innerHTML = '<i class="fa-solid fa-location-dot" style="color:#eab308;"></i> 장소 통계 세부';
         items = advancedStatsData.locations
             .filter(l => !l.name.includes("Unknown") && l.name !== "위치정보없음")
-            .map(l => ({
-                name: l.name,
-                count: l.count,
-                pct: l.pct + "%",
-                color: "#eab308"
-            }));
-            
+            .map(l => {
+                let col = "#9ca3af"; // Default gray
+                if (l.name.startsWith("대한민국")) col = "#3b82f6"; // Blue
+                else if (l.name.includes("캘리포니아") || l.name.includes("네바다") || l.name.includes("뉴욕") || l.name.includes("하와이") || l.name.includes("애리조나") || l.name.includes("텍사스")) col = "#f43f5e"; // Red
+                else if (l.name.includes("Guam") || l.name.includes("괌")) col = "#eab308"; // Yellow
+                else if (l.name.includes("일본")) col = "#ec4899"; // Pink
+                else if (l.name.includes("온타리오") || l.name.includes("앨버타")) col = "#10b981"; // Green
+                else if (l.name.includes("베트남") || l.name.includes("안장성")) col = "#8b5cf6"; // Purple
+                
+                return {
+                    name: l.name,
+                    count: l.count,
+                    pct: l.pct + "%",
+                    color: col
+                };
+            });
     } else if (type === 'date') {
         title.innerHTML = '<i class="fa-regular fa-calendar-check" style="color:#f43f5e;"></i> 날짜 통계 세부';
         items = advancedStatsData.dates
@@ -1094,7 +1103,7 @@ window.showStatsModal = function(type) {
     } else {
         items.forEach(item => {
             const row = document.createElement('div');
-            row.style.cssText = `display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 4px solid ${item.color || '#3b82f6'};`;
+            row.style.cssText = `display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 4px solid ${item.color || '#3b82f6'}; width: 100%; box-sizing: border-box;`;
             
             const nameEl = document.createElement('span');
             nameEl.style.cssText = 'color: white; font-weight: 500; font-size: 0.9rem; flex: 1; margin-right: 10px; word-break: keep-all;';
