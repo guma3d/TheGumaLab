@@ -161,6 +161,22 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
             else:
                 shutil.copy2(filepath, enrolled_dest)
             
+        # [치명적 버그 수정: 장소 메타데이터 증발 방지]
+        # 폴더명(예: 2021-10_서울)에 의존하고 EXIF GPS가 없는 사진이 uploads_raw로 이주 시 '위치정보없음'으로 전락하는 것을 방지!
+        parent_dir = os.path.basename(os.path.dirname(filepath))
+        if "_" in parent_dir:
+            parts = parent_dir.split("_", 1)
+            if len(parts) > 1 and parts[1] not in ["Unknown-Location", "위치정보없음", "Unknown-Year"]:
+                presumed_date = parts[0]
+                presumed_loc = parts[1]
+                try:
+                    from api.utils.metadata_editor import MetadataEditor
+                    # 날짜와 장소 메타데이터를 원본에 영구 삽입 (exiftool)
+                    MetadataEditor.stamp_metadata([filepath], target_date=presumed_date, target_location=presumed_loc)
+                    print(f"  [+] EXIF 없는 파일의 메타데이터 영구 보존 조치 완료({presumed_date}, {presumed_loc}): {filepath}")
+                except Exception as e:
+                    print(f"  [-] EXIF 지역 보존 실패: {e}")
+            
         # 1-2. 기존 찌꺼기 완전 파기 (Qdrant & SQLite DELETED)
         # 여러 얼굴이 하나의 사진에 있을 수 있으므로 동일 파일의 중복 처리를 방지하기 위해 try-except로 무시
         try: PhotoPurger.purge_photo_data(filepath, point_id=point_id, keep_original=True)

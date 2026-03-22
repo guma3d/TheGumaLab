@@ -129,7 +129,8 @@ class OrganizerPipeline:
                         lat = None  # Ensure lat/lon remain None to completely bypass Nominatim reverse-geocode
                         lon = None
                         
-                if 'GPSLatitude' in data and 'GPSLongitude' in data and lat is not None and lat != 999.0:
+                # Location 텍스트가 명시적으로 없는 경우에만 GPS 좌푯값 파싱 (lat=None 일 때만)
+                if 'GPSLatitude' in data and 'GPSLongitude' in data and (loc_str == "Unknown-Location" or not loc_str):
                     lat_str = str(data['GPSLatitude']).replace('+', '')
                     lon_str = str(data['GPSLongitude']).replace('+', '')
                     lat = float(lat_str)
