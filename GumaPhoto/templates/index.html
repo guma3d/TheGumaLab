@@ -21,7 +21,7 @@
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="frontend/style.css?v=124">
+    <link rel="stylesheet" href="frontend/style.css?v=125">
 </head>
 
 <body>
@@ -232,10 +232,10 @@
 
     <!-- Stats Detail Modal -->
     <div id="stats-modal" class="modal hidden" style="z-index: 10000; background-color: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; position: fixed; top:0; left:0; width:100%; height:100%;">
-        <div class="modal-content" style="max-width: 500px; width: 90vw; background: rgba(20, 20, 20, 0.95); padding: 24px; border-radius: 16px; border: 1px solid var(--glass-border); max-height: 80vh; display: flex; flex-direction: column;">
+        <div class="modal-content" style="max-width: 500px; width: 90vw; box-sizing: border-box; background: rgba(20, 20, 20, 0.95); padding: 24px; border-radius: 16px; border: 1px solid var(--glass-border); max-height: 80vh; display: flex; flex-direction: column; align-items: stretch;">
             <span class="modal-close" style="top: 10px; right: 15px; font-size: 28px;" onclick="document.getElementById('stats-modal').classList.add('hidden'); document.body.style.overflow = 'auto';">&times;</span>
-            <h2 id="stats-modal-title" style="color: white; margin-top: 0; margin-bottom: 20px; font-size: 1.3rem;">Detail Statistic</h2>
-            <div id="stats-modal-body" style="flex: 1; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 10px;">
+            <h2 id="stats-modal-title" style="color: white; margin-top: 0; margin-bottom: 20px; font-size: 1.3rem; text-align: left;">Detail Statistic</h2>
+            <div id="stats-modal-body" style="flex: 1; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; width: 100%; align-items: stretch; box-sizing: border-box; gap: 10px;">
                 <!-- Content goes here -->
             </div>
         </div>
@@ -310,8 +310,8 @@
 
     <!-- UI Interaction Library (Zoom) -->
     <script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
-    <script src="frontend/guma-earth.js?v=30"></script>
-    <script src="frontend/script.js?v=176"></script>
+    <script src="frontend/guma-earth.js?v=31"></script>
+    <script src="frontend/script.js?v=177"></script>
 </body>
 
 </html>
