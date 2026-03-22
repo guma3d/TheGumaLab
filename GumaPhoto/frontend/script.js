@@ -1545,12 +1545,13 @@ document.getElementById('fb-temptest-send-btn')?.addEventListener('click', async
         const feedbackHubModal = document.getElementById('feedback-hub-modal');
         if (feedbackHubModal) feedbackHubModal.classList.add('hidden');
         
-        // 홈 탭으로 자동 복귀
+        // 홈 탭으로 자동 복귀 및 강제 새로고침
         switchView('home');
         
         // 브라우저 렌더링 충돌을 막기 위해 0.1초 딜레이 후 Alert 띄움
         setTimeout(() => {
-            alert("Feedback submitted successfully.");
+            alert("Feedback submitted successfully. 화면을 새로고침합니다.");
+            window.location.reload();
         }, 100);
         
     } catch (err) {
@@ -1615,7 +1616,10 @@ const sendPersonFeedback = async (apiUrlEndpoint, btnId) => {
         if (res.ok) {
             document.getElementById('fb-temptest-results').style.display = 'none';
             switchView('home'); 
-            setTimeout(() => alert("Feedback submitted successfully."), 100);
+            setTimeout(() => {
+                alert("Feedback submitted successfully. 화면을 새로고침합니다.");
+                window.location.reload();
+            }, 100);
         } else {
             alert('Failed to submit feedback.');
         }
