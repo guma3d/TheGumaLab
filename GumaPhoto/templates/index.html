@@ -13,14 +13,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
 
     <!-- CesiumJS 3D Map Engine -->
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Cesium.js"></script>
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="frontend/style.css?v=102">
+    <link rel="stylesheet" href="frontend/style.css?v=115">
 </head>
 
 <body>
@@ -177,44 +178,69 @@
             </div>
 
             <!-- Premium System Tab -->
-            <div id="system" class="hidden" style="max-width: 500px; margin: 0 auto; box-sizing: border-box; padding: 2.5rem 1rem;">
-
-
+            <div id="system" class="hidden" style="max-width: 600px; margin: 0 auto; box-sizing: border-box; padding: 2.5rem 1rem;">
                 <div style="display: flex; flex-direction: column; gap: 16px;">
-                    
-                    <!-- Server Photos Card -->
-                    <div style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 24px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-                        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #3b82f6;"></div>
-                        <div>
-                            <h3 style="color: white; font-size: 1.1rem; margin: 0 0 4px 0; font-weight: 700; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-hard-drive" style="color:#3b82f6"></i> Server Storage</h3>
-                            <small style="color: #6b7280; font-size: 0.85rem;">Total raw images hosted</small>
-                        </div>
-                        <p id="prog-total" style="color: #60a5fa; font-size: 2rem; font-weight: 800; margin: 0; text-shadow: 0 0 15px rgba(59, 130, 246, 0.4);">...</p>
+                    <div style="text-align: center; margin-bottom: 10px;">
+                        <h2 style="color: white; margin: 0; font-size: 1.5rem; font-weight: 700;"><i class="fa-solid fa-chart-pie" style="color: #3b82f6;"></i> Database Statistics</h2>
+                        <p style="color: #9ca3af; margin: 4px 0 0 0; font-size: 0.95rem;">Real-time AI Indexing Health</p>
                     </div>
 
-                    <!-- Pending Indexing Card -->
-                    <div style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 24px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-                        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #f59e0b;"></div>
-                        <div>
-                            <h3 style="color: white; font-size: 1.1rem; margin: 0 0 4px 0; font-weight: 700; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-microchip" style="color:#f59e0b"></i> AI Pipeline Queue</h3>
-                            <small style="color: #6b7280; font-size: 0.85rem;">Pending vector embeddings</small>
+                    <!-- Unknown Date Card -->
+                    <div style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #f43f5e;"></div>
+                        <div style="flex: 1;">
+                            <h3 style="color: white; font-size: 1.05rem; margin: 0 0 4px 0; font-weight: 600; display:flex; align-items:center; gap:8px;"><i class="fa-regular fa-calendar-xmark" style="color:#f43f5e"></i> Unknown Date</h3>
+                            <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 8px; overflow: hidden;">
+                                <div id="prog-date-bar" style="height: 100%; width: 0%; background: #f43f5e; border-radius: 4px; transition: width 0.5s;"></div>
+                            </div>
                         </div>
-                        <p id="prog-ai-left" style="color: #fbbf24; font-size: 2rem; font-weight: 800; margin: 0; text-shadow: 0 0 15px rgba(245, 158, 11, 0.4);">...</p>
+                        <div style="text-align: right; margin-left: 20px;">
+                            <p id="prog-date-val" style="color: #f43f5e; font-size: 1.4rem; font-weight: 700; margin: 0;">-</p>
+                            <small id="prog-date-pct" style="color: #9ca3af; font-size: 0.8rem;">- %</small>
+                        </div>
                     </div>
 
-                    <!-- DB Matrix Card -->
-                    <div style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 24px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                    <!-- Unknown Location Card -->
+                    <div style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #eab308;"></div>
+                        <div style="flex: 1;">
+                            <h3 style="color: white; font-size: 1.05rem; margin: 0 0 4px 0; font-weight: 600; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-location-question" style="color:#eab308"></i> Unknown Location</h3>
+                            <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 8px; overflow: hidden;">
+                                <div id="prog-loc-bar" style="height: 100%; width: 0%; background: #eab308; border-radius: 4px; transition: width 0.5s;"></div>
+                            </div>
+                        </div>
+                        <div style="text-align: right; margin-left: 20px;">
+                            <p id="prog-loc-val" style="color: #eab308; font-size: 1.4rem; font-weight: 700; margin: 0;">-</p>
+                            <small id="prog-loc-pct" style="color: #9ca3af; font-size: 0.8rem;">- %</small>
+                        </div>
+                    </div>
+
+                    <!-- Unknown Person Card -->
+                    <div style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #a855f7;"></div>
+                        <div style="flex: 1;">
+                            <h3 style="color: white; font-size: 1.05rem; margin: 0 0 4px 0; font-weight: 600; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-user-secret" style="color:#a855f7"></i> Unknown Person</h3>
+                            <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 8px; overflow: hidden;">
+                                <div id="prog-person-bar" style="height: 100%; width: 0%; background: #a855f7; border-radius: 4px; transition: width 0.5s;"></div>
+                            </div>
+                        </div>
+                        <div style="text-align: right; margin-left: 20px;">
+                            <p id="prog-person-val" style="color: #a855f7; font-size: 1.4rem; font-weight: 700; margin: 0;">-</p>
+                            <small id="prog-person-pct" style="color: #9ca3af; font-size: 0.8rem;">- %</small>
+                        </div>
+                    </div>
+
+                    <!-- Total Known Faces Card -->
+                    <div style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
                         <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #10b981;"></div>
                         <div>
-                            <h3 style="color: white; font-size: 1.1rem; margin: 0 0 4px 0; font-weight: 700; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-database" style="color:#10b981"></i> Vector Database</h3>
-                            <small style="color: #6b7280; font-size: 0.85rem;">Fully searchable assets</small>
+                            <h3 style="color: white; font-size: 1.05rem; margin: 0 0 4px 0; font-weight: 600; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-users" style="color:#10b981"></i> Enrolled People</h3>
+                            <small style="color: #9ca3af; font-size: 0.85rem;">Family & Friends completely registered</small>
                         </div>
-                        <p id="prog-db" style="color: #34d399; font-size: 2rem; font-weight: 800; margin: 0; text-shadow: 0 0 15px rgba(16, 185, 129, 0.4);">...</p>
+                        <div style="text-align: right;">
+                            <p id="prog-known-faces" style="color: #10b981; font-size: 1.6rem; font-weight: 800; margin: 0; text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);">- 명</p>
+                        </div>
                     </div>
-
-                    <p id="prog-status" style="font-size: 0.85rem; color: #9ca3af; text-align:center; margin-top: 10px; display:flex; align-items:center; justify-content:center; gap: 8px;">
-                        Loading Matrix Details...
-                    </p>
                 </div>
             </div>
         </main>
@@ -287,6 +313,8 @@
         </div>
     </div>
 
+
+
     <!-- Custom Delete Confirmation Modal -->
     <div id="delete-confirm-modal" class="modal hidden">
         <div class="modal-content" style="background: rgba(20, 20, 25, 0.98); width: 90%; max-width: 350px; margin: auto; box-sizing: border-box; padding: 2.5rem 1.5rem; border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.3); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); text-align: center; display: flex; flex-direction: column; align-items: center;">
@@ -307,8 +335,8 @@
 
     <!-- UI Interaction Library (Zoom) -->
     <script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
-    <script src="frontend/guma-earth.js?v=7"></script>
-    <script src="frontend/script.js?v=158"></script>
+    <script src="frontend/guma-earth.js?v=21"></script>
+    <script src="frontend/script.js?v=167"></script>
 </body>
 
 </html>

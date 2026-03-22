@@ -711,14 +711,42 @@ const deleteBtn = document.getElementById('modal-delete-btn');
 const shareBtn = document.getElementById('modal-share-btn');
 const downloadBtn = document.getElementById('modal-download-btn');
 const modalInfoBadges = document.getElementById('modal-info-badges');
+const modalActionsCenter = document.querySelector('.modal-actions-center');
+
+let pzInstance = null;
+
+// 모달창에서 이미지 클릭 시 정보 뱃지 & 액션버튼 토글 숨김 기능
+modalImage.addEventListener('click', () => {
+    if (modalInfoBadges) modalInfoBadges.classList.toggle('hidden');
+    if (modalActionsCenter) modalActionsCenter.classList.toggle('hidden');
+});
 
 function openModal(photo, imgUrl) {
     currentModalPhoto = photo;
     modalImage.src = imgUrl;
     photoModal.classList.remove('hidden');
     
+    // Panzoom 초기화 또는 초기화 상태 복구
+    if (typeof Panzoom !== 'undefined') {
+        if (!pzInstance) {
+            pzInstance = Panzoom(modalImage, {
+                maxScale: 6,
+                contain: 'outside',
+                step: 0.3
+            });
+            modalImage.parentElement.addEventListener('wheel', pzInstance.zoomWithWheel);
+        } else {
+            pzInstance.reset();
+            // Reset 시 축척 애니메이션 부드러운 전환을 보장
+            setTimeout(() => pzInstance.reset(), 50);
+        }
+    }
+    
     // 모달창 좌측 하단의 Semantic Badges 생성
     if (modalInfoBadges) {
+        modalInfoBadges.classList.remove('hidden'); // 항상 다시 보이도록 리셋
+        if (modalActionsCenter) modalActionsCenter.classList.remove('hidden');
+
         modalInfoBadges.innerHTML = ''; // 초기화
         
         const createBadge = (icon, text, isHighlight = false) => {
@@ -763,6 +791,7 @@ function closeModal() {
     photoModal.classList.add('hidden');
     currentModalPhoto = null;
     modalImage.src = '';
+    if (pzInstance) pzInstance.reset();
 }
 
 modalClose.addEventListener('click', closeModal);
@@ -773,75 +802,35 @@ photoModal.addEventListener('click', (e) => {
 
 
 // ==========================================
-// iOS Action Sheet (공유 버튼 클릭 시)
+// Native Web Share API (원래 로직으로 리롤백)
 // ==========================================
-const iosShareSheet = document.getElementById('ios-share-sheet');
-const sheetShareBtn = document.getElementById('sheet-share');
-const sheetSaveBtn = document.getElementById('sheet-save');
-const sheetCopyBtn = document.getElementById('sheet-copy');
-const sheetCancelBtn = document.getElementById('sheet-cancel');
-
-// 1. 하단 액션 시트 모달 띄우기
-shareBtn?.addEventListener('click', () => {
+shareBtn?.addEventListener('click', async () => {
     if (!currentModalPhoto) return;
-    iosShareSheet.classList.remove('hidden');
-});
-
-// 2. 배경 터치 혹은 취소 시트 닫기
-iosShareSheet?.addEventListener('click', (e) => {
-    if (e.target === iosShareSheet) {
-        iosShareSheet.classList.add('hidden');
-    }
-});
-sheetCancelBtn?.addEventListener('click', () => {
-    iosShareSheet.classList.add('hidden');
-});
-
-// 3. 액션: 공유 (Native Share)
-sheetShareBtn?.addEventListener('click', async () => {
-    iosShareSheet.classList.add('hidden');
-    if (!currentModalPhoto) return;
-    const fileUrl = modalImage.src;
+    
     try {
+        const fileUrl = modalImage.src;
+        // Web Share API (모바일 네이티브 공유 우선)
         if (navigator.share) {
             await navigator.share({
                 title: 'GumaPhoto',
-                text: '이 사진 어때요?',
-                url: fileUrl
+                text: '이 사진을 확인해보세요!',
+                url: fileUrl 
             });
         } else {
-            alert('현재 브라우저에서는 이 공유 방식을 지원하지 않습니다.');
+            // PC 브라우저 데스크탑 환경 폴백
+            await navigator.clipboard.writeText(fileUrl);
+            
+            const originalHtml = shareBtn.innerHTML;
+            shareBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
+            shareBtn.style.color = '#10b981';
+            
+            setTimeout(() => {
+                shareBtn.innerHTML = originalHtml;
+                shareBtn.style.color = '';
+            }, 2000);
         }
-    } catch(err) {
-        console.error("공유 취소 또는 오류:", err);
-    }
-});
-
-// 4. 액션: 기기에 직접 저장 (Download)
-sheetSaveBtn?.addEventListener('click', () => {
-    iosShareSheet.classList.add('hidden');
-    if (!currentModalPhoto) return;
-    const fileUrl = modalImage.src;
-    const a = document.createElement('a');
-    a.href = fileUrl;
-    let filename = fileUrl.split('/').pop().split('?')[0]; 
-    if (!filename) filename = `GumaPhoto_${currentModalPhoto.id}.jpg`;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-});
-
-// 5. 액션: 클립보드 복사
-sheetCopyBtn?.addEventListener('click', async () => {
-    iosShareSheet.classList.add('hidden');
-    if (!currentModalPhoto) return;
-    const fileUrl = modalImage.src;
-    try {
-        await navigator.clipboard.writeText(fileUrl);
-        alert("사진 링크가 클립보드에 복사되었습니다!");
-    } catch(err) {
-        console.error("복사 오류:", err);
+    } catch (err) {
+        console.log('Share canceled or failed', err);
     }
 });
 
@@ -940,7 +929,6 @@ window.addEventListener('click', (e) => {
 
 async function fetchProgress() {
     try {
-        // Cache buster to prevent browser from caching the JSON
         const cb = new Date().getTime();
         let targetUrl = '/api/system/progress?cb=' + cb;
         if (window.location.pathname.startsWith('/GumaPhoto')) {
@@ -950,24 +938,32 @@ async function fetchProgress() {
         const res = await fetch(targetUrl);
         if (res.ok) {
             const data = await res.json();
-            // Extracted raw metrics
-            const totalPhotos = Number(data.total_photos || 0);
-            const dbCompleted = Number(data.db_completed || 0);
+            const total = Number(data.total_photos || 1); // zero division 방지
+            
+            const ukDate = Number(data.unknown_date || 0);
+            const ukLoc = Number(data.unknown_loc || 0);
+            const ukPerson = Number(data.unknown_person || 0);
+            const kfCount = Number(data.known_faces_count || 0);
+            
+            const datePct = ((ukDate / total) * 100).toFixed(1);
+            const locPct = ((ukLoc / total) * 100).toFixed(1);
+            const personPct = ((ukPerson / total) * 100).toFixed(1);
 
-            // Calculated true metrics
-            const needsDb = Math.max(0, totalPhotos - dbCompleted);
-            
-            document.getElementById('prog-total').innerText = `${totalPhotos.toLocaleString()}`;
-            document.getElementById('prog-ai-left').innerText = `${needsDb.toLocaleString()}`;
-            document.getElementById('prog-db').innerText = `${dbCompleted.toLocaleString()}`;
-            
-            document.getElementById('prog-status').innerHTML = 'Syncing... <i class="fa-solid fa-spinner fa-spin"></i>';
-        } else {
-            console.error('Failed to load progress data:', res.statusText);
-            document.getElementById('prog-status').innerText = 'Waiting (No response data)';
+            document.getElementById('prog-date-val').innerText = ukDate.toLocaleString();
+            document.getElementById('prog-loc-val').innerText = ukLoc.toLocaleString();
+            document.getElementById('prog-person-val').innerText = ukPerson.toLocaleString();
+            document.getElementById('prog-known-faces').innerText = kfCount.toLocaleString() + ' 명';
+
+            document.getElementById('prog-date-pct').innerText = `${datePct}%`;
+            document.getElementById('prog-loc-pct').innerText = `${locPct}%`;
+            document.getElementById('prog-person-pct').innerText = `${personPct}%`;
+
+            document.getElementById('prog-date-bar').style.width = `${datePct}%`;
+            document.getElementById('prog-loc-bar').style.width = `${locPct}%`;
+            document.getElementById('prog-person-bar').style.width = `${personPct}%`;
         }
     } catch(err) {
-        console.error('Error fetching tracker data:', err);
+        console.error('Error fetching system stats:', err);
     }
 }
 
@@ -1236,14 +1232,26 @@ async function loadUnknownPhoto(manualTargetPayload = null) {
         }
         
         // 이슈 종류에 따른 폼 UI 전환
+        const personBtns = document.getElementById('fb-person-feedback-buttons');
+        const personGuide = document.getElementById('fb-people-guide');
+        
         if(selectedFeedbackTarget.issue.includes('Date')) {
             inputVal.style.display = 'none';
             inputDate.style.display = 'block';
+            if(personBtns) personBtns.style.display = 'none';
+            if(personGuide) personGuide.style.display = 'none';
+        } else if (selectedFeedbackTarget.issue.includes('Person') || selectedFeedbackTarget.issue.includes('People')) {
+            inputDate.style.display = 'none';
+            inputVal.style.display = 'block';
+            inputVal.placeholder = "예: 성욱 (누락된 인물의 이름)";
+            if(personBtns) personBtns.style.display = 'flex';
+            if(personGuide) personGuide.style.display = 'block';
         } else {
             inputDate.style.display = 'none';
             inputVal.style.display = 'block';
-            if(selectedFeedbackTarget.issue.includes('People')) inputVal.placeholder = "예: 성욱 (누락된 인물의 이름)";
-            else inputVal.placeholder = "예: 대한민국-인천광역시 (장소 포맷)";
+            inputVal.placeholder = "예: 대한민국-인천광역시 (장소 포맷)";
+            if(personBtns) personBtns.style.display = 'none';
+            if(personGuide) personGuide.style.display = 'none';
         }
         
     } catch (err) {
@@ -1456,7 +1464,7 @@ document.getElementById('fb-temptest-send-btn')?.addEventListener('click', async
         
         // 브라우저 렌더링 충돌을 막기 위해 0.1초 딜레이 후 Alert 띄움
         setTimeout(() => {
-            alert("🚀 피드백 전송 완료!\n\n현재 백그라운드 봇(Daemon)이 사진 메타데이터 수술, 구형 DB 말소, 폴더 강제 이동, 그리고 Qdrant 신규 인덱싱까지 연쇄 파도타기(릴레이) 작업을 수행 중입니다.\n잠시 후 홈 화면에서 새로고침하여 수술된 사진의 새 위치를 확인하세요!");
+            alert("Feedback submitted successfully.");
         }, 100);
         
     } catch (err) {
@@ -1466,6 +1474,73 @@ document.getElementById('fb-temptest-send-btn')?.addEventListener('click', async
         btn.disabled = false;
     }
 });
+
+// ----------------------------------------------------------------------
+// 피드백 추가 액션 버튼들 (Skip, Remove, Unidentifiable Person, No Person)
+// ----------------------------------------------------------------------
+document.getElementById('fb-skip-btn')?.addEventListener('click', async () => {
+    switchView('feedback');
+});
+
+document.getElementById('fb-remove-btn')?.addEventListener('click', async () => {
+    if (!selectedFeedbackTarget || !selectedFeedbackTarget.id) return;
+    try {
+        let apiUrl = '/api/photos';
+        if (window.location.pathname.startsWith('/GumaPhoto')) apiUrl = '/GumaPhoto/api/photos';
+        
+        const res = await fetch(apiUrl, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                filepath: selectedFeedbackTarget.originalUrl || selectedFeedbackTarget.url,
+                point_id: selectedFeedbackTarget.id
+            })
+        });
+        if (res.ok) {
+            document.getElementById('fb-temptest-results').style.display = 'none';
+            switchView('feedback');
+        }
+    } catch(err) {
+        console.error("삭제 실패", err);
+    }
+});
+
+const sendPersonFeedback = async (apiUrlEndpoint, btnId) => {
+    if (!selectedFeedbackTarget || !selectedFeedbackTarget.id) return;
+    const btn = document.getElementById(btnId);
+    const ogHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    btn.disabled = true;
+
+    try {
+        let apiUrl = apiUrlEndpoint;
+        if (window.location.pathname.startsWith('/GumaPhoto')) apiUrl = '/GumaPhoto' + apiUrl;
+        
+        const res = await fetch(apiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                point_id: selectedFeedbackTarget.id,
+                issue_type: selectedFeedbackTarget.issue
+            })
+        });
+        
+        if (res.ok) {
+            document.getElementById('fb-temptest-results').style.display = 'none';
+            switchView('home'); 
+            setTimeout(() => alert("Feedback submitted successfully."), 100);
+        } else {
+            alert('Failed to submit feedback.');
+        }
+    } catch(err) {
+        console.error(err);
+        btn.innerHTML = ogHtml;
+        btn.disabled = false;
+    }
+};
+
+document.getElementById('fb-not-a-face-btn')?.addEventListener('click', () => sendPersonFeedback('/api/feedback_v2/ignore_face', 'fb-not-a-face-btn'));
+document.getElementById('fb-no-person-btn')?.addEventListener('click', () => sendPersonFeedback('/api/feedback_v2/no_person', 'fb-no-person-btn'));
 
 // =========================================================================
 // 📱 Mobile Bottom Navigation Bar & View Router Logic

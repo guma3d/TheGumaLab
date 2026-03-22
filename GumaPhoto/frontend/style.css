@@ -898,9 +898,70 @@ img {
 }
 
 .bottom-nav .nav-item.active {
-    color: #10b981;
+    color: #10b981; /* 에메랄드 메인 색상 */
 }
 
+/* -------------------------------------------------------------
+   iOS Style Action Sheet
+   ------------------------------------------------------------- */
+#ios-share-sheet {
+    align-items: flex-end;
+    padding: 0 10px 20px 10px;
+}
+
+.ios-sheet {
+    width: 100%;
+    max-width: 400px;
+    animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.ios-sheet-buttons {
+    background: rgba(240, 240, 240, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.ios-btn {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    color: #007aff;
+    font-size: 1.15rem;
+    font-weight: 500;
+    padding: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.ios-btn:last-child {
+    border-bottom: none;
+}
+
+.ios-btn:active {
+    background: rgba(0,0,0,0.1);
+}
+
+.ios-sheet-cancel {
+    background: rgba(240, 240, 240, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.ios-btn.cancel-btn {
+    font-weight: 600;
+    color: #007aff;
+}
 /* 📱 모바일에선 상단 액션 아이콘 숨기기, 데스크탑에선 하단바 숨기기 분리 */
 @media (max-width: 768px) {
     .hide-on-mobile { display: none !important; }

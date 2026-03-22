@@ -11,7 +11,6 @@ app.conf.update(
     result_serializer="json",
     timezone="Asia/Seoul",
     enable_utc=False,
-    worker_max_tasks_per_child=1,  # Critical for preventing PyTorch VRAM leaks!
     task_acks_late=True,
     worker_prefetch_multiplier=1
 )

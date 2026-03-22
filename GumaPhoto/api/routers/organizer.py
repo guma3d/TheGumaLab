@@ -122,13 +122,13 @@ class OrganizerPipeline:
                     else:
                         dt_str = raw_dt.replace(':', '-')
                         
-                if 'XMP:Location' in data:
-                    loc_str = str(data['XMP:Location']).strip()
+                if 'Location' in data:
+                    loc_str = str(data['Location']).strip()
                     if loc_str:
-                        lat = 999.0 
-                        lon = 999.0
+                        lat = None  # Ensure lat/lon remain None to completely bypass Nominatim reverse-geocode
+                        lon = None
                         
-                if 'GPSLatitude' in data and 'GPSLongitude' in data and lat != 999.0:
+                if 'GPSLatitude' in data and 'GPSLongitude' in data and lat is not None and lat != 999.0:
                     lat_str = str(data['GPSLatitude']).replace('+', '')
                     lon_str = str(data['GPSLongitude']).replace('+', '')
                     lat = float(lat_str)

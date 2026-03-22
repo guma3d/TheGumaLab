@@ -41,6 +41,72 @@
 2. **바운딩 박스(Bbox) 라우팅 로직:** 사진 좌표가 대한민국 바운딩 박스(예: Lat 33~39, Lon 124~130) 내부일 경우 VWorld 로드, 해외일 경우 구글 3D 타일 파이프라인으로 동적으로 갈아타는 스위칭 구현.
 3. **엔티티(Marker) 랜더링:** `Cesium.Cartesian3.fromDegrees` 수학 함수를 통해 3D 지구 표면 정확한 지점에 대량의 썸네일 핀(Pin) 생성.
 
+### **Phase 3-1: 동적 클러스터링 및 시각화 (Dynamic Clustering & Visuals)**
+수많은 사진 마커를 렌더링할 때 발생하는 성능 저하를 방지하고, 지역별 데이터 밀도를 시각적으로 아름답게 표현하기 위해 CesiumJS 네이티브 클러스트링(CustomDataSource) 기능을 커스터마이징합니다. 카메라 거리에 따라 동적으로 이합집산되는 방사형 글로우(Neon Glow) 원형 텍스처를 지표면에 스냅하여 투영합니다.
+
+- **VRAM 누수 방지 최적화:** 초당 수십 번 호출되는 `clusterEvent` 특성상 캔버스를 무한 생성하지 않고 딕셔너리(`clusterTextureCache`)를 통한 이미지 재사용(Caching) 로직 필수.
+- **다이내믹 테크니컬 아트:** 단순 단색이 아닌 HTML5 Canvas의 `createRadialGradient`를 활용하여 데이터 수량 구간(`10+`, `50+`)에 따라 파란색, 오렌지색, 붉은색 트랜지션 및 반투명(Alpha) 스무딩 적용.
+
+```javascript
+// [최적화] 캔버스 텍스처 재사용 캐시 딕셔너리
+const clusterTextureCache = {};
+
+// [TA] 방사형 그라데이션 커스텀 네온 글로우 텍스처
+function getOrCreateClusterTexture(count, color) {
+    const cacheKey = `${count}_${color.toCssColorString()}`;
+    if (clusterTextureCache[cacheKey]) return clusterTextureCache[cacheKey];
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 64; canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+
+    const gradient = ctx.createRadialGradient(32, 32, 10, 32, 32, 32);
+    gradient.addColorStop(0.0, color.withAlpha(1.0).toCssColorString()); // 코어
+    gradient.addColorStop(0.6, color.withAlpha(0.6).toCssColorString()); // 중간 블렌딩
+    gradient.addColorStop(1.0, color.withAlpha(0.0).toCssColorString()); // 외곽 투명 스무딩
+
+    ctx.fillStyle = gradient;
+    ctx.beginPath(); ctx.arc(32, 32, 32, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px "Inter", sans-serif'; 
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(count.toString(), 32, 32);
+
+    clusterTextureCache[cacheKey] = canvas;
+    return canvas;
+}
+
+// -------------------------------------------------------------
+// 1. 데이터 소스 생성 및 클러스터 속성 설정
+const photoDataSource = new Cesium.CustomDataSource('photos');
+photoDataSource.clustering.enabled = true;
+photoDataSource.clustering.pixelRange = 60; 
+photoDataSource.clustering.minimumClusterSize = 2; 
+
+// 2. 클러스터 시각화 이벤트 오버라이드
+photoDataSource.clustering.clusterEvent.addEventListener(function(clusteredEntities, cluster) {
+    const photoCount = clusteredEntities.length;
+
+    cluster.label.show = false;
+    cluster.billboard.show = true;
+    cluster.billboard.id = cluster.label.id;
+
+    // 수량에 따른 스케일 크기 및 색상 테마 티어링
+    const visualScale = 0.8 + (Math.log(photoCount) * 0.25);
+    let clusterColor = Cesium.Color.fromCssColorString('#0ea5e9'); // 기본: 블루
+    if (photoCount > 50) clusterColor = Cesium.Color.fromCssColorString('#f43f5e'); // 핫: 레드
+    else if (photoCount > 10) clusterColor = Cesium.Color.fromCssColorString('#f59e0b'); // 워밍: 오렌지
+
+    // 3. 지형 표면에 밀착되는 글로우 텍스처 마커
+    cluster.billboard.image = getOrCreateClusterTexture(photoCount, clusterColor); 
+    cluster.billboard.scale = visualScale;
+    cluster.billboard.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND; 
+});
+
+viewer.dataSources.add(photoDataSource);
+```
+
 ### **Phase 4: 비주얼 폴리싱 & 테크니컬 아트 (UX/TA Touch)**
 1. **스마트 고도 락온(Altitude Snapping):** 사진 메타데이터 내의 오차율 높은 Z축(고도) 값을 무시하고, `sampleTerrainMostDetailed` API를 호출해 지구 표면(산/지형 위)에 마커를 즉시 물리적으로 안착시키는 정밀화 작업.
 2. **레이어 블렌딩 이슈 해결:** VWorld 로컬 지형과 글로벌 베이스 지도의 경계선에서 생기는 단층 이질감을 Alpha Blending(투명도 컷오프) 기법과 마스킹으로 깎아냄.

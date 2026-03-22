@@ -11,6 +11,27 @@ from core.state import state
 from qdrant_client.http.models import Filter, FieldCondition, MatchValue
 import random
 
+def get_uuid_from_id(id_val: typing.Union[int, str]) -> str:
+    val_str = str(id_val)
+    if "-" in val_str and len(val_str) == 36:
+        return val_str
+        
+    from core.database import SessionLocal
+    from core.models import Photo
+    import uuid
+    db = SessionLocal()
+    try:
+        if val_str.isdigit():
+            photo = db.query(Photo).filter(Photo.id == int(val_str)).first()
+            if photo and photo.filepath:
+                return str(uuid.uuid5(uuid.NAMESPACE_URL, photo.filepath))
+    except Exception as e:
+        print(f"[get_uuid_from_id] Error: {e}")
+    finally:
+        db.close()
+        
+    return val_str
+
 router = APIRouter()
 
 class FeedbackV2Request(BaseModel):
@@ -61,13 +82,15 @@ async def no_person_feedback(req: FeedbackV2Request):
 async def temptest_feedback(req: FeedbackV2Request):
     if not state.qdrant_client: return {"error": "Qdrant not loaded"}
     
+    real_point_id = get_uuid_from_id(req.point_id)
+    
     # "People"이면 face 벡터 참조, 그 외는 scene 벡터
     fb_type = "face" if "People" in req.issue_type else "scene"
     
     try:
         recommend_res = state.qdrant_client.query_points(
             collection_name="gumaphoto_hybrid_kr",
-            query=str(req.point_id),
+            query=real_point_id,
             using=fb_type,
             limit=100,
             with_payload=True
@@ -76,7 +99,7 @@ async def temptest_feedback(req: FeedbackV2Request):
         # 사용자가 명시적으로 선택한 '메인 원본 피드백 타겟'을 강제로 최우선 순위로 끌어옵니다.
         target_point = state.qdrant_client.retrieve(
             collection_name="gumaphoto_hybrid_kr",
-            ids=[str(req.point_id)],
+            ids=[real_point_id],
             with_payload=True
         )
         
@@ -94,7 +117,7 @@ async def temptest_feedback(req: FeedbackV2Request):
             })
             
         for hit in recommend_res:
-            if str(hit.id) == str(req.point_id): continue
+            if str(hit.id) == real_point_id: continue
             
             # 사용자 지시사항: "해당 얼굴과 유사한 얼굴벡터를 가진 사진들을 유사율 0.8 기준으로 보여줘야 함"
             cutoff = 0.80 if fb_type == "face" else 0.85
@@ -262,6 +285,8 @@ async def get_unknown_photo():
 async def submit_feedback_v2(req: FeedbackV2Request):
     fb_type = "face" if "People" in req.issue_type else "time_loc"
     
+    real_point_id = get_uuid_from_id(req.point_id)
+    
     final_correct_value = req.correct_value
     prefix = ""
     
@@ -319,26 +344,28 @@ async def submit_feedback_v2(req: FeedbackV2Request):
 
     # Redis Celery 큐로 작업 던지기
     db_correct_value = f"{prefix}{final_correct_value}" if prefix else final_correct_value
-    tp_json = json.dumps(req.target_points) if req.target_points else "[]"
+    
+    real_target_points = [get_uuid_from_id(tid) for tid in req.target_points] if req.target_points else []
+    tp_json = json.dumps(real_target_points) if real_target_points else "[]"
     
     try:
         if fb_type == "face":
             from api.tasks import run_feedback_face_job
-            run_feedback_face_job.delay(str(req.point_id), db_correct_value, tp_json)
+            run_feedback_face_job.delay(real_point_id, db_correct_value, tp_json)
         else:
             if db_correct_value.startswith("DATE|"):
                 date_val = db_correct_value.split("|", 1)[1]
                 from api.tasks import run_feedback_time_loc_job
-                run_feedback_time_loc_job.delay(str(req.point_id), date_val, "Unknown", tp_json)
+                run_feedback_time_loc_job.delay(real_point_id, date_val, "Unknown", tp_json)
             elif db_correct_value.startswith("LOC|"):
                 loc_val = db_correct_value.split("|", 1)[1]
                 from api.tasks import run_feedback_time_loc_job
-                run_feedback_time_loc_job.delay(str(req.point_id), "Unknown", loc_val, tp_json)
+                run_feedback_time_loc_job.delay(real_point_id, "Unknown", loc_val, tp_json)
             else:
                 from api.tasks import run_feedback_time_loc_job
-                run_feedback_time_loc_job.delay(str(req.point_id), "Unknown", db_correct_value, tp_json)
+                run_feedback_time_loc_job.delay(real_point_id, "Unknown", db_correct_value, tp_json)
                 
-        print(f"🚀 [Feedback v2.0 -> Redis] Celery 대기열에 지시서 발송 완료! (ID: {req.point_id})")
+        print(f"🚀 [Feedback v2.0 -> Redis] Celery 대기열에 지시서 발송 완료! (ID: {real_point_id})")
         return {"message": "Feedback submitted successfully. Processing in background."}
         
     except Exception as e:
