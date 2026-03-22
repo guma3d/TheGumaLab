@@ -132,6 +132,26 @@ class VectorIndexerOrchestrator:
                         sort_date = dt.year * 10000 + dt.month * 100 + dt.day
                     except Exception: sort_date = 0
 
+                lat_f, lon_f = None, None
+                try:
+                    from PIL.ExifTags import GPSTAGS
+                    exif = item["pil_img"].getexif()
+                    if exif:
+                        gps_ifd = exif.get_ifd(0x8825)
+                        if gps_ifd:
+                            gps_info = {GPSTAGS.get(k, k): v for k, v in gps_ifd.items()}
+                            if "GPSLatitude" in gps_info and "GPSLongitude" in gps_info:
+                                def to_dec(val):
+                                    return float(val[0]) + (float(val[1])/60.0) + (float(val[2])/3600.0)
+                                lt = to_dec(gps_info["GPSLatitude"])
+                                ln = to_dec(gps_info["GPSLongitude"])
+                                if gps_info.get("GPSLatitudeRef", "N") != "N": lt = -lt
+                                if gps_info.get("GPSLongitudeRef", "E") != "E": ln = -ln
+                                if lt != 0.0 or ln != 0.0:
+                                    lat_f, lon_f = lt, ln
+                except Exception:
+                    pass
+
                 payload = {
                     "filepath": filepath,
                     "filename": item["filename"],
@@ -144,7 +164,9 @@ class VectorIndexerOrchestrator:
                     "time_of_day": item["time_of_day"],
                     "season": item["season"],
                     "objects": found_objects,
-                    "caption": scene_caption
+                    "caption": scene_caption,
+                    "lat": lat_f,
+                    "lon": lon_f
                 }
                 payload.update(best_face_payload)
                 

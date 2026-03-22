@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GumaPhoto 3D Map Explorer</title>
+    <!-- CesiumJS CSS -->
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        #cesiumContainer {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* GumaPhoto Premium UI Floating Button */
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(20, 20, 20, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .back-btn:hover {
+            background: rgba(40, 40, 45, 0.8);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-btn">
+        <i class="fa-solid fa-arrow-left"></i> GumaPhoto
+    </a>
+    
+    <div id="cesiumContainer"></div>
+
+    <!-- CesiumJS Library -->
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Cesium.js"></script>
+    
+    <script>
+        // Phase 1 + 2: Bootstrapping Basic CesiumJS Viewer
+        Cesium.Ion.defaultAccessToken = '<REPLACE_WITH_YOUR_CESIUM_ION_TOKEN_IF_NEEDED>'; // If they use local VWorld, standard ION token is fine or optional.
+        
+        const viewer = new Cesium.Viewer('cesiumContainer', {
+            terrainProvider: Cesium.createWorldTerrain(),
+            animation: false,
+            timeline: false,
+            baseLayerPicker: false,
+            geocoder: false,
+            homeButton: false,
+            infoBox: false,
+            navigationHelpButton: false,
+            selectionIndicator: false,
+            fullscreenButton: false,
+            sceneModePicker: false
+        });
+
+        // Optimization for performance
+        viewer.scene.globe.maximumScreenSpaceError = 2; // sharper terrain
+        viewer.scene.globe.depthTestAgainstTerrain = true;
+        
+        // Remove credit logo for clean UI if allowed, or push it down
+        viewer.scene.frameState.creditDisplay.container.style.display = 'none';
+
+        // Set default camera to South Korea (대한민국)
+        viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(127.978, 36.566, 2000000.0), // Lon, Lat, Height
+            duration: 0
+        });
+        
+        // Load the Phase 2 GeoJSON data
+        fetch('/frontend/photos_map.geojson')
+            .then(response => response.json())
+            .then(data => {
+                Cesium.GeoJsonDataSource.load(data, {
+                    markerSize: 24,
+                    markerColor: Cesium.Color.fromCssColorString('#f43f5e'),
+                    markerSymbol: 'camera'
+                }).then(function(ds) {
+                    viewer.dataSources.add(ds);
+                    console.log("[Phase 2] GeoJSON 로드 및 파싱 완료. 마커 수:", ds.entities.values.length);
+                }).catch(err => {
+                    console.error("GeoJSON 파싱 실패:", err);
+                });
+            })
+            .catch(err => {
+                console.warn("지도 마커를 표시할 photos_map.geojson 파일이 아직 없거나 로드할 수 없습니다. (Phase 2 스크립트 실행 대기중)");
+            });
+
+    </script>
+</body>
+</html>

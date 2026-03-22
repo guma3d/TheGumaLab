@@ -21,7 +21,7 @@
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="frontend/style.css?v=123">
+    <link rel="stylesheet" href="frontend/style.css?v=124">
 </head>
 
 <body>
@@ -178,39 +178,30 @@
             </div>
 
             <!-- Premium System Tab -->
-            <div id="system" class="hidden" style="max-width: 600px; margin: 0 auto; box-sizing: border-box; padding: 2.5rem 1rem;">
+            <div id="system" class="hidden" style="max-width: 600px; margin: 0 auto; box-sizing: border-box; padding: 1.5rem 1rem 2.5rem 1rem;">
                 <div style="display: flex; flex-direction: column; gap: 16px;">
-                    <div style="text-align: center; margin-bottom: 10px;">
-                        <h2 style="color: white; margin: 0; font-size: 1.5rem; font-weight: 700;"><i class="fa-solid fa-chart-pie" style="color: #3b82f6;"></i> GumaPhoto Statistics</h2>
-                        <p style="color: #9ca3af; margin: 4px 0 0 0; font-size: 0.95rem;">Detailed AI Knowledge Analytics</p>
-                    </div>
-
                     <!-- Photo Stats Card -->
-                    <div style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                    <div onclick="window.showStatsModal('photo')" style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); cursor: pointer; transition: transform 0.2s;">
                         <h3 style="color: white; font-size: 1.1rem; margin: 0 0 10px 0; font-weight: 600;"><i class="fa-solid fa-images" style="color:#3b82f6"></i> 사진 통계</h3>
-                        <p style="color: #9ca3af; margin: 0 0 15px 0; font-size: 0.95rem;">전체 보유 사진 수: <strong id="stat-total-photos" style="color: white; font-size: 1.4rem;">-</strong> 장</p>
-                        <button onclick="window.showStatsModal('photo')" style="width: 100%; padding: 10px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); color: #3b82f6; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;">Detail Statistic</button>
+                        <p style="color: #9ca3af; margin: 0; font-size: 0.95rem;">전체 보유 사진 수: <strong id="stat-total-photos" style="color: white; font-size: 1.4rem;">-</strong> 장</p>
                     </div>
 
                     <!-- Person Stats Card -->
-                    <div style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                    <div onclick="window.showStatsModal('person')" style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); cursor: pointer; transition: transform 0.2s;">
                         <h3 style="color: white; font-size: 1.1rem; margin: 0 0 10px 0; font-weight: 600;"><i class="fa-solid fa-users" style="color:#10b981"></i> 인물 통계</h3>
-                        <p style="color: #9ca3af; margin: 0 0 15px 0; font-size: 0.95rem;">등록 완료된 인물 수: <strong id="stat-total-people" style="color: white; font-size: 1.4rem;">-</strong> 명</p>
-                        <button onclick="window.showStatsModal('person')" style="width: 100%; padding: 10px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;">Detail Statistic</button>
+                        <p style="color: #9ca3af; margin: 0; font-size: 0.95rem;">등록 완료된 인물 수: <strong id="stat-total-people" style="color: white; font-size: 1.4rem;">-</strong> 명</p>
                     </div>
 
                     <!-- Location Stats Card -->
-                    <div style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                    <div onclick="window.showStatsModal('location')" style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); cursor: pointer; transition: transform 0.2s;">
                         <h3 style="color: white; font-size: 1.1rem; margin: 0 0 10px 0; font-weight: 600;"><i class="fa-solid fa-location-dot" style="color:#eab308"></i> 장소 통계</h3>
-                        <p style="color: #9ca3af; margin: 0 0 15px 0; font-size: 0.95rem;">고유 장소 개수: <strong id="stat-total-locations" style="color: white; font-size: 1.4rem;">-</strong> 곳</p>
-                        <button onclick="window.showStatsModal('location')" style="width: 100%; padding: 10px; background: rgba(234, 179, 8, 0.15); border: 1px solid rgba(234, 179, 8, 0.4); color: #eab308; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;">Detail Statistic</button>
+                        <p style="color: #9ca3af; margin: 0; font-size: 0.95rem;">고유 장소 개수: <strong id="stat-total-locations" style="color: white; font-size: 1.4rem;">-</strong> 곳</p>
                     </div>
 
                     <!-- Date Stats Card -->
-                    <div style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                    <div onclick="window.showStatsModal('date')" style="background: rgba(30,30,35, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); cursor: pointer; transition: transform 0.2s;">
                         <h3 style="color: white; font-size: 1.1rem; margin: 0 0 10px 0; font-weight: 600;"><i class="fa-regular fa-calendar-check" style="color:#f43f5e"></i> 연도 통계</h3>
-                        <p style="color: #9ca3af; margin: 0 0 15px 0; font-size: 0.95rem;">전체 데이터 수집 기간: <strong id="stat-total-dates" style="color: white; font-size: 1.4rem;">-</strong></p>
-                        <button onclick="window.showStatsModal('date')" style="width: 100%; padding: 10px; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); color: #f43f5e; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;">Detail Statistic</button>
+                        <p style="color: #9ca3af; margin: 0; font-size: 0.95rem;">전체 데이터 수집 기간: <strong id="stat-total-dates" style="color: white; font-size: 1.4rem;">-</strong></p>
                     </div>
                 </div>
             </div>
@@ -319,8 +310,8 @@
 
     <!-- UI Interaction Library (Zoom) -->
     <script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
-    <script src="frontend/guma-earth.js?v=29"></script>
-    <script src="frontend/script.js?v=175"></script>
+    <script src="frontend/guma-earth.js?v=30"></script>
+    <script src="frontend/script.js?v=176"></script>
 </body>
 
 </html>

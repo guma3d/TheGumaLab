@@ -16,3 +16,7 @@ async def serve_sw():
 @router.get("/manifest.json")
 async def serve_manifest():
     return FileResponse("templates/manifest.json")
+
+@router.get("/map")
+async def serve_map(request: Request):
+    return templates.TemplateResponse("map.html", {"request": request})
