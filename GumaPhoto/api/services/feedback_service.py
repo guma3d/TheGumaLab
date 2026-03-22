@@ -38,6 +38,9 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
         if target_points_str:
             target_points = json.loads(target_points_str)
     except Exception: pass
+    
+    if qdrant_id and qdrant_id not in target_points:
+        target_points.append(qdrant_id)
         
     similar_files = []
     if target_points and len(target_points) > 0:
@@ -127,6 +130,9 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
         if target_points_str:
             target_points = json.loads(target_points_str)
     except Exception: pass
+    
+    if qdrant_id and qdrant_id not in target_points:
+        target_points.append(qdrant_id)
     
     # 1. 파일 시스템 복제 및 마이그레이션 (메타데이터 건너뜀)
     target_filepaths = []
