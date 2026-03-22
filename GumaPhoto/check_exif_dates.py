@@ -10,7 +10,7 @@ EXCLUDES = ["Unknown-Year", "uploads_raw"]
 def scan_folder(folder):
     cmd = [
         "exiftool", "-q", "-j", "-r", "-ext", "jpg", "-ext", "jpeg", "-ext", "png", 
-        "-DateTimeOriginal", "-CreateDate", "-ModifyDate", folder
+        "-DateTimeOriginal", "-CreateDate", folder
     ]
     try:
         res = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8')
@@ -23,7 +23,7 @@ def scan_folder(folder):
         local_missing = []
         for file_info in data:
             filename = file_info.get("SourceFile", "Unknown")
-            dt = file_info.get("DateTimeOriginal") or file_info.get("CreateDate") or file_info.get("ModifyDate")
+            dt = file_info.get("DateTimeOriginal") or file_info.get("CreateDate")
             
             if not dt:
                 local_missing.append(filename)

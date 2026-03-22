@@ -108,13 +108,13 @@ class OrganizerPipeline:
         lat, lon = None, None
 
         try:
-            cmd = ["exiftool", "-j", "-c", "%+.6f", "-DateTimeOriginal", "-CreateDate", "-ModifyDate", "-GPSLatitude", "-GPSLongitude", "-Location", filepath]
+            cmd = ["exiftool", "-j", "-c", "%+.6f", "-DateTimeOriginal", "-CreateDate", "-GPSLatitude", "-GPSLongitude", "-Location", filepath]
             res = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
             
             if res.returncode == 0 and res.stdout.strip():
                 data = json.loads(res.stdout)[0]
                 
-                date_val = data.get('DateTimeOriginal') or data.get('CreateDate') or data.get('ModifyDate')
+                date_val = data.get('DateTimeOriginal') or data.get('CreateDate')
                 if date_val:
                     raw_dt = str(date_val).split(' ')[0]
                     parts = raw_dt.split(':')
