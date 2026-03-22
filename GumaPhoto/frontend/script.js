@@ -1026,6 +1026,8 @@ window.fetchAdvancedStats = async function(forceRefresh = false) {
             document.getElementById('stat-total-people').innerText = advancedStatsData.known_faces_count.toLocaleString();
             document.getElementById('stat-total-locations').innerText = actualLocs.toLocaleString();
             document.getElementById('stat-total-dates').innerText = dateSpanStr;
+            
+            fetchAuditLogs();
         }
     } catch(err) {
         console.error('Error fetching advanced stats:', err);
@@ -1033,6 +1035,75 @@ window.fetchAdvancedStats = async function(forceRefresh = false) {
         if (refreshIcon && forceRefresh) refreshIcon.classList.remove('fa-spin');
     }
 }
+
+async function fetchAuditLogs() {
+    try {
+        let apiUrl = '/api/system/audit_logs';
+        if (window.location.pathname.startsWith('/GumaPhoto')) apiUrl = '/GumaPhoto' + apiUrl;
+        
+        const res = await fetch(apiUrl);
+        if (res.ok) {
+            const data = await res.json();
+            renderAuditLogs(data);
+        }
+    } catch (e) {
+        console.error('Error fetching audit logs:', e);
+    }
+}
+
+function renderAuditLogs(logs) {
+    const container = document.getElementById('system-audit-logs-container');
+    if (!container) return;
+    
+    if (!logs || logs.length === 0) {
+        container.innerHTML = '<p style="color: #9ca3af; font-size: 0.9rem; text-align: center; padding: 20px 0;">최근 피드백 기록이 없습니다.</p>';
+        return;
+    }
+    
+    let html = '';
+    logs.forEach(log => {
+        const bef = log.before || {};
+        const aft = log.after || {};
+        
+        const getFilename = (path) => path ? path.split(/[\/\\]/).pop() : 'Unknown';
+        
+        html += `
+        <div style="background: rgba(30, 40, 50, 0.4); border-left: 4px solid #3b82f6; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                <span style="color: white; font-size: 0.9rem; font-family: monospace;">ID: ${log.trace_id.substring(0,15)}...</span>
+                <span style="color: #10b981; font-size: 0.8rem; font-weight: bold;"><i class="fa-solid fa-check"></i> PROCESS DB COMPLETED</span>
+            </div>
+            
+            <div style="display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:#d1d5db;">
+                <div style="display:flex;">
+                    <span style="width: 70px; color:#9ca3af;">파일명</span>
+                    <span style="flex:1;"><del style="color:#ef4444; margin-right:8px;">${getFilename(bef.filepath)}</del> <i class="fa-solid fa-arrow-right" style="color:#6b7280; font-size:0.7rem; margin-right:8px;"></i> <span style="color:#10b981;">${getFilename(aft.filepath)}</span></span>
+                </div>
+                <div style="display:flex;">
+                    <span style="width: 70px; color:#9ca3af;">날 짜</span>
+                    <span style="flex:1;"><del style="color:#ef4444; margin-right:8px;">[${bef.date || 'Unknown'}]</del> <i class="fa-solid fa-arrow-right" style="color:#6b7280; font-size:0.7rem; margin-right:8px;"></i> <span style="color:#10b981;">[${aft.date || 'Unknown'}]</span></span>
+                </div>
+                <div style="display:flex;">
+                    <span style="width: 70px; color:#9ca3af;">장 소</span>
+                    <span style="flex:1;"><del style="color:#ef4444; margin-right:8px;">[${bef.location || 'Unknown'}]</del> <i class="fa-solid fa-arrow-right" style="color:#6b7280; font-size:0.7rem; margin-right:8px;"></i> <span style="color:#10b981;">[${aft.location || 'Unknown'}]</span></span>
+                </div>
+                <div style="display:flex;">
+                    <span style="width: 70px; color:#9ca3af;">인 물</span>
+                    <span style="flex:1;"><del style="color:#ef4444; margin-right:8px;">${JSON.stringify(bef.people || [])}</del> <i class="fa-solid fa-arrow-right" style="color:#6b7280; font-size:0.7rem; margin-right:8px;"></i> <span style="color:#10b981;">${JSON.stringify(aft.people || [])}</span></span>
+                </div>
+                
+                <div style="margin-top:8px; padding-top:8px; border-top: 1px dashed rgba(255,255,255,0.05); font-size: 0.8rem;">
+                    <div style="margin-bottom: 4px;"><span style="color:#f59e0b;">BEFORE EXIF:</span> <span style="color:#9ca3af; font-family:monospace;">${bef.exif || 'None'}</span></div>
+                    <div><span style="color:#3b82f6;">AFTER EXIF:</span> <span style="color:#e5e7eb; font-family:monospace;">${aft.exif || 'None'}</span></div>
+                </div>
+            </div>
+        </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
 
 window.showStatsModal = function(type) {
     if (!advancedStatsData) {

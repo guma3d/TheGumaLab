@@ -21,7 +21,7 @@
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="frontend/style.css?v=137">
+    <link rel="stylesheet" href="frontend/style.css?v=138">
 </head>
 
 <body>
@@ -217,9 +217,15 @@
                         <i class="fa-solid fa-rotate-right" id="stats-refresh-icon" style="color: #10b981; font-size: 1.3rem;"></i>
                     </button>
                 </div>
+
+                <!-- Recent Feedback Results Container -->
+                <div style="margin-top: 20px; padding: 20px; background: rgba(20, 20, 25, 0.7); backdrop-filter: blur(10px); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 80px;">
+                    <h2 style="color: white; margin-top: 0; font-size: 1.3rem; margin-bottom: 16px;"><i class="fa-solid fa-list-check" style="color: #3b82f6;"></i> 최근 피드백 결과</h2>
+                    <div id="system-audit-logs-container" style="display: flex; flex-direction: column; gap: 12px;">
+                        <p style="color: #9ca3af; font-size: 0.9rem; text-align: center; padding: 20px 0;">데이터 불러오는 중...</p>
+                    </div>
+                </div>
             </div>
-
-
         </main>
     </div>
 
@@ -323,8 +329,8 @@
 
     <!-- UI Interaction Library (Zoom) -->
     <script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
-    <script src="frontend/guma-earth.js?v=44"></script>
-    <script src="frontend/script.js?v=190"></script>
+    <script src="frontend/guma-earth.js?v=45"></script>
+    <script src="frontend/script.js?v=191"></script>
 </body>
 
 </html>

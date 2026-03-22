@@ -152,3 +152,50 @@ def get_advanced_system_stats():
         import traceback
         traceback.print_exc()
         return {"error": str(e)}
+
+@router.get("/api/system/audit_logs")
+async def get_audit_logs(limit: int = 5):
+    import json
+    import os
+    trace_file = "/app/data/audit_trace.json"
+    results = []
+    
+    if os.path.exists(trace_file):
+        try:
+            with open(trace_file, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+                
+            before_dict = {}
+            after_dict = {}
+            
+            for line in lines:
+                try:
+                    data = json.loads(line)
+                    tid = data.get("trace_id")
+                    if not tid: continue
+                    ctype = data.get("type", "")
+                    
+                    if ctype == "BEFORE":
+                        before_dict[tid] = data
+                    elif ctype == "AFTER":
+                        after_dict[tid] = data
+                        
+                except:
+                    pass
+                    
+            # 역순으로 최신 완료본부터 추출
+            for tid, after_data in reversed(after_dict.items()):
+                if tid in before_dict:
+                    results.append({
+                        "trace_id": tid,
+                        "before": before_dict[tid],
+                        "after": after_data
+                    })
+                    if len(results) >= limit:
+                        break
+        except Exception as e:
+            print("Audit log load error:", e)
+            pass
+            
+    return results
+

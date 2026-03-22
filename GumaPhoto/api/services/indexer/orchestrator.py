@@ -188,7 +188,7 @@ class VectorIndexerOrchestrator:
                         print(f"  [🕵️‍♂️ AUDIT-AFTER] File: {filepath} | Loc: {payload.get('location')} | Date: {payload.get('date')} | People: {payload.get('people')}")
                         
                         try:
-                            import json, os, subprocess
+                            import subprocess
                             
                             def get_exif_str(f_path):
                                 try:
@@ -217,9 +217,22 @@ class VectorIndexerOrchestrator:
                                         print(f"  > 날  짜: [{data.get('date')}]  ➡️  [{payload.get('date')}]")
                                         print(f"  > 장  소: [{data.get('location')}]  ➡️  [{payload.get('location')}]")
                                         print(f"  > 인  물: {data.get('people')}  ➡️  {payload.get('people')}")
+                                        after_exif = get_exif_str(filepath)
                                         print(f"  > 물리적 메타데이터 [BEFORE]: {data.get('exif')}")
-                                        print(f"  > 물리적 메타데이터  [AFTER]: {get_exif_str(filepath)}")
+                                        print(f"  > 물리적 메타데이터  [AFTER]: {after_exif}")
                                         print("========================================================\n")
+                                        try:
+                                            with open(trace_file, "a", encoding="utf-8") as wf:
+                                                wf.write(json.dumps({
+                                                    "type": "AFTER", 
+                                                    "trace_id": trace_id, 
+                                                    "filepath": filepath, 
+                                                    "location": payload.get('location'), 
+                                                    "date": payload.get('date'), 
+                                                    "people": payload.get('people'), 
+                                                    "exif": after_exif
+                                                }, ensure_ascii=False) + "\n")
+                                        except: pass
                                         break
                         except Exception as trace_err:
                             print(f"    [-] Audit Trace Exception: {trace_err}")

@@ -123,16 +123,20 @@ class OrganizerPipeline:
                     else:
                         dt_str = raw_dt.replace(':', '-')
                         
-                if 'Location' in data:
-                    loc_str = str(data['Location']).strip()
+                valid_loc_key = 'Location' if 'Location' in data else 'XMP:Location' if 'XMP:Location' in data else None
+                if valid_loc_key:
+                    loc_str = str(data[valid_loc_key]).strip()
                     if loc_str:
-                        lat = None  # Ensure lat/lon remain None to completely bypass Nominatim reverse-geocode
+                        lat = None  
                         lon = None
                         
+                lat_key = 'GPSLatitude' if 'GPSLatitude' in data else 'EXIF:GPSLatitude' if 'EXIF:GPSLatitude' in data else 'Composite:GPSLatitude' if 'Composite:GPSLatitude' in data else None
+                lon_key = 'GPSLongitude' if 'GPSLongitude' in data else 'EXIF:GPSLongitude' if 'EXIF:GPSLongitude' in data else 'Composite:GPSLongitude' if 'Composite:GPSLongitude' in data else None
+                
                 # Location 텍스트가 명시적으로 없는 경우에만 GPS 좌푯값 파싱 (lat=None 일 때만)
-                if 'GPSLatitude' in data and 'GPSLongitude' in data and (loc_str == "Unknown-Location" or not loc_str):
-                    lat_str = str(data['GPSLatitude']).replace('+', '')
-                    lon_str = str(data['GPSLongitude']).replace('+', '')
+                if lat_key and lon_key and (not loc_str or loc_str == "Unknown-Location"):
+                    lat_str = str(data[lat_key]).replace('+', '')
+                    lon_str = str(data[lon_key]).replace('+', '')
                     lat = float(lat_str)
                     lon = float(lon_str)
         except Exception as e:
