@@ -82,7 +82,7 @@
 
         // Optimization for performance
         viewer.scene.globe.maximumScreenSpaceError = 2; // sharper terrain
-        viewer.scene.globe.depthTestAgainstTerrain = true;
+        viewer.scene.globe.depthTestAgainstTerrain = false; // 지형(산) 뒤에 숨겨지지 않고 마커가 렌더링되게 설정 (줌 인 증발 방지)
         
         // Remove credit logo for clean UI if allowed, or push it down
         viewer.scene.frameState.creditDisplay.container.style.display = 'none';
@@ -102,13 +102,12 @@
                     markerColor: Cesium.Color.fromCssColorString('#f43f5e'),
                     markerSymbol: 'camera'
                 }).then(function(ds) {
-                    // 고도/지형에 파묻히는 문제(Depth Test) 방지: 클램핑 및 최상단 렌더링 강제
+                    // 고도/지형에 파묻히는 문제(Depth Test) 방지: 클램핑 강제
                     const entities = ds.entities.values;
                     for (let i = 0; i < entities.length; i++) {
                         const evt = entities[i];
                         if (evt.billboard) {
                             evt.billboard.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND;
-                            evt.billboard.disableDepthTestDistance = Number.POSITIVE_INFINITY; // 지형(산) 내부로 파고들어도 무조건 가장 위에 렌더링
                         }
                     }
                     
