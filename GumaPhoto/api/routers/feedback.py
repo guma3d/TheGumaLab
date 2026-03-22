@@ -184,12 +184,8 @@ async def get_unknown_photo():
                     with_vectors=["face"]
                 )
                 
-                # known_faces.pkl 로드하여 즉석 유사도 검증 준비
-                known_faces_path = "/app/data/known_faces.pkl" # Docker volume
-                known_faces = {}
-                if os.path.exists(known_faces_path):
-                    with open(known_faces_path, "rb") as f:
-                        known_faces = pickle.load(f)
+                # [최적화] 매번 하드디스크에서 pkl을 열지 않고, 부팅 시 메모리에 적재된 사전 재사용
+                known_faces = getattr(state, "known_faces", {})
                         
                 if known_faces:
                     # 무작위 샘플 중 얼굴 벡터가 존재하며, 정확도가 0.55 밑으로 떨어지는 타겟 찾기
@@ -242,11 +238,16 @@ async def get_unknown_photo():
                     "face_bbox": p.get("face_bbox", None)
                 }
                 
-        # [초고속 탐색 🚀] 기존 통합 SQLite 기반 장소/시간 피드백
-        target_photo = db.query(Photo).filter(
+        # [초고속 튜닝 🚀] 전체 스캔(func.random) 대신 O(1) 단위의 수치 랜덤 오프셋으로 락 방지
+        base_query = db.query(Photo).filter(
             (Photo.status == 'VECTORIZED') &
             (Photo.filepath.like('%Unknown%') | Photo.filepath.like('%위치정보없음%'))
-        ).order_by(func.random()).first()
+        )
+        total_unknown_count = base_query.count()
+        target_photo = None
+        if total_unknown_count > 0:
+            random_offset = random.randint(0, total_unknown_count - 1)
+            target_photo = base_query.offset(random_offset).first()
         
         if target_photo and target_photo.filepath:
             deterministic_qdrant_id = str(uuid.uuid5(uuid.NAMESPACE_URL, target_photo.filepath))
