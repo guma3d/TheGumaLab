@@ -43,19 +43,6 @@ const GumaEarth = (function() {
                 enablePickFeatures: false
             });
             const baseLayer = viewer.imageryLayers.addImageryProvider(esriProvider);
-            baseLayer.brightness = 0.75; baseLayer.gamma = 0.8; baseLayer.saturation = 1.3;
-
-            // 1.5. Local Premium Map (VWorld South Korea Satellite) - Phase 3 Hybrid Bbox
-            // Overlay ultra high-res VWorld purely over the Korean rectangular bounds
-            const vworldProvider = new Cesium.UrlTemplateImageryProvider({
-                url : 'https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg',
-                maximumLevel : 19
-            });
-            const vworldLayer = viewer.imageryLayers.addImageryProvider(vworldProvider);
-            // LonMin, LatMin, LonMax, LatMax (South Korea Bounding Box)
-            vworldLayer.rectangle = Cesium.Rectangle.fromDegrees(124.0, 33.0, 131.5, 39.0);
-            vworldLayer.brightness = 0.8; vworldLayer.saturation = 1.1;
-            
             // Dim and saturated the satellite imagery slightly to look cinematic and preserve the Dark App Theme
             baseLayer.brightness = 0.75; 
             baseLayer.gamma = 0.8;
@@ -142,8 +129,8 @@ const GumaEarth = (function() {
 
                     const clusterTextureCache = {};
 
-                    function getOrCreateClusterTexture(count, color) {
-                        const cacheKey = `${count}_${color.toCssColorString()}`;
+                    function getOrCreateClusterTexture(color) {
+                        const cacheKey = color.toCssColorString();
                         if (clusterTextureCache[cacheKey]) return clusterTextureCache[cacheKey];
 
                         const canvas = document.createElement('canvas');
@@ -152,8 +139,8 @@ const GumaEarth = (function() {
                         const ctx = canvas.getContext('2d');
 
                         const gradient = ctx.createRadialGradient(32, 32, 10, 32, 32, 32);
-                        gradient.addColorStop(0.0, color.withAlpha(1.0).toCssColorString()); // 코어
-                        gradient.addColorStop(0.6, color.withAlpha(0.6).toCssColorString()); // 중간 블렌딩
+                        gradient.addColorStop(0.0, color.withAlpha(0.9).toCssColorString()); // 코어
+                        gradient.addColorStop(0.5, color.withAlpha(0.5).toCssColorString()); // 중간 블렌딩
                         gradient.addColorStop(1.0, color.withAlpha(0.0).toCssColorString()); // 외곽 투명 스무딩
 
                         ctx.fillStyle = gradient;
@@ -161,32 +148,36 @@ const GumaEarth = (function() {
                         ctx.arc(32, 32, 32, 0, Math.PI * 2); 
                         ctx.fill();
 
-                        ctx.fillStyle = '#ffffff';
-                        ctx.font = 'bold 18px "Outfit", sans-serif'; 
-                        ctx.textAlign = 'center'; 
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText(count.toString(), 32, 32);
-
                         clusterTextureCache[cacheKey] = canvas;
                         return canvas;
                     }
 
+                    const minColor = Cesium.Color.fromCssColorString('#0ea5e9'); // 파랑
+                    const midColor = Cesium.Color.fromCssColorString('#10b981'); // 초록
+                    const maxColor = Cesium.Color.fromCssColorString('#f43f5e'); // 빨강
+
                     ds.clustering.clusterEvent.addEventListener(function(clusteredEntities, cluster) {
                         const photoCount = clusteredEntities.length;
 
-                        // Use our custom drawn texture instead of default text labels
+                        // Use our custom drawn texture without text labels
                         cluster.label.show = false;
                         cluster.billboard.show = true;
                         cluster.billboard.id = cluster.label.id;
 
-                        // 수량에 따른 스케일 크기 및 색상 테마 티어링
-                        const visualScale = 0.8 + (Math.log(photoCount) * 0.25);
-                        let clusterColor = Cesium.Color.fromCssColorString('#0ea5e9'); // 블루 (기본)
-                        if (photoCount > 50) clusterColor = Cesium.Color.fromCssColorString('#f43f5e'); // 레드 (밀집)
-                        else if (photoCount > 10) clusterColor = Cesium.Color.fromCssColorString('#10b981'); // 그린 (보통)
+                        // 수량에 따른 스케일 크기 증가율
+                        const visualScale = 0.5 + (Math.log(photoCount) * 0.2);
+
+                        // 부드러운 색상 전환 (Lerp: 2~100장 기준)
+                        const ratio = Math.max(0, Math.min((photoCount - 2) / 98, 1.0));
+                        let clusterColor = new Cesium.Color();
+                        if (ratio < 0.5) {
+                            Cesium.Color.lerp(minColor, midColor, ratio * 2.0, clusterColor);
+                        } else {
+                            Cesium.Color.lerp(midColor, maxColor, (ratio - 0.5) * 2.0, clusterColor);
+                        }
 
                         // 지형 표면에 밀착되는 글로우 텍스처 마커
-                        cluster.billboard.image = getOrCreateClusterTexture(photoCount, clusterColor); 
+                        cluster.billboard.image = getOrCreateClusterTexture(clusterColor); 
                         cluster.billboard.scale = visualScale;
                         cluster.billboard.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND; 
                     });
