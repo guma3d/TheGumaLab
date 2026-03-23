@@ -736,6 +736,13 @@ modalImage.addEventListener('click', () => {
 function openModal(photo, imgUrl) {
     currentModalPhoto = photo;
     modalImage.src = imgUrl;
+    
+    // 모달창에 짧은 식별 번호 (Short ID) 삽입
+    const idEl = document.getElementById('modal-photo-id');
+    if (idEl && photo.id) {
+        idEl.innerHTML = `<i class="fa-solid fa-fingerprint"></i> ID: ${photo.id.substring(0,8)}`;
+    }
+    
     photoModal.classList.remove('hidden');
     
     // Panzoom 초기화 또는 초기화 상태 복구
