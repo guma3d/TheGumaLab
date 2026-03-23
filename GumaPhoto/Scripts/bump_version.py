@@ -17,7 +17,7 @@ def replacer(match):
     prefix = match.group(1)
     version = int(match.group(2))
     new_version = version + 1
-    print(f"업데이트 됨: v{version} -> v{new_version}")
+    print(f"Updated: v{version} -> v{new_version}")
     return f"{prefix}{new_version}"
 
 new_content = re.sub(r'(\?v=)(\d+)', replacer, content)
