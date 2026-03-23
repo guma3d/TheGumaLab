@@ -78,6 +78,9 @@
    - 브라우저 특성상 `navigator.share()` 로 이미지를 보내면 보안상 URL String만 카카오톡에 전송되는 치명적 문제를 해결하기 위해, 프론트엔드가 이미지 `src`를 백그라운드 Fetch로 빨아들여 물리적인 바이너리 `Blob`에서 `File` 객체로 포맷 형변환 후 네이티브 OS 전송 시트(Native Share Sheet)에 강제 주입함. 이를 통해 내부망(Private) 외부에서도 언제든 원본 사진 파일을 이격 공유 가능.
 2. **터치 이벤트 하이재킹 방어 (iOS Haptic/Lift 무효화)**
    - 아이폰(Safari)의 사진을 꾹 누를 때 발생하는 시스템 기본 드래그 앤 드롭 프론트뷰(Lift 현상)나 영역 탭 하이라이트를 완전히 무력화(`-webkit-user-drag: none;`)하여, CSS로 그려둔 `border-radius` 둥근 모서리가 확대축소 연산 중에도 절대 파괴되지 않게 보호함. 또한 `Panzoom.js` 핀치 줌 라이브러리와 조합하여 순정 Photos 앱의 1티어 조작감을 완벽 재현함.
+3. **Cloudflare & Edge 정적 캐시(Static Cache) 무결점 무효화 우회**
+   - CDN(Cloudflare)이나 브라우저의 끈질긴 HTML/JS 파일 해싱 캐시 정책 때문에 `?v=XXX` 쿼리 파라미터 강제 패치가 무시되는 치명적 현상을 방어합니다. DOM 노드(HTML)가 낡은 뼈대로 렌더링되더라도, 자바스크립트가 실행될 때 부모 노드 유효성을 100% 검사해 강제로 올바른 위치에 DOM을 납치(Hijack)하여 재생성합니다.
+   - 지속적인 Edge 서버 캐싱 오작동을 무력화하기 위해, 주요 JS 에셋 자체의 파일명을 교체(`script_app.js`, `guma-earth_app.js`)하는 초강수로 완전 무결점의 즉각 배포(Immediate Deployment) 파이프라인을 확립했습니다.
 
 ## 8. 📁 API 폴더 구조 및 모듈 설명 (Clean Architecture)
 이 시스템은 "관심사의 분리(Separation of Concerns)" 원칙에 따라, 스파게티 형태였던 단일 파일들을 `api/` 디렉토리 아래 각각의 전문 도메인(Domain)으로 완전히 해체하여 관리합니다.

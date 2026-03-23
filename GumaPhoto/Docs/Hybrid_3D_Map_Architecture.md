@@ -100,9 +100,14 @@ photoDataSource.clustering.clusterEvent.addEventListener(function(clusteredEntit
     cluster.label.show = false;
     cluster.billboard.show = false;
 
-    // 수량에 따른 반경(미터 스케일) 개편 및 Lerp 컬러 동기화
+    // [다이내믹 스케일링] 줌아웃(우주) 시 안보이는 착시 방지를 위해 카메라 고도에 맞게 동적 팽창
     const visualScale = 0.8 + (Math.log(photoCount) * 0.25);
-    const finalRadius = 40000 * visualScale;
+    let camHeight = 1000000;
+    if (viewer && viewer.camera && viewer.camera.positionCartographic) {
+        camHeight = Math.max(10000, viewer.camera.positionCartographic.height);
+    }
+    const baseRadiusMeters = (camHeight * 0.035) + 15000; 
+    const finalRadius = baseRadiusMeters * visualScale;
     let clusterColor = new Cesium.Color(); /* Lerp 계산 생략 */
 
     // 클러스터 아이디와 동기화되는 Native WGS84 커브 3D 타원체 렌더링 생성
