@@ -380,14 +380,14 @@ async def submit_feedback_v2(req: FeedbackV2Request):
             if db_correct_value.startswith("DATE|"):
                 date_val = db_correct_value.split("|", 1)[1]
                 from api.tasks import run_feedback_time_loc_job
-                run_feedback_time_loc_job.delay(real_point_id, date_val, "Unknown", tp_json)
+                run_feedback_time_loc_job.delay(real_point_id, date_val, "Unknown-Location", tp_json)
             elif db_correct_value.startswith("LOC|"):
                 loc_val = db_correct_value.split("|", 1)[1]
                 from api.tasks import run_feedback_time_loc_job
-                run_feedback_time_loc_job.delay(real_point_id, "Unknown", loc_val, tp_json)
+                run_feedback_time_loc_job.delay(real_point_id, "Unknown Date", loc_val, tp_json)
             else:
                 from api.tasks import run_feedback_time_loc_job
-                run_feedback_time_loc_job.delay(real_point_id, "Unknown", db_correct_value, tp_json)
+                run_feedback_time_loc_job.delay(real_point_id, "Unknown Date", db_correct_value, tp_json)
                 
         print(f"🚀 [Feedback v2.0 -> Redis] Celery 대기열에 지시서 발송 완료! (ID: {real_point_id})")
         return {"message": "Feedback submitted successfully. Processing in background."}

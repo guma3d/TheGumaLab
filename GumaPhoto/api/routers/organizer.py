@@ -180,7 +180,7 @@ class OrganizerPipeline:
             time.sleep(1.1)
             location = self.geolocator.reverse((lat, lon), language='ko', timeout=10)
             if not location:
-                return "위치정보없음"
+                return "Unknown-Location"
                 
             addr = location.raw.get('address', {})
             city = addr.get('city') or addr.get('town') or addr.get('village') or addr.get('county')
@@ -193,13 +193,13 @@ class OrganizerPipeline:
             elif city:
                 raw_loc = city
             else:
-                raw_loc = "위치정보없음"
+                raw_loc = "Unknown-Location"
                 
             formatted_name = raw_loc.replace(' ', '-')
             self.geocode_cache[cache_key] = formatted_name
             return formatted_name
         except Exception:
-            return "위치정보없음"
+            return "Unknown-Location"
 
     def generate_clean_filename(self, dt_str, sequence_idx, original_ext):
         return f"{dt_str}_{sequence_idx:02d}{original_ext}"
