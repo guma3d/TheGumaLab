@@ -191,9 +191,9 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
                     if img is not None:
                         x1, y1, x2, y2 = map(int, face_bbox)
                         h, w = img.shape[:2]
-                        # 얼굴 인식을 위해 주변 문맥 여백(Margin) 20% 부여
-                        margin_x = int((x2 - x1) * 0.2)
-                        margin_y = int((y2 - y1) * 0.2)
+                        # 얼굴 인식을 위해 주변 문맥 여백(Margin)을 100%로 넉넉하게 주어 InsightFace 왜곡(Distortion) 현상 완벽 방지
+                        margin_x = int((x2 - x1) * 1.0)
+                        margin_y = int((y2 - y1) * 1.0)
                         nx1, ny1 = max(0, x1 - margin_x), max(0, y1 - margin_y)
                         nx2, ny2 = min(w, x2 + margin_x), min(h, y2 + margin_y)
                         
@@ -270,7 +270,10 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
                     faces = face_app.get(img)
                     if not faces: continue
                     
-                    best_face = sorted(faces, key=lambda f: (f.bbox[2]-f.bbox[0])*(f.bbox[3]-f.bbox[1]), reverse=True)[0]
+                    # 넉넉한 마진 안에서 여러 얼굴이 잡힐 수 있으므로, 크기가 아닌 정중앙(Target)에 가장 가까운 얼굴을 색출!
+                    img_h, img_w = img.shape[:2]
+                    cx, cy = img_w / 2, img_h / 2
+                    best_face = sorted(faces, key=lambda f: ((f.bbox[0]+f.bbox[2])/2 - cx)**2 + ((f.bbox[1]+f.bbox[3])/2 - cy)**2)[0]
                     person_vectors.append(best_face.normed_embedding)
                     
                 if person_vectors:

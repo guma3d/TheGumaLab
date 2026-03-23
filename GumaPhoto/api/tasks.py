@@ -14,10 +14,13 @@ def run_organizer_job():
 @app.task(name="tasks.indexer")
 def run_indexer_job():
     try:
-        from api.services.indexer.orchestrator import run_indexing_pipeline
-        print("🚀 [Celery] Vector Indexer (딥러닝 VRAM 가동) 시작...")
-        run_indexing_pipeline()
-        print("✅ [Celery] Vector Indexer 작업 완료! VRAM 100% 반환 대기 중...")
+        import sys
+        sys.path.append("/app")
+        from vector_indexer import VectorIndexer
+        print("🚀 [Celery] 최신 메인 Vector Indexer (딥러닝 VRAM 가동) 시작...")
+        idx_bot = VectorIndexer()
+        idx_bot.run()
+        print("✅ [Celery] 최신 Vector Indexer 작업 완료! VRAM 100% 반환 대기 중...")
     except Exception as e:
         print(f"❌ [Celery] Vector Indexer 오류: {e}")
         raise
