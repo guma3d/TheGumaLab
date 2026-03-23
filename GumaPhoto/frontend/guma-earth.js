@@ -159,13 +159,12 @@ const GumaEarth = (function() {
                     ds.clustering.clusterEvent.addEventListener(function(clusteredEntities, cluster) {
                         const photoCount = clusteredEntities.length;
 
-                        // Use our custom drawn texture without text labels
+                        // 1️⃣ 기본 라벨과 빌보드를 끄고 Ellipse로 대체 (지구 곡면 밀착 3D 클러스터)
                         cluster.label.show = false;
-                        cluster.billboard.show = true;
-                        cluster.billboard.id = cluster.label.id;
+                        cluster.billboard.show = false;
 
-                        // 수량에 따른 스케일 크기 증가율
-                        const visualScale = 0.5 + (Math.log(photoCount) * 0.2);
+                        // 수량에 따른 스케일 크기 증가율 시각화 조정
+                        const visualScale = 0.8 + (Math.log(photoCount) * 0.25);
 
                         // 부드러운 색상 전환 (Lerp: 2~100장 기준)
                         const ratio = Math.max(0, Math.min((photoCount - 2) / 98, 1.0));
@@ -175,11 +174,23 @@ const GumaEarth = (function() {
                         } else {
                             Cesium.Color.lerp(midColor, maxColor, (ratio - 0.5) * 2.0, clusterColor);
                         }
+                        
+                        // 2️⃣ 픽셀(Pixel) 스케일 대신 실제 지구상의 미터(Meter) 반경 설정
+                        const baseRadiusMeters = 50000; 
+                        const finalRadius = baseRadiusMeters * visualScale;
 
-                        // 지형 표면에 밀착되는 글로우 텍스처 마커
-                        cluster.billboard.image = getOrCreateClusterTexture(clusterColor); 
-                        cluster.billboard.scale = visualScale;
-                        cluster.billboard.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND; 
+                        // 3️⃣ 지구 곡률에 착 달라붙는 타원(Ellipse) 기하학 생성
+                        cluster.ellipse = new Cesium.EllipseGraphics({
+                            semiMajorAxis: finalRadius,
+                            semiMinorAxis: finalRadius,
+                            // 직접 만든 캔버스 텍스처를 머티리얼로 매핑
+                            material: new Cesium.ImageMaterialProperty({
+                                image: getOrCreateClusterTexture(clusterColor),
+                                transparent: true
+                            }),
+                            // 핵심: 지형(산, 계곡)에 완전히 밀착시킴
+                            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND 
+                        });
                     });
 
                     viewer.dataSources.add(ds);
