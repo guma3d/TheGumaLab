@@ -13,15 +13,16 @@ router = APIRouter()
 def get_system_progress():
     db = SessionLocal()
     try:
-        total_photos = db.query(Photo).filter(Photo.status.in_(['ORGANIZED', 'VECTORIZED'])).count()
-        vectorized_completed = db.query(Photo).filter(Photo.status == 'VECTORIZED').count()
-        
+        total_photos = 0
+        vectorized_completed = 0
         unk_date, unk_loc, unk_person = 0, 0, 0
         
         if state.qdrant_client:
             try:
                 qc = state.qdrant_client
                 coll = "gumaphoto_hybrid_kr"
+                vectorized_completed = qc.count(collection_name=coll).count
+                total_photos = vectorized_completed
                 unk_date = qc.count(collection_name=coll, count_filter=Filter(
                     must=[FieldCondition(key="date", match=MatchText(text="Unknown"))]
                 )).count
