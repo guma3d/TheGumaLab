@@ -177,8 +177,14 @@ const GumaEarth = (function() {
                         if (ratio < 0.5) Cesium.Color.lerp(minColor, midColor, ratio * 2.0, clusterColor);
                         else Cesium.Color.lerp(midColor, maxColor, (ratio - 0.5) * 2.0, clusterColor);
                         
-                        // 픽셀 대신 실제 미터 스케일 반경 적용 (줌아웃 시 고정된 반경 유지)
-                        const baseRadiusMeters = 40000; 
+                        // 픽셀 대신 실제 미터 스케일 반경 적용하되, 카메라 고도(Zoom)에 비례해서 동적으로 크기를 부풀립니다!
+                        // (절대값 40km는 우주 줌아웃 뷰에서는 점(1px) 미만으로 줄어들어 '안 보이는 것'처럼 착각을 유발함)
+                        let camHeight = 1000000;
+                        if (viewer && viewer.camera && viewer.camera.positionCartographic) {
+                            camHeight = Math.max(10000, viewer.camera.positionCartographic.height);
+                        }
+                        // 고도 1만km 상공 -> 반경 약 360km 수준으로 거대하게 줌아웃-스케일링. 
+                        const baseRadiusMeters = (camHeight * 0.035) + 15000; 
                         const finalRadius = baseRadiusMeters * visualScale;
 
                         // ---- [핵심] Cesium 자체 클러스터링 코어는 내부적으로 2D 빌보드(Billboard) 계열만 
