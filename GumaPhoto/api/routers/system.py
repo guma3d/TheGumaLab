@@ -57,15 +57,15 @@ _CACHED_ADVANCED_STATS = None
 _CACHED_STATS_TIME = 0
 
 @router.get("/advanced")
-def get_advanced_system_stats():
+def get_advanced_system_stats(force_refresh: bool = False):
     global _CACHED_ADVANCED_STATS, _CACHED_STATS_TIME
     
     if not state.qdrant_client:
         return {"error": "Qdrant not loaded"}
         
-    # [Cache 🚀] 10분 단위 캐시를 두어 매번 2.3만 장 풀스캔하는 현상을 종식시킵니다.
+    # [Cache 🚀] 10분 단위 캐시를 두어 매번 2.3만 장 풀스캔하는 현상을 방어 (명시적 새로고침 시 무시)
     current_time = time.time()
-    if _CACHED_ADVANCED_STATS and (current_time - _CACHED_STATS_TIME < 600):
+    if not force_refresh and _CACHED_ADVANCED_STATS and (current_time - _CACHED_STATS_TIME < 600):
         return _CACHED_ADVANCED_STATS
     
     try:
@@ -139,7 +139,7 @@ def get_advanced_system_stats():
                 res.append({"name": k, "count": v, "pct": round((v / total_photos * 100), 1) if total_photos > 0 else 0})
             return res
             
-        return {
+        _CACHED_ADVANCED_STATS = {
             "total_photos": total_photos,
             "min_date": min_date if min_date != "9999-99" else None,
             "max_date": max_date if max_date != "0000-00" else None,
@@ -149,6 +149,8 @@ def get_advanced_system_stats():
             "locations": format_counter(counts["locations"]),
             "people": format_counter(counts["people"])
         }
+        _CACHED_STATS_TIME = current_time
+        return _CACHED_ADVANCED_STATS
     except Exception as e:
         import traceback
         traceback.print_exc()

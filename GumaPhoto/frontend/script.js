@@ -737,9 +737,19 @@ function openModal(photo, imgUrl) {
     currentModalPhoto = photo;
     modalImage.src = imgUrl;
     
-    // 모달창에 짧은 식별 번호 (Short ID) 삽입
-    const idEl = document.getElementById('modal-photo-id');
-    if (idEl && photo.id) {
+    // HTML 정적 캐시를 우회하기 위해 DOM이 없으면 동적으로 즉석 생성
+    let idEl = document.getElementById('modal-photo-id');
+    if (!idEl) {
+        idEl = document.createElement('div');
+        idEl.id = 'modal-photo-id';
+        idEl.style.cssText = "text-align:center; color:#6b7280; font-size:0.75rem; margin-bottom:12px; font-family: monospace; letter-spacing: 1px;";
+        const actionsCenter = document.querySelector('.modal-actions-center');
+        if (actionsCenter) {
+            actionsCenter.parentNode.insertBefore(idEl, actionsCenter);
+        }
+    }
+    
+    if (photo.id) {
         idEl.innerHTML = `<i class="fa-solid fa-fingerprint"></i> ID: ${photo.id.substring(0,8)}`;
     }
     
