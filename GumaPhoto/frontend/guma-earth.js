@@ -155,42 +155,72 @@ const GumaEarth = (function() {
                     const minColor = Cesium.Color.fromCssColorString('#0ea5e9'); // 파랑
                     const midColor = Cesium.Color.fromCssColorString('#10b981'); // 초록
                     const maxColor = Cesium.Color.fromCssColorString('#f43f5e'); // 빨강
+                    if (!window.customClusterSource) {
+                        window.customClusterSource = new Cesium.CustomDataSource('customClusters');
+                        viewer.dataSources.add(window.customClusterSource);
+                    }
+                    
+                    let seenClusterIds = new Set();
+                    let cleanupTimer = null;
 
                     ds.clustering.clusterEvent.addEventListener(function(clusteredEntities, cluster) {
                         const photoCount = clusteredEntities.length;
 
-                        // 1️⃣ 기본 라벨과 빌보드를 끄고 Ellipse로 대체 (지구 곡면 밀착 3D 클러스터)
+                        // 원래 클러스터의 허공에 뜨는 2D 빌보드와 라벨은 모두 투명화하여 끕니다.
                         cluster.label.show = false;
                         cluster.billboard.show = false;
 
-                        // 수량에 따른 스케일 크기 증가율 시각화 조정
                         const visualScale = 0.8 + (Math.log(photoCount) * 0.25);
-
-                        // 부드러운 색상 전환 (Lerp: 2~100장 기준)
                         const ratio = Math.max(0, Math.min((photoCount - 2) / 98, 1.0));
                         let clusterColor = new Cesium.Color();
-                        if (ratio < 0.5) {
-                            Cesium.Color.lerp(minColor, midColor, ratio * 2.0, clusterColor);
-                        } else {
-                            Cesium.Color.lerp(midColor, maxColor, (ratio - 0.5) * 2.0, clusterColor);
-                        }
+                        if (ratio < 0.5) Cesium.Color.lerp(minColor, midColor, ratio * 2.0, clusterColor);
+                        else Cesium.Color.lerp(midColor, maxColor, (ratio - 0.5) * 2.0, clusterColor);
                         
-                        // 2️⃣ 픽셀(Pixel) 스케일 대신 실제 지구상의 미터(Meter) 반경 설정
-                        const baseRadiusMeters = 50000; 
+                        // 픽셀 대신 실제 미터 스케일 반경 적용 (줌아웃 시 고정된 반경 유지)
+                        const baseRadiusMeters = 40000; 
                         const finalRadius = baseRadiusMeters * visualScale;
 
-                        // 3️⃣ 지구 곡률에 착 달라붙는 타원(Ellipse) 기하학 생성
-                        cluster.ellipse = new Cesium.EllipseGraphics({
-                            semiMajorAxis: finalRadius,
-                            semiMinorAxis: finalRadius,
-                            // 직접 만든 캔버스 텍스처를 머티리얼로 매핑
-                            material: new Cesium.ImageMaterialProperty({
+                        // ---- [핵심] Cesium 자체 클러스터링 코어는 내부적으로 2D 빌보드(Billboard) 계열만 
+                        // 최종 렌더링을 허가하므로, 지형 밀착용 3D Ellipse 프로젝션을 띄우기 위해
+                        // '평행우주(parallell custom source)'를 생성해 메모리 레벨에서 동기화합니다. ----
+                        let syncEntity = window.customClusterSource.entities.getById(cluster.id);
+                        if (!syncEntity) {
+                            syncEntity = window.customClusterSource.entities.add({
+                                id: cluster.id,
+                                position: cluster.position,
+                                ellipse: {
+                                    semiMajorAxis: finalRadius,
+                                    semiMinorAxis: finalRadius,
+                                    material: new Cesium.ImageMaterialProperty({
+                                        image: getOrCreateClusterTexture(clusterColor),
+                                        transparent: true
+                                    }),
+                                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                                }
+                            });
+                        } else {
+                            syncEntity.position = cluster.position;
+                            syncEntity.ellipse.semiMajorAxis = finalRadius;
+                            syncEntity.ellipse.semiMinorAxis = finalRadius;
+                            syncEntity.ellipse.material = new Cesium.ImageMaterialProperty({
                                 image: getOrCreateClusterTexture(clusterColor),
                                 transparent: true
-                            }),
-                            // 핵심: 지형(산, 계곡)에 완전히 밀착시킴
-                            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND 
-                        });
+                            });
+                        }
+
+                        seenClusterIds.add(cluster.id);
+                        
+                        clearTimeout(cleanupTimer);
+                        cleanupTimer = setTimeout(() => {
+                            // 클러스터링 계산 사이클 완료 시점: 이번 프레임에 생존하지 못한 유령 클러스터(Ellipse)들을 모두 파기
+                            const entities = window.customClusterSource.entities.values;
+                            const toRemove = [];
+                            for (let i = 0; i < entities.length; i++) {
+                                if (!seenClusterIds.has(entities[i].id)) toRemove.push(entities[i]);
+                            }
+                            toRemove.forEach(e => window.customClusterSource.entities.remove(e));
+                            seenClusterIds.clear();
+                        }, 50);
                     });
 
                     viewer.dataSources.add(ds);
