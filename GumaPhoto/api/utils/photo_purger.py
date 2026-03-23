@@ -90,8 +90,9 @@ class PhotoPurger:
                 cur = conn.cursor()
                 # 찌꺼기 테이블에서 해당 파일의 메타데이터 완전 소각 (Tombstone 없이 아예 삭제하여 클린 유지)
                 cur.execute("DELETE FROM vectorized_files WHERE filepath=?", (abs_path,))
+                cur.execute("DELETE FROM file_hashes WHERE filepath=?", (abs_path,))
                 conn.commit()
                 conn.close()
-                print(f"   ✅ [3/3] 통합 SQLite (vectorized_files) 영구 제명(동기화) 완료")
+                print(f"   ✅ [3/3] 통합 SQLite (vectorized_files 및 file_hashes) 영구 제명 완료")
             except Exception as e:
                 print(f"   ❌ [3/3] 통합 SQLite 삭제 중 오류 발생: {e}")
