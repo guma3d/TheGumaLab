@@ -57,9 +57,10 @@ const GumaEarth = (function() {
             });
             const textLayer = viewer.imageryLayers.addImageryProvider(labelProvider);
             
-            // 🔥 Force Text Color to Pure White via WebGL Shader Overrides
-            textLayer.brightness = 3.5; // Blows out the standard light-grey CartoDB typography into pure white.
-            textLayer.contrast = 1.5;   // sharpens the text halo edges against the dark background.
+            // [수정] WebGL 셰이더 조절 기능을 원복하여 CartoDB 본연의 깔끔하고 얇은 글씨체를 살립니다.
+            // (강제 조정 시 픽셀들의 검은 테두리가 과도하게 뻥튀기되어 '두꺼운 아웃라인'으로 안 예쁘게 보임)
+            textLayer.brightness = 1.0; 
+            textLayer.contrast = 1.0;
 
             // 🌟 Advanced Rendering & Atmosphere Effects
             viewer.scene.highDynamicRange = true; // HDR tone mapping

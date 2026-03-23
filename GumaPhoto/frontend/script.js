@@ -737,20 +737,20 @@ function openModal(photo, imgUrl) {
     currentModalPhoto = photo;
     modalImage.src = imgUrl;
     
-    // HTML 정적 캐시를 우회하기 위해 DOM이 없으면 동적으로 즉석 생성
+    // 사진 내부 우측 상단에 강렬한 노란색 텍스트(검은색 굵은 테두리 포함)로 ID 주입
     let idEl = document.getElementById('modal-photo-id');
     if (!idEl) {
         idEl = document.createElement('div');
         idEl.id = 'modal-photo-id';
-        idEl.style.cssText = "text-align:center; color:#6b7280; font-size:0.75rem; margin-bottom:12px; font-family: monospace; letter-spacing: 1px;";
-        const actionsCenter = document.querySelector('.modal-actions-center');
-        if (actionsCenter) {
-            actionsCenter.parentNode.insertBefore(idEl, actionsCenter);
+        idEl.style.cssText = "position: absolute; top: 15px; right: 15px; z-index: 1000; pointer-events: none; color: #facc15; font-size: 0.9rem; font-weight: bold; font-family: monospace; letter-spacing: 1px; text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0px 0px 8px rgba(0,0,0,0.8);";
+        const imgContainer = document.querySelector('.modal-image-container');
+        if (imgContainer) {
+            imgContainer.appendChild(idEl);
         }
     }
     
     if (photo.id) {
-        idEl.innerHTML = `<i class="fa-solid fa-fingerprint"></i> ID: ${photo.id.substring(0,8)}`;
+        idEl.innerHTML = `<i class="fa-solid fa-fingerprint" style="margin-right:4px;"></i>ID: ${photo.id.substring(0,8)}`;
     }
     
     photoModal.classList.remove('hidden');
