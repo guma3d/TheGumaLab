@@ -92,6 +92,7 @@ class VectorIndexer:
                 filepath TEXT PRIMARY KEY,
                 status TEXT,
                 face_count INTEGER DEFAULT 0,
+                metadata TEXT,
                 processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
@@ -184,11 +185,16 @@ class VectorIndexer:
 
     def is_already_processed(self, filepath):
         """이미 벡터화가 성공적으로 끝난 파일인지 검사 (Fail-safe 이어하기)"""
-        # 고유 ID 계산
         import uuid
         point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, filepath))
         
-        # 1. Qdrant 벡터DB 실존 검사 (with_payload/vectors=False 로 초고속 존재 검증)
+        # 1. SQLite 상태 검사 (주 진실 공급원 교체)
+        with getattr(self, "db_lock", __import__("threading").Lock()):
+            self.cursor.execute("SELECT status FROM vectorized_files WHERE filepath=?", (filepath,))
+            row = self.cursor.fetchone()
+        sqlite_done = (row is not None and row[0] == 'DONE')
+        
+        # 2. Qdrant 벡터DB 검증
         try:
             records = self.q_client.retrieve(
                 collection_name=COLLECTION_NAME,
@@ -200,18 +206,11 @@ class VectorIndexer:
         except Exception:
             qdrant_has_vector = False
             
-        # 2. XMP 물리 파일 검사
-        base_name, _ = os.path.splitext(filepath)
-        xmp_exists = os.path.exists(base_name + ".xmp")
-        
-        # 완벽하게 둘 다 있는 경우에만 Skip (UI 관리용 DB 검증 생략, 상태는 업데이트 삽입만)
-        if qdrant_has_vector and xmp_exists:
-            with getattr(self, "db_lock", __import__("threading").Lock()):
-                self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status) VALUES (?, ?)", (filepath, 'DONE'))
-                self.conn.commit()
+        # 완벽하게 둘 다 있는 경우에만 Skip
+        if qdrant_has_vector and sqlite_done:
             return True
             
-        # 둘 중 하나라도 누락된 경우 -> 찌꺼기 완벽 소거 후 처음부터 다시 (Full Pipeline)
+        # 둘 중 하나라도 누락(Mismatch)된 경우 -> 찌꺼기 완벽 소거 후 처음부터 다시
         if qdrant_has_vector:
             try:
                 from qdrant_client.http.models import PointIdsList
@@ -219,12 +218,10 @@ class VectorIndexer:
             except:
                 pass
                 
-        if xmp_exists:
-            try:
-                base_name, _ = os.path.splitext(filepath)
-                os.remove(base_name + ".xmp")
-            except:
-                pass
+        # SQLite에서 잘못된 상태 찌꺼기 초기화
+        with getattr(self, "db_lock", __import__("threading").Lock()):
+            self.cursor.execute("DELETE FROM vectorized_files WHERE filepath=?", (filepath,))
+            self.conn.commit()
                 
         return False
 
@@ -476,24 +473,20 @@ class VectorIndexer:
                 print(f"      ⚠️ 개별 항목 payload 병합 오류 (Skip): {e}")
                 with getattr(self, "db_lock", __import__("threading").Lock()):
                     self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status) VALUES (?, ?)", (filepath, 'ERROR'))
+                    self.conn.commit()
                 
         # Qdrant에 일괄 묶음 사격 (배치 Upsert)
         if points_to_upsert:
             try:
                 self.q_client.upsert(collection_name=COLLECTION_NAME, points=points_to_upsert)
                 
-                # 성공적으로 Qdrant에 저장된 사진들만 원자성(Atomicity)을 보장하며 물리 XMP 및 SQLite 기록 생성
-                import xmp_utils
-                for filepath, payload, face_count in successful_payloads:
-                    try:
-                        xmp_utils.generate_xmp_sidecar(filepath, payload)
-                    except Exception as xmp_e:
-                        print(f"      ⚠️ XMP 생성 실패: {xmp_e}")
-                        
-                    with getattr(self, "db_lock", __import__("threading").Lock()):
-                        self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status, face_count) VALUES (?, ?, ?)",
-                                          (filepath, 'DONE', face_count))
+                # 성공적으로 Qdrant에 저장된 사진들만 원자성(Atomicity)을 보장하며 SQLite 메타데이터 기록 생성 (XMP 대체)
+                import json
                 with getattr(self, "db_lock", __import__("threading").Lock()):
+                    for filepath, payload, face_count in successful_payloads:
+                        meta_str = json.dumps(payload, ensure_ascii=False)
+                        self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status, face_count, metadata) VALUES (?, ?, ?, ?)",
+                                          (filepath, 'DONE', face_count, meta_str))
                     self.conn.commit()
                 
             except Exception as qdrant_err:
@@ -570,6 +563,7 @@ class VectorIndexer:
                             print(f"      ⚠️ 이미지 로드 오류 (Skip): {os.path.basename(filepath)} - {e}")
                             with getattr(self, "db_lock", __import__("threading").Lock()):
                                 self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status) VALUES (?, ?)", (filepath, 'ERROR'))
+                                self.conn.commit()
                             return None
                             
                     results = list(executor.map(prep, batch_paths))
