@@ -19,9 +19,9 @@ from insightface.app import FaceAnalysis
 import torch
 from hsemotion.facial_emotions import HSEmotionRecognizer
 
-# SQLAlchemy ORM
-from core.database import SessionLocal
-from core.models import Photo
+# SQLAlchemy ORM (DEPRECATED & REMOVED)
+# from core.database import SessionLocal
+# from core.models import Photo
 
 router = APIRouter()
 
@@ -70,10 +70,19 @@ class OrganizerPipeline:
             
         file_hash = self.get_file_hash(filepath)
         
-        # [ORM 변경점] 이미 처리된 해시(중복 사본)인지 확인
-        existing = db.query(Photo).filter(Photo.file_hash == file_hash).first()
-        if existing and existing.status != 'DELETED':
-            return True, "DUPLICATE"
+        # [신규 아키텍처] organizer_state.db 에서 중복 해시 체크
+        import sqlite3
+        try:
+            conn = sqlite3.connect("/app/data/organizer_state.db")
+            cur = conn.cursor()
+            cur.execute("CREATE TABLE IF NOT EXISTS file_hashes (file_hash TEXT PRIMARY KEY, filepath TEXT)")
+            cur.execute("SELECT filepath FROM file_hashes WHERE file_hash=?", (file_hash,))
+            existing = cur.fetchone()
+            conn.close()
+            if existing:
+                return True, "DUPLICATE"
+        except Exception:
+            pass
             
         ext = os.path.splitext(filepath)[1].lower()
         if ext in ['.mp4', '.mov', '.avi', '.mkv']:
@@ -214,7 +223,7 @@ class OrganizerPipeline:
     def run(self, batch_size=200):
         print("🚀 [GumaPhoto Pipeline] 데이터 정리를 시작합니다...")
         
-        db = SessionLocal()
+        # db = SessionLocal() # Removed ORM
         total_processed_in_this_run = 0
         try:
             while True:
@@ -318,38 +327,34 @@ class OrganizerPipeline:
                             except Exception as thumb_e:
                                 print(f"   ⚠️ 썸네일 파싱 실패 (동영상이거나 손상): {thumb_e}")
                                 
-                            # [ORM 변경점] SQLite 통합 명부에 최종 이주 내역과 메타정보 기록
+                            # [신규 아키텍처] SQLite 통합 명부에 최종 이주 내역과 메타정보 기록
                             total_processed_in_this_run += 1
                             file_hash_val = item.get('hash', 'UNKNOWN_HASH')
-                            photo_obj = db.query(Photo).filter(Photo.filepath == final_move_path).first()
+                            import sqlite3, json
                             
-                            if photo_obj:
-                                photo_obj.status = 'ORGANIZED'
-                                photo_obj.file_hash = file_hash_val
-                                photo_obj.original_context = item['original_context']
-                                photo_obj.width = width if width > 0 else None
-                                photo_obj.height = height if height > 0 else None
-                                photo_obj.file_size_bytes = file_size_bytes
-                            else:
-                                new_photo = Photo(
-                                    filepath=final_move_path,
-                                    file_hash=file_hash_val,
-                                    original_context=item['original_context'],
-                                    status='ORGANIZED',
-                                    width=width if width > 0 else None,
-                                    height=height if height > 0 else None,
-                                    file_size_bytes=file_size_bytes
-                                )
-                                db.add(new_photo)
+                            conn_lite = sqlite3.connect("/app/data/organizer_state.db")
+                            cur_lite = conn_lite.cursor()
+                            
+                            # 중복 방지 해시 테이블 기록
+                            cur_lite.execute("CREATE TABLE IF NOT EXISTS file_hashes (file_hash TEXT PRIMARY KEY, filepath TEXT)")
+                            cur_lite.execute("INSERT OR IGNORE INTO file_hashes (file_hash, filepath) VALUES (?, ?)", (file_hash_val, final_move_path))
+                            
+                            # Indexed 대기열 상태 기록 (vector_indexer가 알아서 가져갈 수 있도록)
+                            cur_lite.execute('''CREATE TABLE IF NOT EXISTS vectorized_files 
+                                         (filepath TEXT PRIMARY KEY, status TEXT, face_count INTEGER DEFAULT 0, metadata TEXT, processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+                                         
+                            cur_lite.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status, metadata) VALUES (?, ?, ?)", 
+                                        (final_move_path, 'ORGANIZED', json.dumps({"original_context": item['original_context']}, ensure_ascii=False)))
+                            conn_lite.commit()
+                            conn_lite.close()
                                 
                         except Exception as e:
                             print(f"   ⚠️ 폴더 반영 실패: {os.path.basename(item['filepath'])} -> {e}")
                             
-                db.commit()
-                print(f"[*] ✅ 배치 이동 및 ORM 체계 반영 완료! (배치 끝)")
+                print(f"[*] ✅ 배치 이동 완료! (배치 끝)")
                 
         finally:
-            db.close() # Connection Pool 안전 반환
+            pass # db.close() Removed ORM
 
 @router.post("/api/system/organizer/run")
 async def trigger_run_organizer_task():

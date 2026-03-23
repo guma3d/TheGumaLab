@@ -163,15 +163,19 @@ class VectorIndexer:
             
         print("  [+] 모든 시각 초거대 AI 모델 로딩 완료!")
 
-    def get_original_context(self, file_hash):
-        """1단계에서 저장해둔 원본 문맥(가족_결혼사진 등)을 해시값으로 역추적하여 빼오기"""
+    def get_original_context(self, filepath):
+        """1단계(Organizer)에서 vectorized_files 테이블의 metadata JSON에 저장해둔 원본 문맥 얻어오기"""
         try:
             with getattr(self, "db_lock", __import__("threading").Lock()):
-                self.cursor.execute("SELECT original_context FROM processed_files WHERE file_hash=?", (file_hash,))
+                self.cursor.execute("SELECT metadata FROM vectorized_files WHERE filepath=?", (filepath,))
                 row = self.cursor.fetchone()
-            return row[0] if row else "Organized_Photo"
-        except sqlite3.OperationalError:
-            return "Organized_Photo"
+                if row and row[0]:
+                    import json
+                    meta = json.loads(row[0])
+                    return meta.get("original_context", "Organized_Photo")
+        except Exception:
+            pass
+        return "Organized_Photo"
 
     def get_file_hash(self, filepath):
         """파일 SHA256 해시 추출 (DB 연동 시 고유 조회용 - 1단계 Organizer와 통일)"""
@@ -543,8 +547,7 @@ class VectorIndexer:
                             # 디스크 병목 구역 (멀티스레딩 효과 극대화)
                             pil_img = Image.open(filepath).convert('RGB')
                             cv_img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
-                            file_hash = self.get_file_hash(filepath)
-                            context_str = self.get_original_context(file_hash)
+                            context_str = self.get_original_context(filepath)
                             time_of_day, season = self.extract_time_and_season(filepath)
                             import uuid
                             point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, filepath))
