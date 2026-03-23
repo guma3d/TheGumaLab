@@ -196,7 +196,7 @@ const GumaEarth = (function() {
                                         image: getOrCreateClusterTexture(clusterColor),
                                         transparent: true
                                     }),
-                                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                                    height: 0 // 지표면(Ellipsoid)에 평면으로 완벽히 밀착 (GroundPrimitive Shader 충돌 방지)
                                 }
                             });
                         } else {
