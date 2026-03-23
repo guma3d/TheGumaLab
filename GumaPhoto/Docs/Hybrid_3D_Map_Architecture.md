@@ -84,24 +84,53 @@ photoDataSource.clustering.enabled = true;
 photoDataSource.clustering.pixelRange = 60; 
 photoDataSource.clustering.minimumClusterSize = 2; 
 
-// 2. 클러스터 시각화 이벤트 오버라이드
+// [TA 업그레이드] Cesium 엔진 렌더링 한계 돌파: 평행우주 프로젝션 매핑
+// Cesium 자체 클러스터링 코어는 빌보드(2D)만 렌더링하므로, 지형/곡면에 밀착되는 진정한 3D 투사(Ellipse)를 위해 
+// 클러스터링을 감독하는 별도의 CustomDataSource를 운영합니다.
+let customClusterSource = new Cesium.CustomDataSource('customClusters');
+viewer.dataSources.add(customClusterSource);
+
+let seenClusterIds = new Set();
+let cleanupTimer = null;
+
 photoDataSource.clustering.clusterEvent.addEventListener(function(clusteredEntities, cluster) {
     const photoCount = clusteredEntities.length;
 
+    // 허공에 뜨는 기존 2D 빌보드 코어를 숨김 처리
     cluster.label.show = false;
-    cluster.billboard.show = true;
-    cluster.billboard.id = cluster.label.id;
+    cluster.billboard.show = false;
 
-    // 수량에 따른 스케일 크기 및 색상 테마 티어링
+    // 수량에 따른 반경(미터 스케일) 개편 및 Lerp 컬러 동기화
     const visualScale = 0.8 + (Math.log(photoCount) * 0.25);
-    let clusterColor = Cesium.Color.fromCssColorString('#0ea5e9'); // 기본: 블루
-    if (photoCount > 50) clusterColor = Cesium.Color.fromCssColorString('#f43f5e'); // 핫: 레드
-    else if (photoCount > 10) clusterColor = Cesium.Color.fromCssColorString('#f59e0b'); // 워밍: 오렌지
+    const finalRadius = 40000 * visualScale;
+    let clusterColor = new Cesium.Color(); /* Lerp 계산 생략 */
 
-    // 3. 지형 표면에 밀착되는 글로우 텍스처 마커
-    cluster.billboard.image = getOrCreateClusterTexture(photoCount, clusterColor); 
-    cluster.billboard.scale = visualScale;
-    cluster.billboard.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND; 
+    // 클러스터 아이디와 동기화되는 Native WGS84 커브 3D 타원체 렌더링 생성
+    let syncEntity = customClusterSource.entities.getById(cluster.id);
+    if (!syncEntity) {
+        customClusterSource.entities.add({
+            id: cluster.id,
+            position: cluster.position,
+            ellipse: {
+                semiMajorAxis: finalRadius,
+                semiMinorAxis: finalRadius,
+                material: new Cesium.ImageMaterialProperty({
+                    image: getOrCreateClusterTexture(clusterColor),
+                    transparent: true
+                }),
+                height: 0 // 지표면(Ellipsoid)에 평면으로 완벽히 밀착해 자연스러운 굴곡 형성
+            }
+        });
+    }
+
+    seenClusterIds.add(cluster.id);
+
+    // 50ms 후 생존하지 못한 클러스터들을 수거 (Garbage Cleanup)
+    clearTimeout(cleanupTimer);
+    cleanupTimer = setTimeout(() => {
+        /* 삭제 로직 */
+        seenClusterIds.clear();
+    }, 50);
 });
 
 viewer.dataSources.add(photoDataSource);
