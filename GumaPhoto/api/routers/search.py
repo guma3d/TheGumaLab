@@ -331,11 +331,20 @@ async def perform_search(req: SearchRequest):
             
             for res in formatted_results:
                 m = meta_map.get(res["original_path"], {})
-                res["width"] = m.get("w", 0)
-                res["height"] = m.get("h", 0)
+                w = m.get("w", 0)
+                h = m.get("h", 0)
+                if w == 0 or h == 0:
+                    try:
+                        from PIL import Image
+                        with Image.open(res["original_path"]) as img:
+                            w, h = img.size
+                    except Exception:
+                        w, h = 800, 800
+                res["width"] = w
+                res["height"] = h
                 res["file_size_bytes"] = m.get("bytes", 0)
                 
-            print(f"✅ 통합 DB(SQLite) Width/Height 조인 성공! (총 결과 {len(formatted_results)}건 반환)")
+            print(f"✅ 통합 DB(SQLite) Width/Height 조인 성공! (다이나믹 폴백 포함, 총 결과 {len(formatted_results)}건 반환)")
         except Exception as db_err:
             print(f"⚠️ Metadata Join 에러: {db_err}")
         finally:
