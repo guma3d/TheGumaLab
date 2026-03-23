@@ -81,26 +81,17 @@ class PhotoPurger:
             except Exception as e:
                 print(f"   ❌ [2/3] Qdrant DB 삭제 통신망 접속 오류: {e}")
 
-        # [3] SQLAlchemy ORM 영구 사망(Tombstone) 낙인 처리
-        db = SessionLocal()
-        try:
-            photo = db.query(Photo).filter(Photo.filepath == abs_path).first()
-            if photo:
-                photo.status = 'DELETED'
-                db.commit()
-                print(f"   ✅ [3/3] SQLite 영구 삭제 마킹(Tombstone) 완료")
-            else:
-                # 존재조차 안 했다면 좀비 생성 후 즉각 사살 (keep_original=False 일 때만)
-                if not keep_original:
-                    new_zombie = Photo(
-                        filepath=abs_path,
-                        file_hash="ZOMBIE_DELETED",
-                        status='DELETED'
-                    )
-                    db.add(new_zombie)
-                    db.commit()
-                    print(f"   ✅ [3/3] 허상 파일(Zombie) 영구 차단망 설치 완료")
-        except Exception as e:
-            print(f"   ❌ [3/3] SQLite SQLAlchemy 갱신 중 오류 발생: {e}")
-        finally:
-            db.close()
+        # [3] 신규 아키텍처 동기화 (SQLite vectorized_files에서 영구 제명)
+        import sqlite3
+        db_path = "/app/data/organizer_state.db"
+        if os.path.exists(db_path):
+            try:
+                conn = sqlite3.connect(db_path)
+                cur = conn.cursor()
+                # 찌꺼기 테이블에서 해당 파일의 메타데이터 완전 소각 (Tombstone 없이 아예 삭제하여 클린 유지)
+                cur.execute("DELETE FROM vectorized_files WHERE filepath=?", (abs_path,))
+                conn.commit()
+                conn.close()
+                print(f"   ✅ [3/3] 통합 SQLite (vectorized_files) 영구 제명(동기화) 완료")
+            except Exception as e:
+                print(f"   ❌ [3/3] 통합 SQLite 삭제 중 오류 발생: {e}")

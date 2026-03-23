@@ -40,6 +40,25 @@ class FeedbackV2Request(BaseModel):
     correct_value: typing.Optional[str] = ""
     target_points: typing.Optional[typing.List[typing.Union[int, str]]] = []
 
+def sync_payload_to_sqlite(point_id: str):
+    """Qdrant에서 수정된 최신 Payload를 SQLite 메타데이터에 즉시 동기화"""
+    try:
+        if not state.qdrant_client: return
+        res = state.qdrant_client.retrieve(collection_name="gumaphoto_hybrid_kr", ids=[point_id], with_payload=True)
+        if res and res[0].payload:
+            p = res[0].payload
+            fpath = p.get("filepath")
+            if fpath:
+                import sqlite3, json
+                conn = sqlite3.connect("/app/data/organizer_state.db")
+                cur = conn.cursor()
+                cur.execute("UPDATE vectorized_files SET metadata=? WHERE filepath=?", (json.dumps(p, ensure_ascii=False), fpath))
+                conn.commit()
+                conn.close()
+                print(f"[*] 피드백 수정사항 SQLite 완전 동기화 완료: {fpath}")
+    except Exception as e:
+        print(f"[-] SQLite 동기화 에러: {e}")
+
 @router.post("/api/feedback_v2/ignore_face")
 async def ignore_face_feedback(req: FeedbackV2Request):
     if not state.qdrant_client: return {"error": "Qdrant not loaded"}
@@ -56,6 +75,7 @@ async def ignore_face_feedback(req: FeedbackV2Request):
             payload={"people": ["Unidentifiable Person"]},
             points=[real_point_id]
         )
+        sync_payload_to_sqlite(real_point_id)
         return {"message": "Ignored successfully."}
     except Exception as e:
         return {"error": str(e)}
@@ -76,6 +96,7 @@ async def no_person_feedback(req: FeedbackV2Request):
             payload={"people": ["No Person"]},
             points=[real_point_id]
         )
+        sync_payload_to_sqlite(real_point_id)
         return {"message": "Ignored successfully as No Person."}
     except Exception as e:
         return {"error": str(e)}
