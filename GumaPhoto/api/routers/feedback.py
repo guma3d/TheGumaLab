@@ -150,16 +150,12 @@ async def temptest_feedback(req: FeedbackV2Request):
             filepath = payload.get("filepath", "")
             if not filepath: continue
             
-            if fb_type == "scene":
-                if "Date" in req.issue_type:
-                    dt = payload.get("date", "")
-                    if dt and "Unknown" not in dt: continue
-                elif "Location" in req.issue_type:
-                    loc = payload.get("location", "")
-                    if loc and "Unknown" not in loc and "위치정보없음" not in loc: continue
-            elif fb_type == "face":
+            # [수정] 기존에는 Unknown 상태인 사진만 추천하도록 강제 필터링했으나, 
+            # 멀쩡한 데이터를 다른 데이터로 '교정'하려는 피드백 수행 시 유사 사진이 리스트에 아예 뜨지 않아
+            # 단 1장의 사진만 피드백되어 파이프라인으로 넘어가는 구조적 버그 해결.
+            if fb_type == "face":
                 ppl = payload.get("people", [])
-                # 다른 이름으로 이미 매칭되었다면 일단 스킵할지 여부 고민 가능하나, 오탐일수 있으므로 일단 보려면 열어둠.
+                # 다른 이름으로 매칭되었더라도 오탐일 수 있으므로 시각적 유사도만 높으면 그대로 올려보냅니다.
             
             url_path = filepath.replace("/app/data/organized", "/photos")
             similars.append({

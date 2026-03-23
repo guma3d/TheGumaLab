@@ -42,7 +42,7 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
     if qdrant_id and qdrant_id not in target_points:
         target_points.append(qdrant_id)
         
-    similar_files = []
+    valid_targets = []
     if target_points and len(target_points) > 0:
         points_data = client.retrieve(
             collection_name=COLLECTION_NAME,
@@ -53,7 +53,7 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
             p = getattr(res, 'payload', {})
             fpath = p.get("filepath")
             if fpath:
-                similar_files.append(fpath)
+                valid_targets.append({"fpath": fpath, "pt_id": res.id})
                 exif_str = get_physical_metadata_str(fpath)
                 print(f"  [🕵️‍♂️ AUDIT-BEFORE (Time/Loc)] File: {fpath} | Loc: {p.get('location')} | Date: {p.get('date')} | People: {p.get('people')}")
                 print(f"      ㄴ [메타데이터-BEFORE]: {exif_str}")
@@ -75,9 +75,9 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
     
     # zipped iteration: zip(similar_files, target_points) (개수가 같다고 보장될 때)
     # 하지만 더 안전하게는 각 파일별로 돌리는 것이 좋음
-    for i, fpath in enumerate(similar_files):
-        # 쌍을 이루는 Qdrant point_id 가 존재한다면 매핑
-        pt_id = target_points[i] if i < len(target_points) else None
+    for target_item in valid_targets:
+        fpath = target_item["fpath"]
+        pt_id = target_item["pt_id"]
         
         # 통합 유틸리티를 호출하여 찌꺼기를 날리고 원본만 보존!
         PhotoPurger.purge_photo_data(
