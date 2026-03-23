@@ -742,11 +742,14 @@ function openModal(photo, imgUrl) {
     if (!idEl) {
         idEl = document.createElement('div');
         idEl.id = 'modal-photo-id';
-        idEl.style.cssText = "position: absolute; top: 15px; right: 15px; z-index: 1000; pointer-events: none; color: #facc15; font-size: 0.9rem; font-weight: bold; font-family: monospace; letter-spacing: 1px; text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0px 0px 8px rgba(0,0,0,0.8);";
-        const imgContainer = document.querySelector('.modal-image-container');
-        if (imgContainer) {
-            imgContainer.appendChild(idEl);
-        }
+    }
+    
+    // 강제 스타일링 및 위치 배정 (기존 낡은 HTML 파일 캐시가 남아있어도 무력화시킴)
+    idEl.style.cssText = "position: absolute; top: 15px; right: 15px; z-index: 1000; pointer-events: none; color: #facc15; font-size: 0.9rem; font-weight: bold; font-family: monospace; letter-spacing: 1px; text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0px 0px 8px rgba(0,0,0,0.8);";
+    
+    const imgContainer = document.querySelector('.modal-image-container');
+    if (imgContainer && idEl.parentNode !== imgContainer) {
+        imgContainer.appendChild(idEl);
     }
     
     if (photo.id) {
