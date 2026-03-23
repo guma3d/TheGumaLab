@@ -596,13 +596,13 @@ function renderGallery(photos, append = false, targetId = 'gallery-grid', isMaso
             let badgesHtml = '';
             
             // 1. Date
-            let dateVal = (photo.date && photo.date.trim() !== '') ? photo.date : 'Unknown';
-            if (dateVal.length > 10 && dateVal !== 'Unknown') dateVal = dateVal.substring(0, 10);
+            let dateVal = (photo.date && photo.date.trim() !== '') ? photo.date : 'Unknown Date';
+            if (dateVal.length > 10 && !dateVal.includes('Unknown')) dateVal = dateVal.substring(0, 10);
             badgesHtml += createBadge('fa-regular fa-calendar', dateVal);
             
             // 2. Location
-            let locVal = (photo.location && photo.location.trim() !== '') ? photo.location.replace(/-/g, ' ') : 'Unknown';
-            if (locVal.includes('위치정보없음')) locVal = 'Unknown';
+            let locVal = (photo.location && photo.location.trim() !== '') ? photo.location.replace(/-/g, ' ') : 'Unknown Location';
+            if (locVal.includes('위치정보없음') || locVal === 'Unknown') locVal = 'Unknown Location';
             badgesHtml += createBadge('fa-solid fa-location-dot', locVal);
             
             // 3. People (Highlight)
@@ -770,13 +770,13 @@ function openModal(photo, imgUrl) {
         let badgesHtml = '';
         
         // 1. Date
-        let dateVal = (photo.date && photo.date.trim() !== '') ? photo.date : 'Unknown';
+        let dateVal = (photo.date && photo.date.trim() !== '') ? photo.date : 'Unknown Date';
         if (dateVal.length > 10 && !dateVal.includes('Unknown')) dateVal = dateVal.substring(0, 10);
         badgesHtml += createBadge('fa-regular fa-calendar', dateVal);
         
         // 2. Location
-        let locVal = (photo.location && photo.location.trim() !== '') ? photo.location.replace(/-/g, ' ') : 'Unknown';
-        if (locVal.includes('위치정보없음')) locVal = 'Unknown';
+        let locVal = (photo.location && photo.location.trim() !== '') ? photo.location.replace(/-/g, ' ') : 'Unknown Location';
+        if (locVal.includes('위치정보없음') || locVal === 'Unknown') locVal = 'Unknown Location';
         badgesHtml += createBadge('fa-solid fa-location-dot', locVal);
         
         // 3. People (Highlight)
