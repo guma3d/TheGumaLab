@@ -5,8 +5,6 @@ from core.state import state
 import json
 import os
 import re
-from core.database import SessionLocal
-from core.models import Photo
 import torch
 from qdrant_client.http.models import Filter, FieldCondition, MatchText, MatchAny, OrderBy, Direction
 
@@ -320,36 +318,27 @@ async def perform_search(req: SearchRequest):
             })
 
         # --------------------------------------------------------------------------
-        # [신규 추가] Qdrant에는 없는 물리적 해상도(width/height)를 통합 SQLite에서 
-        # O(1) in_ 배치 쿼리로 긁어와 결과에 Join 주입시킵니다 (Masonry 깨짐 완벽 방지)
+        # [신규 아키텍처] Qdrant 단일화로 인해 SQLite를 거치지 않고, 
+        # 디스크의 원본 이미지(PIL) 헤더를 직접 읽어 해상도(width/height)를 주입합니다.
         # --------------------------------------------------------------------------
-        filepaths = [res["original_path"] for res in formatted_results]
-        db = SessionLocal()
-        try:
-            db_photos = db.query(Photo).filter(Photo.filepath.in_(filepaths)).all()
-            meta_map = {p.filepath: {"w": p.width, "h": p.height, "bytes": p.file_size_bytes} for p in db_photos}
+        for res in formatted_results:
+            try:
+                from PIL import Image
+                with Image.open(res["original_path"]) as img:
+                    w, h = img.size
+            except Exception:
+                w, h = 800, 800
             
-            for res in formatted_results:
-                m = meta_map.get(res["original_path"], {})
-                w = m.get("w", 0)
-                h = m.get("h", 0)
-                if w == 0 or h == 0:
-                    try:
-                        from PIL import Image
-                        with Image.open(res["original_path"]) as img:
-                            w, h = img.size
-                    except Exception:
-                        w, h = 800, 800
-                res["width"] = w
-                res["height"] = h
-                res["file_size_bytes"] = m.get("bytes", 0)
+            res["width"] = w
+            res["height"] = h
+            # 원본 파일 크기 주입 (SQLite bytes 테이블 대체)
+            try:
+                import os
+                res["file_size_bytes"] = os.path.getsize(res["original_path"])
+            except Exception:
+                res["file_size_bytes"] = 0
                 
-            print(f"✅ 통합 DB(SQLite) Width/Height 조인 성공! (다이나믹 폴백 포함, 총 결과 {len(formatted_results)}건 반환)")
-        except Exception as db_err:
-            print(f"⚠️ Metadata Join 에러: {db_err}")
-        finally:
-            db.close()
-            
+        print(f"✅ 원본 파일 헤더 직접 파싱 성공! (총 결과 {len(formatted_results)}건 반환)")
         return {"results": formatted_results}
 
     except Exception as e:

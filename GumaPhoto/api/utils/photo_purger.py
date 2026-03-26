@@ -1,8 +1,5 @@
 import os
 from qdrant_client import QdrantClient
-from core.database import SessionLocal
-from core.models import Photo
-
 class PhotoPurger:
     @staticmethod
     def purge_photo_data(abs_path: str, point_id: str = None, keep_original: bool = False):
@@ -81,18 +78,5 @@ class PhotoPurger:
             except Exception as e:
                 print(f"   ❌ [2/3] Qdrant DB 삭제 통신망 접속 오류: {e}")
 
-        # [3] 신규 아키텍처 동기화 (SQLite vectorized_files에서 영구 제명)
-        import sqlite3
-        db_path = "/app/data/organizer_state.db"
-        if os.path.exists(db_path):
-            try:
-                conn = sqlite3.connect(db_path)
-                cur = conn.cursor()
-                # 찌꺼기 테이블에서 해당 파일의 메타데이터 완전 소각 (Tombstone 없이 아예 삭제하여 클린 유지)
-                cur.execute("DELETE FROM vectorized_files WHERE filepath=?", (abs_path,))
-                cur.execute("DELETE FROM file_hashes WHERE filepath=?", (abs_path,))
-                conn.commit()
-                conn.close()
-                print(f"   ✅ [3/3] 통합 SQLite (vectorized_files 및 file_hashes) 영구 제명 완료")
-            except Exception as e:
-                print(f"   ❌ [3/3] 통합 SQLite 삭제 중 오류 발생: {e}")
+        # [3] SQLite 통합 명부 삭제 (현재 아키텍처에서 폐기됨 - Qdrant 단일 진실화로 인해 불필요)
+        print(f"   ✅ [3/3] SQLite 명단 제거 생략 (단일 진실 아키텍처로 인한 통폐합 완료)")

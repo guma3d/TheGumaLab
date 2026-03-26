@@ -5,8 +5,6 @@ import os
 import json
 from sqlalchemy import func
 import uuid
-from core.database import SessionLocal
-from core.models import Photo
 from core.state import state
 from qdrant_client.http.models import Filter, FieldCondition, MatchValue
 import random
@@ -15,20 +13,6 @@ def get_uuid_from_id(id_val: typing.Union[int, str]) -> str:
     val_str = str(id_val)
     if "-" in val_str and len(val_str) == 36:
         return val_str
-        
-    from core.database import SessionLocal
-    from core.models import Photo
-    import uuid
-    db = SessionLocal()
-    try:
-        if val_str.isdigit():
-            photo = db.query(Photo).filter(Photo.id == int(val_str)).first()
-            if photo and photo.filepath:
-                return str(uuid.uuid5(uuid.NAMESPACE_URL, photo.filepath))
-    except Exception as e:
-        print(f"[get_uuid_from_id] Error: {e}")
-    finally:
-        db.close()
         
     return val_str
 
@@ -41,23 +25,8 @@ class FeedbackV2Request(BaseModel):
     target_points: typing.Optional[typing.List[typing.Union[int, str]]] = []
 
 def sync_payload_to_sqlite(point_id: str):
-    """Qdrant에서 수정된 최신 Payload를 SQLite 메타데이터에 즉시 동기화"""
-    try:
-        if not state.qdrant_client: return
-        res = state.qdrant_client.retrieve(collection_name="gumaphoto_hybrid_kr", ids=[point_id], with_payload=True)
-        if res and res[0].payload:
-            p = res[0].payload
-            fpath = p.get("filepath")
-            if fpath:
-                import sqlite3, json
-                conn = sqlite3.connect("/app/data/organizer_state.db")
-                cur = conn.cursor()
-                cur.execute("UPDATE vectorized_files SET metadata=? WHERE filepath=?", (json.dumps(p, ensure_ascii=False), fpath))
-                conn.commit()
-                conn.close()
-                print(f"[*] 피드백 수정사항 SQLite 완전 동기화 완료: {fpath}")
-    except Exception as e:
-        print(f"[-] SQLite 동기화 에러: {e}")
+    """Qdrant 단일 진실화 아키텍처로 인해 SQLite 동기화 과정 삭제됨"""
+    pass
 
 @router.post("/api/feedback_v2/ignore_face")
 async def ignore_face_feedback(req: FeedbackV2Request):
@@ -176,8 +145,6 @@ async def temptest_feedback(req: FeedbackV2Request):
 @router.get("/api/feedback_v2/unknown")
 async def get_unknown_photo():
     if not state.qdrant_client: return {"error": "Qdrant not loaded"}
-    
-    db = SessionLocal()
     try:
         import random
         import numpy as np
@@ -255,49 +222,46 @@ async def get_unknown_photo():
                     "face_bbox": p.get("face_bbox", None)
                 }
                 
-        # [초고속 튜닝 🚀] 전체 스캔(func.random) 대신 O(1) 단위의 수치 랜덤 오프셋으로 락 방지
-        base_query = db.query(Photo).filter(
-            (Photo.status == 'VECTORIZED') &
-            (Photo.filepath.like('%Unknown%') | Photo.filepath.like('%위치정보없음%'))
+        # [초고속 튜닝 🚀] 전체 스캔 대신 Qdrant Scroll API를 통해 Unknown 요소 50개만 캐싱하여 랜덤 추출 (SQLite 소각)
+        from qdrant_client.http.models import Filter, FieldCondition, MatchText
+        unknowns, _ = state.qdrant_client.scroll(
+            collection_name="gumaphoto_hybrid_kr",
+            scroll_filter=Filter(
+                should=[
+                    FieldCondition(key="date", match=MatchText(text="Unknown")),
+                    FieldCondition(key="location", match=MatchText(text="Unknown")),
+                    FieldCondition(key="location", match=MatchText(text="위치정보없음"))
+                ]
+            ),
+            limit=50,
+            with_payload=True,
+            with_vectors=False
         )
-        total_unknown_count = base_query.count()
-        target_photo = None
-        if total_unknown_count > 0:
-            random_offset = random.randint(0, total_unknown_count - 1)
-            target_photo = base_query.offset(random_offset).first()
         
-        if target_photo and target_photo.filepath:
-            deterministic_qdrant_id = str(uuid.uuid5(uuid.NAMESPACE_URL, target_photo.filepath))
-            points_data = state.qdrant_client.retrieve(
-                collection_name="gumaphoto_hybrid_kr", ids=[deterministic_qdrant_id], with_payload=True
-            )
-            if points_data:
-                raw_target = points_data[0]
-                p = raw_target.payload or {}
-                loc = p.get("location", "")
-                date_val = p.get("date", "")
+        if unknowns:
+            raw_target = random.choice(unknowns)
+            p = raw_target.payload or {}
+            loc = p.get("location", "")
+            date_val = p.get("date", "")
+            issues = []
+            if "Unknown" in date_val or not date_val: issues.append("Date")
+            if "위치정보없음" in loc or "Unknown" in loc or not loc: issues.append("Location")
                 
-                issues = []
-                if "Unknown" in date_val or not date_val: issues.append("Date")
-                if "위치정보없음" in loc or "Unknown" in loc or not loc: issues.append("Location")
-                    
-                if issues:
-                    issue = random.choice(issues)
-                    url_path = p.get("filepath", "").replace("/app/data/organized", "/photos")
-                    return {
-                        "id": raw_target.id,
-                        "url": url_path,
-                        "issue": issue,
-                        "date": date_val,
-                        "location": loc,
-                        "people": p.get("people", []),
-                        "face_bbox": p.get("face_bbox", None)
-                    }
+            if issues:
+                issue = random.choice(issues)
+                url_path = p.get("filepath", "").replace("/app/data/organized", "/photos")
+                return {
+                    "id": raw_target.id,
+                    "url": url_path,
+                    "issue": issue,
+                    "date": date_val,
+                    "location": loc,
+                    "people": p.get("people", []),
+                    "face_bbox": p.get("face_bbox", None)
+                }
                     
     except Exception as e:
         print(f"❌ 피드백 고속 혼합 탐색 중 예외 발생: {e}")
-    finally:
-        db.close()
 
     return {"id": None, "message": "No photos require feedback at this time."}
 

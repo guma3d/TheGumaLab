@@ -1,6 +1,4 @@
 from fastapi import APIRouter
-from core.database import SessionLocal
-from core.models import Photo
 from core.state import state
 import os
 import pickle
@@ -11,46 +9,42 @@ router = APIRouter()
 
 @router.get("/progress")
 def get_system_progress():
-    db = SessionLocal()
-    try:
-        total_photos = 0
-        vectorized_completed = 0
-        unk_date, unk_loc, unk_person = 0, 0, 0
-        
-        if state.qdrant_client:
-            try:
-                qc = state.qdrant_client
-                coll = "gumaphoto_hybrid_kr"
-                vectorized_completed = qc.count(collection_name=coll).count
-                total_photos = vectorized_completed
-                unk_date = qc.count(collection_name=coll, count_filter=Filter(
-                    must=[FieldCondition(key="date", match=MatchText(text="Unknown"))]
-                )).count
-                unk_loc = qc.count(collection_name=coll, count_filter=Filter(
-                    should=[
-                        FieldCondition(key="location", match=MatchText(text="Unknown")),
-                        FieldCondition(key="location", match=MatchText(text="위치정보없음"))
-                    ]
-                )).count
-                unk_person = qc.count(collection_name=coll, count_filter=Filter(
-                    must=[FieldCondition(key="people", match=MatchValue(value="Unknown People"))]
-                )).count
-            except Exception as e:
-                print(f"[System Stats Error] Qdrant metrics: {e}")
-                
-        known_faces_count = len(state.known_faces) if hasattr(state, 'known_faces') and state.known_faces else 0
+    total_photos = 0
+    vectorized_completed = 0
+    unk_date, unk_loc, unk_person = 0, 0, 0
+    
+    if state.qdrant_client:
+        try:
+            qc = state.qdrant_client
+            coll = "gumaphoto_hybrid_kr"
+            vectorized_completed = qc.count(collection_name=coll).count
+            total_photos = vectorized_completed
+            unk_date = qc.count(collection_name=coll, count_filter=Filter(
+                must=[FieldCondition(key="date", match=MatchText(text="Unknown"))]
+            )).count
+            unk_loc = qc.count(collection_name=coll, count_filter=Filter(
+                should=[
+                    FieldCondition(key="location", match=MatchText(text="Unknown")),
+                    FieldCondition(key="location", match=MatchText(text="위치정보없음"))
+                ]
+            )).count
+            unk_person = qc.count(collection_name=coll, count_filter=Filter(
+                must=[FieldCondition(key="people", match=MatchValue(value="Unknown People"))]
+            )).count
+        except Exception as e:
+            print(f"[System Stats Error] Qdrant metrics: {e}")
             
-        return {
-            "total_photos": total_photos,
-            "db_completed": vectorized_completed,
-            "unknown_date": unk_date,
-            "unknown_loc": unk_loc,
-            "unknown_person": unk_person,
-            "known_faces_count": known_faces_count,
-            "status": "healthy"
-        }
-    finally:
-        db.close()
+    known_faces_count = len(state.known_faces) if hasattr(state, 'known_faces') and state.known_faces else 0
+        
+    return {
+        "total_photos": total_photos,
+        "db_completed": vectorized_completed,
+        "unknown_date": unk_date,
+        "unknown_loc": unk_loc,
+        "unknown_person": unk_person,
+        "known_faces_count": known_faces_count,
+        "status": "healthy"
+    }
 
 import time
 _CACHED_ADVANCED_STATS = None

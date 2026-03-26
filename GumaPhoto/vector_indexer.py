@@ -1,5 +1,4 @@
 import os
-import sqlite3
 import numpy as np
 import cv2
 import time
@@ -40,26 +39,20 @@ except ImportError:
 # ==========================================
 # 1단계 정리에서 이동/복사된 최종 폴더 (이 폴더의 사진만 스캔 대상)
 TARGET_DIR = "/app/data/organized"
-DB_PATH = "/app/data/organizer_state.db"
 QDRANT_URL = os.environ.get("QDRANT_URL", "http://qdrant:6333")
 COLLECTION_NAME = "gumaphoto_hybrid_kr"
 BATCH_SIZE = 15 # 한 번에 처리할 사진 수 (GPU, RAM 메모리 고려)
 
 class VectorIndexer:
-    def __init__(self):
+    def __init__(self, skip_face=False):
+        self.skip_face = skip_face
         print(f"[*] 벡터 DB (Qdrant) 접속 초기화... ({QDRANT_URL})")
         self.q_client = QdrantClient(url=QDRANT_URL, timeout=60)
         self.init_qdrant_collection()
         
-        print("[*] SQLite (상태 관리용 DB) 접속 초기화...")
-        import threading
-        self.db_lock = threading.Lock()
-        self.conn = sqlite3.connect(DB_PATH, timeout=60, check_same_thread=False)
-        self.cursor = self.conn.cursor()
-        self.cursor.execute("PRAGMA journal_mode=WAL;")
-        self.cursor.execute("PRAGMA synchronous=NORMAL;")
-        self.cursor.execute("PRAGMA busy_timeout=5000;")
-        self.init_sqlite_tables()
+        # SQLite 대신 Qdrant 자체를 Source of Truth로 사용하여 캐싱 (초고속 O(1) 스캔)
+        self.indexed_filepaths = self.load_indexed_filepaths_from_qdrant()
+        self.failed_filepaths = set()
         
         self.load_ai_models()
 
@@ -81,22 +74,31 @@ class VectorIndexer:
             self.q_client.create_payload_index(COLLECTION_NAME, "objects", field_schema=PayloadSchemaType.KEYWORD)
             self.q_client.create_payload_index(COLLECTION_NAME, "location", field_schema=PayloadSchemaType.TEXT)
             self.q_client.create_payload_index(COLLECTION_NAME, "caption", field_schema=PayloadSchemaType.TEXT)
+            self.q_client.create_payload_index(COLLECTION_NAME, "hash", field_schema=PayloadSchemaType.KEYWORD)
             print(f"  [+] 신규 Qdrant 멀티-벡터 컬렉션 '{COLLECTION_NAME}' 생성 완료.")
         else:
             print(f"  [-] 기존 Qdrant 컬렉션 '{COLLECTION_NAME}' 을 재사용합니다.")
 
-    def init_sqlite_tables(self):
-        """벡터화 진행 상태를 저장하여 도중에 꺼져도 이어하기(Resume) 가능하게 구성"""
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS vectorized_files (
-                filepath TEXT PRIMARY KEY,
-                status TEXT,
-                face_count INTEGER DEFAULT 0,
-                metadata TEXT,
-                processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    def load_indexed_filepaths_from_qdrant(self):
+        """시작 시 Qdrant에서 처리 완료된 파일 경로를 빨아들여 메모리에 올려둠"""
+        print("[*] Qdrant에서 기존 인덱싱 된 파일 목록 캐싱 중...")
+        indexed = set()
+        offset = None
+        while True:
+            records, offset = self.q_client.scroll(
+                collection_name=COLLECTION_NAME,
+                limit=1000,
+                offset=offset,
+                with_payload=["filepath"],
+                with_vectors=False
             )
-        ''')
-        self.conn.commit()
+            for record in records:
+                if record.payload and "filepath" in record.payload:
+                    indexed.add(record.payload["filepath"])
+            if offset is None:
+                break
+        print(f"  [+] 총 {len(indexed)}개의 기존 처리 완료 파일이 캐시되었습니다.")
+        return indexed
 
     def load_ai_models(self):
         """🚀 SigLIP (배경/상황) & InsightFace (얼굴) & Florence-2-large 모델 VRAM 로드"""
@@ -105,46 +107,15 @@ class VectorIndexer:
         self.siglip_model = AutoModel.from_pretrained("google/siglip-base-patch16-224").to('cuda' if torch.cuda.is_available() else 'cpu')
         self.siglip_model.eval()
         
-        print("[*] 👤 InsightFace 얼굴 인식 모델 로드 중 (buffalo_l) ...")
-        # GPU 가용 시 CUDA 사용, 아니면 CPU 동작 (providers에서 지정)
-        self.face_app = FaceAnalysis(name='buffalo_l', providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
-        self.face_app.prepare(ctx_id=0, det_size=(640, 640))
-        
-        print("[*] ❤️ HSEmotion 표정 인식기 로드 중 (enet_b0_8_best_vgaf) ...")
-        # PyTorch 2.6 weights_only 오류 방어 패치
-        import timm.models.efficientnet
-        if hasattr(torch.serialization, 'add_safe_globals'):
-            torch.serialization.add_safe_globals([timm.models.efficientnet.EfficientNet])
+        if not self.skip_face:
             try:
-                import timm.models.layers.conv2d_same
-                torch.serialization.add_safe_globals([timm.models.layers.conv2d_same.Conv2dSame])
-            except: pass
-        
-        _original_load = torch.load
-        torch.load = lambda *a, **k: _original_load(*a, weights_only=False, **{key:val for key,val in k.items() if key != 'weights_only'})
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        try:
-            self.emotion_recognizer = HSEmotionRecognizer(model_name='enet_b0_8_best_vgaf', device=device)
-        except Exception as e:
-            print(f"  [!] ⚠️ HSEmotion 모델 다운로드 또는 초기화 실패 (GitHub 429 등): {e}. 감정 인식 기능이 임시 비활성화됩니다.")
-            self.emotion_recognizer = None
-            
-        torch.load = _original_load
-        
-        # === 가족 메타데이터 로드 ===
-        self.known_faces = {}
-        if os.path.exists("/app/data/known_faces.pkl"):
-            with open("/app/data/known_faces.pkl", "rb") as f:
-                raw_faces = pickle.load(f)
-                valid_faces = 0
-                for name, vectors in raw_faces.items():
-                    if vectors:
-                        mean_vec = np.mean(vectors, axis=0)
-                        mean_vec = mean_vec / np.linalg.norm(mean_vec)
-                        self.known_faces[name] = mean_vec
-                        valid_faces += 1
-            print(f"  [+] 사전에 학습된 가족 얼굴 데이터 {valid_faces}명 로드 완료.")
-            
+                from api.services.insightface_service import InsightFaceModule
+                self.insightface = InsightFaceModule()
+            except Exception as e:
+                print(f"  [!] InsightFaceModule 로드 실패: {e}")
+                self.insightface = None
+        else:
+            self.insightface = None
         self.family_meta = {}
         if os.path.exists("/app/data/family_meta.json"):
             with open("/app/data/family_meta.json", "r", encoding="utf-8") as f:
@@ -164,18 +135,11 @@ class VectorIndexer:
         print("  [+] 모든 시각 초거대 AI 모델 로딩 완료!")
 
     def get_original_context(self, filepath):
-        """1단계(Organizer)에서 vectorized_files 테이블의 metadata JSON에 저장해둔 원본 문맥 얻어오기"""
+        """기존 SQLite 의존성을 제거하고 디렉토리명에서 문맥 추출"""
         try:
-            with getattr(self, "db_lock", __import__("threading").Lock()):
-                self.cursor.execute("SELECT metadata FROM vectorized_files WHERE filepath=?", (filepath,))
-                row = self.cursor.fetchone()
-                if row and row[0]:
-                    import json
-                    meta = json.loads(row[0])
-                    return meta.get("original_context", "Organized_Photo")
+            return os.path.basename(os.path.dirname(filepath))
         except Exception:
-            pass
-        return "Organized_Photo"
+            return "Organized_Photo"
 
     def get_file_hash(self, filepath):
         """파일 SHA256 해시 추출 (DB 연동 시 고유 조회용 - 1단계 Organizer와 통일)"""
@@ -188,45 +152,11 @@ class VectorIndexer:
         return hasher.hexdigest()
 
     def is_already_processed(self, filepath):
-        """이미 벡터화가 성공적으로 끝난 파일인지 검사 (Fail-safe 이어하기)"""
-        import uuid
-        point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, filepath))
-        
-        # 1. SQLite 상태 검사 (주 진실 공급원 교체)
-        with getattr(self, "db_lock", __import__("threading").Lock()):
-            self.cursor.execute("SELECT status FROM vectorized_files WHERE filepath=?", (filepath,))
-            row = self.cursor.fetchone()
-        sqlite_done = (row is not None and row[0] == 'DONE')
-        
-        # 2. Qdrant 벡터DB 검증
-        try:
-            records = self.q_client.retrieve(
-                collection_name=COLLECTION_NAME,
-                ids=[point_id],
-                with_payload=False,
-                with_vectors=False
-            )
-            qdrant_has_vector = len(records) > 0
-        except Exception:
-            qdrant_has_vector = False
-            
-        # 완벽하게 둘 다 있는 경우에만 Skip
-        if qdrant_has_vector and sqlite_done:
+        """메모리에 캐싱된 Qdrant 세트를 기반으로 초고속 O(1) 중복 검사 (SQLite 종속 제거)"""
+        if filepath in self.indexed_filepaths:
             return True
-            
-        # 둘 중 하나라도 누락(Mismatch)된 경우 -> 찌꺼기 완벽 소거 후 처음부터 다시
-        if qdrant_has_vector:
-            try:
-                from qdrant_client.http.models import PointIdsList
-                self.q_client.delete(collection_name=COLLECTION_NAME, points_selector=PointIdsList(points=[point_id]))
-            except:
-                pass
-                
-        # SQLite에서 잘못된 상태 찌꺼기 초기화
-        with getattr(self, "db_lock", __import__("threading").Lock()):
-            self.cursor.execute("DELETE FROM vectorized_files WHERE filepath=?", (filepath,))
-            self.conn.commit()
-                
+        if filepath in self.failed_filepaths:
+            return True
         return False
 
 
@@ -370,79 +300,41 @@ class VectorIndexer:
                 scene_caption = captions_batch[i]
                 found_objects = objects_batch[i]
                 
-                faces = self.face_app.get(cv_img)
-                face_count = len(faces)
-                
-                vectors = {"scene": scene_embedding.tolist()}
+                face_count = 0
+                found_people = ["No People"]
                 best_face_payload = {}
-                found_people = []
+                vectors = {"scene": scene_embedding.tolist()}
                 
-                if face_count > 0:
-                    for face in faces:
-                        norm_emb = face.normed_embedding
-                        best_match_name = None
-                        best_sim = 0.40
-                        for name, known_vec in self.known_faces.items():
-                            sim = np.dot(norm_emb, known_vec)
-                            if sim > best_sim:
-                                best_sim = sim
-                                best_match_name = name
-                        if best_match_name and best_match_name not in found_people:
-                            found_people.append(best_match_name)
-                    
-                    if not found_people:
-                        found_people.append("Unknown People")
-
-                    best_face = sorted(faces, key=lambda f: (f.bbox[2]-f.bbox[0])*(f.bbox[3]-f.bbox[1]), reverse=True)[0]
-                    vectors["face"] = best_face.normed_embedding.tolist()
-                    
-                    ai_age = int(best_face.age)
-                    ai_gender = "남성(Male)" if best_face.gender == 1 else "여성(Female)"
-                    
-                    real_name = "Unknown People"
-                    best_sim_main = -1.0
-                    for name, k_vec in self.known_faces.items():
-                        sim = np.dot(best_face.normed_embedding, k_vec)
-                        if sim > best_sim_main:
-                            best_sim_main = sim
-                            if sim >= 0.35:
-                                real_name = name
-                                
-                    real_age = ai_age
-                    real_gender = ai_gender
-                    
-                    if real_name in self.family_meta:
-                        real_gender = self.family_meta[real_name].get("gender", ai_gender)
-                        born_year = self.family_meta[real_name].get("birth_year")
-                        
-                        match = re.search(r'(19|20)\d{2}', filepath)
-                        if born_year and match:
-                            photo_year = int(match.group(0))
-                            real_age = photo_year - born_year
-                            
-                    best_face_payload['age'] = real_age
-                    best_face_payload['gender'] = real_gender
-                    
-                    age_korean_1 = f"{real_age}세"
-                    age_korean_2 = f"{real_age}살"
-                    if age_korean_1 not in found_objects: found_objects.append(age_korean_1)
-                    if age_korean_2 not in found_objects: found_objects.append(age_korean_2)
-                    
-                    box = best_face.bbox.astype(int)
-                    x1, y1, x2, y2 = max(0, box[0]), max(0, box[1]), min(cv_img.shape[1], box[2]), min(cv_img.shape[0], box[3])
-                    face_img = cv_img[y1:y2, x1:x2]
-                    
-                    try:
-                        if face_img.size > 0 and getattr(self, "emotion_recognizer", None):
-                            emotion, scores = self.emotion_recognizer.predict_emotions(face_img, logits=False)
-                            best_face_payload['emotion'] = emotion
-                        else:
-                            best_face_payload['emotion'] = 'neutral'
-                    except Exception as df_e:
-                        print(f"      ⚠️ HSEmotion 분석 실패 (Skip): {df_e}")
-                        best_face_payload['emotion'] = 'neutral'
+                if self.insightface:
+                    face_res = self.insightface.analyze_image(filepath, cv_img=cv_img)
+                    face_count = face_res["face_count"]
+                    found_people = face_res["found_people"]
+                    best_face_payload = face_res["payload"]
+                    if "face" in face_res["vectors"]:
+                        vectors["face"] = face_res["vectors"]["face"]
+                    for obj in face_res["objects"]:
+                        if obj not in found_objects:
+                            found_objects.append(obj)
                 else:
-                    found_people.append("No People")
+                    # When skip_face is True (Feedback mode), keep existing face data from DB
+                    # We will NOT overwrite it here because Qdrant's upsert replaces the payload.
+                    # Wait, if we upsert, we might wipe out the missing face info.
+                    # Use Qdrant retrieve to fetch existing face info if we are just re-indexing for location!
+                    try:
+                        pts = self.q_client.retrieve(COLLECTION_NAME, ids=[point_id], with_payload=True, with_vectors=True)
+                        if pts:
+                            pt = pts[0]
+                            old_p = pt.payload or {}
+                            face_count = old_p.get("face_count", 0)
+                            found_people = old_p.get("people", ["No People"])
+                            best_face_payload = {
+                                "age": old_p.get("age"),
+                                "gender": old_p.get("gender"),
+                                "emotion": old_p.get("emotion")
+                            }
+                            if pt.vector and "face" in pt.vector:
+                                vectors["face"] = pt.vector["face"]
+                    except: pass
 
                 parent_dir = os.path.basename(os.path.dirname(filepath))
                 location_str = "Unknown Location"
@@ -463,10 +355,10 @@ class VectorIndexer:
                     "people": found_people,
                     "date": date_str,
                     "location": location_str,
-                    "time_of_day": item["time_of_day"],
                     "season": item["season"],
                     "objects": found_objects,
-                    "caption": scene_caption
+                    "caption": scene_caption,
+                    "hash": item["file_hash"]
                 }
                 payload.update(best_face_payload)
                 
@@ -475,32 +367,54 @@ class VectorIndexer:
                 
             except Exception as e:
                 print(f"      ⚠️ 개별 항목 payload 병합 오류 (Skip): {e}")
-                with getattr(self, "db_lock", __import__("threading").Lock()):
-                    self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status) VALUES (?, ?)", (filepath, 'ERROR'))
-                    self.conn.commit()
+                self.failed_filepaths.add(filepath)
                 
         # Qdrant에 일괄 묶음 사격 (배치 Upsert)
         if points_to_upsert:
             try:
                 self.q_client.upsert(collection_name=COLLECTION_NAME, points=points_to_upsert)
                 
-                # 성공적으로 Qdrant에 저장된 사진들만 원자성(Atomicity)을 보장하며 SQLite 메타데이터 기록 생성 (XMP 대체)
-                import json
-                with getattr(self, "db_lock", __import__("threading").Lock()):
-                    for filepath, payload, face_count in successful_payloads:
-                        meta_str = json.dumps(payload, ensure_ascii=False)
-                        self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status, face_count, metadata) VALUES (?, ?, ?, ?)",
-                                          (filepath, 'DONE', face_count, meta_str))
-                    self.conn.commit()
+                # 성공적으로 Qdrant에 저장된 사진들만 원자성(Atomicity)을 보장하며 메모리 캐시 갱신 (SQLite 완전 탈피)
+                for filepath, payload, face_count in successful_payloads:
+                    self.indexed_filepaths.add(filepath)
                 
             except Exception as qdrant_err:
                 print(f"    🚨 Qdrant 배치 업서트 치명적 실패: {qdrant_err}")
-                with getattr(self, "db_lock", __import__("threading").Lock()):
-                    self.conn.rollback()
             
         # VRAM 메모리 단편화 및 좀비 텐서를 해제하여 장시간 가동 시의 쿠다 OOM 다운 방어
         torch.cuda.empty_cache()
         gc.collect()
+
+    def force_reindex_files(self, target_filepaths):
+        print(f"[*] 강제 리인덱싱(덮어쓰기) 모드 발동: {len(target_filepaths)}장")
+        batch = []
+        for filepath in target_filepaths:
+            if not os.path.exists(filepath):
+                continue
+            try:
+                pil_img = Image.open(filepath).convert('RGB')
+                cv_img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+                context_str = self.get_original_context(filepath)
+                time_of_day, season = self.extract_time_and_season(filepath)
+                import uuid
+                point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, filepath))
+                batch.append({
+                    "filepath": filepath,
+                    "filename": os.path.basename(filepath),
+                    "pil_img": pil_img,
+                    "cv_img": cv_img,
+                    "context_str": context_str,
+                    "time_of_day": time_of_day,
+                    "season": season,
+                    "point_id": point_id,
+                    "file_hash": self.get_file_hash(filepath)
+                })
+            except Exception as e:
+                print(f"  [-] {filepath} 강제 분석 실패: {e}")
+        
+        if batch:
+            self.process_batch(batch)
+            print("[+] 메타데이터 덮어쓰기 완료!")
 
     def run(self, test_limit=None):
         print("\n🚀 [3단계: 딥러닝 벡터화 파이프라인 가동]")
@@ -560,13 +474,12 @@ class VectorIndexer:
                                 "context_str": context_str,
                                 "time_of_day": time_of_day,
                                 "season": season,
-                                "point_id": point_id
+                                "point_id": point_id,
+                                "file_hash": self.get_file_hash(filepath)
                             }
                         except Exception as e:
                             print(f"      ⚠️ 이미지 로드 오류 (Skip): {os.path.basename(filepath)} - {e}")
-                            with getattr(self, "db_lock", __import__("threading").Lock()):
-                                self.cursor.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status) VALUES (?, ?)", (filepath, 'ERROR'))
-                                self.conn.commit()
+                            self.failed_filepaths.add(filepath)
                             return None
                             
                     results = list(executor.map(prep, batch_paths))

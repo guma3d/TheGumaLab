@@ -64,24 +64,34 @@ class OrganizerPipeline:
                 buf = f.read(65536)
         return hasher.hexdigest()
 
-    def is_junk_or_duplicate(self, filepath, db):
+    def is_junk_or_duplicate(self, filepath):
         if "_fbpass_" in os.path.basename(filepath):
             return False, self.get_file_hash(filepath)
             
         file_hash = self.get_file_hash(filepath)
         
-        # [신규 아키텍처] organizer_state.db 에서 중복 해시 체크
-        import sqlite3
+        # [신규 아키텍처] Qdrant Payload Hash 중복 체크 (SQLite 완전 소각)
         try:
-            conn = sqlite3.connect("/app/data/organizer_state.db")
-            cur = conn.cursor()
-            cur.execute("CREATE TABLE IF NOT EXISTS file_hashes (file_hash TEXT PRIMARY KEY, filepath TEXT)")
-            cur.execute("SELECT filepath FROM file_hashes WHERE file_hash=?", (file_hash,))
-            existing = cur.fetchone()
-            conn.close()
-            if existing:
+            from qdrant_client import QdrantClient
+            from qdrant_client.http import models
+            import os
+            
+            q_url = os.environ.get("QDRANT_URL", "http://qdrant:6333")
+            client = QdrantClient(url=q_url, timeout=3)
+            res, _ = client.scroll(
+                collection_name="gumaphoto_hybrid_kr", 
+                scroll_filter=models.Filter(
+                    must=[models.FieldCondition(key="hash", match=models.MatchValue(value=file_hash))]
+                ), 
+                limit=1,
+                with_payload=False, 
+                with_vectors=False
+            )
+            if len(res) > 0:
+                print(f"  [-] Qdrant 중복 해시 탐지: {file_hash}")
                 return True, "DUPLICATE"
-        except Exception:
+        except Exception as e:
+            # Qdrant 연결 오류 시 패스
             pass
             
         ext = os.path.splitext(filepath)[1].lower()
@@ -204,8 +214,8 @@ class OrganizerPipeline:
     def generate_clean_filename(self, dt_str, sequence_idx, original_ext):
         return f"{dt_str}_{sequence_idx:02d}{original_ext}"
 
-    def process_file_metadata(self, filepath, db):
-        is_junk, junk_reason = self.is_junk_or_duplicate(filepath, db)
+    def process_file_metadata(self, filepath):
+        is_junk, junk_reason = self.is_junk_or_duplicate(filepath)
         if is_junk:
             return {"status": "JUNK", "reason": junk_reason}
 
@@ -253,7 +263,7 @@ class OrganizerPipeline:
                     if (i+1) % 50 == 0:
                         print(f"   ⏳ 메타데이터 추출 중... ({i+1}/{len(batch_files)})")
         
-                    meta = self.process_file_metadata(filepath, db)
+                    meta = self.process_file_metadata(filepath)
                     
                     if meta["status"] == "JUNK":
                         junk_count += 1
@@ -327,26 +337,10 @@ class OrganizerPipeline:
                             except Exception as thumb_e:
                                 print(f"   ⚠️ 썸네일 파싱 실패 (동영상이거나 손상): {thumb_e}")
                                 
-                            # [신규 아키텍처] SQLite 통합 명부에 최종 이주 내역과 메타정보 기록
+                            # [신규 아키텍처] SQLite 통폐합으로 인해 기록 과정 폭파. 
+                            # 단순히 폴더 이동만 완료하면, 나중에 vector_indexer 가 Qdrant 존재여부를 스캔하여 알아서 인제스트합니다.
                             total_processed_in_this_run += 1
                             file_hash_val = item.get('hash', 'UNKNOWN_HASH')
-                            import sqlite3, json
-                            
-                            conn_lite = sqlite3.connect("/app/data/organizer_state.db")
-                            cur_lite = conn_lite.cursor()
-                            
-                            # 중복 방지 해시 테이블 기록
-                            cur_lite.execute("CREATE TABLE IF NOT EXISTS file_hashes (file_hash TEXT PRIMARY KEY, filepath TEXT)")
-                            cur_lite.execute("INSERT OR IGNORE INTO file_hashes (file_hash, filepath) VALUES (?, ?)", (file_hash_val, final_move_path))
-                            
-                            # Indexed 대기열 상태 기록 (vector_indexer가 알아서 가져갈 수 있도록)
-                            cur_lite.execute('''CREATE TABLE IF NOT EXISTS vectorized_files 
-                                         (filepath TEXT PRIMARY KEY, status TEXT, face_count INTEGER DEFAULT 0, metadata TEXT, processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-                                         
-                            cur_lite.execute("INSERT OR REPLACE INTO vectorized_files (filepath, status, metadata) VALUES (?, ?, ?)", 
-                                        (final_move_path, 'ORGANIZED', json.dumps({"original_context": item['original_context']}, ensure_ascii=False)))
-                            conn_lite.commit()
-                            conn_lite.close()
                                 
                         except Exception as e:
                             print(f"   ⚠️ 폴더 반영 실패: {os.path.basename(item['filepath'])} -> {e}")

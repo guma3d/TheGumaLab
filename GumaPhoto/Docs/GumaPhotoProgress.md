@@ -57,3 +57,10 @@
 *   **Pinch-to-Zoom 뷰어 탑재:** `Panzoom.js` 프레임워크를 이식하여 두 손가락 부드러운 줌인/아웃 구현 + 화면 단일 탭 시 거추장스러운 UI들만 스르르 사라지는(Fade 오파시티 토글) 영화 같은 몰입 뷰(Focus Mode) 완성.
 *   **자동 고스트 롤백(Ghost Rollback) 방어 체계:** 사용자가 피드백 UI에서 동명이인이나 엉뚱한 인물로 잘못 태깅하고 재교정을 시도할 때, 구 폴더에 떨어져 있던 가짜 얼굴 크롭(`{point_id}.jpg`)을 `glob`로 글로벌 추적 후 원천 소각하는 롤백 메커니즘을 융합 완료.
 *   **Windows 배치 스크립트 인코딩 가드:** 한글을 포함해 `chcp 65001` 선언 시 Windows `cmd.exe` 버그로 인해 `docker` 명령어나 변수가 바이트 밀림으로 잘리던 고질적 버그(`aphoto_app`)를 100% 영문 ASCII 변환을 통해 영구 해결.
+
+## 📌 [13단계] 단일 진실 공급원(Qdrant) 아키텍처 완성과 독립 AI 모듈화 (완료 🎯)
+*   **완벽한 Qdrant 단일화 (SQLite 완전 소각):** 피드백, 인덱서, 검색 등 모든 도메인에서 `SessionLocal`, `Photo` ORM 접근을 полностью 제거하여 파편화된 DB 동기화 오류를 원천 차단. 메타데이터와 벡터를 모두 품은 Qdrant 단일 생태계 확립.
+*   **InsightFace 완전 독립 모듈화 (`InsightFaceModule`):** `vector_indexer`에 종속되어 있던 안면 인식 엔진을 `api/services/insightface_service.py`로 분리. 장소/날짜 피드백 시 불필요한 안면 분석을 생략(`skip_face=True`)할 수 있게 되어 Qdrant 덮어쓰기 파이프라인 속도가 비약적으로 상승.
+*   **피드백 덮어쓰기(Overwrite) 메커니즘 전환:** 
+    *   장소/날짜 피드백: 기존의 `PhotoPurger` 파쇄 후 `uploads_raw` 재업로드 큐를 타던 비효율적 롤백 방식에서 탈피하여, `MetadataEditor`로 EXIF를 영구 수정 후 즉시 Qdrant에 벡터를 덮어쓰도록(Overwrite) 진화.
+    *   인물(얼굴) 피드백: 사용자가 명시적으로 선택한 1장의 사진만 `enrolled` 도감에 등록하고, 나머지 동반 선택된 타겟 사진들은 도감 오염 없이 `InsightFaceModule`로만 평가하여 Qdrant 페이로드를 즉각 업데이트하도록 초정밀 최적화 달성.
