@@ -1582,6 +1582,59 @@ async function loadUnknownPhoto(manualTargetPayload = null) {
 }
 
 
+// =========================================================================
+// 통합 백엔드 전송 모듈 (재사용성 강화)
+// =========================================================================
+async function submitSharedFeedback(pointId, issueType, correctValue, targetPointsArray) {
+    const btn1 = document.getElementById('fb-temptest-send-btn');
+    const btn2 = document.getElementById('fb-submit-btn');
+    const ogHtml1 = btn1 ? btn1.innerHTML : '';
+    const ogHtml2 = btn2 ? btn2.innerHTML : '';
+    
+    if (btn1) { btn1.disabled = true; btn1.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 대기열 배달 중...'; }
+    if (btn2) { btn2.disabled = true; btn2.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 대기열 배달 중...'; }
+    
+    try {
+        let apiUrl = '/api/feedback_v2/submit';
+        if (window.location.pathname.startsWith('/GumaPhoto')) apiUrl = '/GumaPhoto' + apiUrl;
+        
+        let res = await fetch(apiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                point_id: pointId,
+                issue_type: issueType,
+                correct_value: correctValue,
+                target_points: targetPointsArray
+            })
+        });
+        
+        if (res.status === 404 || res.status === 405) {
+            console.log("[우회 접속] 백엔드 POST API 응답 누락 처리됨 (모의 통과)");
+        } else {
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "제출 실패");
+        }
+        
+        const feedbackHubModal = document.getElementById('feedback-hub-modal');
+        if (feedbackHubModal) feedbackHubModal.classList.add('hidden');
+        document.getElementById('fb-temptest-results').style.display = 'none';
+        
+        switchView('home');
+        
+        setTimeout(() => {
+            alert("Feedback submitted successfully. 화면을 새로고침합니다.");
+            window.location.reload();
+        }, 100);
+        
+    } catch (err) {
+        console.error(err);
+        alert(err.message);
+        if (btn1) { btn1.innerHTML = ogHtml1; btn1.disabled = false; }
+        if (btn2) { btn2.innerHTML = ogHtml2; btn2.disabled = false; }
+    }
+}
+
 // 사용자 제출 로직 (백엔드 우회 테스트 모드 지원)
 // Send 버튼 시뮬레이션 통합 적용 (수정 제출 API 가동 중단 상태)
 document.getElementById('fb-submit-btn')?.addEventListener('click', async () => {
@@ -1599,6 +1652,20 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
     
     if (!correctValue) {
         alert("Please provide the correct information first!");
+        return;
+    }
+
+    const bulkChecks = document.querySelectorAll('.grid-checkbox:checked');
+    if (bulkChecks.length > 0) {
+        // 메인 화면에서 활성화된 체크박스가 존재한다면 스캔 패스하고 일괄전송(Bulk) 액션 즉시 실행
+        const bulkTargets = [];
+        bulkChecks.forEach(cb => bulkTargets.push(cb.getAttribute('data-id')));
+        
+        if (!bulkTargets.includes(String(selectedFeedbackTarget.id)) && !bulkTargets.includes(Number(selectedFeedbackTarget.id))) {
+            bulkTargets.push(selectedFeedbackTarget.id);
+        }
+        
+        await submitSharedFeedback(selectedFeedbackTarget.id, selectedFeedbackTarget.issue, correctValue, bulkTargets);
         return;
     }
 
@@ -1779,53 +1846,7 @@ document.getElementById('fb-temptest-send-btn')?.addEventListener('click', async
         targetPoints.push(selectedFeedbackTarget.id);
     }
 
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 대기열 배달 중...';
-    
-    try {
-        let apiUrl = '/api/feedback_v2/submit';
-        if (window.location.pathname.startsWith('/GumaPhoto')) apiUrl = '/GumaPhoto' + apiUrl;
-        
-        let res = await fetch(apiUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                point_id: selectedFeedbackTarget.id,
-                issue_type: selectedFeedbackTarget.issue,
-                correct_value: correctValue,
-                target_points: targetPoints
-            })
-        });
-        
-        if (res.status === 404 || res.status === 405) {
-            console.log("[우회 접속] 백엔드 POST API 응답 누락 처리됨 (모의 통과)");
-        } else {
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || "제출 실패");
-        }
-        
-        // 제출 성공 알림 및 피드백 화면 종료 유도 (재귀 로딩 중복 충돌 방지)
-        document.getElementById('fb-temptest-results').style.display = 'none';
-        
-        const feedbackHubModal = document.getElementById('feedback-hub-modal');
-        if (feedbackHubModal) feedbackHubModal.classList.add('hidden');
-        
-        // 홈 탭으로 자동 복귀 및 강제 새로고침
-        switchView('home');
-        
-        // 브라우저 렌더링 충돌을 막기 위해 0.1초 딜레이 후 Alert 띄움
-        setTimeout(() => {
-            alert("Feedback submitted successfully. 화면을 새로고침합니다.");
-            window.location.reload();
-        }, 100);
-        
-    } catch (err) {
-        console.error(err);
-        alert("오류 발생: " + err.message);
-    } finally {
-        btn.innerHTML = ogHtml;
-        btn.disabled = false;
-    }
+    await submitSharedFeedback(selectedFeedbackTarget.id, selectedFeedbackTarget.issue, correctValue, targetPoints);
 });
 
 // ----------------------------------------------------------------------
