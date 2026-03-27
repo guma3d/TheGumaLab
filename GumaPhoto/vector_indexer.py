@@ -364,6 +364,8 @@ class VectorIndexer:
                                 "gender": old_p.get("gender"),
                                 "emotion": old_p.get("emotion")
                             }
+                            if "face_bbox" in old_p:
+                                best_face_payload["face_bbox"] = old_p["face_bbox"]
                             if pt.vector and "face" in pt.vector:
                                 vectors["face"] = pt.vector["face"]
                     except: pass

@@ -116,6 +116,7 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
                         "filepath": tg["fpath"], 
                         "location": after_loc, 
                         "date": after_date,
+                        "people": ap.get('people'),
                         "exif": exif_str
                     }, ensure_ascii=False) + "\n")
         except Exception as e:
