@@ -74,7 +74,6 @@ class OrganizerPipeline:
         try:
             from qdrant_client import QdrantClient
             from qdrant_client.http import models
-            import os
             
             q_url = os.environ.get("QDRANT_URL", "http://qdrant:6333")
             client = QdrantClient(url=q_url, timeout=3)
