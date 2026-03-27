@@ -66,7 +66,6 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
                 print(f"  [🕵️‍♂️ AUDIT-BEFORE (Time/Loc)] File: {fpath} | Loc: {p.get('location')} | Date: {p.get('date')} | People: {p.get('people')}")
                 print(f"      ㄴ [메타데이터-BEFORE]: {exif_str}")
                 try:
-                    import json, os
                     with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
                         tf.write(json.dumps({"type": "BEFORE", "trace_id": res.id, "hash_key": os.path.basename(fpath)[:15], "filepath": fpath, "location": p.get('location'), "date": p.get('date'), "people": p.get('people'), "exif": exif_str}, ensure_ascii=False) + "\n")
                 except: pass
