@@ -150,7 +150,7 @@ def get_advanced_system_stats(force_refresh: bool = False):
         traceback.print_exc()
         return {"error": str(e)}
 
-@router.get("/api/system/audit_logs")
+@router.get("/audit_logs")
 async def get_audit_logs(limit: int = 5):
     import json
     import os

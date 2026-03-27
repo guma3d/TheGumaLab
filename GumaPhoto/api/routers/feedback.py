@@ -9,11 +9,12 @@ from core.state import state
 from qdrant_client.http.models import Filter, FieldCondition, MatchValue
 import random
 
-def get_uuid_from_id(id_val: typing.Union[int, str]) -> str:
+def get_uuid_from_id(id_val: typing.Union[int, str]) -> typing.Union[int, str]:
+    if isinstance(id_val, int):
+        return id_val
     val_str = str(id_val)
-    if "-" in val_str and len(val_str) == 36:
-        return val_str
-        
+    if val_str.isdigit():
+        return int(val_str)
     return val_str
 
 router = APIRouter()
