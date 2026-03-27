@@ -1741,10 +1741,17 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
                 }
                 badgesHtml += createBadge('fa-solid fa-user-tag', peopleVal, true);
 
+                let rawUrl = item.original_path || item.url;
+                if (window.location.pathname.startsWith('/GumaPhoto') && !rawUrl.startsWith('/GumaPhoto')) rawUrl = '/GumaPhoto' + rawUrl;
+                
+                const dotIndex = rawUrl.lastIndexOf('.');
+                const thumbUrl = dotIndex !== -1 ? 
+                    rawUrl.substring(0, dotIndex) + '_' + rawUrl.substring(dotIndex + 1).toLowerCase() + '.webp' : rawUrl;
+
                 const bboxStr = item.face_bbox_target ? JSON.stringify(item.face_bbox_target) : '';
                 gridHtml += `
                 <div style="position: relative; width: 100%; aspect-ratio: 1/1; border-radius: 8px; overflow: hidden; background: #111;">
-                    <img class="temp-crop-img" src="" data-src="${item.original_path || item.url}" data-bbox='${bboxStr}' style="width: 100%; height: 100%; object-fit: cover; transition: filter 0.3s ease;" loading="lazy">
+                    <img class="temp-crop-img" src="" data-src="${thumbUrl}" data-full-src="${rawUrl}" data-bbox='${bboxStr}' style="width: 100%; height: 100%; object-fit: cover; transition: filter 0.3s ease;" loading="lazy">
                     
                     <div class="meta-badge" style="position: absolute; left: 5px; top: 5px;">
                         <i class="fa-solid fa-bullseye"></i> ${scoreText}
@@ -1759,16 +1766,23 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
             });
             grid.innerHTML = gridHtml;
             
-            // 후속 처리: 인물 피드백일 경우 캔버스를 통해 얼굴만 Crop하여 표시
             document.querySelectorAll('.temp-crop-img').forEach(img => {
                 const src = img.getAttribute('data-src');
+                const fullSrc = img.getAttribute('data-full-src');
                 const bboxStr = img.getAttribute('data-bbox');
+                
+                const finalSrc = window.location.pathname.startsWith('/GumaPhoto') && !src.startsWith('/GumaPhoto') ? '/GumaPhoto' + src : src;
+                const finalFullSrc = window.location.pathname.startsWith('/GumaPhoto') && !fullSrc.startsWith('/GumaPhoto') ? '/GumaPhoto' + fullSrc : fullSrc;
                 
                 if (bboxStr && (selectedFeedbackTarget.issue.includes('Person') || selectedFeedbackTarget.issue.includes('People'))) {
                     const bbox = JSON.parse(bboxStr);
                     const tempImg = new Image();
                     tempImg.crossOrigin = "Anonymous";
-                    tempImg.src = window.location.pathname.startsWith('/GumaPhoto') && !src.startsWith('/GumaPhoto') ? '/GumaPhoto' + src : src;
+                    tempImg.src = finalSrc;
+                    
+                    tempImg.onerror = () => {
+                        if (tempImg.src !== finalFullSrc) tempImg.src = finalFullSrc;
+                    };
                     
                     tempImg.onload = () => {
                         const canvas = document.createElement('canvas');
@@ -1789,7 +1803,10 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
                         }
                     };
                 } else {
-                    img.src = window.location.pathname.startsWith('/GumaPhoto') && !src.startsWith('/GumaPhoto') ? '/GumaPhoto' + src : src;
+                    img.src = finalSrc;
+                    img.onerror = function() {
+                        if (this.src !== finalFullSrc) this.src = finalFullSrc;
+                    };
                 }
             });
             
