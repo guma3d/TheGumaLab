@@ -406,6 +406,7 @@ class VectorIndexer:
                         sort_date = dt.year * 10000 + dt.month * 100 + dt.day
                     except Exception:
                         sort_date = 0
+                print(f"DEBUG: {filepath} => date_str: {date_str}, sort_date: {sort_date}")
                         
                 payload = {
                     "filepath": filepath,
