@@ -388,16 +388,8 @@ class VectorIndexer:
                     match_sd = re.search(r'(19|20)\d{2}(-\d{2})?(-\d{2})?', date_str)
                     if match_sd:
                         sd_parts = match_sd.group(0).split('-')
-                        if len(sd_parts) < 3:
-                            try:
-                                import datetime
-                                dt = datetime.datetime.fromtimestamp(os.path.getmtime(filepath))
-                                if len(sd_parts) == 1:
-                                    sd_parts.append(str(dt.month).zfill(2))
-                                sd_parts.append(str(dt.day).zfill(2))
-                            except:
-                                while len(sd_parts) < 3:
-                                    sd_parts.append("01")
+                        while len(sd_parts) < 3:
+                            sd_parts.append("01")
                         sort_date = int(sd_parts[0]) * 10000 + int(sd_parts[1]) * 100 + int(sd_parts[2])
                 if sort_date == 0:
                     try:
