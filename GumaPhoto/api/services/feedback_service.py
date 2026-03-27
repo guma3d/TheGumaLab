@@ -94,11 +94,32 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
         idx_bot = VectorIndexer(skip_face=True)
         idx_bot.force_reindex_files(valid_filepaths, force_location=target_location, force_date=target_date)
         
+        # Qdrant에 저장된 최신 값을 다시 불러와 시스템 Audit 로그에 정확히 남김
+        # (기존 target_date 파라미터가 "Unknown Date"일 경우, 사용자가 오해하지 않도록 실데이터 추출)
         try:
+            client = QdrantClient(QDRANT_URL)
             with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
                 for tg in valid_targets:
-                    tf.write(json.dumps({"type": "AFTER", "trace_id": tg["pt_id"], "filepath": tg["fpath"], "location": target_location, "date": target_date}, ensure_ascii=False) + "\n")
-        except: pass
+                    # 방금 업데이트 완료된 Qdrant 최신 페이로드 조회
+                    after_pts = client.retrieve(collection_name=COLLECTION_NAME, ids=[tg["pt_id"]], with_payload=True)
+                    if after_pts:
+                        ap = after_pts[0].payload or {}
+                        after_date = ap.get('date', target_date)
+                        after_loc = ap.get('location', target_location)
+                    else:
+                        after_date, after_loc = target_date, target_location
+                        
+                    exif_str = get_physical_metadata_str(tg["fpath"])
+                    tf.write(json.dumps({
+                        "type": "AFTER", 
+                        "trace_id": tg["pt_id"], 
+                        "filepath": tg["fpath"], 
+                        "location": after_loc, 
+                        "date": after_date,
+                        "exif": exif_str
+                    }, ensure_ascii=False) + "\n")
+        except Exception as e:
+            print(f"      [!] 시스템 로그 갱신 중 에러 (무시): {e}")
         
         print("  [+] 새로운 메타데이터 기반 벡터인덱싱 및 DB 덮어쓰기가 완료되었습니다!")
 
