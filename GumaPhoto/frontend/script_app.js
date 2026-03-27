@@ -1046,8 +1046,6 @@ window.fetchAdvancedStats = async function(forceRefresh = false) {
             document.getElementById('stat-total-people').innerText = advancedStatsData.known_faces_count.toLocaleString();
             document.getElementById('stat-total-locations').innerText = actualLocs.toLocaleString();
             document.getElementById('stat-total-dates').innerText = dateSpanStr;
-            
-            fetchAuditLogs();
         }
     } catch(err) {
         console.error('Error fetching advanced stats:', err);
@@ -1064,23 +1062,20 @@ async function fetchAuditLogs() {
         const res = await fetch(apiUrl);
         if (res.ok) {
             const data = await res.json();
-            renderAuditLogs(data);
+            return data;
         }
     } catch (e) {
         console.error('Error fetching audit logs:', e);
     }
+    return [];
 }
 
 function renderAuditLogs(logs) {
-    const container = document.getElementById('system-audit-logs-container');
-    if (!container) return;
-    
     if (!logs || logs.length === 0) {
-        container.innerHTML = '<p style="color: #9ca3af; font-size: 0.9rem; text-align: center; padding: 20px 0;">최근 피드백 기록이 없습니다.</p>';
-        return;
+        return '<p style="color: #9ca3af; font-size: 0.9rem; text-align: center; padding: 20px 0;">최근 피드백 기록이 없습니다.</p>';
     }
     
-    let html = '';
+    let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
     logs.forEach(log => {
         const bef = log.before || {};
         const aft = log.after || {};
@@ -1088,7 +1083,7 @@ function renderAuditLogs(logs) {
         const getFilename = (path) => path ? path.split(/[\/\\]/).pop() : 'Unknown';
         
         html += `
-        <div style="background: rgba(30, 40, 50, 0.4); border-left: 4px solid #3b82f6; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
+        <div style="background: rgba(30, 40, 50, 0.4); border-left: 4px solid #8b5cf6; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
                 <span style="color: white; font-size: 0.9rem; font-family: monospace;">ID: ${log.trace_id.substring(0,15)}...</span>
                 <span style="color: #10b981; font-size: 0.8rem; font-weight: bold;"><i class="fa-solid fa-check"></i> PROCESS DB COMPLETED</span>
@@ -1113,15 +1108,15 @@ function renderAuditLogs(logs) {
                 </div>
                 
                 <div style="margin-top:8px; padding-top:8px; border-top: 1px dashed rgba(255,255,255,0.05); font-size: 0.8rem;">
-                    <div style="margin-bottom: 4px;"><span style="color:#f59e0b;">BEFORE EXIF:</span> <span style="color:#9ca3af; font-family:monospace;">${bef.exif || 'None'}</span></div>
-                    <div><span style="color:#3b82f6;">AFTER EXIF:</span> <span style="color:#e5e7eb; font-family:monospace;">${aft.exif || 'None'}</span></div>
+                    <div style="margin-bottom: 4px;"><span style="color:#f59e0b;">BEFORE EXIF:</span> <span style="color:#9ca3af; font-family:monospace; word-break: break-all;">${bef.exif || 'None'}</span></div>
+                    <div><span style="color:#8b5cf6;">AFTER EXIF:</span> <span style="color:#e5e7eb; font-family:monospace; word-break: break-all;">${aft.exif || 'None'}</span></div>
                 </div>
             </div>
         </div>
         `;
     });
-    
-    container.innerHTML = html;
+    html += '</div>';
+    return html;
 }
 
 
@@ -1207,6 +1202,15 @@ window.showStatsModal = function(type) {
                 pct: d.pct + "%",
                 color: "#f43f5e"
             }));
+    } else if (type === 'audit') {
+        title.innerHTML = '<i class="fa-solid fa-list-check" style="color:#8b5cf6;"></i> 최근 피드백 기록 열람';
+        body.innerHTML = '<div style="display: flex; flex-direction: column; gap: 12px;"><p style="color: #9ca3af; font-size: 0.9rem; text-align: center; padding: 20px 0;"><i class="fa-solid fa-spinner fa-spin"></i> 데이터 불러오는 중...</p></div>';
+        modal.classList.remove('hidden');
+        
+        fetchAuditLogs().then(data => {
+            body.innerHTML = renderAuditLogs(data);
+        });
+        return;
     }
     
     if (items.length === 0) {

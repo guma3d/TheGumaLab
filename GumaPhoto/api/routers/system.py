@@ -151,7 +151,7 @@ def get_advanced_system_stats(force_refresh: bool = False):
         return {"error": str(e)}
 
 @router.get("/audit_logs")
-async def get_audit_logs(limit: int = 5):
+async def get_audit_logs(limit: int = 50):
     import json
     import os
     trace_file = "/app/data/audit_trace.json"
