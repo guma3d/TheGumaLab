@@ -290,7 +290,39 @@ class VectorIndexer:
             except Exception as e:
                 print(f"      ⚠️ Florence-2 다중 배치 처리 중 오류: {e}")
 
-        # --- [C] 개별 연산 (InsightFace) 및 페이로드 조립 ---
+        # --- [C] EXIF 메타데이터 다중 배치 추출 (폴더명 파싱 완전 배제) ---
+        batch_filepaths = [item["filepath"] for item in valid_items]
+        exif_dict = {}
+        try:
+            import subprocess, json
+            cmd = ["exiftool", "-j", "-DateTimeOriginal", "-CreateDate", "-Location", "-XMP:Location"] + batch_filepaths
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+            if res.returncode == 0 and res.stdout.strip():
+                # exiftool JSON 출력 파싱
+                parsed_list = json.loads(res.stdout)
+                for f_data in parsed_list:
+                    # exiftool returns SourceFile keys with normalized paths, we'll try to match basename or fallback
+                    fpath = f_data.get("SourceFile", "")
+                    fname = os.path.basename(fpath)
+                    
+                    date_val = f_data.get('DateTimeOriginal') or f_data.get('CreateDate')
+                    dt_str = "Unknown Date"
+                    if date_val:
+                        raw_dt = str(date_val).split(' ')[0]
+                        parts = raw_dt.split(':')
+                        if len(parts) >= 2:
+                            dt_str = f"{parts[0]}-{parts[1]}"
+                        else:
+                            dt_str = raw_dt.replace(':', '-')
+                            
+                    loc_val = f_data.get('Location') or f_data.get('XMP:Location')
+                    loc_str = str(loc_val).strip() if loc_val else "Unknown Location"
+                    
+                    exif_dict[fname] = {"date": dt_str, "loc": loc_str}
+        except Exception as e:
+            print(f"      🚨 배치 EXIF 추출 오류: {e}")
+
+        # --- DB Upsert 조립 ---
         for i, item in enumerate(valid_items):
             try:
                 filepath = item["filepath"]
@@ -336,16 +368,14 @@ class VectorIndexer:
                                 vectors["face"] = pt.vector["face"]
                     except: pass
 
-                parent_dir = os.path.basename(os.path.dirname(filepath))
-                location_str = "Unknown Location"
+                # EXIF 기반 데이터 매칭 (폴더명 기반 강제 규정 로직 완벽 제거)
                 date_str = "Unknown Date"
+                location_str = "Unknown Location"
                 
-                if "_" in parent_dir:
-                    parts = parent_dir.split("_", 1)
-                    if re.match(r'^(19|20)\d{2}', parts[0]):
-                        date_str = parts[0]
-                    if len(parts) > 1 and parts[1] != "Unknown-Location" and parts[1] != "Unknown-Year":
-                        location_str = parts[1].replace("-", " ")
+                fname = os.path.basename(filepath)
+                if fname in exif_dict:
+                    date_str = exif_dict[fname]["date"]
+                    location_str = exif_dict[fname]["loc"]
                         
                 if force_location and "Unknown" not in force_location:
                     location_str = force_location
