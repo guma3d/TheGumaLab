@@ -387,34 +387,36 @@ class VectorIndexer:
 
     def force_reindex_files(self, target_filepaths):
         print(f"[*] 강제 리인덱싱(덮어쓰기) 모드 발동: {len(target_filepaths)}장")
-        batch = []
-        for filepath in target_filepaths:
-            if not os.path.exists(filepath):
-                continue
-            try:
-                pil_img = Image.open(filepath).convert('RGB')
-                cv_img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
-                context_str = self.get_original_context(filepath)
-                time_of_day, season = self.extract_time_and_season(filepath)
-                import uuid
-                point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, filepath))
-                batch.append({
-                    "filepath": filepath,
-                    "filename": os.path.basename(filepath),
-                    "pil_img": pil_img,
-                    "cv_img": cv_img,
-                    "context_str": context_str,
-                    "time_of_day": time_of_day,
-                    "season": season,
-                    "point_id": point_id,
-                    "file_hash": self.get_file_hash(filepath)
-                })
-            except Exception as e:
-                print(f"  [-] {filepath} 강제 분석 실패: {e}")
-        
-        if batch:
-            self.process_batch(batch)
-            print("[+] 메타데이터 덮어쓰기 완료!")
+        for i in range(0, len(target_filepaths), BATCH_SIZE):
+            chunk = target_filepaths[i:i + BATCH_SIZE]
+            batch = []
+            for filepath in chunk:
+                if not os.path.exists(filepath):
+                    continue
+                try:
+                    pil_img = Image.open(filepath).convert('RGB')
+                    cv_img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+                    context_str = self.get_original_context(filepath)
+                    time_of_day, season = self.extract_time_and_season(filepath)
+                    import uuid
+                    point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, filepath))
+                    batch.append({
+                        "filepath": filepath,
+                        "filename": os.path.basename(filepath),
+                        "pil_img": pil_img,
+                        "cv_img": cv_img,
+                        "context_str": context_str,
+                        "time_of_day": time_of_day,
+                        "season": season,
+                        "point_id": point_id,
+                        "file_hash": self.get_file_hash(filepath)
+                    })
+                except Exception as e:
+                    print(f"  [-] {filepath} 강제 분석 실패: {e}")
+            
+            if batch:
+                self.process_batch(batch)
+        print("[+] 메타데이터 덮어쓰기 완료!")
 
     def run(self, test_limit=None):
         print("\n🚀 [3단계: 딥러닝 벡터화 파이프라인 가동]")

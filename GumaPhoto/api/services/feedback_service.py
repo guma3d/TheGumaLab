@@ -60,7 +60,7 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
                 try:
                     import json, os
                     with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
-                        tf.write(json.dumps({"type": "BEFORE", "hash_key": os.path.basename(fpath)[:15], "filepath": fpath, "location": p.get('location'), "date": p.get('date'), "people": p.get('people'), "exif": exif_str}, ensure_ascii=False) + "\n")
+                        tf.write(json.dumps({"type": "BEFORE", "trace_id": res.id, "hash_key": os.path.basename(fpath)[:15], "filepath": fpath, "location": p.get('location'), "date": p.get('date'), "people": p.get('people'), "exif": exif_str}, ensure_ascii=False) + "\n")
                 except: pass
     else:
         print("[-] 지정된 타겟 포인트 리스트가 없습니다. 종료합니다.")
@@ -86,6 +86,12 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
         print("  [*] 변경된 메타데이터를 바탕으로 벡터 정보를 Qdrant에 덮어씁니다...")
         idx_bot = VectorIndexer(skip_face=True)
         idx_bot.force_reindex_files(valid_filepaths)
+        
+        try:
+            with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
+                for tg in valid_targets:
+                    tf.write(json.dumps({"type": "AFTER", "trace_id": tg["pt_id"], "filepath": tg["fpath"], "location": target_location, "date": target_date}, ensure_ascii=False) + "\n")
+        except: pass
         
         print("  [+] 새로운 메타데이터 기반 벡터인덱싱 및 DB 덮어쓰기가 완료되었습니다!")
 
@@ -114,7 +120,8 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
                 target_filepaths.append({
                     "filepath": filepath,
                     "face_bbox": face_bbox,
-                    "point_id": res.id
+                    "point_id": res.id,
+                    "old_people": res.payload.get("people", [])
                 })
                 
     if not target_filepaths:
@@ -227,6 +234,13 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
                     collection_name=COLLECTION_NAME,
                     points=[PointVectors(id=point_id, vector={"face": face_res["vectors"]["face"]})]
                 )
+                
+            try:
+                with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
+                    tf.write(json.dumps({"type": "BEFORE", "trace_id": point_id, "filepath": filepath, "people": target.get("old_people", [])}, ensure_ascii=False) + "\n")
+                    tf.write(json.dumps({"type": "AFTER", "trace_id": point_id, "filepath": filepath, "people": face_res["found_people"]}, ensure_ascii=False) + "\n")
+            except: pass
+            
             print(f"    - {os.path.basename(filepath)} : 업데이트 완료 {face_res['found_people']}")
         except Exception as e:
             print(f"    - {filepath} 덮어쓰기 실패: {e}")
