@@ -23,6 +23,13 @@ git commit -m "Auto-sync update from Antigravity"
 git push origin main
 ```
 
+### 4단계: 홈서버(HomeServer) 동기화 및 도커 워커 재부팅 (Deploy)
+작업 내용을 즉시 운영망에 배포하기 위해 SSH 원격 콘솔 명령을 실행합니다.
+```powershell
+ssh HomeServer "D:\TheGumaLab\pull_update.bat"
+ssh HomeServer "cmd /c docker restart gumaphoto_celery"
+```
+
 ---
 
 *(참고 사항)*
