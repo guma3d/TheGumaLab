@@ -12,7 +12,7 @@ class MetadataEditor:
         
         # 1. 위치 정보가 넘어왔다면 위도/경도로 변환 준비
         lat, lon = None, None
-        if target_location and target_location != "Unknown":
+        if target_location and "Unknown" not in target_location:
             geolocator = Nominatim(user_agent="guma_photo_metadata_editor")
             parts = target_location.split("-", 1)
             query = {"country": parts[0].strip(), "city": parts[1].strip()} if len(parts) == 2 else {"q": target_location.replace("-", " ")}
@@ -37,7 +37,7 @@ class MetadataEditor:
             has_update = False
             
             # (A) XMP 장소명 문자열 박기
-            if target_location and target_location != "Unknown":
+            if target_location and "Unknown" not in target_location:
                 cmd.extend([f"-XMP:Location={target_location}"])
                 has_update = True
             
@@ -55,7 +55,7 @@ class MetadataEditor:
                 has_update = True
                 
             # (C) 사진 촬영 일자 박기
-            if target_date and target_date != "Unknown":
+            if target_date and "Unknown" not in target_date:
                 parts = target_date.split("-")
                 yyyy = parts[0]
                 mm = parts[1] if len(parts) > 1 else "01"
