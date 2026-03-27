@@ -37,8 +37,12 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
     target_points = []
     try:
         if target_points_str:
-            target_points = json.loads(target_points_str)
-    except Exception: pass
+            if isinstance(target_points_str, list):
+                target_points = target_points_str
+            else:
+                target_points = json.loads(target_points_str)
+    except Exception as e:
+        print(f"  [🚨 CELERY JSON ERROR] type={type(target_points_str)}, 내용={repr(target_points_str)[:200]}, 예외={e}")
     
     if qdrant_id and qdrant_id not in target_points:
         target_points.append(qdrant_id)
