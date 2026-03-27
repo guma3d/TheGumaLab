@@ -272,6 +272,17 @@ async def get_unknown_photo():
 
 @router.post("/api/feedback_v2/submit")
 async def submit_feedback_v2(req: FeedbackV2Request):
+    print(f"===========================================================")
+    print(f"[🔍 DEBUG] SUBMIT API POST RECEIVED!")
+    print(f"  - point_id: {req.point_id}")
+    print(f"  - issue: {req.issue_type}, correct: {req.correct_value}")
+    if req.target_points:
+        print(f"  - target_points length: {len(req.target_points)}")
+        print(f"  - sample: {req.target_points[:3]}")
+    else:
+        print(f"  - req.target_points IS EMPTY OR NONE!")
+    print(f"===========================================================")
+    
     fb_type = "face" if "People" in req.issue_type else "time_loc"
     
     real_point_id = get_uuid_from_id(req.point_id)
