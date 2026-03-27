@@ -390,7 +390,7 @@ class VectorIndexer:
                         sd_parts = match_sd.group(0).split('-')
                         if len(sd_parts) < 3:
                             try:
-                                import datetime, os
+                                import datetime
                                 dt = datetime.datetime.fromtimestamp(os.path.getmtime(filepath))
                                 if len(sd_parts) == 1:
                                     sd_parts.append(str(dt.month).zfill(2))
@@ -401,7 +401,7 @@ class VectorIndexer:
                         sort_date = int(sd_parts[0]) * 10000 + int(sd_parts[1]) * 100 + int(sd_parts[2])
                 if sort_date == 0:
                     try:
-                        import datetime, os
+                        import datetime
                         dt = datetime.datetime.fromtimestamp(os.path.getmtime(filepath))
                         sort_date = dt.year * 10000 + dt.month * 100 + dt.day
                     except Exception:
