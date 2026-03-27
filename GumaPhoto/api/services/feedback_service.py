@@ -224,7 +224,7 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
             if person_vectors:
                 mean_vec = np.mean(person_vectors, axis=0)
                 mean_vec = mean_vec / np.linalg.norm(mean_vec)
-                new_known_faces[person_name] = mean_vec.tolist()
+                new_known_faces[person_name] = [mean_vec.tolist()]
                 print(f"    - '{person_name}' 님 학습 완료 ({len(person_vectors)}장)")
                 
     with open(KNOWN_FACES_PATH, 'wb') as f:
