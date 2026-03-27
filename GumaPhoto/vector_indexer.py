@@ -382,6 +382,23 @@ class VectorIndexer:
                 if force_date and "Unknown" not in force_date:
                     date_str = force_date
                     
+                sort_date = 0
+                if date_str != "Unknown Date":
+                    import re
+                    match_sd = re.search(r'(19|20)\d{2}(-\d{2})?(-\d{2})?', date_str)
+                    if match_sd:
+                        sd_parts = match_sd.group(0).split('-')
+                        while len(sd_parts) < 3:
+                            sd_parts.append("01")
+                        sort_date = int(sd_parts[0]) * 10000 + int(sd_parts[1]) * 100 + int(sd_parts[2])
+                if sort_date == 0:
+                    try:
+                        import datetime, os
+                        dt = datetime.datetime.fromtimestamp(os.path.getmtime(filepath))
+                        sort_date = dt.year * 10000 + dt.month * 100 + dt.day
+                    except Exception:
+                        sort_date = 0
+                        
                 payload = {
                     "filepath": filepath,
                     "filename": item["filename"],
@@ -389,6 +406,7 @@ class VectorIndexer:
                     "face_count": face_count,
                     "people": found_people,
                     "date": date_str,
+                    "sort_date": sort_date,
                     "location": location_str,
                     "season": item["season"],
                     "objects": found_objects,
