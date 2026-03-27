@@ -120,12 +120,16 @@ async def temptest_feedback(req: FeedbackV2Request):
             filepath = payload.get("filepath", "")
             if not filepath: continue
             
-            # [수정] 기존에는 Unknown 상태인 사진만 추천하도록 강제 필터링했으나, 
-            # 멀쩡한 데이터를 다른 데이터로 '교정'하려는 피드백 수행 시 유사 사진이 리스트에 아예 뜨지 않아
-            # 단 1장의 사진만 피드백되어 파이프라인으로 넘어가는 구조적 버그 해결.
-            if fb_type == "face":
-                ppl = payload.get("people", [])
-                # 다른 이름으로 매칭되었더라도 오탐일 수 있으므로 시각적 유사도만 높으면 그대로 올려보냅니다.
+            # 사용자 요청: 장소/날짜 피드백 시에는 해당 값이 "Unknown"이거나 비어있는 유사 사진만 노출. (이미 멀쩡한 피드백 제외 방지)
+            if fb_type != "face":
+                if "Location" in req.issue_type:
+                    p_loc = payload.get("location", "")
+                    if "Unknown" not in p_loc and "위치정보없음" not in p_loc and p_loc.strip() != "":
+                        continue
+                elif "Date" in req.issue_type or "날짜" in req.issue_type:
+                    p_date = payload.get("date", "")
+                    if "Unknown" not in p_date and p_date.strip() != "":
+                        continue
             
             url_path = filepath.replace("/app/data/organized", "/photos")
             similars.append({
