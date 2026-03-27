@@ -31,6 +31,7 @@ def get_physical_metadata_str(filepath):
 
 def process_time_location_feedback(qdrant_id, target_date, target_location, target_points_str="[]"):
     print(f"[*] 시간/장소 피드백 가동: 타겟 UUID {qdrant_id}, 새로운 시간: {target_date}, 새로운 장소: {target_location}")
+    print(f"  [🔍 CELERY DBG] 받은 target_points_str 길이: {len(target_points_str)}")
     client = QdrantClient(QDRANT_URL)
     
     target_points = []
@@ -85,7 +86,7 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
         
         print("  [*] 변경된 메타데이터를 바탕으로 벡터 정보를 Qdrant에 덮어씁니다...")
         idx_bot = VectorIndexer(skip_face=True)
-        idx_bot.force_reindex_files(valid_filepaths)
+        idx_bot.force_reindex_files(valid_filepaths, force_location=target_location, force_date=target_date)
         
         try:
             with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:

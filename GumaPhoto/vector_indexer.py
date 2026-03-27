@@ -219,7 +219,7 @@ class VectorIndexer:
                     
         return time_of_day, season
 
-    def process_batch(self, valid_items):
+    def process_batch(self, valid_items, force_location=None, force_date=None):
         """Pre-fetched batch 단위로 메모리에 올려 병렬 연산 (CPU/GPU 동시 가동을 위함)"""
         points_to_upsert = []
         successful_payloads = []
@@ -346,6 +346,11 @@ class VectorIndexer:
                         date_str = parts[0]
                     if len(parts) > 1 and parts[1] != "Unknown-Location" and parts[1] != "Unknown-Year":
                         location_str = parts[1].replace("-", " ")
+                        
+                if force_location and "Unknown" not in force_location:
+                    location_str = force_location
+                if force_date and "Unknown" not in force_date:
+                    date_str = force_date
                     
                 payload = {
                     "filepath": filepath,
@@ -385,7 +390,7 @@ class VectorIndexer:
         torch.cuda.empty_cache()
         gc.collect()
 
-    def force_reindex_files(self, target_filepaths):
+    def force_reindex_files(self, target_filepaths, force_location=None, force_date=None):
         print(f"[*] 강제 리인덱싱(덮어쓰기) 모드 발동: {len(target_filepaths)}장")
         for i in range(0, len(target_filepaths), BATCH_SIZE):
             chunk = target_filepaths[i:i + BATCH_SIZE]
@@ -415,7 +420,7 @@ class VectorIndexer:
                     print(f"  [-] {filepath} 강제 분석 실패: {e}")
             
             if batch:
-                self.process_batch(batch)
+                self.process_batch(batch, force_location=force_location, force_date=force_date)
         print("[+] 메타데이터 덮어쓰기 완료!")
 
     def run(self, test_limit=None):
