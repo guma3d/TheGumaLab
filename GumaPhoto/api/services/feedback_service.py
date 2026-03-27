@@ -43,6 +43,8 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
     if qdrant_id and qdrant_id not in target_points:
         target_points.append(qdrant_id)
         
+    print(f"  [🔍 CELERY DBG] 파싱된 target_points 원소 수: {len(target_points)}")
+        
     valid_targets = []
     if target_points and len(target_points) > 0:
         points_data = client.retrieve(
@@ -50,6 +52,7 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
             ids=target_points,
             with_payload=True
         )
+        print(f"  [🔍 CELERY DBG] Qdrant에서 retrieve된 레코드 수: {len(points_data)}")
         for res in points_data:
             p = getattr(res, 'payload', {})
             fpath = p.get("filepath")
