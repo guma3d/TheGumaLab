@@ -63,4 +63,9 @@
 *   **InsightFace 완전 독립 모듈화 (`InsightFaceModule`):** `vector_indexer`에 종속되어 있던 안면 인식 엔진을 `api/services/insightface_service.py`로 분리. 장소/날짜 피드백 시 불필요한 안면 분석을 생략(`skip_face=True`)할 수 있게 되어 Qdrant 덮어쓰기 파이프라인 속도가 비약적으로 상승.
 *   **피드백 덮어쓰기(Overwrite) 메커니즘 전환:** 
     *   장소/날짜 피드백: 기존의 `PhotoPurger` 파쇄 후 `uploads_raw` 재업로드 큐를 타던 비효율적 롤백 방식에서 탈피하여, `MetadataEditor`로 EXIF를 영구 수정 후 즉시 Qdrant에 벡터를 덮어쓰도록(Overwrite) 진화.
-    *   인물(얼굴) 피드백: 사용자가 명시적으로 선택한 1장의 사진만 `enrolled` 도감에 등록하고, 나머지 동반 선택된 타겟 사진들은 도감 오염 없이 `InsightFaceModule`로만 평가하여 Qdrant 페이로드를 즉각 업데이트하도록 초정밀 최적화 달성.
+## 📌 [14단계] 피드백 데이터 무결점 감시 및 시각화 고도화 (완료 🎯)
+*   **물리적 Exif 완전 통치 (Location/Date):** 기존의 임시방편이었던 폴더 이름 기반 장소/날짜 파싱 트릭을 영구 소각하고, 온전히 `ExifTool`이 주입한 실제 파일 메타데이터만을 진실의 원천(Source of Truth)으로 삼아 Qdrant 및 백엔드를 동기화하도록 아키텍처 재편.
+*   **Celery Scope-Shadowing 버그 픽스:** 파이썬 `import json` 로컬 변수 섀도잉으로 인해 일괄 처리가 1장으로 끊어지던 치명적 배치(Batch) 오류를 완벽히 타파, 대규모 사진 N장에 대한 즉각적 멀티 피드백 적용 성공.
+*   **Audit Logger (블랙박스) 체제 도입:** 메타데이터 변조가 발생할 때마다 변경 전(Before)과 변경 후(After)의 실제 생태를 `.json` 로그 파일로 낱낱이 남기는 회계 감시망(`audit_trace.json`) 작동 및 Qdrant Retrieve 연계 입증 지원.
+*   **프론트엔드 Audit UI 대규모 모달(Modal) 개사:** System 탭 구석에 흉하게 방치되던 텍스트 로그 컨테이너를 잘라내어, 프리미엄 카드 버튼 + 글라스모피즘 팝업 모달 + 최대 50건 스크롤 뷰 형식으로 완벽한 통일성 부여 및 브라우저 캐시 무력화(`v=4` 멱등성 갱신) 달성.
+*   **피드백 Scan 레이어 썸네일 초고속화:** 유사 사진 체크박스(Check) 뷰에서 무지성으로 다운로드 되던 20MB 원본 코어(`.jpg`) 대신, 초경량 썸네일 파일(`.webp`) 경로를 우선 탐색하는 Fallback 알고리즘 렌더기를 장착하여 렌더링 스피드 한계 돌파.

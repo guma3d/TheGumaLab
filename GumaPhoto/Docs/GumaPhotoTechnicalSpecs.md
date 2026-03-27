@@ -51,11 +51,12 @@
 **[핵심 비즈니스 모듈]:** `api/services/feedback_service.py` 와 `api/tasks.py` (Celery)
 
 *   **동작 방식 (1:N 시각 군집 확장 및 무결점 리인덱싱):** 사용자가 누락된 미분류 정보(Unknown)를 1장만 채워주면, AI가 일괄 교정하는 시스템입니다.
-    1.  **단일 질의 및 시각 군집화:** 1장의 사진을 교정하면, 거리가 가까운 유사 군집 N장이 자동 색출 타겟으로 포착됨.
+    1.  **단일 질의 및 시각 군집화:** 1장의 사진을 교정하면, 거리가 가까운 유사 군집 N장이 자동 색출 타겟으로 포착됨. (**WebP 썸네일 고속 렌더링 도입**: 프론트엔드의 체크박스 레이어에서 무식하게 원본 JPG(수십MB)를 내리지 않고 `_jpg.webp` 등 최적화된 저해상도 경로를 파싱/로드 후 우회하여 VRAM과 트래픽 부담 한계를 타파).
     2.  **결손 데이터 1/N 무작위 등확률 선별:** Location 편향 버그를 고쳐 Date, Location 누락 시 동등하게 1/N 체계로 출제함.
-    3.  **100% 무결점 클린 파기 후 ExifTool 주입:** 타겟이 된 사진의 모든 과거 DB 찌꺼기와 XMP를 `PhotoPurger`로 날리고, 독립 모듈인 `MetadataEditor`를 통해 하드코딩한 후 `uploads_raw` 폴더로 이주. (피드백 정정 시, 기존에 타 인물 폴더에 잔존하던 유령 얼굴 크롭 쪼가리를 `glob.glob`으로 탐색하여 사전 소각하는 Ghost Auto-Rollback 탑재로 100% 오염 무결성 방어)
-    4.  **🚨 Enterprise Redis Celery 비동기 메시지 대기열 큐 (Single-Concurrency):** 
-        - **(문제점 방어):** 수십 번의 피드백 연타 시 파일 이동 `shutil.move`의 동시성 접근 불가 `FileNotFoundError` 발생 방어.
+    3.  **100% 무결점 클린 파기 후 ExifTool 주입:** 타겟이 된 사진의 모든 과거 DB 찌꺼기와 XMP를 `PhotoPurger`로 날리고, 독립 모듈인 `MetadataEditor`를 통해 하드코딩한 후 `uploads_raw` 폴더로 이주. (이 과정에서 기존의 허술했던 폴더명 기반 파싱을 폐기하고, 오롯이 **물리적 Exif 메타데이터와 Qdrant Payload 간의 Source of Truth 동기화** 체계 개편을 완료).
+    4.  **Audit Logs (블랙박스) 실시간 감시망:** 물리적인 변화를 가스라이팅하거나 속일 수 없도록, Qdrant 및 디스크의 진위(Before vs After) 상태와 추적 Trace ID, 최종 Exif를 무조건 `audit_trace.json`에 영속 기록하여 시스템 메뉴 모달에서 사용자가 100% 투명하게 영수증 검사를 할 수 있는 무결성 아키텍처 지원.
+    5.  **🚨 Enterprise Redis Celery 비동기 메시지 대기열 큐 (Single-Concurrency):** 
+        - **(문제점 방어):** 수십 번의 피드백 연타 시 파일 이동 `shutil.move`의 동시성 접근 불가 `FileNotFoundError` 발생 방어. (최근 파이썬 `json` 모듈 로컬-글로벌 섀도잉 중복 버그로 N장 중 1장만 먹히던 최악의 에러마저 완전 적출 승리).
         - **(엔터프라이즈 솔루션 구현):** FastAPI 라우터는 기다리지 않고 **Redis 큐에 `.delay()`** 명령어만 발급. `celery_worker` 컨테이너가 1개의 단일 스레드로(Single Concurrency) 순서대로 뽑아먹으며, `organizer`와 `indexer` 시스템을 차분히 연쇄 구동시킴.
         - **(VRAM 무결화):** 이 Celery 워커는 `max_tasks_per_child=1` 옵션을 가져서 작업이 끝나는 순간 프로세스를 자살시켜 **PyTorch GPU 메모리를 강제 VRAM 0%로 완벽하게 비워주는 초강력 안전 장치** 임무를 수행함.
 
