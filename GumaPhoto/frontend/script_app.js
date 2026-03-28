@@ -1652,6 +1652,9 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
         correctValue = inputDate.value;
     } else {
         correctValue = inputVal.value.trim();
+        if (inputVal.dataset.exactPayload && inputVal.dataset.exactDisplay === correctValue) {
+            correctValue = inputVal.dataset.exactPayload;
+        }
     }
     
     if (!correctValue) {
@@ -1876,7 +1879,9 @@ if (fbInputVal && fbDropdown) {
                         div.onmouseout = () => div.style.backgroundColor = 'transparent';
                         
                         div.onclick = () => {
-                            fbInputVal.value = item.exact;
+                            fbInputVal.value = item.display;
+                            fbInputVal.dataset.exactPayload = item.exact;
+                            fbInputVal.dataset.exactDisplay = item.display;
                             fbDropdown.style.display = 'none';
                         };
                         fbDropdown.appendChild(div);
@@ -1914,6 +1919,9 @@ document.getElementById('fb-temptest-send-btn')?.addEventListener('click', async
         correctValue = inputDate.value;
     } else {
         correctValue = inputVal.value.trim();
+        if (inputVal.dataset.exactPayload && inputVal.dataset.exactDisplay === correctValue) {
+            correctValue = inputVal.dataset.exactPayload;
+        }
     }
     
     if (!correctValue) {
