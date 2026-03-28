@@ -92,8 +92,16 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
         
         print("  [*] 변경된 메타데이터를 바탕으로 벡터 정보를 Qdrant에 덮어씁니다...")
         idx_bot = VectorIndexer(skip_face=True)
-        idx_bot.force_reindex_files(valid_filepaths, force_location=target_location, force_date=target_date)
         
+        # Qdrant 페이로드용 장소 이름 정제 ([lat, lon] 부분 제거)
+        clean_target_location = target_location
+        if target_location:
+            import re
+            match = re.search(r'^\[([-\d\.]+),\s*([-\d\.]+)\]\s*(.*)$', target_location)
+            if match:
+                clean_target_location = str(match.group(3)).strip()
+                
+        idx_bot.force_reindex_files(valid_filepaths, force_location=clean_target_location, force_date=target_date)        
         # Qdrant에 저장된 최신 값을 다시 불러와 시스템 Audit 로그에 정확히 남김
         # (기존 target_date 파라미터가 "Unknown Date"일 경우, 사용자가 오해하지 않도록 실데이터 추출)
         try:
