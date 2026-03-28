@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gumaphoto-v3-kakao-pwa';
+const CACHE_NAME = 'gumaphoto-v4-kakao-pwa';
 
 self.addEventListener('install', (event) => {
     // Force the waiting service worker to become the active service worker
