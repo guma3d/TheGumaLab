@@ -1831,6 +1831,74 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
 });
 
 // =========================================================================
+// Kakao Location Autocomplete UI Logic
+// =========================================================================
+const fbInputVal = document.getElementById('fb-input-val');
+const fbDropdown = document.getElementById('fb-autocomplete-dropdown');
+let kakaoSearchTimeout = null;
+
+if (fbInputVal && fbDropdown) {
+    fbInputVal.addEventListener('input', async (e) => {
+        if (!selectedFeedbackTarget || !selectedFeedbackTarget.issue.includes('Location')) {
+            fbDropdown.style.display = 'none';
+            return;
+        }
+        
+        const q = e.target.value.trim();
+        if (q.length < 2) {
+            fbDropdown.style.display = 'none';
+            return;
+        }
+
+        if (kakaoSearchTimeout) clearTimeout(kakaoSearchTimeout);
+        kakaoSearchTimeout = setTimeout(async () => {
+            try {
+                let apiUrl = `/api/location/search_kakao?q=${encodeURIComponent(q)}`;
+                if (window.location.pathname.startsWith('/GumaPhoto')) apiUrl = '/GumaPhoto' + apiUrl;
+                
+                const res = await fetch(apiUrl);
+                if (!res.ok) return;
+                const data = await res.json();
+                
+                if (data.results && data.results.length > 0) {
+                    fbDropdown.innerHTML = '';
+                    data.results.forEach(item => {
+                        const div = document.createElement('div');
+                        div.style.padding = '12px 16px';
+                        div.style.cursor = 'pointer';
+                        div.style.borderBottom = '1px solid #4a5568';
+                        div.style.color = '#e2e8f0';
+                        div.style.fontSize = '14px';
+                        div.style.backgroundColor = 'transparent';
+                        div.innerText = item.display;
+                        
+                        div.onmouseover = () => div.style.backgroundColor = '#4a5568';
+                        div.onmouseout = () => div.style.backgroundColor = 'transparent';
+                        
+                        div.onclick = () => {
+                            fbInputVal.value = item.exact;
+                            fbDropdown.style.display = 'none';
+                        };
+                        fbDropdown.appendChild(div);
+                    });
+                    fbDropdown.style.display = 'block';
+                } else {
+                    fbDropdown.style.display = 'none';
+                }
+            } catch(err) {
+                console.error('Kakao autocomplete error:', err);
+            }
+        }, 400); // 400ms delay to prevent API spam
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!fbDropdown.contains(e.target) && e.target !== fbInputVal) {
+            fbDropdown.style.display = 'none';
+        }
+    });
+}
+
+// =========================================================================
 // 선택된 타겟 대상(체크박스) 피드백 DB 전송 액션
 // =========================================================================
 document.getElementById('fb-temptest-send-btn')?.addEventListener('click', async () => {

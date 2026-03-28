@@ -371,3 +371,42 @@ async def submit_feedback_v2(req: FeedbackV2Request):
     except Exception as e:
         print(f"❌ [Feedback v2.0 -> Redis] 큐 발송 실패: {e}")
         return {"error": "Failed to submit feedback."}
+
+@router.get("/api/location/search_kakao")
+async def search_kakao_location(q: str):
+    import requests
+    import os
+    kakao_key = os.environ.get("KAKAO_REST_API_KEY", "").strip()
+    if not kakao_key:
+        return {"error": "KAKAO_REST_API_KEY is not configured in .env."}
+
+    url = "https://dapi.kakao.com/v2/local/search/keyword.json"
+    headers = {"Authorization": f"KakaoAK {kakao_key}"}
+    params = {"query": q, "size": 10}
+
+    try:
+        res = requests.get(url, headers=headers, params=params, timeout=5)
+        if res.status_code == 200:
+            data = res.json()
+            results = []
+            for doc in data.get("documents", []):
+                # Kakao Local API returns y as latitude and x as longitude
+                lat_str = doc.get("y", "")
+                lon_str = doc.get("x", "")
+                
+                # We format the name combining the place_name and address for clarity
+                place_name = doc.get("place_name", "")
+                address_name = doc.get("road_address_name") or doc.get("address_name") or ""
+                
+                # Combine them so the UI can show detailed info
+                full_name = f"{place_name} ({address_name})" if address_name else place_name
+                
+                # Store the exact bracket format for direct metadata_editor parsing
+                if lat_str and lon_str:
+                    exact_format = f"[{lat_str[:9]}, {lon_str[:10]}] {place_name}"
+                    results.append({"display": full_name, "exact": exact_format})
+            return {"results": results}
+        else:
+            return {"error": f"Kakao API Error: {res.status_code} {res.text}"}
+    except Exception as e:
+        return {"error": str(e)}

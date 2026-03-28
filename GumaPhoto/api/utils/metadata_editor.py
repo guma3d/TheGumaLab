@@ -13,18 +13,26 @@ class MetadataEditor:
         # 1. 위치 정보가 넘어왔다면 위도/경도로 변환 준비
         lat, lon = None, None
         if target_location and "Unknown" not in target_location:
-            geolocator = Nominatim(user_agent="guma_photo_metadata_editor")
-            parts = target_location.split("-", 1)
-            query = {"country": parts[0].strip(), "city": parts[1].strip()} if len(parts) == 2 else {"q": target_location.replace("-", " ")}
-                
-            try:
-                loc_data = geolocator.geocode(query, language='ko', timeout=10)
-                if not loc_data and len(parts) == 2:
-                    loc_data = geolocator.geocode({"q": target_location.replace("-", " ")}, language='ko', timeout=10)
-                if loc_data:
-                    lat, lon = loc_data.latitude, loc_data.longitude
-            except Exception as e:
-                print(f"    [-] 지오코딩 변환(Nominatim) 중 에러 발생: {e}")
+            import re
+            match = re.search(r'^\[([-\d\.]+),\s*([-\d\.]+)\]\s*(.*)$', target_location)
+            if match:
+                lat = float(match.group(1))
+                lon = float(match.group(2))
+                target_location = str(match.group(3)).strip()
+                print(f"    [+] 수동 타겟 GPS 좌표 파싱 성공: 위도 {lat}, 경도 {lon}, 명칭: {target_location}")
+            else:
+                geolocator = Nominatim(user_agent="guma_photo_metadata_editor")
+                parts = target_location.split("-", 1)
+                query = {"country": parts[0].strip(), "city": parts[1].strip()} if len(parts) == 2 else {"q": target_location.replace("-", " ")}
+                    
+                try:
+                    loc_data = geolocator.geocode(query, language='ko', timeout=10)
+                    if not loc_data and len(parts) == 2:
+                        loc_data = geolocator.geocode({"q": target_location.replace("-", " ")}, language='ko', timeout=10)
+                    if loc_data:
+                        lat, lon = loc_data.latitude, loc_data.longitude
+                except Exception as e:
+                    print(f"    [-] 지오코딩 변환(Nominatim) 중 에러 발생: {e}")
 
         modified_count = 0
 
