@@ -1879,9 +1879,9 @@ if (fbInputVal && fbDropdown) {
                         div.onmouseout = () => div.style.backgroundColor = 'transparent';
                         
                         div.onclick = () => {
-                            fbInputVal.value = item.display;
+                            fbInputVal.value = item.short_name;
                             fbInputVal.dataset.exactPayload = item.exact;
-                            fbInputVal.dataset.exactDisplay = item.display;
+                            fbInputVal.dataset.exactDisplay = item.short_name;
                             fbDropdown.style.display = 'none';
                         };
                         fbDropdown.appendChild(div);

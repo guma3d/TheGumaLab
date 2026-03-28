@@ -404,7 +404,7 @@ async def search_kakao_location(q: str):
                 # Store the exact bracket format for direct metadata_editor parsing
                 if lat_str and lon_str:
                     exact_format = f"[{lat_str[:9]}, {lon_str[:10]}] {place_name}"
-                    results.append({"display": full_name, "exact": exact_format})
+                    results.append({"display": full_name, "exact": exact_format, "short_name": place_name})
             return {"results": results}
         else:
             return {"error": f"Kakao API Error: {res.status_code} {res.text}"}
