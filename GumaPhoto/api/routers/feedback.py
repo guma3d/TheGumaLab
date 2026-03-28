@@ -45,6 +45,14 @@ async def ignore_face_feedback(req: FeedbackV2Request):
             payload={"people": ["Unidentifiable Person"]},
             points=[real_point_id]
         )
+        
+        try:
+            import json
+            with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
+                tf.write(json.dumps({"type": "BEFORE", "trace_id": real_point_id, "filepath": "unknown", "people": ["Unknown Person"]}, ensure_ascii=False) + "\n")
+                tf.write(json.dumps({"type": "AFTER", "trace_id": real_point_id, "filepath": "unknown", "people": ["Unidentifiable Person"]}, ensure_ascii=False) + "\n")
+        except: pass
+        
         sync_payload_to_sqlite(real_point_id)
         return {"message": "Ignored successfully."}
     except Exception as e:
@@ -63,9 +71,17 @@ async def no_person_feedback(req: FeedbackV2Request):
         )
         state.qdrant_client.set_payload(
             collection_name="gumaphoto_hybrid_kr",
-            payload={"people": ["No Person"]},
+            payload={"people": ["No People"]},
             points=[real_point_id]
         )
+        
+        try:
+            import json
+            with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
+                tf.write(json.dumps({"type": "BEFORE", "trace_id": real_point_id, "filepath": "unknown", "people": ["Unknown Person"]}, ensure_ascii=False) + "\n")
+                tf.write(json.dumps({"type": "AFTER", "trace_id": real_point_id, "filepath": "unknown", "people": ["No People"]}, ensure_ascii=False) + "\n")
+        except: pass
+        
         sync_payload_to_sqlite(real_point_id)
         return {"message": "Ignored successfully as No Person."}
     except Exception as e:

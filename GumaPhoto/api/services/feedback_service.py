@@ -164,6 +164,26 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
     if not target_filepaths:
         print("  [!] 이동할 유효한 파일이 없습니다. 인물 학습을 중단합니다.")
         return
+
+    lower_name = known_name.lower().strip()
+    if "unidentifiable" in lower_name or "no person" in lower_name or "no people" in lower_name:
+        true_name = "No People" if "no" in lower_name else "Unidentifiable Person"
+        print(f"  [*] 특별 케이스: '{true_name}' 로 바로 처리 (인물 딥러닝 스킵)")
+        for target in target_filepaths:
+            point_id = target["point_id"]
+            filepath = target["filepath"]
+            
+            client.delete_payload(collection_name=COLLECTION_NAME, keys=["face_bbox"], points=[point_id])
+            client.set_payload(collection_name=COLLECTION_NAME, payload={"people": [true_name]}, points=[point_id])
+            
+            try:
+                import json
+                with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
+                    tf.write(json.dumps({"type": "BEFORE", "trace_id": point_id, "filepath": filepath, "people": target.get("old_people", [])}, ensure_ascii=False) + "\n")
+                    tf.write(json.dumps({"type": "AFTER", "trace_id": point_id, "filepath": filepath, "people": [true_name]}, ensure_ascii=False) + "\n")
+            except: pass
+            print(f"    - {os.path.basename(filepath)} : 업데이트 완료 [{true_name}]")
+        return
         
     enrolled_dir = os.path.join("/app/data/enrolled", known_name)
     os.makedirs(enrolled_dir, exist_ok=True)
