@@ -1569,7 +1569,7 @@ async function loadUnknownPhoto(manualTargetPayload = null) {
         } else {
             inputDate.style.display = 'none';
             inputVal.style.display = 'block';
-            inputVal.placeholder = "예: 대한민국-인천광역시 (장소 포맷)";
+            inputVal.placeholder = "예: 하남 위례롯데캐슬";
             if(personBtns) personBtns.style.display = 'none';
             if(personGuide) personGuide.style.display = 'none';
         }
