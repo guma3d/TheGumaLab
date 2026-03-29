@@ -1146,7 +1146,7 @@ window.showStatsModal = function(type) {
         const ukP1 = advancedStatsData.people.find(p => p.name === "Unknown People")?.count || 0;
         const ukP2 = advancedStatsData.people.find(p => p.name === "Unknown Person")?.count || 0;
         const ukP3 = advancedStatsData.people.find(p => p.name === "Unidentifiable Person")?.count || 0;
-        const ukP4 = advancedStatsData.people.find(p => p.name === "No Person")?.count || 0;
+        const ukP4 = advancedStatsData.people.find(p => p.name === "No People")?.count || 0;
         const ukPerson = ukP1 + ukP2 + ukP3 + ukP4;
         
         items = [
@@ -1947,7 +1947,7 @@ document.getElementById('fb-temptest-send-btn')?.addEventListener('click', async
 });
 
 // ----------------------------------------------------------------------
-// 피드백 추가 액션 버튼들 (Skip, Remove, Unidentifiable Person, No Person)
+// 피드백 추가 액션 버튼들 (Skip, Remove, Unidentifiable Person, No People)
 // ----------------------------------------------------------------------
 document.getElementById('fb-skip-btn')?.addEventListener('click', async () => {
     switchView('feedback');
