@@ -75,8 +75,10 @@ class InsightFaceModule:
                     if sim > best_sim:
                         best_sim = sim
                         best_match_name = name
-                if best_match_name and best_match_name not in found_people:
-                    found_people.append(best_match_name)
+                if best_match_name:
+                    clean_name = best_match_name.split('_')[0]
+                    if clean_name not in found_people:
+                        found_people.append(clean_name)
             
             if not found_people:
                 found_people.append("Unknown People")
@@ -94,7 +96,7 @@ class InsightFaceModule:
                 if sim > best_sim_main:
                     best_sim_main = sim
                     if sim >= 0.35:
-                        real_name = name
+                        real_name = name.split('_')[0]
                         
             real_age = ai_age
             real_gender = ai_gender
