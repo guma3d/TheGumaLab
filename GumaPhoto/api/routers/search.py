@@ -29,6 +29,12 @@ async def perform_search(req: SearchRequest):
     if state.qdrant_client is None:
         return {"results": [], "error": "AI Database Not Initialized"}
         
+    try:
+        if not state.qdrant_client.collection_exists("gumaphoto_hybrid_kr"):
+            return {"results": [], "error": "잠시만요! 딥러닝 벡터 DB의 기초 뼈대를 구축 중입니다. 조금 뒤에 툴을 새로고침 해주세요!"}
+    except Exception as e:
+        return {"results": [], "error": "잠시만요! 딥러닝 벡터 DB의 기초 뼈대를 구축 중입니다. 조금 뒤에 툴을 새로고침 해주세요!"}
+        
     search_text = req.query.strip()
     
     # [수정] 프론트엔드 UI의 기본 진입점 쿼리 정규화
@@ -100,17 +106,20 @@ async def perform_search(req: SearchRequest):
                     known_locs = json.load(f).get("locations", [])
                 
                 import difflib
+                import re
                 
                 for full_loc in known_locs:
-                    if full_loc in ["Unknown-Location", "위치정보없음", "All Locations"]: continue
+                    if full_loc in ["Unknown Location", "Unknown-Location", "위치정보없음", "All Locations", "None"]: continue
                     
-                    parts = full_loc.split("-")
+                    # [최종 검검 수정] OSM(OpenStreetMap) 형태로 DB가 싹 갈아엎어졌으므로, "대한민국 서울특별시 강남구" 처럼 띄어쓰기/쉼표로 장소 토큰을 쪼갭니다.
+                    parts = re.split(r'[ \-,]+', full_loc)
                     for p in parts:
-                        core = p.replace("특별시", "").replace("광역시", "").replace("특별자치도", "").replace("시", "")
+                        # 텍스트 검색 최적화를 위해 불필요한 행정구역 접미사를 떼어버립니다 (예: 강남구 -> 강남)
+                        core = p.replace("특별시", "").replace("광역시", "").replace("특별자치도", "").replace("시", "").replace("구", "").replace("동", "").strip()
                         core_len = len(core)
                         if core_len < 2: continue
                         
-                        # 1. 100% Exact Match (기존 로직 보존)
+                        # 1. 100% Exact Match
                         if core in search_text:
                             if full_loc not in extracted_locations:
                                 extracted_locations.append(full_loc)
@@ -333,7 +342,6 @@ async def perform_search(req: SearchRequest):
             res["height"] = h
             # 원본 파일 크기 주입 (SQLite bytes 테이블 대체)
             try:
-                import os
                 res["file_size_bytes"] = os.path.getsize(res["original_path"])
             except Exception:
                 res["file_size_bytes"] = 0
@@ -348,7 +356,7 @@ async def perform_search(req: SearchRequest):
 
 @router.get("/api/filters")
 async def get_filters():
-    import os, re
+    import os
     locations = []
     dates = []
     try:
@@ -358,17 +366,11 @@ async def get_filters():
                 tag_data = json.load(f)
                 locations = sorted(tag_data.get("locations", []))
                 
-        organized_dir = "/app/data/organized"
-        if os.path.exists(organized_dir):
-            for year_folder in os.listdir(organized_dir):
-                year_path = os.path.join(organized_dir, year_folder)
-                if os.path.isdir(year_path):
-                    for tag_folder in os.listdir(year_path):
-                        match = re.search(r'^(\d{4}-\d{2})_', tag_folder)
-                        if match:
-                            dates.append(match.group(1))
-                            
-        dates = sorted(list(set(dates)), reverse=True)
+                # [아키텍처 혁신 변경] 폴더/파일 구조 의존도를 100% 끊어냈으므로 
+                # 날짜 버튼들도 오직 Qdrant에서 추출되어 캐시된 JSON(available_tags)에만 의존합니다!
+                raw_dates = tag_data.get("dates", [])
+                dates = sorted(raw_dates, reverse=True)
+                
         # 동적 인물 명단 바인딩
         names = ["All Names"]
         if os.path.exists("/app/data/known_faces.pkl"):

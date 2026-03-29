@@ -94,10 +94,8 @@ class OrganizerPipeline:
             pass
             
         ext = os.path.splitext(filepath)[1].lower()
-        if ext in ['.mp4', '.mov', '.avi', '.mkv']:
-            if 'screenrecording' in os.path.basename(filepath).lower():
-                return True, "SCREENRECORDING_VIDEO"
-            return False, file_hash
+        if ext in ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.flv', '.wmv']:
+            return True, "UNSUPPORTED_VIDEO_FORMAT"
 
         try:
             img = Image.open(filepath)
@@ -160,12 +158,7 @@ class OrganizerPipeline:
         except Exception as e:
             pass
 
-        if dt_str == "Unknown-Year":
-            parent_dir = os.path.basename(os.path.dirname(filepath))
-            grandparent_dir = os.path.basename(os.path.dirname(os.path.dirname(filepath)))
-            match = re.search(r'(19|20)\d{2}[-._]?\d{0,2}', parent_dir + grandparent_dir)
-            if match:
-                dt_str = match.group().replace('_', '-').replace('.', '-').rstrip('-')
+        # [엄격한 메타데이터 정책] 폴더명 유추(Fallback) 로직 완전 제거됨
                 
         if lat is not None and lon is not None:
             if lat != 999.0:
@@ -288,12 +281,11 @@ class OrganizerPipeline:
                         ext = os.path.splitext(item["filepath"])[1].lower()
                         
                         date_str = str(date)
-                        if re.match(r'^(19|20)\d{2}', date_str):
-                            year_folder = date_str.split('-')[0].split('_')[0]
-                        else:
-                            year_folder = 'Unknown-Year'
+                        if date_str == "Unknown-Year":
+                            date_str = "UnknownDate"
                         
-                        target_folder_path = os.path.join(TARGET_DIR, year_folder, f"{date}_{item['loc_str']}")
+                        # 요청하신 대로, 장소명이나 연도 독립 폴더를 없애고 심플하게 'YYYY-MM' (또는 UnknownDate) 폴더 하나로만 분류합니다.
+                        target_folder_path = os.path.join(TARGET_DIR, date_str)
                         os.makedirs(target_folder_path, exist_ok=True)
         
                         sequence = 1

@@ -295,13 +295,13 @@ class VectorIndexer:
         exif_dict = {}
         try:
             import subprocess, json
-            cmd = ["exiftool", "-j", "-DateTimeOriginal", "-CreateDate", "-Location", "-XMP:Location"] + batch_filepaths
+            cmd = ["exiftool", "-j", "-c", "%+.6f", "-DateTimeOriginal", "-CreateDate", "-Location", "-XMP:Location", "-GPSLatitude", "-GPSLongitude"] + batch_filepaths
             res = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
             if res.returncode == 0 and res.stdout.strip():
                 # exiftool JSON 출력 파싱
                 parsed_list = json.loads(res.stdout)
                 for f_data in parsed_list:
-                    # exiftool returns SourceFile keys with normalized paths, we'll try to match basename or fallback
+                    # exiftool returns SourceFile keys with normalized paths
                     fpath = f_data.get("SourceFile", "")
                     fname = os.path.basename(fpath)
                     
@@ -318,7 +318,17 @@ class VectorIndexer:
                     loc_val = f_data.get('Location') or f_data.get('XMP:Location')
                     loc_str = str(loc_val).strip() if loc_val else "Unknown Location"
                     
-                    exif_dict[fname] = {"date": dt_str, "loc": loc_str}
+                    lat_f = None
+                    lon_f = None
+                    try:
+                        lat_raw = f_data.get('GPSLatitude')
+                        lon_raw = f_data.get('GPSLongitude')
+                        if lat_raw and lon_raw:
+                            lat_f = float(str(lat_raw).replace('+', ''))
+                            lon_f = float(str(lon_raw).replace('+', ''))
+                    except: pass
+                    
+                    exif_dict[fname] = {"date": dt_str, "loc": loc_str, "lat": lat_f, "lon": lon_f}
         except Exception as e:
             print(f"      🚨 배치 EXIF 추출 오류: {e}")
 
@@ -373,16 +383,77 @@ class VectorIndexer:
                 # EXIF 기반 데이터 매칭 (폴더명 기반 강제 규정 로직 완벽 제거)
                 date_str = "Unknown Date"
                 location_str = "Unknown Location"
+                lat_f = None
+                lon_f = None
                 
                 fname = os.path.basename(filepath)
                 if fname in exif_dict:
                     date_str = exif_dict[fname]["date"]
                     location_str = exif_dict[fname]["loc"]
+                    lat_f = exif_dict[fname]["lat"]
+                    lon_f = exif_dict[fname]["lon"]
                         
                 if force_location and "Unknown" not in force_location:
                     location_str = force_location
                 if force_date and "Unknown" not in force_date:
                     date_str = force_date
+                    
+                # [ OSM 글로벌 지능형 위치 번역 캐시 시스템 ]
+                if lat_f is not None and lon_f is not None and location_str == "Unknown Location":
+                    lat_key = round(lat_f, 3)
+                    lon_key = round(lon_f, 3)
+                    cache_key = f"{lat_key}_{lon_key}"
+                    
+                    if not hasattr(self, 'location_cache'):
+                        self.location_cache = {}
+                        
+                    if cache_key in self.location_cache:
+                        location_str = self.location_cache[cache_key]
+                    else:
+                        try:
+                            import urllib.request, time
+                            time.sleep(1.1)
+                            req_url = f"https://nominatim.openstreetmap.org/reverse?lat={lat_f}&lon={lon_f}&format=jsonv2&accept-language=ko"
+                            req = urllib.request.Request(req_url, headers={'User-Agent': 'GumaPhotoIndexer/CacheNode'})
+                            with urllib.request.urlopen(req, timeout=5) as resp:
+                                if resp.status == 200:
+                                    import json
+                                    geo_data = json.loads(resp.read().decode('utf-8'))
+                                    addr = geo_data.get('address', {})
+                                    country = addr.get('country', '')
+                                    city = addr.get('city', '') or addr.get('town', '') or addr.get('county', '')
+                                    suburb = addr.get('suburb', '') or addr.get('borough', '') or addr.get('village', '')
+                                    
+                                    clean_parts = []
+                                    if country: clean_parts.append(country)
+                                    if city: clean_parts.append(city)
+                                    if suburb: clean_parts.append(suburb)
+                                    
+                                    if clean_parts:
+                                        self.location_cache[cache_key] = " ".join(clean_parts)
+                                    else:
+                                        self.location_cache[cache_key] = geo_data.get('display_name', "Unknown Location").split(',')[0].strip()
+                                        
+                                    location_str = self.location_cache[cache_key]
+                                    print(f"      [📍 OSM 스마트 번역 성공] {lat_key}_{lon_key} ➡️ {location_str}")
+                        except Exception as gc_e:
+                            print(f"      [-] OSM 역 지오코딩 에러: {gc_e}")
+                            self.location_cache[cache_key] = "Unknown Location"
+                            
+                # [ WebP 프론트엔드 최적화 썸네일 자동 생성 ]
+                try:
+                    from PIL import Image, ImageOps
+                    orig_ext = filepath.rsplit('.', 1)[-1].lower() if '.' in filepath else ""
+                    base_name = os.path.splitext(filepath)[0]
+                    thumb_path = f"{base_name}_{orig_ext}.webp"
+                    if not os.path.exists(thumb_path):
+                        with Image.open(filepath) as t_img:
+                            t_img = ImageOps.exif_transpose(t_img)
+                            t_img.thumbnail((300, 300))
+                            if t_img.mode in ("RGBA", "P"): t_img = t_img.convert("RGB")
+                            t_img.save(thumb_path, "WEBP", quality=75)
+                except Exception as t_e:
+                    print(f"      [-] WebP 썸네일 생성 실패: {t_e}")
                     
                 sort_date = 0
                 if date_str != "Unknown Date":

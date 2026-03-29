@@ -108,49 +108,100 @@ class VectorIndexerOrchestrator:
                 if age_korean_1 not in found_objects: found_objects.append(age_korean_1)
                 if age_korean_2 not in found_objects: found_objects.append(age_korean_2)
                 
-                parent_dir = os.path.basename(os.path.dirname(filepath))
+                # [아키텍처 혁신 변경] 폴더명 의존을 완전히 폐기하고 '무조건 EXIF/XMP 메타데이터'에서 Source of Truth를 가져옵니다.
                 location_str = "Unknown Location"
                 date_str = "Unknown Date"
-                if "_" in parent_dir:
-                    parts = parent_dir.split("_", 1)
-                    if re.match(r'^(19|20)\d{2}', parts[0]): date_str = parts[0]
-                    if len(parts) > 1 and parts[1] != "Unknown-Location" and parts[1] != "Unknown-Year":
-                        location_str = parts[1]
-                        
+                lat_f, lon_f = None, None
                 sort_date = 0
-                if date_str != "Unknown Date":
-                    match_sd = re.search(r'(19|20)\d{2}(-\d{2})?(-\d{2})?', date_str)
-                    if match_sd:
-                        sd_full = match_sd.group(0)
-                        sd_parts = sd_full.split('-')
-                        sd_yr, sd_mo, sd_dy = int(sd_parts[0]), int(sd_parts[1]) if len(sd_parts) > 1 else 1, int(sd_parts[2]) if len(sd_parts) > 2 else 1
-                        sort_date = sd_yr * 10000 + sd_mo * 100 + sd_dy
+                
+                try:
+                    import subprocess, json
+                    r = subprocess.run(["exiftool", "-j", "-c", "%+.6f", "-DateTimeOriginal", "-CreateDate", "-Location", "-XMP:Location", "-GPSLatitude", "-GPSLongitude", filepath], capture_output=True, text=True, timeout=5)
+                    if r.returncode == 0 and r.stdout.strip():
+                        d = json.loads(r.stdout)[0]
+                        
+                        # 시간/날짜 (Date) 추출
+                        d_val = d.get('DateTimeOriginal') or d.get('CreateDate')
+                        if d_val:
+                            raw_dt = str(d_val).split(' ')[0].replace(':', '-')
+                            date_str = raw_dt
+                            import re
+                            if re.match(r'^(19|20)\d{2}-\d{2}-\d{2}$', date_str):
+                                sp = date_str.split('-')
+                                sort_date = int(sp[0])*10000 + int(sp[1])*100 + int(sp[2])
+                        
+                        # 장소(Location) 글로벌 네임 파싱
+                        l_val = d.get('Location') or d.get('XMP:Location')
+                        if l_val:
+                            location_str = str(l_val).strip()
+                            if not location_str: location_str = "Unknown Location"
+                        
+                        # GPS 마커 파싱
+                        lat_raw = d.get('GPSLatitude') or d.get('EXIF:GPSLatitude')
+                        lon_raw = d.get('GPSLongitude') or d.get('EXIF:GPSLongitude')
+                        if lat_raw and lon_raw:
+                            try:
+                                lat_f = float(str(lat_raw).replace('+', ''))
+                                lon_f = float(str(lon_raw).replace('+', ''))
+                            except ValueError: pass
+                            
+                        # --------------------------------------------------------------------------
+                        # [ OSM 글로벌 지능형 위치 번역 캐시 시스템 (Reverse Geocoding) ]
+                        # --------------------------------------------------------------------------
+                        if lat_f is not None and lon_f is not None and location_str == "Unknown Location":
+                            # 오차 반경 약 110m 묶음 (속도 극대화 & 차단 방지)
+                            lat_key = round(lat_f, 3)
+                            lon_key = round(lon_f, 3)
+                            cache_key = f"{lat_key}_{lon_key}"
+                            
+                            if not hasattr(self, 'location_cache'):
+                                self.location_cache = {}
+                                
+                            if cache_key in self.location_cache:
+                                location_str = self.location_cache[cache_key]
+                            else:
+                                try:
+                                    import urllib.request, time
+                                    time.sleep(1.1)
+                                    req_url = f"https://nominatim.openstreetmap.org/reverse?lat={lat_f}&lon={lon_f}&format=jsonv2&accept-language=ko"
+                                    req = urllib.request.Request(req_url, headers={'User-Agent': 'GumaPhotoIndexer/CacheNode'})
+                                    with urllib.request.urlopen(req, timeout=5) as resp:
+                                        if resp.status == 200:
+                                            geo_data = json.loads(resp.read().decode('utf-8'))
+                                            addr = geo_data.get('address', {})
+                                            country = addr.get('country', '')
+                                            city = addr.get('city', '') or addr.get('town', '') or addr.get('county', '')
+                                            suburb = addr.get('suburb', '') or addr.get('borough', '') or addr.get('village', '')
+                                            
+                                            clean_parts = []
+                                            if country: clean_parts.append(country)
+                                            if city: clean_parts.append(city)
+                                            if suburb: clean_parts.append(suburb)
+                                            
+                                            if clean_parts:
+                                                self.location_cache[cache_key] = " ".join(clean_parts)
+                                            else:
+                                                self.location_cache[cache_key] = geo_data.get('display_name', "Unknown Location").split(',')[0].strip()
+                                                
+                                            location_str = self.location_cache[cache_key]
+                                            print(f"      [📍 OSM 스마트 번역 성공] {lat_key}_{lon_key} ➡️ {location_str}")
+                                except Exception as gc_e:
+                                    print(f"      [-] OSM 역 지오코딩 1일 한도 API 에러(또는 차단): {gc_e}")
+                                    self.location_cache[cache_key] = "Unknown Location"
+                        # --------------------------------------------------------------------------
+                                    
+                except Exception as ex_e:
+                    print(f"      [-] Exif parsing err (DB Sync): {ex_e}")
+
                 if sort_date == 0:
                     try:
                         import datetime
                         dt = datetime.datetime.fromtimestamp(os.path.getmtime(filepath))
                         sort_date = dt.year * 10000 + dt.month * 100 + dt.day
-                    except Exception: sort_date = 0
-
-                lat_f, lon_f = None, None
-                try:
-                    from PIL.ExifTags import GPSTAGS
-                    exif = item["pil_img"].getexif()
-                    if exif:
-                        gps_ifd = exif.get_ifd(0x8825)
-                        if gps_ifd:
-                            gps_info = {GPSTAGS.get(k, k): v for k, v in gps_ifd.items()}
-                            if "GPSLatitude" in gps_info and "GPSLongitude" in gps_info:
-                                def to_dec(val):
-                                    return float(val[0]) + (float(val[1])/60.0) + (float(val[2])/3600.0)
-                                lt = to_dec(gps_info["GPSLatitude"])
-                                ln = to_dec(gps_info["GPSLongitude"])
-                                if gps_info.get("GPSLatitudeRef", "N") != "N": lt = -lt
-                                if gps_info.get("GPSLongitudeRef", "E") != "E": ln = -ln
-                                if lt != 0.0 or ln != 0.0:
-                                    lat_f, lon_f = lt, ln
-                except Exception:
-                    pass
+                        if date_str == "Unknown Date":
+                            date_str = f"{dt.year:04d}-{dt.month:02d}-{dt.day:02d}"
+                    except Exception: 
+                        sort_date = 0
 
                 payload = {
                     "filepath": filepath,
@@ -330,16 +381,39 @@ class VectorIndexerOrchestrator:
         prod_thread.join()
         
         locs = set()
-        for y in os.listdir(TARGET_DIR):
-            yp = os.path.join(TARGET_DIR, y)
-            if os.path.isdir(yp):
-                for d in os.listdir(yp):
-                    if '_' in d: locs.add(d.split('_', 1)[1])
+        dates_set = set()
+        print("\n[*] Qdrant 페이로드(DB)를 통한 프론트엔드 좌측 사이드바 위치 및 날짜 태그를 재구성 중입니다...")
         try:
+            offset = None
+            while True:
+                results, offset = self.qdrant.q_client.scroll(
+                    collection_name="gumaphoto_hybrid_kr",
+                    scroll_filter=None,
+                    limit=1000,
+                    with_payload=["location", "date"],
+                    with_vectors=False,
+                    offset=offset
+                )
+                for r in results:
+                    p = r.payload or {}
+                    loc_val = p.get("location")
+                    date_val = p.get("date")
+                    
+                    if loc_val and loc_val != "Unknown Location":
+                        locs.add(loc_val)
+                    if date_val and date_val != "Unknown Date":
+                        import re
+                        m = re.match(r'^(19|20)\d{2}-\d{2}', date_val)
+                        if m: dates_set.add(m.group(0))
+                        
+                if offset is None:
+                    break
+                    
             with open("/app/data/available_tags.json", "w", encoding="utf-8") as f:
-                json.dump({"locations": list(locs)}, f, ensure_ascii=False)
-            print(f"  [+] 총 {len(locs)}개의 로케이션 태그가 생성되었습니다.")
-        except Exception: pass
+                json.dump({"locations": list(locs), "dates": list(dates_set)}, f, ensure_ascii=False)
+            print(f"  [+] Qdrant Payload 기반 총 장소 {len(locs)}개, 날짜 {len(dates_set)}개의 태그(사이드바 뱃지)가 스크롤 생성 완료되었습니다.")
+        except Exception as e:
+            print(f"  [-] Qdrant 서치 및 태그 추출 실패 (태그 생성 무시됨): {e}")
             
         print("\n✅ 모든 벡터 데이터베이스 컴파일 완료!")
 

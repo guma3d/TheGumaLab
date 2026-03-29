@@ -73,6 +73,45 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
         print("[-] 지정된 타겟 포인트 리스트가 없습니다. 종료합니다.")
         return
     # ----------------------------------------------------
+    # [💥 글로벌 DB 동기화 단계] 카카오 이름 -> OSM 형태 규격화
+    # ----------------------------------------------------
+    if target_location:
+        import re
+        match = re.search(r'^\[([-\d\.]+),\s*([-\d\.]+)\]\s*(.*)$', target_location)
+        if match:
+            lat_val = float(match.group(1))
+            lon_val = float(match.group(2))
+            raw_place = str(match.group(3)).strip()
+            
+            try:
+                import urllib.request, json
+                req_url = f"https://nominatim.openstreetmap.org/reverse?lat={lat_val}&lon={lon_val}&format=jsonv2&accept-language=ko"
+                req = urllib.request.Request(req_url, headers={'User-Agent': 'GumaPhoto-FeedbackWorker/1.0'})
+                with urllib.request.urlopen(req, timeout=5) as resp:
+                    if resp.status == 200:
+                        geo_data = json.loads(resp.read().decode('utf-8'))
+                        addr = geo_data.get('address', {})
+                        country = addr.get('country', '')
+                        city = addr.get('city', '') or addr.get('town', '') or addr.get('county', '')
+                        suburb = addr.get('suburb', '') or addr.get('borough', '') or addr.get('village', '')
+                        
+                        clean_parts = []
+                        if country: clean_parts.append(country)
+                        if city: clean_parts.append(city)
+                        if suburb: clean_parts.append(suburb)
+                        
+                        if clean_parts:
+                            final_osm_name = " ".join(clean_parts)
+                        else:
+                            final_osm_name = geo_data.get('display_name', raw_place).split(',')[0].strip()
+                        
+                        # 나중에 인덱서가 재스캔해도 동일하게 인식되도록 target_location 자체를 덮어쓰기!
+                        target_location = f"[{lat_val}, {lon_val}] {final_osm_name}"
+                        print(f"  [📍 피드백 일관성 통합] 카카오 '{raw_place}' ➡️ OSM '{final_osm_name}'")
+            except Exception as e:
+                print(f"  [-] OSM 역 지오코딩 실패(원본 유지): {e}")
+
+    # ----------------------------------------------------
     # [1단계] 메타데이터 수정 (EXIF 영구 변경)
     # ----------------------------------------------------
     valid_filepaths = [item["fpath"] for item in valid_targets]
