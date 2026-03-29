@@ -258,32 +258,36 @@ async def submit_feedback_v2(req: FeedbackV2Request):
     # 1. Location 피드백인 경우
     if fb_type == "time_loc" and "Location" in req.issue_type and state.gemini_client:
         prefix = "LOC|"
-        try:
-            existing_locations = []
-            if os.path.exists("/app/data/available_tags.json"):
-                with open("/app/data/available_tags.json", "r", encoding="utf-8") as f:
-                    tag_data = json.load(f)
-                    existing_locations = tag_data.get("locations", [])
-                    
-            prompt = (
-                f"사용자 입력 장소: '{req.correct_value}'\n"
-                "당신은 스마트 갤러리의 위치 정보 표준화 매니저입니다.\n"
-                "사용자가 구어체나 부분 약어로 장소를 입력하더라도, 다음의 <보유 장소 목록> 중에서 가장 정확히 일치하는 '국가명-지역명' 형태로 교정(Parsing)해주세요.\n"
-                f"<보유 장소 목록>: {existing_locations}\n"
-                "규칙 1: 목록에 정규화된 이름이 존재한다면, 목록의 텍스트와 100% 동일한 문자열을 반환하세요.\n"
-                "규칙 2: 목록에 아예 없는 완전한 신규 국가/도시라면, '국가명-지역명' 포맷을 유지하여 새로 창조하세요.\n"
-                "규칙 3: 불필요한 부연 설명이나 마크다운 없이 오직 교정된 '문자열 1줄'만 반환하세요."
-            )
-            response = state.gemini_client.models.generate_content(
-                model='gemini-3.1-flash-lite-preview',
-                contents=prompt,
-            )
-            parsed_loc = response.text.strip().replace("\n", "").replace("\"", "")
-            if parsed_loc and len(parsed_loc) < 50:
-                final_correct_value = parsed_loc
-                print(f"[Gemini 장소 교정] 원본: '{req.correct_value}' -> 결과: '{final_correct_value}'")
-        except Exception as e:
-            print(f"[Gemini 위치 파싱 오류] {e}")
+        if req.correct_value.startswith("["):
+            # 카카오 자동완성 등 위경도 기반 정확한 페이로드가 들어온 경우, AI 교정을 생략하고 원형 보존
+            final_correct_value = req.correct_value
+        else:
+            try:
+                existing_locations = []
+                if os.path.exists("/app/data/available_tags.json"):
+                    with open("/app/data/available_tags.json", "r", encoding="utf-8") as f:
+                        tag_data = json.load(f)
+                        existing_locations = tag_data.get("locations", [])
+                        
+                prompt = (
+                    f"사용자 입력 장소: '{req.correct_value}'\n"
+                    "당신은 스마트 갤러리의 위치 정보 표준화 매니저입니다.\n"
+                    "사용자가 구어체나 부분 약어로 장소를 입력하더라도, 다음의 <보유 장소 목록> 중에서 가장 정확히 일치하는 '국가명-지역명' 형태로 교정(Parsing)해주세요.\n"
+                    f"<보유 장소 목록>: {existing_locations}\n"
+                    "규칙 1: 목록에 정규화된 이름이 존재한다면, 목록의 텍스트와 100% 동일한 문자열을 반환하세요.\n"
+                    "규칙 2: 목록에 아예 없는 완전한 신규 국가/도시라면, '국가명-지역명' 포맷을 유지하여 새로 창조하세요.\n"
+                    "규칙 3: 불필요한 부연 설명이나 마크다운 없이 오직 교정된 '문자열 1줄'만 반환하세요."
+                )
+                response = state.gemini_client.models.generate_content(
+                    model='gemini-3.1-flash-lite-preview',
+                    contents=prompt,
+                )
+                parsed_loc = response.text.strip().replace("\n", "").replace("\"", "")
+                if parsed_loc and len(parsed_loc) < 50:
+                    final_correct_value = parsed_loc
+                    print(f"[Gemini 장소 교정] 원본: '{req.correct_value}' -> 결과: '{final_correct_value}'")
+            except Exception as e:
+                print(f"[Gemini 위치 파싱 오류] {e}")
 
     # 2. Date 피드백인 경우
     elif fb_type == "time_loc" and ("Date" in req.issue_type or "날짜" in req.issue_type) and state.gemini_client:
