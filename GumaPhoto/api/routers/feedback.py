@@ -107,7 +107,7 @@ async def temptest_feedback(req: FeedbackV2Request):
             collection_name="gumaphoto_hybrid_kr",
             query=real_point_id,
             using=fb_type,
-            limit=100,
+            limit=300,  # 더 많은 유사 사진 목록을 확보하기 위해 리소스 한도 증가 (기존 100 -> 300)
             with_payload=True
         ).points
         
@@ -134,8 +134,8 @@ async def temptest_feedback(req: FeedbackV2Request):
         for hit in recommend_res:
             if str(hit.id) == real_point_id: continue
             
-            # 사용자 지시사항: "해당 얼굴과 유사한 얼굴벡터를 가진 사진들을 유사율 0.8 기준으로 보여줘야 함"
-            cutoff = 0.80 if fb_type == "face" else 0.85
+            # 사용자 지시사항 반영: 장소(scene) 피드백 시 많은 사진을 보여주기 위해 유사율 0.7(70%)로 대폭 하향 조정
+            cutoff = 0.80 if fb_type == "face" else 0.70
             if hit.score < cutoff: continue
             
             payload = hit.payload or {}
