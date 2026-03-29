@@ -79,8 +79,8 @@ class FaceEngine:
                         best_sim = sim
                         best_match_name = name
                 if best_match_name:
-                    # 유저 지시사항: '준우1', '준우_아동' 등 폴더를 분리 학습하더라도 동일한 기본 이름으로 클러스터링
-                    clean_name = re.sub(r'\d+$', '', best_match_name.split('_')[0])
+                    # 유저 지시사항: 오작동 방지를 위해 이름 뒤 문자열 파싱은 반드시 언더바(_) 기준으로만 처리
+                    clean_name = best_match_name.split('_')[0]
                     if clean_name not in found_people:
                         found_people.append(clean_name)
             
@@ -100,7 +100,7 @@ class FaceEngine:
                 if sim > best_sim_main:
                     best_sim_main = sim
                     if sim >= 0.35:
-                        real_name = re.sub(r'\d+$', '', name.split('_')[0])
+                        real_name = name.split('_')[0]
                         
             real_age = ai_age
             real_gender = ai_gender
