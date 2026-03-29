@@ -134,8 +134,8 @@ async def temptest_feedback(req: FeedbackV2Request):
         for hit in recommend_res:
             if str(hit.id) == real_point_id: continue
             
-            # 사용자 지시사항 반영: 장소(scene) 피드백 시 많은 사진을 보여주기 위해 유사율 0.7(70%)로 대폭 하향 조정
-            cutoff = 0.80 if fb_type == "face" else 0.70
+            # 사용자 지시사항 반영: 장소(scene) 피드백 시 검색 풀은 넓게 유지하되, 지나친 오탐을 방지하기 위해 83%로 상향
+            cutoff = 0.80 if fb_type == "face" else 0.83
             if hit.score < cutoff: continue
             
             payload = hit.payload or {}
