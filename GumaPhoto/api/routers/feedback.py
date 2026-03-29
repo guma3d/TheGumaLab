@@ -174,118 +174,61 @@ async def get_unknown_photo():
     if not state.qdrant_client: return {"error": "Qdrant not loaded"}
     try:
         import random
-        import numpy as np
-        import pickle
-        import os
-        from qdrant_client.http.models import Filter, FieldCondition, MatchValue
+        from qdrant_client.http.models import Filter, FieldCondition, MatchText, MatchValue
         
-        check_people = True if random.random() < 0.6 else False
-        
-        if check_people:
-            # 1. '낮은 정확도(Low Accuracy)' 얼굴 사진 탐색 로직 (사용자 MLOps 지시사항 반영)
-            # Qdrant에 랜덤 노이즈 768차원 벡터를 던져서, 은하계 전역에서 진정한 무작위 100장을 가져옴
-            random_vec = np.random.randn(768).tolist()
-            try:
-                # `search()`를 통해 무작위 샘플링 및 Face 벡터 반환 요청 (with_vectors=["face"])
-                random_hits = state.qdrant_client.search(
-                    collection_name="gumaphoto_hybrid_kr",
-                    query_vector=("scene", random_vec),
-                    limit=100,
-                    with_payload=True,
-                    with_vectors=["face"]
-                )
-                
-                # [최적화] 매번 하드디스크에서 pkl을 열지 않고, 부팅 시 메모리에 적재된 사전 재사용
-                known_faces = getattr(state, "known_faces", {})
-                        
-                if known_faces:
-                    # 무작위 샘플 중 얼굴 벡터가 존재하며, 정확도가 0.55 밑으로 떨어지는 타겟 찾기
-                    for hit in random_hits:
-                        face_vec = hit.vector.get("face") if hit.vector else None
-                        p_people = hit.payload.get("people", [])
-                        
-                        # 완전히 알 수 없다고 판정된 'Unknown People'은 기존 로직에서 잡을 것이므로 패스
-                        if face_vec and "Unknown People" not in p_people:
-                            best_sim = -1.0
-                            for k_name, k_vec in known_faces.items():
-                                sim = np.dot(face_vec, k_vec)
-                                if sim > best_sim:
-                                    best_sim = sim
-                            
-                            # 정확도가 현저히 낮은 사진(0.55 이하) 발견 시, 억지 채점된 사진이므로 피드백 타겟으로 즉시 반환
-                            if 0.0 < best_sim <= 0.55:
-                                p = hit.payload or {}
-                                url_path = p.get("filepath", "").replace("/app/data/organized", "/photos")
-                                return {
-                                    "id": hit.id,
-                                    "url": url_path,
-                                    "issue": "People",
-                                    "date": p.get("date", "Unknown"),
-                                    "location": p.get("location", "Unknown"),
-                                    "people": p.get("people", []),
-                                    "face_bbox": p.get("face_bbox", None)
-                                }
-            except Exception as rand_err:
-                print(f"      [!] 랜덤 샘플링 유사도 채점 실패: {rand_err}")
-
-            # 2. '완전 인식 실패(Unknown People)' 사진 탐색 로직 (기존)
-            res, _ = state.qdrant_client.scroll(
-                collection_name="gumaphoto_hybrid_kr",
-                scroll_filter=Filter(must=[FieldCondition(key="people", match=MatchValue(value="Unknown People"))]),
-                limit=100,
-                with_payload=True
-            )
-            if res:
-                raw_target = random.choice(res)
-                p = raw_target.payload or {}
-                url_path = p.get("filepath", "").replace("/app/data/organized", "/photos")
-                return {
-                    "id": raw_target.id,
-                    "url": url_path,
-                    "issue": "People",
-                    "date": p.get("date", "Unknown"),
-                    "location": p.get("location", "Unknown"),
-                    "people": p.get("people", []),
-                    "face_bbox": p.get("face_bbox", None)
-                }
-                
-        # [초고속 튜닝 🚀] 전체 스캔 대신 Qdrant Scroll API를 통해 Unknown 요소 50개만 캐싱하여 랜덤 추출 (SQLite 소각)
-        from qdrant_client.http.models import Filter, FieldCondition, MatchText
+        # 한 번의 쿼리로 모든 종류의 Unknown(Date, Location, People)을 무작위 추출
         unknowns, _ = state.qdrant_client.scroll(
             collection_name="gumaphoto_hybrid_kr",
             scroll_filter=Filter(
                 should=[
                     FieldCondition(key="date", match=MatchText(text="Unknown")),
                     FieldCondition(key="location", match=MatchText(text="Unknown")),
-                    FieldCondition(key="location", match=MatchText(text="위치정보없음"))
+                    FieldCondition(key="location", match=MatchText(text="위치정보없음")),
+                    FieldCondition(key="people", match=MatchValue(value="Unknown Person")),
+                    FieldCondition(key="people", match=MatchValue(value="Unknown People"))
                 ]
             ),
-            limit=50,
+            limit=500,  # 500개를 캐싱하여 넓은 랜덤풀 생성
             with_payload=True,
             with_vectors=False
         )
         
         if unknowns:
-            raw_target = random.choice(unknowns)
-            p = raw_target.payload or {}
-            loc = p.get("location", "")
-            date_val = p.get("date", "")
-            issues = []
-            if "Unknown" in date_val or not date_val: issues.append("Date")
-            if "위치정보없음" in loc or "Unknown" in loc or not loc: issues.append("Location")
+            random.shuffle(unknowns)
+            
+            for raw_target in unknowns:
+                p = raw_target.payload or {}
+                loc = p.get("location", "")
+                date_val = p.get("date", "")
+                people_val = p.get("people", [])
                 
-            if issues:
-                issue = random.choice(issues)
-                url_path = p.get("filepath", "").replace("/app/data/organized", "/photos")
-                return {
-                    "id": raw_target.id,
-                    "url": url_path,
-                    "issue": issue,
-                    "date": date_val,
-                    "location": loc,
-                    "people": p.get("people", []),
-                    "face_bbox": p.get("face_bbox", None)
-                }
+                issues = []
+                if "Unknown" in date_val or not date_val: 
+                    issues.append("Date")
+                if "위치정보없음" in loc or "Unknown" in loc or not loc: 
+                    issues.append("Location")
+                    
+                # 사람 판별: Unidentifiable Person / No People 은 확실하게 정해진 상태이므로 Unknown 취급 안함.
+                has_unknown_person = False
+                for person in people_val:
+                    if person in ["Unknown Person", "Unknown People"]:
+                        has_unknown_person = True
+                        break
+                if has_unknown_person:
+                    issues.append("People")
+                    
+                if issues:
+                    issue = random.choice(issues)
+                    url_path = p.get("filepath", "").replace("/app/data/organized", "/photos")
+                    return {
+                        "id": raw_target.id,
+                        "url": url_path,
+                        "issue": issue,
+                        "date": date_val,
+                        "location": loc,
+                        "people": people_val,
+                        "face_bbox": p.get("face_bbox", None)
+                    }
                     
     except Exception as e:
         print(f"❌ 피드백 고속 혼합 탐색 중 예외 발생: {e}")
