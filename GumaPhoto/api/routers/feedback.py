@@ -47,10 +47,13 @@ async def ignore_face_feedback(req: FeedbackV2Request):
         )
         
         try:
+            pt = state.qdrant_client.retrieve(collection_name="gumaphoto_hybrid_kr", ids=[real_point_id], with_payload=True)
+            fpath = pt[0].payload.get("filepath", "unknown") if pt else "unknown"
+            old_people = pt[0].payload.get("people", ["Unknown Person"]) if pt else ["Unknown Person"]
             import json
             with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
-                tf.write(json.dumps({"type": "BEFORE", "trace_id": real_point_id, "filepath": "unknown", "people": ["Unknown Person"]}, ensure_ascii=False) + "\n")
-                tf.write(json.dumps({"type": "AFTER", "trace_id": real_point_id, "filepath": "unknown", "people": ["Unidentifiable Person"]}, ensure_ascii=False) + "\n")
+                tf.write(json.dumps({"type": "BEFORE", "trace_id": real_point_id, "filepath": fpath, "people": old_people}, ensure_ascii=False) + "\n")
+                tf.write(json.dumps({"type": "AFTER", "trace_id": real_point_id, "filepath": fpath, "people": ["Unidentifiable Person"]}, ensure_ascii=False) + "\n")
         except: pass
         
         sync_payload_to_sqlite(real_point_id)
@@ -76,10 +79,13 @@ async def no_person_feedback(req: FeedbackV2Request):
         )
         
         try:
+            pt = state.qdrant_client.retrieve(collection_name="gumaphoto_hybrid_kr", ids=[real_point_id], with_payload=True)
+            fpath = pt[0].payload.get("filepath", "unknown") if pt else "unknown"
+            old_people = pt[0].payload.get("people", ["Unknown Person"]) if pt else ["Unknown Person"]
             import json
             with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
-                tf.write(json.dumps({"type": "BEFORE", "trace_id": real_point_id, "filepath": "unknown", "people": ["Unknown Person"]}, ensure_ascii=False) + "\n")
-                tf.write(json.dumps({"type": "AFTER", "trace_id": real_point_id, "filepath": "unknown", "people": ["No People"]}, ensure_ascii=False) + "\n")
+                tf.write(json.dumps({"type": "BEFORE", "trace_id": real_point_id, "filepath": fpath, "people": old_people}, ensure_ascii=False) + "\n")
+                tf.write(json.dumps({"type": "AFTER", "trace_id": real_point_id, "filepath": fpath, "people": ["No People"]}, ensure_ascii=False) + "\n")
         except: pass
         
         sync_payload_to_sqlite(real_point_id)
@@ -365,19 +371,24 @@ async def submit_feedback_v2(req: FeedbackV2Request):
     tp_json = json.dumps(real_target_points) if real_target_points else "[]"
     
     try:
+        all_pts = [real_point_id] + real_target_points if real_target_points else [real_point_id]
         if fb_type == "face":
+            state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"people": ["Processing..."]}, points=all_pts)
             from api.tasks import run_feedback_face_job
             run_feedback_face_job.delay(real_point_id, db_correct_value, tp_json)
         else:
             if db_correct_value.startswith("DATE|"):
                 date_val = db_correct_value.split("|", 1)[1]
+                state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"date": "Processing..."}, points=all_pts)
                 from api.tasks import run_feedback_time_loc_job
                 run_feedback_time_loc_job.delay(real_point_id, date_val, "Unknown-Location", tp_json)
             elif db_correct_value.startswith("LOC|"):
                 loc_val = db_correct_value.split("|", 1)[1]
+                state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"location": "Processing..."}, points=all_pts)
                 from api.tasks import run_feedback_time_loc_job
                 run_feedback_time_loc_job.delay(real_point_id, "Unknown Date", loc_val, tp_json)
             else:
+                state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"location": "Processing..."}, points=all_pts)
                 from api.tasks import run_feedback_time_loc_job
                 run_feedback_time_loc_job.delay(real_point_id, "Unknown Date", db_correct_value, tp_json)
                 
