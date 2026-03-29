@@ -40,24 +40,7 @@ for pt_id, new_people in points_to_update:
     print(f"Updated Qdrant point {pt_id}")
 print('Qdrant updated.')
 
-db_path = '/app/data/gumaphoto.db'
-if os.path.exists(db_path):
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.execute("SELECT filepath, metadata_json FROM file_metadata WHERE metadata_json LIKE '%No Person%'")
-    rows = cursor.fetchall()
-    print(f'Found {len(rows)} rows in SQLite to update.')
-    for filepath, metadata_json in rows:
-        try:
-            meta = json.loads(metadata_json)
-            if 'people' in meta and isinstance(meta['people'], list):
-                meta['people'] = [p if p != 'No Person' else 'No People' for p in meta['people']]
-                cursor.execute('UPDATE file_metadata SET metadata_json = ? WHERE filepath = ?', (json.dumps(meta, ensure_ascii=False), filepath))
-        except Exception as e:
-            print('SQLite error:', e)
-    conn.commit()
-    conn.close()
-    print('SQLite updated.')
+# db_path = '/app/data/gumaphoto.db'
 
 audit_path = '/app/data/audit_trace.json'
 if os.path.exists(audit_path):

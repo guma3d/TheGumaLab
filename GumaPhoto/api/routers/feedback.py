@@ -89,7 +89,7 @@ async def no_person_feedback(req: FeedbackV2Request):
         except: pass
         
         sync_payload_to_sqlite(real_point_id)
-        return {"message": "Ignored successfully as No Person."}
+        return {"message": "Ignored successfully as No People."}
     except Exception as e:
         return {"error": str(e)}
 
