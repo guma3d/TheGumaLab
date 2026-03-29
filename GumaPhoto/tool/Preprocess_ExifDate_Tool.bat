@@ -23,7 +23,7 @@ echo [*] GumaPhoto 컨테이너 내장 ExifTool 가동 중...
 echo     (폴더의 크기와 사진 장수에 따라 시간이 걸릴 수 있습니다)
 echo.
 
-docker run --rm -v "%TARGET_PATH%:/process" -v "%cd%:/app" gumaphoto-gumaphoto:latest python /app/Scripts/preprocess_tool.py
+docker run --rm -it --env-file "%~dp0..\.env" -v "%TARGET_PATH%:/process" -v "%~dp0..:/app" gumaphoto-gumaphoto:latest python /app/Scripts/preprocess_tool.py
 
 echo.
 echo ✅ 전처리가 완료되었습니다! 이제 이 폴더 안의 파일들을 
