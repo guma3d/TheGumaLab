@@ -44,8 +44,13 @@ COLLECTION_NAME = "gumaphoto_hybrid_kr"
 BATCH_SIZE = 15 # 한 번에 처리할 사진 수 (GPU, RAM 메모리 고려)
 
 class VectorIndexer:
-    def __init__(self, skip_face=False):
-        self.skip_face = skip_face
+    def __init__(self, run_vision_ai=True, run_semantic_ai=True, run_facial_ai=True, run_metadata_geo=True, run_webp_thumbnail=True):
+        self.run_vision_ai = run_vision_ai
+        self.run_semantic_ai = run_semantic_ai
+        self.skip_face = not run_facial_ai
+        self.run_metadata_geo = run_metadata_geo
+        self.run_webp_thumbnail = run_webp_thumbnail
+        
         print(f"[*] 벡터 DB (Qdrant) 접속 초기화... ({QDRANT_URL})")
         self.q_client = QdrantClient(url=QDRANT_URL, timeout=60)
         self.init_qdrant_collection()
@@ -54,7 +59,11 @@ class VectorIndexer:
         self.indexed_filepaths = self.load_indexed_filepaths_from_qdrant()
         self.failed_filepaths = set()
         
-        self.load_ai_models()
+        if self.run_vision_ai or self.run_semantic_ai or not self.skip_face:
+            self.load_ai_models()
+        else:
+            print("[*] 💡 시각 AI / 캡션 AI / 안면 AI 엔진이 모두 비활성화되어 모델 로드를 생략합니다. (초경량 모드)")
+
 
     def init_qdrant_collection(self):
         """다중 벡터(Multivector)를 수용할 수 있는 Qdrant 컬렉션 뼈대 생성"""
@@ -153,6 +162,10 @@ class VectorIndexer:
 
     def is_already_processed(self, filepath):
         """메모리에 캐싱된 Qdrant 세트를 기반으로 초고속 O(1) 중복 검사 (SQLite 종속 제거)"""
+        # 만약 AI를 끈 '순수 메타데이터 업데이트 모드'라면, 기존에 처리된 파일도 일괄 강제 스캔(무조건 업데이트)합니다!
+        if not (self.run_vision_ai or self.run_semantic_ai or not self.skip_face):
+            return False 
+            
         if filepath in self.indexed_filepaths:
             return True
         if filepath in self.failed_filepaths:
@@ -235,17 +248,18 @@ class VectorIndexer:
         objects_batch = [[] for _ in valid_items]
         
         # --- [A] SigLIP 다중 배치 추론 ---
-        try:
-            siglip_inputs = self.siglip_processor(images=pil_images, return_tensors="pt").to(self.siglip_model.device)
-            with torch.no_grad():
-                out = self.siglip_model.get_image_features(**siglip_inputs)
-                emb = out / out.norm(p=2, dim=-1, keepdim=True)
-                scene_embeddings = emb.cpu().numpy()
-        except Exception as e:
-            print(f"      🚨 SigLIP 연산 오류: {e}")
+        if self.run_vision_ai:
+            try:
+                siglip_inputs = self.siglip_processor(images=pil_images, return_tensors="pt").to(self.siglip_model.device)
+                with torch.no_grad():
+                    out = self.siglip_model.get_image_features(**siglip_inputs)
+                    emb = out / out.norm(p=2, dim=-1, keepdim=True)
+                    scene_embeddings = emb.cpu().numpy()
+            except Exception as e:
+                print(f"      🚨 SigLIP 연산 오류: {e}")
             
         # --- [B] Florence-2 다중 배치 추론 ---
-        if getattr(self, "florence_model", None):
+        if self.run_semantic_ai and getattr(self, "florence_model", None):
             try:
                 # 캡션 다중 배치
                 task_prompt_cap = "<MORE_DETAILED_CAPTION>"
@@ -484,30 +498,34 @@ class VectorIndexer:
                         sort_date = 0
                 print(f"DEBUG: {filepath} => date_str: {date_str}, sort_date: {sort_date}")
                         
-                payload = {
-                    "filepath": filepath,
-                    "filename": item["filename"],
-                    "original_context": item["context_str"],
-                    "face_count": face_count,
-                    "people": found_people,
-                    "date": date_str,
-                    "sort_date": sort_date,
-                    "location": location_str,
-                    "season": item["season"],
-                    "objects": found_objects,
-                    "caption": scene_caption,
-                    "hash": item["file_hash"]
-                }
-                payload.update(best_face_payload)
-                
-                successful_payloads.append((filepath, payload, face_count))
-                points_to_upsert.append(PointStruct(id=point_id, vector=vectors, payload=payload))
-                
+                if self.run_vision_ai or self.run_semantic_ai or not self.skip_face:
+                    payload = {
+                        "filepath": filepath,
+                        "filename": item["filename"],
+                        "original_context": item["context_str"],
+                        "face_count": face_count,
+                        "people": found_people,
+                        "date": date_str,
+                        "sort_date": sort_date,
+                        "location": location_str,
+                        "season": item["season"],
+                        "objects": found_objects,
+                        "caption": scene_caption,
+                        "hash": item["file_hash"]
+                    }
+                    payload.update(best_face_payload)
+                    successful_payloads.append((filepath, payload, face_count))
+                    points_to_upsert.append(PointStruct(id=point_id, vector=vectors, payload=payload))
+                elif self.run_metadata_geo:
+                    update_payload = {"location": location_str, "date": date_str, "sort_date": sort_date, "season": item["season"]}
+                    self.q_client.set_payload(collection_name=COLLECTION_NAME, payload=update_payload, points=[point_id])
+                    successful_payloads.append((filepath, update_payload, face_count))
+                    
             except Exception as e:
                 print(f"      ⚠️ 개별 항목 payload 병합 오류 (Skip): {e}")
                 self.failed_filepaths.add(filepath)
                 
-        # Qdrant에 일괄 묶음 사격 (배치 Upsert)
+        # [모드 분기] Qdrant 일괄 묶음 사격
         if points_to_upsert:
             try:
                 self.q_client.upsert(collection_name=COLLECTION_NAME, points=points_to_upsert)
@@ -645,10 +663,28 @@ class VectorIndexer:
 
 if __name__ == "__main__":
     import sys
-    indexer = VectorIndexer()
+    import argparse
     
-    # python vector_indexer.py --test 20 형태로 실행 가능하게 설정
-    if len(sys.argv) == 3 and sys.argv[1] == '--test':
-        indexer.run(test_limit=int(sys.argv[2]))
+    parser = argparse.ArgumentParser(description='GumaPhoto Vector Indexer')
+    parser.add_argument('--test', type=int, help='테스트 모드: 지정된 갯수만큼만 무작위 스캔', default=None)
+    parser.add_argument('--update-location', action='store_true', help='[장소만 갱신]: 모든 AI를 차단하고 오직 GPS 번역만 재수행합니다.')
+    parser.add_argument('--skip-ai', action='store_true', help='[모든 AI 차단]: 메타데이터/WebP만 갱신합니다.')
+    
+    args = parser.parse_args()
+    
+    if args.update_location or args.skip_ai:
+        print("\n🚀 [모드 전환] 초경량 업데이트 스위치가 켜졌습니다. VRAM을 소모하지 않습니다.")
+        indexer = VectorIndexer(
+            run_vision_ai=False,
+            run_semantic_ai=False,
+            run_facial_ai=False,
+            run_metadata_geo=True,
+            run_webp_thumbnail=not args.update_location # 장소 업데이트 시 썸네일 불필요
+        )
+    else:
+        indexer = VectorIndexer()
+        
+    if args.test:
+        indexer.run(test_limit=args.test)
     else:
         indexer.run()
