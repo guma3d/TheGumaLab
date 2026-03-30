@@ -159,14 +159,40 @@ def build_theme_cache():
     
     cached_data = []
     
+    # 지역별 고정 반경 (Gemini 요청 없이 자체 하드코딩 변환)
+    geo_map = {
+        "제주": {"lat": 33.4996, "lon": 126.5312, "radius": 50000},
+        "서울": {"lat": 37.5665, "lon": 126.9780, "radius": 30000},
+        "인천": {"lat": 37.4563, "lon": 126.7052, "radius": 30000},
+        "부산": {"lat": 35.1796, "lon": 129.0756, "radius": 30000},
+        "대전": {"lat": 36.3504, "lon": 127.3845, "radius": 30000},
+        "대구": {"lat": 35.8714, "lon": 128.6014, "radius": 30000},
+        "광주": {"lat": 35.1595, "lon": 126.8526, "radius": 30000},
+        "강원": {"lat": 37.8228, "lon": 128.1555, "radius": 80000},
+        "춘천": {"lat": 37.8813, "lon": 127.7299, "radius": 30000},
+        "강릉": {"lat": 37.7518, "lon": 128.8760, "radius": 30000}
+    }
+    
     for theme in all_themes:
         must_conds = []
         scene_query = theme.get("scene", "")
         loc_query = theme.get("location", "")
         
         if loc_query:
-            must_conds.append(FieldCondition(key="location", match=MatchText(text=loc_query)))
-            
+            if loc_query in geo_map:
+                from qdrant_client.http.models import GeoRadius, GeoPoint
+                must_conds.append(
+                    FieldCondition(
+                        key="geo_point",
+                        geo_radius=GeoRadius(
+                            center=GeoPoint(lat=geo_map[loc_query]["lat"], lon=geo_map[loc_query]["lon"]),
+                            radius=geo_map[loc_query]["radius"]
+                        )
+                    )
+                )
+            else:
+                must_conds.append(FieldCondition(key="location", match=MatchText(text=loc_query)))
+                
         q_filter = Filter(must=must_conds) if must_conds else None
         text_vector = None
         
