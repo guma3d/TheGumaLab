@@ -169,7 +169,9 @@ Output MUST be a valid JSON array of strings, and nothing else. If no location m
         if len(final_locations) == 1:
             must_conds.append(FieldCondition(key="location", match=MatchText(text=final_locations[0])))
         else:
-            must_conds.append(FieldCondition(key="location", match=MatchAny(any=final_locations)))
+            # Qdrant의 PayloadSchemaType.TEXT 인덱스에는 MatchAny가 정상 작동하지 않으므로, 다중 OR(should) Filter로 중첩 처리해야 합니다.
+            loc_shoulds = [FieldCondition(key="location", match=MatchText(text=loc)) for loc in final_locations]
+            must_conds.append(Filter(should=loc_shoulds))
             
     if extracted_years:
         if len(extracted_years) == 1:
@@ -240,15 +242,19 @@ Output MUST be a valid JSON array of strings, and nothing else. If no location m
             print(f"[*] 한국어 쿼리 번역 시도: '{search_text}'")
             prompt = (
                 f"You are driving an AI image semantic search engine.\n"
-                f"Translate the following Korean user intent into exactly ONE concise English phrase (maximum 5 words).\n"
+                f"Translate the following Korean user intent into exactly ONE concise English phrase describing the VISUAL contents (maximum 5 words).\n"
                 f"Korean: {search_text}\n"
-                f"Just output the phrase directly. No lists, no commas. E.g. 'night city view', 'mom smiling in park'"
+                f"CRITICAL: If the text ONLY contains conversational fillers like 'show me', 'photos', 'pictures', 'search for' with NO actual visual subjects (e.g. '사진 보여줘', '있는거 찾아봐'), output EXACTLY the word: EMPTY\n"
+                f"Just output the phrase directly. No lists, no commas. E.g. 'night city view', 'mom smiling in park', 'EMPTY'"
             )
             t_resp = state.gemini_client.models.generate_content(model='gemini-3.1-flash-lite-preview', contents=prompt)
             translated = t_resp.text.strip().replace('\n', '')
             if translated:
                 print(f"  [+] 영문 매핑 완료: '{translated}'")
-                search_text = translated
+                if translated.upper() == "EMPTY":
+                    search_text = ""
+                else:
+                    search_text = translated
         except Exception as e:
             print(f"  [-] Gemini 번역 에러: {e}")
 
