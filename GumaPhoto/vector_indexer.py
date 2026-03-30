@@ -315,8 +315,8 @@ class VectorIndexer:
                         else:
                             dt_str = raw_dt.replace(':', '-')
                             
-                    loc_val = f_data.get('Location') or f_data.get('XMP:Location')
-                    loc_str = str(loc_val).strip() if loc_val else "Unknown Location"
+                    loc_str = "Unknown Location" # XMP Location 완전 폐기, 항상 GPS 우선 역추적
+
                     
                     lat_f = None
                     lon_f = None
@@ -434,7 +434,18 @@ class VectorIndexer:
                                     else:
                                         self.location_cache[cache_key] = geo_data.get('display_name', "Unknown Location").split(',')[0].strip()
                                         
-                                    location_str = self.location_cache[cache_key]
+                                    
+                                    import unicodedata
+                                    def _remove_latin(t):
+                                        if not isinstance(t, str): return t
+                                        res = ""
+                                        for c in t:
+                                            if 'LATIN' in unicodedata.name(c, ''):
+                                                res += unicodedata.normalize('NFD', c).encode('ascii', 'ignore').decode('utf-8')
+                                            else: res += c
+                                        return res
+                                        
+                                    location_str = _remove_latin(self.location_cache[cache_key])
                                     print(f"      [📍 OSM 스마트 번역 성공] {lat_key}_{lon_key} ➡️ {location_str}")
                         except Exception as gc_e:
                             print(f"      [-] OSM 역 지오코딩 에러: {gc_e}")

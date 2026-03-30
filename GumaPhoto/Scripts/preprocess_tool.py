@@ -29,9 +29,9 @@ def process_single_image(filepath, f, folder_name, date_pattern, cached_places):
                 date_to_write = f"{yyyy}:{mm}:{dd} 12:00:00"
 
         loc_to_write = None
-        # Location 체크
+        # Location 체크 (기존 XMP 확인 로직 제거, 순수 GPS만 확인)
         if folder_name in cached_places:
-            result_loc = subprocess.run(["exiftool", "-XMP:Location", "-s3", filepath], capture_output=True, text=True, timeout=10)
+            result_loc = subprocess.run(["exiftool", "-GPSLatitude", "-s3", filepath], capture_output=True, text=True, timeout=10)
             if not result_loc.stdout.strip():
                 loc_to_write = cached_places[folder_name]
 
@@ -43,13 +43,11 @@ def process_single_image(filepath, f, folder_name, date_pattern, cached_places):
         if date_to_write:
             cmd.extend([f"-DateTimeOriginal={date_to_write}", f"-CreateDate={date_to_write}"])
         if loc_to_write:
-            pname = loc_to_write["name"]
             lat = float(loc_to_write["lat"])
             lon = float(loc_to_write["lon"])
             lat_ref = "N" if lat >= 0 else "S"
             lon_ref = "E" if lon >= 0 else "W"
             cmd.extend([
-                f"-XMP:Location={pname}",
                 f"-GPSLatitude={abs(lat)}",
                 f"-GPSLatitudeRef={lat_ref}",
                 f"-GPSLongitude={abs(lon)}",

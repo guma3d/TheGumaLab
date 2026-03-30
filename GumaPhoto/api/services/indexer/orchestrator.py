@@ -130,11 +130,8 @@ class VectorIndexerOrchestrator:
                                 sp = date_str.split('-')
                                 sort_date = int(sp[0])*10000 + int(sp[1])*100 + int(sp[2])
                         
-                        # 장소(Location) 글로벌 네임 파싱
-                        l_val = d.get('Location') or d.get('XMP:Location')
-                        if l_val:
-                            location_str = str(l_val).strip()
-                            if not location_str: location_str = "Unknown Location"
+                        # 장소(Location) XMP 텍스트 기반 네임 파싱 완전히 폐지 (사용자 규칙: 오직 숫자 GPS 역추적만 사용)
+                        location_str = "Unknown Location"
                         
                         # GPS 마커 파싱
                         lat_raw = d.get('GPSLatitude') or d.get('EXIF:GPSLatitude')
@@ -288,7 +285,7 @@ class VectorIndexerOrchestrator:
                         except Exception as trace_err:
                             print(f"    [-] Audit Trace Exception: {trace_err}")
                             
-                        generate_xmp_sidecar(filepath, payload)
+                        # generate_xmp_sidecar(filepath, payload) # XMP 사이드카 파일 완전 제거 정책
                         
                         orig_ext = filepath.rsplit('.', 1)[-1].lower() if '.' in filepath else ""
                         base_name = os.path.splitext(filepath)[0]

@@ -44,11 +44,7 @@ class MetadataEditor:
             cmd = ["exiftool"]
             has_update = False
             
-            # (A) XMP 장소명 문자열 박기
-            if target_location and "Unknown" not in target_location:
-                cmd.extend([f"-XMP:Location={target_location}"])
-                has_update = True
-            
+            # (A) XMP 장소명 문자열 박기 전면 폐기 (사용자 요청: 위치는 오직 GPS 위도/경도만 참조)            
             # (B) 진짜 GPS 위도경도 박기
             if lat is not None and lon is not None:
                 lat_ref, lon_ref = ('N', 'E') if lat >= 0 and lon >= 0 else ('S', 'W')
