@@ -241,11 +241,12 @@ Output MUST be a valid JSON array of strings, and nothing else. If no location m
         try:
             print(f"[*] 한국어 쿼리 번역 시도: '{search_text}'")
             prompt = (
-                f"You are driving an AI image semantic search engine.\n"
-                f"Translate the following Korean user intent into exactly ONE concise English phrase describing the VISUAL contents (maximum 5 words).\n"
-                f"Korean: {search_text}\n"
-                f"CRITICAL: If the text ONLY contains conversational fillers like 'show me', 'photos', 'pictures', 'search for' with NO actual visual subjects (e.g. '사진 보여줘', '있는거 찾아봐'), output EXACTLY the word: EMPTY\n"
-                f"Just output the phrase directly. No lists, no commas. E.g. 'night city view', 'mom smiling in park', 'EMPTY'"
+                f"You are an AI assistant for an image search engine.\n"
+                f"Extract ONLY the visually meaningful keywords from the user's Korean query, and translate them into a concise English phrase (max 5 words).\n"
+                f"User Query: {search_text}\n"
+                f"Ignore all conversational phrases, greetings, or filler words regardless of what the user types.\n"
+                f"If the query contains NO visually meaningful keywords after ignoring fillers, output EXACTLY the word: EMPTY\n"
+                f"Do not include any extra text. Output Example: 'blue sky ocean', 'dog running', 'EMPTY'."
             )
             t_resp = state.gemini_client.models.generate_content(model='gemini-3.1-flash-lite-preview', contents=prompt)
             translated = t_resp.text.strip().replace('\n', '')
