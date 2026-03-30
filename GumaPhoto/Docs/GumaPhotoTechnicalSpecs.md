@@ -115,4 +115,11 @@
  ┃ ┗ 📄 metadata.py: XMP 사이드카를 자동 생성하거나 읽어오는 고속 스크립트 모음
  ┃
  ┗ 📄 tasks.py: `celery_worker` 컨테이너가 실행할 Redis Celery 통합 레지스트리 (모든 무거운 도메인 함수의 `@celery_app.task` 명찰 부착소)
+
+ 📁 Scripts/ (서버 관리자용 유틸리티 및 오프라인 전처리 툴)
+  ┣ 📄 factory_reset_db.py: 데이터베이스 구조계(Qdrant/SQLite)를 즉시 소각하여 VRAM 오염과 싱크를 100% 멸균 초기화하는 스크립트.
+  ┗ 📄 preprocess_tool.py: 업로드 파이프라인 진입 전, 사진별로 카카오맵 좌표를 수동으로 정확히 태깅하여 Exif Date/GPS를 선-주입(Pre-injection)하는 정밀 타격 툴.
+
+ 📁 tool/exiftool_engine/ (모듈 내재화)
+  ┗ 📦 외부 의존성 설치 문제나 PATH 환경 변수에 기대지 않도록, 완전 독립형(Standalone) Perl ExifTool 배포판을 폴더 내부에 삽입하여 영구적인 캡슐화 작동 보장.
 ```

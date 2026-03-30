@@ -76,3 +76,9 @@
 *   **InsightFace Age-Progressive 매핑 대응:** 나이에 따라 `준우_1`, `준우_2` 등 세분화된 얼굴 도감으로 학습시키더라도, Qdrant 페이로드와 Frontend 검색 상에서는 무조건 깨끗한 본명(`준우`) 통일되도록 `split('_')[0]` 강제 정규화 파이프라인 검증 및 탑재.
 *   **FastAPI 콜드-스타트(Cold-Start) 수문장 방어:** 딥러닝 워커가 VRAM에 모델을 올리고 Qdrant Collection을 생성하기도 전에 프론트엔드가 접속하여 404 Not Found로 백엔드가 치명적 크래시 되는 현상을 타파. `collection_exists` 예외(Exception)를 우아하게 잡아내어 유저에게 '데이터베이스 초기화 중'이라는 친절한 Payload를 반환하도록 생존성 패치.
 *   **파이썬 로컬 섀도잉(UnboundLocalError) 버그 발본색원:** `search.py` 하단부 깊숙한 곳의 `try... import os` 하나로 인해, 상단부 전체의 `os.path` 네임스페이스가 오염되던 파이썬 호이스팅 버그를 추적/격리/삭제하여 치명적 백엔드 마비 요인 제거.
+
+## 📌 [16단계] 인프라 완전 자립 최적화 및 편의 유틸리티 팩 확장 (완료 🎯 - 오늘 진행)
+*   **완전 무결점 ExifTool 내장화 (Native Engine):** 기존 OS 셸 환경이나 환경변수에 의존하던 외부 `exiftool`을 Perl 기반 Standalone 바이너리 단위로 직접 Git 레포지토리 폴더(`tool/exiftool_engine`) 내부에 박아넣어, 어느 OS나 Docker 컨테이너에서든 환경 셋업 없이 100% 작동을 보장하는 네이티브 통합 구동 달성.
+*   **사전 카카오톡 장소 태깅망(Preprocess Tool) 구축:** 사진이 Qdrant에 올라가기 전, Python의 대화형 터미널에서 `Scripts/preprocess_tool.py`를 가동해 사용자가 직접 카카오맵 기반으로 특정 사진의 장소 좌표를 선태그(pre-injection)할 수 있는 무적의 편의성 유틸리티 완성.
+*   **공장 초기화 엔진 (Factory Reset DB):** 데이터 정합성이 깨진 경우 셸에서 폴더들을 수동으로 지우는 노동을 방지하기 위해, Qdrant Collection 소각부터 SQLite 비우기, 파생 폴더 리셋까지 한 방에 해결하는 `Scripts/factory_reset_db.py` 배치 파일 연동.
+*   **InsightFace 파일명 파싱 엄격화:** 기존 `re.sub`를 쓰던 모호한 파싱 로직을 폐기하고, 오직 언더바(`_`) 스플릿 방식만 허용하도록 `model_faces.py` 및 `insightface_service.py`를 단속하여 '준우_아동' 같은 형태가 '준우' 등으로 어긋남 없이 안전 매핑 작동하도록 구조 강화.
