@@ -6,7 +6,7 @@ import json
 import os
 import re
 import torch
-from qdrant_client.http.models import Filter, FieldCondition, MatchText, MatchAny, MatchValue, OrderBy, Direction
+from qdrant_client.http.models import Filter, FieldCondition, MatchText, MatchAny, MatchValue, OrderBy, Direction, GeoRadius, GeoPoint
 
 router = APIRouter()
 
@@ -97,63 +97,46 @@ async def perform_search(req: SearchRequest):
             print(f"[-] Known faces extraction error: {e}")
 
     # 0.5. 자연어 텍스트 문맥 내에서 장소 식별자 강제 추출 (NLP Metadata Hard Filtering)
+    extracted_geo = None
     extracted_locations = []
-    if search_text:
+    
+    if search_text and state.gemini_client:
         try:
-            if os.path.exists('/app/data/available_tags.json'):
+            prompt = f"""You are a Geolocation Parser for a Photo Search Engine.
+The user's query is: "{search_text}"
+If the user mentions a specific place, landmark, city, or country (e.g. "하와이", "도쿄 디즈니랜드", "집근처"), convert it into GPS coordinates (WGS84) and a reasonable search radius in meters.
+- City/Province/Country: radius 50000 (50km)
+- Specific landmark/district: radius 2000 (2km)
+
+If a location IS found, output ONLY a valid JSON object in this exact format, where 'matched_word' is the exact substring of the location from the user's query:
+{{"lat": 35.6329, "lon": 139.8804, "radius": 5000, "matched_word": "도쿄 디즈니랜드"}}
+
+If NO location is implied in the query, output ONLY the exact word: EMPTY"""
+            
+            resp = state.gemini_client.models.generate_content(
+                model='gemini-3.1-flash-lite-preview', 
+                contents=prompt
+            )
+            resp_text = resp.text.strip()
+            if resp_text.startswith("```json"): resp_text = resp_text[7:-3].strip()
+            elif resp_text.startswith("```"): resp_text = resp_text[3:-3].strip()
+            
+            if resp_text != "EMPTY" and "lat" in resp_text:
                 import json
-                with open('/app/data/available_tags.json', 'r', encoding='utf-8') as f:
-                    known_locs = json.load(f).get("locations", [])
-                
-                valid_locs = [loc for loc in known_locs if loc not in ["Unknown Location", "Unknown-Location", "위치정보없음", "All Locations", "None"]]
-                
-                if valid_locs and state.gemini_client:
-                    loc_list_str = "\n".join(valid_locs)
-                    prompt = f"""You are an intelligent Geolocation Entity Matcher.
-Here is the list of valid locations currently available in our database:
-{loc_list_str}
-
-The user's search query is: "{search_text}"
-
-Does the user's query imply searching for a specific location(s) from the list above?
-Consider English-Korean translations (e.g. "하와이" == "Hawaii", "일본" == "Japan") and administrative variations (e.g. "강남" == "강남구").
-If the location exists in the list above, return the EXACT string(s) from the list.
-Output MUST be a valid JSON array of strings, and nothing else. If no location matches, output []."""
-                    
-                    try:
-                        resp = state.gemini_client.models.generate_content(
-                            model='gemini-3.1-flash-lite-preview', 
-                            contents=prompt
-                        )
-                        # JSON parsing (Markdown fallback parsing included)
-                        resp_text = resp.text.strip()
-                        if resp_text.startswith("```json"):
-                            resp_text = resp_text[7:-3].strip()
-                        elif resp_text.startswith("```"):
-                            resp_text = resp_text[3:-3].strip()
-                            
-                        matched_locs = json.loads(resp_text)
-                        
-                        if isinstance(matched_locs, list):
-                            for loc in matched_locs:
-                                if loc in valid_locs and loc not in extracted_locations:
-                                    extracted_locations.append(loc)
-                                    print(f"[*] 🧠 Gemini 지능형 장소 식별 성공: '{loc}'")
-                    except Exception as ge:
-                        print(f"[-] Gemini location matching error: {ge}")
-                                
-        except Exception as e:
-            print(f"[-] Known locations extraction error: {e}")
+                extracted_geo = json.loads(resp_text)
+                if "matched_word" in extracted_geo:
+                    extracted_locations.append(extracted_geo["matched_word"])
+                print(f"[*] 🧠 Gemini 공간(Geo-Radius) 좌표 식별 완료: {extracted_geo}")
+        except Exception as ge:
+            print(f"[-] Gemini Geo matching error: {ge}")
 
     # UI 선택 이름과 텍스트 서치에서 추출된 이름을 모두 병합
     final_people = list(set(req.people + extracted_names))
     
-    # UI 선택 장소와 텍스트 서치 추출 장소를 모두 병합
+    # UI 선택 장소 병합
     final_locations = []
     if req.location and req.location != "All Locations":
         final_locations.append(req.location)
-    else:
-        final_locations.extend(extracted_locations)
     
     # 1. 쿼리가 없을 경우 (Home 화면 진입 시) -> 단순 필터 + 스크롤 검색
     direct = Direction.ASC if req.sort == "asc" else Direction.DESC
@@ -169,9 +152,19 @@ Output MUST be a valid JSON array of strings, and nothing else. If no location m
         if len(final_locations) == 1:
             must_conds.append(FieldCondition(key="location", match=MatchValue(value=final_locations[0])))
         else:
-            # Qdrant의 PayloadSchemaType.TEXT 인덱스에는 MatchAny가 정상 작동하지 않으므로, 다중 OR(should) Filter로 중첩 처리해야 합니다.
             loc_shoulds = [FieldCondition(key="location", match=MatchValue(value=loc)) for loc in final_locations]
             must_conds.append(Filter(should=loc_shoulds))
+            
+    if extracted_geo:
+        must_conds.append(
+            FieldCondition(
+                key="geo_point",
+                geo_radius=GeoRadius(
+                    center=GeoPoint(lat=extracted_geo["lat"], lon=extracted_geo["lon"]),
+                    radius=extracted_geo.get("radius", 50000)
+                )
+            )
+        )
             
     if extracted_years:
         if len(extracted_years) == 1:
@@ -387,3 +380,59 @@ async def get_filters():
         "locations": ["All Locations"] + locations,
         "names": names
     }
+
+@router.get("/api/map/geojson")
+def get_map_geojson():
+    if not state.qdrant_client:
+        return {"type": "FeatureCollection", "features": []}
+        
+    try:
+        features = []
+        offset = None
+        
+        while True:
+            records, offset = state.qdrant_client.scroll(
+                collection_name="gumaphoto_hybrid_kr",
+                with_payload=["filepath", "geo_point"],
+                limit=5000,
+                offset=offset
+            )
+            for hit in records:
+                payload = getattr(hit, 'payload', {}) or {}
+                geo = payload.get("geo_point")
+                if geo and isinstance(geo, dict) and "lat" in geo and "lon" in geo:
+                    filepath = payload.get("filepath", "")
+                    photo_url = filepath.replace("/app/data/organized", "/photos")
+                    features.append({
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [float(geo["lon"]), float(geo["lat"])]
+                        },
+                        "properties": {
+                            "url": photo_url
+                        }
+                    })
+            if offset is None:
+                break
+                
+        return {
+            "type": "FeatureCollection",
+            "features": features
+        }
+    except Exception as e:
+        print(f"❌ GeoJSON 동적 생성 오류: {e}")
+        return {"type": "FeatureCollection", "features": []}
+
+import os
+@router.get("/api/system/indexer-log")
+def get_indexer_log():
+    try:
+        log_path = "/app/data/indexer_geo_log.txt"
+        if os.path.exists(log_path):
+            with open(log_path, "r", encoding="utf-8") as f:
+                lines = f.read().splitlines()
+                return {"log": "\\n".join(lines[-25:])}
+        return {"log": "Log file not found."}
+    except Exception as e:
+        return {"log": f"Error reading log: {str(e)}"}

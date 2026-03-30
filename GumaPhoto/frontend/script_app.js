@@ -37,17 +37,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     hasMore = true;
     totalHits = 0;
     
-    // 1. 홈 갤러리 메인 데이터 로딩 및 피드백 큐 10개 자동 장전 (Parallel)
-    await Promise.all([
-        fetchPhotos(false),
-        preloadFeedbackQueue(10)
-    ]);
+    // 1. 홈 갤러리 메인 데이터(타임라인) 초고속 로딩 (초기 체감속도 극대화 교차점)
+    await fetchPhotos(false);
     
-    // 2. 프리패치가 완료되면 스플래시 화면을 페이드아웃하며 제거
+    // 2. 화면 필수 데이터가 완성되면 멋진 스플래시 애니메이션은 유지하되, 대기 없이 즉각 페이드아웃 (Non-blocking UX)
     const splashScreen = document.getElementById('splash-screen');
     if (splashScreen) {
         splashScreen.style.opacity = '0';
         setTimeout(() => splashScreen.remove(), 600);
+    }
+    
+    // 3. 무거운 피드백 큐 로딩은 화면이 전부 뜬 뒤에 조용히 백그라운드로 장전
+    if (typeof preloadFeedbackQueue === 'function') {
+        preloadFeedbackQueue(10).catch(e => console.error("Feedback preload error:", e));
     }
 });
 
@@ -301,24 +303,25 @@ async function fetchPhotos(isLoadMore) {
                     return {results: []}; 
                 });
 
-                const responses = await Promise.all([...(fetchThemes ? themePromises : []), timelinePromise]);
-                const timelineRes = responses[responses.length - 1];
-                
+                // 무거운 15가지 AI 테마 패치는 비동기로 던져두고, 메인 타임라인만 즉각 기다림 (Blocking-Free)
                 if (fetchThemes) {
-                    const rawThemes = responses.slice(0, responses.length - 1);
-                    // 빈 결과를 걸러내고 무조건 10개로 고정
-                    const themes = rawThemes.filter(t => t && t.photos && t.photos.length > 0).slice(0, 10);
-                    if (themes.length > 0) {
-                        renderThemes(themes);
-                        themesContainer.classList.remove('hidden');
-                    } else {
-                        themesContainer.classList.add('hidden');
-                    }
+                    Promise.all(themePromises).then(rawThemes => {
+                        const themes = rawThemes.filter(t => t && t.photos && t.photos.length > 0).slice(0, 10);
+                        if (themes.length > 0) {
+                            renderThemes(themes);
+                            themesContainer.classList.remove('hidden');
+                        } else {
+                            themesContainer.classList.add('hidden');
+                        }
+                    }).catch(err => console.error("Theme background load error:", err));
                 } else {
                     if (themesContainer.innerHTML !== '') {
                         themesContainer.classList.remove('hidden');
                     }
                 }
+                
+                // 타임라인 데이터 결괏값을 즉시 받아 UI 해방
+                const timelineRes = await timelinePromise;
                 timelineHeader.classList.remove('hidden');
                 
                 let results = timelineRes.results || [];
@@ -957,33 +960,61 @@ document.getElementById('confirm-delete-btn')?.addEventListener('click', async (
 // ---------------------------------------------------------------------------------
 const progressMonitorBtn = document.getElementById('progress-monitor-btn');
 const progressModal = document.getElementById('progress-modal');
-const progressModalClose = document.getElementById('progress-modal-close');
-
-window.progressPollingInterval = null;
+async function updateProgressMonitor() {
+    const logBox = document.getElementById('progress-log-content');
+    if (!logBox) return;
+    
+    let apiUrl = '/api/system/indexer-log';
+    if (window.location.pathname.startsWith('/GumaPhoto')) {
+        apiUrl = '/GumaPhoto/api/system/indexer-log';
+    }
+    
+    try {
+        const res = await fetch(apiUrl + "?cb=" + new Date().getTime());
+        if (res.ok) {
+            const data = await res.json();
+            logBox.innerText = data.log || "No log found or empty.";
+            logBox.scrollTop = logBox.scrollHeight; // Auto-scroll to bottom
+        } else {
+            logBox.innerText = "Error fetching log.";
+        }
+    } catch (e) {
+        logBox.innerText = "Network error loading log.";
+    }
+}
 
 if (progressMonitorBtn) {
     progressMonitorBtn.addEventListener('click', () => {
-        updateProgressMonitor();
-        switchView('system');
+        const modal = document.getElementById('progress-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            updateProgressMonitor(); // Initial fetch
+            if (window.progressPollingInterval) clearInterval(window.progressPollingInterval);
+            window.progressPollingInterval = setInterval(updateProgressMonitor, 1500); // Poll every 1.5 seconds
+        }
     });
 }
 
+const progressModalClose = document.getElementById('progress-modal-close');
 if (progressModalClose) {
     progressModalClose.addEventListener('click', closeProgressModal);
 }
 
 function closeProgressModal() {
-    progressModal.classList.add('hidden');
+    const modal = document.getElementById('progress-modal');
+    if (modal) modal.classList.add('hidden');
     document.body.style.overflow = 'auto'; // restore body scroll
-    if (progressPollingInterval) {
-        clearInterval(progressPollingInterval);
-        progressPollingInterval = null;
+    if (window.progressPollingInterval) {
+        clearInterval(window.progressPollingInterval);
+        window.progressPollingInterval = null;
     }
 }
 
 // Close monitor modal when clicking outside
 window.addEventListener('click', (e) => {
-    if (e.target === progressModal) {
+    const modal = document.getElementById('progress-modal');
+    if (modal && e.target === modal) {
         closeProgressModal();
     }
 });

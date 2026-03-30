@@ -86,4 +86,10 @@
 *   **Vector Indexer 초경량 모듈 스위치(`--update-location`) 탑재:** 기존의 거대한 AI 인덱서를 5개의 토글 스위치(`run_vision_ai`, `skip_face`, `run_metadata_geo` 등)로 분할. 무거운 SigLIP, Florence-2를 VRAM에 올리지 않고 CPU만 사용하여 수만 장의 DB 페이로드를 초당 수백 장씩 광속으로 덮어쓰기(`set_payload`)하는 혁신적 DB 패치 파이프라인 도입.
 *   **Qdrant TEXT 인덱스 `MatchAny` 버그 픽스:** Qdrant 내부 수학 엔진이 문자열 배열 매칭 시 TEXT 자료형에서 `MatchAny` 연산을 무시하며 0건을 반환하던 치명적 버그를 색출. 이를 `Filter(should=[FieldCondition(MatchText)])` 방식의 OR 중첩 쿼리문으로 완벽히 치환하여 검색 누락 해결.
 *   **Gemini 3.1 Flash 지능형 엔티티 추출(Entity Resolution) 도입:** "하와이 사진 보여줘" 같은 자연어에서 정규표현식으로 행정구역(특별시, 도)을 떼어내며 억지로 비교하던 `difflib` 문자열 슬라이싱 코드를 전면 폐기. 오로지 `available_tags.json` 리스트를 통째로 Gemini에 넘겨 "사용자 의도에 맞는 지명을 리스트에서 골라만 줘" 라고 책임을 위임하는 차세대 LLM 매핑 방식을 도입하여 `["미국 Hawaii"]` 와 같은 영문/국문 크로스 매칭을 100% 무결점으로 달성.
-*   **검색어 필러(Filler Words) 무력화 방어:** "사진 보여줘" 같은 불필요한 대화형 추임새가 SigLIP 시각 벡터로 치환되어 엉뚱한 이미지를 오염시키는 현상을 막기 위해, Gemini 프롬프트에 시각적 알맹이가 없으면 `EMPTY`를 반환하도록 강제하여 즉시 벡터 검색을 SKIP하는 스마트 방어 체계 구축.
+## 📌 [18단계] 3D 지구 렌더링 검토 및 실시간 모니터링 시스템 구축 (완료 🎯 - 오늘 진행)
+*   **비동기 Qdrant 호출 블로킹 방어 엔진:** GeoJSON 핀 생성용 라우터(`search.py`) 내부에서 순차적 I/O 동기(Synchronous) 작업인 Qdrant 쿼리가 FastAPI의 `async` 비동기 메인 이벤트 루프를 장악하여 UI 무한 로딩(블로킹)을 유발하던 버그를 해결. 이를 안전한 스레드 풀 할당(`def` 선언)으로 전환하여 프론트엔드 반응성 즉시 복구.
+*   **글로벌 라이브 프로세싱 시스템 모달 탑재:** 백그라운드에서 동작 중인 AI 인덱싱(현재 `--update-location` 약 2.6만 장 배치 연산) 과정의 stdout 텍스트 로그(`/app/data/indexer_geo_log.txt`)를 인터셉트하여, 프론트엔드에서 주기적으로 읽어들이는 **'Live Progress Monitor' (<i class="fa-solid fa-list-check"></i>)** 전용 글라스모피즘 버튼과 듀플렉스 팝업 창을 `index.html`에 성공적으로 이식 완료. (현재 모바일 대응 버전 `v=15` 적용)
+*   **Three.js 방식의 CesiumJS 광환(Glow) 이식 검토 작업:** 
+    *   초기: 단순 확대 구체(`scale 1.05`)와 역광 셰이더(`pow(1.0-v)`)를 사용하였으나, 외곽선 페더링(Smoothstep) 및 터미네이터(음영 경계선) 수식 오류로 빛 샘 현상 발생.
+    *   2차: Three.js의 `THREE.BackSide` (뒷면 렌더링을 통한 물리적 가림막) 및 `AdditiveBlending` 효과를 Cesium의 `CullFace.FRONT` 렌더 상태값으로 강제 포팅하여 완벽한 모사(Imitation)를 시도.
+    *   최종 결정: 지구의 표면 텍스쳐나 3D 지형의 복잡성으로 인해 시각적 이질감이 발생함을 확인, **과감하게 커스텀 글로우 객체를 모두 롤백 및 파기**하여 순수한 Cesium 원본 해상도의 속도감을 유지하기로 선회 결정함.

@@ -84,6 +84,7 @@ class VectorIndexer:
             self.q_client.create_payload_index(COLLECTION_NAME, "location", field_schema=PayloadSchemaType.TEXT)
             self.q_client.create_payload_index(COLLECTION_NAME, "caption", field_schema=PayloadSchemaType.TEXT)
             self.q_client.create_payload_index(COLLECTION_NAME, "hash", field_schema=PayloadSchemaType.KEYWORD)
+            self.q_client.create_payload_index(COLLECTION_NAME, "geo_point", field_schema=PayloadSchemaType.GEO)
             print(f"  [+] 신규 Qdrant 멀티-벡터 컬렉션 '{COLLECTION_NAME}' 생성 완료.")
         else:
             print(f"  [-] 기존 Qdrant 컬렉션 '{COLLECTION_NAME}' 을 재사용합니다.")
@@ -360,6 +361,7 @@ class VectorIndexer:
                 found_people = ["No People"]
                 best_face_payload = {}
                 vectors = {"scene": scene_embedding.tolist()}
+                old_qdrant_location = None
                 
                 if not self.skip_face and getattr(self, "insightface", None):
                     face_res = self.insightface.analyze_image(filepath, cv_img=cv_img)
@@ -381,6 +383,7 @@ class VectorIndexer:
                         if pts:
                             pt = pts[0]
                             old_p = pt.payload or {}
+                            old_qdrant_location = old_p.get("location")
                             face_count = old_p.get("face_count", 0)
                             found_people = old_p.get("people", ["No People"])
                             best_face_payload = {
@@ -414,56 +417,68 @@ class VectorIndexer:
                     
                 # [ OSM 글로벌 지능형 위치 번역 캐시 시스템 ]
                 if lat_f is not None and lon_f is not None and location_str == "Unknown Location":
-                    lat_key = round(lat_f, 3)
-                    lon_key = round(lon_f, 3)
-                    cache_key = f"{lat_key}_{lon_key}"
-                    
-                    if not hasattr(self, 'location_cache'):
-                        self.location_cache = {}
-                        
-                    if cache_key in self.location_cache:
-                        location_str = self.location_cache[cache_key]
+                    if old_qdrant_location and old_qdrant_location != "Unknown Location":
+                        location_str = old_qdrant_location
                     else:
-                        try:
-                            import urllib.request, time
-                            time.sleep(1.1)
-                            req_url = f"https://nominatim.openstreetmap.org/reverse?lat={lat_f}&lon={lon_f}&format=jsonv2&accept-language=ko"
-                            req = urllib.request.Request(req_url, headers={'User-Agent': 'GumaPhotoIndexer/CacheNode'})
-                            with urllib.request.urlopen(req, timeout=5) as resp:
-                                if resp.status == 200:
-                                    import json
-                                    geo_data = json.loads(resp.read().decode('utf-8'))
-                                    addr = geo_data.get('address', {})
-                                    country = addr.get('country', '')
-                                    city = addr.get('city', '') or addr.get('town', '') or addr.get('county', '')
-                                    suburb = addr.get('suburb', '') or addr.get('borough', '') or addr.get('village', '')
-                                    
-                                    clean_parts = []
-                                    if country: clean_parts.append(country)
-                                    if city: clean_parts.append(city)
-                                    if suburb: clean_parts.append(suburb)
-                                    
-                                    if clean_parts:
-                                        self.location_cache[cache_key] = " ".join(clean_parts)
-                                    else:
-                                        self.location_cache[cache_key] = geo_data.get('display_name', "Unknown Location").split(',')[0].strip()
+                        lat_key = round(lat_f, 3)
+                        lon_key = round(lon_f, 3)
+                        cache_key = f"{lat_key}_{lon_key}"
+                        
+                        if not hasattr(self, 'location_cache'):
+                            self.osm_cache_path = "/app/data/osm_cache.json"
+                            self.location_cache = {}
+                            if os.path.exists(self.osm_cache_path):
+                                try:
+                                    with open(self.osm_cache_path, "r", encoding="utf-8") as fm:
+                                        self.location_cache = json.load(fm)
+                                except: pass
+                                
+                        if cache_key in self.location_cache:
+                            location_str = self.location_cache[cache_key]
+                        else:
+                            try:
+                                import urllib.request, time
+                                time.sleep(1.1)
+                                req_url = f"https://nominatim.openstreetmap.org/reverse?lat={lat_f}&lon={lon_f}&format=jsonv2&accept-language=ko"
+                                req = urllib.request.Request(req_url, headers={'User-Agent': 'GumaPhotoIndexer/CacheNode'})
+                                with urllib.request.urlopen(req, timeout=5) as resp:
+                                    if resp.status == 200:
+                                        import json
+                                        geo_data = json.loads(resp.read().decode('utf-8'))
+                                        addr = geo_data.get('address', {})
+                                        country = addr.get('country', '')
+                                        city = addr.get('city', '') or addr.get('town', '') or addr.get('county', '')
+                                        suburb = addr.get('suburb', '') or addr.get('borough', '') or addr.get('village', '')
                                         
-                                    
-                                    import unicodedata
-                                    def _remove_latin(t):
-                                        if not isinstance(t, str): return t
-                                        res = ""
-                                        for c in t:
-                                            if 'LATIN' in unicodedata.name(c, ''):
-                                                res += unicodedata.normalize('NFD', c).encode('ascii', 'ignore').decode('utf-8')
-                                            else: res += c
-                                        return res
+                                        clean_parts = []
+                                        if country: clean_parts.append(country)
+                                        if city: clean_parts.append(city)
+                                        if suburb: clean_parts.append(suburb)
                                         
-                                    location_str = _remove_latin(self.location_cache[cache_key])
-                                    print(f"      [📍 OSM 스마트 번역 성공] {lat_key}_{lon_key} ➡️ {location_str}")
-                        except Exception as gc_e:
-                            print(f"      [-] OSM 역 지오코딩 에러: {gc_e}")
-                            self.location_cache[cache_key] = "Unknown Location"
+                                        if clean_parts:
+                                            self.location_cache[cache_key] = " ".join(clean_parts)
+                                        else:
+                                            self.location_cache[cache_key] = geo_data.get('display_name', "Unknown Location").split(',')[0].strip()
+                                            
+                                        import unicodedata
+                                        def _remove_latin(t):
+                                            if not isinstance(t, str): return t
+                                            res = ""
+                                            for c in t:
+                                                if 'LATIN' in unicodedata.name(c, ''):
+                                                    res += unicodedata.normalize('NFD', c).encode('ascii', 'ignore').decode('utf-8')
+                                                else: res += c
+                                            return res
+                                            
+                                        location_str = _remove_latin(self.location_cache[cache_key])
+                                        print(f"      [📍 OSM 스마트 번역 성공] {lat_key}_{lon_key} ➡️ {location_str}")
+                                        try:
+                                            with open(self.osm_cache_path, "w", encoding="utf-8") as fm:
+                                                json.dump(self.location_cache, fm, ensure_ascii=False)
+                                        except: pass
+                            except Exception as gc_e:
+                                print(f"      [-] OSM 역 지오코딩 에러: {gc_e}")
+                                self.location_cache[cache_key] = "Unknown Location"
                             
                 # [ WebP 프론트엔드 최적화 썸네일 자동 생성 ]
                 if self.run_webp_thumbnail:
@@ -514,11 +529,16 @@ class VectorIndexer:
                         "caption": scene_caption,
                         "hash": item["file_hash"]
                     }
+                    if lat_f is not None and lon_f is not None:
+                        payload["geo_point"] = {"lat": lat_f, "lon": lon_f}
+                        
                     payload.update(best_face_payload)
                     successful_payloads.append((filepath, payload, face_count))
                     points_to_upsert.append(PointStruct(id=point_id, vector=vectors, payload=payload))
                 elif self.run_metadata_geo:
                     update_payload = {"location": location_str, "date": date_str, "sort_date": sort_date, "season": item["season"]}
+                    if lat_f is not None and lon_f is not None:
+                        update_payload["geo_point"] = {"lat": lat_f, "lon": lon_f}
                     self.q_client.set_payload(collection_name=COLLECTION_NAME, payload=update_payload, points=[point_id])
                     successful_payloads.append((filepath, update_payload, face_count))
                     
