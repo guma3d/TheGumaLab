@@ -221,53 +221,18 @@ async function fetchPhotos(isLoadMore) {
                 // Determine if we want themes
                 let fetchThemes = (themesContainer.innerHTML === '');
                 
-                let themePromises = [];
+                let themePromise = null;
                 if (fetchThemes) {
-                    const generalIdeas = [
-                        { title: "Winter Memories", scene: "winter snow cold" },
-                        { title: "Spring Vibes", scene: "spring cherry blossom warm" },
-                        { title: "Summer Waves", scene: "summer beach ocean sand" },
-                        { title: "Autumn Leaves", scene: "autumn fall leaves" },
-                        { title: "Delicious Meals", scene: "delicious food eating meal" },
-                        { title: "Animal Friends", scene: "dog pet animal" },
-                        { title: "City Explorers", scene: "city street building urban" },
-                        { title: "Nature Walks", scene: "forest tree mountain nature" },
-                        { title: "Joyful Moments", scene: "happy smiling laughing" },
-                        { title: "Birthday Parties", scene: "birthday cake celebration party" },
-                        { title: "Night Vibes", scene: "night dark lights" },
-                        { title: "Cloudy Moods", scene: "cloudy grey sky moody" },
-                        { title: "Cafe Hopping", scene: "cafe coffee drinking" },
-                        { title: "Beautiful Landscapes", scene: "landscape scenic view" },
-                        { title: "Travel Adventures", scene: "travel luggage map plane" },
-                        { title: "Peaceful Times", scene: "peaceful calm quiet resting" },
-                        { title: "Sunset Magic", scene: "sunset sun twilight orange sky" },
-                        { title: "Art & Culture", scene: "museum art gallery painting exhibition" },
-                        { title: "In the Mountains", scene: "mountain hiking trail" }
-                    ];
-                    const locationIdeas = [
-                        { title: "Trip to Jeju", location: "Jeju Si South Korea" },
-                        { title: "Memories in San Francisco", location: "San Francisco California" },
-                        { title: "Las Vegas Nights", location: "Las Vegas Nevada" },
-                        { title: "Incheon Stops", location: "Incheon South Korea" },
-                        { title: "Seoul City Life", location: "Seoul South Korea" }
-                    ];
+                    let themesApiUrl = window.location.pathname.startsWith('/GumaPhoto') ? '/GumaPhoto/api/themes' : '/api/themes';
+                    themesApiUrl += '?limit=9';
                     
-                    const allThemeIdeas = [...generalIdeas, ...locationIdeas].sort(() => 0.5 - Math.random());
-                    // 15가지를 랜덤하게 질의하여, 사진이 없는 테마가 탈락하더라도 10개 이상이 살아남게 함
-                    const themeIdeas = allThemeIdeas.slice(0, 15);
-                    
-                    themePromises = themeIdeas.map(t => fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        signal,
-                        body: JSON.stringify({
-                            query: "theme_dummy", offset: 0, limit: 12, is_load_more: true,
-                            people: [], location: t.location || "", scene: t.scene || ""
-                        })
-                    }).then(r => r.json()).then(data => ({
-                        title: t.title,
-                        photos: data.results || []
-                    })).catch(err => { if (err.name !== 'AbortError') console.error(err); return {title: t.title, photos: []}; }));
+                    themePromise = fetch(themesApiUrl, {
+                        method: 'GET',
+                        signal
+                    }).then(r => r.json()).then(data => data.themes || []).catch(err => {
+                        if (err.name !== 'AbortError') console.error("Theme fetch error:", err);
+                        return [];
+                    });
                 }
                 
                 // Timeline Fetch
@@ -303,11 +268,10 @@ async function fetchPhotos(isLoadMore) {
                     return {results: []}; 
                 });
 
-                // 무거운 15가지 AI 테마 패치는 비동기로 던져두고, 메인 타임라인만 즉각 기다림 (Blocking-Free)
-                if (fetchThemes) {
-                    Promise.all(themePromises).then(rawThemes => {
-                        const themes = rawThemes.filter(t => t && t.photos && t.photos.length > 0).slice(0, 10);
-                        if (themes.length > 0) {
+                // 무거운 테마 패치는 백엔드 단일 통신으로 비동기 위임하고 메인 타임라인 즉각 기다림 (Blocking-Free)
+                if (fetchThemes && themePromise) {
+                    themePromise.then(themes => {
+                        if (themes && themes.length > 0) {
                             renderThemes(themes);
                             themesContainer.classList.remove('hidden');
                         } else {

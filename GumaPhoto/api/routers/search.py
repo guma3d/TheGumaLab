@@ -424,6 +424,74 @@ def get_map_geojson():
         print(f"❌ GeoJSON 동적 생성 오류: {e}")
         return {"type": "FeatureCollection", "features": []}
 
+import random
+
+@router.get("/api/themes")
+async def get_random_themes(limit: int = 9):
+    if state.qdrant_client is None:
+        return {"themes": []}
+        
+    general_ideas = [
+        {"title": "Winter Memories", "scene": "winter snow cold"},
+        {"title": "Spring Vibes", "scene": "spring cherry blossom warm"},
+        {"title": "Summer Waves", "scene": "summer beach ocean sand"},
+        {"title": "Autumn Leaves", "scene": "autumn fall leaves"},
+        {"title": "Delicious Meals", "scene": "delicious food eating meal"},
+        {"title": "Animal Friends", "scene": "dog pet animal"},
+        {"title": "City Explorers", "scene": "city street building urban"},
+        {"title": "Nature Walks", "scene": "forest tree mountain nature"},
+        {"title": "Joyful Moments", "scene": "happy smiling laughing"},
+        {"title": "Birthday Parties", "scene": "birthday cake celebration party"},
+        {"title": "Night Vibes", "scene": "night dark lights"},
+        {"title": "Cloudy Moods", "scene": "cloudy grey sky moody"},
+        {"title": "Cafe Hopping", "scene": "cafe coffee drinking"},
+        {"title": "Beautiful Landscapes", "scene": "landscape scenic view"},
+        {"title": "Travel Adventures", "scene": "travel luggage map plane"},
+        {"title": "Peaceful Times", "scene": "peaceful calm quiet resting"},
+        {"title": "Sunset Magic", "scene": "sunset sun twilight orange sky"},
+        {"title": "Art & Culture", "scene": "museum art gallery painting exhibition"},
+        {"title": "In the Mountains", "scene": "mountain hiking trail"}
+    ]
+    location_ideas = [
+        {"title": "Trip to Jeju", "location": "Jeju Si South Korea"},
+        {"title": "Memories in San Francisco", "location": "San Francisco California"},
+        {"title": "Las Vegas Nights", "location": "Las Vegas Nevada"},
+        {"title": "Incheon Stops", "location": "Incheon South Korea"},
+        {"title": "Seoul City Life", "location": "Seoul South Korea"}
+    ]
+    
+    all_ideas = general_ideas + location_ideas
+    # 무작위 셔플 후, 사진이 없는 테마가 탈락할 것을 대비하여 limit + 6개 타겟팅
+    selected_ideas = random.sample(all_ideas, min(len(all_ideas), limit + 6))
+    
+    valid_themes = []
+    
+    for idea in selected_ideas:
+        if len(valid_themes) >= limit:
+            break
+            
+        req = SearchRequest(
+            query="theme_dummy",
+            offset=0,
+            limit=12,
+            location=idea.get("location", ""),
+            scene=idea.get("scene", "")
+        )
+        
+        try:
+            resp = await perform_search(req)
+            results = resp.get("results", [])
+            # 사진이 1장이라도 있으면 유효한 테마로 인정
+            if len(results) > 0:
+                valid_themes.append({
+                    "title": idea["title"],
+                    "photos": results
+                })
+        except Exception as e:
+            print(f"[-] Theme fetch error for {idea['title']}: {e}")
+            
+    return {"themes": valid_themes}
+
 import os
 @router.get("/api/system/indexer-log")
 def get_indexer_log():
