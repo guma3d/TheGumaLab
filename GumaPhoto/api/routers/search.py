@@ -425,72 +425,29 @@ def get_map_geojson():
         return {"type": "FeatureCollection", "features": []}
 
 import random
+import os
+import json
 
 @router.get("/api/themes")
 async def get_random_themes(limit: int = 9):
-    if state.qdrant_client is None:
-        return {"themes": []}
-        
-    general_ideas = [
-        {"title": "Winter Memories", "scene": "winter snow cold"},
-        {"title": "Spring Vibes", "scene": "spring cherry blossom warm"},
-        {"title": "Summer Waves", "scene": "summer beach ocean sand"},
-        {"title": "Autumn Leaves", "scene": "autumn fall leaves"},
-        {"title": "Delicious Meals", "scene": "delicious food eating meal"},
-        {"title": "Animal Friends", "scene": "dog pet animal"},
-        {"title": "City Explorers", "scene": "city street building urban"},
-        {"title": "Nature Walks", "scene": "forest tree mountain nature"},
-        {"title": "Joyful Moments", "scene": "happy smiling laughing"},
-        {"title": "Birthday Parties", "scene": "birthday cake celebration party"},
-        {"title": "Night Vibes", "scene": "night dark lights"},
-        {"title": "Cloudy Moods", "scene": "cloudy grey sky moody"},
-        {"title": "Cafe Hopping", "scene": "cafe coffee drinking"},
-        {"title": "Beautiful Landscapes", "scene": "landscape scenic view"},
-        {"title": "Travel Adventures", "scene": "travel luggage map plane"},
-        {"title": "Peaceful Times", "scene": "peaceful calm quiet resting"},
-        {"title": "Sunset Magic", "scene": "sunset sun twilight orange sky"},
-        {"title": "Art & Culture", "scene": "museum art gallery painting exhibition"},
-        {"title": "In the Mountains", "scene": "mountain hiking trail"}
-    ]
-    location_ideas = [
-        {"title": "Trip to Jeju", "location": "Jeju Si South Korea"},
-        {"title": "Memories in San Francisco", "location": "San Francisco California"},
-        {"title": "Las Vegas Nights", "location": "Las Vegas Nevada"},
-        {"title": "Incheon Stops", "location": "Incheon South Korea"},
-        {"title": "Seoul City Life", "location": "Seoul South Korea"}
-    ]
+    cache_path = "/app/data/frontend/themes_cache.json"
     
-    all_ideas = general_ideas + location_ideas
-    # 무작위 셔플 후, 사진이 없는 테마가 탈락할 것을 대비하여 limit + 6개 타겟팅
-    selected_ideas = random.sample(all_ideas, min(len(all_ideas), limit + 6))
-    
-    valid_themes = []
-    
-    for idea in selected_ideas:
-        if len(valid_themes) >= limit:
-            break
-            
-        req = SearchRequest(
-            query="theme_dummy",
-            offset=0,
-            limit=12,
-            location=idea.get("location", ""),
-            scene=idea.get("scene", "")
-        )
-        
+    # 1. 캐시 파일이 존재하면 초고속 베이킹된 테마 서빙
+    if os.path.exists(cache_path):
         try:
-            resp = await perform_search(req)
-            results = resp.get("results", [])
-            # 사진이 1장이라도 있으면 유효한 테마로 인정
-            if len(results) > 0:
-                valid_themes.append({
-                    "title": idea["title"],
-                    "photos": results
-                })
-        except Exception as e:
-            print(f"[-] Theme fetch error for {idea['title']}: {e}")
+            with open(cache_path, "r", encoding="utf-8") as f:
+                all_cached_themes = json.load(f)
             
-    return {"themes": valid_themes}
+            if all_cached_themes and len(all_cached_themes) > 0:
+                # 200개 규모의 거대한 캐시풀에서 무작위 9개만 즉각 선발
+                selected_themes = random.sample(all_cached_themes, min(len(all_cached_themes), limit))
+                return {"themes": selected_themes}
+        except Exception as e:
+            print(f"[-] Theme cache load error: {e}")
+            
+    # 2. 캐시 파일이 만들어지기 전(최초 구동)에는 빈 배열 반환하여 UI 오류 방지
+    # (실제 캐시는 새벽 3시나 인덱싱 완료 후 백그라운드 워커가 생성함)
+    return {"themes": []}
 
 import os
 @router.get("/api/system/indexer-log")

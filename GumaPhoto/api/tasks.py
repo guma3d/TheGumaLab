@@ -1,5 +1,14 @@
 from core.celery_app import app
 
+@app.task(name="tasks.theme_builder")
+def run_theme_builder_job():
+    try:
+        from api.services.indexer.theme_builder import build_theme_cache
+        build_theme_cache()
+    except Exception as e:
+        print(f"❌ [Celery] Theme Builder 오류: {e}")
+        raise
+
 @app.task(name="tasks.organizer")
 def run_organizer_job():
     try:
