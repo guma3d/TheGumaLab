@@ -105,50 +105,42 @@ async def perform_search(req: SearchRequest):
                 with open('/app/data/available_tags.json', 'r', encoding='utf-8') as f:
                     known_locs = json.load(f).get("locations", [])
                 
-                import difflib
-                import re
+                valid_locs = [loc for loc in known_locs if loc not in ["Unknown Location", "Unknown-Location", "위치정보없음", "All Locations", "None"]]
                 
-                for full_loc in known_locs:
-                    if full_loc in ["Unknown Location", "Unknown-Location", "위치정보없음", "All Locations", "None"]: continue
+                if valid_locs and state.gemini_client:
+                    loc_list_str = "\n".join(valid_locs)
+                    prompt = f"""You are an intelligent Geolocation Entity Matcher.
+Here is the list of valid locations currently available in our database:
+{loc_list_str}
+
+The user's search query is: "{search_text}"
+
+Does the user's query imply searching for a specific location(s) from the list above?
+Consider English-Korean translations (e.g. "하와이" == "Hawaii", "일본" == "Japan") and administrative variations (e.g. "강남" == "강남구").
+If the location exists in the list above, return the EXACT string(s) from the list.
+Output MUST be a valid JSON array of strings, and nothing else. If no location matches, output []."""
                     
-                    # [최종 검검 수정] OSM(OpenStreetMap) 형태로 DB가 싹 갈아엎어졌으므로, "대한민국 서울특별시 강남구" 처럼 띄어쓰기/쉼표로 장소 토큰을 쪼갭니다.
-                    parts = re.split(r'[ \-,]+', full_loc)
-                    for p in parts:
-                        # 텍스트 검색 최적화를 위해 불필요한 행정구역 접미사를 떼어버립니다 (예: 강남구 -> 강남)
-                        core = p.replace("특별시", "").replace("광역시", "").replace("특별자치도", "").replace("시", "").replace("구", "").replace("동", "").strip()
-                        core_len = len(core)
-                        if core_len < 2: continue
+                    try:
+                        resp = state.gemini_client.models.generate_content(
+                            model='gemini-3.1-flash-lite-preview', 
+                            contents=prompt
+                        )
+                        # JSON parsing (Markdown fallback parsing included)
+                        resp_text = resp.text.strip()
+                        if resp_text.startswith("```json"):
+                            resp_text = resp_text[7:-3].strip()
+                        elif resp_text.startswith("```"):
+                            resp_text = resp_text[3:-3].strip()
+                            
+                        matched_locs = json.loads(resp_text)
                         
-                        # 1. 100% Exact Match
-                        if core in search_text:
-                            if full_loc not in extracted_locations:
-                                extracted_locations.append(full_loc)
-                                print(f"[*] 장소 강제 식별 필터 작동 (100% 매칭): '{full_loc}' (매칭단어: {core})")
-                                
-                        # 2. 3글자 이상인 경우 Fuzzy(오타 허용) 매칭 동작
-                        elif core_len >= 3:
-                            query_words = search_text.split()
-                            found_fuzzy = False
-                            for word in query_words:
-                                # 조사(에서, 으로..)가 붙어있을 수 있으므로 다양한 길이로 잘라서 검사
-                                candidates = [
-                                    word, 
-                                    word[:core_len], 
-                                    word[:core_len+1], 
-                                    word[:core_len-1]
-                                ]
-                                
-                                # 65% 이상 단어가 유사하면 오타/동의어("글랜데일"=="글렌데일", "라스베가스"=="라스베이거스")로 인정
-                                matches = difflib.get_close_matches(core, candidates, n=1, cutoff=0.65)
-                                if matches:
-                                    found_fuzzy = True
-                                    print(f"[*] 장소 강제 식별 (오타교정 융통성 작동): '{full_loc}' (입력 오타: '{matches[0]}' -> 원본 해석: '{core}')")
-                                    # 쿼리에서 해당 오타 단어를 지워줌 (AI가 엉뚱하게 번역하지 않도록)
-                                    search_text = search_text.replace(word, "")
-                                    break
-                                    
-                            if found_fuzzy and full_loc not in extracted_locations:
-                                extracted_locations.append(full_loc)
+                        if isinstance(matched_locs, list):
+                            for loc in matched_locs:
+                                if loc in valid_locs and loc not in extracted_locations:
+                                    extracted_locations.append(loc)
+                                    print(f"[*] 🧠 Gemini 지능형 장소 식별 성공: '{loc}'")
+                    except Exception as ge:
+                        print(f"[-] Gemini location matching error: {ge}")
                                 
         except Exception as e:
             print(f"[-] Known locations extraction error: {e}")
