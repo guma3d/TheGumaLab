@@ -361,7 +361,7 @@ class VectorIndexer:
                 best_face_payload = {}
                 vectors = {"scene": scene_embedding.tolist()}
                 
-                if self.insightface:
+                if not self.skip_face and getattr(self, "insightface", None):
                     face_res = self.insightface.analyze_image(filepath, cv_img=cv_img)
                     face_count = face_res["face_count"]
                     found_people = face_res["found_people"]
@@ -466,19 +466,20 @@ class VectorIndexer:
                             self.location_cache[cache_key] = "Unknown Location"
                             
                 # [ WebP 프론트엔드 최적화 썸네일 자동 생성 ]
-                try:
-                    from PIL import Image, ImageOps
-                    orig_ext = filepath.rsplit('.', 1)[-1].lower() if '.' in filepath else ""
-                    base_name = os.path.splitext(filepath)[0]
-                    thumb_path = f"{base_name}_{orig_ext}.webp"
-                    if not os.path.exists(thumb_path):
-                        with Image.open(filepath) as t_img:
-                            t_img = ImageOps.exif_transpose(t_img)
-                            t_img.thumbnail((300, 300))
-                            if t_img.mode in ("RGBA", "P"): t_img = t_img.convert("RGB")
-                            t_img.save(thumb_path, "WEBP", quality=75)
-                except Exception as t_e:
-                    print(f"      [-] WebP 썸네일 생성 실패: {t_e}")
+                if self.run_webp_thumbnail:
+                    try:
+                        from PIL import Image, ImageOps
+                        orig_ext = filepath.rsplit('.', 1)[-1].lower() if '.' in filepath else ""
+                        base_name = os.path.splitext(filepath)[0]
+                        thumb_path = f"{base_name}_{orig_ext}.webp"
+                        if not os.path.exists(thumb_path):
+                            with Image.open(filepath) as t_img:
+                                t_img = ImageOps.exif_transpose(t_img)
+                                t_img.thumbnail((300, 300))
+                                if t_img.mode in ("RGBA", "P"): t_img = t_img.convert("RGB")
+                                t_img.save(thumb_path, "WEBP", quality=75)
+                    except Exception as t_e:
+                        print(f"      [-] WebP 썸네일 생성 실패: {t_e}")
                     
                 sort_date = 0
                 if date_str != "Unknown Date":
