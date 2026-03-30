@@ -6,7 +6,7 @@ import json
 import os
 import re
 import torch
-from qdrant_client.http.models import Filter, FieldCondition, MatchText, MatchAny, OrderBy, Direction
+from qdrant_client.http.models import Filter, FieldCondition, MatchText, MatchAny, MatchValue, OrderBy, Direction
 
 router = APIRouter()
 
@@ -163,24 +163,24 @@ Output MUST be a valid JSON array of strings, and nothing else. If no location m
     if final_people:
         # 벡터 매칭이 아닌 절대 Metadata 매칭으로 강제 규정 (AND 교집합)
         for p_name in final_people:
-            must_conds.append(FieldCondition(key="people", match=MatchText(text=p_name)))
+            must_conds.append(FieldCondition(key="people", match=MatchValue(value=p_name)))
             
     if final_locations:
         if len(final_locations) == 1:
-            must_conds.append(FieldCondition(key="location", match=MatchText(text=final_locations[0])))
+            must_conds.append(FieldCondition(key="location", match=MatchValue(value=final_locations[0])))
         else:
             # Qdrant의 PayloadSchemaType.TEXT 인덱스에는 MatchAny가 정상 작동하지 않으므로, 다중 OR(should) Filter로 중첩 처리해야 합니다.
-            loc_shoulds = [FieldCondition(key="location", match=MatchText(text=loc)) for loc in final_locations]
+            loc_shoulds = [FieldCondition(key="location", match=MatchValue(value=loc)) for loc in final_locations]
             must_conds.append(Filter(should=loc_shoulds))
             
     if extracted_years:
         if len(extracted_years) == 1:
-            must_conds.append(FieldCondition(key="date", match=MatchText(text=extracted_years[0])))
+            must_conds.append(FieldCondition(key="date", match=MatchValue(value=extracted_years[0])))
         else:
             must_conds.append(FieldCondition(key="date", match=MatchAny(any=extracted_years)))
             
     if req.date and req.date != "All Dates":
-        must_conds.append(FieldCondition(key="date", match=MatchText(text=req.date)))
+        must_conds.append(FieldCondition(key="date", match=MatchValue(value=req.date)))
         
     q_filter = Filter(must=must_conds) if must_conds else None
 
