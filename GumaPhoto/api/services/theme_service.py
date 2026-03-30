@@ -9,11 +9,20 @@ def build_theme_cache():
     print("🚀 [Theme Builder] 200개 규모의 거대한 테마 정적 캐시(Baking) 시스템 가동 시작...")
     
     # AI 모델 & Qdrant 연동 런타임 검사 및 강제 로드(Celery 단독 실행 환경 대비)
-    if state.qdrant_client is None or getattr(state, 'siglip_model', None) is None:
+    if getattr(state, 'qdrant_client', None) is None:
+        from qdrant_client import QdrantClient
+        state.qdrant_client = QdrantClient(url=os.environ.get("QDRANT_URL", "http://qdrant:6333"))
+        
+    if getattr(state, 'siglip_model', None) is None:
         try:
-            from core.startup import init_ai_models, init_qdrant
-            init_qdrant()
-            init_ai_models()
+            from transformers import AutoProcessor, AutoModel
+            import torch
+            print("[Theme Builder] SigLIP 모델 오프라인 로드 중...")
+            state.siglip_processor = AutoProcessor.from_pretrained("google/siglip-base-patch16-224")
+            state.siglip_model = AutoModel.from_pretrained("google/siglip-base-patch16-224")
+            state.siglip_model.eval()
+            if torch.cuda.is_available():
+                state.siglip_model.to("cuda")
         except Exception as e:
             print(f"[-] AI 모델 초기화 중 에러: {e}")
             
