@@ -430,7 +430,7 @@ import json
 
 @router.get("/api/themes")
 async def get_random_themes(limit: int = 9):
-    cache_path = "/app/data/frontend/themes_cache.json"
+    cache_path = "/app/data/caches/themes_cache.json"
     
     # 1. 캐시 파일이 존재하면 초고속 베이킹된 테마 서빙
     if os.path.exists(cache_path):

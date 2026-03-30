@@ -225,8 +225,8 @@ def build_theme_cache():
             print(f"  [!] 테마 처리 에러 '{theme['title']}': {e}")
             
     # 4. JSON 파일 저장(Baking)
-    # 볼륨 마운트 된 디렉토리 사용 보장
-    cache_path = "/app/data/frontend/themes_cache.json"
+    # 볼륨 마운트 된 디렉토리 사용 보장 (통합 캐시 저장소)
+    cache_path = "/app/data/caches/themes_cache.json"
     os.makedirs(os.path.dirname(cache_path), exist_ok=True)
     
     with open(cache_path, "w", encoding="utf-8") as f:
