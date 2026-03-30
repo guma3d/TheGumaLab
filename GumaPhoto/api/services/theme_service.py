@@ -182,14 +182,13 @@ def build_theme_cache():
         # 2. Qdrant 질의
         try:
             if text_vector:
-                # [핵심] 500장까지 넓게 검색하되 score_threshold=0.8 로 정밀 타격
+                # [핵심] 150장까지만 검색하여 가장 유사한 상위 항목들만 확보 (score_threshold 삭제)
                 results = state.qdrant_client.query_points(
                     collection_name="gumaphoto_hybrid_kr",
                     query=text_vector,
                     using="scene",
                     query_filter=q_filter,
-                    limit=500,
-                    score_threshold=0.80,
+                    limit=150,
                     with_payload=True
                 ).points
             else:
