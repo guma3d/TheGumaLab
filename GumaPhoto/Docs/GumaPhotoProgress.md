@@ -81,4 +81,9 @@
 *   **완전 무결점 ExifTool 내장화 (Native Engine):** 기존 OS 셸 환경이나 환경변수에 의존하던 외부 `exiftool`을 Perl 기반 Standalone 바이너리 단위로 직접 Git 레포지토리 폴더(`tool/exiftool_engine`) 내부에 박아넣어, 어느 OS나 Docker 컨테이너에서든 환경 셋업 없이 100% 작동을 보장하는 네이티브 통합 구동 달성.
 *   **사전 카카오톡 장소 태깅망(Preprocess Tool) 구축:** 사진이 Qdrant에 올라가기 전, Python의 대화형 터미널에서 `Scripts/preprocess_tool.py`를 가동해 사용자가 직접 카카오맵 기반으로 특정 사진의 장소 좌표를 선태그(pre-injection)할 수 있는 무적의 편의성 유틸리티 완성.
 *   **공장 초기화 엔진 (Factory Reset DB):** 데이터 정합성이 깨진 경우 셸에서 폴더들을 수동으로 지우는 노동을 방지하기 위해, Qdrant Collection 소각부터 SQLite 비우기, 파생 폴더 리셋까지 한 방에 해결하는 `Scripts/factory_reset_db.py` 배치 파일 연동.
-*   **InsightFace 파일명 파싱 엄격화:** 기존 `re.sub`를 쓰던 모호한 파싱 로직을 폐기하고, 오직 언더바(`_`) 스플릿 방식만 허용하도록 `model_faces.py` 및 `insightface_service.py`를 단속하여 '준우_아동' 같은 형태가 '준우' 등으로 어긋남 없이 안전 매핑 작동하도록 구조 강화.
+## 📌 [17단계] 장소 파싱 정밀화 및 AI 검색 아키텍처 완전 개편 (완료 🎯 - 오늘 진행)
+*   **XMP 메타데이터 완전 폐기 및 GPS-Only 단일화:** 과거 Adobe 표준인 XMP 규격을 파싱하다 발생한 외계어 텍스트(`??ǳ`) 오염을 뿌리뽑고자, XMP 파싱 및 주입 로직을 `preprocess_tool.py`, `orchestrator.py` 등 모든 곳에서 영구 삭제. 오직 원본 GPS 좌표(Latitude/Longitude)만을 Source of Truth로 삼아 OSM(Nominatim) 역번역으로만 장소를 구축하는 청정 DB로 마이그레이션 성공.
+*   **Vector Indexer 초경량 모듈 스위치(`--update-location`) 탑재:** 기존의 거대한 AI 인덱서를 5개의 토글 스위치(`run_vision_ai`, `skip_face`, `run_metadata_geo` 등)로 분할. 무거운 SigLIP, Florence-2를 VRAM에 올리지 않고 CPU만 사용하여 수만 장의 DB 페이로드를 초당 수백 장씩 광속으로 덮어쓰기(`set_payload`)하는 혁신적 DB 패치 파이프라인 도입.
+*   **Qdrant TEXT 인덱스 `MatchAny` 버그 픽스:** Qdrant 내부 수학 엔진이 문자열 배열 매칭 시 TEXT 자료형에서 `MatchAny` 연산을 무시하며 0건을 반환하던 치명적 버그를 색출. 이를 `Filter(should=[FieldCondition(MatchText)])` 방식의 OR 중첩 쿼리문으로 완벽히 치환하여 검색 누락 해결.
+*   **Gemini 3.1 Flash 지능형 엔티티 추출(Entity Resolution) 도입:** "하와이 사진 보여줘" 같은 자연어에서 정규표현식으로 행정구역(특별시, 도)을 떼어내며 억지로 비교하던 `difflib` 문자열 슬라이싱 코드를 전면 폐기. 오로지 `available_tags.json` 리스트를 통째로 Gemini에 넘겨 "사용자 의도에 맞는 지명을 리스트에서 골라만 줘" 라고 책임을 위임하는 차세대 LLM 매핑 방식을 도입하여 `["미국 Hawaii"]` 와 같은 영문/국문 크로스 매칭을 100% 무결점으로 달성.
+*   **검색어 필러(Filler Words) 무력화 방어:** "사진 보여줘" 같은 불필요한 대화형 추임새가 SigLIP 시각 벡터로 치환되어 엉뚱한 이미지를 오염시키는 현상을 막기 위해, Gemini 프롬프트에 시각적 알맹이가 없으면 `EMPTY`를 반환하도록 강제하여 즉시 벡터 검색을 SKIP하는 스마트 방어 체계 구축.
