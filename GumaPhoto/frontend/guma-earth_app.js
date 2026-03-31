@@ -151,10 +151,10 @@ const GumaEarth = (function() {
                         // Create Canvas Caching Dictionary for gorgeous 3D dynamic cluster orbs
                         const clusterImageCache = {};
 
-                        // 아우라 구슬(Aura Orb) 생성기 - 클러스터(다수)와 낱개 핀(단일) 모두 통합하여 사용
-                        function createAuraOrb(count) {
+                        // 아우라 구슬(Aura Orb) 생성기 - 색상 테마 지원
+                        function createAuraOrb(count, theme = 'blue') {
                             let clusterSize = count < 50 ? 50 : count < 500 ? 64 : 80;
-                            const identifier = count + '_' + clusterSize + '_3DOrb';
+                            const identifier = count + '_' + clusterSize + '_' + theme;
                             
                             if (clusterImageCache[identifier]) {
                                 return clusterImageCache[identifier];
@@ -173,7 +173,9 @@ const GumaEarth = (function() {
                                 center, center, radius
                             );
                             
-                            const rgb = '244, 63, 94'; // Rose Theme
+                            const rgb = theme === 'blue' ? '59, 130, 246' : 
+                                       (theme === 'green' ? '34, 197, 94' : '244, 63, 94');
+
                             gradient.addColorStop(0, `rgba(${rgb}, 1.0)`);    // 중심~20% 완전 불투명 (Solid Core)
                             gradient.addColorStop(0.2, `rgba(${rgb}, 1.0)`);
                             gradient.addColorStop(1, `rgba(${rgb}, 0.0)`);    // 20% 지점에서 가장자리로 서서히 페이드 아웃
@@ -202,19 +204,23 @@ const GumaEarth = (function() {
                         ds.clustering.clusterEvent.addEventListener(function(clusteredEntities, cluster) {
                             cluster.billboard.show = true;
                             cluster.label.show = false; // 글자는 구슬 위에 직접 캔버스로 박음
+                            
+                            // 클릭 모달 액션을 위해 데이터 임베딩
+                            cluster.customData = clusteredEntities;
 
-                            cluster.billboard.image = createAuraOrb(clusteredEntities.length);
+                            cluster.billboard.image = createAuraOrb(clusteredEntities.length, 'blue');
                             cluster.billboard.verticalOrigin = Cesium.VerticalOrigin.BOTTOM; 
                             cluster.billboard.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND;
                         });
                         
                         // 기본 카메라 마커(빨간 핀) 전면 폐기 및 낱개 사진(1장)도 동일한 아우라 구슬로 렌더링 강제 교체
                         const entities = ds.entities.values;
-                        const singleOrb = createAuraOrb(1); // 1장짜리 단일 핀 미리 굽기 (텍스트 없음)
+                        const singleOrbBlue = createAuraOrb(1, 'blue'); // 1장짜리 단일 핀 미리 굽기 (텍스트 없음)
                         for (let i = 0; i < entities.length; i++) {
                             const evt = entities[i];
                             if (evt.billboard) {
-                                evt.billboard.image = singleOrb; // 촌스러운 기본 빨간 핀(Camera) 이미지를 날려버리고 오라 구슬로 덮어쓰기!
+                                evt.customData = [evt]; // 단일 파일도 동일한 배열 규칙으로 통일
+                                evt.billboard.image = singleOrbBlue; // 촌스러운 기본 빨간 핀(Camera) 이미지를 날려버리고 오라 구슬로 덮어쓰기!
                                 // 💡 중요: GeoJsonDataSource가 생성한 기존 마커는 markerColor(#f43f5e)의 '빨간색 틴트(Color)'가 Billboard에 먹혀있습니다.
                                 // 이 틴트 속성을 White(순정)으로 지워주지 않으면, 캔버스 구슬 이미지 위에 또 빨간 셰이더가 곱해져 클러스터 구슬보다 어둡고 칙칙해 보임.
                                 evt.billboard.color = Cesium.Color.WHITE; 
@@ -225,6 +231,113 @@ const GumaEarth = (function() {
 
                         viewer.dataSources.add(ds);
                         console.log(`[GumaEarth] Successfully loaded ${entities.length} dynamic GPS markers! Clustering Enabled.`);
+                        
+                        // 🎯 --- 모달 UI 동적 주입 및 클릭 인터랙션 설계 ---
+                        const modalOverlay = document.createElement('div');
+                        modalOverlay.id = 'guma-earth-cluster-modal';
+                        modalOverlay.style.cssText = `
+                            position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
+                            width: 90%; max-width: 400px;
+                            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px);
+                            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px;
+                            display: none; flex-direction: column; z-index: 9999;
+                            box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden;
+                        `;
+                        
+                        const modalHeader = document.createElement('div');
+                        modalHeader.style.cssText = "padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.05);";
+                        const headerTitle = document.createElement('h3');
+                        headerTitle.style.cssText = "margin: 0; font-size: 15px; color: #fff; font-weight: 600;";
+                        
+                        const closeBtn = document.createElement('button');
+                        closeBtn.innerHTML = "✕";
+                        closeBtn.style.cssText = "background: none; border: none; color: #fff; font-size: 16px; cursor: pointer; display: flex; align-items: center;";
+                        
+                        const modalContent = document.createElement('div');
+                        modalContent.style.cssText = "display: flex; flex-wrap: wrap; gap: 8px; padding: 16px; overflow-y: auto; max-height: calc(50vh - 50px); justify-content: flex-start;";
+                        
+                        modalHeader.appendChild(headerTitle);
+                        modalHeader.appendChild(closeBtn);
+                        modalOverlay.appendChild(modalHeader);
+                        modalOverlay.appendChild(modalContent);
+                        document.body.appendChild(modalOverlay);
+                        
+                        let currSelectedEntity = null;
+                        let currClusterCount = 0;
+                        
+                        function clearSelection() {
+                            if (currSelectedEntity && currSelectedEntity.billboard) {
+                                currSelectedEntity.billboard.image = createAuraOrb(currClusterCount, 'blue');
+                                currSelectedEntity = null;
+                            }
+                            modalOverlay.style.display = 'none';
+                            modalContent.innerHTML = '';
+                        }
+                        
+                        closeBtn.onclick = clearSelection;
+                        
+                        const clickHandler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+                        clickHandler.setInputAction(function(click) {
+                            const picked = viewer.scene.pick(click.position);
+                            
+                            if (!Cesium.defined(picked) || !picked.id || !picked.id.billboard) {
+                                clearSelection();
+                                return;
+                            }
+                            
+                            const entity = picked.id;
+                            if (!entity.customData) {
+                                clearSelection();
+                                return;
+                            }
+                            
+                            if (currSelectedEntity !== entity) clearSelection();
+                            
+                            const photos = entity.customData;
+                            currClusterCount = photos.length;
+                            currSelectedEntity = entity;
+                            
+                            // 클릭된 클러스터를 초록색(Green)으로 변경!
+                            currSelectedEntity.billboard.image = createAuraOrb(currClusterCount, 'green');
+                            
+                            headerTitle.innerText = `${currClusterCount} Photos In Area`;
+                            modalContent.innerHTML = '';
+                            
+                            // 1. 역순(시간 최신순) 정렬을 위한 데이터 추출
+                            let photoList = photos.map(p => {
+                                return {
+                                    url: p.properties.url ? p.properties.url.getValue() : '',
+                                    date: p.properties.date ? p.properties.date.getValue() : '1970'
+                                };
+                            });
+                            
+                            photoList.sort((a,b) => b.date.localeCompare(a.date));
+                            
+                            // 2. DOM 삽입
+                            photoList.forEach(data => {
+                                if (data.url) {
+                                    const img = document.createElement('img');
+                                    img.src = data.url;
+                                    img.style.cssText = "width: calc(33.3% - 6px); aspect-ratio: 1/1; object-fit: cover; border-radius: 6px; background: #333; cursor: pointer; opacity: 0; transition: opacity 0.3s ease;";
+                                    img.onload = () => { img.style.opacity = 1; };
+                                    img.onclick = () => { window.open(data.url, '_blank'); };
+                                    modalContent.appendChild(img);
+                                }
+                            });
+                            
+                            modalOverlay.style.display = 'flex';
+                            
+                            // 모바일 클릭 흔들림 방지를 위해 선택된 핀으로 카메라 부드럽게 고정
+                            viewer.camera.flyTo({
+                                destination: Cesium.Cartesian3.fromDegrees(
+                                    Cesium.Math.toDegrees(viewer.camera.positionCartographic.longitude),
+                                    Cesium.Math.toDegrees(viewer.camera.positionCartographic.latitude),
+                                    viewer.camera.positionCartographic.height
+                                ),
+                                duration: 0.1
+                            });
+                            
+                        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
                     }
                 } else {
                     console.warn(`[GumaEarth] Map markers fetch failed: ${response.status}`);

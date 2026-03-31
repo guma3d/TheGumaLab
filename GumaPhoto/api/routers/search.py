@@ -410,7 +410,8 @@ def get_map_geojson():
                             "coordinates": [float(geo["lon"]), float(geo["lat"])]
                         },
                         "properties": {
-                            "url": photo_url
+                            "url": photo_url,
+                            "date": payload.get("date", "1970:01:01 00:00:00")
                         }
                     })
             if offset is None:
