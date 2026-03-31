@@ -150,6 +150,33 @@ def build_theme_cache():
         ]
     }
     
+    # ----- 동적 장소 추출 로직 (DB 통계 연동) -----
+    try:
+        import random
+        if os.path.exists("/app/data/available_tags.json"):
+            with open("/app/data/available_tags.json", "r", encoding="utf-8") as f:
+                tag_data = json.load(f)
+                valid_locations = [loc for loc in tag_data.get("locations", []) if loc and loc != "Unknown Location" and loc != "위치정보없음"]
+                
+                # 방대한 시스템 통계 풀(약 300곳)에서 매일 밤 무작위로 10곳을 색다르게 픽업
+                sample_size = min(len(valid_locations), 10)
+                random_locs = random.sample(valid_locations, sample_size)
+                
+                # 하드코딩된 지역 테마를 덮어쓰고 생동감 있는 DB 실존 장소로 대체
+                dynamic_themes = []
+                for loc in random_locs:
+                    # '경기도 고양시 일산동구' -> '일산동구' 처럼 마지막 단어만 따서 예쁘게 타이틀 생성
+                    short_name = loc.split()[-1] if len(loc.split()) > 0 else loc
+                    dynamic_themes.append({
+                        "title": f"{short_name}에서의 추억", 
+                        "location": loc
+                    })
+                    
+                categories["Korean Dynamic Locations"] = dynamic_themes
+                print(f"[*] 다이내믹 장소 10곳 무작위 추출 완료: {[t['title'] for t in dynamic_themes]}")
+    except Exception as e:
+        print(f"[-] 시스템 통계(available_tags.json) 연동 실패 (기본값 사용): {e}")
+
     # 카테고리 평탄화
     all_themes = []
     for cat_name, themes in categories.items():
