@@ -38,6 +38,11 @@ const GumaEarth = (function() {
             // Remove any auto-loaded ION components if they somehow snuck in
             viewer.scene.imageryLayers.removeAll();
 
+            // 🎯 초고해상도 렌더링 강제 (Retina/4K 대응 및 스트리밍 해상도 향상)
+            viewer.useBrowserRecommendedResolution = false;       // 브라우저의 프레임 우선 강제 다운스케일링 제어 해제 (1:1 네이티브 해상도 복원)
+            viewer.scene.globe.maximumScreenSpaceError = 1.5;     // 기본값(2.0). 수치를 낮출수록 픽셀 왜곡을 허용하지 않고 즉시 고해상도 타일을 강제 스트리밍 (선명도 극대화)
+
+
             // 1. Global Base Map (Esri World Imagery)
             const esriProvider = await Cesium.ArcGisMapServerImageryProvider.fromUrl(
                 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer', {
