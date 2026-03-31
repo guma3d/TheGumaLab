@@ -41,6 +41,10 @@ const GumaEarth = (function() {
             // 🎯 초고해상도 렌더링 강제 (Retina/4K 대응 및 스트리밍 해상도 향상)
             viewer.useBrowserRecommendedResolution = false;       // 브라우저의 프레임 우선 강제 다운스케일링 제어 해제 (1:1 네이티브 해상도 복원)
             viewer.scene.globe.maximumScreenSpaceError = 1.5;     // 기본값(2.0). 수치를 낮출수록 픽셀 왜곡을 허용하지 않고 즉시 고해상도 타일을 강제 스트리밍 (선명도 극대화)
+            
+            // 🎯 비동기 스트리밍 범위 전면 확장 (모바일 화면 가장자리 지연 로드 방지)
+            viewer.scene.globe.preloadAncestors = true;
+            viewer.scene.globe.preloadSiblings = true; // 현재 시야(중앙) 뿐만 아니라 주변 프러스텀 밖의 텍스쳐 타일들까지 과감히 미리 당겨서 로딩(Preload)
 
 
             // 1. Global Base Map (Esri World Imagery)
@@ -179,14 +183,16 @@ const GumaEarth = (function() {
                             ctx.fillStyle = gradient;
                             ctx.fill();
                             
-                            // 2. 선명한 텍스트 (단일 개체인 경우에도 통일성을 위해 '1'을 새겨넣음)
-                            ctx.font = 'bold ' + (count < 100 ? 14 : 16) + 'px Helvetica, Arial, sans-serif';
-                            ctx.textAlign = 'center';
-                            ctx.textBaseline = 'middle';
-                            
-                            const txt = count > 9999 ? '9.9k' : count.toString();
-                            ctx.fillStyle = 'white';
-                            ctx.fillText(txt, center, center + 1);
+                            // 2. 선명한 텍스트 (단일 개체인 경우에도 통일성을 위해 캔버스는 구우나, 숫자 1 표기는 생략)
+                            if (count > 1) {
+                                ctx.font = 'bold ' + (count < 100 ? 14 : 16) + 'px Helvetica, Arial, sans-serif';
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'middle';
+                                
+                                const txt = count > 9999 ? '9.9k' : count.toString();
+                                ctx.fillStyle = 'white';
+                                ctx.fillText(txt, center, center + 1);
+                            }
 
                             const dataUrl = canvas.toDataURL();
                             clusterImageCache[identifier] = dataUrl;
@@ -204,11 +210,14 @@ const GumaEarth = (function() {
                         
                         // 기본 카메라 마커(빨간 핀) 전면 폐기 및 낱개 사진(1장)도 동일한 아우라 구슬로 렌더링 강제 교체
                         const entities = ds.entities.values;
-                        const singleOrb = createAuraOrb(1); // 1장짜리 단일 핀 미리 굽기
+                        const singleOrb = createAuraOrb(1); // 1장짜리 단일 핀 미리 굽기 (텍스트 없음)
                         for (let i = 0; i < entities.length; i++) {
                             const evt = entities[i];
                             if (evt.billboard) {
                                 evt.billboard.image = singleOrb; // 촌스러운 기본 빨간 핀(Camera) 이미지를 날려버리고 오라 구슬로 덮어쓰기!
+                                // 💡 중요: GeoJsonDataSource가 생성한 기존 마커는 markerColor(#f43f5e)의 '빨간색 틴트(Color)'가 Billboard에 먹혀있습니다.
+                                // 이 틴트 속성을 White(순정)으로 지워주지 않으면, 캔버스 구슬 이미지 위에 또 빨간 셰이더가 곱해져 클러스터 구슬보다 어둡고 칙칙해 보임.
+                                evt.billboard.color = Cesium.Color.WHITE; 
                                 evt.billboard.verticalOrigin = Cesium.VerticalOrigin.BOTTOM; 
                                 evt.billboard.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND;
                             }
