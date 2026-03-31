@@ -278,65 +278,78 @@ const GumaEarth = (function() {
                         
                         const clickHandler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
                         clickHandler.setInputAction(function(click) {
-                            const picked = viewer.scene.pick(click.position);
-                            
-                            if (!Cesium.defined(picked) || !picked.id || !picked.id.billboard) {
-                                clearSelection();
-                                return;
-                            }
-                            
-                            const entity = picked.id;
-                            if (!entity.customData) {
-                                clearSelection();
-                                return;
-                            }
-                            
-                            if (currSelectedEntity !== entity) clearSelection();
-                            
-                            const photos = entity.customData;
-                            currClusterCount = photos.length;
-                            currSelectedEntity = entity;
-                            
-                            // 클릭된 클러스터를 초록색(Green)으로 변경!
-                            currSelectedEntity.billboard.image = createAuraOrb(currClusterCount, 'green');
-                            
-                            headerTitle.innerText = `${currClusterCount} Photos In Area`;
-                            modalContent.innerHTML = '';
-                            
-                            // 1. 역순(시간 최신순) 정렬을 위한 데이터 추출
-                            let photoList = photos.map(p => {
-                                return {
-                                    url: p.properties.url ? p.properties.url.getValue() : '',
-                                    date: p.properties.date ? p.properties.date.getValue() : '1970'
-                                };
-                            });
-                            
-                            photoList.sort((a,b) => b.date.localeCompare(a.date));
-                            
-                            // 2. DOM 삽입
-                            photoList.forEach(data => {
-                                if (data.url) {
-                                    const img = document.createElement('img');
-                                    img.src = data.url;
-                                    img.style.cssText = "width: calc(33.3% - 6px); aspect-ratio: 1/1; object-fit: cover; border-radius: 6px; background: #333; cursor: pointer; opacity: 0; transition: opacity 0.3s ease;";
-                                    img.onload = () => { img.style.opacity = 1; };
-                                    img.onclick = () => { window.open(data.url, '_blank'); };
-                                    modalContent.appendChild(img);
+                            try {
+                                const picked = viewer.scene.pick(click.position);
+                                
+                                if (!Cesium.defined(picked) || !picked.id || !picked.id.billboard) {
+                                    clearSelection();
+                                    return;
                                 }
-                            });
-                            
-                            modalOverlay.style.display = 'flex';
-                            
-                            // 모바일 클릭 흔들림 방지를 위해 선택된 핀으로 카메라 부드럽게 고정
-                            viewer.camera.flyTo({
-                                destination: Cesium.Cartesian3.fromDegrees(
-                                    Cesium.Math.toDegrees(viewer.camera.positionCartographic.longitude),
-                                    Cesium.Math.toDegrees(viewer.camera.positionCartographic.latitude),
-                                    viewer.camera.positionCartographic.height
-                                ),
-                                duration: 0.1
-                            });
-                            
+                                
+                                const entity = picked.id;
+                                if (!entity.customData) {
+                                    clearSelection();
+                                    return;
+                                }
+                                
+                                if (currSelectedEntity !== entity) clearSelection();
+                                
+                                const photos = entity.customData;
+                                currClusterCount = photos.length;
+                                currSelectedEntity = entity;
+                                
+                                // 클릭된 클러스터를 초록색(Green)으로 변경!
+                                currSelectedEntity.billboard.image = createAuraOrb(currClusterCount, 'green');
+                                
+                                headerTitle.innerText = `${currClusterCount} Photos In Area`;
+                                modalContent.innerHTML = '';
+                                
+                                // 1. 역순(시간 최신순) 정렬을 위한 안전한 데이터 추출 (서버에서 date 파라미터가 비어있어도 크래시 방지)
+                                let photoList = photos.map(p => {
+                                    let safeUrl = '';
+                                    let safeDate = '1970';
+                                    
+                                    if (p.properties) {
+                                        // PropertyBag.getValue() 체크
+                                        if (p.properties.url !== undefined) {
+                                            safeUrl = typeof p.properties.url.getValue === 'function' ? p.properties.url.getValue() : p.properties.url;
+                                        }
+                                        if (p.properties.date !== undefined) {
+                                            safeDate = typeof p.properties.date.getValue === 'function' ? p.properties.date.getValue() : p.properties.date;
+                                        }
+                                    }
+                                    
+                                    return { url: safeUrl, date: safeDate };
+                                });
+                                
+                                photoList.sort((a,b) => b.date.localeCompare(a.date));
+                                
+                                // 2. DOM 삽입
+                                photoList.forEach(data => {
+                                    if (data.url) {
+                                        const img = document.createElement('img');
+                                        img.src = data.url;
+                                        img.style.cssText = "width: calc(33.3% - 6px); aspect-ratio: 1/1; object-fit: cover; border-radius: 6px; background: #333; cursor: pointer; opacity: 0; transition: opacity 0.3s ease;";
+                                        img.onload = () => { img.style.opacity = 1; };
+                                        img.onclick = () => { window.open(data.url, '_blank'); };
+                                        modalContent.appendChild(img);
+                                    }
+                                });
+                                
+                                modalOverlay.style.display = 'flex';
+                                
+                                // 모바일 클릭 흔들림 방지를 위해 선택된 핀으로 카메라 부드럽게 고정
+                                viewer.camera.flyTo({
+                                    destination: Cesium.Cartesian3.fromDegrees(
+                                        Cesium.Math.toDegrees(viewer.camera.positionCartographic.longitude),
+                                        Cesium.Math.toDegrees(viewer.camera.positionCartographic.latitude),
+                                        viewer.camera.positionCartographic.height
+                                    ),
+                                    duration: 0.1
+                                });
+                            } catch (e) {
+                                console.error("[GumaEarth] Cluster Click Interaction crashed:", e);
+                            }
                         }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
                     }
                 } else {
