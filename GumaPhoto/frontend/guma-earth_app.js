@@ -26,8 +26,8 @@ const GumaEarth = (function() {
                 timeline: false,
                 navigationHelpButton: false,
                 scene3DOnly: true,                  // Disable 2D/Columbus view
-                requestRenderMode: true,            // Save battery: only render on interact
-                maximumRenderTimeChange: Infinity,
+                requestRenderMode: false,           // [중요: 절전모드 해제] 클러스터링 연산이 화면 가장자리/밖에서 지연되어 렌더링이 튀는 현상(Popping)을 막기 위해 60fps 상시 렌더링 체제로 전환
+                // maximumRenderTimeChange 속성 비활성화 (requestRenderMode가 false이므로 불필요)
                 baseLayer: false                    // Prevent default Bing Maps (No Token error)
             });
             
