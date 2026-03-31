@@ -142,71 +142,74 @@ const GumaEarth = (function() {
                         // -- 3D Map Clustering Setup --
                         ds.clustering.enabled = true;
                         ds.clustering.pixelRange = 45; // Group markers within 45 pixels
-                        ds.clustering.minimumClusterSize = 3;
+                        ds.clustering.minimumClusterSize = 2; // 최소 2개부터 즉각 클러스터링 적용
 
                         // Create Canvas Caching Dictionary for gorgeous 3D dynamic cluster orbs
                         const clusterImageCache = {};
 
-                        ds.clustering.clusterEvent.addEventListener(function(clusteredEntities, cluster) {
-                            const count = clusteredEntities.length;
-                            
-                            // Cesium의 내부 클러스터 처리 엔진(EntityCluster)은 오직 Billboard, Label, Point 세 가지만 지원하며 
-                            // Ellipse나 Ellipsoid 같은 3D 입체 도형은 성능 문제로 자체 렌더링을 완전히 무시(패스)해버립니다.
-                            // 따라서 Canvas API를 활용하여 완벽한 '입체 3D 구슬' 홀로그램을 그려 Billboard에 매핑합니다.
-                            
-                            cluster.billboard.show = true;
-                            cluster.label.show = false; // 글자는 구슬 위에 직접 캔버스로 박음
-
+                        // 아우라 구슬(Aura Orb) 생성기 - 클러스터(다수)와 낱개 핀(단일) 모두 통합하여 사용
+                        function createAuraOrb(count) {
                             let clusterSize = count < 50 ? 50 : count < 500 ? 64 : 80;
                             const identifier = count + '_' + clusterSize + '_3DOrb';
                             
-                            if (!clusterImageCache[identifier]) {
-                                const canvas = document.createElement('canvas');
-                                canvas.width = clusterSize;
-                                canvas.height = clusterSize;
-                                const ctx = canvas.getContext('2d');
-                                const center = clusterSize / 2;
-                                
-                                // 1. 중심 0% ~ 20%는 완전 불투명(1.0)한 코어를 갖고, 20% ~ 100%(가장자리)는 서서히 투명(0.0)해지며 퍼져나가는 후광(Aura) 그라데이션
-                                const radius = center - 4; // Margin
-                                const gradient = ctx.createRadialGradient(
-                                    center, center, 0, 
-                                    center, center, radius
-                                );
-                                
-                                const rgb = '244, 63, 94'; // Rose Theme
-                                gradient.addColorStop(0, `rgba(${rgb}, 1.0)`);    // 중심~20% 완전 불투명 (Solid Core)
-                                gradient.addColorStop(0.2, `rgba(${rgb}, 1.0)`);
-                                gradient.addColorStop(1, `rgba(${rgb}, 0.0)`);    // 20% 지점에서 가장자리로 갈수록 부드럽게 완전 투명으로 페이드 아웃
-                                
-                                ctx.beginPath();
-                                ctx.arc(center, center, radius, 0, Math.PI * 2);
-                                ctx.fillStyle = gradient;
-                                ctx.fill();
-                                
-                                // 2. 선명한 텍스트 (반구 트릭 롤백: 다시 정중앙으로 배치)
-                                ctx.font = 'bold ' + (count < 100 ? 14 : 16) + 'px Helvetica, Arial, sans-serif';
-                                ctx.textAlign = 'center';
-                                ctx.textBaseline = 'middle';
-                                
-                                const txt = count > 9999 ? '9.9k' : count.toString();
-                                ctx.fillStyle = 'white';
-                                ctx.fillText(txt, center, center + 1);
-
-                                clusterImageCache[identifier] = canvas.toDataURL();
+                            if (clusterImageCache[identifier]) {
+                                return clusterImageCache[identifier];
                             }
                             
-                            cluster.billboard.image = clusterImageCache[identifier];
-                            // 핵심 롤백: 돔(Dome) 트릭을 해제하고 다시 'BOTTOM' 속성으로 핀처럼 지면에 서게 만듦
+                            const canvas = document.createElement('canvas');
+                            canvas.width = clusterSize;
+                            canvas.height = clusterSize;
+                            const ctx = canvas.getContext('2d');
+                            const center = clusterSize / 2;
+                            
+                            // 1. 중심 0% ~ 20%는 완전 불투명(1.0), 20% ~ 100%(가장자리)는 서서히 투명(0.0)해지며 퍼져나가는 후광(Aura) 그라데이션
+                            const radius = center - 4; // Margin
+                            const gradient = ctx.createRadialGradient(
+                                center, center, 0, 
+                                center, center, radius
+                            );
+                            
+                            const rgb = '244, 63, 94'; // Rose Theme
+                            gradient.addColorStop(0, `rgba(${rgb}, 1.0)`);    // 중심~20% 완전 불투명 (Solid Core)
+                            gradient.addColorStop(0.2, `rgba(${rgb}, 1.0)`);
+                            gradient.addColorStop(1, `rgba(${rgb}, 0.0)`);    // 20% 지점에서 가장자리로 서서히 페이드 아웃
+                            
+                            ctx.beginPath();
+                            ctx.arc(center, center, radius, 0, Math.PI * 2);
+                            ctx.fillStyle = gradient;
+                            ctx.fill();
+                            
+                            // 2. 선명한 텍스트 (단일 개체인 경우에도 통일성을 위해 '1'을 새겨넣음)
+                            ctx.font = 'bold ' + (count < 100 ? 14 : 16) + 'px Helvetica, Arial, sans-serif';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            
+                            const txt = count > 9999 ? '9.9k' : count.toString();
+                            ctx.fillStyle = 'white';
+                            ctx.fillText(txt, center, center + 1);
+
+                            const dataUrl = canvas.toDataURL();
+                            clusterImageCache[identifier] = dataUrl;
+                            return dataUrl;
+                        }
+
+                        ds.clustering.clusterEvent.addEventListener(function(clusteredEntities, cluster) {
+                            cluster.billboard.show = true;
+                            cluster.label.show = false; // 글자는 구슬 위에 직접 캔버스로 박음
+
+                            cluster.billboard.image = createAuraOrb(clusteredEntities.length);
                             cluster.billboard.verticalOrigin = Cesium.VerticalOrigin.BOTTOM; 
                             cluster.billboard.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND;
                         });
                         
+                        // 기본 카메라 마커(빨간 핀) 전면 폐기 및 낱개 사진(1장)도 동일한 아우라 구슬로 렌더링 강제 교체
                         const entities = ds.entities.values;
+                        const singleOrb = createAuraOrb(1); // 1장짜리 단일 핀 미리 굽기
                         for (let i = 0; i < entities.length; i++) {
                             const evt = entities[i];
                             if (evt.billboard) {
-                                // Anchor pins to ground
+                                evt.billboard.image = singleOrb; // 촌스러운 기본 빨간 핀(Camera) 이미지를 날려버리고 오라 구슬로 덮어쓰기!
+                                evt.billboard.verticalOrigin = Cesium.VerticalOrigin.BOTTOM; 
                                 evt.billboard.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND;
                             }
                         }
