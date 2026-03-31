@@ -49,19 +49,17 @@ const GumaEarth = (function() {
             baseLayer.gamma = 0.8;
             baseLayer.saturation = 1.3;
 
-            // 2. High-Resolution Text Overlay Layer (CartoDB Dark Matter - Only Labels @2x Retina)
-            // Appending '@2x.png' retrieves massive 512x512 tiles, completely eliminating blurriness when scaled/zoomed in.
-            const labelProvider = new Cesium.UrlTemplateImageryProvider({
-                url: 'https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}@2x.png',
-                subdomains: ['a', 'b', 'c', 'd'],
-                maximumLevel: 19
+            // 2. High-Resolution Text Overlay Layer (Esri Reference - World Boundaries and Places)
+            // 기존 CartoDB 타일보다 훨씬 고해상도의 압도적으로 깔끔하고 정교한 공식 위성 지도 라벨(글자/국경선)입니다.
+            const labelProvider = await Cesium.ArcGisMapServerImageryProvider.fromUrl(
+                'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer', {
+                enablePickFeatures: false
             });
             const textLayer = viewer.imageryLayers.addImageryProvider(labelProvider);
             
-            // [수정] WebGL 셰이더 조절 기능을 원복하여 CartoDB 본연의 깔끔하고 얇은 글씨체를 살립니다.
-            // (강제 조정 시 픽셀들의 검은 테두리가 과도하게 뻥튀기되어 '두꺼운 아웃라인'으로 안 예쁘게 보임)
-            textLayer.brightness = 1.0; 
-            textLayer.contrast = 1.0;
+            // 라벨의 가독성을 높이기 위해 채도와 대비를 살짝 강조
+            textLayer.brightness = 1.1; 
+            textLayer.contrast = 1.2;
 
             // 🌟 Advanced Rendering & Atmosphere Effects (Three.js Style)
             viewer.scene.highDynamicRange = true; // HDR tone mapping
