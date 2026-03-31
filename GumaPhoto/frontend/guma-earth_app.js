@@ -266,8 +266,15 @@ const GumaEarth = (function() {
                         let currClusterCount = 0;
                         
                         function clearSelection() {
-                            if (currSelectedEntity && currSelectedEntity.billboard) {
-                                currSelectedEntity.billboard.image = createAuraOrb(currClusterCount, 'blue');
+                            if (currSelectedEntity) {
+                                // 클러스터 프리미티브에 직접 매핑된 경우 (Billboard)
+                                if (currSelectedEntity.image !== undefined) {
+                                    currSelectedEntity.image = createAuraOrb(currClusterCount, 'blue');
+                                } 
+                                // 단일 엔티티(Entity)인 경우
+                                else if (currSelectedEntity.billboard) {
+                                    currSelectedEntity.billboard.image = createAuraOrb(currClusterCount, 'blue');
+                                }
                                 currSelectedEntity = null;
                             }
                             modalOverlay.style.display = 'none';
@@ -281,25 +288,41 @@ const GumaEarth = (function() {
                             try {
                                 const picked = viewer.scene.pick(click.position);
                                 
-                                if (!Cesium.defined(picked) || !picked.id || !picked.id.billboard) {
+                                if (!Cesium.defined(picked) || !picked.id) {
                                     clearSelection();
                                     return;
                                 }
                                 
-                                const entity = picked.id;
-                                if (!entity.customData) {
+                                let photos = [];
+                                let count = 0;
+                                let targetForColorChange = null;
+                                
+                                // 💡 중요: Cesium 엔진은 클러스터(Cluster)를 클릭했을 때 picked.id에 Entity가 아닌 "클러스터된 Entity들의 Array(배열)"을 반환합니다!
+                                // 단일 마커(Single)를 클릭했을 때는 기존 원본 Entity를 반환합니다.
+                                if (Array.isArray(picked.id)) {
+                                    photos = picked.id; // 배열 자체가 사진 데이터들
+                                    count = photos.length;
+                                    targetForColorChange = picked.primitive; // 클러스터는 Entity가 렌더링을 제어하지 않으므로 원시 Billboard(primitive)를 직접 조작
+                                } else if (picked.id && picked.id.customData) {
+                                    photos = picked.id.customData;
+                                    count = photos.length;
+                                    targetForColorChange = picked.id; // 단일 엔티티
+                                } else {
                                     clearSelection();
                                     return;
                                 }
                                 
-                                if (currSelectedEntity !== entity) clearSelection();
+                                if (currSelectedEntity !== targetForColorChange) clearSelection();
                                 
-                                const photos = entity.customData;
-                                currClusterCount = photos.length;
-                                currSelectedEntity = entity;
+                                currClusterCount = count;
+                                currSelectedEntity = targetForColorChange;
                                 
-                                // 클릭된 클러스터를 초록색(Green)으로 변경!
-                                currSelectedEntity.billboard.image = createAuraOrb(currClusterCount, 'green');
+                                // 클릭된 클러스터나 마커를 초록색(Green)으로 변경!
+                                if (targetForColorChange.image !== undefined) {
+                                    targetForColorChange.image = createAuraOrb(count, 'green');
+                                } else if (targetForColorChange.billboard) {
+                                    targetForColorChange.billboard.image = createAuraOrb(count, 'green');
+                                }
                                 
                                 headerTitle.innerText = `${currClusterCount} Photos In Area`;
                                 modalContent.innerHTML = '';
