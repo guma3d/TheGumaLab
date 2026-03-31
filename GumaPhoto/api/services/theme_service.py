@@ -219,8 +219,8 @@ def build_theme_cache():
                     )
                 )
             else:
-                from qdrant_client.http.models import MatchValue
-                must_conds.append(FieldCondition(key="location", match=MatchValue(value=loc_query.replace("-", " "))))
+                from qdrant_client.http.models import MatchText
+                must_conds.append(FieldCondition(key="location", match=MatchText(text=loc_query.replace("-", " "))))
                 
         q_filter = Filter(must=must_conds) if must_conds else None
         text_vector = None
