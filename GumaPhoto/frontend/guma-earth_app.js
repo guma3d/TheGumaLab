@@ -144,16 +144,15 @@ const GumaEarth = (function() {
                         const clusterImageCache = {};
 
                         ds.clustering.clusterEvent.addEventListener(function(clusteredEntities, cluster) {
-                            // Turn off default naked text label, we will draw the number directly ON the billboard canvas for a solid UI feel
+                            // Turn off default text label and billboard
                             cluster.label.show = false;
-                            cluster.billboard.show = true;
-                            cluster.billboard.verticalOrigin = Cesium.VerticalOrigin.CENTER;
+                            cluster.billboard.show = false; // We are completely abandoning Camera-Facing Billboards!
                             
                             const count = clusteredEntities.length;
                             
-                            // Scale the bubble slowly as count grows
-                            let clusterSize = count < 50 ? 40 : count < 500 ? 50 : 60;
-                            const identifier = count + '_' + clusterSize;
+                            // Scale the bubble slowly as count grows (Using high-res Canvas for sharp projection)
+                            let clusterSize = count < 50 ? 64 : count < 500 ? 80 : 96; 
+                            const identifier = count + '_' + clusterSize + '_decal';
                             
                             if (!clusterImageCache[identifier]) {
                                 const canvas = document.createElement('canvas');
@@ -162,7 +161,7 @@ const GumaEarth = (function() {
                                 const ctx = canvas.getContext('2d');
                                 const center = clusterSize / 2;
                                 
-                                // 1. Outer Soft Glow Ring (Glassmorphism inspired)
+                                // 1. Outer Soft Glow Ring (Glassmorphism inspired, blending on terrain)
                                 ctx.beginPath();
                                 ctx.arc(center, center, center - 2, 0, Math.PI * 2);
                                 ctx.fillStyle = 'rgba(244, 63, 94, 0.4)'; // Primary theme color transparent
@@ -170,12 +169,12 @@ const GumaEarth = (function() {
                                 
                                 // 2. Inner Solid Core
                                 ctx.beginPath();
-                                ctx.arc(center, center, center - 8, 0, Math.PI * 2);
-                                ctx.fillStyle = '#f43f5e'; 
+                                ctx.arc(center, center, center - 12, 0, Math.PI * 2);
+                                ctx.fillStyle = 'rgba(244, 63, 94, 0.85)'; // Slightly transparent to let terrain show
                                 ctx.fill();
                                 
                                 // 3. Crisp Text with Outline
-                                ctx.font = 'bold ' + (count < 100 ? 14 : 12) + 'px sans-serif';
+                                ctx.font = 'bold ' + (count < 100 ? 20 : 18) + 'px sans-serif';
                                 ctx.textAlign = 'center';
                                 ctx.textBaseline = 'middle';
                                 
@@ -185,8 +184,30 @@ const GumaEarth = (function() {
 
                                 clusterImageCache[identifier] = canvas.toDataURL();
                             }
-                            // Assign generated Base64 canvas image to the cluster billboard natively
-                            cluster.billboard.image = clusterImageCache[identifier];
+                            
+                            // 4. Transform into a 3D Decal (Ellipse Graphics)
+                            // We use a CallbackProperty so the physical size on the globe shrinks/grows as the camera zooms, 
+                            // ensuring the decal remains approximately the same visual size on the screen.
+                            const dynamicRadius = new Cesium.CallbackProperty(function(time, result) {
+                                if (!cluster.position) return 50000.0;
+                                const pos = cluster.position.getValue(time);
+                                if (!pos) return 50000.0;
+                                
+                                const dist = Cesium.Cartesian3.distance(viewer.camera.positionWC, pos);
+                                // Multiplier controls how much ground the decal covers relative to camera distance
+                                const multiplier = count < 50 ? 0.03 : count < 500 ? 0.04 : 0.05;
+                                return dist * multiplier;
+                            }, false);
+
+                            cluster.ellipse = new Cesium.EllipseGraphics({
+                                semiMajorAxis: dynamicRadius,
+                                semiMinorAxis: dynamicRadius,
+                                material: new Cesium.ImageMaterialProperty({
+                                    image: clusterImageCache[identifier],
+                                    transparent: true
+                                }),
+                                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND // Project onto terrain/globe
+                            });
                         });
                         
                         const entities = ds.entities.values;
