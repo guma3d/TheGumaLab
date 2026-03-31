@@ -163,7 +163,7 @@ const GumaEarth = (function() {
                                 const ctx = canvas.getContext('2d');
                                 const center = clusterSize / 2;
                                 
-                                // 1. 중심 0% ~ 20%는 완전 투명(0.0), 20% ~ 100%(가장자리)는 서서히 진해지는 링(Ring)/할로 그라데이션
+                                // 1. 중심 0% ~ 20%는 완전 불투명(1.0)한 코어를 갖고, 20% ~ 100%(가장자리)는 서서히 투명(0.0)해지며 퍼져나가는 후광(Aura) 그라데이션
                                 const radius = center - 4; // Margin
                                 const gradient = ctx.createRadialGradient(
                                     center, center, 0, 
@@ -171,9 +171,9 @@ const GumaEarth = (function() {
                                 );
                                 
                                 const rgb = '244, 63, 94'; // Rose Theme
-                                gradient.addColorStop(0, `rgba(${rgb}, 0.0)`);    // 중심~20% 완전 투명 (글씨 뒷배경이 비어있게 됨)
-                                gradient.addColorStop(0.2, `rgba(${rgb}, 0.0)`);
-                                gradient.addColorStop(1, `rgba(${rgb}, 0.95)`);   // 20%에서 가장자리로 갈수록 투명도가 사라지며 짙어짐
+                                gradient.addColorStop(0, `rgba(${rgb}, 1.0)`);    // 중심~20% 완전 불투명 (Solid Core)
+                                gradient.addColorStop(0.2, `rgba(${rgb}, 1.0)`);
+                                gradient.addColorStop(1, `rgba(${rgb}, 0.0)`);    // 20% 지점에서 가장자리로 갈수록 부드럽게 완전 투명으로 페이드 아웃
                                 
                                 ctx.beginPath();
                                 ctx.arc(center, center, radius, 0, Math.PI * 2);
