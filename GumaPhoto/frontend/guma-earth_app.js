@@ -187,20 +187,23 @@ const GumaEarth = (function() {
                                 ctx.shadowBlur = 0;
                                 ctx.shadowOffsetY = 0;
                                 
-                                // 3. 선명한 텍스트 
+                                // 3. 선명한 텍스트 (반구 형태로 아래 절반이 잘릴 것을 대비해 숫자를 위쪽으로 15% 끌어올림)
                                 ctx.font = 'bold ' + (count < 100 ? 14 : 16) + 'px Helvetica, Arial, sans-serif';
                                 ctx.textAlign = 'center';
                                 ctx.textBaseline = 'middle';
                                 
                                 const txt = count > 9999 ? '9.9k' : count.toString();
                                 ctx.fillStyle = 'white';
-                                ctx.fillText(txt, center, center + 1);
+                                ctx.fillText(txt, center, center - (clusterSize * 0.15));
 
                                 clusterImageCache[identifier] = canvas.toDataURL();
                             }
                             
                             cluster.billboard.image = clusterImageCache[identifier];
-                            cluster.billboard.verticalOrigin = Cesium.VerticalOrigin.BOTTOM; // 핀처럼 지면에 박히게
+                            // 핵심: 앵커 포인트를 구의 '정중앙(CENTER)'으로 설정 + CLAMP_TO_GROUND
+                            // 이렇게 하면 지구 표면이 구의 중앙을 가로지르게 되어, 카메라 각도에 따라 정확히 절반이 땅에 파묻힌 완벽한 '반구(Dome)' 매직이 실행됩니다.
+                            cluster.billboard.verticalOrigin = Cesium.VerticalOrigin.CENTER; 
+                            cluster.billboard.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND;
                         });
                         
                         const entities = ds.entities.values;
