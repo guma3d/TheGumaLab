@@ -62,9 +62,10 @@ const GumaEarth = (function() {
             });
             const textLayer = viewer.imageryLayers.addImageryProvider(labelProvider);
             
-            // 라벨의 가독성을 높이기 위해 채도와 대비를 살짝 강조
-            textLayer.brightness = 1.1; 
-            textLayer.contrast = 1.2;
+            // Bloom(글로우) 임계점에 하얀색 텍스트가 걸려 번쩍이는 현상(빛 번짐)을 우회 방지하기 위해, 
+            // 텍스트 레이어의 자체 밝기(Brightness)를 0.95로 살짝 억눌러 Bloom 타겟에서 회피 처리.
+            textLayer.brightness = 0.95; 
+            textLayer.contrast = 1.0;
 
             // 🌟 Advanced Rendering & Atmosphere Effects (Three.js Style)
             viewer.scene.highDynamicRange = true; // HDR tone mapping
