@@ -135,17 +135,71 @@ const GumaEarth = (function() {
                         };
                         const ds = await Cesium.GeoJsonDataSource.load(data, params);
                         
+                        // -- 3D Map Clustering Setup --
+                        ds.clustering.enabled = true;
+                        ds.clustering.pixelRange = 45; // Group markers within 45 pixels
+                        ds.clustering.minimumClusterSize = 3;
+
+                        // Create Canvas Caching Dictionary for gorgeous dynamic cluster icons
+                        const clusterImageCache = {};
+
+                        ds.clustering.clusterEvent.addEventListener(function(clusteredEntities, cluster) {
+                            // Turn off default naked text label, we will draw the number directly ON the billboard canvas for a solid UI feel
+                            cluster.label.show = false;
+                            cluster.billboard.show = true;
+                            cluster.billboard.verticalOrigin = Cesium.VerticalOrigin.CENTER;
+                            
+                            const count = clusteredEntities.length;
+                            
+                            // Scale the bubble slowly as count grows
+                            let clusterSize = count < 50 ? 40 : count < 500 ? 50 : 60;
+                            const identifier = count + '_' + clusterSize;
+                            
+                            if (!clusterImageCache[identifier]) {
+                                const canvas = document.createElement('canvas');
+                                canvas.width = clusterSize;
+                                canvas.height = clusterSize;
+                                const ctx = canvas.getContext('2d');
+                                const center = clusterSize / 2;
+                                
+                                // 1. Outer Soft Glow Ring (Glassmorphism inspired)
+                                ctx.beginPath();
+                                ctx.arc(center, center, center - 2, 0, Math.PI * 2);
+                                ctx.fillStyle = 'rgba(244, 63, 94, 0.4)'; // Primary theme color transparent
+                                ctx.fill();
+                                
+                                // 2. Inner Solid Core
+                                ctx.beginPath();
+                                ctx.arc(center, center, center - 8, 0, Math.PI * 2);
+                                ctx.fillStyle = '#f43f5e'; 
+                                ctx.fill();
+                                
+                                // 3. Crisp Text with Outline
+                                ctx.font = 'bold ' + (count < 100 ? 14 : 12) + 'px sans-serif';
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'middle';
+                                
+                                const txt = count > 9999 ? '9.9k' : count.toString();
+                                ctx.fillStyle = 'white';
+                                ctx.fillText(txt, center, center + 1);
+
+                                clusterImageCache[identifier] = canvas.toDataURL();
+                            }
+                            // Assign generated Base64 canvas image to the cluster billboard natively
+                            cluster.billboard.image = clusterImageCache[identifier];
+                        });
+                        
                         const entities = ds.entities.values;
                         for (let i = 0; i < entities.length; i++) {
                             const evt = entities[i];
                             if (evt.billboard) {
-                                // Restore exactly to how it was before clustering was added: CLAMP_TO_GROUND
+                                // Anchor pins to ground
                                 evt.billboard.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND;
                             }
                         }
 
                         viewer.dataSources.add(ds);
-                        console.log(`[GumaEarth] Successfully loaded ${entities.length} dynamic GPS markers!`);
+                        console.log(`[GumaEarth] Successfully loaded ${entities.length} dynamic GPS markers! Clustering Enabled.`);
                     }
                 } else {
                     console.warn(`[GumaEarth] Map markers fetch failed: ${response.status}`);
