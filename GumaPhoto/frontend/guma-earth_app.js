@@ -140,73 +140,51 @@ const GumaEarth = (function() {
                         ds.clustering.pixelRange = 45; // Group markers within 45 pixels
                         ds.clustering.minimumClusterSize = 3;
 
-                        // Create Canvas Caching Dictionary for gorgeous dynamic cluster icons
+                        // Create robust dictionary in case we need it later
                         const clusterImageCache = {};
 
                         ds.clustering.clusterEvent.addEventListener(function(clusteredEntities, cluster) {
-                            // Turn off default text label and billboard
-                            cluster.label.show = false;
-                            cluster.billboard.show = false; // We are completely abandoning Camera-Facing Billboards!
-                            
                             const count = clusteredEntities.length;
                             
-                            // Scale the bubble slowly as count grows (Using high-res Canvas for sharp projection)
-                            let clusterSize = count < 50 ? 64 : count < 500 ? 80 : 96; 
-                            const identifier = count + '_' + clusterSize + '_decal';
+                            // 1. 빌보드 패기 및 순정 텍스트 레이블(Label) 부활
+                            // 3D 구체 안에서 숫자가 깔끔하게 보이도록, 순수 웹폰트로 항상 화면 맨 위(Z-Index)에 표출
+                            cluster.billboard.show = false;
                             
-                            if (!clusterImageCache[identifier]) {
-                                const canvas = document.createElement('canvas');
-                                canvas.width = clusterSize;
-                                canvas.height = clusterSize;
-                                const ctx = canvas.getContext('2d');
-                                const center = clusterSize / 2;
-                                
-                                // 1. Outer Soft Glow Ring (Glassmorphism inspired, blending on terrain)
-                                ctx.beginPath();
-                                ctx.arc(center, center, center - 2, 0, Math.PI * 2);
-                                ctx.fillStyle = 'rgba(244, 63, 94, 0.4)'; // Primary theme color transparent
-                                ctx.fill();
-                                
-                                // 2. Inner Solid Core
-                                ctx.beginPath();
-                                ctx.arc(center, center, center - 12, 0, Math.PI * 2);
-                                ctx.fillStyle = 'rgba(244, 63, 94, 0.85)'; // Slightly transparent to let terrain show
-                                ctx.fill();
-                                
-                                // 3. Crisp Text with Outline
-                                ctx.font = 'bold ' + (count < 100 ? 20 : 18) + 'px sans-serif';
-                                ctx.textAlign = 'center';
-                                ctx.textBaseline = 'middle';
-                                
-                                const txt = count > 9999 ? '9.9k' : count.toString();
-                                ctx.fillStyle = 'white';
-                                ctx.fillText(txt, center, center + 1);
-
-                                clusterImageCache[identifier] = canvas.toDataURL();
+                            cluster.label.show = true;
+                            cluster.label.text = count > 9999 ? '9.9k' : count.toString();
+                            cluster.label.font = 'bold ' + (count < 100 ? 20 : 16) + 'px Helvetica, Arial, sans-serif';
+                            cluster.label.fillColor = Cesium.Color.WHITE;
+                            cluster.label.style = Cesium.LabelStyle.FILL_AND_OUTLINE;
+                            cluster.label.outlineColor = Cesium.Color.fromCssColorString('#be123c'); // Dark Rose outline
+                            cluster.label.outlineWidth = 4;
+                            cluster.label.verticalOrigin = Cesium.VerticalOrigin.CENTER;
+                            // 구체 내부나 지형에 글자가 파묻히는 걸 원천 차단 (항상 렌더링 최상위 포지셔닝)
+                            cluster.label.disableDepthTestDistance = Number.POSITIVE_INFINITY;
+                            
+                            // 과거 잔재(Ellipse 데칼 등)가 재사용될 때를 대비해 깔끔히 삭제
+                            if (cluster.ellipse) {
+                                cluster.ellipse = undefined;
                             }
                             
-                            // 4. Transform into a 3D Decal (Ellipse Graphics)
-                            // We use a CallbackProperty so the physical size on the globe shrinks/grows as the camera zooms, 
-                            // ensuring the decal remains approximately the same visual size on the screen.
-                            const dynamicRadius = new Cesium.CallbackProperty(function(time, result) {
-                                if (!cluster.position) return 50000.0;
+                            // 2. 3D 입체 투명 구체(Sphere) 생성
+                            // 카메라 고도에 맞게 3차원 X,Y,Z 물리적 크기 모두 가변 확장
+                            const dynamicRadii = new Cesium.CallbackProperty(function(time, result) {
+                                if (!cluster.position) return new Cesium.Cartesian3(50000.0, 50000.0, 50000.0);
                                 const pos = cluster.position.getValue(time);
-                                if (!pos) return 50000.0;
+                                if (!pos) return new Cesium.Cartesian3(50000.0, 50000.0, 50000.0);
                                 
                                 const dist = Cesium.Cartesian3.distance(viewer.camera.positionWC, pos);
-                                // Multiplier controls how much ground the decal covers relative to camera distance
-                                const multiplier = count < 50 ? 0.03 : count < 500 ? 0.04 : 0.05;
-                                return dist * multiplier;
+                                // 반경 가중치 (구체가 너무 크면 시야를 가리므로 데칼보단 조금 작게)
+                                const multiplier = count < 50 ? 0.015 : count < 500 ? 0.025 : 0.035;
+                                const radius = dist * multiplier;
+                                
+                                return new Cesium.Cartesian3(radius, radius, radius);
                             }, false);
 
-                            cluster.ellipse = new Cesium.EllipseGraphics({
-                                semiMajorAxis: dynamicRadius,
-                                semiMinorAxis: dynamicRadius,
-                                material: new Cesium.ImageMaterialProperty({
-                                    image: clusterImageCache[identifier],
-                                    transparent: true
-                                }),
-                                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND // Project onto terrain/globe
+                            cluster.ellipsoid = new Cesium.EllipsoidGraphics({
+                                radii: dynamicRadii,
+                                material: new Cesium.ColorMaterialProperty(Cesium.Color.fromCssColorString('#f43f5e').withAlpha(0.65)),
+                                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND // 땅에 절반이 파묻혀 기하학적 '반구(Dome)'가 완성됨
                             });
                         });
                         
