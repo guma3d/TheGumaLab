@@ -163,46 +163,38 @@ const GumaEarth = (function() {
                                 const ctx = canvas.getContext('2d');
                                 const center = clusterSize / 2;
                                 
-                                // 1. 그림자 효과 (지면에 떠 있는 듯한 입체감)
-                                ctx.shadowColor = 'rgba(0,0,0,0.6)';
-                                ctx.shadowBlur = 8;
-                                ctx.shadowOffsetY = 4;
-                                
-                                // 2. 3D 구슬(Orb) 그라데이션 광원(Lighting) 투영
-                                // 빛이 좌측 상단에서 내리쬐는 듯한 입체 구면 질감
+                                // 1. 중심 0% ~ 80%는 불투명(단일색), 80% ~ 100%는 투명(0.0)해지는 방사형 그라데이션
+                                const radius = center - 4; // Margin
                                 const gradient = ctx.createRadialGradient(
-                                    center - center * 0.3, center - center * 0.3, center * 0.1, // 하이라이트 지점
-                                    center, center, center - 6 // 외곽선
+                                    center, center, 0, 
+                                    center, center, radius
                                 );
-                                gradient.addColorStop(0, '#fda4af'); // 밝은 장미색 하이라이트
-                                gradient.addColorStop(0.5, '#e11d48'); // 메인 핑크/레드
-                                gradient.addColorStop(1, '#881337'); // 짙은 그림자 음영
+                                
+                                const rgb = '244, 63, 94'; // Rose Theme
+                                gradient.addColorStop(0, `rgba(${rgb}, 0.95)`);   // 중심~80% 불투명
+                                gradient.addColorStop(0.8, `rgba(${rgb}, 0.95)`);
+                                gradient.addColorStop(1, `rgba(${rgb}, 0.0)`);    // 끝자락 완전 투명으로 페더링
                                 
                                 ctx.beginPath();
-                                ctx.arc(center, center, center - 6, 0, Math.PI * 2);
+                                ctx.arc(center, center, radius, 0, Math.PI * 2);
                                 ctx.fillStyle = gradient;
                                 ctx.fill();
                                 
-                                // 그림자 초기화 (글쇠 보호)
-                                ctx.shadowBlur = 0;
-                                ctx.shadowOffsetY = 0;
-                                
-                                // 3. 선명한 텍스트 (반구 형태로 아래 절반이 잘릴 것을 대비해 숫자를 위쪽으로 15% 끌어올림)
+                                // 2. 선명한 텍스트 (반구 트릭 롤백: 다시 정중앙으로 배치)
                                 ctx.font = 'bold ' + (count < 100 ? 14 : 16) + 'px Helvetica, Arial, sans-serif';
                                 ctx.textAlign = 'center';
                                 ctx.textBaseline = 'middle';
                                 
                                 const txt = count > 9999 ? '9.9k' : count.toString();
                                 ctx.fillStyle = 'white';
-                                ctx.fillText(txt, center, center - (clusterSize * 0.15));
+                                ctx.fillText(txt, center, center + 1);
 
                                 clusterImageCache[identifier] = canvas.toDataURL();
                             }
                             
                             cluster.billboard.image = clusterImageCache[identifier];
-                            // 핵심: 앵커 포인트를 구의 '정중앙(CENTER)'으로 설정 + CLAMP_TO_GROUND
-                            // 이렇게 하면 지구 표면이 구의 중앙을 가로지르게 되어, 카메라 각도에 따라 정확히 절반이 땅에 파묻힌 완벽한 '반구(Dome)' 매직이 실행됩니다.
-                            cluster.billboard.verticalOrigin = Cesium.VerticalOrigin.CENTER; 
+                            // 핵심 롤백: 돔(Dome) 트릭을 해제하고 다시 'BOTTOM' 속성으로 핀처럼 지면에 서게 만듦
+                            cluster.billboard.verticalOrigin = Cesium.VerticalOrigin.BOTTOM; 
                             cluster.billboard.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND;
                         });
                         
