@@ -241,7 +241,7 @@ const GumaEarth = (function() {
                             width: 90%; max-width: 400px;
                             background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px);
                             border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px;
-                            display: none; flex-direction: column; z-index: 9999;
+                            display: none; flex-direction: column; z-index: 500;
                             box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden;
                         `;
                         
