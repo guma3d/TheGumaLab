@@ -82,6 +82,9 @@
 3. **Cloudflare & Edge 정적 캐시(Static Cache) 무결점 무효화 우회**
    - CDN(Cloudflare)이나 브라우저의 끈질긴 HTML/JS 파일 해싱 캐시 정책 때문에 `?v=XXX` 쿼리 파라미터 강제 패치가 무시되는 치명적 현상을 방어합니다. DOM 노드(HTML)가 낡은 뼈대로 렌더링되더라도, 자바스크립트가 실행될 때 부모 노드 유효성을 100% 검사해 강제로 올바른 위치에 DOM을 납치(Hijack)하여 재생성합니다.
    - 지속적인 Edge 서버 캐싱 오작동을 무력화하기 위해, 주요 JS 에셋 자체의 파일명을 교체(`script_app.js`, `guma-earth_app.js`)하는 초강수로 완전 무결점의 즉각 배포(Immediate Deployment) 파이프라인을 확립했습니다.
+4. **3D 지구 곡률 및 프러스텀(Frustum) 컬링 무력화 클러스터링**
+   - 3D 지구 엔진(`EntityCluster`)이 줌아웃(Zoom-out) 시 가장자리(지평선 근처)로 렌더링이 밀려나는 핀들을 "지구 곡률 뒤편으로 넘어간 요소"로 판정해 병합망에서 누락(Culling)시켜 낱개로 쏟아내는 치명적 수학적 모순을 돌파.
+   - 엔진의 지형 탐색 비용을 영구 패스(`HeightReference.NONE`)하고, GPU 심도 처리 파이프라인(`disableDepthTestDistance: POSITIVE_INFINITY`)을 무한대로 뚫어버려, 지평선에 구겨져 있어도 무조건 2D 클러스터 판정식(Pixel Range 45px)에 100% 동참시키도록 렌더링 오버라이드. 프론트엔드의 부드러운 픽셀 병합 질감과 대규모 줌아웃 안정성을 동시에 이룩.
 
 ## 8. 📁 API 폴더 구조 및 모듈 설명 (Clean Architecture)
 이 시스템은 "관심사의 분리(Separation of Concerns)" 원칙에 따라, 스파게티 형태였던 단일 파일들을 `api/` 디렉토리 아래 각각의 전문 도메인(Domain)으로 완전히 해체하여 관리합니다.
