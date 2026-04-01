@@ -190,15 +190,10 @@ class VectorIndexerOrchestrator:
                 except Exception as ex_e:
                     print(f"      [-] Exif parsing err (DB Sync): {ex_e}")
 
-                if sort_date == 0:
-                    try:
-                        import datetime
-                        dt = datetime.datetime.fromtimestamp(os.path.getmtime(filepath))
-                        sort_date = dt.year * 10000 + dt.month * 100 + dt.day
-                        if date_str == "Unknown Date":
-                            date_str = f"{dt.year:04d}-{dt.month:02d}-{dt.day:02d}"
-                    except Exception: 
-                        sort_date = 0
+                # EXIF 날짜가 비어있는 경우(Unknown Date), 다운로드 날짜(getmtime)를 무시하고 
+                # 정렬용 변수(sort_date)를 무조건 0으로 확정지어 최신순(DESC) 정렬 시 타임라인의 맨 마지막(최하단)으로 강제 유배시킵니다.
+                if date_str == "Unknown Date":
+                    sort_date = 0
 
                 payload = {
                     "filepath": filepath,
