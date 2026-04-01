@@ -44,18 +44,30 @@ async def perform_search(req: SearchRequest):
     elif search_text in ["timeline_dummy", "tag_dummy", "theme_dummy"]:
         search_text = ""
         
-    import time
-    is_cacheable = (req.offset == 0 and not req.query.strip() and not req.scene and not req.location and not req.date) or (req.query in ["timeline_dummy", "tag_dummy"] and req.offset == 0)
-    cache_key = ""
-    if is_cacheable:
-        cache_key = f"timeline_{req.limit}_{'_'.join(req.people)}_{req.sort}"
-        if not hasattr(state, 'api_cache'):
-            state.api_cache = {}
-        if cache_key in state.api_cache:
-            cache_data, cache_time = state.api_cache[cache_key]
-            if time.time() - cache_time < 300: # 5분간 캐시 유지
-                print(f"🚀 [Memory Cache Hit] Guma Family & Tags 타임라인 {len(cache_data)}장 즉각 반환 (0초 지연)")
-                return {"results": cache_data}
+    # 테마와 완전히 동일한 파이프라인 구조(Static JSON Cache)로 타임라인 500장 검색
+    is_timeline = (not req.query.strip() and not req.scene and not req.location and not req.date) or (req.query in ["timeline_dummy", "tag_dummy"])
+    if is_timeline and req.offset < 500:
+        try:
+            cache_path = "/app/data/caches/timeline_cache.json"
+            if os.path.exists(cache_path):
+                import json
+                with open(cache_path, "r", encoding="utf-8") as f:
+                    t_cache = json.load(f)
+                
+                target_key = "recent"
+                if req.people and len(req.people) > 0:
+                    target_key = req.people[0]
+                    
+                if target_key in t_cache:
+                    cached_list = t_cache[target_key]
+                    if cached_list and len(cached_list) > req.offset:
+                        end_idx = min(req.offset + req.limit, 500)
+                        sliced = cached_list[req.offset : end_idx]
+                        if sliced:
+                            print(f"🚀 [Baking Cache Hit] Guma Family 통합 아키텍처 JSON 반환: {target_key} ({req.offset}~{end_idx}장)")
+                            return {"results": sliced}
+        except Exception as e:
+            print(f"[-] File Cache Load Error: {e}")
     
     # 0. 자연어 텍스트 문맥 내에서 시간(연도) 식별자 강제 추출 (NLP Year Filtering)
     extracted_years = []
@@ -236,8 +248,6 @@ If NO location is implied in the query, output ONLY the exact word: EMPTY"""
                     "doc_id": hit.id
                 })
             print(f"✅ 일반 스크롤 로딩 완료: {len(formatted_results)}건 반환 (쿼리 없음)")
-            if is_cacheable:
-                state.api_cache[cache_key] = (formatted_results, time.time())
             return {"results": formatted_results}
         except Exception as e:
             print(f"❌ 스크롤 데이터 로딩 에러: {e}")
