@@ -696,7 +696,7 @@ input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.4); }
 }
 
 .theme-section {
-    margin-bottom: 12px;
+    margin-bottom: 25px;
 }
 
 .theme-title {

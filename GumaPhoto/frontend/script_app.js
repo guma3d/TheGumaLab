@@ -449,7 +449,6 @@ function renderThemes(themes) {
         
         const section = document.createElement('div');
         section.className = 'theme-section';
-        if (isTile) section.style.marginBottom = '25px';
         
         const h3 = document.createElement('h3');
         h3.innerText = theme.title;
