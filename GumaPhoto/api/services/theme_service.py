@@ -189,11 +189,10 @@ def build_theme_cache():
             
             dynamic_themes = []
             for loc in random_locs:
-                # 미국-캘리포니아-샌디에이고 -> 샌디에이고 추출
-                # 하이픈이나 띄어쓰기를 기준으로 가장 마지막 단어를 타이틀로 사용
-                clean_name = loc.replace("-", " ").split()[-1] if len(loc.replace("-", " ").split()) > 0 else loc
+                # 미국-캘리포니아-샌디에이고 -> 미국 캘리포니아 샌디에이고 (풀네이밍, '의 추억' 등 수식어 제거)
+                clean_name = loc.replace("-", " ")
                 dynamic_themes.append({
-                    "title": f"'{clean_name}'의 추억", 
+                    "title": clean_name, 
                     "location": loc
                 })
                 
