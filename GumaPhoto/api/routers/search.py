@@ -43,6 +43,19 @@ async def perform_search(req: SearchRequest):
         search_text = req.scene.strip()
     elif search_text in ["timeline_dummy", "tag_dummy", "theme_dummy"]:
         search_text = ""
+        
+    import time
+    is_cacheable = (req.offset == 0 and not req.query.strip() and not req.scene and not req.location and not req.date) or (req.query in ["timeline_dummy", "tag_dummy"] and req.offset == 0)
+    cache_key = ""
+    if is_cacheable:
+        cache_key = f"timeline_{req.limit}_{'_'.join(req.people)}_{req.sort}"
+        if not hasattr(state, 'api_cache'):
+            state.api_cache = {}
+        if cache_key in state.api_cache:
+            cache_data, cache_time = state.api_cache[cache_key]
+            if time.time() - cache_time < 300: # 5분간 캐시 유지
+                print(f"🚀 [Memory Cache Hit] Guma Family & Tags 타임라인 {len(cache_data)}장 즉각 반환 (0초 지연)")
+                return {"results": cache_data}
     
     # 0. 자연어 텍스트 문맥 내에서 시간(연도) 식별자 강제 추출 (NLP Year Filtering)
     extracted_years = []
@@ -223,6 +236,8 @@ If NO location is implied in the query, output ONLY the exact word: EMPTY"""
                     "doc_id": hit.id
                 })
             print(f"✅ 일반 스크롤 로딩 완료: {len(formatted_results)}건 반환 (쿼리 없음)")
+            if is_cacheable:
+                state.api_cache[cache_key] = (formatted_results, time.time())
             return {"results": formatted_results}
         except Exception as e:
             print(f"❌ 스크롤 데이터 로딩 에러: {e}")
