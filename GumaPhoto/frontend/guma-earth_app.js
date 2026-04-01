@@ -153,7 +153,13 @@ const GumaEarth = (function() {
 
                         // 아우라 구슬(Aura Orb) 생성기 - 색상 테마 지원
                         function createAuraOrb(count, theme = 'blue') {
-                            let clusterSize = count < 50 ? 50 : count < 500 ? 64 : 80;
+                            // 천 단위 이상의 매머드 숫자들에 대응하기 위한 더 정교한 스케일업(Scale-up)
+                            let clusterSize = 50;
+                            if (count >= 50000) clusterSize = 110;
+                            else if (count >= 5000) clusterSize = 96;
+                            else if (count >= 500) clusterSize = 80;
+                            else if (count >= 50) clusterSize = 64;
+
                             const identifier = count + '_' + clusterSize + '_' + theme;
                             
                             if (clusterImageCache[identifier]) {
@@ -187,11 +193,22 @@ const GumaEarth = (function() {
                             
                             // 2. 선명한 텍스트 (단일 개체인 경우에도 통일성을 위해 캔버스는 구우나, 숫자 1 표기는 생략)
                             if (count > 1) {
-                                ctx.font = 'bold ' + (count < 100 ? 14 : 16) + 'px Helvetica, Arial, sans-serif';
+                                let fontSize = 14;
+                                if (count >= 50000) fontSize = 20;
+                                else if (count >= 5000) fontSize = 18;
+                                else if (count >= 100) fontSize = 16;
+
+                                ctx.font = 'bold ' + fontSize + 'px Helvetica, Arial, sans-serif';
                                 ctx.textAlign = 'center';
                                 ctx.textBaseline = 'middle';
                                 
-                                const txt = count > 9999 ? '9.9k' : count.toString();
+                                // 무제한 스케일업 (9.9k 돌파를 위한 동적 로직)
+                                let txt = count.toString();
+                                if (count >= 1000) {
+                                    txt = (count / 1000).toFixed(1) + 'k';
+                                    txt = txt.replace('.0k', 'k'); // 15.0k -> 15k 로 정돈
+                                }
+
                                 ctx.fillStyle = 'white';
                                 ctx.fillText(txt, center, center + 1);
                             }
