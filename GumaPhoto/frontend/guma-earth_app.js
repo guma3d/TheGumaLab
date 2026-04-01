@@ -278,6 +278,9 @@ const GumaEarth = (function() {
                                 }
                                 currSelectedEntity = null;
                             }
+                            if (modalContent._scrollHandler) {
+                                modalContent.removeEventListener('scroll', modalContent._scrollHandler);
+                            }
                             modalOverlay.style.display = 'none';
                             modalContent.innerHTML = '';
                         }
@@ -342,17 +345,58 @@ const GumaEarth = (function() {
                                 
                                 photoList.sort((a,b) => b.date.localeCompare(a.date));
                                 
-                                // 2. DOM 삽입
-                                photoList.forEach(data => {
-                                    if (data.url) {
-                                        const img = document.createElement('img');
-                                        img.src = data.url;
-                                        img.style.cssText = "width: calc(33.3% - 6px); aspect-ratio: 1/1; object-fit: cover; border-radius: 6px; background: #333; cursor: pointer; opacity: 0; transition: opacity 0.3s ease;";
-                                        img.onload = () => { img.style.opacity = 1; };
-                                        img.onclick = () => { window.open(data.url, '_blank'); };
-                                        modalContent.appendChild(img);
+                                // 2. DOM 삽입 최적화 (WebP 썸네일 + 레이지 스크롤 무한 로딩)
+                                let currentRenderIndex = 0;
+                                const CHUNK_SIZE = 30; // 30장씩 끊어서 스크롤 시 점진적 로딩
+                                
+                                // 이전 스크롤 핸들러 청소 (안전장치)
+                                if (modalContent._scrollHandler) {
+                                    modalContent.removeEventListener('scroll', modalContent._scrollHandler);
+                                }
+                                
+                                const renderChunk = () => {
+                                    const chunk = photoList.slice(currentRenderIndex, currentRenderIndex + CHUNK_SIZE);
+                                    chunk.forEach(data => {
+                                        if (data.url) {
+                                            const img = document.createElement('img');
+                                            
+                                            // WebP 썸네일 경로 연산 (원본 원본 대신 _jpg.webp 로딩)
+                                            let imgUrl = data.url;
+                                            const dotIndex = imgUrl.lastIndexOf('.');
+                                            const thumbUrl = dotIndex !== -1 ? 
+                                                imgUrl.substring(0, dotIndex) + '_' + imgUrl.substring(dotIndex + 1).toLowerCase() + '.webp' : imgUrl;
+                                            
+                                            img.src = thumbUrl;
+                                            img.loading = "lazy"; // 브라우저 로딩 최적화
+                                            
+                                            // 썸네일 실패 시 원본 강제 폴백 적용
+                                            img.onerror = function() {
+                                                if (this.src !== imgUrl) this.src = imgUrl;
+                                            };
+                                            
+                                            img.style.cssText = "width: calc(33.3% - 6px); aspect-ratio: 1/1; object-fit: cover; border-radius: 6px; background: #333; cursor: pointer; opacity: 0; transition: opacity 0.3s ease;";
+                                            img.onload = () => { img.style.opacity = 1; };
+                                            img.onclick = () => { window.open(data.url, '_blank'); };
+                                            modalContent.appendChild(img);
+                                        }
+                                    });
+                                    currentRenderIndex += CHUNK_SIZE;
+                                };
+                                
+                                // 초기 첫 30장 화면 렌더링
+                                renderChunk();
+                                
+                                // 스크롤이 바닥에 닿으면 다음 청크 30장을 추가로 이어 붙이는 무한 페이저
+                                modalContent._scrollHandler = (e) => {
+                                    const el = e.target;
+                                    // 스크롤이 마지막 200px 지점에 도달할 때 패치
+                                    if (el.scrollHeight - el.scrollTop - el.clientHeight < 200) {
+                                        if (currentRenderIndex < photoList.length) {
+                                            renderChunk();
+                                        }
                                     }
-                                });
+                                };
+                                modalContent.addEventListener('scroll', modalContent._scrollHandler);
                                 
                                 modalOverlay.style.display = 'flex';
                                 
