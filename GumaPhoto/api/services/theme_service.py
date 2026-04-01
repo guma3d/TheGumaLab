@@ -276,8 +276,17 @@ def build_theme_cache():
                         "people": payload.get("people", [])
                     })
                     
+                # 카테고리명을 역추적 (categories 딕셔너리에 포함된 리스트를 탐색)
+                theme_category = "General"
+                for c_name, t_list in categories.items():
+                    if any(t.get("title") == theme["title"] for t in t_list):
+                        theme_category = c_name
+                        break
+                        
                 cached_data.append({
                     "title": theme["title"],
+                    "is_location": (theme_category == "Korean Dynamic Locations"),
+                    "category": theme_category,
                     "photos": photos
                 })
                 print(f"  [+] 통과 '{theme['title']}': 총 {len(results)}장 중 {actual_sample_size}장 랜덤 픽업 완료")

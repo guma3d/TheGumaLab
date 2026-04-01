@@ -445,9 +445,28 @@ async def get_random_themes(limit: int = 9):
                 all_cached_themes = json.load(f)
             
             if all_cached_themes and len(all_cached_themes) > 0:
-                # 200개 규모의 거대한 캐시풀에서 무작위 9개만 즉각 선발
-                selected_themes = random.sample(all_cached_themes, min(len(all_cached_themes), limit))
-                return {"themes": selected_themes}
+                import re; import random
+                # 50% 지역/로케이션 테마 추출 알고리즘 (기존 캐시 호환)
+                def check_loc(t):
+                    if t.get("is_location") is True: return True
+                    # 한국어 타이틀이 포함되어 있으면 한국 지역 테마로 동적 판단
+                    return bool(re.search(r'[가-힣]', t.get("title", "")))
+                
+                loc_pool = [t for t in all_cached_themes if check_loc(t)]
+                oth_pool = [t for t in all_cached_themes if not check_loc(t)]
+                
+                # 목표 슬롯 계산 (정확히 50%) -> 9개 요청 시 5개(올림) 지역 할당
+                loc_limit = min(len(loc_pool), (limit + 1) // 2)
+                oth_limit = min(len(oth_pool), limit - loc_limit)
+                
+                # 나머지 테마 풀이 부족하다면 지역 테마로 남은 슬롯을 메꿈
+                if loc_limit + oth_limit < limit:
+                    loc_limit = min(len(loc_pool), limit - oth_limit)
+                    
+                selected = random.sample(loc_pool, loc_limit) + random.sample(oth_pool, oth_limit)
+                random.shuffle(selected) # 교차로 잘 섞이도록 셔플
+                
+                return {"themes": selected}
         except Exception as e:
             print(f"[-] Theme cache load error: {e}")
             
