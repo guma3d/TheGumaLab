@@ -152,7 +152,7 @@ const GumaEarth = (function() {
                         const clusterImageCache = {};
 
                         // 아우라 구슬(Aura Orb) 생성기 - 색상 테마 지원
-                        function createAuraOrb(count, theme = 'blue') {
+                        function createAuraOrb(count, theme = 'red') {
                             // 천 단위 이상의 매머드 숫자들에 대응하기 위한 더 정교한 스케일업(Scale-up)
                             let clusterSize = 50;
                             if (count >= 50000) clusterSize = 110;
@@ -226,7 +226,7 @@ const GumaEarth = (function() {
                             cluster.billboard.id = clusteredEntities;
                             cluster.customData = clusteredEntities; // 호환성을 위해 유지
 
-                            cluster.billboard.image = createAuraOrb(clusteredEntities.length, 'blue');
+                            cluster.billboard.image = createAuraOrb(clusteredEntities.length, 'red');
                             cluster.billboard.verticalOrigin = Cesium.VerticalOrigin.BOTTOM; 
                             
                             // 🚀 가장자리 시야각 클러스터 해제 버그 픽스 (프론트엔드 해결)
@@ -238,12 +238,12 @@ const GumaEarth = (function() {
                         
                         // 기본 카메라 마커(빨간 핀) 전면 폐기 및 낱개 사진(1장)도 동일한 아우라 구슬로 렌더링 강제 교체
                         const entities = ds.entities.values;
-                        const singleOrbBlue = createAuraOrb(1, 'blue'); // 1장짜리 단일 핀 미리 굽기 (텍스트 없음)
+                        const singleOrbRed = createAuraOrb(1, 'red'); // 1장짜리 단일 핀 미리 굽기 (텍스트 없음)
                         for (let i = 0; i < entities.length; i++) {
                             const evt = entities[i];
                             if (evt.billboard) {
                                 evt.customData = [evt]; // 단일 파일도 동일한 배열 규칙으로 통일
-                                evt.billboard.image = singleOrbBlue; // 촌스러운 기본 빨간 핀(Camera) 이미지를 날려버리고 오라 구슬로 덮어쓰기!
+                                evt.billboard.image = singleOrbRed; // 촌스러운 기본 빨간 핀(Camera) 이미지를 날려버리고 오라 구슬로 덮어쓰기!
                                 // 💡 중요: GeoJsonDataSource가 생성한 기존 마커는 markerColor(#f43f5e)의 '빨간색 틴트(Color)'가 Billboard에 먹혀있습니다.
                                 // 이 틴트 속성을 White(순정)으로 지워주지 않으면, 캔버스 구슬 이미지 위에 또 빨간 셰이더가 곱해져 클러스터 구슬보다 어둡고 칙칙해 보임.
                                 evt.billboard.color = Cesium.Color.WHITE; 
@@ -295,11 +295,11 @@ const GumaEarth = (function() {
                             if (currSelectedEntity) {
                                 // 클러스터 프리미티브에 직접 매핑된 경우 (Billboard)
                                 if (currSelectedEntity.image !== undefined) {
-                                    currSelectedEntity.image = createAuraOrb(currClusterCount, 'blue');
+                                    currSelectedEntity.image = createAuraOrb(currClusterCount, 'red');
                                 } 
                                 // 단일 엔티티(Entity)인 경우
                                 else if (currSelectedEntity.billboard) {
-                                    currSelectedEntity.billboard.image = createAuraOrb(currClusterCount, 'blue');
+                                    currSelectedEntity.billboard.image = createAuraOrb(currClusterCount, 'red');
                                 }
                                 currSelectedEntity = null;
                             }
