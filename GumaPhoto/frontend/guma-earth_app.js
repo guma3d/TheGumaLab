@@ -228,7 +228,12 @@ const GumaEarth = (function() {
 
                             cluster.billboard.image = createAuraOrb(clusteredEntities.length, 'blue');
                             cluster.billboard.verticalOrigin = Cesium.VerticalOrigin.BOTTOM; 
-                            cluster.billboard.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND;
+                            
+                            // 🚀 가장자리 시야각 클러스터 해제 버그 픽스 (프론트엔드 해결)
+                            // 지평선 곡률이나 지형 뒤에 가려져 연산에서 누락되는 것을 막기 위해 깊이 테스팅을 강제 영구 무효화
+                            cluster.billboard.disableDepthTestDistance = Number.POSITIVE_INFINITY;
+                            // 비동기 지형 높이 연산을 기다리다 타임아웃되어 클러스터링을 깨뜨리는 현상을 원천 방지
+                            cluster.billboard.heightReference = Cesium.HeightReference.NONE;
                         });
                         
                         // 기본 카메라 마커(빨간 핀) 전면 폐기 및 낱개 사진(1장)도 동일한 아우라 구슬로 렌더링 강제 교체
@@ -243,7 +248,10 @@ const GumaEarth = (function() {
                                 // 이 틴트 속성을 White(순정)으로 지워주지 않으면, 캔버스 구슬 이미지 위에 또 빨간 셰이더가 곱해져 클러스터 구슬보다 어둡고 칙칙해 보임.
                                 evt.billboard.color = Cesium.Color.WHITE; 
                                 evt.billboard.verticalOrigin = Cesium.VerticalOrigin.BOTTOM; 
-                                evt.billboard.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND;
+                                
+                                // 개별 마커들도 동일하게 가장자리 연산 누락 방지를 위해 깊이 체크 및 CLAMP 연산 제거
+                                evt.billboard.disableDepthTestDistance = Number.POSITIVE_INFINITY;
+                                evt.billboard.heightReference = Cesium.HeightReference.NONE;
                             }
                         }
 
