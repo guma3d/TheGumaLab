@@ -461,36 +461,40 @@ function renderThemes(themes) {
             layoutBox.className = 'theme-tile-box';
             layoutBox.style.display = 'grid';
             layoutBox.style.gridTemplateColumns = 'repeat(3, 1fr)';
-            // 스마트폰 환경에서 3열 정사각형에 가까운 비율 보장
             layoutBox.style.gridAutoRows = 'min(30vw, 150px)';
+            // 빈 공간을 지능적으로 채우는 매직! (비대칭 레이아웃의 핵심)
+            layoutBox.style.gridAutoFlow = 'dense';
             layoutBox.style.gap = '8px';
             layoutBox.style.padding = '0 10px 10px 10px';
         } else {
             layoutBox.className = 'theme-scroll-box';
         }
         
-        // 타일 방식일 경우 노출수 제한 유지 (모듈형 디자인을 위해 최대 8장으로 확장)
         const photosToRender = isTile ? theme.photos.slice(0, 8) : theme.photos;
+        
+        // 4가지 랜더링 프로파일 (지루하지 않게 순서에 따라 교차 적용)
+        let heroIdx = 0, wideIdx = 4;
+        const variant = Math.floor(idx / 3) % 4;
+        if (variant === 1) { heroIdx = 1; wideIdx = 5; } // 우측 상단 대문
+        else if (variant === 2) { heroIdx = 4; wideIdx = 0; } // 우측 하단 대문, 상단 파노라마
+        else if (variant === 3) { heroIdx = 3; wideIdx = 7; } // 좌측 중단 대문, 우측 하단 파노라마
         
         photosToRender.forEach((photo, pIdx) => {
             const imgBtn = document.createElement('div');
             imgBtn.className = 'theme-photo-item';
             imgBtn.dataset.id = photo.id;
             
-            // 프리미엄 매거진/모자이크 스타일 비대칭 렌더링
             if (isTile) {
                 imgBtn.style.borderRadius = '12px';
                 imgBtn.style.overflow = 'hidden';
                 imgBtn.style.width = '100%';
                 imgBtn.style.height = '100%';
                 
-                // 크기 변화의 하이라이트 (재미 요소, 3열 퍼즐 호환성)
-                if (pIdx === 0) {
-                    // 첫 번째 사진: 2x2 칸짜리 거대한 메인 썸네일 (Hero)
+                // 크기 변화의 하이라이트 (재미 요소, 다이내믹 퍼즐)
+                if (pIdx === heroIdx) {
                     imgBtn.style.gridColumn = 'span 2';
                     imgBtn.style.gridRow = 'span 2';
-                } else if (pIdx === 4) {
-                    // 다섯 번째 사진: 가로칸 2개짜리 파노라마 (퍼즐 완성을 위해 인덱스 4로 늦춤)
+                } else if (pIdx === wideIdx) {
                     imgBtn.style.gridColumn = 'span 2';
                 }
             }
