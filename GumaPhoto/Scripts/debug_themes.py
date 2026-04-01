@@ -2,7 +2,7 @@ import json
 from qdrant_client import QdrantClient
 from qdrant_client.models import Filter, FieldCondition, MatchValue
 
-client = QdrantClient(url="http://localhost:6333")
+client = QdrantClient(url="http://gumaphoto_qdrant:6333")
 
 try:
     with open('/app/data/available_tags.json', 'r', encoding='utf-8') as f:
