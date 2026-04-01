@@ -362,17 +362,27 @@ def build_theme_cache():
             
         timeline_cache_data["recent"] = _format_res(res_recent)
         
-        # 주요 인물 500장 추출
+        # 주요 인물 500장 추출 (단독 샷 솔로 필터링 적용)
         for person in ["성욱", "준우", "지우", "송이"]:
             p_filter = Filter(must=[FieldCondition(key="people", match=MatchValue(value=person))])
             res_p, _ = state.qdrant_client.scroll(
                 collection_name="gumaphoto_hybrid_kr",
                 scroll_filter=p_filter,
-                limit=500,
+                limit=5000, # 충분히 많이 가져와서 솔로 샷만 추려냅니다
                 with_payload=True,
                 order_by=OrderBy(key="sort_date", direction=Direction.DESC)
             )
-            timeline_cache_data[person] = _format_res(res_p)
+            
+            solo_shots = []
+            for hit in res_p:
+               payload = getattr(hit, 'payload', {}) or {}
+               people_list = payload.get("people", [])
+               if len(people_list) == 1 and person in people_list:
+                   solo_shots.append(hit)
+               if len(solo_shots) >= 500:
+                   break
+                   
+            timeline_cache_data[person] = _format_res(solo_shots)
             
         timeline_path = "/app/data/caches/timeline_cache.json"
         with open(timeline_path, "w", encoding="utf-8") as f:
