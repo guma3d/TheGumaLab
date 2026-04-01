@@ -153,30 +153,57 @@ def build_theme_cache():
     # ----- 동적 장소 추출 로직 (DB 통계 연동) -----
     try:
         import random
-        if os.path.exists("/app/data/available_tags.json"):
-            with open("/app/data/available_tags.json", "r", encoding="utf-8") as f:
-                tag_data = json.load(f)
-                valid_locations = [loc for loc in tag_data.get("locations", []) if loc and "Unknown" not in loc and "정보없음" not in loc]
+        from collections import Counter
+        
+        qc = state.qdrant_client
+        if qc:
+            coll = "gumaphoto_hybrid_kr"
+            offset = None
+            loc_counts = Counter()
+            
+            # 벡터를 제외한 초고속 스크롤로 전체 사진의 위치 정보 집계
+            while True:
+                batch, next_offset = qc.scroll(
+                    collection_name=coll,
+                    limit=10000,
+                    with_payload=["location"],
+                    with_vectors=False,
+                    offset=offset
+                )
+                for pt in batch:
+                    p = pt.payload or {}
+                    loc = p.get("location")
+                    if loc and loc != "Unknown Location" and "Unknown" not in loc and "정보없음" not in loc:
+                        loc_counts[loc] += 1
+                        
+                if next_offset is None:
+                    break
+                offset = next_offset
                 
-                # 방대한 시스템 통계 풀(약 300곳)에서 매일 밤 무작위로 10곳을 색다르게 픽업
-                sample_size = min(len(valid_locations), 10)
-                random_locs = random.sample(valid_locations, sample_size)
+            # 사용자의 피드백을 반영: 사진이 10장 이상인 알짜배기 장소만 테마 후보로 등극시킴
+            valid_locations = [loc for loc, count in loc_counts.items() if count >= 10]
+            
+            # 그 중에서 최대 30개를 무작위로 추출하여 압도적으로 다채로운 지역 앨범 라인업 구성
+            sample_size = min(len(valid_locations), 30)
+            random_locs = random.sample(valid_locations, sample_size)
+            
+            dynamic_themes = []
+            for loc in random_locs:
+                # 미국-캘리포니아-샌디에이고 -> 샌디에이고 추출
+                # 하이픈이나 띄어쓰기를 기준으로 가장 마지막 단어를 타이틀로 사용
+                clean_name = loc.replace("-", " ").split()[-1] if len(loc.replace("-", " ").split()) > 0 else loc
+                dynamic_themes.append({
+                    "title": f"'{clean_name}'의 추억", 
+                    "location": loc
+                })
                 
-                # 하드코딩된 지역 테마를 덮어쓰고 생동감 있는 DB 실존 장소로 대체
-                dynamic_themes = []
-                for loc in random_locs:
-                    # '경기도 고양시 일산동구' -> '일산동구' 처럼 
-                    # '대한민국-제주특별자치도-서귀포시' -> '서귀포시' 처럼
-                    clean_name = loc.replace("-", " ").split()[-1] if len(loc.replace("-", " ").split()) > 0 else loc
-                    dynamic_themes.append({
-                        "title": f"'{clean_name}'의 추억", 
-                        "location": loc
-                    })
-                    
+            if dynamic_themes:
                 categories["Korean Dynamic Locations"] = dynamic_themes
-                print(f"[*] 다이내믹 장소 10곳 무작위 추출 완료: {[t['title'] for t in dynamic_themes]}")
+                print(f"[*] 다이내믹 장소 (10장 이상) {len(dynamic_themes)}곳 무작위 추출 및 테마 등록 완료!")
     except Exception as e:
-        print(f"[-] 시스템 통계 연동 실패: {e}")
+        import traceback
+        traceback.print_exc()
+        print(f"[-] 시스템 통계 연동 및 동적 장소 추출 실패: {e}")
 
     # 카테고리 평탄화
     all_themes = []
