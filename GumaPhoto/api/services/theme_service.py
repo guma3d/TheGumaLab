@@ -183,8 +183,8 @@ def build_theme_cache():
             # 사용자의 피드백을 반영: 사진이 10장 이상인 알짜배기 장소만 테마 후보로 등극시킴
             valid_locations = [loc for loc, count in loc_counts.items() if count >= 10]
             
-            # 그 중에서 최대 30개를 무작위로 추출하여 압도적으로 다채로운 지역 앨범 라인업 구성
-            sample_size = min(len(valid_locations), 30)
+            # 그 중에서 최대 70개를 मु작위로 추출하여, 사용자 요청(총 150개 풀)을 달성할 수 있도록 빈자리를 지역 테마로 듬뿍 채웁니다.
+            sample_size = min(len(valid_locations), 70)
             random_locs = random.sample(valid_locations, sample_size)
             
             dynamic_themes = []
