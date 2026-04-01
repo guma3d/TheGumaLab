@@ -443,22 +443,48 @@ function renderThemes(themes) {
     const container = document.getElementById('themes-container');
     container.innerHTML = '';
     
-    themes.forEach(theme => {
+    themes.forEach((theme, idx) => {
+        // 프리미엄 레이아웃 믹스: 타일 -> 슬라이딩 -> 슬라이딩 교차 배치
+        const isTile = (idx % 3 === 0);
+        
         const section = document.createElement('div');
         section.className = 'theme-section';
+        if (isTile) section.style.marginBottom = '25px';
         
         const h3 = document.createElement('h3');
         h3.innerText = theme.title;
         h3.className = 'theme-title';
         section.appendChild(h3);
         
-        const scrollBox = document.createElement('div');
-        scrollBox.className = 'theme-scroll-box';
+        const layoutBox = document.createElement('div');
+        if (isTile) {
+            layoutBox.className = 'theme-tile-box';
+            layoutBox.style.display = 'grid';
+            layoutBox.style.gridTemplateColumns = 'repeat(2, 1fr)';
+            layoutBox.style.gap = '8px';
+            layoutBox.style.padding = '0 10px 10px 10px';
+        } else {
+            layoutBox.className = 'theme-scroll-box';
+        }
         
-        theme.photos.forEach(photo => {
+        // 타일 방식일 경우 래핑이 길어지는 것을 방지하기 위해 최대 노출수를 조절할 수도 있으나,
+        // 일단 사용자의 모든 사진 경험을 해치지 않기 위해 전체 렌더링을 유지하거나 
+        // 시각적 균형을 위해 타일에서는 최대 6~8장만 선별하여 깔끔한 모듈을 완성할 수 있습니다.
+        // 현재는 첫 요구사항에 맞춰 2열 구조만 강제합니다.
+        const photosToRender = isTile ? theme.photos.slice(0, 6) : theme.photos; // 타일은 화면 점유율을 고려해 너무 길어지지 않게 6장만 프리뷰로 제공 (원하시면 제거 가능!)
+        
+        photosToRender.forEach(photo => {
             const imgBtn = document.createElement('div');
             imgBtn.className = 'theme-photo-item';
             imgBtn.dataset.id = photo.id;
+            
+            // 타일 모드일 때 썸네일 비율을 1:1로 확정지어 모자이크처럼 꽉 차게 만듭니다.
+            if (isTile) {
+                imgBtn.style.aspectRatio = '1 / 1';
+                imgBtn.style.width = '100%';
+                imgBtn.style.borderRadius = '12px';
+                imgBtn.style.overflow = 'hidden';
+            }
             
             let imgUrl = photo.url;
             if (window.location.pathname.startsWith('/GumaPhoto')) {
@@ -473,20 +499,25 @@ function renderThemes(themes) {
             img.src = thumbUrl;
             img.loading = "lazy";
             
+            if (isTile) {
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'cover';
+            }
+            
             img.onerror = function() {
                 if (this.src !== imgUrl) this.src = imgUrl;
             };
             imgBtn.appendChild(img);
             
-            // Add click to open modal
             imgBtn.addEventListener('click', () => {
                 openModal(photo, imgUrl);
             });
             
-            scrollBox.appendChild(imgBtn);
+            layoutBox.appendChild(imgBtn);
         });
         
-        section.appendChild(scrollBox);
+        section.appendChild(layoutBox);
         container.appendChild(section);
     });
 }
