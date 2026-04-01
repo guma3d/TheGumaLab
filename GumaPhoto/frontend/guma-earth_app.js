@@ -229,6 +229,13 @@ const GumaEarth = (function() {
                             cluster.billboard.image = createAuraOrb(clusteredEntities.length, 'red');
                             cluster.billboard.verticalOrigin = Cesium.VerticalOrigin.BOTTOM; 
                             
+                            // 🚀 [중대한 버그 수정] 클러스터 중심점이 지표면 아래(마그마 층)로 파고드는 현상 방지:
+                            // 여러 점의 3D 카테시안(Cartesian) 평균을 내면 필연적으로 곡면의 현(Chord)를 따라 땅속으로 파고들게 되어 Horizon Culling에 의해 클러스터가 허무하게 사라집니다 (괌 앞바다 버그 원인).
+                            // 해결책: 클러스터의 위치를 평균 좌표가 아니라 '클러스터된 첫 번째 사진의 정확한 GPS 표면 좌표'로 강제 스냅(Snap) 시킵니다!
+                            if (clusteredEntities.length > 0 && clusteredEntities[0].position) {
+                                cluster.position = clusteredEntities[0].position.getValue(Cesium.JulianDate.now());
+                            }
+                            
                             // 🚀 가장자리 시야각 클러스터 해제 버그 픽스 (프론트엔드 해결)
                             // 지평선 곡률이나 지형 뒤에 가려져 연산에서 누락되는 것을 막기 위해 깊이 테스팅을 강제 영구 무효화
                             cluster.billboard.disableDepthTestDistance = Number.POSITIVE_INFINITY;
