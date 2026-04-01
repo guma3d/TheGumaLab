@@ -1876,16 +1876,30 @@ if (fbInputVal && fbDropdown) {
         if (kakaoSearchTimeout) clearTimeout(kakaoSearchTimeout);
         kakaoSearchTimeout = setTimeout(async () => {
             try {
-                let apiUrl = `/api/location/search_kakao?q=${encodeURIComponent(q)}`;
+                let apiUrl = `/api/location/search_global?q=${encodeURIComponent(q)}`;
                 if (window.location.pathname.startsWith('/GumaPhoto')) apiUrl = '/GumaPhoto' + apiUrl;
                 
                 const res = await fetch(apiUrl);
                 if (!res.ok) return;
                 const data = await res.json();
                 
-                if (data.results && data.results.length > 0) {
-                    fbDropdown.innerHTML = '';
-                    data.results.forEach(item => {
+                fbDropdown.innerHTML = '';
+                
+                // 렌더링 헬퍼 함수
+                const appendSection = (title, items, isKakao) => {
+                    if (!items || items.length === 0) return;
+                    
+                    const titleDiv = document.createElement('div');
+                    titleDiv.style.padding = '8px 12px';
+                    titleDiv.style.backgroundColor = '#1e293b';
+                    titleDiv.style.color = isKakao ? '#facc15' : '#38bdf8'; // 카카오는 노란색, OSM은 파란색
+                    titleDiv.style.fontWeight = 'bold';
+                    titleDiv.style.fontSize = '12px';
+                    titleDiv.style.letterSpacing = '1px';
+                    titleDiv.innerHTML = isKakao ? '<i class="fa-solid fa-house-chimney"></i> 국내 상세 스팟 (Kakao)' : '<i class="fa-solid fa-globe"></i> 글로벌/해외 주소 (OSM)';
+                    fbDropdown.appendChild(titleDiv);
+                    
+                    items.forEach(item => {
                         const div = document.createElement('div');
                         div.style.padding = '12px 16px';
                         div.style.cursor = 'pointer';
@@ -1906,14 +1920,19 @@ if (fbInputVal && fbDropdown) {
                         };
                         fbDropdown.appendChild(div);
                     });
+                };
+                
+                if ((data.kakao && data.kakao.length > 0) || (data.osm && data.osm.length > 0)) {
+                    appendSection('글로벌/해외 주소 (OSM)', data.osm, false);
+                    appendSection('국내 상세 스팟 (Kakao)', data.kakao, true);
                     fbDropdown.style.display = 'block';
                 } else {
                     fbDropdown.style.display = 'none';
                 }
             } catch(err) {
-                console.error('Kakao autocomplete error:', err);
+                console.error('Global autocomplete error:', err);
             }
-        }, 400); // 400ms delay to prevent API spam
+        }, 500); // 500ms delay to prevent API spam
     });
 
     document.addEventListener('click', (e) => {
@@ -1937,11 +1956,16 @@ document.getElementById('fb-temptest-send-btn')?.addEventListener('click', async
     let correctValue = "";
     if (selectedFeedbackTarget.issue.includes('Date')) {
         correctValue = inputDate.value;
-    } else {
-        correctValue = inputVal.value.trim();
-        if (inputVal.dataset.exactPayload && inputVal.dataset.exactDisplay === correctValue) {
-            correctValue = inputVal.dataset.exactPayload;
+    } else if (selectedFeedbackTarget.issue.includes('Location')) {
+        // [장소 피드백 제약] 3D 지도의 완벽한 GPS 보장을 위해 드롭다운 클릭 강제
+        if (!inputVal.dataset.exactPayload || inputVal.dataset.exactDisplay !== inputVal.value.trim()) {
+            alert("⚠️ 정확한 3D 지도 좌표 매핑을 위해, 반드시 하단 드롭다운 리스트(Kakao/OSM) 항목 중 하나를 클릭해 주세요!");
+            return;
         }
+        correctValue = inputVal.dataset.exactPayload;
+    } else {
+        // 인물 피드백 등은 쌩텍스트 가능
+        correctValue = inputVal.value.trim();
     }
     
     if (!correctValue) {

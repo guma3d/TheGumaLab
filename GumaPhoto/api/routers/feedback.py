@@ -320,67 +320,98 @@ async def submit_feedback_v2(req: FeedbackV2Request):
     try:
         all_pts = [real_point_id] + real_target_points if real_target_points else [real_point_id]
         if fb_type == "face":
-            state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"people": ["Processing..."]}, points=all_pts)
-            from api.tasks import run_feedback_face_job
-            run_feedback_face_job.delay(real_point_id, db_correct_value, tp_json)
+            state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"people": [f"Processing (Test)... {db_correct_value}"]}, points=all_pts)
+            # [테스트 모드] 실제 얼굴 크롭 및 벡터 인덱싱 차단
+            # from api.tasks import run_feedback_face_job
+            # run_feedback_face_job.delay(real_point_id, db_correct_value, tp_json)
+            print(f"🛑 [TEST MODE] Face Feedback 훈련 로직 차단됨. 타겟: {all_pts}, 이름: {db_correct_value}")
         else:
             if db_correct_value.startswith("DATE|"):
                 date_val = db_correct_value.split("|", 1)[1]
-                state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"date": "Processing..."}, points=all_pts)
-                from api.tasks import run_feedback_time_loc_job
-                run_feedback_time_loc_job.delay(real_point_id, date_val, "Unknown-Location", tp_json)
+                state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"date": f"Processing (Test)... {date_val}"}, points=all_pts)
+                # [테스트 모드]
+                # from api.tasks import run_feedback_time_loc_job
+                # run_feedback_time_loc_job.delay(real_point_id, date_val, "Unknown-Location", tp_json)
+                print(f"🛑 [TEST MODE] Date Feedback 훈련 로직 차단됨. 날짜: {date_val}")
             elif db_correct_value.startswith("LOC|"):
                 loc_val = db_correct_value.split("|", 1)[1]
-                state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"location": "Processing..."}, points=all_pts)
-                from api.tasks import run_feedback_time_loc_job
-                run_feedback_time_loc_job.delay(real_point_id, "Unknown Date", loc_val, tp_json)
+                state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"location": f"Processing (Test)... {loc_val}"}, points=all_pts)
+                # [테스트 모드]
+                # from api.tasks import run_feedback_time_loc_job
+                # run_feedback_time_loc_job.delay(real_point_id, "Unknown Date", loc_val, tp_json)
+                print(f"🛑 [TEST MODE] Location Feedback 훈련 로직 차단됨. 장소: {loc_val}")
             else:
-                state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"location": "Processing..."}, points=all_pts)
-                from api.tasks import run_feedback_time_loc_job
-                run_feedback_time_loc_job.delay(real_point_id, "Unknown Date", db_correct_value, tp_json)
+                state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"location": f"Processing (Test)... {db_correct_value}"}, points=all_pts)
+                # [테스트 모드]
+                # from api.tasks import run_feedback_time_loc_job
+                # run_feedback_time_loc_job.delay(real_point_id, "Unknown Date", db_correct_value, tp_json)
+                print(f"🛑 [TEST MODE] General Time/Loc Feedback 훈련 로직 차단됨. 값: {db_correct_value}")
                 
-        print(f"🚀 [Feedback v2.0 -> Redis] Celery 대기열에 지시서 발송 완료! (ID: {real_point_id})")
-        return {"message": "Feedback submitted successfully. Processing in background."}
+        print(f"✅ [Test Mode -> Redis] 큐 발송 스킵됨 (ID: {real_point_id})")
+        return {"message": "Feedback submitted successfully. (TEST MODE - Metadata not changed)"}
         
     except Exception as e:
         print(f"❌ [Feedback v2.0 -> Redis] 큐 발송 실패: {e}")
         return {"error": "Failed to submit feedback."}
 
-@router.get("/api/location/search_kakao")
-async def search_kakao_location(q: str):
-    import requests
-    import os
+import asyncio
+import requests
+import os
+
+@router.get("/api/location/search_global")
+async def search_global_location(q: str):
     kakao_key = os.environ.get("KAKAO_REST_API_KEY", "").strip()
-    if not kakao_key:
-        return {"error": "KAKAO_REST_API_KEY is not configured in .env."}
+    
+    def fetch_kakao_sync():
+        if not kakao_key: return []
+        url = "https://dapi.kakao.com/v2/local/search/keyword.json"
+        headers = {"Authorization": f"KakaoAK {kakao_key}"}
+        params = {"query": q, "size": 10}
+        try:
+            res = requests.get(url, headers=headers, params=params, timeout=5.0)
+            if res.status_code == 200:
+                data = res.json()
+                results = []
+                for doc in data.get("documents", []):
+                    lat_str = doc.get("y", "")
+                    lon_str = doc.get("x", "")
+                    place_name = doc.get("place_name", "")
+                    address_name = doc.get("road_address_name") or doc.get("address_name") or ""
+                    full_name = f"{place_name} ({address_name})" if address_name else place_name
+                    if lat_str and lon_str:
+                        exact_format = f"[{lat_str[:9]}, {lon_str[:10]}] {place_name}"
+                        results.append({"display": full_name, "exact": exact_format, "short_name": place_name})
+                return results
+        except Exception: pass
+        return []
 
-    url = "https://dapi.kakao.com/v2/local/search/keyword.json"
-    headers = {"Authorization": f"KakaoAK {kakao_key}"}
-    params = {"query": q, "size": 10}
+    def fetch_osm_sync():
+        url = "https://nominatim.openstreetmap.org/search"
+        params = {"q": q, "format": "jsonv2", "limit": 10, "accept-language": "ko"}
+        headers = {"User-Agent": "GumaPhoto-SearchApp/1.0"}
+        try:
+            res = requests.get(url, headers=headers, params=params, timeout=5.0)
+            if res.status_code == 200:
+                data = res.json()
+                results = []
+                for doc in data:
+                    lat_str = doc.get("lat", "")
+                    lon_str = doc.get("lon", "")
+                    display_name = doc.get("display_name", "")
+                    short_name = display_name.split(',')[0].strip()
+                    if lat_str and lon_str:
+                        exact_format = f"[{lat_str[:9]}, {lon_str[:10]}] {short_name}"
+                        results.append({"display": display_name, "exact": exact_format, "short_name": short_name})
+                return results
+        except Exception: pass
+        return []
 
-    try:
-        res = requests.get(url, headers=headers, params=params, timeout=5)
-        if res.status_code == 200:
-            data = res.json()
-            results = []
-            for doc in data.get("documents", []):
-                # Kakao Local API returns y as latitude and x as longitude
-                lat_str = doc.get("y", "")
-                lon_str = doc.get("x", "")
-                
-                # We format the name combining the place_name and address for clarity
-                place_name = doc.get("place_name", "")
-                address_name = doc.get("road_address_name") or doc.get("address_name") or ""
-                
-                # Combine them so the UI can show detailed info
-                full_name = f"{place_name} ({address_name})" if address_name else place_name
-                
-                # Store the exact bracket format for direct metadata_editor parsing
-                if lat_str and lon_str:
-                    exact_format = f"[{lat_str[:9]}, {lon_str[:10]}] {place_name}"
-                    results.append({"display": full_name, "exact": exact_format, "short_name": place_name})
-            return {"results": results}
-        else:
-            return {"error": f"Kakao API Error: {res.status_code} {res.text}"}
-    except Exception as e:
-        return {"error": str(e)}
+    kakao_results, osm_results = await asyncio.gather(
+        asyncio.to_thread(fetch_kakao_sync),
+        asyncio.to_thread(fetch_osm_sync)
+    )
+    
+    return {
+        "kakao": kakao_results,
+        "osm": osm_results
+    }
