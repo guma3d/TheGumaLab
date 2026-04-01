@@ -461,29 +461,37 @@ function renderThemes(themes) {
             layoutBox.className = 'theme-tile-box';
             layoutBox.style.display = 'grid';
             layoutBox.style.gridTemplateColumns = 'repeat(2, 1fr)';
+            // 스마트폰 환경에서 정사각형에 가까운 비율 보장 + PC에서도 너무 커지지 않게
+            layoutBox.style.gridAutoRows = 'min(45vw, 200px)';
             layoutBox.style.gap = '8px';
             layoutBox.style.padding = '0 10px 10px 10px';
         } else {
             layoutBox.className = 'theme-scroll-box';
         }
         
-        // 타일 방식일 경우 래핑이 길어지는 것을 방지하기 위해 최대 노출수를 조절할 수도 있으나,
-        // 일단 사용자의 모든 사진 경험을 해치지 않기 위해 전체 렌더링을 유지하거나 
-        // 시각적 균형을 위해 타일에서는 최대 6~8장만 선별하여 깔끔한 모듈을 완성할 수 있습니다.
-        // 현재는 첫 요구사항에 맞춰 2열 구조만 강제합니다.
-        const photosToRender = isTile ? theme.photos.slice(0, 6) : theme.photos; // 타일은 화면 점유율을 고려해 너무 길어지지 않게 6장만 프리뷰로 제공 (원하시면 제거 가능!)
+        // 타일 방식일 경우 노출수 제한 유지 (모듈형 디자인을 위해 최대 6장)
+        const photosToRender = isTile ? theme.photos.slice(0, 6) : theme.photos;
         
-        photosToRender.forEach(photo => {
+        photosToRender.forEach((photo, pIdx) => {
             const imgBtn = document.createElement('div');
             imgBtn.className = 'theme-photo-item';
             imgBtn.dataset.id = photo.id;
             
-            // 타일 모드일 때 썸네일 비율을 1:1로 확정지어 모자이크처럼 꽉 차게 만듭니다.
+            // 프리미엄 매거진/모자이크 스타일 비대칭 렌더링
             if (isTile) {
-                imgBtn.style.aspectRatio = '1 / 1';
-                imgBtn.style.width = '100%';
                 imgBtn.style.borderRadius = '12px';
                 imgBtn.style.overflow = 'hidden';
+                imgBtn.style.width = '100%';
+                imgBtn.style.height = '100%';
+                
+                // 크기 변화의 하이라이트 (재미 요소)
+                if (pIdx === 0) {
+                    // 첫 번째 사진: 세로로 2칸짜리 큰 대문 사진
+                    imgBtn.style.gridRow = 'span 2';
+                } else if (pIdx === 3) {
+                    // 네 번째 사진: 가로로 2칸짜리 와이드 와이드 컷
+                    imgBtn.style.gridColumn = 'span 2';
+                }
             }
             
             let imgUrl = photo.url;
