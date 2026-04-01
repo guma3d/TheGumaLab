@@ -33,7 +33,7 @@ services:
   celery_worker:
     build: .
     container_name: gumaphoto_celery
-    command: ["/usr/local/bin/celery", "-A", "core.celery_app", "worker", "--loglevel=info", "--concurrency=1"]
+    command: ["/usr/local/bin/celery", "-A", "core.celery_app", "worker", "-B", "--loglevel=info", "--concurrency=1"]
     volumes:
       - .:/app
       - ./data:/app/data
