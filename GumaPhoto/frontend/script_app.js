@@ -460,17 +460,17 @@ function renderThemes(themes) {
         if (isTile) {
             layoutBox.className = 'theme-tile-box';
             layoutBox.style.display = 'grid';
-            layoutBox.style.gridTemplateColumns = 'repeat(2, 1fr)';
-            // 스마트폰 환경에서 정사각형에 가까운 비율 보장 + PC에서도 너무 커지지 않게
-            layoutBox.style.gridAutoRows = 'min(45vw, 200px)';
+            layoutBox.style.gridTemplateColumns = 'repeat(3, 1fr)';
+            // 스마트폰 환경에서 3열 정사각형에 가까운 비율 보장
+            layoutBox.style.gridAutoRows = 'min(30vw, 150px)';
             layoutBox.style.gap = '8px';
             layoutBox.style.padding = '0 10px 10px 10px';
         } else {
             layoutBox.className = 'theme-scroll-box';
         }
         
-        // 타일 방식일 경우 노출수 제한 유지 (모듈형 디자인을 위해 최대 6장)
-        const photosToRender = isTile ? theme.photos.slice(0, 6) : theme.photos;
+        // 타일 방식일 경우 노출수 제한 유지 (모듈형 디자인을 위해 최대 8장으로 확장)
+        const photosToRender = isTile ? theme.photos.slice(0, 8) : theme.photos;
         
         photosToRender.forEach((photo, pIdx) => {
             const imgBtn = document.createElement('div');
@@ -484,12 +484,13 @@ function renderThemes(themes) {
                 imgBtn.style.width = '100%';
                 imgBtn.style.height = '100%';
                 
-                // 크기 변화의 하이라이트 (재미 요소)
+                // 크기 변화의 하이라이트 (재미 요소, 3열 퍼즐 호환성)
                 if (pIdx === 0) {
-                    // 첫 번째 사진: 세로로 2칸짜리 큰 대문 사진
+                    // 첫 번째 사진: 2x2 칸짜리 거대한 메인 썸네일 (Hero)
+                    imgBtn.style.gridColumn = 'span 2';
                     imgBtn.style.gridRow = 'span 2';
-                } else if (pIdx === 3) {
-                    // 네 번째 사진: 가로로 2칸짜리 와이드 와이드 컷
+                } else if (pIdx === 4) {
+                    // 다섯 번째 사진: 가로칸 2개짜리 파노라마 (퍼즐 완성을 위해 인덱스 4로 늦춤)
                     imgBtn.style.gridColumn = 'span 2';
                 }
             }
