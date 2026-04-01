@@ -393,7 +393,7 @@ def get_map_geojson():
         while True:
             records, offset = state.qdrant_client.scroll(
                 collection_name="gumaphoto_hybrid_kr",
-                with_payload=["filepath", "geo_point"],
+                with_payload=["filepath", "geo_point", "date", "location", "people", "season", "time_of_day"],
                 limit=5000,
                 offset=offset
             )
@@ -410,8 +410,13 @@ def get_map_geojson():
                             "coordinates": [float(geo["lon"]), float(geo["lat"])]
                         },
                         "properties": {
+                            "id": hit.id,
                             "url": photo_url,
-                            "date": payload.get("date", "1970:01:01 00:00:00")
+                            "date": payload.get("date", "1970:01:01 00:00:00"),
+                            "location": payload.get("location", "Unknown Location"),
+                            "people": payload.get("people", []),
+                            "season": payload.get("season", "Unknown"),
+                            "time_of_day": payload.get("time_of_day", "Unknown")
                         }
                     })
             if offset is None:

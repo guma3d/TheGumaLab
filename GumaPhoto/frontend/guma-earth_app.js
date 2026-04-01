@@ -331,15 +331,26 @@ const GumaEarth = (function() {
                                 headerTitle.innerText = `${currClusterCount} Photos In Area`;
                                 modalContent.innerHTML = '';
                                 
-                                // 1. 역순(시간 최신순) 정렬을 위한 안전한 데이터 추출 (서버에서 date 파라미터가 비어있어도 크래시 방지)
+                                // 1. 역순(시간 최신순) 정렬을 위한 안전한 데이터 추출 및 2중 모달용 풀-하이드레이션 (Full Hydration)
                                 let photoList = photos.map(p => {
-                                    // 💡 옵셔널 체이닝과 예외처리를 통해 완벽하게 방어
-                                    let safeUrl = p?.properties?.url?.getValue?.() || p?.properties?.url || '';
-                                    let safeDate = p?.properties?.date?.getValue?.() || p?.properties?.date || '1970';
+                                    const props = p?.properties || {};
+                                    const getVal = (prop, fallback = '') => {
+                                        if (prop === undefined || prop === null) return fallback;
+                                        if (typeof prop.getValue === 'function') {
+                                            const v = prop.getValue();
+                                            return (v !== undefined && v !== null) ? v : fallback;
+                                        }
+                                        return prop;
+                                    };
                                     
-                                    return { 
-                                        url: safeUrl, 
-                                        date: String(safeDate) // 💡 반드시 문자열로 강제 캐스팅 (null/undefined 에러 원천 차단)
+                                    return {
+                                        id: getVal(props.id),
+                                        url: getVal(props.url), 
+                                        date: String(getVal(props.date, '1970')), // 💡 무결성 보장을 위한 캐스팅
+                                        location: getVal(props.location, 'Unknown Location'),
+                                        people: getVal(props.people, []),
+                                        season: getVal(props.season, 'Unknown'),
+                                        time_of_day: getVal(props.time_of_day, 'Unknown')
                                     };
                                 });
                                 
@@ -376,7 +387,14 @@ const GumaEarth = (function() {
                                             
                                             img.style.cssText = "width: calc(33.3% - 6px); aspect-ratio: 1/1; object-fit: cover; border-radius: 6px; background: #333; cursor: pointer; opacity: 0; transition: opacity 0.3s ease;";
                                             img.onload = () => { img.style.opacity = 1; };
-                                            img.onclick = () => { window.open(data.url, '_blank'); };
+                                            img.onclick = () => { 
+                                                // 2중 통합 모달 연결 (존재 여부 검증 후 폴백 처리)
+                                                if (typeof openModal === 'function') {
+                                                    openModal(data, data.url);
+                                                } else {
+                                                    window.open(data.url, '_blank'); 
+                                                }
+                                            };
                                             modalContent.appendChild(img);
                                         }
                                     });
