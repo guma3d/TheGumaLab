@@ -205,8 +205,9 @@ const GumaEarth = (function() {
                             cluster.billboard.show = true;
                             cluster.label.show = false; // 글자는 구슬 위에 직접 캔버스로 박음
                             
-                            // 클릭 모달 액션을 위해 데이터 임베딩
-                            cluster.customData = clusteredEntities;
+                            // 클릭 모달 액션을 위해 데이터 임베딩: 픽 이벤트를 위해 billboard.id 에 명시적으로 바인딩
+                            cluster.billboard.id = clusteredEntities;
+                            cluster.customData = clusteredEntities; // 호환성을 위해 유지
 
                             cluster.billboard.image = createAuraOrb(clusteredEntities.length, 'blue');
                             cluster.billboard.verticalOrigin = Cesium.VerticalOrigin.BOTTOM; 
@@ -329,20 +330,14 @@ const GumaEarth = (function() {
                                 
                                 // 1. 역순(시간 최신순) 정렬을 위한 안전한 데이터 추출 (서버에서 date 파라미터가 비어있어도 크래시 방지)
                                 let photoList = photos.map(p => {
-                                    let safeUrl = '';
-                                    let safeDate = '1970';
+                                    // 💡 옵셔널 체이닝과 예외처리를 통해 완벽하게 방어
+                                    let safeUrl = p?.properties?.url?.getValue?.() || p?.properties?.url || '';
+                                    let safeDate = p?.properties?.date?.getValue?.() || p?.properties?.date || '1970';
                                     
-                                    if (p.properties) {
-                                        // PropertyBag.getValue() 체크
-                                        if (p.properties.url !== undefined) {
-                                            safeUrl = typeof p.properties.url.getValue === 'function' ? p.properties.url.getValue() : p.properties.url;
-                                        }
-                                        if (p.properties.date !== undefined) {
-                                            safeDate = typeof p.properties.date.getValue === 'function' ? p.properties.date.getValue() : p.properties.date;
-                                        }
-                                    }
-                                    
-                                    return { url: safeUrl, date: safeDate };
+                                    return { 
+                                        url: safeUrl, 
+                                        date: String(safeDate) // 💡 반드시 문자열로 강제 캐스팅 (null/undefined 에러 원천 차단)
+                                    };
                                 });
                                 
                                 photoList.sort((a,b) => b.date.localeCompare(a.date));
