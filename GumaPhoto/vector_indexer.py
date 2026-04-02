@@ -367,7 +367,7 @@ class VectorIndexer:
                     
                     exif_dict[fname] = {"date": dt_str, "loc": loc_str, "lat": lat_f, "lon": lon_f}
                     if date_val:
-                        exif_dict[fname]["time_of_day"], exif_dict[fname]["season"] = self.extract_time_and_season(filepath, date_val=date_val)
+                        exif_dict[fname]["time_of_day"], exif_dict[fname]["season"] = self.extract_time_and_season(fpath, date_val=date_val)
                         
         except Exception as e:
             print(f"      🚨 배치 EXIF 추출 오류: {e}")
