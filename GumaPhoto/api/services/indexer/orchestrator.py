@@ -40,16 +40,15 @@ class VectorIndexerOrchestrator:
         self.engine_face = FaceEngine()
         self.engine_florence = FlorenceEngine()
 
-    def extract_time_and_season(self, filepath):
+    def extract_time_and_season(self, filepath, date_val=None):
         time_of_day = "Unknown"
         season = "Unknown"
-        try:
-            with open(filepath, 'rb') as f:
-                tags = exifread.process_file(f, details=False)
-            if 'EXIF DateTimeOriginal' in tags:
-                dt_str = str(tags['EXIF DateTimeOriginal'])
-                parts = dt_str.split(' ')
-                if len(parts) == 2:
+        
+        # 1. exiftool에서 넘겨받은 강력한 문자열이 있다면 (ex. '2024:05:13 14:12:00')
+        if date_val and str(date_val) != "Unknown Date":
+            try:
+                parts = str(date_val).split(' ')
+                if len(parts) >= 2:
                     date_part, time_part = parts[0], parts[1]
                     hour = int(time_part.split(':')[0])
                     if 0 <= hour < 6: time_of_day = "새벽"
@@ -57,13 +56,39 @@ class VectorIndexerOrchestrator:
                     elif 12 <= hour < 18: time_of_day = "낮"
                     else: time_of_day = "밤/저녁"
                     
-                    month = int(date_part.split(':')[1])
+                    month_str = date_part.split(':')[1] if ':' in date_part else date_part.split('-')[1]
+                    month = int(month_str)
                     if month in [3, 4, 5]: season = "봄"
                     elif month in [6, 7, 8]: season = "여름"
                     elif month in [9, 10, 11]: season = "가을"
                     elif month in [12, 1, 2]: season = "겨울"
-        except Exception:
-            pass
+            except Exception:
+                pass
+
+        # 2. fallback: 기존 exifread 파싱
+        if season == "Unknown":
+            try:
+                import exifread
+                with open(filepath, 'rb') as f:
+                    tags = exifread.process_file(f, details=False)
+                if 'EXIF DateTimeOriginal' in tags:
+                    dt_str = str(tags['EXIF DateTimeOriginal'])
+                    parts = dt_str.split(' ')
+                    if len(parts) == 2:
+                        date_part, time_part = parts[0], parts[1]
+                        hour = int(time_part.split(':')[0])
+                        if 0 <= hour < 6: time_of_day = "새벽"
+                        elif 6 <= hour < 12: time_of_day = "아침"
+                        elif 12 <= hour < 18: time_of_day = "낮"
+                        else: time_of_day = "밤/저녁"
+                        
+                        month = int(date_part.split(':')[1])
+                        if month in [3, 4, 5]: season = "봄"
+                        elif month in [6, 7, 8]: season = "여름"
+                        elif month in [9, 10, 11]: season = "가을"
+                        elif month in [12, 1, 2]: season = "겨울"
+            except Exception:
+                pass
             
         if season == "Unknown":
             match = re.search(r'(19|20)\d{2}-(\d{2})', filepath)
@@ -129,6 +154,13 @@ class VectorIndexerOrchestrator:
                             if re.match(r'^(19|20)\d{2}-\d{2}-\d{2}$', date_str):
                                 sp = date_str.split('-')
                                 sort_date = int(sp[0])*10000 + int(sp[1])*100 + int(sp[2])
+                        
+                        # [핵심 패치] exiftool이 정확히 추출한 d_val을 사용하여 계절/시간대를 재계산 (exifread 오류 우회)
+                        if d_val:
+                            new_time, new_season = self.extract_time_and_season(filepath, date_val=d_val)
+                            item["time_of_day"] = new_time if new_time != "Unknown" else item["time_of_day"]
+                            item["season"] = new_season if new_season != "Unknown" else item["season"]
+                            
                         
                         # 장소(Location) XMP 텍스트 기반 네임 파싱 완전히 폐지 (사용자 규칙: 오직 숫자 GPS 역추적만 사용)
                         location_str = "Unknown Location"

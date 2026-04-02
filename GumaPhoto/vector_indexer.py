@@ -174,47 +174,69 @@ class VectorIndexer:
         return False
 
 
-    def extract_time_and_season(self, filepath):
+    def extract_time_and_season(self, filepath, date_val=None):
         """EXIF나 파일명을 기반으로 시간대(Time of Day)와 계절(Season) 추출"""
         time_of_day = "Unknown"
         season = "Unknown"
         
-        # 1. EXIF에서 정확한 시간 추출 시도
-        try:
-            with open(filepath, 'rb') as f:
-                tags = exifread.process_file(f, details=False)
-            
-            if 'EXIF DateTimeOriginal' in tags:
-                dt_str = str(tags['EXIF DateTimeOriginal'])
-                # 포맷: 2023:10:15 14:30:00
-                parts = dt_str.split(' ')
-                if len(parts) == 2:
-                    date_part = parts[0]
-                    time_part = parts[1]
-                    
-                    # 시간대 구분
+        # 1. 전달받은 exiftool 날짜 파싱
+        if date_val and str(date_val) != "Unknown Date":
+            try:
+                parts = str(date_val).split(' ')
+                if len(parts) >= 2:
+                    date_part, time_part = parts[0], parts[1]
                     hour = int(time_part.split(':')[0])
-                    if 0 <= hour < 6:
-                        time_of_day = "새벽"
-                    elif 6 <= hour < 12:
-                        time_of_day = "아침"
-                    elif 12 <= hour < 18:
-                        time_of_day = "낮"
-                    else:
-                        time_of_day = "밤/저녁"
+                    if 0 <= hour < 6: time_of_day = "새벽"
+                    elif 6 <= hour < 12: time_of_day = "아침"
+                    elif 12 <= hour < 18: time_of_day = "낮"
+                    else: time_of_day = "밤/저녁"
+                    
+                    month_str = date_part.split(':')[1] if ':' in date_part else date_part.split('-')[1]
+                    month = int(month_str)
+                    if month in [3, 4, 5]: season = "봄"
+                    elif month in [6, 7, 8]: season = "여름"
+                    elif month in [9, 10, 11]: season = "가을"
+                    elif month in [12, 1, 2]: season = "겨울"
+            except Exception:
+                pass
+                
+        # 2. EXIF에서 정확한 시간 추출 시도
+        if season == "Unknown":
+            try:
+                with open(filepath, 'rb') as f:
+                    tags = exifread.process_file(f, details=False)
+                
+                if 'EXIF DateTimeOriginal' in tags:
+                    dt_str = str(tags['EXIF DateTimeOriginal'])
+                    # 포맷: 2023:10:15 14:30:00
+                    parts = dt_str.split(' ')
+                    if len(parts) == 2:
+                        date_part = parts[0]
+                        time_part = parts[1]
                         
-                    # 계절 구분 (월 기반)
-                    month = int(date_part.split(':')[1])
-                    if month in [3, 4, 5]:
-                        season = "봄"
-                    elif month in [6, 7, 8]:
-                        season = "여름"
-                    elif month in [9, 10, 11]:
-                        season = "가을"
-                    elif month in [12, 1, 2]:
-                        season = "겨울"
-        except Exception:
-            pass
+                        # 시간대 구분
+                        hour = int(time_part.split(':')[0])
+                        if 0 <= hour < 6:
+                            time_of_day = "새벽"
+                        elif 6 <= hour < 12:
+                            time_of_day = "아침"
+                        elif 12 <= hour < 18:
+                            time_of_day = "낮"
+                        else:
+                            time_of_day = "밤/저녁"
+                            
+                        # 계절 구분 (월 기반)
+                        month = int(date_part.split(':')[1])
+                        if month in [3, 4, 5]:
+                            season = "봄"
+                        elif month in [6, 7, 8]:
+                            season = "여름"
+                        elif month in [9, 10, 11]:
+                            season = "가을"
+                        elif month in [12, 1, 2]:
+                            season = "겨울"
+            except Exception:
+                pass
             
         # 2. EXIF가 날아갔다면 폴더명/파일명에서 유추 (예: /app/data/organized/2012-12_San-Francisco/2012-12_177.jpg)
         if season == "Unknown":
@@ -344,6 +366,9 @@ class VectorIndexer:
                     except: pass
                     
                     exif_dict[fname] = {"date": dt_str, "loc": loc_str, "lat": lat_f, "lon": lon_f}
+                    if date_val:
+                        exif_dict[fname]["time_of_day"], exif_dict[fname]["season"] = self.extract_time_and_season(filepath, date_val=date_val)
+                        
         except Exception as e:
             print(f"      🚨 배치 EXIF 추출 오류: {e}")
 
@@ -524,7 +549,8 @@ class VectorIndexer:
                         "date": date_str,
                         "sort_date": sort_date,
                         "location": location_str,
-                        "season": item["season"],
+                        "season": exif_dict[fname]["season"] if fname in exif_dict and "season" in exif_dict[fname] else item["season"],
+                        "time_of_day": exif_dict[fname]["time_of_day"] if fname in exif_dict and "time_of_day" in exif_dict[fname] else item.get("time_of_day", "Unknown"),
                         "objects": found_objects,
                         "caption": scene_caption,
                         "hash": item["file_hash"]
@@ -536,7 +562,9 @@ class VectorIndexer:
                     successful_payloads.append((filepath, payload, face_count))
                     points_to_upsert.append(PointStruct(id=point_id, vector=vectors, payload=payload))
                 elif self.run_metadata_geo:
-                    update_payload = {"location": location_str, "date": date_str, "sort_date": sort_date, "season": item["season"]}
+                    new_season = exif_dict[fname]["season"] if fname in exif_dict and "season" in exif_dict[fname] else item["season"]
+                    new_time = exif_dict[fname]["time_of_day"] if fname in exif_dict and "time_of_day" in exif_dict[fname] else item.get("time_of_day", "Unknown")
+                    update_payload = {"location": location_str, "date": date_str, "sort_date": sort_date, "season": new_season, "time_of_day": new_time}
                     if lat_f is not None and lon_f is not None:
                         update_payload["geo_point"] = {"lat": lat_f, "lon": lon_f}
                     self.q_client.set_payload(collection_name=COLLECTION_NAME, payload=update_payload, points=[point_id])
