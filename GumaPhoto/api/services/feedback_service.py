@@ -262,12 +262,12 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
         else:
             shutil.copy2(main_filepath, enrolled_dest)
 
-    # 2. 빠른 DB 즉시 덮어쓰기 (새벽 딥러닝 전까지 프론트엔드용으로 임시 확보)
+    # 2. 빠른 DB 즉시 덮어쓰기 (새벽 딥러닝 전까지 프론트엔드용으로 임시 유지)
     print("  [*] 인물 등록 딥러닝 우회 (새벽 지연). DB에 즉시 강제 덮어쓰기 중...")
     for target in target_filepaths:
         point_id = target["point_id"]
         # 기존 people 리스트에서 Unnamed 등 교체 후 추가, 혹은 심플하게 덮어쓰기
-        client.set_payload(collection_name=COLLECTION_NAME, payload={"people": [known_name], "processing_status": True}, points=[point_id])
-        print(f"    - {os.path.basename(target['filepath'])} : 임시 즉각 업데이트 완료 [{known_name}]")
+        client.set_payload(collection_name=COLLECTION_NAME, payload={"people": [known_name]}, points=[point_id])
+        print(f"    - {os.path.basename(target['filepath'])} : 영구 업데이트 완료 [{known_name}]")
         
-    print("  [+] 인물 사진 도감 축적 및 DB 임시 반영 모두 완료되었습니다! (딥러닝 학습은 새벽에 진행됩니다)")
+    print("  [+] 인물 사진 도감 축적 및 DB 반영 모두 완료되었습니다! (딥러닝 모델 병합은 새벽에 진행됩니다)")
