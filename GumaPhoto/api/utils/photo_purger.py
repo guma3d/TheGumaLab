@@ -9,6 +9,9 @@ class PhotoPurger:
         2. Qdrant 벡터 증발
         3. SQLAlchemy DB Tombstone 부여 (영구 제명 상태 = DELETED)
         """
+        import urllib.parse
+        abs_path = urllib.parse.unquote(abs_path)
+        
         if abs_path.startswith("/videos/"):
             abs_path = abs_path.replace("/videos/", "/app/data/organized/")
         elif abs_path.startswith("/photos/"):
