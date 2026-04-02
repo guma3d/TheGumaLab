@@ -25,7 +25,7 @@ def get_physical_metadata_str(filepath):
             lat = d.get("GPSLatitude", "None")
             lon = d.get("GPSLongitude", "None")
             gps = f"({lat}, {lon})" if lat != "None" else "No GPS"
-            return f"Loc: {d.get('Location', 'None')} | GPS: {gps} | Date: {d.get('DateTimeOriginal', 'None')}"
+            return f"GPS: {gps} | Date: {d.get('DateTimeOriginal', 'None')}"
     except Exception as e: pass
     return "EXIF: Parse Error or Empty"
 
@@ -73,7 +73,7 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
                 print(f"      ㄴ [메타데이터-BEFORE]: {exif_str}")
                 try:
                     with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
-                        tf.write(json.dumps({"type": "BEFORE", "trace_id": res.id, "hash_key": os.path.basename(fpath)[:15], "filepath": fpath, "location": p.get('location'), "date": p.get('date'), "people": p.get('people'), "exif": exif_str}, ensure_ascii=False) + "\n")
+                        tf.write(json.dumps({"type": "BEFORE", "trace_id": res.id, "hash_key": os.path.basename(fpath)[:15], "filepath": fpath, "location": p.get('location'), "geo_point": p.get('geo_point'), "date": p.get('date'), "people": p.get('people'), "exif": exif_str}, ensure_ascii=False) + "\n")
                 except: pass
     else:
         print("[-] 지정된 타겟 포인트 리스트가 없습니다. 종료합니다.")
@@ -195,6 +195,7 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
                         "location": after_loc, 
                         "date": after_date,
                         "people": ap.get('people') if 'ap' in locals() else None,
+                        "geo_point": ap.get('geo_point') if 'ap' in locals() else None,
                         "exif": exif_str
                     }, ensure_ascii=False) + "\n")
         except Exception as e:
