@@ -89,7 +89,7 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
             raw_place = str(match.group(3)).strip()
             
             try:
-                import urllib.request, json
+                import urllib.request
                 req_url = f"https://nominatim.openstreetmap.org/reverse?lat={lat_val}&lon={lon_val}&format=jsonv2&accept-language=ko"
                 req = urllib.request.Request(req_url, headers={'User-Agent': 'GumaPhoto-FeedbackWorker/1.0'})
                 with urllib.request.urlopen(req, timeout=5) as resp:
@@ -242,7 +242,6 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
             client.set_payload(collection_name=COLLECTION_NAME, payload={"people": [true_name]}, points=[point_id])
             
             try:
-                import json
                 with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
                     tf.write(json.dumps({"type": "BEFORE", "trace_id": point_id, "filepath": filepath, "people": target.get("old_people", [])}, ensure_ascii=False) + "\n")
                     tf.write(json.dumps({"type": "AFTER", "trace_id": point_id, "filepath": filepath, "people": [true_name]}, ensure_ascii=False) + "\n")
@@ -298,7 +297,6 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
         client.set_payload(collection_name=COLLECTION_NAME, payload={"people": [known_name]}, points=[point_id])
         
         try:
-            import json
             with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
                 tf.write(json.dumps({"type": "BEFORE", "trace_id": point_id, "filepath": filepath, "people": target.get("old_people", [])}, ensure_ascii=False) + "\n")
                 tf.write(json.dumps({"type": "AFTER", "trace_id": point_id, "filepath": filepath, "people": [known_name]}, ensure_ascii=False) + "\n")
