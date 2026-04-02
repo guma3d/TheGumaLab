@@ -311,37 +311,18 @@ async def submit_feedback_v2(req: FeedbackV2Request):
         except Exception as e:
             print(f"[Gemini 날짜 파싱 오류] {e}")
 
-    # Redis Celery 큐로 작업 던지기 대신 SQLite 장부에 기록하고 Qdrant 즉시 반영
+    # SQLite 등 별도의 DB를 사용하지 않고 오직 Qdrant 내부의 페이로드 자체를 큐(Queue) 상태망으로 사용합니다!
     db_correct_value = f"{prefix}{final_correct_value}" if prefix else final_correct_value
     
     real_target_points = [get_uuid_from_id(tid) for tid in req.target_points] if req.target_points else []
     tp_json = json.dumps(real_target_points) if real_target_points else "[]"
     
     try:
-        from core.database import SessionLocal
-        from core.models import FeedbackQueue
-        
         all_pts = [real_point_id] + real_target_points if real_target_points else [real_point_id]
         
-        db = SessionLocal()
-        # 장부(Queue)에 기록
-        for pt_id in all_pts:
-            new_job = FeedbackQueue(
-                qdrant_id=pt_id,
-                issue_type=req.issue_type,
-                correct_value=db_correct_value,
-                status="PENDING"
-            )
-            db.add(new_job)
-        db.commit()
-        db.close()
-        
-        print(f"📥 [새벽 배치 대기열] 피드백 장부 등록 완료 (총 {len(all_pts)}건)")
-        
-        # UI 즉각 반영을 위한 Qdrant 메모리 강제 업데이트 (Processing_status 플래그 부여)
+        # UI 즉각 반영 및 새벽 배치를 위한 Qdrant 상태 업데이트 (processing_status 부여)
         if fb_type == "face":
-            # 인물의 경우 feedback_service 쪽에서 얼굴 크롭(Crop) 로직을 거쳐야 함.
-            # 서버 내부 모듈을 직접 호출하여 크롭 + Qdrant 임시 업데이트 처리
+            # 인물의 경우 feedback_service에 크롭만 하고 DB 처리하도록 위임
             from api.services.feedback_service import process_face_enrollment
             process_face_enrollment(real_point_id, final_correct_value, tp_json)
         else:
@@ -354,8 +335,8 @@ async def submit_feedback_v2(req: FeedbackV2Request):
             else:
                 state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"location": db_correct_value, "processing_status": True}, points=all_pts)
                 
-        print(f"✅ [Test Mode -> 배칭 큐 전환] Qdrant 즉시 반영 + 장부 기록 완료 (ID: {real_point_id})")
-        return {"message": "Feedback submitted successfully. Added to processing queue."}
+        print(f"✅ [Single Source of Truth] Qdrant 즉시 반영 완료 (ID: {real_point_id})")
+        return {"message": "Feedback submitted successfully."}
         
     except Exception as e:
         print(f"❌ [Feedback v3.0 -> SQLite] 큐 발송 실패: {e}")
