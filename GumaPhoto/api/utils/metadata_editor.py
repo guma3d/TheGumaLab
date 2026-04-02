@@ -34,46 +34,47 @@ class MetadataEditor:
                 except Exception as e:
                     print(f"    [-] 지오코딩 변환(Nominatim) 중 에러 발생: {e}")
 
+        # 2. ExifTool 일괄 묶음 처리 (Batch Processing)
+        cmd = ["exiftool", "-m", "-overwrite_original"]
+        has_update = False
+        
+        if lat is not None and lon is not None:
+            lat_ref, lon_ref = ('N', 'E') if lat >= 0 and lon >= 0 else ('S', 'W')
+            if lat < 0 and lon >= 0: lat_ref, lon_ref = 'S', 'E'
+            if lat >= 0 and lon < 0: lat_ref, lon_ref = 'N', 'W'
+            if lat < 0 and lon < 0: lat_ref, lon_ref = 'S', 'W'
+            
+            cmd.extend([
+                f"-GPSLatitude={abs(lat)}", f"-GPSLatitudeRef={lat_ref}", 
+                f"-GPSLongitude={abs(lon)}", f"-GPSLongitudeRef={lon_ref}"
+            ])
+            has_update = True
+            
+        if target_date and "Unknown" not in target_date:
+            parts = target_date.split("-")
+            yyyy = parts[0]
+            mm = parts[1] if len(parts) > 1 else "01"
+            dd = parts[2] if len(parts) > 2 else "15"
+            exif_time = f"{yyyy}:{mm}:{dd} 12:00:00"
+            # -DateTimeOriginal과 -CreateDate 동시 타겟팅
+            cmd.extend([f"-DateTimeOriginal={exif_time}", f"-CreateDate={exif_time}"])
+            has_update = True
+        
         modified_count = 0
-
-        # 2. 파일별로 ExifTool 덧씌우기 수행
-        for fpath in filepath_list:
-            if not os.path.exists(fpath): 
-                continue
-                
-            cmd = ["exiftool"]
-            has_update = False
-            
-            # (A) XMP 장소명 문자열 박기 전면 폐기 (사용자 요청: 위치는 오직 GPS 위도/경도만 참조)            
-            # (B) 진짜 GPS 위도경도 박기
-            if lat is not None and lon is not None:
-                lat_ref, lon_ref = ('N', 'E') if lat >= 0 and lon >= 0 else ('S', 'W')
-                if lat < 0 and lon >= 0: lat_ref, lon_ref = 'S', 'E'
-                if lat >= 0 and lon < 0: lat_ref, lon_ref = 'N', 'W'
-                if lat < 0 and lon < 0: lat_ref, lon_ref = 'S', 'W'
-                
-                cmd.extend([
-                    f"-GPSLatitude={abs(lat)}", f"-GPSLatitudeRef={lat_ref}", 
-                    f"-GPSLongitude={abs(lon)}", f"-GPSLongitudeRef={lon_ref}"
-                ])
-                has_update = True
-                
-            # (C) 사진 촬영 일자 박기
-            if target_date and "Unknown" not in target_date:
-                parts = target_date.split("-")
-                yyyy = parts[0]
-                mm = parts[1] if len(parts) > 1 else "01"
-                dd = parts[2] if len(parts) > 2 else "15" # 중간값 15일로 배정 (안정성)
-                exif_time = f"{yyyy}:{mm}:{dd} 12:00:00"
-                cmd.extend([f"-DateTimeOriginal={exif_time}", f"-CreateDate={exif_time}"])
-                has_update = True
-            
-            if has_update:
-                cmd.extend(["-m", "-overwrite_original", fpath])
-                try:
-                    subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                    modified_count += 1
-                except Exception as e:
-                    print(f"    [-] ExifTool 실행 중 파일 단위 에러 발생 ({fpath}): {e}")
-                    
+        if has_update and filepath_list:
+            # 존재하고 유효한 파일들만 추출
+            valid_files = [f for f in filepath_list if os.path.exists(f)]
+            if valid_files:
+                # 윈도우 커맨드 길이 제한 방지를 위해 100개씩 청크(Batch) 단위로 쪼개서 실행
+                batch_size = 100
+                for i in range(0, len(valid_files), batch_size):
+                    batch = valid_files[i:i+batch_size]
+                    batch_cmd = list(cmd) + batch
+                    try:
+                        subprocess.run(batch_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        modified_count += len(batch)
+                    except Exception as e:
+                        print(f"    [-] ExifTool Batch 실행 중 에러 발생: {e}")
+                        
+        print(f"    [+] 총 {modified_count}개의 파일 EXIF 강제 주입 성공")
         return modified_count

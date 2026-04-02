@@ -40,3 +40,17 @@ class Photo(Base):
     # 타임스탬프
     created_at = Column(DateTime, default=get_now)
     updated_at = Column(DateTime, default=get_now, onupdate=get_now)
+
+class FeedbackQueue(Base):
+    """
+    새벽 3시 일괄 처리(Batch Processing)를 위해 피드백 요청을 임시 저장하는 장부 테이블
+    """
+    __tablename__ = "feedback_queue"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    qdrant_id = Column(String, index=True, nullable=False)    # 타겟 사진 UUID
+    issue_type = Column(String, nullable=False)               # 'Location', 'Date', 'Person' 등
+    correct_value = Column(String, nullable=False)            # 새롭게 변경할 값
+    status = Column(String, default="PENDING", index=True)    # PENDING, COMPLETED, ERROR
+    created_at = Column(DateTime, default=get_now)
+

@@ -255,90 +255,19 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
                     nx2, ny2 = min(w, x2 + margin_x), min(h, y2 + margin_y)
                     face_chip = img[ny1:ny2, nx1:nx2]
                     cv2.imwrite(enrolled_dest, face_chip)
-                    print(f"  [+] 정밀 크롭(Crop) 데이터셋 축적 완료: {enrolled_dest}")
+                    print(f"  [+] 정밀 크롭(Crop) 데이터셋 축적 완료 (학습은 새벽 배치로 지연): {enrolled_dest}")
             except Exception as e:
                 print(f"  [!] 얼굴 크롭 실패: {e}")
                 shutil.copy2(main_filepath, enrolled_dest)
         else:
             shutil.copy2(main_filepath, enrolled_dest)
 
-    # 2. 얼굴 도감 정밀 리빌드
-    print("  [*] 딥러닝 인물 도감 전체 재학습 시작...")
-    from insightface.app import FaceAnalysis
-    face_app = FaceAnalysis(name='buffalo_l', providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
-    face_app.prepare(ctx_id=0, det_size=(640, 640))
-    
-    new_known_faces = {}
-    base_enrolled_dir = "/app/data/enrolled"
-    if os.path.exists(base_enrolled_dir):
-        for person_name in os.listdir(base_enrolled_dir):
-            person_folder = os.path.join(base_enrolled_dir, person_name)
-            if not os.path.isdir(person_folder): continue
-            
-            person_vectors = []
-            for img_name in os.listdir(person_folder):
-                img_path = os.path.join(person_folder, img_name)
-                img = cv2.imread(img_path)
-                if img is None: continue
-                faces = face_app.get(img)
-                if not faces: continue
-                
-                img_h, img_w = img.shape[:2]
-                cx, cy = img_w / 2, img_h / 2
-                best_face = sorted(faces, key=lambda f: ((f.bbox[0]+f.bbox[2])/2 - cx)**2 + ((f.bbox[1]+f.bbox[3])/2 - cy)**2)[0]
-                person_vectors.append(best_face.normed_embedding)
-                
-            if person_vectors:
-                mean_vec = np.mean(person_vectors, axis=0)
-                mean_vec = mean_vec / np.linalg.norm(mean_vec)
-                new_known_faces[person_name] = [mean_vec.tolist()]
-                print(f"    - '{person_name}' 님 학습 완료 ({len(person_vectors)}장)")
-                
-    with open(KNOWN_FACES_PATH, 'wb') as f:
-        pickle.dump(new_known_faces, f)
-    print(f"  [+] 온디맨드 인물 도감 교체 완료! (총 {len(new_known_faces)}명)")
-    
-    # 메모리 회수
-    del face_app
-    
-    # 3. 모든 대상 사진에 대해 InsightFace 평가 및 DB 덮어쓰기 실시
-    print("  [*] 대상 사진 전체에 대해 독립형 InsightFace 적용 및 Qdrant 덮어쓰기...")
-    from api.services.insightface_service import InsightFaceModule
-    face_bot = InsightFaceModule()
-    
+    # 2. 빠른 DB 즉시 덮어쓰기 (새벽 딥러닝 전까지 프론트엔드용으로 임시 확보)
+    print("  [*] 인물 등록 딥러닝 우회 (새벽 지연). DB에 즉시 강제 덮어쓰기 중...")
     for target in target_filepaths:
-        filepath = target['filepath']
-        point_id = target['point_id']
-        try:
-            face_res = face_bot.analyze_image(filepath)
-            
-            client.set_payload(
-                collection_name=COLLECTION_NAME,
-                payload={
-                    "people": face_res["found_people"],
-                    "face_count": face_res["face_count"],
-                    "age": face_res["payload"].get("age"),
-                    "gender": face_res["payload"].get("gender"),
-                    "emotion": face_res["payload"].get("emotion"),
-                },
-                points=[point_id]
-            )
-            
-            if "face" in face_res["vectors"]:
-                from qdrant_client.models import PointVectors
-                client.update_vectors(
-                    collection_name=COLLECTION_NAME,
-                    points=[PointVectors(id=point_id, vector={"face": face_res["vectors"]["face"]})]
-                )
-                
-            try:
-                with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
-                    tf.write(json.dumps({"type": "BEFORE", "trace_id": point_id, "filepath": filepath, "people": target.get("old_people", [])}, ensure_ascii=False) + "\n")
-                    tf.write(json.dumps({"type": "AFTER", "trace_id": point_id, "filepath": filepath, "people": face_res["found_people"]}, ensure_ascii=False) + "\n")
-            except: pass
-            
-            print(f"    - {os.path.basename(filepath)} : 업데이트 완료 {face_res['found_people']}")
-        except Exception as e:
-            print(f"    - {filepath} 덮어쓰기 실패: {e}")
-            
-    print("  [+] 인물 학습 및 DB 반영 모두 완료되었습니다!")
+        point_id = target["point_id"]
+        # 기존 people 리스트에서 Unnamed 등 교체 후 추가, 혹은 심플하게 덮어쓰기
+        client.set_payload(collection_name=COLLECTION_NAME, payload={"people": [known_name], "processing_status": True}, points=[point_id])
+        print(f"    - {os.path.basename(target['filepath'])} : 임시 즉각 업데이트 완료 [{known_name}]")
+        
+    print("  [+] 인물 사진 도감 축적 및 DB 임시 반영 모두 완료되었습니다! (딥러닝 학습은 새벽에 진행됩니다)")
