@@ -50,7 +50,6 @@ async def ignore_face_feedback(req: FeedbackV2Request):
             pt = state.qdrant_client.retrieve(collection_name="gumaphoto_hybrid_kr", ids=[real_point_id], with_payload=True)
             fpath = pt[0].payload.get("filepath", "unknown") if pt else "unknown"
             old_people = pt[0].payload.get("people", ["Unknown Person"]) if pt else ["Unknown Person"]
-            import json
             with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
                 tf.write(json.dumps({"type": "BEFORE", "trace_id": real_point_id, "filepath": fpath, "people": old_people}, ensure_ascii=False) + "\n")
                 tf.write(json.dumps({"type": "AFTER", "trace_id": real_point_id, "filepath": fpath, "people": ["Unidentifiable Person"]}, ensure_ascii=False) + "\n")
@@ -82,7 +81,6 @@ async def no_person_feedback(req: FeedbackV2Request):
             pt = state.qdrant_client.retrieve(collection_name="gumaphoto_hybrid_kr", ids=[real_point_id], with_payload=True)
             fpath = pt[0].payload.get("filepath", "unknown") if pt else "unknown"
             old_people = pt[0].payload.get("people", ["Unknown Person"]) if pt else ["Unknown Person"]
-            import json
             with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
                 tf.write(json.dumps({"type": "BEFORE", "trace_id": real_point_id, "filepath": fpath, "people": old_people}, ensure_ascii=False) + "\n")
                 tf.write(json.dumps({"type": "AFTER", "trace_id": real_point_id, "filepath": fpath, "people": ["No People"]}, ensure_ascii=False) + "\n")
