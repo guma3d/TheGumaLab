@@ -121,40 +121,11 @@ const GumaEarth = (function() {
             const MAX_ALTITUDE = 18000000.0; // 18,000km
             viewer.scene.screenSpaceCameraController.maximumZoomDistance = MAX_ALTITUDE; 
 
-            // Set initial fallback camera targeting the Korean peninsula
+            // Set initial default camera targeting the Korean peninsula (Instant snap, no animation)
             viewer.camera.flyTo({
-                destination: Cesium.Cartesian3.fromDegrees(127.5, 36.0, MAX_ALTITUDE),
-                duration: 0 // Instant snap to prevent animation weirdness if hidden
+                destination: Cesium.Cartesian3.fromDegrees(127.5, 36.0, 3000000.0), // 한국 위 약 3000km
+                duration: 0
             });
-            
-            // --- NEW: HTML5 진단 위치 추적 (현재 GPS 탐색 및 시네마틱 줌인) ---
-            const COUNTRY_LEVEL_ALTITUDE = 1500000.0; // 더 가까이! 1,500km 수직 상공
-            const cinematicZoomTo = (lon, lat) => {
-                viewer.camera.flyTo({
-                    destination: Cesium.Cartesian3.fromDegrees(lon, lat, COUNTRY_LEVEL_ALTITUDE),
-                    duration: 5.0, // 우주에서부터 5초간 웅장하게 줌인 연출
-                    easingFunction: Cesium.EasingFunction.CUBIC_IN_OUT // 부드러운 가감속
-                });
-            };
-
-            if ("geolocation" in navigator) {
-                console.log("[GumaEarth] Requesting User GPS coordinates...");
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const lat = position.coords.latitude;
-                        const lon = position.coords.longitude;
-                        console.log(`[GumaEarth] User GPS Found: ${lat}, ${lon} -> Zooming in!`);
-                        cinematicZoomTo(lon, lat);
-                    },
-                    (error) => {
-                        console.warn("[GumaEarth] GPS Permission denied or failed. Zooming to default Korea view.", error);
-                        cinematicZoomTo(127.5, 36.0); // 실패 시 한반도로 줌인
-                    },
-                    { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
-                );
-            } else {
-                cinematicZoomTo(127.5, 36.0);
-            }
             
             // --- NEW: Load GeoJSON Markers dynamically from Qdrant (ZERO LATENCY PREFETCH) ---
             try {
