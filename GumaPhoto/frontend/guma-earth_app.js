@@ -121,19 +121,23 @@ const GumaEarth = (function() {
             const MAX_ALTITUDE = 18000000.0; // 18,000km
             viewer.scene.screenSpaceCameraController.maximumZoomDistance = MAX_ALTITUDE; 
 
-            // Set initial fallback camera targeting the Korean peninsula
+            // 클러스터 폭죽 효과(다이내믹 스플릿): 카메라 이동 시마다 클러스터 연산을 즉각 수행하도록 역치(Threshold) 극단적 낮춤
+            viewer.camera.percentageChanged = 0.05;
+
+            // Set initial fallback camera targeting the Korean peninsula BUT close to ground
             viewer.camera.flyTo({
-                destination: Cesium.Cartesian3.fromDegrees(127.5, 36.0, MAX_ALTITUDE),
-                duration: 0 // Instant snap to prevent animation weirdness if hidden
+                destination: Cesium.Cartesian3.fromDegrees(127.5, 36.0, 1000000.0), // 1000km (시작점)
+                duration: 0 // 화면 안보일 때 즉시 세팅
             });
             
-            // --- NEW: HTML5 진단 위치 추적 (현재 GPS 탐색 및 시네마틱 줌인) ---
-            const COUNTRY_LEVEL_ALTITUDE = 1500000.0; // 더 가까이! 1,500km 수직 상공
+            // --- NEW: HTML5 진단 위치 추적 (우주로 튀어 올랐다 꽂히는 바운스 줌인) ---
+            const COUNTRY_LEVEL_ALTITUDE = 1000000.0; // 1,000km (더욱 가까이!)
             const cinematicZoomTo = (lon, lat) => {
                 viewer.camera.flyTo({
                     destination: Cesium.Cartesian3.fromDegrees(lon, lat, COUNTRY_LEVEL_ALTITUDE),
-                    duration: 5.0, // 우주에서부터 5초간 웅장하게 줌인 연출
-                    easingFunction: Cesium.EasingFunction.CUBIC_IN_OUT // 부드러운 가감속
+                    duration: 5.0, // 5초짜리 장대한 서사시 연출
+                    maximumHeight: 18000000.0, // 비행 궤적의 최고점을 무조건 18,000km(외기권)로 강제하여 거대한 포물선(Bounce) 생성
+                    easingFunction: Cesium.EasingFunction.QUADRATIC_IN_OUT 
                 });
             };
 
