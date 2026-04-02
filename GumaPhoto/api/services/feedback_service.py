@@ -220,7 +220,7 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
     
     target_filepaths = []
     if target_points:
-        points_data = client.retrieve(collection_name=COLLECTION_NAME, ids=target_points, with_payload=True)
+        points_data = client.retrieve(collection_name=COLLECTION_NAME, ids=target_points, with_payload=True, with_vectors=True)
         for res in points_data:
             filepath = res.payload.get("filepath")
             face_bbox = res.payload.get("face_bbox")
@@ -229,7 +229,8 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
                     "filepath": filepath,
                     "face_bbox": face_bbox,
                     "point_id": res.id,
-                    "old_people": res.payload.get("people", [])
+                    "old_people": res.payload.get("people", []),
+                    "vector": res.vector
                 })
                 
     if not target_filepaths:
@@ -255,7 +256,53 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
             print(f"    - {os.path.basename(filepath)} : 업데이트 완료 [{true_name}]")
         return
         
-    enrolled_dir = os.path.join("/app/data/enrolled", known_name)
+    best_folder_name = known_name
+    
+    # --- 스마트 라우팅 로직 (Cosine Similarity 기반) ---
+    known_faces_data = {}
+    pkl_path = "/app/data/known_faces.pkl"
+    if os.path.exists(pkl_path):
+        import pickle
+        import numpy as np
+        try:
+            with open(pkl_path, "rb") as f:
+                raw_faces = pickle.load(f)
+                for name, vectors in raw_faces.items():
+                    if vectors:
+                        vec_array = np.array(vectors)
+                        mean_vec = vec_array if vec_array.ndim == 1 else np.mean(vec_array, axis=0)
+                        mean_vec = mean_vec / np.linalg.norm(mean_vec)
+                        known_faces_data[name] = mean_vec
+        except Exception as e: 
+            print(f"  [!] 스마트 라우팅을 위한 known_faces.pkl 로딩 실패: {e}")
+
+    candidates = [n for n in known_faces_data.keys() if n == known_name or n.startswith(f"{known_name}_")]
+    
+    if len(candidates) > 1:
+        print(f"  [*] '{known_name}' 관련 파생 폴더가 {len(candidates)}개 발견되었습니다. 가장 유사한 얼굴 벡터를 찾습니다...")
+        main_target = next((item for item in target_filepaths if item["point_id"] == qdrant_id), target_filepaths[0])
+        vec_data = main_target.get("vector")
+        
+        face_vec = None
+        if isinstance(vec_data, dict):
+            face_vec = vec_data.get("face") or vec_data.get("scene")
+        elif vec_data:
+            face_vec = vec_data
+            
+        if face_vec:
+            face_vec_np = np.array(face_vec)
+            face_vec_np = face_vec_np / np.linalg.norm(face_vec_np)
+            
+            best_sim = -1.0
+            for cand in candidates:
+                sim = float(np.dot(face_vec_np, known_faces_data[cand]))
+                print(f"    - 후보 [{cand}] 유사도: {sim:.4f}")
+                if sim > best_sim:
+                    best_sim = sim
+                    best_folder_name = cand
+            print(f"  [+] 최종 선택된 집: {best_folder_name} (유사도 {best_sim:.4f})")
+    
+    enrolled_dir = os.path.join("/app/data/enrolled", best_folder_name)
     os.makedirs(enrolled_dir, exist_ok=True)
     
     import cv2
