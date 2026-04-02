@@ -500,6 +500,53 @@ const GumaEarth = (function() {
             
             console.log("[GumaEarth] WebGL Engine successfully booted!");
             
+            // --- NEW: 내 위치로 돌아가기 (로케이터 버튼) 동적 주입 ---
+            const locateBtn = document.createElement('button');
+            locateBtn.id = 'guma-earth-locate-me-btn';
+            locateBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i>'; // 조준점 아이콘
+            locateBtn.title = "내 위치로 (고도 500km)";
+            locateBtn.style.cssText = `
+                position: absolute; bottom: 85px; right: 20px; z-index: 400;
+                width: 48px; height: 48px; border-radius: 50%;
+                background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px);
+                border: 1px solid rgba(255, 255, 255, 0.2); color: white;
+                font-size: 1.25rem; cursor: pointer; display: flex;
+                justify-content: center; align-items: center;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.5); transition: all 0.2s;
+            `;
+            // Hover effect (for PC)
+            locateBtn.addEventListener('mouseenter', () => locateBtn.style.transform = 'scale(1.1)');
+            locateBtn.addEventListener('mouseleave', () => locateBtn.style.transform = 'scale(1)');
+            
+            // GPS 비행 액션
+            locateBtn.addEventListener('click', () => {
+                if ("geolocation" in navigator) {
+                    locateBtn.style.color = '#38bdf8'; // 로딩 중 파란색
+                    locateBtn.style.transform = 'scale(0.9)'; // 클릭 눌림 효과
+                    setTimeout(() => locateBtn.style.transform = 'scale(1)', 150);
+                    
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const lat = position.coords.latitude;
+                            const lon = position.coords.longitude;
+                            viewer.camera.flyTo({
+                                destination: Cesium.Cartesian3.fromDegrees(lon, lat, 500000.0), // 고도 500km (요청사항)
+                                duration: 3.5, // 3.5초에 걸쳐 자연스럽게
+                                easingFunction: Cesium.EasingFunction.QUADRATIC_IN_OUT 
+                            });
+                            setTimeout(() => locateBtn.style.color = 'white', 3500);
+                        },
+                        (error) => {
+                            console.warn("[GumaEarth] LocateBtn GPS failed", error);
+                            locateBtn.style.color = '#ef4444'; // 에러 시 빨간색
+                            setTimeout(() => locateBtn.style.color = 'white', 2000);
+                        },
+                        { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
+                    );
+                }
+            });
+            document.getElementById('cesiumContainer').appendChild(locateBtn);
+            
         } catch (err) {
             console.error("[GumaEarth] Hardware/Engine Boot Failure: ", err);
         }
