@@ -83,3 +83,51 @@ class PhotoPurger:
 
         # [3] SQLite 통합 명부 삭제 (현재 아키텍처에서 폐기됨 - Qdrant 단일 진실화로 인해 불필요)
         print(f"   ✅ [3/3] SQLite 명단 제거 생략 (단일 진실 아키텍처로 인한 통폐합 완료)")
+        
+        # [4] 캐시 시스템 강제 동기화 (오프라인 뷰에서 유령 데이터가 남는 현상 방어)
+        if point_id:
+            PhotoPurger._remove_from_static_caches(point_id)
+
+    @staticmethod
+    def _remove_from_static_caches(point_id: str):
+        import json, os
+        # 1. Timeline cache 방어 (메인 갤러리 진입 시 재등장하는 원인)
+        timeline_path = "/app/data/caches/timeline_cache.json"
+        if os.path.exists(timeline_path):
+            try:
+                with open(timeline_path, "r", encoding="utf-8") as f:
+                    t_cache = json.load(f)
+                changed = False
+                for key, photos in t_cache.items():
+                    if isinstance(photos, list):
+                        original_len = len(photos)
+                        t_cache[key] = [p for p in photos if p.get("id") != point_id]
+                        if len(t_cache[key]) != original_len:
+                            changed = True
+                if changed:
+                    with open(timeline_path, "w", encoding="utf-8") as f:
+                        json.dump(t_cache, f, ensure_ascii=False)
+                    print(f"   🧹 [캐싱 타겟 제거] timeline_cache.json 에서 {point_id} 완벽 추방 완료!")
+            except Exception as e:
+                print(f"   ⚠️ timeline_cache.json 업데이트 실패: {e}")
+                
+        # 2. Themes cache 방어
+        themes_path = "/app/data/caches/themes_cache.json"
+        if os.path.exists(themes_path):
+            try:
+                with open(themes_path, "r", encoding="utf-8") as f:
+                    th_cache = json.load(f)
+                changed = False
+                for theme in th_cache:
+                    photos = theme.get("photos", [])
+                    if isinstance(photos, list):
+                        original_len = len(photos)
+                        theme["photos"] = [p for p in photos if p.get("id") != point_id]
+                        if len(theme["photos"]) != original_len:
+                            changed = True
+                if changed:
+                    with open(themes_path, "w", encoding="utf-8") as f:
+                        json.dump(th_cache, f, ensure_ascii=False)
+                    print(f"   🧹 [캐싱 타겟 제거] themes_cache.json 에서 {point_id} 완벽 추방 완료!")
+            except Exception as e:
+                print(f"   ⚠️ themes_cache.json 업데이트 실패: {e}")
