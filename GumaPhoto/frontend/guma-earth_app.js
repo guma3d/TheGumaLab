@@ -506,7 +506,7 @@ const GumaEarth = (function() {
             locateBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i>'; // 조준점 아이콘
             locateBtn.title = "내 위치로 (고도 500km)";
             locateBtn.style.cssText = `
-                position: absolute; bottom: 85px; right: 20px; z-index: 400;
+                position: absolute; bottom: 30px; right: 20px; z-index: 400;
                 width: 48px; height: 48px; border-radius: 50%;
                 background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px);
                 border: 1px solid rgba(255, 255, 255, 0.2); color: white;
@@ -530,7 +530,7 @@ const GumaEarth = (function() {
                             const lat = position.coords.latitude;
                             const lon = position.coords.longitude;
                             viewer.camera.flyTo({
-                                destination: Cesium.Cartesian3.fromDegrees(lon, lat, 500000.0), // 고도 500km (요청사항)
+                                destination: Cesium.Cartesian3.fromDegrees(lon, lat, 50000.0), // 고도 50km (훨씬 가깝게)
                                 duration: 3.5, // 3.5초에 걸쳐 자연스럽게
                                 easingFunction: Cesium.EasingFunction.QUADRATIC_IN_OUT 
                             });
