@@ -214,7 +214,7 @@ async def get_unknown_photo():
                     if person in ["Unknown Person", "Unknown People"]:
                         has_unknown_person = True
                         break
-                if has_unknown_person:
+                if has_unknown_person and p.get("face_bbox"):
                     issues.append("People")
                     
                 if issues:

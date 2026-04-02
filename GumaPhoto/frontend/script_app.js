@@ -1771,7 +1771,7 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
                 const thumbUrl = dotIndex !== -1 ? 
                     rawUrl.substring(0, dotIndex) + '_' + rawUrl.substring(dotIndex + 1).toLowerCase() + '.webp' : rawUrl;
 
-                const bboxStr = item.face_bbox_target ? JSON.stringify(item.face_bbox_target) : '';
+                const bboxStr = item.face_bbox ? JSON.stringify(item.face_bbox) : '';
                 gridHtml += `
                 <div style="position: relative; width: 100%; aspect-ratio: 1/1; border-radius: 8px; overflow: hidden; background: #111;">
                     <img class="temp-crop-img" src="" data-src="${thumbUrl}" data-full-src="${rawUrl}" data-bbox='${bboxStr}' style="width: 100%; height: 100%; object-fit: cover; transition: filter 0.3s ease;" loading="lazy">
