@@ -331,12 +331,22 @@ async def submit_feedback_v2(req: FeedbackV2Request, background_tasks: Backgroun
             if db_correct_value.startswith("DATE|"):
                 target_date = db_correct_value.split("|", 1)[1]
                 state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"date": target_date}, points=all_pts)
-            elif db_correct_value.startswith("LOC|"):
-                target_loc = db_correct_value.split("|", 1)[1]
-                state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"location": target_loc}, points=all_pts)
             else:
-                target_loc = db_correct_value
-                state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"location": target_loc}, points=all_pts)
+                target_loc = db_correct_value.split("|", 1)[1] if db_correct_value.startswith("LOC|") else db_correct_value
+                
+                payload_obj = {"location": target_loc}
+                try:
+                    import re
+                    match = re.search(r'^\[([-\d\.]+),\s*([-\d\.]+)\]\s*(.*)$', target_loc)
+                    if match:
+                        lat_val = float(match.group(1))
+                        lon_val = float(match.group(2))
+                        clean_loc = str(match.group(3)).strip()
+                        payload_obj["location"] = clean_loc
+                        payload_obj["geo_point"] = {"lat": lat_val, "lon": lon_val}
+                except:
+                    pass
+                state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload=payload_obj, points=all_pts)
             
             # 2. 물리 파일(EXIF) 덮어쓰기는 연산은 빠르나 디스크 I/O가 1초가량 딜레이를 주므로 백그라운드 위임
             from api.services.feedback_service import process_time_location_feedback

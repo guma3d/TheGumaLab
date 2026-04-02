@@ -65,7 +65,8 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
                     "fpath": fpath, 
                     "pt_id": res.id,
                     "old_location": p.get('location'),
-                    "old_date": p.get('date')
+                    "old_date": p.get('date'),
+                    "old_geo_point": p.get('geo_point')
                 })
                 exif_str = get_physical_metadata_str(fpath)
                 print(f"  [🕵️‍♂️ AUDIT-BEFORE (Time/Loc)] File: {fpath} | Loc: {p.get('location')} | Date: {p.get('date')} | People: {p.get('people')}")
@@ -131,6 +132,8 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
                 rb_payload = {}
                 if target_location and "Unknown" not in target_location: 
                     rb_payload["location"] = tg.get("old_location")
+                    if "old_geo_point" in tg:
+                        rb_payload["geo_point"] = tg.get("old_geo_point")
                 if target_date and "Unknown" not in target_date: 
                     rb_payload["date"] = tg.get("old_date")
                 
@@ -151,15 +154,17 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
         
         # Qdrant 페이로드용 장소 이름 정제 ([lat, lon] 부분 제거)
         clean_target_location = target_location
-        if target_location:
+        payload_update = {}
+        if target_location and "Unknown" not in target_location:
             import re
             match = re.search(r'^\[([-\d\.]+),\s*([-\d\.]+)\]\s*(.*)$', target_location)
             if match:
+                lat_val = float(match.group(1))
+                lon_val = float(match.group(2))
                 clean_target_location = str(match.group(3)).strip()
-                
-        payload_update = {}
-        if target_location and "Unknown" not in target_location:
+                payload_update["geo_point"] = {"lat": lat_val, "lon": lon_val}
             payload_update["location"] = clean_target_location
+            
         if target_date and "Unknown" not in target_date:
             payload_update["date"] = target_date
             
