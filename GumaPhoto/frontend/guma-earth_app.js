@@ -530,7 +530,7 @@ const GumaEarth = (function() {
                             const lat = position.coords.latitude;
                             const lon = position.coords.longitude;
                             viewer.camera.flyTo({
-                                destination: Cesium.Cartesian3.fromDegrees(lon, lat, 50000.0), // 고도 50km (훨씬 가깝게)
+                                destination: Cesium.Cartesian3.fromDegrees(lon, lat, 1000.0), // 고도 1km (초정밀 파고들기)
                                 duration: 3.5, // 3.5초에 걸쳐 자연스럽게
                                 easingFunction: Cesium.EasingFunction.QUADRATIC_IN_OUT 
                             });
