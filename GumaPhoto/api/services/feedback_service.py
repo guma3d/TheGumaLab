@@ -121,16 +121,9 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
         print(f"  [+] 총 {len(valid_filepaths)}개의 원본 파일 메타데이터(EXIF)가 성공적으로 덮어쓰기 완료되었습니다.")
         
         # ----------------------------------------------------
-        # [2단계] Qdrant 덮어쓰기를 위해 벡터인덱서 모듈 단일 호출
-        # (장소, 시간 피드백이므로 InsightFace 제외)
+        # [2단계] 초고속 DB(Qdrant) 페이로드 즉시 덮어쓰기 (새벽 지연 없음)
         # ----------------------------------------------------
-        import sys
-        if "/app" not in sys.path:
-            sys.path.append("/app")
-        from vector_indexer import VectorIndexer
-        
-        print("  [*] 변경된 메타데이터를 바탕으로 벡터 정보를 Qdrant에 덮어씁니다...")
-        idx_bot = VectorIndexer(skip_face=True)
+        print("  [*] 무거운 AI 인덱서(VectorIndexer)를 생략하고 Qdrant에 즉시 덮어씁니다...")
         
         # Qdrant 페이로드용 장소 이름 정제 ([lat, lon] 부분 제거)
         clean_target_location = target_location
@@ -140,21 +133,30 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
             if match:
                 clean_target_location = str(match.group(3)).strip()
                 
-        idx_bot.force_reindex_files(valid_filepaths, force_location=clean_target_location, force_date=target_date)        
-        # Qdrant에 저장된 최신 값을 다시 불러와 시스템 Audit 로그에 정확히 남김
-        # (기존 target_date 파라미터가 "Unknown Date"일 경우, 사용자가 오해하지 않도록 실데이터 추출)
+        payload_update = {}
+        if target_location and "Unknown" not in target_location:
+            payload_update["location"] = clean_target_location
+        if target_date and "Unknown" not in target_date:
+            payload_update["date"] = target_date
+            
+        if payload_update:
+            try:
+                for tg in valid_targets:
+                    client.set_payload(collection_name=COLLECTION_NAME, payload=payload_update, points=[tg["pt_id"]])
+            except Exception as e:
+                print(f"  [!] Qdrant 즉시 업데이트 에러: {e}")
+                
+        # 시스템 Audit 로그 남기기
         try:
-            client = QdrantClient(QDRANT_URL)
             with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
                 for tg in valid_targets:
-                    # 방금 업데이트 완료된 Qdrant 최신 페이로드 조회
                     after_pts = client.retrieve(collection_name=COLLECTION_NAME, ids=[tg["pt_id"]], with_payload=True)
                     if after_pts:
                         ap = after_pts[0].payload or {}
                         after_date = ap.get('date', target_date)
-                        after_loc = ap.get('location', target_location)
+                        after_loc = ap.get('location', clean_target_location)
                     else:
-                        after_date, after_loc = target_date, target_location
+                        after_date, after_loc = target_date, clean_target_location
                         
                     exif_str = get_physical_metadata_str(tg["fpath"])
                     tf.write(json.dumps({
@@ -163,13 +165,13 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
                         "filepath": tg["fpath"], 
                         "location": after_loc, 
                         "date": after_date,
-                        "people": ap.get('people'),
+                        "people": ap.get('people') if 'ap' in locals() else None,
                         "exif": exif_str
                     }, ensure_ascii=False) + "\n")
         except Exception as e:
             print(f"      [!] 시스템 로그 갱신 중 에러 (무시): {e}")
         
-        print("  [+] 새로운 메타데이터 기반 벡터인덱싱 및 DB 덮어쓰기가 완료되었습니다!")
+        print("  [+] 메타데이터 EXIF 주입 및 DB 덮어쓰기가 초고속으로 완료되었습니다!")
 
 
 def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):

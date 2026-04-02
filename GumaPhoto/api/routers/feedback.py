@@ -235,8 +235,10 @@ async def get_unknown_photo():
 
     return {"id": None, "message": "No photos require feedback at this time."}
 
+from fastapi import BackgroundTasks
+
 @router.post("/api/feedback_v2/submit")
-async def submit_feedback_v2(req: FeedbackV2Request):
+async def submit_feedback_v2(req: FeedbackV2Request, background_tasks: BackgroundTasks):
     print(f"===========================================================")
     print(f"[🔍 DEBUG] SUBMIT API POST RECEIVED!")
     print(f"  - point_id: {req.point_id}")
@@ -282,10 +284,8 @@ async def submit_feedback_v2(req: FeedbackV2Request):
                     model='gemini-3.1-flash-lite-preview',
                     contents=prompt,
                 )
-                parsed_loc = response.text.strip().replace("\n", "").replace("\"", "")
-                if parsed_loc and len(parsed_loc) < 50:
-                    final_correct_value = parsed_loc
-                    print(f"[Gemini 장소 교정] 원본: '{req.correct_value}' -> 결과: '{final_correct_value}'")
+                final_correct_value = response.text.strip().replace("\n", "").replace("\"", "")
+                print(f"[Gemini 장소 교정] 원본: '{req.correct_value}' -> 결과: '{final_correct_value}'")
             except Exception as e:
                 print(f"[Gemini 위치 파싱 오류] {e}")
 
@@ -311,7 +311,6 @@ async def submit_feedback_v2(req: FeedbackV2Request):
         except Exception as e:
             print(f"[Gemini 날짜 파싱 오류] {e}")
 
-    # SQLite 등 별도의 DB를 사용하지 않고 오직 Qdrant 내부의 페이로드 자체를 큐(Queue) 상태망으로 사용합니다!
     db_correct_value = f"{prefix}{final_correct_value}" if prefix else final_correct_value
     
     real_target_points = [get_uuid_from_id(tid) for tid in req.target_points] if req.target_points else []
@@ -320,22 +319,30 @@ async def submit_feedback_v2(req: FeedbackV2Request):
     try:
         all_pts = [real_point_id] + real_target_points if real_target_points else [real_point_id]
         
-        # UI 즉각 반영 및 새벽 배치를 위한 Qdrant 상태 업데이트 (processing_status 부여)
         if fb_type == "face":
-            # 인물의 경우 feedback_service에 크롭만 하고 DB 처리하도록 위임
+            # 인물의 경우 feedback_service에 크롭만 하고 바로 DB 처리
             from api.services.feedback_service import process_face_enrollment
             process_face_enrollment(real_point_id, final_correct_value, tp_json)
         else:
+            # 1. UI 즉각 반영을 위한 Qdrant 상태 초고속 병행 업데이트 (processing_status 불필요)
+            target_date = "Unknown Date"
+            target_loc = "Unknown Location"
+            
             if db_correct_value.startswith("DATE|"):
-                date_val = db_correct_value.split("|", 1)[1]
-                state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"date": date_val, "processing_status": True}, points=all_pts)
+                target_date = db_correct_value.split("|", 1)[1]
+                state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"date": target_date}, points=all_pts)
             elif db_correct_value.startswith("LOC|"):
-                loc_val = db_correct_value.split("|", 1)[1]
-                state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"location": loc_val, "processing_status": True}, points=all_pts)
+                target_loc = db_correct_value.split("|", 1)[1]
+                state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"location": target_loc}, points=all_pts)
             else:
-                state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"location": db_correct_value, "processing_status": True}, points=all_pts)
+                target_loc = db_correct_value
+                state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"location": target_loc}, points=all_pts)
+            
+            # 2. 물리 파일(EXIF) 덮어쓰기는 연산은 빠르나 디스크 I/O가 1초가량 딜레이를 주므로 백그라운드 위임
+            from api.services.feedback_service import process_time_location_feedback
+            background_tasks.add_task(process_time_location_feedback, real_point_id, target_date, target_loc, tp_json)
                 
-        print(f"✅ [Single Source of Truth] Qdrant 즉시 반영 완료 (ID: {real_point_id})")
+        print(f"✅ [Instant Feedback] Qdrant 즉시 반영 및 EXIF 처리 프로세스 인계 완료 (ID: {real_point_id})")
         return {"message": "Feedback submitted successfully."}
         
     except Exception as e:
