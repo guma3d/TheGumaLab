@@ -121,11 +121,33 @@ const GumaEarth = (function() {
             const MAX_ALTITUDE = 18000000.0; // 18,000km
             viewer.scene.screenSpaceCameraController.maximumZoomDistance = MAX_ALTITUDE; 
 
-            // Set initial camera view targeting the Korean peninsula (At our new Max Zoom bounding)
+            // Set initial fallback camera targeting the Korean peninsula
             viewer.camera.flyTo({
                 destination: Cesium.Cartesian3.fromDegrees(127.5, 36.0, MAX_ALTITUDE),
                 duration: 0 // Instant snap to prevent animation weirdness if hidden
             });
+            
+            // --- NEW: HTML5 진단 위치 추적 (현재 GPS 탐색) ---
+            if ("geolocation" in navigator) {
+                console.log("[GumaEarth] Requesting User GPS coordinates...");
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        console.log(`[GumaEarth] User GPS Found: ${lat}, ${lon} -> Flying Camera!`);
+                        
+                        // 현재 내 위치로 지구본 끄르륵 회전 비행!
+                        viewer.camera.flyTo({
+                            destination: Cesium.Cartesian3.fromDegrees(lon, lat, MAX_ALTITUDE),
+                            duration: 2.5 // 2.5초간 우아하게 날아가도록 연출
+                        });
+                    },
+                    (error) => {
+                        console.warn("[GumaEarth] GPS Permission denied or failed. Sticking to default Korea view.", error);
+                    },
+                    { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
+                );
+            }
             
             // --- NEW: Load GeoJSON Markers dynamically from Qdrant ---
             try {
