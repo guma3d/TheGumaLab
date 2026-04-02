@@ -34,31 +34,6 @@ def run_indexer_job():
         print(f"❌ [Celery] Vector Indexer 오류: {e}")
         raise
 
-@app.task(name="tasks.feedback_time_loc")
-def run_feedback_time_loc_job(qdrant_id, target_date, target_location, tp_json):
-    try:
-        from api.services.feedback_service import process_time_location_feedback
-        print(f"🚀 [Celery] 시간/장소 피드백 가동 ({qdrant_id})...")
-        process_time_location_feedback(qdrant_id, target_date, target_location, tp_json)
-        
-        # 🔗 더 이상 직접 Organizer나 Indexer를 호명하지 않습니다. 
-        # feedback_service 내부에서 스스로 "FileForceReindex" 이벤트를 확성기로 외치도록 결합을 끊었습니다!
-    except Exception as e:
-        print(f"❌ [Celery] 피드백 오류: {e}")
-        raise
-
-@app.task(name="tasks.feedback_face")
-def run_feedback_face_job(qdrant_id, correct_value, tp_json):
-    try:
-        from api.services.feedback_service import process_face_enrollment
-        print(f"🚀 [Celery] 얼굴 재학습 가동 ({correct_value})...")
-        process_face_enrollment(qdrant_id, correct_value, tp_json)
-        
-        # 🔗 마찬가지로 서비스 내부에서 Event를 외치게 함
-    except Exception as e:
-        print(f"❌ [Celery] 얼굴 피드백 오류: {e}")
-        raise
-
 @app.task(name="tasks.dispatch_event")
 def dispatch_event(event_type: str, payload: dict):
     """
@@ -76,14 +51,4 @@ def dispatch_event(event_type: str, payload: dict):
     elif event_type == "FileOrganized":
         # 🔔 사건 접수: 하드디스크에 사진들이 년도별로 너무 예쁘게 정리되었음!
         # 🤖 출동 부서: AI 딥러닝 봇 (VRAM 투입)
-        run_indexer_job.delay()
-        
-    elif event_type == "FileForceReindex":
-        # 🔔 사건 접수: 사용자의 피드백으로 사진이 쫓겨나서 재검열(Upload 폴더)로 들어감!
-        # 🤖 출동 부서: 정리정돈 봇 (Upload 이벤트를 또 발생시킴)
-        run_organizer_job.delay()
-        
-    elif event_type == "FaceFeedbackEnrolled":
-        # 🔔 사건 접수: 가족 구성원의 새로운 얼굴 명칭/평균 벡터값이 메인 사전에 업데이트됨!
-        # 🤖 출동 부서: 기존 미분류 사진들을 다시 스캔하기 위해 딥러닝 봇 출동
         run_indexer_job.delay()
