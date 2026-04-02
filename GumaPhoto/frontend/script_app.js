@@ -48,6 +48,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     // 3. 무거운 피드백 큐 로딩은 화면이 전부 뜬 뒤에 조용히 백그라운드로 장전
+    // 4. 3D 지구본 모달 진입 시 발생하는 네트워크 랙(Lag)을 박멸하기 위해, 
+    // 수만 장 규모의 GeoJSON 데이터를 앱 최초 로딩 백그라운드에서 투명하게 미리 쥐고 있기 (Prefetch)
+    window.__geoJsonPrefetchPromise = fetch('/api/map/geojson').then(r => r.json()).catch(e => {
+        console.warn("[Prefetch] Failed to preload geojson:", e);
+        return null;
+    });
     if (typeof preloadFeedbackQueue === 'function') {
         preloadFeedbackQueue(10).catch(e => console.error("Feedback preload error:", e));
     }

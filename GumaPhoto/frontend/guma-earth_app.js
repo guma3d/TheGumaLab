@@ -149,16 +149,23 @@ const GumaEarth = (function() {
                 );
             }
             
-            // --- NEW: Load GeoJSON Markers dynamically from Qdrant ---
+            // --- NEW: Load GeoJSON Markers dynamically from Qdrant (ZERO LATENCY PREFETCH) ---
             try {
-                const geoJsonUrl = '/api/map/geojson';
-                const response = await fetch(geoJsonUrl);
-                if (response.ok) {
-                    const data = await response.json();
-                    if (!data.features || data.features.length === 0) {
-                        console.warn("[GumaEarth] No GPS locations found in Qdrant yet.");
-                    } else {
-                        const params = {
+                let data = null;
+                // 앱 메인 로딩 시 백그라운드로 장전해둔 GeoJSON 데이터를 번개처럼 낚아채기
+                if (window.__geoJsonPrefetchPromise) {
+                    console.log("[GumaEarth] Intercepting Prefetched GeoJSON! (Zero Network Lag)");
+                    data = await window.__geoJsonPrefetchPromise;
+                    window.__geoJsonPrefetchPromise = null; // RAM 회수
+                } else {
+                    const response = await fetch('/api/map/geojson');
+                    if (response.ok) data = await response.json();
+                }
+
+                if (!data || !data.features || data.features.length === 0) {
+                    console.warn("[GumaEarth] No GPS locations found in Qdrant yet.");
+                } else {
+                    const params = {
                             markerSize: 28,
                             markerColor: Cesium.Color.fromCssColorString('#f43f5e'), // Red-pink marker
                             markerSymbol: 'camera'
@@ -480,9 +487,6 @@ const GumaEarth = (function() {
                             }
                         }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
                     }
-                } else {
-                    console.warn(`[GumaEarth] Map markers fetch failed: ${response.status}`);
-                }
             } catch(e) {
                 console.error("[GumaEarth] Error loading dynamic GeoJSON markers:", e);
             }
