@@ -121,9 +121,9 @@ const GumaEarth = (function() {
             const MAX_ALTITUDE = 18000000.0; // 18,000km
             viewer.scene.screenSpaceCameraController.maximumZoomDistance = MAX_ALTITUDE; 
 
-            // Set initial default camera targeting the Korean peninsula (Instant snap, no animation)
+            // Set initial default camera targeting the Korean peninsula (Instant snap, full globe view)
             viewer.camera.flyTo({
-                destination: Cesium.Cartesian3.fromDegrees(127.5, 36.0, 3000000.0), // 한국 위 약 3000km
+                destination: Cesium.Cartesian3.fromDegrees(127.5, 36.0, MAX_ALTITUDE), // 18,000km 우주 정지 궤도 (지구 전체)
                 duration: 0
             });
             
