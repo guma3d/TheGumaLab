@@ -119,6 +119,7 @@ class InsightFaceModule:
             
             box = best_face.bbox.astype(int)
             x1, y1, x2, y2 = max(0, box[0]), max(0, box[1]), min(cv_img.shape[1], box[2]), min(cv_img.shape[0], box[3])
+            best_face_payload['face_bbox'] = [int(x1), int(y1), int(x2), int(y2)]
             face_img = cv_img[y1:y2, x1:x2]
             
             try:
