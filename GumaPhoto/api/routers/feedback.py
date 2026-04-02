@@ -312,6 +312,21 @@ async def submit_feedback_v2(req: FeedbackV2Request, background_tasks: Backgroun
             from api.services.feedback_service import process_face_enrollment
             process_face_enrollment(real_point_id, final_correct_value, tp_json)
         else:
+            # 0. 감사 로그(Audit Log) 도플갱어 방지 (덮어쓰기 전의 원본 상태 스냅샷 뜨기)
+            old_snapshots = []
+            try:
+                old_pts = state.qdrant_client.retrieve(collection_name="gumaphoto_hybrid_kr", ids=all_pts, with_payload=True)
+                for pt in old_pts:
+                    old_snapshots.append({
+                        "id": str(pt.id),
+                        "location": pt.payload.get("location"),
+                        "date": pt.payload.get("date"),
+                        "geo_point": pt.payload.get("geo_point"),
+                        "people": pt.payload.get("people")
+                    })
+            except Exception as e:
+                print(f"Snapshot error: {e}")
+                
             # 1. UI 즉각 반영을 위한 Qdrant 상태 초고속 병행 업데이트 (processing_status 불필요)
             target_date = "Unknown Date"
             target_loc = "Unknown Location"
@@ -338,7 +353,8 @@ async def submit_feedback_v2(req: FeedbackV2Request, background_tasks: Backgroun
             
             # 2. 물리 파일(EXIF) 덮어쓰기는 연산은 빠르나 디스크 I/O가 1초가량 딜레이를 주므로 백그라운드 위임
             from api.services.feedback_service import process_time_location_feedback
-            background_tasks.add_task(process_time_location_feedback, real_point_id, target_date, target_loc, tp_json)
+            old_snapshots_json = json.dumps(old_snapshots)
+            background_tasks.add_task(process_time_location_feedback, real_point_id, target_date, target_loc, tp_json, old_snapshots_json)
                 
         print(f"✅ [Instant Feedback] Qdrant 즉시 반영 및 EXIF 처리 프로세스 인계 완료 (ID: {real_point_id})")
         return {"message": "Feedback submitted successfully."}

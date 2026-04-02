@@ -29,9 +29,8 @@ def get_physical_metadata_str(filepath):
     except Exception as e: pass
     return "EXIF: Parse Error or Empty"
 
-def process_time_location_feedback(qdrant_id, target_date, target_location, target_points_str="[]"):
-    print(f"[*] 시간/장소 피드백 가동: 타겟 UUID {qdrant_id}, 새로운 시간: {target_date}, 새로운 장소: {target_location}")
-    print(f"  [🔍 CELERY DBG] 받은 target_points_str 길이: {len(target_points_str)}")
+def process_time_location_feedback(qdrant_id: str, target_date: str, target_location: str, target_points_str: str = "[]", old_snapshots_json: str = "[]"):
+    print(f"🔄 [Celery/Worker] 시간/장소 피드백 메타데이터 수정 태스크 시작 (ID: {qdrant_id})")
     client = QdrantClient(QDRANT_URL)
     
     target_points = []
@@ -48,6 +47,13 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
         target_points.append(qdrant_id)
         
     print(f"  [🔍 CELERY DBG] 파싱된 target_points 원소 수: {len(target_points)}")
+    
+    # 0. 라우터에서 전달받은 스냅샷(BEFORE)을 활용하여 도플갱어 이슈 차단
+    old_snapshots = []
+    try:
+        old_snapshots = json.loads(old_snapshots_json)
+    except: pass
+    snapshot_map = {str(item["id"]): item for item in old_snapshots}
         
     valid_targets = []
     if target_points and len(target_points) > 0:
@@ -61,19 +67,21 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
             p = getattr(res, 'payload', {})
             fpath = p.get("filepath")
             if fpath:
+                rid = str(res.id)
+                old_data = snapshot_map.get(rid, {})
                 valid_targets.append({
                     "fpath": fpath, 
                     "pt_id": res.id,
-                    "old_location": p.get('location'),
-                    "old_date": p.get('date'),
-                    "old_geo_point": p.get('geo_point')
+                    "old_location": old_data.get('location', p.get('location')),
+                    "old_date": old_data.get('date', p.get('date')),
+                    "old_geo_point": old_data.get('geo_point', p.get('geo_point'))
                 })
                 exif_str = get_physical_metadata_str(fpath)
-                print(f"  [🕵️‍♂️ AUDIT-BEFORE (Time/Loc)] File: {fpath} | Loc: {p.get('location')} | Date: {p.get('date')} | People: {p.get('people')}")
+                print(f"  [🕵️‍♂️ AUDIT-BEFORE (Time/Loc)] File: {fpath} | Loc: {old_data.get('location')} | Date: {old_data.get('date')} | People: {old_data.get('people')}")
                 print(f"      ㄴ [메타데이터-BEFORE]: {exif_str}")
                 try:
                     with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
-                        tf.write(json.dumps({"type": "BEFORE", "trace_id": res.id, "hash_key": os.path.basename(fpath)[:15], "filepath": fpath, "location": p.get('location'), "geo_point": p.get('geo_point'), "date": p.get('date'), "people": p.get('people'), "exif": exif_str}, ensure_ascii=False) + "\n")
+                        tf.write(json.dumps({"type": "BEFORE", "trace_id": res.id, "hash_key": os.path.basename(fpath)[:15], "filepath": fpath, "location": old_data.get('location'), "geo_point": old_data.get('geo_point'), "date": old_data.get('date'), "people": old_data.get('people'), "exif": exif_str}, ensure_ascii=False) + "\n")
                 except: pass
     else:
         print("[-] 지정된 타겟 포인트 리스트가 없습니다. 종료합니다.")
@@ -277,9 +285,10 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
             print(f"  [!] 스마트 라우팅을 위한 known_faces.pkl 로딩 실패: {e}")
 
     candidates = [n for n in known_faces_data.keys() if n == known_name or n.startswith(f"{known_name}_")]
+    best_folder_name = known_name
     
-    if len(candidates) > 1:
-        print(f"  [*] '{known_name}' 관련 파생 폴더가 {len(candidates)}개 발견되었습니다. 가장 유사한 얼굴 벡터를 찾습니다...")
+    if len(candidates) >= 1:
+        print(f"  [*] '{known_name}' 관련 폴더가 {len(candidates)}개 발견되었습니다. 가장 유사한 얼굴 중심점(Centroid)을 찾습니다...")
         main_target = next((item for item in target_filepaths if item["point_id"] == qdrant_id), target_filepaths[0])
         vec_data = main_target.get("vector")
         
@@ -290,6 +299,7 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
             face_vec = vec_data
             
         if face_vec:
+            import numpy as np
             face_vec_np = np.array(face_vec)
             face_vec_np = face_vec_np / np.linalg.norm(face_vec_np)
             
@@ -300,7 +310,14 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
                 if sim > best_sim:
                     best_sim = sim
                     best_folder_name = cand
-            print(f"  [+] 최종 선택된 집: {best_folder_name} (유사도 {best_sim:.4f})")
+            print(f"  [+] 최고 유사도 후보 방: {best_folder_name} (유사도 {best_sim:.4f})")
+            
+            # [Multi-Centroid Logic] 다중 중심점 동적 생성 (유사도 0.35 미만이면 새 폴더 개척)
+            if best_sim > 0.0 and best_sim < 0.35:
+                import uuid
+                new_cand_idx = len(candidates) + 1
+                best_folder_name = f"{known_name}_{new_cand_idx}_{str(uuid.uuid4())[:4]}"
+                print(f"  [🧬 다중 중심점 분열] 얼굴이 기존 기억(유사도 {best_sim:.4f})과 너무 다릅니다! 동일인물의 완전히 새로운 앵커를 위해 '{best_folder_name}' 폴더를 파생 개척합니다.")
     
     enrolled_dir = os.path.join("/app/data/enrolled", best_folder_name)
     os.makedirs(enrolled_dir, exist_ok=True)
