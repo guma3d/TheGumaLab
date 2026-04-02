@@ -30,6 +30,13 @@ def run_indexer_job():
         idx_bot = VectorIndexer()
         idx_bot.run()
         print("✅ [Celery] 최신 Vector Indexer 작업 완료! VRAM 100% 반환 대기 중...")
+        
+        # [NEW] AI 추출 작업 직후 프론트엔드 실시간 동기화를 위해 가벼운 타임라인 캐시만 즉시 업데이트 (Callback)
+        try:
+            from api.services.theme_service import build_timeline_cache_only
+            build_timeline_cache_only()
+        except Exception as cache_err:
+            print(f"⚠️ [Celery] 타임라인 콜백 업데이트 실패 (무시됨): {cache_err}")
     except Exception as e:
         print(f"❌ [Celery] Vector Indexer 오류: {e}")
         raise

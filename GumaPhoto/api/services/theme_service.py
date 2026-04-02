@@ -392,3 +392,70 @@ def build_theme_cache():
         import traceback
         traceback.print_exc()
         print(f"[-] Guma Family 타임라인 캐시 에러: {e}")
+
+def build_timeline_cache_only():
+    print("🚀 [Theme Builder] 단기 콜백: Guma Family 타임라인 캐시만 즉속 업데이트합니다.")
+    from qdrant_client.http.models import Filter, FieldCondition, MatchValue, OrderBy, Direction
+    
+    if getattr(state, 'qdrant_client', None) is None:
+        from qdrant_client import QdrantClient
+        state.qdrant_client = QdrantClient(url=os.environ.get("QDRANT_URL", "http://qdrant:6333"))
+
+    try:
+        timeline_cache_data = {}
+        
+        # 전체 500장 (recent)
+        res_recent, _ = state.qdrant_client.scroll(
+            collection_name="gumaphoto_hybrid_kr",
+            limit=500,
+            with_payload=True,
+            order_by=OrderBy(key="sort_date", direction=Direction.DESC)
+        )
+        def _format_res(hits):
+            res = []
+            for hit in hits:
+                payload = getattr(hit, 'payload', {}) or {}
+                filepath = payload.get("filepath", "")
+                if not filepath: continue
+                photo_url = filepath.replace("/app/data/organized", "/photos")
+                res.append({
+                    "id": hit.id, "score": 1.0, "url": photo_url, "original_path": filepath,
+                    "date": payload.get("date", "Unknown"), "location": payload.get("location", "Unknown Location"),
+                    "people": payload.get("people", []), "caption": payload.get("caption", ""),
+                    "time_of_day": payload.get("time_of_day", "Unknown"), "season": payload.get("season", "Unknown"), "doc_id": hit.id
+                })
+            return res
+            
+        timeline_cache_data["recent"] = _format_res(res_recent)
+        
+        # 주요 인물 500장 추출 (단독 샷 솔로 필터링 적용)
+        for person in ["성욱", "준우", "지우", "송이"]:
+            p_filter = Filter(must=[FieldCondition(key="people", match=MatchValue(value=person))])
+            res_p, _ = state.qdrant_client.scroll(
+                collection_name="gumaphoto_hybrid_kr",
+                scroll_filter=p_filter,
+                limit=5000,
+                with_payload=True,
+                order_by=OrderBy(key="sort_date", direction=Direction.DESC)
+            )
+            
+            solo_shots = []
+            for hit in res_p:
+               payload = getattr(hit, 'payload', {}) or {}
+               people_list = payload.get("people", [])
+               if len(people_list) == 1 and person in people_list:
+                   solo_shots.append(hit)
+               if len(solo_shots) >= 500:
+                   break
+                   
+            timeline_cache_data[person] = _format_res(solo_shots)
+            
+        timeline_path = "/app/data/caches/timeline_cache.json"
+        with open(timeline_path, "w", encoding="utf-8") as f:
+            json.dump(timeline_cache_data, f, ensure_ascii=False, indent=2)
+        print(f"✅ [Theme Builder] Guma Family 타임라인 전용 파편 업데이트 완료!")
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print(f"[-] Guma Family 전용 타임라인 갱신 에러: {e}")
+
