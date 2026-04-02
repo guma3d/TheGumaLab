@@ -17,12 +17,16 @@ async def delete_photo(req: DeleteRequest):
     print(f"🗑️ [API Router - Delete 호출됨] 파일: {req.filepath} / Point: {req.point_id}")
     
     try:
-        PhotoPurger.purge_photo_data(
+        success, message = PhotoPurger.purge_photo_data(
             abs_path=req.filepath,
             point_id=req.point_id,
             keep_original=False
         )
-        return {"message": "Successfully completely deleted the photo.", "deleted_id": req.point_id}
+        if success:
+            return {"message": message, "deleted_id": req.point_id}
+        else:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=500, detail=message)
     except Exception as e:
         print(f"❌ [API Router] FileManager 호출 중 치명적인 에러 발생: {e}")
         return {"error": str(e)}

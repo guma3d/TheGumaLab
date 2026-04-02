@@ -939,11 +939,11 @@ document.getElementById('confirm-delete-btn')?.addEventListener('click', async (
         elementsToRemove.forEach(el => el.remove());
 
         closeModal(); // 부모 모달도 완전히 닫기
-        // alert("Successfully deleted."); // premium design에서는 성공 알림이 번거로울 수 있으므로 제거 또는 유지
+        alert("성공적으로 삭제되었습니다.");
 
     } catch (err) {
         console.error(err);
-        alert("Failed to delete. Please contact system administrator.");
+        alert(`삭제 실패: ${err.message || '알 수 없는 오류가 발생했습니다.'}`);
     } finally {
         deleteBtn.disabled = false;
         deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
@@ -1318,14 +1318,19 @@ document.getElementById('fb-remove-btn')?.addEventListener('click', async () => 
             })
         });
 
-        if (!res.ok) throw new Error("서버에서 사진을 삭제하지 못했습니다.");
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.detail || "서버에서 사진을 삭제하지 못했습니다.");
+        }
+
+        alert("성공적으로 삭제되었습니다.");
 
         // 삭제 성공 시 바로 다음 타겟 불러오기
         loadUnknownPhoto();
 
     } catch (err) {
         console.error(err);
-        alert("삭제 실패: " + err.message);
+        alert(`삭제 실패: ${err.message || '시스템 통신 오류'}`);
     } finally {
         btn.innerHTML = ogHtml;
         btn.disabled = false;
@@ -2018,11 +2023,16 @@ document.getElementById('fb-remove-btn')?.addEventListener('click', async () => 
             })
         });
         if (res.ok) {
+            alert("성공적으로 삭제되었습니다.");
             document.getElementById('fb-temptest-results').style.display = 'none';
             switchView('feedback');
+        } else {
+            const errData = await res.json().catch(() => ({}));
+            alert(`삭제 실패: ${errData.detail || '서비스 응답 오류'}`);
         }
     } catch (err) {
         console.error("삭제 실패", err);
+        alert(`삭제 실패: ${err.message || '네트워크 문제 발생'}`);
     }
 });
 
