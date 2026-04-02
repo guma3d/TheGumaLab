@@ -61,7 +61,12 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
             p = getattr(res, 'payload', {})
             fpath = p.get("filepath")
             if fpath:
-                valid_targets.append({"fpath": fpath, "pt_id": res.id})
+                valid_targets.append({
+                    "fpath": fpath, 
+                    "pt_id": res.id,
+                    "old_location": p.get('location'),
+                    "old_date": p.get('date')
+                })
                 exif_str = get_physical_metadata_str(fpath)
                 print(f"  [🕵️‍♂️ AUDIT-BEFORE (Time/Loc)] File: {fpath} | Loc: {p.get('location')} | Date: {p.get('date')} | People: {p.get('people')}")
                 print(f"      ㄴ [메타데이터-BEFORE]: {exif_str}")
@@ -117,8 +122,27 @@ def process_time_location_feedback(qdrant_id, target_date, target_location, targ
     valid_filepaths = [item["fpath"] for item in valid_targets]
     if valid_filepaths:
         from api.utils.metadata_editor import MetadataEditor
-        MetadataEditor.stamp_metadata(valid_filepaths, target_date, target_location)
-        print(f"  [+] 총 {len(valid_filepaths)}개의 원본 파일 메타데이터(EXIF)가 성공적으로 덮어쓰기 완료되었습니다.")
+        success_count = MetadataEditor.stamp_metadata(valid_filepaths, target_date, target_location)
+        
+        # 🚨 [Auto Rollback Mechanism]
+        if success_count == 0 and len(valid_filepaths) > 0:
+            print(f"  [🚨 ROLLBACK 작동] 물리적 파일(EXIF) 덮어쓰기에 100% 실패했습니다! 손상 방지를 위해 Qdrant DB를 수정 전으로 즉시 자동 복구(Rollback)합니다.")
+            for tg in valid_targets:
+                rb_payload = {}
+                if target_location and "Unknown" not in target_location: 
+                    rb_payload["location"] = tg.get("old_location")
+                if target_date and "Unknown" not in target_date: 
+                    rb_payload["date"] = tg.get("old_date")
+                
+                if rb_payload:
+                    try:
+                        client.set_payload(collection_name=COLLECTION_NAME, payload=rb_payload, points=[tg["pt_id"]])
+                    except Exception as e:
+                        print(f"    [-] Rollback 실패: {e}")
+            print(f"  [✅ ROLLBACK 완료] 모든 DB가 안전하게 원래 상태로 롤백되었습니다. 프로세스를 강제 종료합니다.")
+            return
+
+        print(f"  [+] 총 {success_count}개의 원본 파일 메타데이터(EXIF)가 성공적으로 덮어쓰기 완료되었습니다.")
         
         # ----------------------------------------------------
         # [2단계] 초고속 DB(Qdrant) 페이로드 즉시 덮어쓰기 (새벽 지연 없음)
