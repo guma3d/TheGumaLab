@@ -1480,7 +1480,7 @@ async function loadUnknownPhoto(manualTargetPayload = null) {
     inputDate.value = `${yyyy}-${mm}`;
 
     submitBtn.disabled = false;
-    submitBtn.innerHTML = 'Scan by Similarity';
+    submitBtn.innerHTML = 'Send';
 
     // TempTest UI 초기화 및 메인 컨테이너 복구
     const tempTestResults = document.getElementById('fb-temptest-results');
