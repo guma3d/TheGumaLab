@@ -6,7 +6,7 @@ import json
 import os
 import re
 import torch
-from qdrant_client.http.models import Filter, FieldCondition, MatchText, MatchAny, MatchValue, OrderBy, Direction, GeoRadius, GeoPoint
+from qdrant_client.http.models import Filter, FieldCondition, MatchText, MatchAny, MatchValue, OrderBy, Direction, GeoRadius, GeoPoint, Range
 
 router = APIRouter()
 
@@ -69,97 +69,61 @@ async def perform_search(req: SearchRequest):
         except Exception as e:
             print(f"[-] File Cache Load Error: {e}")
     
-    # 0. 자연어 텍스트 문맥 내에서 시간(연도) 식별자 강제 추출 (NLP Year Filtering)
+    # 0. One-Shot Smart NLP Extraction (Gemini)
     extracted_years = []
-    if search_text:
-        try:
-            import datetime, re
-            current_year = datetime.datetime.now().year
-            
-            # 1. "N년 전"
-            ago_match = re.search(r'(\d+)\s*년\s*전', search_text)
-            if ago_match:
-                extracted_years.append(str(current_year - int(ago_match.group(1))))
-                search_text = re.sub(r'\d+\s*년\s*전', '', search_text)
-                
-            # 2. "2021년"
-            yyyy_match = re.search(r'(20\d{2})\s*년', search_text)
-            if yyyy_match:
-                extracted_years.append(yyyy_match.group(1))
-                search_text = re.sub(r'20\d{2}\s*년', '', search_text)
-                
-            # 3. "21년", "22년"
-            yy_match = re.search(r'(?<!\d)(\d{2})\s*년', search_text)
-            if yy_match:
-                extracted_years.append("20" + yy_match.group(1))
-                search_text = re.sub(r'(?<!\d)\d{2}\s*년', '', search_text)
-                
-            # 4. 특수 명사
-            for kw, offset in [("올해", 0), ("이번년도", 0), ("작년", 1), ("재작년", 2)]:
-                if kw in search_text:
-                    extracted_years.append(str(current_year - offset))
-                    search_text = search_text.replace(kw, "")
-                    
-            extracted_years = list(set(extracted_years))
-            if extracted_years:
-                print(f"[*] 연도 강제 식별 필터 작동 (AND 조합): {extracted_years}")
-        except Exception as e:
-            print(f"[-] Year extraction error: {e}")
-
-    # 0.1. 자연어 텍스트 문맥 내에서 인물 식별자 강제 추출 (NLP Metadata Hard Filtering)
     extracted_names = []
-    if search_text:
-        try:
-            import pickle
-            if os.path.exists('/app/data/known_faces.pkl'):
-                with open('/app/data/known_faces.pkl', 'rb') as f:
-                    known_names = list(pickle.load(f).keys())
-                for name in known_names:
-                    if name in search_text:
-                        extracted_names.append(name)
-                        print(f"[*] 인물 강제 식별 필터 작동 (AND 조합): '{name}'")
-        except Exception as e:
-            print(f"[-] Known faces extraction error: {e}")
-
-    # 0.5. 자연어 텍스트 문맥 내에서 장소 식별자 강제 추출 (NLP Metadata Hard Filtering)
-    extracted_geo = None
     extracted_locations = []
     
     if search_text and state.gemini_client:
         try:
-            prompt = f"""You are a Geolocation Parser for a Photo Search Engine.
-The user's query is: "{search_text}"
-If the user mentions a specific place, landmark, city, or country (e.g. "하와이", "도쿄 디즈니랜드", "집근처"), convert it into GPS coordinates (WGS84) and a reasonable search radius in meters.
-- City/Province/Country: radius 50000 (50km)
-- Specific landmark/district: radius 2000 (2km)
-
-If a location IS found, output ONLY a valid JSON object in this exact format, where 'matched_word' is the exact substring of the location from the user's query:
-{{"lat": 35.6329, "lon": 139.8804, "radius": 5000, "matched_word": "도쿄 디즈니랜드"}}
-
-If NO location is implied in the query, output ONLY the exact word: EMPTY"""
+            import datetime, re, json, pickle
+            current_year = datetime.datetime.now().year
             
-            resp = state.gemini_client.models.generate_content(
-                model='gemini-3.1-flash-lite-preview', 
-                contents=prompt
-            )
-            resp_text = resp.text.strip()
+            known_names_str = ""
+            if os.path.exists('/app/data/known_faces.pkl'):
+                with open('/app/data/known_faces.pkl', 'rb') as f:
+                    known_names_str = ", ".join(list(pickle.load(f).keys()))
+            
+            prompt = f"""You are a Photo Search Query Parser.
+Current Year: {current_year}
+Known People in DB: [{known_names_str}]
+
+User Query: "{search_text}"
+
+Parse the query into EXACTLY this JSON structure:
+{{
+  "years": [], // list of integers, e.g., 2025. convert "작년" to {current_year - 1}. If none, []
+  "people": [], // list of names exactly matching the Known People list. Fix misspellings if obvious. If none, []
+  "locations": [], // list of strings for ANY specific geographic place. Extract EXACT TEXT for full-text search. e.g., "하와이", "제주도". If none, []
+  "visual": "EMPTY" // Translate all remaining visual/abstract concepts to a concise English phrase. DO NOT include the extracted years, people, or locations. e.g. "수영하는" -> "swimming". If no visual meaning remains, output "EMPTY".
+}}
+Output ONLY valid JSON without markup.
+"""
+            t_resp = state.gemini_client.models.generate_content(model='gemini-3.1-flash-lite-preview', contents=prompt)
+            resp_text = t_resp.text.strip()
             if resp_text.startswith("```json"): resp_text = resp_text[7:-3].strip()
             elif resp_text.startswith("```"): resp_text = resp_text[3:-3].strip()
             
-            if resp_text != "EMPTY" and "lat" in resp_text:
-                import json
-                extracted_geo = json.loads(resp_text)
-                if "matched_word" in extracted_geo:
-                    extracted_locations.append(extracted_geo["matched_word"])
-                print(f"[*] 🧠 Gemini 공간(Geo-Radius) 좌표 식별 완료: {extracted_geo}")
+            parsed = json.loads(resp_text)
+            extracted_years = parsed.get("years", [])
+            extracted_names = parsed.get("people", [])
+            extracted_locations = parsed.get("locations", [])
+            visual_remainder = parsed.get("visual", "EMPTY")
+            
+            if visual_remainder.upper() != "EMPTY":
+                search_text = visual_remainder.strip()
+            else:
+                search_text = ""
+                
+            print(f"[*] 🧠 Smart NLP Extraction: Years={extracted_years}, People={extracted_names}, Locs={extracted_locations}, Visual='{search_text}'")
         except Exception as ge:
-            print(f"[-] Gemini Geo matching error: {ge}")
+            print(f"[-] Smart NLP matching error: {ge}")
 
-    # UI 선택 이름과 텍스트 서치에서 추출된 이름을 모두 병합
+    # UI 선택 이름 병합
     final_people = list(set(req.people + extracted_names))
     
     # UI 선택 장소 병합
-    final_locations = []
+    final_locations = list(set([loc for loc in extracted_locations if loc.strip()]))
     if req.location and req.location != "All Locations":
         final_locations.append(req.location)
     
@@ -169,53 +133,27 @@ If NO location is implied in the query, output ONLY the exact word: EMPTY"""
     
     # 필터 구성 (UI에서 날아온 location, date 및 동적 people)
     if final_people:
-        # 벡터 매칭이 아닌 절대 Metadata 매칭으로 강제 규정 (AND 교집합)
         for p_name in final_people:
             must_conds.append(FieldCondition(key="people", match=MatchValue(value=p_name)))
             
     if final_locations:
         if len(final_locations) == 1:
-            must_conds.append(FieldCondition(key="location", match=MatchValue(value=final_locations[0])))
+            must_conds.append(FieldCondition(key="location", match=MatchText(text=final_locations[0])))
         else:
-            loc_shoulds = [FieldCondition(key="location", match=MatchValue(value=loc)) for loc in final_locations]
+            loc_shoulds = [FieldCondition(key="location", match=MatchText(text=loc)) for loc in final_locations]
             must_conds.append(Filter(should=loc_shoulds))
-            
-    if extracted_geo:
-        must_conds.append(
-            FieldCondition(
-                key="geo_point",
-                geo_radius=GeoRadius(
-                    center=GeoPoint(lat=extracted_geo["lat"], lon=extracted_geo["lon"]),
-                    radius=extracted_geo.get("radius", 50000)
-                )
-            )
-        )
             
     if extracted_years:
         if len(extracted_years) == 1:
-            must_conds.append(FieldCondition(key="date", match=MatchValue(value=extracted_years[0])))
+            must_conds.append(FieldCondition(key="sort_date", range=Range(gte=int(extracted_years[0])*10000, lte=int(extracted_years[0])*10000 + 1231)))
         else:
-            must_conds.append(FieldCondition(key="date", match=MatchAny(any=extracted_years)))
+            y_shoulds = [FieldCondition(key="sort_date", range=Range(gte=int(y)*10000, lte=int(y)*10000 + 1231)) for y in extracted_years]
+            must_conds.append(Filter(should=y_shoulds))
             
     if req.date and req.date != "All Dates":
         must_conds.append(FieldCondition(key="date", match=MatchValue(value=req.date)))
         
     q_filter = Filter(must=must_conds) if must_conds else None
-
-    # [중요] AI 검색 품질 보호: 고유명사 강제 태그(AND/OR)가 걸렸으므로, SigLIP 영어 번역에 들어갈 문장에선 고유명사를 도려내야 합니다!
-    vision_search_text = search_text
-    for n in extracted_names:
-        vision_search_text = vision_search_text.replace(n, "")
-    for lc in extracted_locations:
-        lc_parts = lc.replace("특별시", "").replace("광역시", "").replace("특별자치도", "").replace("시", "").split("-")
-        for lcp in lc_parts:
-            vision_search_text = vision_search_text.replace(lcp, "")
-            
-    # 만약 이름/장소를 다 빼고 났더니 문자열이 텅 비었다면 굳이 AI 벡터 검색을 돌릴 필요가 없음!
-    if not str(vision_search_text).strip():
-        search_text = ""
-    else:
-        search_text = vision_search_text.strip()
 
     # 만약 자연어 텍스트 검색어가 아예 없다면 벡터 추출 없이 가볍게 스크롤링
     if not search_text:
@@ -230,7 +168,7 @@ If NO location is implied in the query, output ONLY the exact word: EMPTY"""
             raw_results = res_scroll[req.offset:]
             formatted_results = []
             for hit in raw_results:
-                payload = hit.payload or {}
+                payload = getattr(hit, 'payload', {}) or {}
                 filepath = payload.get("filepath", "")
                 if not filepath: continue
                 photo_url = filepath.replace("/app/data/organized", "/photos")
@@ -259,29 +197,6 @@ If NO location is implied in the query, output ONLY the exact word: EMPTY"""
             print(f"❌ 스크롤 데이터 로딩 에러: {e}")
             return {"results": [], "error": str(e)}
 
-    # 2. 텍스트 검색어가 존재하는 경우 (AI 벡터 하이브리드 검색)
-    # [신규 추가] 한국어 쿼리를 SigLIP(영어 전용 모델)가 이해할 수 있도록 초고속 Gemini 번역 투입
-    if state.gemini_client and re.search(r'[가-힣]', search_text):
-        try:
-            print(f"[*] 한국어 쿼리 번역 시도: '{search_text}'")
-            prompt = (
-                f"You are an AI assistant for an image search engine.\n"
-                f"Extract ONLY the visually meaningful keywords from the user's Korean query, and translate them into a concise English phrase (max 5 words).\n"
-                f"User Query: {search_text}\n"
-                f"Ignore all conversational phrases, greetings, or filler words regardless of what the user types.\n"
-                f"If the query contains NO visually meaningful keywords after ignoring fillers, output EXACTLY the word: EMPTY\n"
-                f"Do not include any extra text. Output Example: 'blue sky ocean', 'dog running', 'EMPTY'."
-            )
-            t_resp = state.gemini_client.models.generate_content(model='gemini-3.1-flash-lite-preview', contents=prompt)
-            translated = t_resp.text.strip().replace('\n', '')
-            if translated:
-                print(f"  [+] 영문 매핑 완료: '{translated}'")
-                if translated.upper() == "EMPTY":
-                    search_text = ""
-                else:
-                    search_text = translated
-        except Exception as e:
-            print(f"  [-] Gemini 번역 에러: {e}")
 
     try:
         with torch.no_grad():
