@@ -12,6 +12,8 @@ router = APIRouter()
 
 # 전역 메모리 캐시: 디스크 I/O 병목 방지를 위한 이미지 해상도/용량 인메모리 저장소
 _IMAGE_META_CACHE = {}
+# 검색 속도 향상: Gemini NLP 분석 결과를 인메모리에 캐싱하여 중복 호출 방지 (스크롤 시 초고속)
+_NLP_CACHE = {}
 
 class SearchRequest(BaseModel):
     query: str = ""
@@ -78,23 +80,37 @@ async def perform_search(req: SearchRequest):
     extracted_locations = []
     
     if search_text and state.gemini_client:
-        try:
-            import datetime, re, json, pickle, os
-            current_year = datetime.datetime.now().year
+        if search_text in _NLP_CACHE:
+            parsed = _NLP_CACHE[search_text]
+            extracted_years = parsed.get("years", [])
+            extracted_names = parsed.get("people", [])
+            extracted_locations = parsed.get("locations", [])
+            visual_remainder = parsed.get("visual", "EMPTY")
             
-            known_names_str = ""
-            if os.path.exists('/app/data/known_faces.pkl'):
-                with open('/app/data/known_faces.pkl', 'rb') as f:
-                    known_names_str = ", ".join(list(pickle.load(f).keys()))
-            
-            known_locs_str = ""
-            if os.path.exists("/app/data/available_tags.json"):
-                with open("/app/data/available_tags.json", "r", encoding="utf-8") as fm:
-                    tag_data = json.load(fm)
-                    locs = tag_data.get("locations", [])
-                    known_locs_str = ", ".join(locs)
-            
-            prompt = f"""You are a Photo Search Query Parser.
+            if visual_remainder.upper() != "EMPTY":
+                search_text = visual_remainder.strip()
+            else:
+                search_text = ""
+                
+            print(f"[*] ⚡ NLP Cache Hit: Years={extracted_years}, People={extracted_names}, Locs={extracted_locations}, Visual='{search_text}'")
+        else:
+            try:
+                import datetime, re, json, pickle, os
+                current_year = datetime.datetime.now().year
+                
+                known_names_str = ""
+                if os.path.exists('/app/data/known_faces.pkl'):
+                    with open('/app/data/known_faces.pkl', 'rb') as f:
+                        known_names_str = ", ".join(list(pickle.load(f).keys()))
+                
+                known_locs_str = ""
+                if os.path.exists("/app/data/available_tags.json"):
+                    with open("/app/data/available_tags.json", "r", encoding="utf-8") as fm:
+                        tag_data = json.load(fm)
+                        locs = tag_data.get("locations", [])
+                        known_locs_str = ", ".join(locs)
+                
+                prompt = f"""You are a Photo Search Query Parser.
 Current Year: {current_year}
 Known People in DB: [{known_names_str}]
 Known Locations in DB: [{known_locs_str}]
@@ -119,25 +135,29 @@ Parse the query into EXACTLY this JSON structure:
 }}
 Output ONLY valid JSON without markup.
 """
-            t_resp = state.gemini_client.models.generate_content(model='gemini-3.1-flash-lite-preview', contents=prompt)
-            resp_text = t_resp.text.strip()
-            if resp_text.startswith("```json"): resp_text = resp_text[7:-3].strip()
-            elif resp_text.startswith("```"): resp_text = resp_text[3:-3].strip()
-            
-            parsed = json.loads(resp_text)
-            extracted_years = parsed.get("years", [])
-            extracted_names = parsed.get("people", [])
-            extracted_locations = parsed.get("locations", [])
-            visual_remainder = parsed.get("visual", "EMPTY")
-            
-            if visual_remainder.upper() != "EMPTY":
-                search_text = visual_remainder.strip()
-            else:
-                search_text = ""
+                t_resp = state.gemini_client.models.generate_content(model='gemini-3.1-flash-lite-preview', contents=prompt)
+                resp_text = t_resp.text.strip()
+                if resp_text.startswith("```json"): resp_text = resp_text[7:-3].strip()
+                elif resp_text.startswith("```"): resp_text = resp_text[3:-3].strip()
                 
-            print(f"[*] 🧠 Smart NLP Extraction: Years={extracted_years}, People={extracted_names}, Locs={extracted_locations}, Visual='{search_text}'")
-        except Exception as ge:
-            print(f"[-] Smart NLP matching error: {ge}")
+                parsed = json.loads(resp_text)
+                
+                # 다음 번 동일 검색어나 스크롤(load_more) 시 속도 향상을 위해 캐시에 저장
+                _NLP_CACHE[req.query.strip()] = parsed
+                
+                extracted_years = parsed.get("years", [])
+                extracted_names = parsed.get("people", [])
+                extracted_locations = parsed.get("locations", [])
+                visual_remainder = parsed.get("visual", "EMPTY")
+                
+                if visual_remainder.upper() != "EMPTY":
+                    search_text = visual_remainder.strip()
+                else:
+                    search_text = ""
+                    
+                print(f"[*] 🧠 Smart NLP Extraction: Years={extracted_years}, People={extracted_names}, Locs={extracted_locations}, Visual='{search_text}'")
+            except Exception as ge:
+                print(f"[-] Smart NLP matching error: {ge}")
 
     # UI 선택 이름 병합
     final_people = list(set(req.people + extracted_names))
