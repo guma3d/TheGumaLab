@@ -235,18 +235,54 @@ Output ONLY valid JSON without markup.
     if req.date and req.date != "All Dates":
         must_conds.append(FieldCondition(key="date", match=MatchValue(value=req.date)))
         
+    # === 단독 인물 우선 배치 (Pagination 보존) 로직 ===
+    import os, pickle
+    all_known = set()
+    try:
+        if os.path.exists('/app/data/known_faces.pkl'):
+            with open('/app/data/known_faces.pkl', 'rb') as f:
+                all_known = set(pickle.load(f).keys())
+    except:
+        pass
+        
+    exact_filter = None
+    group_filter = None
+    if final_people and all_known:
+        exact_must_nots = []
+        has_others_should = []
+        for p_name in all_known:
+            if p_name not in final_people:
+                cond = FieldCondition(key="people", match=MatchValue(value=p_name))
+                exact_must_nots.append(cond)
+                has_others_should.append(cond)
+                
+        exact_filter = Filter(must=list(must_conds), must_not=exact_must_nots)
+        
+        if has_others_should:
+            g_musts = list(must_conds)
+            g_musts.append(Filter(should=has_others_should))
+            group_filter = Filter(must=g_musts)
+    else:
+        exact_filter = Filter(must=must_conds) if must_conds else None
+        
     q_filter = Filter(must=must_conds) if must_conds else None
 
     if not search_text:
         try:
-            res_scroll, _ = state.qdrant_client.scroll(
-                collection_name="gumaphoto_hybrid_kr",
-                scroll_filter=q_filter,
-                limit=req.offset + req.limit,
-                with_payload=True,
-                order_by=OrderBy(key="sort_date", direction=direct)
-            )
-            raw_results = res_scroll[req.offset:]
+            if group_filter is not None:
+                res_exact, _ = state.qdrant_client.scroll(
+                    collection_name="gumaphoto_hybrid_kr", scroll_filter=exact_filter, limit=req.offset + req.limit, with_payload=True, order_by=OrderBy(key="sort_date", direction=direct)
+                )
+                res_group, _ = state.qdrant_client.scroll(
+                    collection_name="gumaphoto_hybrid_kr", scroll_filter=group_filter, limit=req.offset + req.limit, with_payload=True, order_by=OrderBy(key="sort_date", direction=direct)
+                )
+                res_scroll = res_exact + res_group
+            else:
+                res_scroll, _ = state.qdrant_client.scroll(
+                    collection_name="gumaphoto_hybrid_kr", scroll_filter=exact_filter, limit=req.offset + req.limit, with_payload=True, order_by=OrderBy(key="sort_date", direction=direct)
+                )
+            
+            raw_results = res_scroll[req.offset:req.offset+req.limit]
             formatted_results = []
             for hit in raw_results:
                 payload = getattr(hit, 'payload', {}) or {}
@@ -302,16 +338,20 @@ Output ONLY valid JSON without markup.
             text_features = text_features / text_features.norm(p=2, dim=-1, keepdim=True)
             text_vector = text_features[0].cpu().numpy().tolist()
         
-        results = state.qdrant_client.query_points(
-            collection_name="gumaphoto_hybrid_kr",
-            query=text_vector,
-            using="scene",
-            query_filter=q_filter,
-            limit=req.offset + req.limit,
-            offset=0,
-            with_payload=True
-        ).points
-        raw_results = results[req.offset:]
+        if group_filter is not None:
+            results_exact = state.qdrant_client.query_points(
+                collection_name="gumaphoto_hybrid_kr", query=text_vector, using="scene", query_filter=exact_filter, limit=req.offset + req.limit, offset=0, with_payload=True
+            ).points
+            results_group = state.qdrant_client.query_points(
+                collection_name="gumaphoto_hybrid_kr", query=text_vector, using="scene", query_filter=group_filter, limit=req.offset + req.limit, offset=0, with_payload=True
+            ).points
+            results = results_exact + results_group
+        else:
+            results = state.qdrant_client.query_points(
+                collection_name="gumaphoto_hybrid_kr", query=text_vector, using="scene", query_filter=exact_filter, limit=req.offset + req.limit, offset=0, with_payload=True
+            ).points
+            
+        raw_results = results[req.offset:req.offset+req.limit]
         
         # 만약 SigLIP 검색 결과가 부족하다면 Fallback Text 샷
         if not raw_results and req.offset == 0:
@@ -319,23 +359,26 @@ Output ONLY valid JSON without markup.
             fallback_must = []
             if must_conds: fallback_must.extend(must_conds)
             
-            fallback_filter = Filter(
-                must=fallback_must,
-                should=[
-                    FieldCondition(key="caption", match=MatchText(text=search_text)),
-                    FieldCondition(key="location", match=MatchText(text=search_text)),
-                    FieldCondition(key="people", match=MatchText(text=search_text)),
-                    FieldCondition(key="objects", match=MatchText(text=search_text)),
-                    FieldCondition(key="emotion", match=MatchText(text=search_text))
-                ]
-            )
-            res_scroll, _ = state.qdrant_client.scroll(
-                collection_name="gumaphoto_hybrid_kr",
-                scroll_filter=fallback_filter,
-                limit=req.offset + req.limit,
-                with_payload=True
-            )
-            raw_results = res_scroll[req.offset:]
+            fallback_shoulds = [
+                FieldCondition(key="caption", match=MatchText(text=search_text)),
+                FieldCondition(key="location", match=MatchText(text=search_text)),
+                FieldCondition(key="people", match=MatchText(text=search_text)),
+                FieldCondition(key="objects", match=MatchText(text=search_text)),
+                FieldCondition(key="emotion", match=MatchText(text=search_text))
+            ]
+            
+            if group_filter is not None:
+                exact_fallback = Filter(must=exact_filter.must, must_not=exact_filter.must_not, should=fallback_shoulds)
+                group_fallback = Filter(must=group_filter.must, must_not=group_filter.must_not, should=fallback_shoulds)
+                
+                res_exact, _ = state.qdrant_client.scroll(collection_name="gumaphoto_hybrid_kr", scroll_filter=exact_fallback, limit=req.offset + req.limit, with_payload=True)
+                res_group, _ = state.qdrant_client.scroll(collection_name="gumaphoto_hybrid_kr", scroll_filter=group_fallback, limit=req.offset + req.limit, with_payload=True)
+                res_scroll = res_exact + res_group
+            else:
+                exact_fallback = Filter(must=exact_filter.must, must_not=exact_filter.must_not, should=fallback_shoulds) if exact_filter else Filter(should=fallback_shoulds)
+                res_scroll, _ = state.qdrant_client.scroll(collection_name="gumaphoto_hybrid_kr", scroll_filter=exact_fallback, limit=req.offset + req.limit, with_payload=True)
+                
+            raw_results = res_scroll[req.offset:req.offset+req.limit]
             
         # 3. 모든 필터 조건 검색이 실패한 경우 최후의 보루 (순수 벡터 검색으로 롤백)
         # -> 사용자 의도(지역/인물)를 훼손하면서 엉뚱한 결과를 뱉는 강제 해제 롤백 기능을 제거했습니다.
