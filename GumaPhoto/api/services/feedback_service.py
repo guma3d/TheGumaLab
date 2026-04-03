@@ -314,9 +314,8 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
             
             # [Multi-Centroid Logic] 다중 중심점 동적 생성 (유사도 0.35 미만이면 새 폴더 개척)
             if best_sim > 0.0 and best_sim < 0.35:
-                import uuid
                 new_cand_idx = len(candidates) + 1
-                best_folder_name = f"{known_name}_{new_cand_idx}_{str(uuid.uuid4())[:4]}"
+                best_folder_name = f"{known_name}_{new_cand_idx}"
                 print(f"  [🧬 다중 중심점 분열] 얼굴이 기존 기억(유사도 {best_sim:.4f})과 너무 다릅니다! 동일인물의 완전히 새로운 앵커를 위해 '{best_folder_name}' 폴더를 파생 개척합니다.")
     
     enrolled_dir = os.path.join("/app/data/enrolled", best_folder_name)
@@ -344,8 +343,8 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
                 if img is not None:
                     x1, y1, x2, y2 = map(int, face_bbox)
                     h, w = img.shape[:2]
-                    margin_x = int((x2 - x1) * 1.0)
-                    margin_y = int((y2 - y1) * 1.0)
+                    margin_x = int((x2 - x1) * 0.1)
+                    margin_y = int((y2 - y1) * 0.1)
                     nx1, ny1 = max(0, x1 - margin_x), max(0, y1 - margin_y)
                     nx2, ny2 = min(w, x2 + margin_x), min(h, y2 + margin_y)
                     face_chip = img[ny1:ny2, nx1:nx2]
