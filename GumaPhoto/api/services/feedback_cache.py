@@ -1,5 +1,6 @@
 import time
 import threading
+import concurrent.futures
 from core.state import state
 from qdrant_client.http.models import Filter, FieldCondition, MatchText, MatchValue
 
@@ -33,7 +34,7 @@ class FeedbackCacheManager:
                     scroll_filter=scroll_filter,
                     limit=5000,
                     offset=next_page_offset,
-                    with_payload=True,
+                    with_payload=["location", "date", "people"],
                     with_vectors=False
                 )
                 unknowns.extend(batch)
@@ -62,19 +63,17 @@ class FeedbackCacheManager:
             print(f"🔍 [FeedbackCache] Exhaustively assessing density for ALL {len(candidates)} candidates...", flush=True)
             
             cluster_list = []
-            
-            # 2. 모든 Unknown 사진을 하나씩 루프 돌면서 유사도 덩어리 크기 측정
-            # 주의: 성능을 위해 클러스터 캐싱 적용 (이미 확인된 unresolved id는 스킵하여 속도 대폭 최적화)
             global_covered = set()
+            worker_lock = threading.Lock()
             
-            for cand in candidates:
+            def process_candidate(cand):
                 tid = cand["raw"].id
                 issue_key = cand["issue"]
                 
-                # 이미 더 큰 클러스터 추적으로 해결될 사진이면 쿼리 생략하여 속도 폭발적 향상
-                if f"{tid}_{issue_key}" in global_covered:
-                    continue
-                    
+                with worker_lock:
+                    if f"{tid}_{issue_key}" in global_covered:
+                        return
+                        
                 fb_type = "face" if cand["issue"] in ["Person", "People"] else "scene"
                 cutoff = 0.80 if fb_type == "face" else 0.83
                 
@@ -84,7 +83,7 @@ class FeedbackCacheManager:
                         query=tid,
                         using=fb_type,
                         limit=10000,
-                        with_payload=True
+                        with_payload=["location", "date", "people"]
                     ).points
                     
                     unresolved_ids = set()
@@ -104,15 +103,24 @@ class FeedbackCacheManager:
                             if p_people and "Unknown Person" not in p_people and "Unknown People" not in p_people: continue
                                 
                         unresolved_ids.add(str(h.id))
-                        global_covered.add(f"{str(h.id)}_{issue_key}")
                         
                     if len(unresolved_ids) > 0:
-                        cand["match_count"] = len(unresolved_ids)
-                        cand["unresolved_ids"] = unresolved_ids
-                        cluster_list.append(cand)
-                        
+                        with worker_lock:
+                            # Again check if it was covered while we queried
+                            if f"{tid}_{issue_key}" in global_covered:
+                                return
+                            for u_id in unresolved_ids:
+                                global_covered.add(f"{u_id}_{issue_key}")
+                            cand["match_count"] = len(unresolved_ids)
+                            cand["unresolved_ids"] = unresolved_ids
+                            cluster_list.append(cand)
+                            
                 except Exception:
                     pass
+
+            print(f"⚡ [FeedbackCache] Launching parallel executor with 8 workers...", flush=True)
+            with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+                executor.map(process_candidate, candidates)
 
             # 3. 크기 순으로 완벽하게 정렬하여 가장 큰 그룹부터 300개 선별
             cluster_list.sort(key=lambda x: x["match_count"], reverse=True)
@@ -122,7 +130,7 @@ class FeedbackCacheManager:
                 # 안전하게 덮어쓰기
                 self.queue = final_queue
                 
-            print(f"🎉 [FeedbackCache] Generated Top {len(final_queue)} clusters in {time.time()-start_t:.2f}s!", flush=True)
+            print(f"🎉 [FeedbackCache] Generated Top {len(final_queue)} clusters in {time.time()-start_t:.2f}s! (Top 1 has {final_queue[0].get('match_count')} photos)" if final_queue else "🎉 Generated 0 clusters", flush=True)
             
         except Exception as e:
             print(f"❌ [FeedbackCache] Build Error: {e}", flush=True)

@@ -39,7 +39,7 @@ async def ignore_face_feedback(req: FeedbackV2Request):
         )
         
         try:
-            pt = state.qdrant_client.retrieve(collection_name="gumaphoto_hybrid_kr", ids=[real_point_id], with_payload=True)
+            pt = state.qdrant_client.retrieve(collection_name="gumaphoto_hybrid_kr", ids=[real_point_id], with_payload=["location", "date", "people", "face_bbox", "filepath"])
             fpath = pt[0].payload.get("filepath", "unknown") if pt else "unknown"
             old_people = pt[0].payload.get("people", ["Unknown Person"]) if pt else ["Unknown Person"]
             with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
@@ -64,7 +64,7 @@ async def no_person_feedback(req: FeedbackV2Request):
         )
         
         try:
-            pt = state.qdrant_client.retrieve(collection_name="gumaphoto_hybrid_kr", ids=[real_point_id], with_payload=True)
+            pt = state.qdrant_client.retrieve(collection_name="gumaphoto_hybrid_kr", ids=[real_point_id], with_payload=["location", "date", "people", "face_bbox", "filepath"])
             fpath = pt[0].payload.get("filepath", "unknown") if pt else "unknown"
             old_people = pt[0].payload.get("people", ["Unknown Person"]) if pt else ["Unknown Person"]
             with open("/app/data/audit_trace.json", "a", encoding="utf-8") as tf:
@@ -91,14 +91,14 @@ async def temptest_feedback(req: FeedbackV2Request):
             query=real_point_id,
             using=fb_type,
             limit=10000,  # 더 많은 유사 사진 목록을 확보하기 위해 리소스 한도 증가 (기존 100 -> 300)
-            with_payload=True
+            with_payload=["location", "date", "people", "face_bbox", "filepath"]
         ).points
         
         # 사용자가 명시적으로 선택한 '메인 원본 피드백 타겟'을 강제로 최우선 순위로 끌어옵니다.
         target_point = state.qdrant_client.retrieve(
             collection_name="gumaphoto_hybrid_kr",
             ids=[real_point_id],
-            with_payload=True
+            with_payload=["location", "date", "people", "face_bbox", "filepath"]
         )
         
         similars = []
@@ -273,7 +273,7 @@ async def submit_feedback_v2(req: FeedbackV2Request, background_tasks: Backgroun
             # 0. 감사 로그(Audit Log) 도플갱어 방지 (덮어쓰기 전의 원본 상태 스냅샷 뜨기)
             old_snapshots = []
             try:
-                old_pts = state.qdrant_client.retrieve(collection_name="gumaphoto_hybrid_kr", ids=all_pts, with_payload=True)
+                old_pts = state.qdrant_client.retrieve(collection_name="gumaphoto_hybrid_kr", ids=all_pts, with_payload=["location", "date", "people", "face_bbox", "filepath"])
                 for pt in old_pts:
                     old_snapshots.append({
                         "id": str(pt.id),
