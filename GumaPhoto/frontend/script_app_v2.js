@@ -1776,6 +1776,18 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
         return;
     }
 
+    // Check for unregistered names
+    if (selectedFeedbackTarget && (selectedFeedbackTarget.issue.includes('Person') || selectedFeedbackTarget.issue.includes('People'))) {
+        let isKnown = false;
+        if (typeof advancedStatsData !== 'undefined' && advancedStatsData.people) {
+            isKnown = advancedStatsData.people.some(p => p.name === correctValue);
+        }
+        if (!isKnown) {
+            const confirmed = confirm(`'${correctValue}'님은 기존에 등록된 이름이 아닙니다.\n오타가 아니라면 새로 추가하시겠습니까?`);
+            if (!confirmed) return;
+        }
+    }
+
     const bulkChecks = document.querySelectorAll('.grid-checkbox:checked');
     if (bulkChecks.length > 0) {
         // 메인 화면에서 활성화된 체크박스가 존재한다면 스캔 패스하고 일괄전송(Bulk) 액션 즉시 실행
@@ -2180,6 +2192,18 @@ document.getElementById('fb-no-learning-btn')?.addEventListener('click', async (
     if (!correctValue) {
         alert("Please provide the correct information first!");
         return;
+    }
+
+    // Check for unregistered names
+    if (selectedFeedbackTarget && (selectedFeedbackTarget.issue.includes('Person') || selectedFeedbackTarget.issue.includes('People'))) {
+        let isKnown = false;
+        if (typeof advancedStatsData !== 'undefined' && advancedStatsData.people) {
+            isKnown = advancedStatsData.people.some(p => p.name === correctValue);
+        }
+        if (!isKnown) {
+            const confirmed = confirm(`'${correctValue}'님은 기존에 등록된 이름이 아닙니다.\n오타가 아니라면 새로 추가하시겠습니까?`);
+            if (!confirmed) return;
+        }
     }
 
     const btn = document.getElementById('fb-no-learning-btn');
