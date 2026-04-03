@@ -201,7 +201,20 @@ class FeedbackCacheManager:
             if not self.queue:
                 self.build_cache_async()
                 return None
-            res = self.queue.pop(0)
+                
+            # 번갈아가며 다양한 피드백이 나오도록 조치 (장소만 연속으로 나오지 못하게 방지)
+            target_idx = 0
+            if hasattr(self, 'last_issue_type'):
+                for i, item in enumerate(self.queue):
+                    if item["issue"] != self.last_issue_type:
+                        target_idx = i
+                        break
+                        
+            res = self.queue.pop(target_idx)
+            self.last_issue_type = res["issue"]
+            
+            # 추출 후 디스크 저장 업데이트
+            self.save_to_disk()
             
             # 추출 후에도 큐가 너무 작으면 리필 시작
             if len(self.queue) < 15 and not self.is_building:
