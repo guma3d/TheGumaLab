@@ -115,9 +115,11 @@ async def perform_search(req: SearchRequest):
                 current_year = datetime.datetime.now().year
                 
                 known_names_str = ""
+                known_names_list = []
                 if os.path.exists('/app/data/known_faces.pkl'):
                     with open('/app/data/known_faces.pkl', 'rb') as f:
-                        known_names_str = ", ".join(list(pickle.load(f).keys()))
+                        known_names_list = list(pickle.load(f).keys())
+                        known_names_str = ", ".join(known_names_list)
                 
                 known_locs_str = ""
                 if os.path.exists("/app/data/available_tags.json"):
@@ -158,7 +160,18 @@ Output ONLY valid JSON without markup.
                 
                 parsed = json.loads(resp_text)
                 
-                # 다음 번 동일 검색어나 스크롤(load_more) 시 속도 향상을 위해 캐시에 저장
+                # AI가 알려지지 않은 인물(예: '준우_1')을 환각으로 뱉는 것을 방지
+                raw_extracted_names = parsed.get("people", [])
+                clean_names = []
+                for name in raw_extracted_names:
+                    # _1, _2 등이 붙은 변형이름이면 원본 이름으로 정제
+                    base_name = name.split('_')[0] if '_' in name else name
+                    if base_name in known_names_list and base_name not in clean_names:
+                        clean_names.append(base_name)
+                
+                parsed["people"] = clean_names # 환각 제거된 배열로 교체
+                
+                # 다음 번 동일 검색어나 스크롤(load_more) 시 속도 향상을 위해 안정화된 데이터를 캐시에 저장
                 _NLP_CACHE[req.query.strip()] = parsed
                 
                 extracted_years = parsed.get("years", [])
