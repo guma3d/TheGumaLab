@@ -314,7 +314,7 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
             
             # [Multi-Centroid Logic] 다중 중심점 동적 생성 (유사도 0.35 미만이면 새 폴더 개척)
             if best_sim > 0.0 and best_sim < 0.35:
-                new_cand_idx = len(candidates) + 1
+                new_cand_idx = len(candidates)
                 best_folder_name = f"{known_name}_{new_cand_idx}"
                 print(f"  [🧬 다중 중심점 분열] 얼굴이 기존 기억(유사도 {best_sim:.4f})과 너무 다릅니다! 동일인물의 완전히 새로운 앵커를 위해 '{best_folder_name}' 폴더를 파생 개척합니다.")
     
