@@ -1787,7 +1787,7 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
 
     const btn = document.getElementById('fb-submit-btn');
     const ogHtml = btn.innerHTML;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Scanning...';
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Auto Scanning...';
     btn.disabled = true;
 
     try {
@@ -1804,142 +1804,23 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
             })
         });
 
-        if (!res.ok) throw new Error("Could not fetch simulation data from server.");
-        const data = await res.json();
-
-        if (data.error) {
-            alert("서버 에러 발생: " + data.error);
-            btn.innerHTML = ogHtml;
-            btn.disabled = false;
-            return;
+        const data = res.ok ? await res.json() : {results: []};
+        
+        let targetPoints = [];
+        if (data && data.results && data.results.length > 0) {
+            targetPoints = data.results.map(item => item.id);
         }
 
-        if (data.results && data.results.length > 0) {
-            // 결과창 안내명 Inject
-            const parsedSpan = document.getElementById('fb-temptest-parsed-val');
-            if (parsedSpan) {
-                // Return parsed_value (from Gemini) or fallback to raw
-                const finalStr = data.parsed_value || correctValue;
-                parsedSpan.textContent = `"${finalStr}"`;
-            }
-
-            const grid = document.getElementById('fb-temptest-grid');
-            let gridHtml = '';
-            data.results.forEach(item => {
-                const scoreText = (item.score * 100).toFixed(1) + '%';
-
-                const createBadge = (icon, text, isHighlight = false) => {
-                    if (!text || text.trim() === '') text = 'Unknown';
-                    const cls = isHighlight ? 'info-badge highlight' : 'info-badge';
-                    return `<div class="${cls}"><i class="${icon}"></i> ${text}</div>`;
-                };
-
-                let badgesHtml = '';
-                // 1. Date
-                let dateVal = (item.date && item.date.trim() !== '') ? item.date : 'Unknown';
-                if (dateVal.length > 10 && !dateVal.includes('Unknown')) dateVal = dateVal.substring(0, 10);
-                badgesHtml += createBadge('fa-regular fa-calendar', dateVal);
-
-                // 2. Location
-                let locVal = (item.location && item.location.trim() !== '') ? item.location.replace(/-/g, ' ') : 'Unknown';
-                if (locVal.includes('위치정보없음')) locVal = 'Unknown';
-                badgesHtml += createBadge('fa-solid fa-location-dot', locVal);
-
-                // 3. People
-                let peopleVal = 'Unknown';
-                if (item.people && item.people.length > 0) {
-                    let pStr = item.people.filter(p => !p.includes('Unknown')).join(', ');
-                    if (pStr) peopleVal = pStr;
-                }
-                badgesHtml += createBadge('fa-solid fa-user-tag', peopleVal, true);
-
-                let rawUrl = item.original_path || item.url;
-                if (window.location.pathname.startsWith('/GumaPhoto') && !rawUrl.startsWith('/GumaPhoto')) rawUrl = '/GumaPhoto' + rawUrl;
-
-                const dotIndex = rawUrl.lastIndexOf('.');
-                const thumbUrl = dotIndex !== -1 ?
-                    rawUrl.substring(0, dotIndex) + '_' + rawUrl.substring(dotIndex + 1).toLowerCase() + '.webp' : rawUrl;
-
-                const bboxStr = item.face_bbox ? JSON.stringify(item.face_bbox) : '';
-                gridHtml += `
-                <div style="position: relative; width: 100%; aspect-ratio: 1/1; border-radius: 8px; overflow: hidden; background: #111;">
-                    <img class="temp-crop-img" src="" data-src="${thumbUrl}" data-full-src="${rawUrl}" data-bbox='${bboxStr}' style="width: 100%; height: 100%; object-fit: cover; transition: filter 0.3s ease;" loading="lazy">
-                    
-                    <div class="meta-badge" style="position: absolute; left: 5px; top: 5px;">
-                        <i class="fa-solid fa-bullseye"></i> ${scoreText}
-                    </div>
-                    
-                    <input type="checkbox" checked data-id="${item.id}" style="position: absolute; right: 8px; top: 8px; width: 22px; height: 22px; cursor: pointer; z-index: 20; accent-color: #10b981; box-shadow: 0 0 5px rgba(0,0,0,0.5);" onchange="this.parentElement.querySelector('img').style.filter = this.checked ? 'none' : 'grayscale(100%)';">
-                    
-                    <div class="info-badges-overlay" style="position: absolute; left: 5px; bottom: 5px; transform: scale(0.65); transform-origin: left bottom; margin: 0; display: flex; flex-direction: column; gap: 4px; z-index: 10;">
-                        ${badgesHtml}
-                    </div>
-                </div>`;
-            });
-            grid.innerHTML = gridHtml;
-
-            document.querySelectorAll('.temp-crop-img').forEach(img => {
-                const src = img.getAttribute('data-src');
-                const fullSrc = img.getAttribute('data-full-src');
-                const bboxStr = img.getAttribute('data-bbox');
-
-                const finalSrc = window.location.pathname.startsWith('/GumaPhoto') && !src.startsWith('/GumaPhoto') ? '/GumaPhoto' + src : src;
-                const finalFullSrc = window.location.pathname.startsWith('/GumaPhoto') && !fullSrc.startsWith('/GumaPhoto') ? '/GumaPhoto' + fullSrc : fullSrc;
-
-                if (bboxStr && (selectedFeedbackTarget.issue.includes('Person') || selectedFeedbackTarget.issue.includes('People'))) {
-                    const bbox = JSON.parse(bboxStr);
-                    const tempImg = new Image();
-                    tempImg.crossOrigin = "Anonymous";
-                    
-                    // [Fix] 얼굴 박스(BBOX)는 '원본 해상도' 기준 좌표이므로 썸네일(finalSrc)이 아닌 
-                    // 무조건 고해상도 원본(finalFullSrc)을 사용해야 Math.min 수식이 정상 계산되어 잘리지 않습니다.
-                    tempImg.src = finalFullSrc;
-
-                    tempImg.onerror = () => {
-                        if (tempImg.src !== finalFullSrc) tempImg.src = finalFullSrc;
-                    };
-
-                    tempImg.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        let [x1, y1, x2, y2] = bbox;
-                        const w = x2 - x1; const h = y2 - y1;
-                        const margin = Math.max(w, h) * 0.4;
-                        x1 = Math.max(0, x1 - margin); y1 = Math.max(0, y1 - margin);
-                        x2 = Math.min(tempImg.naturalWidth, x2 + margin); y2 = Math.min(tempImg.naturalHeight, y2 + margin);
-                        const cropW = x2 - x1; const cropH = y2 - y1;
-
-                        if (cropW > 0 && cropH > 0) {
-                            canvas.width = cropW; canvas.height = cropH;
-                            ctx.drawImage(tempImg, x1, y1, cropW, cropH, 0, 0, cropW, cropH);
-                            img.src = canvas.toDataURL('image/jpeg', 0.85);
-                        } else {
-                            img.src = tempImg.src;
-                        }
-                    };
-                } else {
-                    img.src = finalSrc;
-                    img.onerror = function () {
-                        if (this.src !== finalFullSrc) this.src = finalFullSrc;
-                    };
-                }
-            });
-
-            document.getElementById('fb-temptest-count').textContent = data.results.length;
-
-            // 메인 타겟 사진 컨테이너를 숨기고 그 자리에 검색결과 교체 표출
-            const mainContainer = document.getElementById('fb-unknown-photo-container');
-            if (mainContainer) mainContainer.style.display = 'none';
-            const infoTextContainer = document.getElementById('fb-info-text-container');
-            if (infoTextContainer) infoTextContainer.style.display = 'none';
-            document.getElementById('fb-temptest-results').style.display = 'block';
-        } else {
-            alert("유사도 임계값(0.85)을 넘는 수정 대상 사진이 0장 입니다.");
+        if (!targetPoints.includes(String(selectedFeedbackTarget.id)) && !targetPoints.includes(Number(selectedFeedbackTarget.id))) {
+            targetPoints.push(selectedFeedbackTarget.id);
         }
+
+        console.log("Auto-submitting feedback for targets count:", targetPoints.length);
+        await submitSharedFeedback(selectedFeedbackTarget.id, selectedFeedbackTarget.issue, correctValue, targetPoints);
+
     } catch (err) {
         console.error(err);
-        alert("시뮬레이션 실패: " + err.message);
-    } finally {
+        alert("Feedback error: " + err.message);
         btn.innerHTML = ogHtml;
         btn.disabled = false;
     }
@@ -2034,55 +1915,6 @@ if (fbInputVal && fbDropdown) {
     });
 }
 
-// =========================================================================
-// 선택된 타겟 대상(체크박스) 피드백 DB 전송 액션
-// =========================================================================
-document.getElementById('fb-temptest-send-btn')?.addEventListener('click', async () => {
-    if (!selectedFeedbackTarget) return;
-
-    const inputVal = document.getElementById('fb-input-val');
-    const inputDate = document.getElementById('fb-input-date');
-    const btn = document.getElementById('fb-temptest-send-btn');
-    const ogHtml = btn.innerHTML;
-
-    let correctValue = "";
-    if (selectedFeedbackTarget.issue.includes('Date')) {
-        correctValue = inputDate.value;
-    } else if (selectedFeedbackTarget.issue.includes('Location')) {
-        // [장소 피드백 제약] 3D 지도의 완벽한 GPS 보장을 위해 드롭다운 클릭 강제
-        if (!inputVal.dataset.exactPayload || inputVal.dataset.exactDisplay !== inputVal.value.trim()) {
-            alert("⚠️ 정확한 3D 지도 좌표 매핑을 위해, 반드시 하단 드롭다운 리스트(Kakao/OSM) 항목 중 하나를 클릭해 주세요!");
-            return;
-        }
-        correctValue = inputVal.dataset.exactPayload;
-    } else {
-        // 인물 피드백 등은 쌩텍스트 가능
-        correctValue = inputVal.value.trim();
-    }
-
-    if (!correctValue) {
-        alert("정답 입력값이 없습니다. 뒤로 돌아가서 다시 입력해주세요!");
-        return;
-    }
-
-    // 1. 체크된 체크박스의 사진 ID들을 수집
-    const checkboxes = document.querySelectorAll('#fb-temptest-grid input[type="checkbox"]');
-    const targetPoints = [];
-    checkboxes.forEach(cb => {
-        if (cb.checked) {
-            targetPoints.push(cb.getAttribute('data-id'));
-        }
-    });
-
-    // 메인 타겟 사진 본인은 무조건 포함 (최소 1장 보장 필터)
-    if (!targetPoints.includes(String(selectedFeedbackTarget.id)) && !targetPoints.includes(Number(selectedFeedbackTarget.id))) {
-        targetPoints.push(selectedFeedbackTarget.id);
-    }
-
-    await submitSharedFeedback(selectedFeedbackTarget.id, selectedFeedbackTarget.issue, correctValue, targetPoints);
-});
-
-// ----------------------------------------------------------------------
 // 피드백 추가 액션 버튼들 (Skip, Remove, Unidentifiable Person, No People)
 // ----------------------------------------------------------------------
 document.getElementById('fb-skip-btn')?.addEventListener('click', async () => {
