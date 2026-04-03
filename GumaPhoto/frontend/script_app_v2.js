@@ -1663,24 +1663,28 @@ async function loadUnknownPhoto(manualTargetPayload = null) {
         // 이슈 종류에 따른 폼 UI 전환
         const personBtns = document.getElementById('fb-person-feedback-buttons');
         const personGuide = document.getElementById('fb-people-guide');
+        const noLearningBtn = document.getElementById('fb-no-learning-btn');
 
         if (selectedFeedbackTarget.issue.includes('Date')) {
             inputVal.style.display = 'none';
             inputDate.style.display = 'block';
             if (personBtns) personBtns.style.display = 'none';
             if (personGuide) personGuide.style.display = 'none';
+            if (noLearningBtn) noLearningBtn.style.display = 'none';
         } else if (selectedFeedbackTarget.issue.includes('Person') || selectedFeedbackTarget.issue.includes('People')) {
             inputDate.style.display = 'none';
             inputVal.style.display = 'block';
             inputVal.placeholder = "예: 성욱 (누락된 인물의 이름)";
             if (personBtns) personBtns.style.display = 'flex';
             if (personGuide) personGuide.style.display = 'block';
+            if (noLearningBtn) noLearningBtn.style.display = 'block';
         } else {
             inputDate.style.display = 'none';
             inputVal.style.display = 'block';
             inputVal.placeholder = "예: 하남 위례롯데캐슬";
             if (personBtns) personBtns.style.display = 'none';
             if (personGuide) personGuide.style.display = 'none';
+            if (noLearningBtn) noLearningBtn.style.display = 'none';
         }
 
     } catch (err) {
