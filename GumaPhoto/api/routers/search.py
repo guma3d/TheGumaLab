@@ -290,6 +290,17 @@ Output ONLY valid JSON without markup.
         
     q_filter = Filter(must=must_conds) if must_conds else None
 
+    total_hits_count = 0
+    try:
+        if group_filter is not None:
+            c1 = state.qdrant_client.count(collection_name="gumaphoto_hybrid_kr", count_filter=exact_filter, exact=True).count
+            c2 = state.qdrant_client.count(collection_name="gumaphoto_hybrid_kr", count_filter=group_filter, exact=True).count
+            total_hits_count = c1 + c2
+        else:
+            total_hits_count = state.qdrant_client.count(collection_name="gumaphoto_hybrid_kr", count_filter=exact_filter, exact=True).count
+    except Exception as e:
+        print("[-] Count error:", e)
+
     if not search_text:
         try:
             if group_filter is not None:
@@ -345,8 +356,8 @@ Output ONLY valid JSON without markup.
                 res["height"] = h
                 res["file_size_bytes"] = sz
             
-            print(f"✅ 엄격한 하드 필터 검색 완료: {len(formatted_results)}건 반환")
-            return {"results": formatted_results}
+            print(f"✅ 엄격한 하드 필터 검색 완료: {len(formatted_results)}건 반환 / 총 {total_hits_count}건")
+            return {"results": formatted_results, "total_hits": total_hits_count}
         except Exception as e:
             print(f"❌ 스크롤 데이터 로딩 에러: {e}")
             return {"results": [], "error": str(e)}
@@ -449,13 +460,19 @@ Output ONLY valid JSON without markup.
                     _IMAGE_META_CACHE[orig_path] = (w, h, sz)
                 except Exception:
                     w, h, sz = 800, 800, 0
-            
             res["width"] = w
             res["height"] = h
             res["file_size_bytes"] = sz
                 
-        print(f"✅ 이미지 메타 캐싱 로딩 완료! (총 결과 {len(formatted_results)}건 반환)")
-        return {"results": formatted_results}
+        print(f"✅ AI 복합 검색 완료: {len(formatted_results)}건 반환 / 총 {total_hits_count}건 타겟팅")
+        return {
+            "results": formatted_results,
+            "total_hits": total_hits_count,
+            "people_detected": extracted_names,
+            "location_detected": known_locs_str if final_people else (extracted_locations[0].get("matched_word", "") if extracted_locations else ""),
+            "enhanced_query": search_text,
+            "fallback_triggered": fallback_triggered
+        }
 
     except Exception as e:
         import traceback

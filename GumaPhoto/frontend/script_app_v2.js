@@ -437,7 +437,15 @@ async function fetchPhotos(isLoadMore) {
                     if (metaArr.length > 0) {
                         finalLog += `[${metaArr.join(" ")}] 탐색 완료. `;
                     }
-                    finalLog += `총 ${data.results.length}장의 사진 발견!`;
+                    let displayHits = data.total_hits !== undefined ? data.total_hits : data.results.length;
+                    
+                    if (data.total_hits !== undefined && data.total_hits > 0) {
+                        finalLog += `전체DB 중 총 ${displayHits.toLocaleString()}장의 사진 발견!`;
+                    } else if (data.total_hits === undefined) {
+                        finalLog += `초기 ${displayHits.toLocaleString()}장의 검색결과 픽업!`;
+                    } else {
+                        finalLog += `조건에 맞는 사진이 없습니다.`;
+                    }
                     
                     logEl.innerText = finalLog;
                     logEl.animate([ { opacity: 0, transform: 'scale(0.95)' }, { opacity: 1, transform: 'scale(1)' } ], { duration: 400, fill: 'forwards', easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' });
