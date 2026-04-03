@@ -6,7 +6,7 @@ import json
 import os
 import re
 import torch
-from qdrant_client.http.models import Filter, FieldCondition, MatchText, MatchAny, MatchValue, OrderBy, Direction, GeoRadius, GeoPoint, Range
+from qdrant_client.http.models import Filter, FieldCondition, MatchText, MatchAny, MatchValue, OrderBy, Direction, GeoRadius, GeoPoint, Range, ValuesCount
 
 router = APIRouter()
 
@@ -236,32 +236,19 @@ Output ONLY valid JSON without markup.
         must_conds.append(FieldCondition(key="date", match=MatchValue(value=req.date)))
         
     # === 단독 인물 우선 배치 (Pagination 보존) 로직 ===
-    import os, pickle
-    all_known = set()
-    try:
-        if os.path.exists('/app/data/known_faces.pkl'):
-            with open('/app/data/known_faces.pkl', 'rb') as f:
-                all_known = set(pickle.load(f).keys())
-    except:
-        pass
-        
     exact_filter = None
     group_filter = None
-    if final_people and all_known:
-        exact_must_nots = []
-        has_others_should = []
-        for p_name in all_known:
-            if p_name not in final_people:
-                cond = FieldCondition(key="people", match=MatchValue(value=p_name))
-                exact_must_nots.append(cond)
-                has_others_should.append(cond)
-                
-        exact_filter = Filter(must=list(must_conds), must_not=exact_must_nots)
+    if final_people:
+        # DB에 저장된 people 배열의 길이를 측정하여 초고속 O(1) 단독/합사 분기 수행
+        val_count_cond = FieldCondition(key="people", values_count=ValuesCount(gt=len(final_people)))
         
-        if has_others_should:
-            g_musts = list(must_conds)
-            g_musts.append(Filter(should=has_others_should))
-            group_filter = Filter(must=g_musts)
+        # 단독 사진: final_people이 모두 포함되어 있고, 그 외 인물은 없음 (배열 길이 <= len(final_people))
+        exact_filter = Filter(must=list(must_conds), must_not=[val_count_cond])
+        
+        # 합사 사진: final_people이 모두 포함되어 있고, 최소 1명 이상의 다른 인물이 더 있음 (배열 길이 > len(final_people))
+        g_musts = list(must_conds)
+        g_musts.append(val_count_cond)
+        group_filter = Filter(must=g_musts)
     else:
         exact_filter = Filter(must=must_conds) if must_conds else None
         
