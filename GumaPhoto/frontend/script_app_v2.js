@@ -1890,7 +1890,10 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
                     const bbox = JSON.parse(bboxStr);
                     const tempImg = new Image();
                     tempImg.crossOrigin = "Anonymous";
-                    tempImg.src = finalSrc;
+                    
+                    // [Fix] 얼굴 박스(BBOX)는 '원본 해상도' 기준 좌표이므로 썸네일(finalSrc)이 아닌 
+                    // 무조건 고해상도 원본(finalFullSrc)을 사용해야 Math.min 수식이 정상 계산되어 잘리지 않습니다.
+                    tempImg.src = finalFullSrc;
 
                     tempImg.onerror = () => {
                         if (tempImg.src !== finalFullSrc) tempImg.src = finalFullSrc;
