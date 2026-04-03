@@ -1979,7 +1979,7 @@ const sendPersonFeedback = async (apiUrlEndpoint, btnId) => {
         if (res.ok) {
             switchView('home');
             setTimeout(() => {
-                alert(`총 ${targetPointsArray.length || 1}장의 사진이 수정되었습니다.\n화면을 새로고침합니다.`);
+                alert(`총 1장의 사진이 수정되었습니다.\n화면을 새로고침합니다.`);
                 window.location.reload();
             }, 100);
         } else {
