@@ -94,7 +94,14 @@ Parse the query into EXACTLY this JSON structure:
 {{
   "years": [], // list of integers, e.g., 2025. convert "작년" to {current_year - 1}. If none, []
   "people": [], // list of names exactly matching the Known People list. Fix misspellings if obvious. If none, []
-  "locations": [], // list of strings for ANY specific geographic place. Extract EXACT TEXT for full-text search. e.g., "하와이", "제주도". If none, []
+  "locations": [ // If any specific place, landmark, city, or province is mentioned (e.g. "하와이", "전라도", "오사카", "집근처"), convert it into GPS coordinates (WGS84).
+    {{
+      "lat": 35.6329,
+      "lon": 139.8804,
+      "radius": 50000,    // City/Province/Country: 50000. Specific landmark/district: 2000.
+      "matched_word": "오사카" // The exact substring of the location from the user's query
+    }}
+  ], // If none, []
   "visual": "EMPTY" // Translate all remaining visual/abstract concepts to a concise English phrase. DO NOT include the extracted years, people, or locations. e.g. "수영하는" -> "swimming". If no visual meaning remains, output "EMPTY".
 }}
 Output ONLY valid JSON without markup.
@@ -122,11 +129,6 @@ Output ONLY valid JSON without markup.
     # UI 선택 이름 병합
     final_people = list(set(req.people + extracted_names))
     
-    # UI 선택 장소 병합
-    final_locations = list(set([loc for loc in extracted_locations if loc.strip()]))
-    if req.location and req.location != "All Locations":
-        final_locations.append(req.location)
-    
     # 1. 쿼리가 없을 경우 (Home 화면 진입 시) -> 단순 필터 + 스크롤 검색
     direct = Direction.ASC if req.sort == "asc" else Direction.DESC
     must_conds = []
@@ -136,12 +138,25 @@ Output ONLY valid JSON without markup.
         for p_name in final_people:
             must_conds.append(FieldCondition(key="people", match=MatchValue(value=p_name)))
             
-    if final_locations:
-        if len(final_locations) == 1:
-            must_conds.append(FieldCondition(key="location", match=MatchText(text=final_locations[0])))
-        else:
-            loc_shoulds = [FieldCondition(key="location", match=MatchText(text=loc)) for loc in final_locations]
-            must_conds.append(Filter(should=loc_shoulds))
+    # [복구] 자연어 GPS GeoRadius 병합
+    for loc_obj in extracted_locations:
+        try:
+            if isinstance(loc_obj, dict) and "lat" in loc_obj and "lon" in loc_obj:
+                must_conds.append(
+                    FieldCondition(
+                        key="geo_point",
+                        geo_radius=GeoRadius(
+                            center=GeoPoint(lat=float(loc_obj["lat"]), lon=float(loc_obj["lon"])),
+                            radius=float(loc_obj.get("radius", 50000))
+                        )
+                    )
+                )
+        except Exception as e:
+            print(f"[-] GeoRadius 파싱 에러: {e}")
+            
+    # UI 명시적 텍스트 Location 필터 병합
+    if req.location and req.location != "All Locations":
+        must_conds.append(FieldCondition(key="location", match=MatchText(text=req.location)))
             
     if extracted_years:
         if len(extracted_years) == 1:
@@ -155,7 +170,6 @@ Output ONLY valid JSON without markup.
         
     q_filter = Filter(must=must_conds) if must_conds else None
 
-    # 만약 자연어 텍스트 검색어가 아예 없다면 벡터 추출 없이 가볍게 스크롤링
     if not search_text:
         try:
             res_scroll, _ = state.qdrant_client.scroll(
