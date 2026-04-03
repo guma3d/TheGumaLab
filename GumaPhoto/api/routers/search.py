@@ -199,12 +199,12 @@ Output ONLY valid JSON without markup.
                     "season": payload.get("season", "Unknown"),
                     "doc_id": hit.id
                 })
-            if len(formatted_results) > 0 or not req.search.strip():
+            if len(formatted_results) > 0 or not req.query.strip():
                 print(f"✅ 일반 스크롤 로딩 완료: {len(formatted_results)}건 반환 (쿼리 없음)")
                 return {"results": formatted_results}
             else:
                 print(f"[*] 하드 필터 검색 결과 없음(0건). 제약을 모두 풀고 원본 검색어로 순수 AI 검색으로 롤백합니다.")
-                search_text = req.search.strip()
+                search_text = req.query.strip()
                 q_filter = None
                 must_conds = []
         except Exception as e:
@@ -261,7 +261,7 @@ Output ONLY valid JSON without markup.
             print("[*] ⚠️ 1/2차 필터 매칭 결과 완전 0건. 페이로드 필터를 강제 해제하고 순수 벡터 매칭만으로 컨텍스트 검색을 개시합니다.")
             
             # 원래 사용자가 적은 원본 문장 전체를 가져와서 완전 순수 벡터로 재가공
-            pure_query = req.search.strip()
+            pure_query = req.query.strip()
             if state.gemini_client and re.search(r'[가-힣]', pure_query):
                 try:
                     p = f"Translate the core meaning of this Korean photo search query to brief English keywords: {pure_query}"
