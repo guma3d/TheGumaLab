@@ -215,18 +215,21 @@ async def get_unknown_photo():
                 
                 for cand in candidates:
                     target_id = cand["raw"].id
-                    fb_type = "face" if cand["issue"] in ["Person", "People"] else "general"
+                    fb_type = "face" if cand["issue"] in ["Person", "People"] else "scene"
                     cutoff = 0.80 if fb_type == "face" else 0.83
                     
                     try:
                         # Vector Recommend Query로 해당 사진이 얼마나 많은 유사사진(대량처리)을 보유했는지 측정 (최대 50개)
-                        rec_res = state.qdrant_client.recommend(
+                        rec_res = state.qdrant_client.query_points(
                             collection_name="gumaphoto_hybrid_kr",
-                            positive=[target_id],
-                            limit=50
-                        )
-                        match_count = sum(1 for h in rec_res if h.score >= cutoff)
-                    except:
+                            query=target_id,
+                            using=fb_type,
+                            limit=50,
+                            with_payload=False
+                        ).points
+                        match_count = sum(1 for h in rec_res if getattr(h, "score", 0.0) >= cutoff)
+                    except Exception as e:
+                        print(f"Rank Priority Search Error: {e}")
                         match_count = 0
                         
                     if match_count > best_score:
