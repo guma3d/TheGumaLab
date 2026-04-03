@@ -1422,7 +1422,6 @@ window.addEventListener('click', (e) => {
 });
 
 document.getElementById('fb-temptest-close')?.addEventListener('click', () => {
-    document.getElementById('fb-temptest-results').style.display = 'none';
     const mainContainer = document.getElementById('fb-unknown-photo-container');
     if (mainContainer) mainContainer.style.display = 'flex';
     const infoTextContainer = document.getElementById('fb-info-text-container');
@@ -1483,8 +1482,6 @@ async function loadUnknownPhoto(manualTargetPayload = null) {
     submitBtn.innerHTML = 'Send';
 
     // TempTest UI 초기화 및 메인 컨테이너 복구
-    const tempTestResults = document.getElementById('fb-temptest-results');
-    if (tempTestResults) tempTestResults.style.display = 'none';
     const mainContainer = document.getElementById('fb-unknown-photo-container');
     if (mainContainer) mainContainer.style.display = 'flex';
     const infoTextContainer = document.getElementById('fb-info-text-container');
@@ -1703,12 +1700,8 @@ async function loadUnknownPhoto(manualTargetPayload = null) {
 // 통합 백엔드 전송 모듈 (재사용성 강화)
 // =========================================================================
 async function submitSharedFeedback(pointId, issueType, correctValue, targetPointsArray, skipEnrolled = false) {
-    const btn1 = document.getElementById('fb-temptest-send-btn');
     const btn2 = document.getElementById('fb-submit-btn');
-    const ogHtml1 = btn1 ? btn1.innerHTML : '';
     const ogHtml2 = btn2 ? btn2.innerHTML : '';
-
-    if (btn1) { btn1.disabled = true; btn1.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 대기열 배달 중...'; }
     if (btn2) { btn2.disabled = true; btn2.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 대기열 배달 중...'; }
 
     try {
@@ -1736,7 +1729,6 @@ async function submitSharedFeedback(pointId, issueType, correctValue, targetPoin
 
         const feedbackHubModal = document.getElementById('feedback-hub-modal');
         if (feedbackHubModal) feedbackHubModal.classList.add('hidden');
-        document.getElementById('fb-temptest-results').style.display = 'none';
 
         switchView('home');
 
@@ -1748,7 +1740,6 @@ async function submitSharedFeedback(pointId, issueType, correctValue, targetPoin
     } catch (err) {
         console.error(err);
         alert(err.message);
-        if (btn1) { btn1.innerHTML = ogHtml1; btn1.disabled = false; }
         if (btn2) { btn2.innerHTML = ogHtml2; btn2.disabled = false; }
     }
 }
@@ -1954,7 +1945,6 @@ document.getElementById('fb-remove-btn')?.addEventListener('click', async () => 
         });
         if (res.ok) {
             alert("성공적으로 삭제되었습니다.");
-            document.getElementById('fb-temptest-results').style.display = 'none';
             switchView('feedback');
         } else {
             const errData = await res.json().catch(() => ({}));
@@ -1987,7 +1977,6 @@ const sendPersonFeedback = async (apiUrlEndpoint, btnId) => {
         });
 
         if (res.ok) {
-            document.getElementById('fb-temptest-results').style.display = 'none';
             switchView('home');
             setTimeout(() => {
                 alert(`총 ${targetPointsArray.length || 1}장의 사진이 수정되었습니다.\n화면을 새로고침합니다.`);

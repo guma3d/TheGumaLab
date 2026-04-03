@@ -26,10 +26,6 @@ class FeedbackV2Request(BaseModel):
     target_points: typing.Optional[typing.List[typing.Union[int, str]]] = []
     skip_enrolled_learning: typing.Optional[bool] = False
 
-def sync_payload_to_sqlite(point_id: str):
-    """Qdrant 단일 진실화 아키텍처로 인해 SQLite 동기화 과정 삭제됨"""
-    pass
-
 @router.post("/api/feedback_v2/ignore_face")
 async def ignore_face_feedback(req: FeedbackV2Request):
     if not state.qdrant_client: return {"error": "Qdrant not loaded"}
@@ -51,7 +47,6 @@ async def ignore_face_feedback(req: FeedbackV2Request):
                 tf.write(json.dumps({"type": "AFTER", "trace_id": real_point_id, "filepath": fpath, "people": ["Unidentifiable Person"]}, ensure_ascii=False) + "\n")
         except: pass
         
-        sync_payload_to_sqlite(real_point_id)
         return {"message": "Ignored successfully."}
     except Exception as e:
         return {"error": str(e)}
@@ -77,7 +72,6 @@ async def no_person_feedback(req: FeedbackV2Request):
                 tf.write(json.dumps({"type": "AFTER", "trace_id": real_point_id, "filepath": fpath, "people": ["No People"]}, ensure_ascii=False) + "\n")
         except: pass
         
-        sync_payload_to_sqlite(real_point_id)
         return {"message": "Ignored successfully as No People."}
     except Exception as e:
         return {"error": str(e)}
