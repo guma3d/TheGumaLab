@@ -22,6 +22,10 @@ from celery.schedules import crontab
 
 # Celery Beat 정기 스케줄러 설정
 app.conf.beat_schedule = {
+    'daily-feedback-cache-rebuild-at-3am': {
+        'task': 'tasks.feedback_cache_builder',
+        'schedule': crontab(hour=3, minute=0),
+    },
     'daily-theme-cache-baking-at-3am': {
         'task': 'tasks.theme_builder',
         'schedule': crontab(hour=3, minute=0), # 매일 새벽 3시 00분

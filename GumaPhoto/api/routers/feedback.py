@@ -181,6 +181,12 @@ async def get_unknown_photo():
         print(f"❌ Feedback Cache Fetch Error: {e}")
         return {"id": None, "message": "No photos require feedback at this time."}
 
+@router.post("/api/feedback_v2/rebuild_cache_now")
+async def trigger_rebuild_cache_now():
+    from api.services.feedback_cache import feedback_cache
+    feedback_cache.build_cache_async()
+    return {"status": "rebuild_started_in_background"}
+
 from fastapi import BackgroundTasks
 
 @router.post("/api/feedback_v2/submit")

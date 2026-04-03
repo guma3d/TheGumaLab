@@ -59,3 +59,13 @@ def dispatch_event(event_type: str, payload: dict):
         # 🔔 사건 접수: 하드디스크에 사진들이 년도별로 너무 예쁘게 정리되었음!
         # 🤖 출동 부서: AI 딥러닝 봇 (VRAM 투입)
         run_indexer_job.delay()
+
+
+@app.task(name="tasks.feedback_cache_builder")
+def run_feedback_builder_job():
+    try:
+        import urllib.request
+        print("🚀 [Celery] 새벽 3시 피드백 캐시 갱신 시작...")
+        urllib.request.urlopen("http://gumaphoto_app:8000/api/feedback_v2/rebuild_cache_now", data=b"", timeout=10)
+    except Exception as e:
+        pass
