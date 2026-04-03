@@ -297,78 +297,90 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
     elif vec_data:
         face_vec = vec_data
         
-    if len(candidates) >= 1:
-        print(f"  [*] '{known_name}' 관련 폴더가 {len(candidates)}개 발견되었습니다. 가장 유사한 얼굴 중심점(Centroid)을 찾습니다...")
-        if face_vec:
-            import numpy as np
-            face_vec_np = np.array(face_vec)
-            face_vec_np = face_vec_np / np.linalg.norm(face_vec_np)
-            
-            best_sim = -1.0
-            for cand in candidates:
-                sim = float(np.dot(face_vec_np, known_faces_data[cand]))
-                print(f"    - 후보 [{cand}] 유사도: {sim:.4f}")
-                if sim > best_sim:
-                    best_sim = sim
-                    best_folder_name = cand
-            print(f"  [+] 최고 유사도 후보 방: {best_folder_name} (유사도 {best_sim:.4f})")
-            
-            # [Multi-Centroid Logic] 다중 중심점 동적 생성 (유사도 0.35 미만이면 새 폴더 개척)
-            if best_sim > 0.0 and best_sim < 0.35:
-                new_cand_idx = len(candidates)
-                best_folder_name = f"{known_name}_{new_cand_idx}"
-                print(f"  [🧬 다중 중심점 분열] 얼굴이 기존 기억(유사도 {best_sim:.4f})과 너무 다릅니다! 동일인물의 완전히 새로운 앵커를 위해 '{best_folder_name}' 폴더를 파생 개척합니다.")
-                
-    # [Zero-Latency Realtime Vector Injection] 새벽 3시 딥러닝 우회 즉시 캐싱
-    if face_vec and len(face_vec) >= 128:
-        import pickle
-        if best_folder_name not in raw_faces:
-            raw_faces[best_folder_name] = []
-        raw_faces[best_folder_name].append(face_vec)
-        try:
-            with open(pkl_path, "wb") as f:
-                pickle.dump(raw_faces, f)
-            print(f"  [⚡ Zero-Latency 학습 완료] '{best_folder_name}' 중심점 네트워크에 방금 피드백된 얼굴 벡터를 즉시 병합했습니다!")
-        except Exception as e:
-            print(f"  [-] 실시간 벡터 주입 실패 (다음 새벽에 일괄 처리됩니다): {e}")
-    
-    enrolled_dir = os.path.join("/app/data/enrolled", best_folder_name)
-    os.makedirs(enrolled_dir, exist_ok=True)
-    
-    import cv2
-    import glob
-    
-    # 1. 오직 유저에게 보여준 메인 사진 1개만 크롭하여 enrolled에 포함
-    main_target = next((item for item in target_filepaths if item["point_id"] == qdrant_id), target_filepaths[0])
-    main_filepath = main_target['filepath']
-    face_bbox = main_target['face_bbox']
-    
-    # 롤백 방어: 기존에 다른 위치에 저장된 조각 삭제
-    old_ghosts = glob.glob(f"/app/data/enrolled/*/{qdrant_id}.jpg")
-    for ghost in old_ghosts:
-        try: os.remove(ghost)
-        except: pass
+    face_bbox = main_target.get('face_bbox')
+    learnable = True
+    if face_bbox and len(face_bbox) == 4:
+        bw = face_bbox[2] - face_bbox[0]
+        bh = face_bbox[3] - face_bbox[1]
+        if bw < 300 or bh < 300:
+            learnable = False
+            print(f"  [🛡️ 딥러닝 보호] BBox 크기({int(bw)}x{int(bh)})가 300px 미만이므로, 품질 보호를 위해 enrolled 등록 및 실시간 벡터 주입을 스킵합니다.")
+    else:
+        learnable = False
         
-    enrolled_dest = os.path.join(enrolled_dir, f"{qdrant_id}.jpg")
-    if not os.path.exists(enrolled_dest):
-        if face_bbox and len(face_bbox) == 4:
+    if learnable:
+        if len(candidates) >= 1:
+            print(f"  [*] '{known_name}' 관련 폴더가 {len(candidates)}개 발견되었습니다. 가장 유사한 얼굴 중심점(Centroid)을 찾습니다...")
+            if face_vec:
+                import numpy as np
+                face_vec_np = np.array(face_vec)
+                face_vec_np = face_vec_np / np.linalg.norm(face_vec_np)
+                
+                best_sim = -1.0
+                for cand in candidates:
+                    sim = float(np.dot(face_vec_np, known_faces_data[cand]))
+                    print(f"    - 후보 [{cand}] 유사도: {sim:.4f}")
+                    if sim > best_sim:
+                        best_sim = sim
+                        best_folder_name = cand
+                print(f"  [+] 최고 유사도 후보 방: {best_folder_name} (유사도 {best_sim:.4f})")
+                
+                # [Multi-Centroid Logic] 다중 중심점 동적 생성 (유사도 0.35 미만이면 새 폴더 개척)
+                if best_sim > 0.0 and best_sim < 0.35:
+                    new_cand_idx = len(candidates)
+                    best_folder_name = f"{known_name}_{new_cand_idx}"
+                    print(f"  [🧬 다중 중심점 분열] 얼굴이 기존 기억(유사도 {best_sim:.4f})과 너무 다릅니다! 동일인물의 완전히 새로운 앵커를 위해 '{best_folder_name}' 폴더를 파생 개척합니다.")
+                    
+        # [Zero-Latency Realtime Vector Injection] 새벽 3시 딥러닝 우회 즉시 캐싱
+        if face_vec and len(face_vec) >= 128:
+            import pickle
+            if best_folder_name not in raw_faces:
+                raw_faces[best_folder_name] = []
+            raw_faces[best_folder_name].append(face_vec)
             try:
-                img = cv2.imread(main_filepath)
-                if img is not None:
-                    x1, y1, x2, y2 = map(int, face_bbox)
-                    h, w = img.shape[:2]
-                    margin_x = int((x2 - x1) * 0.1)
-                    margin_y = int((y2 - y1) * 0.1)
-                    nx1, ny1 = max(0, x1 - margin_x), max(0, y1 - margin_y)
-                    nx2, ny2 = min(w, x2 + margin_x), min(h, y2 + margin_y)
-                    face_chip = img[ny1:ny2, nx1:nx2]
-                    cv2.imwrite(enrolled_dest, face_chip)
-                    print(f"  [+] 정밀 크롭(Crop) 데이터셋 축적 완료 (학습은 새벽 배치로 지연): {enrolled_dest}")
+                with open(pkl_path, "wb") as f:
+                    pickle.dump(raw_faces, f)
+                print(f"  [⚡ Zero-Latency 학습 완료] '{best_folder_name}' 중심점 네트워크에 방금 피드백된 얼굴 벡터를 즉시 병합했습니다!")
             except Exception as e:
-                print(f"  [!] 얼굴 크롭 실패: {e}")
+                print(f"  [-] 실시간 벡터 주입 실패 (다음 새벽에 일괄 처리됩니다): {e}")
+        
+        enrolled_dir = os.path.join("/app/data/enrolled", best_folder_name)
+        os.makedirs(enrolled_dir, exist_ok=True)
+        
+        import cv2
+        import glob
+        
+        # 1. 오직 유저에게 보여준 메인 사진 1개만 크롭하여 enrolled에 포함
+        main_target = next((item for item in target_filepaths if item["point_id"] == qdrant_id), target_filepaths[0])
+        main_filepath = main_target['filepath']
+        face_bbox = main_target['face_bbox']
+        
+        # 롤백 방어: 기존에 다른 위치에 저장된 조각 삭제
+        old_ghosts = glob.glob(f"/app/data/enrolled/*/{qdrant_id}.jpg")
+        for ghost in old_ghosts:
+            try: os.remove(ghost)
+            except: pass
+            
+        enrolled_dest = os.path.join(enrolled_dir, f"{qdrant_id}.jpg")
+        if not os.path.exists(enrolled_dest):
+            if face_bbox and len(face_bbox) == 4:
+                try:
+                    img = cv2.imread(main_filepath)
+                    if img is not None:
+                        x1, y1, x2, y2 = map(int, face_bbox)
+                        h, w = img.shape[:2]
+                        margin_x = int((x2 - x1) * 0.1)
+                        margin_y = int((y2 - y1) * 0.1)
+                        nx1, ny1 = max(0, x1 - margin_x), max(0, y1 - margin_y)
+                        nx2, ny2 = min(w, x2 + margin_x), min(h, y2 + margin_y)
+                        face_chip = img[ny1:ny2, nx1:nx2]
+                        cv2.imwrite(enrolled_dest, face_chip)
+                        print(f"  [+] 정밀 크롭(Crop) 데이터셋 축적 완료 (학습은 새벽 배치로 지연): {enrolled_dest}")
+                except Exception as e:
+                    print(f"  [!] 얼굴 크롭 실패: {e}")
+                    shutil.copy2(main_filepath, enrolled_dest)
+            else:
                 shutil.copy2(main_filepath, enrolled_dest)
-        else:
-            shutil.copy2(main_filepath, enrolled_dest)
 
     # 2. 빠른 DB 즉시 덮어쓰기 (새벽 딥러닝 전까지 프론트엔드용으로 임시 유지)
     print("  [*] 인물 등록 딥러닝 우회 (새벽 지연). DB에 즉시 강제 덮어쓰기 중...")
