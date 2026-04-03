@@ -122,8 +122,8 @@ def get_advanced_system_stats(force_refresh: bool = False):
         if os.path.exists(kf_path):
             try:
                 with open(kf_path, "rb") as f:
-                    kf_dict = pickle.load(f)
-                    known_faces_names = set(kf_dict.keys())
+                    import re
+                    known_faces_names = set(re.sub(r"_\d+$", "", str(k)) for k in kf_dict.keys())
             except: pass
             
         def format_counter(counter_obj):
