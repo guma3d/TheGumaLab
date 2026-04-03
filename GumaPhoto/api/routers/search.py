@@ -247,8 +247,14 @@ If NO location is implied in the query, output ONLY the exact word: EMPTY"""
                     "season": payload.get("season", "Unknown"),
                     "doc_id": hit.id
                 })
-            print(f"✅ 일반 스크롤 로딩 완료: {len(formatted_results)}건 반환 (쿼리 없음)")
-            return {"results": formatted_results}
+            if len(formatted_results) > 0 or not req.search.strip():
+                print(f"✅ 일반 스크롤 로딩 완료: {len(formatted_results)}건 반환 (쿼리 없음)")
+                return {"results": formatted_results}
+            else:
+                print(f"[*] 하드 필터 검색 결과 없음(0건). 제약을 모두 풀고 원본 검색어로 순수 AI 검색으로 롤백합니다.")
+                search_text = req.search.strip()
+                q_filter = None
+                must_conds = []
         except Exception as e:
             print(f"❌ 스크롤 데이터 로딩 에러: {e}")
             return {"results": [], "error": str(e)}
@@ -320,6 +326,41 @@ If NO location is implied in the query, output ONLY the exact word: EMPTY"""
                 with_payload=True
             )
             raw_results = res_scroll[req.offset:]
+            
+        # 3. 모든 필터 조건 검색이 실패한 경우 최후의 보루 (순수 벡터 검색으로 롤백)
+        if not raw_results and req.offset == 0 and must_conds:
+            print("[*] ⚠️ 1/2차 필터 매칭 결과 완전 0건. 페이로드 필터를 강제 해제하고 순수 벡터 매칭만으로 컨텍스트 검색을 개시합니다.")
+            
+            # 원래 사용자가 적은 원본 문장 전체를 가져와서 완전 순수 벡터로 재가공
+            pure_query = req.search.strip()
+            if state.gemini_client and re.search(r'[가-힣]', pure_query):
+                try:
+                    p = f"Translate the core meaning of this Korean photo search query to brief English keywords: {pure_query}"
+                    t_resp = state.gemini_client.models.generate_content(model='gemini-3.1-flash-lite-preview', contents=p)
+                    pure_query = t_resp.text.strip().replace('\n', '')
+                except:
+                    pass
+            
+            try:
+                with torch.no_grad():
+                    inputs = state.siglip_processor(text=[pure_query], padding="max_length", return_tensors="pt")
+                    inputs = {k: v.to(state.siglip_model.device) for k, v in inputs.items()}
+                    t_feat = state.siglip_model.get_text_features(**inputs)
+                    t_feat = t_feat / t_feat.norm(p=2, dim=-1, keepdim=True)
+                    pure_vector = t_feat[0].cpu().numpy().tolist()
+                    
+                unres = state.qdrant_client.query_points(
+                    collection_name="gumaphoto_hybrid_kr",
+                    query=pure_vector,
+                    using="scene",
+                    query_filter=None,  # 필터 전면 개방
+                    limit=req.offset + req.limit,
+                    offset=0,
+                    with_payload=True
+                ).points
+                raw_results = unres[req.offset:]
+            except Exception as e:
+                print(f"[-] 3차 순수 벡터 롤백 실패: {e}")
 
         formatted_results = []
         for hit in raw_results:
