@@ -10,6 +10,9 @@ from qdrant_client.http.models import Filter, FieldCondition, MatchText, MatchAn
 
 router = APIRouter()
 
+# 전역 메모리 캐시: 디스크 I/O 병목 방지를 위한 이미지 해상도/용량 인메모리 저장소
+_IMAGE_META_CACHE = {}
+
 class SearchRequest(BaseModel):
     query: str = ""
     offset: int = 0
@@ -315,25 +318,29 @@ Output ONLY valid JSON without markup.
 
         # --------------------------------------------------------------------------
         # [신규 아키텍처] Qdrant 단일화로 인해 SQLite를 거치지 않고, 
-        # 디스크의 원본 이미지(PIL) 헤더를 직접 읽어 해상도(width/height)를 주입합니다.
+        # 디스크의 원본 이미지(PIL) 헤더를 직접 읽되, In-Memory Cache를 적용하여
+        # 파일별로 1회만 디스크를 읽고, 이후에는 0ms 단위의 초고속 반환을 달성합니다.
         # --------------------------------------------------------------------------
         for res in formatted_results:
-            try:
-                from PIL import Image
-                with Image.open(res["original_path"]) as img:
-                    w, h = img.size
-            except Exception:
-                w, h = 800, 800
+            orig_path = res.get("original_path", "")
+            if orig_path in _IMAGE_META_CACHE:
+                w, h, sz = _IMAGE_META_CACHE[orig_path]
+            else:
+                try:
+                    from PIL import Image
+                    import os
+                    with Image.open(orig_path) as img:
+                        w, h = img.size
+                    sz = os.path.getsize(orig_path)
+                    _IMAGE_META_CACHE[orig_path] = (w, h, sz)
+                except Exception:
+                    w, h, sz = 800, 800, 0
             
             res["width"] = w
             res["height"] = h
-            # 원본 파일 크기 주입 (SQLite bytes 테이블 대체)
-            try:
-                res["file_size_bytes"] = os.path.getsize(res["original_path"])
-            except Exception:
-                res["file_size_bytes"] = 0
+            res["file_size_bytes"] = sz
                 
-        print(f"✅ 원본 파일 헤더 직접 파싱 성공! (총 결과 {len(formatted_results)}건 반환)")
+        print(f"✅ 이미지 메타 캐싱 로딩 완료! (총 결과 {len(formatted_results)}건 반환)")
         return {"results": formatted_results}
 
     except Exception as e:
