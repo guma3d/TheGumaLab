@@ -22,6 +22,12 @@ if os.path.exists(base_enrolled_dir):
             img = cv2.imread(img_path)
             if img is None: continue
             faces = face_app.get(img)
+            
+            # [안전 장치] 만약 너무 타이트하게 잘려 여백이 없어 인식을 실패했다면, 가상의 검은 여백을 주고 재탐색
+            if not faces and img.shape[0] < 300:
+                padded_img = cv2.copyMakeBorder(img, 100, 100, 100, 100, cv2.BORDER_CONSTANT, value=[0, 0, 0])
+                faces = face_app.get(padded_img)
+                
             if not faces: continue
             
             # 가장 큰 타겟(주인공 얼굴) 추출
