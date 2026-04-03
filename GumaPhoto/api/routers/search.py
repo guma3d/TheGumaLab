@@ -78,8 +78,24 @@ async def perform_search(req: SearchRequest):
     extracted_years = []
     extracted_names = []
     extracted_locations = []
-    
     if search_text and state.gemini_client:
+        # [신규 추가] '성욱' 또는 '성욱 송이' 등 등록된 이름으로만 이루어진 검색어일 경우, AI 추론을 건너뛰고 캐시를 즉시 수동 합성
+        try:
+            import os, pickle
+            if search_text not in _NLP_CACHE and os.path.exists('/app/data/known_faces.pkl'):
+                with open('/app/data/known_faces.pkl', 'rb') as f:
+                    known_names = list(pickle.load(f).keys())
+                words = search_text.split()
+                if words and all(w in known_names for w in words):
+                    _NLP_CACHE[search_text] = {
+                        "years": [],
+                        "people": words,
+                        "locations": [],
+                        "visual": "EMPTY"
+                    }
+        except Exception:
+            pass
+
         if search_text in _NLP_CACHE:
             parsed = _NLP_CACHE[search_text]
             extracted_years = parsed.get("years", [])
