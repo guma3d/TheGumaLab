@@ -1770,7 +1770,7 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
     // Check for unregistered names
     if (selectedFeedbackTarget && (selectedFeedbackTarget.issue.includes('Person') || selectedFeedbackTarget.issue.includes('People'))) {
         let isKnown = false;
-        if (typeof advancedStatsData !== 'undefined' && advancedStatsData.people) {
+        if (typeof advancedStatsData !== 'undefined' && advancedStatsData !== null && advancedStatsData.people) {
             isKnown = advancedStatsData.people.some(p => p.name === correctValue);
         }
         if (!isKnown) {
@@ -2186,7 +2186,7 @@ document.getElementById('fb-no-learning-btn')?.addEventListener('click', async (
     // Check for unregistered names
     if (selectedFeedbackTarget && (selectedFeedbackTarget.issue.includes('Person') || selectedFeedbackTarget.issue.includes('People'))) {
         let isKnown = false;
-        if (typeof advancedStatsData !== 'undefined' && advancedStatsData.people) {
+        if (typeof advancedStatsData !== 'undefined' && advancedStatsData !== null && advancedStatsData.people) {
             isKnown = advancedStatsData.people.some(p => p.name === correctValue);
         }
         if (!isKnown) {
