@@ -79,7 +79,7 @@ async def perform_search(req: SearchRequest):
     
     if search_text and state.gemini_client:
         try:
-            import datetime, re, json, pickle
+            import datetime, re, json, pickle, os
             current_year = datetime.datetime.now().year
             
             known_names_str = ""
