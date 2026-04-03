@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gumaphoto-v8-cache-breaker';
+const CACHE_NAME = 'gumaphoto-v9-cache-breaker';
 
 self.addEventListener('install', (event) => {
     // Force the waiting service worker to become the active service worker
