@@ -74,66 +74,90 @@ async def perform_search(req: SearchRequest):
         except Exception as e:
             print(f"[-] File Cache Load Error: {e}")
     
-    # 0. One-Shot Smart NLP Extraction (Gemini)
+    # 0. One-Shot Smart NLP Extraction (Hybrid Local Stripping + Gemini)
     extracted_years = []
     extracted_names = []
     extracted_locations = []
     if search_text and state.gemini_client:
-        # [신규 추가] '성욱' 또는 '성욱 송이' 등 등록된 이름으로만 이루어진 검색어일 경우, AI 추론을 건너뛰고 캐시를 즉시 수동 합성
-        try:
-            import os, pickle
-            if search_text not in _NLP_CACHE and os.path.exists('/app/data/known_faces.pkl'):
-                with open('/app/data/known_faces.pkl', 'rb') as f:
-                    known_names = list(pickle.load(f).keys())
-                words = search_text.split()
-                if words and all(w in known_names for w in words):
-                    _NLP_CACHE[search_text] = {
-                        "years": [],
-                        "people": words,
-                        "locations": [],
-                        "visual": "EMPTY"
-                    }
-        except Exception:
-            pass
-
-        if search_text in _NLP_CACHE:
-            parsed = _NLP_CACHE[search_text]
-            extracted_years = parsed.get("years", [])
-            extracted_names = parsed.get("people", [])
-            extracted_locations = parsed.get("locations", [])
-            visual_remainder = parsed.get("visual", "EMPTY")
-            
-            if visual_remainder.upper() != "EMPTY":
-                search_text = visual_remainder.strip()
-            else:
-                search_text = ""
-                
-            print(f"[*] ⚡ NLP Cache Hit: Years={extracted_years}, People={extracted_names}, Locs={extracted_locations}, Visual='{search_text}'")
-        else:
+        import os, pickle, re, json, datetime
+        
+        known_names_list = []
+        if os.path.exists('/app/data/known_faces.pkl'):
             try:
-                import datetime, re, json, pickle, os
-                current_year = datetime.datetime.now().year
+                with open('/app/data/known_faces.pkl', 'rb') as f:
+                    known_names_list = list(pickle.load(f).keys())
+            except Exception:
+                pass
                 
-                known_names_str = ""
-                known_names_list = []
-                if os.path.exists('/app/data/known_faces.pkl'):
-                    with open('/app/data/known_faces.pkl', 'rb') as f:
-                        known_names_list = list(pickle.load(f).keys())
-                        known_names_str = ", ".join(known_names_list)
+        # --- 1차: Local 파싱 (인물, 연도 분리) ---
+        local_years = []
+        local_people = []
+        remaining_words = []
+        
+        for word in search_text.split():
+            # 1. 연도 추출 (정규식 기반)
+            y_match = re.search(r'^(20\d{2})년?$', word)
+            if y_match:
+                local_years.append(int(y_match.group(1)))
+                continue
                 
-                known_locs_str = ""
-                if os.path.exists("/app/data/available_tags.json"):
-                    with open("/app/data/available_tags.json", "r", encoding="utf-8") as fm:
-                        tag_data = json.load(fm)
-                        locs = tag_data.get("locations", [])
-                        known_locs_str = ", ".join(locs)
+            # 2. 인물 추출 (이름으로 시작하는 단어 - 예: '준우가', '송이랑')
+            matched = False
+            for kn in known_names_list:
+                if word.startswith(kn):
+                    local_people.append(kn)
+                    matched = True
+                    break
+            if matched:
+                continue
                 
-                prompt = f"""You are a Photo Search Query Parser.
+            remaining_words.append(word)
+            
+        # 사람과 연도가 싹 떨어져 나간 순수 나머지 문장 (이것을 캐시 키로 씁니다!)
+        visual_query_key = " ".join(remaining_words).strip()
+        
+        if not visual_query_key:
+            # 남은 검색어가 없으면 (예: "준우 2023년") 즉시 반환! API를 호출할 필요가 없음.
+            extracted_years = local_years
+            extracted_names = local_people
+            search_text = ""
+            print(f"[*] ⚡ NLP 0-ms Direct Hit: Years={extracted_years}, People={extracted_names}, Visual='EMPTY'")
+        else:
+            # 캐시 확인
+            if visual_query_key in _NLP_CACHE:
+                parsed = _NLP_CACHE[visual_query_key]
+                
+                # 병합: 로컬에서 찾은 것 + 캐시에서 꺼낸 것
+                extracted_years = list(set(local_years + parsed.get("years", [])))
+                extracted_names = list(set(local_people + parsed.get("people", [])))
+                extracted_locations = parsed.get("locations", [])
+                visual_remainder = parsed.get("visual", "EMPTY")
+                
+                if visual_remainder.upper() != "EMPTY":
+                    search_text = visual_remainder.strip()
+                else:
+                    search_text = ""
+                    
+                print(f"[*] ⚡ NLP Component Cache Hit: '{visual_query_key}' -> Years={extracted_years}, People={extracted_names}, Locs={extracted_locations}, Visual='{search_text}'")
+            else:
+                try:
+                    current_year = datetime.datetime.now().year
+                    known_names_str = ", ".join(known_names_list)
+                    
+                    known_locs_str = ""
+                    if os.path.exists("/app/data/available_tags.json"):
+                        with open("/app/data/available_tags.json", "r", encoding="utf-8") as fm:
+                            tag_data = json.load(fm)
+                            locs = tag_data.get("locations", [])
+                            known_locs_str = ", ".join(locs)
+                    
+                    # Gemini에게 남은 문장(visual_query_key)에 대해서만 분석 지시!
+                    prompt = f"""You are a Photo Search Query Parser.
 Current Year: {current_year}
 Known People in DB: [{known_names_str}]
 Known Locations in DB: [{known_locs_str}]
 
-User Query: "{search_text}"
+User Query: "{visual_query_key}"
 
 Parse the query into EXACTLY this JSON structure:
 {{
@@ -146,47 +170,46 @@ Parse the query into EXACTLY this JSON structure:
       "radius": 300000,    // IMPORTANT: Estimate radius in METERS. Country: 1000000, State/Province (Hawaii, Jeju): 300000, City: 50000. DO NOT just copy this number.
       "matched_word": "하와이", // The strict substring from the user query
       "official_name": "Hawaii", // Official administrative name
-      "db_exact_locations": ["미국 하와이군", "미국 호놀룰루"] // MANDATORY: Select all heavily overlapping locations strictly from 'Known Locations in DB'. (e.g., if user searches "하와이", grab "미국 하와이군" and any related from the known list).
+      "db_exact_locations": ["미국 하와이군", "미국 호놀룰루"] // MANDATORY: Select all heavily overlapping locations strictly from 'Known Locations in DB'.
     }}
   ], // If none, []
   "visual": "EMPTY" // Translate all remaining visual/abstract concepts to a concise English phrase. DO NOT include the extracted years, people, or locations. e.g. "수영하는" -> "swimming". If no visual meaning remains, output "EMPTY".
 }}
 Output ONLY valid JSON without markup.
 """
-                t_resp = state.gemini_client.models.generate_content(model='gemini-3.1-flash-lite-preview', contents=prompt)
-                resp_text = t_resp.text.strip()
-                if resp_text.startswith("```json"): resp_text = resp_text[7:-3].strip()
-                elif resp_text.startswith("```"): resp_text = resp_text[3:-3].strip()
-                
-                parsed = json.loads(resp_text)
-                
-                # AI가 알려지지 않은 인물(예: '준우_1')을 환각으로 뱉는 것을 방지
-                raw_extracted_names = parsed.get("people", [])
-                clean_names = []
-                for name in raw_extracted_names:
-                    # _1, _2 등이 붙은 변형이름이면 원본 이름으로 정제
-                    base_name = name.split('_')[0] if '_' in name else name
-                    if base_name in known_names_list and base_name not in clean_names:
-                        clean_names.append(base_name)
-                
-                parsed["people"] = clean_names # 환각 제거된 배열로 교체
-                
-                # 다음 번 동일 검색어나 스크롤(load_more) 시 속도 향상을 위해 안정화된 데이터를 캐시에 저장
-                _NLP_CACHE[req.query.strip()] = parsed
-                
-                extracted_years = parsed.get("years", [])
-                extracted_names = parsed.get("people", [])
-                extracted_locations = parsed.get("locations", [])
-                visual_remainder = parsed.get("visual", "EMPTY")
-                
-                if visual_remainder.upper() != "EMPTY":
-                    search_text = visual_remainder.strip()
-                else:
-                    search_text = ""
+                    t_resp = state.gemini_client.models.generate_content(model='gemini-3.1-flash-lite-preview', contents=prompt)
+                    resp_text = t_resp.text.strip()
+                    if resp_text.startswith("```json"): resp_text = resp_text[7:-3].strip()
+                    elif resp_text.startswith("```"): resp_text = resp_text[3:-3].strip()
                     
-                print(f"[*] 🧠 Smart NLP Extraction: Years={extracted_years}, People={extracted_names}, Locs={extracted_locations}, Visual='{search_text}'")
-            except Exception as ge:
-                print(f"[-] Smart NLP matching error: {ge}")
+                    parsed = json.loads(resp_text)
+                    
+                    # 혹시 모를 AI 환각 방지 레이어
+                    raw_extracted_names = parsed.get("people", [])
+                    clean_names = []
+                    for name in raw_extracted_names:
+                        base_name = name.split('_')[0] if '_' in name else name
+                        if base_name in known_names_list and base_name not in clean_names:
+                            clean_names.append(base_name)
+                    parsed["people"] = clean_names 
+                    
+                    # '나머지 문장' 자체를 캐시 (다른 인물이 같은 행동을 검색할 때 100% 재활용)
+                    _NLP_CACHE[visual_query_key] = parsed
+                    
+                    # 최종 병합
+                    extracted_years = list(set(local_years + parsed.get("years", [])))
+                    extracted_names = list(set(local_people + parsed.get("people", [])))
+                    extracted_locations = parsed.get("locations", [])
+                    visual_remainder = parsed.get("visual", "EMPTY")
+                    
+                    if visual_remainder.upper() != "EMPTY":
+                        search_text = visual_remainder.strip()
+                    else:
+                        search_text = ""
+                        
+                    print(f"[*] 🧠 Smart NLP Extraction (Partial): '{visual_query_key}' -> Years={extracted_years}, People={extracted_names}, Locs={extracted_locations}, Visual='{search_text}'")
+                except Exception as ge:
+                    print(f"[-] Smart NLP matching error: {ge}")
 
     # UI 선택 이름 병합
     final_people = list(set(req.people + extracted_names))
