@@ -15,21 +15,29 @@ class FeedbackCacheManager:
         start_t = time.time()
         
         try:
-            unknowns, _ = state.qdrant_client.scroll(
-                collection_name="gumaphoto_hybrid_kr",
-                scroll_filter=Filter(
-                    should=[
-                        FieldCondition(key="date", match=MatchText(text="Unknown")),
-                        FieldCondition(key="location", match=MatchText(text="Unknown")),
-                        FieldCondition(key="location", match=MatchText(text="위치정보없음")),
-                        FieldCondition(key="people", match=MatchValue(value="Unknown Person")),
-                        FieldCondition(key="people", match=MatchValue(value="Unknown People"))
-                    ]
-                ),
-                limit=3000,
-                with_payload=True,
-                with_vectors=False
+            unknowns = []
+            next_page_offset = None
+            scroll_filter = Filter(
+                should=[
+                    FieldCondition(key="date", match=MatchText(text="Unknown")),
+                    FieldCondition(key="location", match=MatchText(text="Unknown")),
+                    FieldCondition(key="location", match=MatchText(text="위치정보없음")),
+                    FieldCondition(key="people", match=MatchValue(value="Unknown Person")),
+                    FieldCondition(key="people", match=MatchValue(value="Unknown People"))
+                ]
             )
+            while True:
+                batch, next_page_offset = state.qdrant_client.scroll(
+                    collection_name="gumaphoto_hybrid_kr",
+                    scroll_filter=scroll_filter,
+                    limit=5000,
+                    offset=next_page_offset,
+                    with_payload=True,
+                    with_vectors=False
+                )
+                unknowns.extend(batch)
+                if next_page_offset is None or len(unknowns) >= 30000:
+                    break
             
             random.shuffle(unknowns)
             
@@ -48,7 +56,7 @@ class FeedbackCacheManager:
                 if issues:
                     candidates.append({"raw": raw, "issue": random.choice(issues)})
                     
-            candidates = candidates[:300]
+            candidates = candidates[:500]
             if not candidates:
                 print("✅ [FeedbackCache] No unknowns found.")
                 return
@@ -66,7 +74,7 @@ class FeedbackCacheManager:
                         collection_name="gumaphoto_hybrid_kr",
                         query=tid,
                         using=fb_type,
-                        limit=100,
+                        limit=300,
                         with_payload=True
                     ).points
                     
