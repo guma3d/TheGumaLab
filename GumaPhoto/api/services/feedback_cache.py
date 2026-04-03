@@ -83,7 +83,7 @@ class FeedbackCacheManager:
                         collection_name="gumaphoto_hybrid_kr",
                         query=tid,
                         using=fb_type,
-                        limit=300,
+                        limit=10000,
                         with_payload=True
                     ).points
                     

@@ -90,7 +90,7 @@ async def temptest_feedback(req: FeedbackV2Request):
             collection_name="gumaphoto_hybrid_kr",
             query=real_point_id,
             using=fb_type,
-            limit=300,  # 더 많은 유사 사진 목록을 확보하기 위해 리소스 한도 증가 (기존 100 -> 300)
+            limit=10000,  # 더 많은 유사 사진 목록을 확보하기 위해 리소스 한도 증가 (기존 100 -> 300)
             with_payload=True
         ).points
         
