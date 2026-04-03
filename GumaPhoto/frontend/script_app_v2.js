@@ -1741,7 +1741,7 @@ async function submitSharedFeedback(pointId, issueType, correctValue, targetPoin
         switchView('home');
 
         setTimeout(() => {
-            alert(`총 ${targetPointsArray.length || 1}장의 사진이 수정되었습니다. 화면을 새로고침합니다.`);
+            alert(`총 ${targetPointsArray.length || 1}장의 사진이 수정되었습니다.\n화면을 새로고침합니다.`);
             window.location.reload();
         }, 100);
 
@@ -1978,7 +1978,7 @@ const sendPersonFeedback = async (apiUrlEndpoint, btnId) => {
             document.getElementById('fb-temptest-results').style.display = 'none';
             switchView('home');
             setTimeout(() => {
-                alert(`총 ${targetPointsArray.length || 1}장의 사진이 수정되었습니다. 화면을 새로고침합니다.`);
+                alert(`총 ${targetPointsArray.length || 1}장의 사진이 수정되었습니다.\n화면을 새로고침합니다.`);
                 window.location.reload();
             }, 100);
         } else {
