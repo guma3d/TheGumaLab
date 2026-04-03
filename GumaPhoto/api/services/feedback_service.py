@@ -269,6 +269,7 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
     # --- 스마트 라우팅 로직 (Cosine Similarity 기반) ---
     known_faces_data = {}
     pkl_path = "/app/data/known_faces.pkl"
+    raw_faces = {}
     if os.path.exists(pkl_path):
         import pickle
         import numpy as np
@@ -287,17 +288,17 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
     candidates = [n for n in known_faces_data.keys() if n == known_name or n.startswith(f"{known_name}_")]
     best_folder_name = known_name
     
+    main_target = next((item for item in target_filepaths if item["point_id"] == qdrant_id), target_filepaths[0])
+    vec_data = main_target.get("vector")
+    
+    face_vec = None
+    if isinstance(vec_data, dict):
+        face_vec = vec_data.get("face") or vec_data.get("scene")
+    elif vec_data:
+        face_vec = vec_data
+        
     if len(candidates) >= 1:
         print(f"  [*] '{known_name}' 관련 폴더가 {len(candidates)}개 발견되었습니다. 가장 유사한 얼굴 중심점(Centroid)을 찾습니다...")
-        main_target = next((item for item in target_filepaths if item["point_id"] == qdrant_id), target_filepaths[0])
-        vec_data = main_target.get("vector")
-        
-        face_vec = None
-        if isinstance(vec_data, dict):
-            face_vec = vec_data.get("face") or vec_data.get("scene")
-        elif vec_data:
-            face_vec = vec_data
-            
         if face_vec:
             import numpy as np
             face_vec_np = np.array(face_vec)
@@ -317,6 +318,19 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
                 new_cand_idx = len(candidates)
                 best_folder_name = f"{known_name}_{new_cand_idx}"
                 print(f"  [🧬 다중 중심점 분열] 얼굴이 기존 기억(유사도 {best_sim:.4f})과 너무 다릅니다! 동일인물의 완전히 새로운 앵커를 위해 '{best_folder_name}' 폴더를 파생 개척합니다.")
+                
+    # [Zero-Latency Realtime Vector Injection] 새벽 3시 딥러닝 우회 즉시 캐싱
+    if face_vec and len(face_vec) >= 128:
+        import pickle
+        if best_folder_name not in raw_faces:
+            raw_faces[best_folder_name] = []
+        raw_faces[best_folder_name].append(face_vec)
+        try:
+            with open(pkl_path, "wb") as f:
+                pickle.dump(raw_faces, f)
+            print(f"  [⚡ Zero-Latency 학습 완료] '{best_folder_name}' 중심점 네트워크에 방금 피드백된 얼굴 벡터를 즉시 병합했습니다!")
+        except Exception as e:
+            print(f"  [-] 실시간 벡터 주입 실패 (다음 새벽에 일괄 처리됩니다): {e}")
     
     enrolled_dir = os.path.join("/app/data/enrolled", best_folder_name)
     os.makedirs(enrolled_dir, exist_ok=True)
