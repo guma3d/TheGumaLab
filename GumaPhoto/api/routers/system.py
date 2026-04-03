@@ -123,6 +123,8 @@ def get_advanced_system_stats(force_refresh: bool = False):
             try:
                 with open(kf_path, "rb") as f:
                     import re
+                    import pickle
+                    kf_dict = pickle.load(f)
                     known_faces_names = set(re.sub(r"_\d+$", "", str(k)) for k in kf_dict.keys())
             except: pass
             
