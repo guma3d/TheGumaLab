@@ -34,7 +34,7 @@ class FeedbackCacheManager:
                     scroll_filter=scroll_filter,
                     limit=5000,
                     offset=next_page_offset,
-                    with_payload=["location", "date", "people"],
+                    with_payload=["location", "date", "people", "filepath"],
                     with_vectors=False
                 )
                 unknowns.extend(batch)
@@ -83,7 +83,7 @@ class FeedbackCacheManager:
                         query=tid,
                         using=fb_type,
                         limit=10000,
-                        with_payload=["location", "date", "people"]
+                        with_payload=["location", "date", "people", "filepath"]
                     ).points
                     
                     unresolved_ids = set()
