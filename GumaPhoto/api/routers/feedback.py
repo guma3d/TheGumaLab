@@ -155,126 +155,31 @@ async def temptest_feedback(req: FeedbackV2Request):
 @router.get("/api/feedback_v2/unknown")
 async def get_unknown_photo():
     if not state.qdrant_client: return {"error": "Qdrant not loaded"}
+    
+    from api.services.feedback_cache import feedback_cache
+    
     try:
-        import random
-        from qdrant_client.http.models import Filter, FieldCondition, MatchText, MatchValue
+        best_candidate = feedback_cache.pop_best()
         
-        # 한 번의 쿼리로 모든 종류의 Unknown(Date, Location, People)을 무작위 추출
-        unknowns, _ = state.qdrant_client.scroll(
-            collection_name="gumaphoto_hybrid_kr",
-            scroll_filter=Filter(
-                should=[
-                    FieldCondition(key="date", match=MatchText(text="Unknown")),
-                    FieldCondition(key="location", match=MatchText(text="Unknown")),
-                    FieldCondition(key="location", match=MatchText(text="위치정보없음")),
-                    FieldCondition(key="people", match=MatchValue(value="Unknown Person")),
-                    FieldCondition(key="people", match=MatchValue(value="Unknown People"))
-                ]
-            ),
-            limit=3000,  # 3000개 캐싱하여 더 방대한 후보군 도출
-            with_payload=True,
-            with_vectors=False
-        )
-        
-        if unknowns:
-            random.shuffle(unknowns)
-            candidates = []
+        if best_candidate:
+            p = best_candidate["raw"].payload or {}
+            url_path = p.get("filepath", "").replace("/app/data/organized", "/photos")
+            return {
+                "id": best_candidate["raw"].id,
+                "url": url_path,
+                "issue": best_candidate["issue"],
+                "date": p.get("date", ""),
+                "location": p.get("location", ""),
+                "people": p.get("people", []),
+                "face_bbox": p.get("face_bbox", None)
+            }
             
-            for raw_target in unknowns:
-                p = raw_target.payload or {}
-                loc = p.get("location", "")
-                date_val = p.get("date", "")
-                people_val = p.get("people", [])
-                
-                issues = []
-                if "Unknown" in date_val or not date_val: 
-                    issues.append("Date")
-                if "위치정보없음" in loc or "Unknown" in loc or not loc: 
-                    issues.append("Location")
-                    
-                has_unknown_person = False
-                for person in people_val:
-                    if person in ["Unknown Person", "Unknown People"]:
-                        has_unknown_person = True
-                        break
-                if has_unknown_person:
-                    issues.append("People")
-                    
-                if issues:
-                    candidates.append({
-                        "raw": raw_target,
-                        "issue": random.choice(issues)
-                    })
-                
-                if len(candidates) >= 100: # 100개 후보 수집하여 최강의 덩어리 탐색
-                    break
-                    
-            if candidates:
-                best_candidate = None
-                best_score = -1
-                
-                for cand in candidates:
-                    target_id = cand["raw"].id
-                    fb_type = "face" if cand["issue"] in ["Person", "People"] else "scene"
-                    cutoff = 0.80 if fb_type == "face" else 0.83
-                    
-                    try:
-                        # Vector Recommend Query로 "아직 이름/장소가 비어있는" 진짜 처리 대기 사진이 몇장이나 뭉쳐있는지 정확히 측정 (최대 100개)
-                        rec_res = state.qdrant_client.query_points(
-                            collection_name="gumaphoto_hybrid_kr",
-                            query=target_id,
-                            using=fb_type,
-                            limit=100,
-                            with_payload=True
-                        ).points
-                        
-                        match_count = 0
-                        for h in rec_res:
-                            if getattr(h, "score", 0.0) < cutoff:
-                                continue
-                            hp = h.payload or {}
-                            
-                            if fb_type != "face":
-                                if "Location" in cand["issue"]:
-                                    loc = hp.get("location", "")
-                                    if "Unknown" not in loc and "위치정보없음" not in loc and loc.strip() != "":
-                                        continue
-                                elif "Date" in cand["issue"]:
-                                    dt = hp.get("date", "")
-                                    if "Unknown" not in dt and not dt.endswith("-Unknown"):
-                                        continue
-                            else:
-                                p_people = hp.get("people", [])
-                                if p_people and "Unknown Person" not in p_people and "Unknown People" not in p_people:
-                                    continue
-                                    
-                            match_count += 1
-                            
-                    except Exception as e:
-                        print(f"Rank Priority Search Error: {e}")
-                        match_count = 0
-                        
-                    if match_count > best_score:
-                        best_score = match_count
-                        best_candidate = cand
-                        
-                if best_candidate:
-                    p = best_candidate["raw"].payload or {}
-                    url_path = p.get("filepath", "").replace("/app/data/organized", "/photos")
-                    return {
-                        "id": best_candidate["raw"].id,
-                        "url": url_path,
-                        "issue": best_candidate["issue"],
-                        "date": p.get("date", ""),
-                        "location": p.get("location", ""),
-                        "people": p.get("people", []),
-                        "face_bbox": p.get("face_bbox", None)
-                    }
-                    
+        # 캐시가 구축 중이거나 비어있을 경우 Fallback
+        return {"id": None, "message": "Cache is building or empty. Please wait a moment."}
+        
     except Exception as e:
-        print(f"❌ 피드백 고속 혼합 탐색 중 예외 발생: {e}")
-
-    return {"id": None, "message": "No photos require feedback at this time."}
+        print(f"❌ Feedback Cache Fetch Error: {e}")
+        return {"id": None, "message": "No photos require feedback at this time."}
 
 from fastapi import BackgroundTasks
 
