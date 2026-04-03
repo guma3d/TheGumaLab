@@ -171,7 +171,7 @@ async def get_unknown_photo():
                     FieldCondition(key="people", match=MatchValue(value="Unknown People"))
                 ]
             ),
-            limit=500,  # 500개를 캐싱하여 넓은 랜덤풀 생성
+            limit=3000,  # 3000개 캐싱하여 더 방대한 후보군 도출
             with_payload=True,
             with_vectors=False
         )
@@ -206,7 +206,7 @@ async def get_unknown_photo():
                         "issue": random.choice(issues)
                     })
                 
-                if len(candidates) >= 30: # 30개 후보 수집
+                if len(candidates) >= 100: # 100개 후보 수집하여 최강의 덩어리 탐색
                     break
                     
             if candidates:
