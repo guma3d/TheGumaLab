@@ -376,12 +376,14 @@ async function fetchPhotos(isLoadMore) {
                 searchOverlay = document.createElement('div');
                 searchOverlay.id = 'search-blocking-overlay';
                 searchOverlay.innerHTML = `
-                <div style="background: rgba(15, 23, 42, 0.85); position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(12px);">
-                    <div style="position:relative; width: 80px; height: 80px; margin-bottom: 25px;">
-                        <i class="fa-solid fa-spinner fa-spin" style="font-size: 3rem; color: #3b82f6; position: absolute; top:50%; left:50%; transform: translate(-50%, -50%);"></i>
-                        <i class="fa-solid fa-wand-magic-sparkles" style="font-size: 1.2rem; color: #60a5fa; position: absolute; top:50%; left:50%; margin-top: -3px; margin-left: 2px; transform: translate(-50%, -50%);"></i>
+                <div style="background: rgba(0, 0, 0, 0.4); position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+                    <div style="background: #1e293b; padding: 25px 35px; border-radius: 20px; box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; border: 1px solid rgba(255,255,255,0.05); max-width: 85%; text-align: center;">
+                        <div style="position:relative; width: 60px; height: 60px; margin-bottom: 15px;">
+                            <i class="fa-solid fa-spinner fa-spin" style="font-size: 2.2rem; color: #3b82f6; position: absolute; top:50%; left:50%; transform: translate(-50%, -50%);"></i>
+                            <i class="fa-solid fa-wand-magic-sparkles" style="font-size: 1rem; color: #60a5fa; position: absolute; top:50%; left:50%; margin-top: -2px; margin-left: 2px; transform: translate(-50%, -50%);"></i>
+                        </div>
+                        <div id="search-log-text" style="color: #f8fafc; font-size: 1.05em; font-weight: 500; min-height: 25px; letter-spacing: 0.3px;">🔍 AI 검색엔진 준비 중...</div>
                     </div>
-                    <div id="search-log-text" style="color: #f8fafc; font-size: 1.15em; font-weight: 500; min-height: 30px; letter-spacing: 0.5px; opacity: 0.9;">🔍 AI 검색엔진 준비 중...</div>
                 </div>`;
                 document.body.appendChild(searchOverlay);
 
