@@ -10,9 +10,6 @@ from qdrant_client.http.models import Filter, FieldCondition, MatchText, MatchAn
 
 router = APIRouter()
 
-# 전역 메모리 캐시: 디스크 I/O 병목 방지를 위한 이미지 해상도/용량 인메모리 저장소
-_IMAGE_META_CACHE = {}
-
 class SearchRequest(BaseModel):
     query: str = ""
     offset: int = 0
@@ -87,17 +84,9 @@ async def perform_search(req: SearchRequest):
                 with open('/app/data/known_faces.pkl', 'rb') as f:
                     known_names_str = ", ".join(list(pickle.load(f).keys()))
             
-            known_locs_str = ""
-            if os.path.exists("/app/data/available_tags.json"):
-                with open("/app/data/available_tags.json", "r", encoding="utf-8") as fm:
-                    tag_data = json.load(fm)
-                    locs = tag_data.get("locations", [])
-                    known_locs_str = ", ".join(locs)
-            
             prompt = f"""You are a Photo Search Query Parser.
 Current Year: {current_year}
 Known People in DB: [{known_names_str}]
-Known Locations in DB: [{known_locs_str}]
 
 User Query: "{search_text}"
 
@@ -107,12 +96,10 @@ Parse the query into EXACTLY this JSON structure:
   "people": [], // list of names exactly matching the Known People list. Fix misspellings if obvious. If none, []
   "locations": [ // If any specific place, landmark, city, or province is mentioned (e.g. "하와이", "전라도", "오사카", "집근처"), convert it into GPS coordinates (WGS84).
     {{
-      "lat": 21.3069,
-      "lon": -157.8583,
-      "radius": 300000,    // IMPORTANT: Estimate radius in METERS. Country: 1000000, State/Province (Hawaii, Jeju): 300000, City: 50000. DO NOT just copy this number.
-      "matched_word": "하와이", // The strict substring from the user query
-      "official_name": "Hawaii", // Official administrative name
-      "db_exact_locations": ["미국 하와이군", "미국 호놀룰루"] // MANDATORY: Select all heavily overlapping locations strictly from 'Known Locations in DB'. (e.g., if user searches "하와이", grab "미국 하와이군" and any related from the known list).
+      "lat": 35.6329,
+      "lon": 139.8804,
+      "radius": 50000,    // City/Province/Country: 50000. Specific landmark/district: 2000.
+      "matched_word": "오사카" // The exact substring of the location from the user's query
     }}
   ], // If none, []
   "visual": "EMPTY" // Translate all remaining visual/abstract concepts to a concise English phrase. DO NOT include the extracted years, people, or locations. e.g. "수영하는" -> "swimming". If no visual meaning remains, output "EMPTY".
@@ -151,11 +138,11 @@ Output ONLY valid JSON without markup.
         for p_name in final_people:
             must_conds.append(FieldCondition(key="people", match=MatchValue(value=p_name)))
             
-    # [복구] 자연어 GPS GeoRadius 병합 + EXIF GPS 누락 사진을 위한 텍스트 위치 매칭 병합 (OR 조건)
+    # [복구] 자연어 GPS GeoRadius 병합
     for loc_obj in extracted_locations:
         try:
             if isinstance(loc_obj, dict) and "lat" in loc_obj and "lon" in loc_obj:
-                loc_shoulds = [
+                must_conds.append(
                     FieldCondition(
                         key="geo_point",
                         geo_radius=GeoRadius(
@@ -163,25 +150,7 @@ Output ONLY valid JSON without markup.
                             radius=float(loc_obj.get("radius", 50000))
                         )
                     )
-                ]
-                
-                # 사용자의 요청에 따라 캡션(caption)/폴더명 제외! 오직 DB에 입력된 공식 location 페이로드만 검색
-                matched_word = loc_obj.get("matched_word", "")
-                official_name = loc_obj.get("official_name", "")
-                db_exact_locations = loc_obj.get("db_exact_locations", [])
-                
-                if matched_word:
-                    loc_shoulds.append(FieldCondition(key="location", match=MatchText(text=matched_word)))
-                if official_name:
-                    loc_shoulds.append(FieldCondition(key="location", match=MatchText(text=official_name)))
-                
-                # AI가 DB에서 직접 찾아낸 정확한 매칭 키워드로 OR 조건 추가 (형태소 분석 오류 극복)
-                if isinstance(db_exact_locations, list):
-                    for db_loc in db_exact_locations:
-                        loc_shoulds.append(FieldCondition(key="location", match=MatchText(text=db_loc)))
-
-                # GPS 반경 안에 있거나, DB location 텍스트(공식 행정구역명 등)에 일치하는 결과 조회
-                must_conds.append(Filter(should=loc_shoulds))
+                )
         except Exception as e:
             print(f"[-] GeoRadius 파싱 에러: {e}")
             
@@ -230,28 +199,14 @@ Output ONLY valid JSON without markup.
                     "season": payload.get("season", "Unknown"),
                     "doc_id": hit.id
                 })
-            # 사용자가 강제한 필터 내역(장소, 인물 등)이 있음에도 0건일 시 억지로 제약을 푸는 현상을 방지합니다.
-            # _IMAGE_META_CACHE 를 통해 프론트엔드 Masonry UI에서 박스가 깨지지 않도록 메타데이터를 직접 주입해 리턴.
-            for res in formatted_results:
-                orig_path = res.get("original_path", "")
-                if orig_path in _IMAGE_META_CACHE:
-                    w, h, sz = _IMAGE_META_CACHE[orig_path]
-                else:
-                    try:
-                        from PIL import Image
-                        import os
-                        with Image.open(orig_path) as img:
-                            w, h = img.size
-                        sz = os.path.getsize(orig_path)
-                        _IMAGE_META_CACHE[orig_path] = (w, h, sz)
-                    except Exception:
-                        w, h, sz = 800, 800, 0
-                res["width"] = w
-                res["height"] = h
-                res["file_size_bytes"] = sz
-            
-            print(f"✅ 엄격한 하드 필터 검색 완료: {len(formatted_results)}건 반환")
-            return {"results": formatted_results}
+            if len(formatted_results) > 0 or not req.search.strip():
+                print(f"✅ 일반 스크롤 로딩 완료: {len(formatted_results)}건 반환 (쿼리 없음)")
+                return {"results": formatted_results}
+            else:
+                print(f"[*] 하드 필터 검색 결과 없음(0건). 제약을 모두 풀고 원본 검색어로 순수 AI 검색으로 롤백합니다.")
+                search_text = req.search.strip()
+                q_filter = None
+                must_conds = []
         except Exception as e:
             print(f"❌ 스크롤 데이터 로딩 에러: {e}")
             return {"results": [], "error": str(e)}
@@ -302,9 +257,39 @@ Output ONLY valid JSON without markup.
             raw_results = res_scroll[req.offset:]
             
         # 3. 모든 필터 조건 검색이 실패한 경우 최후의 보루 (순수 벡터 검색으로 롤백)
-        # -> 사용자 의도(지역/인물)를 훼손하면서 엉뚱한 결과를 뱉는 강제 해제 롤백 기능을 제거했습니다.
         if not raw_results and req.offset == 0 and must_conds:
-            print("[*] ⚠️ 1/2차 필터 매칭 결과 완전 0건. 사용자 지정 필터를 존중하여 순수 AI 롤백을 생략합니다.")
+            print("[*] ⚠️ 1/2차 필터 매칭 결과 완전 0건. 페이로드 필터를 강제 해제하고 순수 벡터 매칭만으로 컨텍스트 검색을 개시합니다.")
+            
+            # 원래 사용자가 적은 원본 문장 전체를 가져와서 완전 순수 벡터로 재가공
+            pure_query = req.search.strip()
+            if state.gemini_client and re.search(r'[가-힣]', pure_query):
+                try:
+                    p = f"Translate the core meaning of this Korean photo search query to brief English keywords: {pure_query}"
+                    t_resp = state.gemini_client.models.generate_content(model='gemini-3.1-flash-lite-preview', contents=p)
+                    pure_query = t_resp.text.strip().replace('\n', '')
+                except:
+                    pass
+            
+            try:
+                with torch.no_grad():
+                    inputs = state.siglip_processor(text=[pure_query], padding="max_length", return_tensors="pt")
+                    inputs = {k: v.to(state.siglip_model.device) for k, v in inputs.items()}
+                    t_feat = state.siglip_model.get_text_features(**inputs)
+                    t_feat = t_feat / t_feat.norm(p=2, dim=-1, keepdim=True)
+                    pure_vector = t_feat[0].cpu().numpy().tolist()
+                    
+                unres = state.qdrant_client.query_points(
+                    collection_name="gumaphoto_hybrid_kr",
+                    query=pure_vector,
+                    using="scene",
+                    query_filter=None,  # 필터 전면 개방
+                    limit=req.offset + req.limit,
+                    offset=0,
+                    with_payload=True
+                ).points
+                raw_results = unres[req.offset:]
+            except Exception as e:
+                print(f"[-] 3차 순수 벡터 롤백 실패: {e}")
 
         formatted_results = []
         for hit in raw_results:
@@ -330,29 +315,25 @@ Output ONLY valid JSON without markup.
 
         # --------------------------------------------------------------------------
         # [신규 아키텍처] Qdrant 단일화로 인해 SQLite를 거치지 않고, 
-        # 디스크의 원본 이미지(PIL) 헤더를 직접 읽되, In-Memory Cache를 적용하여
-        # 파일별로 1회만 디스크를 읽고, 이후에는 0ms 단위의 초고속 반환을 달성합니다.
+        # 디스크의 원본 이미지(PIL) 헤더를 직접 읽어 해상도(width/height)를 주입합니다.
         # --------------------------------------------------------------------------
         for res in formatted_results:
-            orig_path = res.get("original_path", "")
-            if orig_path in _IMAGE_META_CACHE:
-                w, h, sz = _IMAGE_META_CACHE[orig_path]
-            else:
-                try:
-                    from PIL import Image
-                    import os
-                    with Image.open(orig_path) as img:
-                        w, h = img.size
-                    sz = os.path.getsize(orig_path)
-                    _IMAGE_META_CACHE[orig_path] = (w, h, sz)
-                except Exception:
-                    w, h, sz = 800, 800, 0
+            try:
+                from PIL import Image
+                with Image.open(res["original_path"]) as img:
+                    w, h = img.size
+            except Exception:
+                w, h = 800, 800
             
             res["width"] = w
             res["height"] = h
-            res["file_size_bytes"] = sz
+            # 원본 파일 크기 주입 (SQLite bytes 테이블 대체)
+            try:
+                res["file_size_bytes"] = os.path.getsize(res["original_path"])
+            except Exception:
+                res["file_size_bytes"] = 0
                 
-        print(f"✅ 이미지 메타 캐싱 로딩 완료! (총 결과 {len(formatted_results)}건 반환)")
+        print(f"✅ 원본 파일 헤더 직접 파싱 성공! (총 결과 {len(formatted_results)}건 반환)")
         return {"results": formatted_results}
 
     except Exception as e:

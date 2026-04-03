@@ -472,13 +472,15 @@ class VectorIndexer:
                                         geo_data = json.loads(resp.read().decode('utf-8'))
                                         addr = geo_data.get('address', {})
                                         country = addr.get('country', '')
+                                        state = addr.get('state', '') or addr.get('province', '') or addr.get('region', '')
                                         city = addr.get('city', '') or addr.get('town', '') or addr.get('county', '')
                                         suburb = addr.get('suburb', '') or addr.get('borough', '') or addr.get('village', '')
                                         
                                         clean_parts = []
                                         if country: clean_parts.append(country)
-                                        if city: clean_parts.append(city)
-                                        if suburb: clean_parts.append(suburb)
+                                        if state and state != country: clean_parts.append(state)
+                                        if city and city != state: clean_parts.append(city)
+                                        if suburb and suburb != city: clean_parts.append(suburb)
                                         
                                         if clean_parts:
                                             self.location_cache[cache_key] = " ".join(clean_parts)
