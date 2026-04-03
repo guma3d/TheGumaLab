@@ -6,17 +6,5 @@
   "display": "standalone",
   "background_color": "#030303",
   "theme_color": "#030303",
-  "orientation": "portrait",
-  "icons": [
-    {
-      "src": "static/app-icon.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "static/app-icon.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ]
+  "orientation": "portrait"
 }
