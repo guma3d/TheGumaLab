@@ -8,7 +8,7 @@ class FeedbackCacheManager:
     def __init__(self):
         self.queue = []
         self.is_building = False
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()
 
     def _build_cache_worker(self):
         print("🚀 [FeedbackCache] Starting background cluster build...")
@@ -48,6 +48,7 @@ class FeedbackCacheManager:
                 if issues:
                     candidates.append({"raw": raw, "issue": random.choice(issues)})
                     
+            candidates = candidates[:300]
             if not candidates:
                 print("✅ [FeedbackCache] No unknowns found.")
                 return
