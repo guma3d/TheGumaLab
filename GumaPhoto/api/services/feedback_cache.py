@@ -1,6 +1,5 @@
 import time
 import threading
-import random
 from core.state import state
 from qdrant_client.http.models import Filter, FieldCondition, MatchText, MatchValue
 
@@ -11,7 +10,7 @@ class FeedbackCacheManager:
         self.lock = threading.RLock()
 
     def _build_cache_worker(self):
-        print("🚀 [FeedbackCache] Starting background cluster build...")
+        print("🚀 [FeedbackCache] Starting exhaustive background cluster build...", flush=True)
         start_t = time.time()
         
         try:
@@ -26,6 +25,8 @@ class FeedbackCacheManager:
                     FieldCondition(key="people", match=MatchValue(value="Unknown People"))
                 ]
             )
+            
+            # 1. 모든 Unknown 사진 가져오기
             while True:
                 batch, next_page_offset = state.qdrant_client.scroll(
                     collection_name="gumaphoto_hybrid_kr",
@@ -38,9 +39,7 @@ class FeedbackCacheManager:
                 unknowns.extend(batch)
                 if next_page_offset is None or len(unknowns) >= 30000:
                     break
-            
-            random.shuffle(unknowns)
-            
+                    
             candidates = []
             for raw in unknowns:
                 p = raw.payload or {}
@@ -53,19 +52,29 @@ class FeedbackCacheManager:
                 if "위치정보없음" in loc or "Unknown" in loc or not loc: issues.append("Location")
                 if any(x in ["Unknown Person", "Unknown People"] for x in people_val): issues.append("People")
                 
-                if issues:
-                    candidates.append({"raw": raw, "issue": random.choice(issues)})
+                for issue in issues:
+                    candidates.append({"raw": raw, "issue": issue})
                     
-            candidates = candidates[:500]
             if not candidates:
-                print("✅ [FeedbackCache] No unknowns found.")
+                print("✅ [FeedbackCache] No unknowns found.", flush=True)
                 return
 
-            print(f"🔍 [FeedbackCache] Assessing density for {len(candidates)} candidates...")
+            print(f"🔍 [FeedbackCache] Exhaustively assessing density for ALL {len(candidates)} candidates...", flush=True)
             
             cluster_list = []
+            
+            # 2. 모든 Unknown 사진을 하나씩 루프 돌면서 유사도 덩어리 크기 측정
+            # 주의: 성능을 위해 클러스터 캐싱 적용 (이미 확인된 unresolved id는 스킵하여 속도 대폭 최적화)
+            global_covered = set()
+            
             for cand in candidates:
                 tid = cand["raw"].id
+                issue_key = cand["issue"]
+                
+                # 이미 더 큰 클러스터 추적으로 해결될 사진이면 쿼리 생략하여 속도 폭발적 향상
+                if f"{tid}_{issue_key}" in global_covered:
+                    continue
+                    
                 fb_type = "face" if cand["issue"] in ["Person", "People"] else "scene"
                 cutoff = 0.80 if fb_type == "face" else 0.83
                 
@@ -95,51 +104,31 @@ class FeedbackCacheManager:
                             if p_people and "Unknown Person" not in p_people and "Unknown People" not in p_people: continue
                                 
                         unresolved_ids.add(str(h.id))
+                        global_covered.add(f"{str(h.id)}_{issue_key}")
                         
-                    cluster_list.append({
-                        "cand": cand,
-                        "unresolved_ids": unresolved_ids,
-                        "size": len(unresolved_ids)
-                    })
-                except Exception as e:
+                    if len(unresolved_ids) > 0:
+                        cand["match_count"] = len(unresolved_ids)
+                        cand["unresolved_ids"] = unresolved_ids
+                        cluster_list.append(cand)
+                        
+                except Exception:
                     pass
 
-            # 크기 순 정렬
-            cluster_list.sort(key=lambda x: x["size"], reverse=True)
+            # 3. 크기 순으로 완벽하게 정렬하여 가장 큰 그룹부터 300개 선별
+            cluster_list.sort(key=lambda x: x["match_count"], reverse=True)
+            final_queue = cluster_list[:300]
             
-            # Deduplication (가장 최상위 그룹에 포함된 사진 중복 제거)
-            final_queue = []
-            covered_ids = set()
-            
-            for item in cluster_list:
-                cand = item["cand"]
-                uid = str(cand["raw"].id)
-                
-                # 앵커 자체가 이미 다른 상위 클러스터에 먹혔다면 스킵
-                if uid in covered_ids:
-                    continue
-                    
-                # 현재 클러스터에서 이미 다른 곳에 포함된 녀석들을 뺌
-                unique_set = item["unresolved_ids"] - covered_ids
-                
-                # 순수하게 기여하는 파급력이 없거나 적으면 메리트 감소 (가장 큰거 위주로)
-                if len(unique_set) > 0:
-                    cand["match_count"] = len(unique_set)
-                    final_queue.append(cand)
-                    covered_ids.update(unique_set)
-                    
-                if len(final_queue) >= 150: # Top 150 확보
-                    break
-
             with self.lock:
+                # 안전하게 덮어쓰기
                 self.queue = final_queue
                 
-            print(f"🎉 [FeedbackCache] Generated Top {len(final_queue)} unique clusters in {time.time()-start_t:.2f}s!")
+            print(f"🎉 [FeedbackCache] Generated Top {len(final_queue)} clusters in {time.time()-start_t:.2f}s!", flush=True)
             
         except Exception as e:
-            print(f"❌ [FeedbackCache] Build Error: {e}")
+            print(f"❌ [FeedbackCache] Build Error: {e}", flush=True)
         finally:
-            self.is_building = False
+            with self.lock:
+                self.is_building = False
 
     def build_cache_async(self):
         with self.lock:
@@ -157,8 +146,40 @@ class FeedbackCacheManager:
                 self.build_cache_async()
                 return None
             res = self.queue.pop(0)
+            
+            # 추출 후에도 큐가 너무 작으면 리필 시작
             if len(self.queue) < 15 and not self.is_building:
                 self.build_cache_async()
         return res
+
+    def remove_processed(self, processed_ids, issue_type):
+        """
+        4. 피드백이 처리되면 캐쉬에서 해당 사진만 제거하고 순위를 재조정
+        processed_ids: 처리 완료된 점들의 ID 리스트 (문자열)
+        issue_type: 'Location', 'Date', 'Person' 등 (어떤 이슈가 해결되었는지 맵핑)
+        """
+        if not processed_ids: return
+        processed_set = set([str(x) for x in processed_ids])
+        is_face_issue = "People" in issue_type or "Person" in issue_type
+        
+        with self.lock:
+            if not self.queue: return
+            
+            new_queue = []
+            for item in self.queue:
+                item_is_face = item["issue"] in ["People", "Person"]
+                # 같은 타입의 피드백(Face vs Scene)인 경우에만 해당 ID들을 해결된 것으로 간주
+                if is_face_issue == item_is_face:
+                    item["unresolved_ids"].difference_update(processed_set)
+                    item["match_count"] = len(item["unresolved_ids"])
+                
+                # 아직 기여할 사진이 1장 이상 남아있는 앵커만 유지
+                if item["match_count"] > 0:
+                    new_queue.append(item)
+                    
+            # 매치 카운트가 깎였을 수 있으니 다시 정렬
+            new_queue.sort(key=lambda x: x["match_count"], reverse=True)
+            self.queue = new_queue
+            print(f"♻️ [FeedbackCache] Cache synced with processed points. Updated Queue size: {len(self.queue)}", flush=True)
 
 feedback_cache = FeedbackCacheManager()

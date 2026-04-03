@@ -314,6 +314,13 @@ async def submit_feedback_v2(req: FeedbackV2Request, background_tasks: Backgroun
             old_snapshots_json = json.dumps(old_snapshots)
             background_tasks.add_task(process_time_location_feedback, real_point_id, target_date, target_loc, tp_json, old_snapshots_json)
                 
+        try:
+            from api.services.feedback_cache import feedback_cache
+            processed_id_list = [s['id'] for s in similars]
+            feedback_cache.remove_processed(processed_id_list, req.issue_type)
+        except Exception as e:
+            pass
+
         print(f"✅ [Instant Feedback] Qdrant 즉시 반영 및 EXIF 처리 프로세스 인계 완료 (ID: {real_point_id})")
         return {"message": "Feedback submitted successfully."}
         
