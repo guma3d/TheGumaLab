@@ -24,6 +24,7 @@ class FeedbackV2Request(BaseModel):
     issue_type: str
     correct_value: typing.Optional[str] = ""
     target_points: typing.Optional[typing.List[typing.Union[int, str]]] = []
+    skip_enrolled_learning: typing.Optional[bool] = False
 
 def sync_payload_to_sqlite(point_id: str):
     """Qdrant 단일 진실화 아키텍처로 인해 SQLite 동기화 과정 삭제됨"""
@@ -310,7 +311,7 @@ async def submit_feedback_v2(req: FeedbackV2Request, background_tasks: Backgroun
         if fb_type == "face":
             # 인물의 경우 feedback_service에 크롭만 하고 바로 DB 처리
             from api.services.feedback_service import process_face_enrollment
-            process_face_enrollment(real_point_id, final_correct_value, tp_json)
+            process_face_enrollment(real_point_id, final_correct_value, tp_json, req.skip_enrolled_learning)
         else:
             # 0. 감사 로그(Audit Log) 도플갱어 방지 (덮어쓰기 전의 원본 상태 스냅샷 뜨기)
             old_snapshots = []

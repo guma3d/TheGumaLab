@@ -212,15 +212,15 @@ def process_time_location_feedback(qdrant_id: str, target_date: str, target_loca
         print("  [+] 메타데이터 EXIF 주입 및 DB 덮어쓰기가 초고속으로 완료되었습니다!")
 
 
-def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
+def process_face_enrollment(qdrant_id: str, known_name: str, target_points_json: str = "[]", skip_enrolled_learning: bool = False):
     print(f"[*] 인물 물리적 재학습 가동: 메인 UUID {qdrant_id}, 학습 지정 이름: {known_name}")
     from qdrant_client import QdrantClient
     client = QdrantClient(QDRANT_URL)
     
     target_points = []
     try:
-        if target_points_str:
-            target_points = json.loads(target_points_str)
+        if target_points_json:
+            target_points = json.loads(target_points_json)
     except Exception: pass
     
     if qdrant_id and qdrant_id not in target_points:
@@ -299,7 +299,10 @@ def process_face_enrollment(qdrant_id, known_name, target_points_str="[]"):
         
     face_bbox = main_target.get('face_bbox')
     learnable = True
-    if face_bbox and len(face_bbox) == 4:
+    if skip_enrolled_learning:
+        learnable = False
+        print("  [🛡️ 수동 보호] 사용자가 'Send But NoFeedback'을 요청했습니다. 딥러닝 enrolled 등록을 건너뜁니다.")
+    elif face_bbox and len(face_bbox) == 4:
         bw = face_bbox[2] - face_bbox[0]
         bh = face_bbox[3] - face_bbox[1]
         if bw < 300 or bh < 300:

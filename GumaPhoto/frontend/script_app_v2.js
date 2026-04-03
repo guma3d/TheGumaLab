@@ -1698,7 +1698,7 @@ async function loadUnknownPhoto(manualTargetPayload = null) {
 // =========================================================================
 // 통합 백엔드 전송 모듈 (재사용성 강화)
 // =========================================================================
-async function submitSharedFeedback(pointId, issueType, correctValue, targetPointsArray) {
+async function submitSharedFeedback(pointId, issueType, correctValue, targetPointsArray, skipEnrolled = false) {
     const btn1 = document.getElementById('fb-temptest-send-btn');
     const btn2 = document.getElementById('fb-submit-btn');
     const ogHtml1 = btn1 ? btn1.innerHTML : '';
@@ -1718,7 +1718,8 @@ async function submitSharedFeedback(pointId, issueType, correctValue, targetPoin
                 point_id: pointId,
                 issue_type: issueType,
                 correct_value: correctValue,
-                target_points: targetPointsArray
+                target_points: targetPointsArray,
+                skip_enrolled_learning: skipEnrolled
             })
         });
 
@@ -2164,4 +2165,29 @@ document.getElementById('modal-manual-feedback-btn')?.addEventListener('click', 
     document.getElementById('manual-loc-btn').onclick = () => cleanupAndGo('Location');
     document.getElementById('manual-date-btn').onclick = () => cleanupAndGo('Date');
     document.getElementById('manual-cancel-btn').onclick = () => cleanupAndGo(null);
+});
+
+document.getElementById('fb-no-learning-btn')?.addEventListener('click', async () => {
+    if (!selectedFeedbackTarget) return;
+
+    const inputVal = document.getElementById('fb-input-val');
+    let correctValue = inputVal.value.trim();
+
+    if (!correctValue) {
+        alert("Please provide the correct information first!");
+        return;
+    }
+
+    const btn = document.getElementById('fb-no-learning-btn');
+    const ogHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending (No Feedback)...';
+    btn.disabled = true;
+
+    try {
+        await submitSharedFeedback(selectedFeedbackTarget.id, selectedFeedbackTarget.issue, correctValue, [selectedFeedbackTarget.id], true);
+    } catch (err) {
+        console.error(err);
+        btn.innerHTML = ogHtml;
+        btn.disabled = false;
+    }
 });
