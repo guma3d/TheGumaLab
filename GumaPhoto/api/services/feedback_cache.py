@@ -1,4 +1,11 @@
 import time
+import json
+import os
+
+class MockRaw:
+    def __init__(self, id, payload):
+        self.id = id
+        self.payload = payload
 import threading
 import concurrent.futures
 from core.state import state
@@ -9,6 +16,7 @@ class FeedbackCacheManager:
         self.queue = []
         self.is_building = False
         self.lock = threading.RLock()
+        self.load_from_disk()
 
     def _build_cache_worker(self):
         print("🚀 [FeedbackCache] Starting exhaustive background cluster build...", flush=True)
@@ -129,6 +137,7 @@ class FeedbackCacheManager:
             with self.lock:
                 # 안전하게 덮어쓰기
                 self.queue = final_queue
+                self.save_to_disk()
                 
             print(f"🎉 [FeedbackCache] Generated Top {len(final_queue)} clusters in {time.time()-start_t:.2f}s! (Top 1 has {final_queue[0].get('match_count')} photos)" if final_queue else "🎉 Generated 0 clusters", flush=True)
             
@@ -146,6 +155,45 @@ class FeedbackCacheManager:
             
         t = threading.Thread(target=self._build_cache_worker, daemon=True)
         t.start()
+
+
+    def save_to_disk(self):
+        try:
+            os.makedirs('data', exist_ok=True)
+            export_list = []
+            for item in self.queue:
+                export_list.append({
+                    "id": str(item["raw"].id),
+                    "payload": item["raw"].payload,
+                    "issue": item["issue"],
+                    "match_count": item["match_count"],
+                    "unresolved_ids": list(item["unresolved_ids"])
+                })
+            with open('data/feedback_queue.json', 'w', encoding='utf-8') as f:
+                json.dump(export_list, f, ensure_ascii=False)
+            print("[FeedbackCache] 💾 Successfully saved queue to disk persistence.", flush=True)
+        except Exception as e:
+            print(f"❌ Failed to save disk cache: {e}")
+
+    def load_from_disk(self):
+        try:
+            if os.path.exists('data/feedback_queue.json'):
+                with open('data/feedback_queue.json', 'r', encoding='utf-8') as f:
+                    import_list = json.load(f)
+                new_queue = []
+                for entry in import_list:
+                    new_queue.append({
+                        "raw": MockRaw(entry["id"], entry["payload"]),
+                        "issue": entry["issue"],
+                        "match_count": entry["match_count"],
+                        "unresolved_ids": set(entry["unresolved_ids"])
+                    })
+                self.queue = new_queue
+                print(f"[FeedbackCache] 💾 Successfully loaded {len(self.queue)} items from disk.", flush=True)
+                return True
+        except Exception as e:
+            print(f"❌ Failed to load disk cache: {e}")
+        return False
 
     def pop_best(self):
         res = None
@@ -188,6 +236,7 @@ class FeedbackCacheManager:
             # 매치 카운트가 깎였을 수 있으니 다시 정렬
             new_queue.sort(key=lambda x: x["match_count"], reverse=True)
             self.queue = new_queue
+            self.save_to_disk()
             print(f"♻️ [FeedbackCache] Cache synced with processed points. Updated Queue size: {len(self.queue)}", flush=True)
 
 feedback_cache = FeedbackCacheManager()
