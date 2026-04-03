@@ -219,15 +219,37 @@ async def get_unknown_photo():
                     cutoff = 0.80 if fb_type == "face" else 0.83
                     
                     try:
-                        # Vector Recommend Query로 해당 사진이 얼마나 많은 유사사진(대량처리)을 보유했는지 측정 (최대 50개)
+                        # Vector Recommend Query로 "아직 이름/장소가 비어있는" 진짜 처리 대기 사진이 몇장이나 뭉쳐있는지 정확히 측정 (최대 100개)
                         rec_res = state.qdrant_client.query_points(
                             collection_name="gumaphoto_hybrid_kr",
                             query=target_id,
                             using=fb_type,
-                            limit=50,
-                            with_payload=False
+                            limit=100,
+                            with_payload=True
                         ).points
-                        match_count = sum(1 for h in rec_res if getattr(h, "score", 0.0) >= cutoff)
+                        
+                        match_count = 0
+                        for h in rec_res:
+                            if getattr(h, "score", 0.0) < cutoff:
+                                continue
+                            hp = h.payload or {}
+                            
+                            if fb_type != "face":
+                                if "Location" in cand["issue"]:
+                                    loc = hp.get("location", "")
+                                    if "Unknown" not in loc and "위치정보없음" not in loc and loc.strip() != "":
+                                        continue
+                                elif "Date" in cand["issue"]:
+                                    dt = hp.get("date", "")
+                                    if "Unknown" not in dt and not dt.endswith("-Unknown"):
+                                        continue
+                            else:
+                                p_people = hp.get("people", [])
+                                if p_people and "Unknown Person" not in p_people and "Unknown People" not in p_people:
+                                    continue
+                                    
+                            match_count += 1
+                            
                     except Exception as e:
                         print(f"Rank Priority Search Error: {e}")
                         match_count = 0
