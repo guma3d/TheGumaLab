@@ -70,6 +70,23 @@ async def perform_search(req: SearchRequest):
                         sliced = cached_list[req.offset : end_idx]
                         if sliced:
                             print(f"🚀 [Baking Cache Hit] Guma Family 통합 아키텍처 JSON 반환: {target_key} ({req.offset}~{end_idx}장)")
+                            # [FIX] 캐시 반환 시에도 ইন메모리 해상도 사이즈 정보 강제 병합
+                            for res in sliced:
+                                orig_path = res.get("original_path", "")
+                                if orig_path in _IMAGE_META_CACHE:
+                                    w, h, sz = _IMAGE_META_CACHE[orig_path]
+                                else:
+                                    try:
+                                        from PIL import Image
+                                        with Image.open(orig_path) as img:
+                                            w, h = img.size
+                                        sz = os.path.getsize(orig_path)
+                                        _IMAGE_META_CACHE[orig_path] = (w, h, sz)
+                                    except Exception:
+                                        w, h, sz = 800, 800, 0
+                                res["width"] = w
+                                res["height"] = h
+                                res["file_size_bytes"] = sz
                             return {"results": sliced}
         except Exception as e:
             print(f"[-] File Cache Load Error: {e}")

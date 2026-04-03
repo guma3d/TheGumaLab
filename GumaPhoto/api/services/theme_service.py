@@ -363,7 +363,14 @@ def build_theme_cache():
         timeline_cache_data["recent"] = _format_res(res_recent)
         
         # 주요 인물 500장 추출 (단독 샷 솔로 필터링 적용)
-        for person in ["성욱", "준우", "지우", "송이"]:
+        known_names = ["성욱", "준우", "지우", "송이"]
+        try:
+            import pickle, os
+            if os.path.exists('/app/data/known_faces.pkl'):
+                with open('/app/data/known_faces.pkl', 'rb') as pf:
+                    known_names = list(pickle.load(pf).keys())
+        except Exception: pass
+        for person in known_names:
             p_filter = Filter(must=[FieldCondition(key="people", match=MatchValue(value=person))])
             res_p, _ = state.qdrant_client.scroll(
                 collection_name="gumaphoto_hybrid_kr",
@@ -429,7 +436,14 @@ def build_timeline_cache_only():
         timeline_cache_data["recent"] = _format_res(res_recent)
         
         # 주요 인물 500장 추출 (단독 샷 솔로 필터링 적용)
-        for person in ["성욱", "준우", "지우", "송이"]:
+        known_names = ["성욱", "준우", "지우", "송이"]
+        try:
+            import pickle, os
+            if os.path.exists('/app/data/known_faces.pkl'):
+                with open('/app/data/known_faces.pkl', 'rb') as pf:
+                    known_names = list(pickle.load(pf).keys())
+        except Exception: pass
+        for person in known_names:
             p_filter = Filter(must=[FieldCondition(key="people", match=MatchValue(value=person))])
             res_p, _ = state.qdrant_client.scroll(
                 collection_name="gumaphoto_hybrid_kr",
