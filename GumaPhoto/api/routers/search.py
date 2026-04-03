@@ -455,6 +455,7 @@ Output ONLY valid JSON without markup.
                 "caption": payload.get("caption", ""),
                 "time_of_day": payload.get("time_of_day", "Unknown"),
                 "season": payload.get("season", "Unknown"),
+                "face_bbox": payload.get("face_bbox", None),
                 "doc_id": hit.id
             })
 
