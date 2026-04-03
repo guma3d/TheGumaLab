@@ -178,6 +178,7 @@ async def get_unknown_photo():
         
         if unknowns:
             random.shuffle(unknowns)
+            candidates = []
             
             for raw_target in unknowns:
                 p = raw_target.payload or {}
@@ -191,7 +192,6 @@ async def get_unknown_photo():
                 if "위치정보없음" in loc or "Unknown" in loc or not loc: 
                     issues.append("Location")
                     
-                # 사람 판별: Unidentifiable Person / No People 은 확실하게 정해진 상태이므로 Unknown 취급 안함.
                 has_unknown_person = False
                 for person in people_val:
                     if person in ["Unknown Person", "Unknown People"]:
@@ -201,15 +201,48 @@ async def get_unknown_photo():
                     issues.append("People")
                     
                 if issues:
-                    issue = random.choice(issues)
+                    candidates.append({
+                        "raw": raw_target,
+                        "issue": random.choice(issues)
+                    })
+                
+                if len(candidates) >= 30: # 30개 후보 수집
+                    break
+                    
+            if candidates:
+                best_candidate = None
+                best_score = -1
+                
+                for cand in candidates:
+                    target_id = cand["raw"].id
+                    fb_type = "face" if cand["issue"] in ["Person", "People"] else "general"
+                    cutoff = 0.80 if fb_type == "face" else 0.83
+                    
+                    try:
+                        # Vector Recommend Query로 해당 사진이 얼마나 많은 유사사진(대량처리)을 보유했는지 측정 (최대 50개)
+                        rec_res = state.qdrant_client.recommend(
+                            collection_name="gumaphoto_hybrid_kr",
+                            positive=[target_id],
+                            limit=50
+                        )
+                        match_count = sum(1 for h in rec_res if h.score >= cutoff)
+                    except:
+                        match_count = 0
+                        
+                    if match_count > best_score:
+                        best_score = match_count
+                        best_candidate = cand
+                        
+                if best_candidate:
+                    p = best_candidate["raw"].payload or {}
                     url_path = p.get("filepath", "").replace("/app/data/organized", "/photos")
                     return {
-                        "id": raw_target.id,
+                        "id": best_candidate["raw"].id,
                         "url": url_path,
-                        "issue": issue,
-                        "date": date_val,
-                        "location": loc,
-                        "people": people_val,
+                        "issue": best_candidate["issue"],
+                        "date": p.get("date", ""),
+                        "location": p.get("location", ""),
+                        "people": p.get("people", []),
                         "face_bbox": p.get("face_bbox", None)
                     }
                     
