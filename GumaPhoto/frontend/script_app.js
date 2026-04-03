@@ -160,9 +160,13 @@ if (searchModalBtn && searchModal && searchModalClose) {
 
     searchModalClose.addEventListener('click', () => searchModal.classList.add('hidden'));
 
+    // 사용자가 검색어 입력 중 실수로 모달 바깥 배경을 터치하여 검색창이 날아가는 것을 방지.
+    // 터치가 작동하지 않게 (무시되게) 처리합니다.
+    /*
     searchModal.addEventListener('click', (e) => {
         if (e.target === searchModal) searchModal.classList.add('hidden');
     });
+    */
 }
 
 // Search Form Handler
