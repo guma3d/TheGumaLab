@@ -77,3 +77,19 @@ AI 태깅의 오류를 유저가 직접 지속적으로 교정하고, Qdrant 벡
   - 초과 페칭으로 인한 모바일 메모리 오버플로우 방지를 위해, `renderGallery` 는 항상 `t_limit = 20` 단위를 유지하여 화면 스크롤 지점을 계산한 뒤 부드럽게 추가 렌더링 됩니다.
 - **Native iOS Feel**
   - 사진 롱-터치 시 iOS 고유의 선택 동작이 작동하지 못하도록 `user-select: none`, `-webkit-touch-callout: none` CSS 방어막을 쳐서 앱과 똑같은 햅틱 체감을 유지합니다.
+
+---
+
+## 7. 📡 Real-time Monitoring & Logging Architecture (통합 로깅 시스템)
+
+시스템 내부에서 발생하는 수많은 스크립트 실행 내역(인덱싱, 머신러닝 연산, 캐시 갱신 등)을 사용자가 모바일 UI에서 실시간으로 감시할 수 있는 최첨단 모니터링 시스템 스택입니다.
+
+- **`core/log_broadcaster.py` (Sys.stdout Hijacking)**
+  - 파이썬 기본 출력 채널인 `sys.stdout`과 `sys.stderr`를 시스템 레벨에서 래핑(Wrapping)합니다.
+  - FastAPI 호스트 프로세스 뿐만 아니라, `worker_process_init` 시그널을 통해 수많은 하위 워커 프로세스로 쪼개지는 Celery 백그라운드 환경에서도 한 줄의 누락 없이 모든 `print()`와 에러를 나포합니다.
+- **Redis Pub/Sub & List History**
+  - 무거운 디스크 로그 파일(txt) 읽기/쓰기 대신, 초고속 인메모리 스토리지인 Redis를 활용합니다.
+  - 발생하는 모든 로그는 즉각 `gumaphoto_logs_history` 라는 Redis List에 푸시(Push)되어 최신 50줄의 메모리 버퍼를 타이트하게 유지합니다.
+- **Seamless Live UI Panel**
+  - 모바일 프론트엔드의 'Live Background Processing' 아이콘 클릭 한 번으로, 1.5초 간격의 초고속 메모리 폴링을 수행합니다.
+  - 모달 팝업은 모바일 기기에서의 스크롤 블리드(Scroll Bleed, 백그라운드 밀림 현상)를 방지하기 위한 하드코딩 된 Javascript 터치 인터셉터(`e.preventDefault()`) 및 `overscroll-behavior: none` CSS가 적용되어 네이티브 앱 수준의 견고한 조작감을 제공합니다.
