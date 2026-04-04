@@ -13,10 +13,10 @@ async function updateProgressMonitor() {
         const res = await fetch(apiUrl + "?cb=" + new Date().getTime());
         if (res.ok) {
             const data = await res.json();
-            logBox.innerText = data.log || "No log found or empty.";
+            logBox.innerHTML = data.log || "No log found or empty.";
             logBox.scrollTop = logBox.scrollHeight; // Auto-scroll to bottom
         } else {
-            logBox.innerText = "Error fetching log.";
+            logBox.innerHTML = "Error fetching log.";
         }
     } catch (e) {
         logBox.innerText = "Network error loading log.";
@@ -59,6 +59,16 @@ window.addEventListener('click', (e) => {
         closeProgressModal();
     }
 });
+
+// Prevent iOS scroll bleed actively on the modal background
+const progressModalElement = document.getElementById('progress-modal');
+if (progressModalElement) {
+    progressModalElement.addEventListener('touchmove', function(e) {
+        if (!e.target.closest('#progress-log-content')) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+}
 
 window.addEventListener('click', (e) => {
     const statsModal = document.getElementById('stats-modal');

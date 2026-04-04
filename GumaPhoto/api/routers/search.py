@@ -755,6 +755,6 @@ def get_indexer_log():
         logs = r.lrange("gumaphoto_logs_history", 0, -1)
         if not logs:
             return {"log": "System Active. Waiting for background logs..."}
-        return {"log": "\n".join(logs[-50:])}
+        return {"log": "<br>".join(logs[-50:])}
     except Exception as e:
         return {"log": f"Error reading Redis unified logs: {str(e)}"}
