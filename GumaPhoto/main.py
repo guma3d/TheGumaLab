@@ -27,6 +27,8 @@ load_dotenv()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     import sys
+    from core.log_broadcaster import setup_unified_logging
+    setup_unified_logging("🚀[FastAPI]")
     
     # (legacy tracker and daemon processes were fully replaced by decoupled ORM API and Celery Event-Bus)
     

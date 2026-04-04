@@ -1,5 +1,11 @@
 import os
 from celery import Celery
+from celery.signals import worker_process_init
+from core.log_broadcaster import setup_unified_logging
+
+@worker_process_init.connect
+def init_celery_stdout_wrapper(**kwargs):
+    setup_unified_logging("⚙️[CeleryBot]")
 
 REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
 

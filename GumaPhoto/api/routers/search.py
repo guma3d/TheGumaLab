@@ -749,11 +749,12 @@ async def get_family_tags():
 @router.get("/api/system/indexer-log")
 def get_indexer_log():
     try:
-        log_path = "/app/data/indexer_geo_log.txt"
-        if os.path.exists(log_path):
-            with open(log_path, "r", encoding="utf-8") as f:
-                lines = f.read().splitlines()
-                return {"log": "\\n".join(lines[-25:])}
-        return {"log": "Log file not found."}
+        import redis
+        import os
+        r = redis.Redis.from_url(os.getenv("REDIS_URL", "redis://redis:6379/0"), decode_responses=True)
+        logs = r.lrange("gumaphoto_logs_history", 0, -1)
+        if not logs:
+            return {"log": "System Active. Waiting for background logs..."}
+        return {"log": "\\n".join(logs[-25:])}
     except Exception as e:
-        return {"log": f"Error reading log: {str(e)}"}
+        return {"log": f"Error reading Redis unified logs: {str(e)}"}
