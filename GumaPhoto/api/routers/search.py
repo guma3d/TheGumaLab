@@ -489,7 +489,7 @@ Output ONLY valid JSON without markup.
             "people_detected": extracted_names,
             "location_detected": known_locs_str if final_people else (extracted_locations[0].get("matched_word", "") if extracted_locations else ""),
             "enhanced_query": search_text,
-            "fallback_triggered": fallback_triggered
+            "fallback_triggered": fallback_must is not None if 'fallback_must' in locals() else False
         }
 
     except Exception as e:

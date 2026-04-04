@@ -130,9 +130,35 @@ class FeedbackCacheManager:
             with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
                 executor.map(process_candidate, candidates)
 
-            # 3. 크기 순으로 완벽하게 정렬하여 가장 큰 그룹부터 300개 선별
-            cluster_list.sort(key=lambda x: x["match_count"], reverse=True)
-            final_queue = cluster_list[:300]
+            # 3. 이슈 타입별 쿼터(Quota)를 적용하여 정렬 및 추출 (Starvation 방지)
+            from collections import defaultdict
+            clusters_by_issue = defaultdict(list)
+            for c in cluster_list:
+                clusters_by_issue[c["issue"]].append(c)
+                
+            for issue in clusters_by_issue:
+                clusters_by_issue[issue].sort(key=lambda x: x["match_count"], reverse=True)
+                
+            final_queue = []
+            max_total = 300
+            
+            # People(인물) 피드백에 50% 쿼터를 무조건 할당, 나머지를 Location/Date에 균등 분배
+            people_quota = max_total // 2
+            other_quota = max_total - people_quota
+            
+            people_candidates = clusters_by_issue.get("People", [])
+            final_queue.extend(people_candidates[:people_quota])
+            
+            rem_people_slots = max(0, people_quota - len(people_candidates))
+            actual_other_quota = other_quota + rem_people_slots
+            
+            other_candidates = []
+            for issue, cands in clusters_by_issue.items():
+                if issue != "People":
+                    other_candidates.extend(cands)
+                    
+            other_candidates.sort(key=lambda x: x["match_count"], reverse=True)
+            final_queue.extend(other_candidates[:actual_other_quota])
             
             with self.lock:
                 # 안전하게 덮어쓰기

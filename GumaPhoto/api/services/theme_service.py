@@ -365,7 +365,7 @@ def build_theme_cache():
         # 주요 인물 500장 추출 (단독 샷 솔로 필터링 적용)
         known_names = ["성욱", "준우", "지우", "송이"]
         try:
-            import pickle, os
+            import pickle
             if os.path.exists('/app/data/known_faces.pkl'):
                 with open('/app/data/known_faces.pkl', 'rb') as pf:
                     known_names = list(pickle.load(pf).keys())
@@ -438,7 +438,7 @@ def build_timeline_cache_only():
         # 주요 인물 500장 추출 (단독 샷 솔로 필터링 적용)
         known_names = ["성욱", "준우", "지우", "송이"]
         try:
-            import pickle, os
+            import pickle
             if os.path.exists('/app/data/known_faces.pkl'):
                 with open('/app/data/known_faces.pkl', 'rb') as pf:
                     known_names = list(pickle.load(pf).keys())
