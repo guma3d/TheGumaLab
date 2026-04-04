@@ -14,9 +14,9 @@ import xml.etree.ElementTree as ET
 
 app = Flask(__name__)
 
-# Redis 연결 (docker-compose의 서비스 이름 'redis' 사용)
+# Redis 연결 (docker-compose의 서비스 이름 사용)
 try:
-    cache = redis.Redis(host='redis', port=6379, db=0, decode_responses=True)
+    cache = redis.Redis(host='gumastockreport_redis', port=6379, db=0, decode_responses=True)
 except Exception as e:
     print(f"Redis connection error: {e}")
     cache = None

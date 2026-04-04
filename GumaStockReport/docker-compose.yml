@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  backend:
+  gumastockreport:
     build: .
-    container_name: stockmaster_backend
+    container_name: gumastockreport_app
     restart: unless-stopped
     ports:
       - "8050:8050"
@@ -14,9 +14,9 @@ services:
     volumes:
       - .:/app
 
-  redis:
+  gumastockreport_redis:
     image: redis:alpine
-    container_name: stockmaster_redis
+    container_name: gumastockreport_redis
     restart: unless-stopped
     ports:
       - "6380:6379"

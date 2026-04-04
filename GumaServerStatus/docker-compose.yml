@@ -1,7 +1,7 @@
 services:
-  serverstatus:
+  gumaserverstatus:
     build: .
-    container_name: ServerStatus
+    container_name: gumaserverstatus_app
     ports:
       - "8080:8080"
     extra_hosts:

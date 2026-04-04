@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  youtubetodoc:
+  gumatube:
     build: .
-    container_name: youtubetodoc_app
+    container_name: gumatube_app
     ports:
       - "8083:5000"
     volumes:
@@ -29,19 +29,19 @@ services:
               count: 1
               capabilities: [ gpu ]
     networks:
-      - youtubetodoc_network
+      - gumatube_network
 
   qdrant:
     image: qdrant/qdrant:latest
-    container_name: youtubetodoc_qdrant
+    container_name: gumatube_qdrant
     ports:
       - "6334:6333"
     volumes:
       - ./qdrant_data:/qdrant/storage
     restart: unless-stopped
     networks:
-      - youtubetodoc_network
+      - gumatube_network
 
 networks:
-  youtubetodoc_network:
+  gumatube_network:
     driver: bridge

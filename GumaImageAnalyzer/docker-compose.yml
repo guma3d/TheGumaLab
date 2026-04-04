@@ -1,7 +1,7 @@
 services:
-  imageanalyzer:
+  gumaimageanalyzer:
     build: .
-    container_name: ImageAnalyzer
+    container_name: gumaimageanalyzer_app
     ports:
       - "5000:5000"
     volumes:
