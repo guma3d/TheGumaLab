@@ -9,6 +9,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts for consistency -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- PWA / Mobile Optimizations -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
+    
     <!-- Marked.js for Markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
@@ -749,7 +755,7 @@
             // Polling data functionality
             async function fetchMarketData() {
                 try {
-                    const res = await fetch(`/StockMaster_01/api/market-indices?t=${new Date().getTime()}`);
+                    const res = await fetch(`/api/market-indices?t=${new Date().getTime()}`);
                     const data = await res.json();
 
                     const container = document.getElementById('market-indices-container');
@@ -783,7 +789,7 @@
 
             async function fetchWatchlistData() {
                 try {
-                    const res = await fetch(`/StockMaster_01/api/watchlist?t=${new Date().getTime()}`);
+                    const res = await fetch(`/api/watchlist?t=${new Date().getTime()}`);
                     const data = await res.json();
 
                     const container = document.getElementById('watchlist-container');
@@ -833,7 +839,7 @@
                 try {
                     const container = document.getElementById('portfolio-analysis-container');
 
-                    const res = await fetch(`/StockMaster_01/api/portfolio-analysis?t=${new Date().getTime()}`);
+                    const res = await fetch(`/api/portfolio-analysis?t=${new Date().getTime()}`);
                     const data = await res.json();
 
                     if (data.success) {
@@ -907,7 +913,7 @@
                 searchResultsContainer.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-muted);">Searching with AI...</div>';
 
                 try {
-                    const res = await fetch('/StockMaster_01/api/search-stock', {
+                    const res = await fetch('/api/search-stock', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ query })
@@ -959,7 +965,7 @@
 
                 try {
                     searchResultsContainer.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-muted);">Adding to portfolio...</div>';
-                    const res = await fetch('/StockMaster_01/api/watchlist', {
+                    const res = await fetch('/api/watchlist', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ ticker, name, shares })
@@ -991,7 +997,7 @@
 
                 try {
                     document.getElementById('watchlist-container').innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 1rem;">Updating...</div>';
-                    const res = await fetch('/StockMaster_01/api/watchlist', {
+                    const res = await fetch('/api/watchlist', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ ticker: rawTicker, name: name, shares: shares })
@@ -1015,7 +1021,7 @@
                 if (!confirm("Are you sure you want to remove this stock?")) return;
 
                 try {
-                    const res = await fetch(`/StockMaster_01/api/watchlist/${rawTicker}`, { method: 'DELETE' });
+                    const res = await fetch(`/api/watchlist/${rawTicker}`, { method: 'DELETE' });
                     const data = await res.json();
                     if (data.success) {
                         document.getElementById('watchlist-container').innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 1rem;">Updating...</div>';
@@ -1027,6 +1033,17 @@
                 }
             };
         });
+
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then((registration) => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }, (err) => {
+                    console.error('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
     </script>
 </body>
 

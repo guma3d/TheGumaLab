@@ -1,0 +1,10 @@
+{
+  "name": "Guma Stock Report",
+  "short_name": "GumaStock",
+  "description": "AI-Powered Real-time Stock Analysis & Portfolio Dashboard",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#10b981",
+  "orientation": "portrait"
+}

@@ -160,6 +160,21 @@ def home():
     # Render the styled dashboard
     return render_template("index.html")
 
+from flask import send_from_directory
+
+@app.route("/sw.js")
+def serve_sw():
+    # Serve Service Worker from the frontend root with proper MIME type
+    response = send_from_directory("frontend", "sw.js")
+    response.headers['Content-Type'] = 'application/javascript'
+    # Ensure Service-Worker-Allowed header is set
+    response.headers['Service-Worker-Allowed'] = '/'
+    return response
+
+@app.route("/frontend/<path:filename>")
+def serve_frontend(filename):
+    return send_from_directory("frontend", filename)
+
 @app.route("/api/market-indices")
 def api_market_indices():
     data = fetch_stock_data(INDICES)
