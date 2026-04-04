@@ -59,7 +59,10 @@ class FeedbackCacheManager:
                 issues = []
                 if "Unknown" in date_val or not date_val: issues.append("Date")
                 if "위치정보없음" in loc or "Unknown" in loc or not loc: issues.append("Location")
-                if any(x in ["Unknown Person", "Unknown People"] for x in people_val): issues.append("People")
+                if any(x in ["Unknown Person", "Unknown People"] for x in people_val):
+                    # AI 학습 벡터가 존재해야만 (face_bbox 스코프 인식 가능할 때만) 인물 피드백 대상에 포함시킴
+                    if p.get("face_bbox"):
+                        issues.append("People")
                 
                 for issue in issues:
                     candidates.append({"raw": raw, "issue": issue})
@@ -237,6 +240,33 @@ class FeedbackCacheManager:
                         break
                         
             res = self.queue.pop(target_idx)
+            
+            # [🔥 Live Sanity Validation] 큐에서 꺼낸 아이템이 아직 실제 DB에 유효한 이슈인지 검증
+            try:
+                from core.state import state
+                if state.qdrant_client:
+                    latest_pts = state.qdrant_client.retrieve(collection_name="gumaphoto_hybrid_kr", ids=[res["raw"].id], with_payload=True)
+                    if not latest_pts:
+                        # 포인트가 삭제(Hard Delete)된 경우
+                        print(f"👻 [피드백 가드] '{res['raw'].id}'는 삭제된 유령 데이터. 폐기하고 다음으로 넘어갑니다.")
+                        return self.pop_best()
+                    else:
+                        lp = latest_pts[0].payload or {}
+                        issue = res["issue"]
+                        if issue == "Location" and lp.get("location") and "Unknown" not in lp.get("location") and "위치정보없음" not in lp.get("location"):
+                            return self.pop_best()
+                        elif issue == "Date" and lp.get("date") and "Unknown" not in lp.get("date"):
+                            return self.pop_best()
+                        elif issue in ["Person", "People"]:
+                            p_people = lp.get("people", [])
+                            if not lp.get("face_bbox") or not p_people or ("Unknown Person" not in p_people and "Unknown People" not in p_people):
+                                return self.pop_best()
+                        
+                        # 검증 성공 시, 프론트엔드에 나갈 payload를 가장 최신 Qdrant 기반으로 강제 덮어쓰기 (잔상 원천 차단)
+                        res["raw"].payload = lp
+            except:
+                pass
+                
             self.last_issue_type = res["issue"]
             
             # 추출 후 디스크 저장 업데이트

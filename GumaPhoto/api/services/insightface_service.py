@@ -53,6 +53,18 @@ class InsightFaceModule:
     def analyze_image(self, filepath, cv_img=None):
         if cv_img is None:
             cv_img = cv2.imread(filepath)
+            if cv_img is None and filepath.lower().endswith(('.heic', '.heif')):
+                try:
+                    from pillow_heif import register_heif_opener
+                    from PIL import Image, ImageOps
+                    import numpy as np
+                    register_heif_opener()
+                    pil_img = Image.open(filepath)
+                    pil_img = ImageOps.exif_transpose(pil_img)
+                    pil_img = pil_img.convert("RGB")
+                    cv_img = np.array(pil_img)[:, :, ::-1].copy()
+                except:
+                    pass
             
         if cv_img is None:
             return {"face_count": 0, "found_people": ["No People"], "vectors": {}, "payload": {}, "objects": []}

@@ -97,12 +97,17 @@ async def perform_search(req: SearchRequest):
                             # [FIX] 캐시 반환 시에도 인메모리 해상도 사이즈 정보 강제 병합
                             cache_updated = False
                             for res in sliced:
+                                if "width" in res and "height" in res and res["width"] > 0:
+                                    continue
+                                
                                 orig_path = res.get("original_path", "")
                                 if orig_path in _IMAGE_META_CACHE:
                                     w, h, sz = _IMAGE_META_CACHE[orig_path]
                                 else:
                                     try:
                                         from PIL import Image
+                                        from pillow_heif import register_heif_opener
+                                        register_heif_opener()
                                         with Image.open(orig_path) as img:
                                             w, h = img.size
                                         sz = os.path.getsize(orig_path)
@@ -288,29 +293,34 @@ Output ONLY valid JSON without markup.
         for loc_obj in extracted_locations:
             try:
                 if isinstance(loc_obj, dict):
-                    if "lat" in loc_obj and "lon" in loc_obj:
-                        loc_shoulds.append(
-                            FieldCondition(
-                                key="geo_point",
-                                geo_radius=GeoRadius(
-                                    center=GeoPoint(lat=float(loc_obj["lat"]), lon=float(loc_obj["lon"])),
-                                    radius=min(float(loc_obj.get("radius", 20000)), 35000)
-                                )
-                            )
-                        )
-                    
-                    matched_word = loc_obj.get("matched_word", "")
-                    official_name = loc_obj.get("official_name", "")
                     db_exact_locations = loc_obj.get("db_exact_locations", [])
+                    has_exact = False
                     
-                    if matched_word:
-                        loc_shoulds.append(FieldCondition(key="location", match=MatchText(text=matched_word)))
-                    if official_name:
-                        loc_shoulds.append(FieldCondition(key="location", match=MatchText(text=official_name)))
-                    
-                    if isinstance(db_exact_locations, list):
+                    if isinstance(db_exact_locations, list) and len(db_exact_locations) > 0:
+                        has_exact = True
                         for db_loc in db_exact_locations:
                             loc_shoulds.append(FieldCondition(key="location", match=MatchText(text=db_loc)))
+                    
+                    # DB 정답 장소가 파악됐다면, 20km 반경(GeoRadius)이나 모호한 이름 매칭을 전면 배제하여 칼같은 정확도 보장
+                    if not has_exact:
+                        if "lat" in loc_obj and "lon" in loc_obj:
+                            loc_shoulds.append(
+                                FieldCondition(
+                                    key="geo_point",
+                                    geo_radius=GeoRadius(
+                                        center=GeoPoint(lat=float(loc_obj["lat"]), lon=float(loc_obj["lon"])),
+                                        radius=min(float(loc_obj.get("radius", 20000)), 35000)
+                                    )
+                                )
+                            )
+                        
+                        matched_word = loc_obj.get("matched_word", "")
+                        official_name = loc_obj.get("official_name", "")
+                        
+                        if matched_word:
+                            loc_shoulds.append(FieldCondition(key="location", match=MatchText(text=matched_word)))
+                        if official_name:
+                            loc_shoulds.append(FieldCondition(key="location", match=MatchText(text=official_name)))
             except Exception as e:
                 print(f"[-] GeoRadius 파싱 에러: {e}")
                 
@@ -708,6 +718,33 @@ async def get_random_themes(limit: int = 9):
     # 2. 캐시 파일이 만들어지기 전(최초 구동)에는 빈 배열 반환하여 UI 오류 방지
     # (실제 캐시는 새벽 3시나 인덱싱 완료 후 백그라운드 워커가 생성함)
     return {"themes": []}
+
+@router.get("/api/family_tags")
+async def get_family_tags():
+    """
+    사용자의 'Guma Family' 모든 태그에 대한 캐시를 1번의 가벼운 요청(태그 당 20장)으로 
+    프론트엔드에 한방에 쏴주는 궁극의 최적화 라우트입니다.
+    """
+    cache_path = "/app/data/caches/timeline_cache.json"
+    result = {}
+    try:
+        if os.path.exists(cache_path):
+            with open(cache_path, "r", encoding="utf-8") as f:
+                t_cache = json.load(f)
+            # 프론트엔드가 요구하는 5개의 메인 태그
+            tags = ["recent", "성욱", "준우", "지우", "송이"]
+            for tag in tags:
+                if tag in t_cache:
+                    cached_list = t_cache[tag]
+                    result[tag] = {
+                        "results": cached_list[:20], # UI 부하 방지를 위해 초기 로딩은 20장만
+                        "offset": 20,
+                        "totalHits": len(cached_list),
+                        "hasMore": len(cached_list) > 20
+                    }
+    except Exception as e:
+        print(f"[-] Family tags cache load error: {e}")
+    return result
 
 @router.get("/api/system/indexer-log")
 def get_indexer_log():

@@ -174,88 +174,8 @@ class VectorIndexer:
         return False
 
 
-    def extract_time_and_season(self, filepath, date_val=None):
-        """EXIF나 파일명을 기반으로 시간대(Time of Day)와 계절(Season) 추출"""
-        time_of_day = "Unknown"
-        season = "Unknown"
-        
-        # 1. 전달받은 exiftool 날짜 파싱
-        if date_val and str(date_val) != "Unknown Date":
-            try:
-                parts = str(date_val).split(' ')
-                if len(parts) >= 2:
-                    date_part, time_part = parts[0], parts[1]
-                    hour = int(time_part.split(':')[0])
-                    if 0 <= hour < 6: time_of_day = "새벽"
-                    elif 6 <= hour < 12: time_of_day = "아침"
-                    elif 12 <= hour < 18: time_of_day = "낮"
-                    else: time_of_day = "밤/저녁"
-                    
-                    month_str = date_part.split(':')[1] if ':' in date_part else date_part.split('-')[1]
-                    month = int(month_str)
-                    if month in [3, 4, 5]: season = "봄"
-                    elif month in [6, 7, 8]: season = "여름"
-                    elif month in [9, 10, 11]: season = "가을"
-                    elif month in [12, 1, 2]: season = "겨울"
-            except Exception:
-                pass
-                
-        # 2. EXIF에서 정확한 시간 추출 시도
-        if season == "Unknown":
-            try:
-                with open(filepath, 'rb') as f:
-                    tags = exifread.process_file(f, details=False)
-                
-                if 'EXIF DateTimeOriginal' in tags:
-                    dt_str = str(tags['EXIF DateTimeOriginal'])
-                    # 포맷: 2023:10:15 14:30:00
-                    parts = dt_str.split(' ')
-                    if len(parts) == 2:
-                        date_part = parts[0]
-                        time_part = parts[1]
-                        
-                        # 시간대 구분
-                        hour = int(time_part.split(':')[0])
-                        if 0 <= hour < 6:
-                            time_of_day = "새벽"
-                        elif 6 <= hour < 12:
-                            time_of_day = "아침"
-                        elif 12 <= hour < 18:
-                            time_of_day = "낮"
-                        else:
-                            time_of_day = "밤/저녁"
-                            
-                        # 계절 구분 (월 기반)
-                        month = int(date_part.split(':')[1])
-                        if month in [3, 4, 5]:
-                            season = "봄"
-                        elif month in [6, 7, 8]:
-                            season = "여름"
-                        elif month in [9, 10, 11]:
-                            season = "가을"
-                        elif month in [12, 1, 2]:
-                            season = "겨울"
-            except Exception:
-                pass
-            
-        # 2. EXIF가 날아갔다면 폴더명/파일명에서 유추 (예: /app/data/organized/2012-12_San-Francisco/2012-12_177.jpg)
-        if season == "Unknown":
-            import re
-            match = re.search(r'(19|20)\d{2}-(\d{2})', filepath)
-            if match:
-                month = int(match.group(2))
-                if month in [3, 4, 5]:
-                    season = "봄"
-                elif month in [6, 7, 8]:
-                    season = "여름"
-                elif month in [9, 10, 11]:
-                    season = "가을"
-                elif month in [12, 1, 2]:
-                    season = "겨울"
-                    
-        return time_of_day, season
-
     def process_batch(self, valid_items, force_location=None, force_date=None):
+        from api.utils.metadata_parser import MetadataParser
         """Pre-fetched batch 단위로 메모리에 올려 병렬 연산 (CPU/GPU 동시 가동을 위함)"""
         points_to_upsert = []
         successful_payloads = []
@@ -367,7 +287,7 @@ class VectorIndexer:
                     
                     exif_dict[fname] = {"date": dt_str, "loc": loc_str, "lat": lat_f, "lon": lon_f}
                     if date_val:
-                        exif_dict[fname]["time_of_day"], exif_dict[fname]["season"] = self.extract_time_and_season(fpath, date_val=date_val)
+                        exif_dict[fname]["time_of_day"], exif_dict[fname]["season"] = MetadataParser.parse_time_and_season(filepath=fpath, date_val=date_val)
                         
         except Exception as e:
             print(f"      🚨 배치 EXIF 추출 오류: {e}")
@@ -449,63 +369,8 @@ class VectorIndexer:
                         lon_key = round(lon_f, 3)
                         cache_key = f"{lat_key}_{lon_key}"
                         
-                        if not hasattr(self, 'location_cache'):
-                            self.osm_cache_path = "/app/data/osm_cache.json"
-                            self.location_cache = {}
-                            if os.path.exists(self.osm_cache_path):
-                                try:
-                                    with open(self.osm_cache_path, "r", encoding="utf-8") as fm:
-                                        self.location_cache = json.load(fm)
-                                except: pass
-                                
-                        if cache_key in self.location_cache:
-                            location_str = self.location_cache[cache_key]
-                        else:
-                            try:
-                                import urllib.request, time
-                                time.sleep(1.1)
-                                req_url = f"https://nominatim.openstreetmap.org/reverse?lat={lat_f}&lon={lon_f}&format=jsonv2&accept-language=ko"
-                                req = urllib.request.Request(req_url, headers={'User-Agent': 'GumaPhotoIndexer/CacheNode'})
-                                with urllib.request.urlopen(req, timeout=5) as resp:
-                                    if resp.status == 200:
-                                        import json
-                                        geo_data = json.loads(resp.read().decode('utf-8'))
-                                        addr = geo_data.get('address', {})
-                                        country = addr.get('country', '')
-                                        state = addr.get('state', '') or addr.get('province', '') or addr.get('region', '')
-                                        city = addr.get('city', '') or addr.get('town', '') or addr.get('county', '')
-                                        suburb = addr.get('suburb', '') or addr.get('borough', '') or addr.get('village', '')
-                                        
-                                        clean_parts = []
-                                        if country: clean_parts.append(country)
-                                        if state and state != country: clean_parts.append(state)
-                                        if city and city != state: clean_parts.append(city)
-                                        if suburb and suburb != city: clean_parts.append(suburb)
-                                        
-                                        if clean_parts:
-                                            self.location_cache[cache_key] = " ".join(clean_parts)
-                                        else:
-                                            self.location_cache[cache_key] = geo_data.get('display_name', "Unknown Location").split(',')[0].strip()
-                                            
-                                        import unicodedata
-                                        def _remove_latin(t):
-                                            if not isinstance(t, str): return t
-                                            res = ""
-                                            for c in t:
-                                                if 'LATIN' in unicodedata.name(c, ''):
-                                                    res += unicodedata.normalize('NFD', c).encode('ascii', 'ignore').decode('utf-8')
-                                                else: res += c
-                                            return res
-                                            
-                                        location_str = _remove_latin(self.location_cache[cache_key])
-                                        print(f"      [📍 OSM 스마트 번역 성공] {lat_key}_{lon_key} ➡️ {location_str}")
-                                        try:
-                                            with open(self.osm_cache_path, "w", encoding="utf-8") as fm:
-                                                json.dump(self.location_cache, fm, ensure_ascii=False)
-                                        except: pass
-                            except Exception as gc_e:
-                                print(f"      [-] OSM 역 지오코딩 에러: {gc_e}")
-                                self.location_cache[cache_key] = "Unknown Location"
+                        from api.utils.metadata_parser import MetadataParser
+                        location_str = MetadataParser.parse_location(lat_f, lon_f)
                             
                 # [ WebP 프론트엔드 최적화 썸네일 자동 생성 ]
                 if self.run_webp_thumbnail:
@@ -593,6 +458,7 @@ class VectorIndexer:
         gc.collect()
 
     def force_reindex_files(self, target_filepaths, force_location=None, force_date=None):
+        from api.utils.metadata_parser import MetadataParser
         print(f"[*] 강제 리인덱싱(덮어쓰기) 모드 발동: {len(target_filepaths)}장")
         for i in range(0, len(target_filepaths), BATCH_SIZE):
             chunk = target_filepaths[i:i + BATCH_SIZE]
@@ -604,7 +470,7 @@ class VectorIndexer:
                     pil_img = Image.open(filepath).convert('RGB')
                     cv_img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
                     context_str = self.get_original_context(filepath)
-                    time_of_day, season = self.extract_time_and_season(filepath)
+                    time_of_day, season = MetadataParser.parse_time_and_season(filepath=filepath)
                     import uuid
                     point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, filepath))
                     batch.append({
@@ -657,6 +523,7 @@ class VectorIndexer:
         batch_queue = queue.Queue(maxsize=1) # 메모리 버퍼: 너무 많으면 RAM OOM 발생! 최대 1개 선로딩
 
         def cpu_producer():
+            from api.utils.metadata_parser import MetadataParser
             with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
                 for i in range(0, total, BATCH_SIZE):
                     batch_paths = all_targets[i : i + BATCH_SIZE]
@@ -671,7 +538,7 @@ class VectorIndexer:
                             pil_img = Image.open(filepath).convert('RGB')
                             cv_img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
                             context_str = self.get_original_context(filepath)
-                            time_of_day, season = self.extract_time_and_season(filepath)
+                            time_of_day, season = MetadataParser.parse_time_and_season(filepath=filepath)
                             import uuid
                             point_id = str(uuid.uuid5(uuid.NAMESPACE_URL, filepath))
                             

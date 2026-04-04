@@ -12,7 +12,6 @@ from datetime import datetime
 import exifread
 import re
 from typing import Any
-from geopy.geocoders import Nominatim
 
 # AI Models
 from insightface.app import FaceAnalysis
@@ -156,45 +155,13 @@ class OrganizerPipeline:
         if lat is not None and lon is not None:
             if lat != 999.0:
                 try:
-                    loc_str = self.get_location_name(lat, lon)
+                    from api.utils.metadata_parser import MetadataParser
+                    loc_str = MetadataParser.parse_location(lat, lon)
                 except Exception:
                     pass
         
         loc_str = re.sub(r'[\\/:*?"<>|]+', '-', loc_str)
         return dt_str, loc_str
-
-    def get_location_name(self, lat, lon):
-        cache_key = f"{round(lat, 3)},{round(lon, 3)}"
-        if cache_key in self.geocode_cache:
-            return self.geocode_cache[cache_key]
-
-        if self.geolocator is None:
-            self.geolocator = Nominatim(user_agent="guma_photo_organizer")
-            
-        try:
-            time.sleep(1.1)
-            location = self.geolocator.reverse((lat, lon), language='ko', timeout=10)
-            if not location:
-                return "Unknown-Location"
-                
-            addr = location.raw.get('address', {})
-            city = addr.get('city') or addr.get('town') or addr.get('village') or addr.get('county')
-            state = addr.get('state') or addr.get('country')
-            
-            if city and state:
-                raw_loc = f"{state}-{city}"
-            elif state:
-                raw_loc = state
-            elif city:
-                raw_loc = city
-            else:
-                raw_loc = "Unknown-Location"
-                
-            formatted_name = raw_loc.replace(' ', '-')
-            self.geocode_cache[cache_key] = formatted_name
-            return formatted_name
-        except Exception:
-            return "Unknown-Location"
 
     def generate_clean_filename(self, dt_str, sequence_idx, original_ext):
         return f"{dt_str}_{sequence_idx:02d}{original_ext}"

@@ -23,10 +23,17 @@ if os.path.exists(base_enrolled_dir):
             if img is None: continue
             faces = face_app.get(img)
             
-            # [안전 장치] 만약 너무 타이트하게 잘려 여백이 없어 인식을 실패했다면, 가상의 검은 여백을 주고 재탐색
-            if not faces and img.shape[0] < 300:
+            # [안전 장치 1] 만약 너무 타이트하게 잘려 여백이 없어 인식을 실패했다면, 가상의 검은 여백을 주고 해상도와 무관하게 무조건 재탐색
+            if not faces:
                 padded_img = cv2.copyMakeBorder(img, 100, 100, 100, 100, cv2.BORDER_CONSTANT, value=[0, 0, 0])
                 faces = face_app.get(padded_img)
+                
+            # [안전 장치 2] 만약 얼굴이 지나치게 크게 확대되어(Zoom) 컨텍스트가 붕괴되었다면, 축소 후 넓은 여백을 주어 재시도
+            if not faces:
+                scale = min(1.0, 300.0 / max(img.shape[0], img.shape[1]))
+                resized = cv2.resize(img, (0, 0), fx=scale, fy=scale)
+                padded_img2 = cv2.copyMakeBorder(resized, 200, 200, 200, 200, cv2.BORDER_CONSTANT, value=[0, 0, 0])
+                faces = face_app.get(padded_img2)
                 
             if not faces: continue
             

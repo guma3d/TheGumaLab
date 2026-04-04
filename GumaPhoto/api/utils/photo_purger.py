@@ -150,6 +150,20 @@ class PhotoPurger:
                 print(f"   ⚠️ {err_msg}")
                 cache_errors.append(err_msg)
                 
+        # 3. Feedback cache 방어
+        try:
+            from api.services.feedback_cache import feedback_cache
+            with feedback_cache.lock:
+                original_len = len(feedback_cache.queue)
+                feedback_cache.queue = [item for item in feedback_cache.queue if str(item["raw"].id) != point_id]
+                if len(feedback_cache.queue) != original_len:
+                    feedback_cache.save_to_disk()
+                    print(f"   🧹 [캐싱 타겟 제거] feedback_cache 에서 {point_id} 완벽 추방 완료!")
+        except Exception as e:
+            err_msg = f"feedback_cache 업데이트 실패: {str(e)}"
+            print(f"   ⚠️ {err_msg}")
+            cache_errors.append(err_msg)
+            
         if cache_errors:
             return "캐시 제거 실패 (" + " / ".join(cache_errors) + ")"
         return None

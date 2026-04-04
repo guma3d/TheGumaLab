@@ -72,8 +72,8 @@ document.addEventListener('click', e => {
         if (GumaState.cachedTags[GumaState.currentGalleryFilter]) {
             const c = GumaState.cachedTags[GumaState.currentGalleryFilter];
             GumaState.currentOffset = c.offset;
-            GumaState.hasMore = c.GumaState.hasMore;
-            GumaState.totalHits = c.GumaState.totalHits;
+            GumaState.hasMore = c.hasMore;
+            GumaState.totalHits = c.totalHits;
 
             document.getElementById('gallery-grid').innerHTML = '';
             document.getElementById('search-grid').innerHTML = '';
@@ -97,45 +97,23 @@ document.addEventListener('click', e => {
 
 // Preload other tags into memory
 async function preloadTags() {
-    const tagsToPreload = ["성욱", "준우", "지우", "송이", "recent"];
-    let apiUrl = '/api/search';
+    let familyUrl = '/api/family_tags';
     if (window.location.pathname.startsWith('/GumaPhoto')) {
-        apiUrl = '/GumaPhoto/api/search';
+        familyUrl = '/GumaPhoto/api/family_tags';
     }
-
-    for (let tag of tagsToPreload) {
-        if (GumaState.cachedTags[tag]) continue;
-        try {
-            let t_query = "tag_dummy";
-            let t_scene = "";
-            let t_people = [tag];
-            let t_limit = 50;
-            if (tag === "recent") {
-                t_query = "timeline_dummy";
-                t_scene = "photo";
-                t_people = [];
-                t_limit = 20;
+    
+    try {
+        const res = await fetch(familyUrl);
+        if (res.ok) {
+            const data = await res.json();
+            for (let tag in data) {
+                 if (!GumaState.cachedTags[tag]) {
+                     GumaState.cachedTags[tag] = data[tag];
+                 }
             }
-            const res = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    query: t_query, offset: 0, limit: t_limit, is_load_more: true,
-                    people: t_people, location: "", scene: t_scene
-                })
-            });
-            if (res.ok) {
-                const data = await res.json();
-                let results = data.results || [];
-                if (tag !== "recent") {
-                    results = results.filter(p => p.people && p.people.length === 1 && p.people.includes(tag));
-                }
-                GumaState.cachedTags[tag] = {
-                    results: results,
-                    offset: t_limit, totalHits: results.length, hasMore: (data.results && data.results.length >= t_limit)
-                };
-            }
-        } catch (e) { }
+        }
+    } catch (e) { 
+        console.error("Family tags preload failed:", e);
     }
 }
 
@@ -241,7 +219,7 @@ async function fetchPhotos(isLoadMore) {
                     t_query = "tag_dummy";
                     t_scene = "";
                     t_people = [GumaState.currentGalleryFilter];
-                    t_limit = 50; // Over-fetch to filter solo shots
+                    t_limit = 20; // 🎯 백엔드에서 이미 Solo Shot으로 완벽히 정제되었으므로 20장만 로드 (렌더링 속도 최적화)
                 }
 
                 const timelinePromise = fetch(apiUrl, {
@@ -321,7 +299,7 @@ async function fetchPhotos(isLoadMore) {
                     t_query = "tag_dummy";
                     t_scene = "";
                     t_people = [GumaState.currentGalleryFilter];
-                    t_limit = 50;
+                    t_limit = 20;
                 }
 
                 const res = await fetch(apiUrl, {

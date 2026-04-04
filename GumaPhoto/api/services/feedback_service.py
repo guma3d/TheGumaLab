@@ -6,7 +6,6 @@ import pickle
 import uuid
 import numpy as np
 from qdrant_client import QdrantClient
-from geopy.geocoders import Nominatim
 
 from core.database import SessionLocal
 from core.models import Photo
@@ -98,32 +97,12 @@ def process_time_location_feedback(qdrant_id: str, target_date: str, target_loca
             raw_place = str(match.group(3)).strip()
             
             try:
-                import urllib.request
-                req_url = f"https://nominatim.openstreetmap.org/reverse?lat={lat_val}&lon={lon_val}&format=jsonv2&accept-language=ko"
-                req = urllib.request.Request(req_url, headers={'User-Agent': 'GumaPhoto-FeedbackWorker/1.0'})
-                with urllib.request.urlopen(req, timeout=5) as resp:
-                    if resp.status == 200:
-                        geo_data = json.loads(resp.read().decode('utf-8'))
-                        addr = geo_data.get('address', {})
-                        country = addr.get('country', '')
-                        city = addr.get('city', '') or addr.get('town', '') or addr.get('county', '')
-                        suburb = addr.get('suburb', '') or addr.get('borough', '') or addr.get('village', '')
-                        
-                        clean_parts = []
-                        if country: clean_parts.append(country)
-                        if city: clean_parts.append(city)
-                        if suburb: clean_parts.append(suburb)
-                        
-                        if clean_parts:
-                            final_osm_name = " ".join(clean_parts)
-                        else:
-                            final_osm_name = geo_data.get('display_name', raw_place).split(',')[0].strip()
-                        
-                        # 나중에 인덱서가 재스캔해도 동일하게 인식되도록 target_location 자체를 덮어쓰기!
-                        target_location = f"[{lat_val}, {lon_val}] {final_osm_name}"
-                        print(f"  [📍 피드백 일관성 통합] 카카오 '{raw_place}' ➡️ OSM '{final_osm_name}'")
+                from api.utils.metadata_parser import MetadataParser
+                final_osm_name = MetadataParser.parse_location(lat_val, lon_val)
+                target_location = f"[{lat_val}, {lon_val}] {final_osm_name}"
+                print(f"  [📍 피드백 일관성 통합] 카카오 '{raw_place}' ➡️ OSM 메타데이터 통합 '{final_osm_name}'")
             except Exception as e:
-                print(f"  [-] OSM 역 지오코딩 실패(원본 유지): {e}")
+                print(f"  [-] 통합 OSM 메타데이터 파서 실패(원본 유지): {e}")
 
     # ----------------------------------------------------
     # [1단계] 메타데이터 수정 (EXIF 영구 변경)
@@ -174,7 +153,11 @@ def process_time_location_feedback(qdrant_id: str, target_date: str, target_loca
             payload_update["location"] = clean_target_location
             
         if target_date and "Unknown" not in target_date:
+            from api.utils.metadata_parser import MetadataParser
+            time_of_day, season = MetadataParser.parse_time_and_season(date_val=target_date)
             payload_update["date"] = target_date
+            if time_of_day != "Unknown": payload_update["time_of_day"] = time_of_day
+            if season != "Unknown": payload_update["season"] = season
             
         if payload_update:
             try:
@@ -208,6 +191,12 @@ def process_time_location_feedback(qdrant_id: str, target_date: str, target_loca
                     }, ensure_ascii=False) + "\n")
         except Exception as e:
             print(f"      [!] 시스템 로그 갱신 중 에러 (무시): {e}")
+            
+        try:
+            from api.services.theme_service import build_timeline_cache_only
+            build_timeline_cache_only()
+        except Exception as e:
+            print(f"      [!] 타임라인 캐시 동기화 콜백 에러: {e}")
         
         print("  [+] 메타데이터 EXIF 주입 및 DB 덮어쓰기가 초고속으로 완료되었습니다!")
 
@@ -305,9 +294,11 @@ def process_face_enrollment(qdrant_id: str, known_name: str, target_points_json:
     elif face_bbox and len(face_bbox) == 4:
         bw = face_bbox[2] - face_bbox[0]
         bh = face_bbox[3] - face_bbox[1]
-        if bw < 300 or bh < 300:
+        
+        # InsightFace 최적 입력 크기는 112x112. 100px 미만인 아주 흐릿한 군중 속 얼굴만 딥러닝 오염 방지를 위해 스킵합니다.
+        if bw < 100 or bh < 100:
             learnable = False
-            print(f"  [🛡️ 딥러닝 보호] BBox 크기({int(bw)}x{int(bh)})가 300px 미만이므로, 품질 보호를 위해 enrolled 등록 및 실시간 벡터 주입을 스킵합니다.")
+            print(f"  [🛡️ 딥러닝 보호] BBox 크기({int(bw)}x{int(bh)})가 100px 미만이므로, 품질 보호를 위해 enrolled 등록 및 실시간 벡터 주입을 스킵합니다.")
     else:
         learnable = False
         
@@ -401,5 +392,11 @@ def process_face_enrollment(qdrant_id: str, known_name: str, target_points_json:
         except: pass
         
         print(f"    - {os.path.basename(filepath)} : 영구 업데이트 완료 [{known_name}]")
+        
+    try:
+        from api.services.theme_service import build_timeline_cache_only
+        build_timeline_cache_only()
+    except Exception as e:
+        print(f"  [!] 타임라인 캐시 동기화 콜백 에러: {e}")
         
     print("  [+] 인물 사진 도감 축적 및 DB 반영 모두 완료되었습니다! (딥러닝 모델 병합은 새벽에 진행됩니다)")
