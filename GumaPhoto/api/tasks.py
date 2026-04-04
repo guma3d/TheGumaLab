@@ -25,7 +25,7 @@ def run_indexer_job():
     try:
         import sys
         sys.path.append("/app")
-        from vector_indexer import VectorIndexer
+        from Scripts.vector_indexer import VectorIndexer
         print("🚀 [Celery] 최신 메인 Vector Indexer (딥러닝 VRAM 가동) 시작...")
         idx_bot = VectorIndexer()
         idx_bot.run()
