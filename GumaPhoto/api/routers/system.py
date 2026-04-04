@@ -29,7 +29,10 @@ def get_system_progress():
                 ]
             )).count
             unk_person = qc.count(collection_name=coll, count_filter=Filter(
-                must=[FieldCondition(key="people", match=MatchValue(value="Unknown People"))]
+                should=[
+                    FieldCondition(key="people", match=MatchValue(value="Unknown People")),
+                    FieldCondition(key="people", match=MatchValue(value="Unknown Person"))
+                ]
             )).count
         except Exception as e:
             print(f"[System Stats Error] Qdrant metrics: {e}")
@@ -112,10 +115,13 @@ def get_advanced_system_stats(force_refresh: bool = False):
             
             people_list = p.get("people", [])
             if not people_list:
-                counts["people"]["Unknown Person"] += 1
+                counts["people"]["Unknown People"] += 1
             else:
                 for person in people_list:
-                    counts["people"][person] += 1
+                    if person == "Unknown Person":
+                        counts["people"]["Unknown People"] += 1
+                    else:
+                        counts["people"][person] += 1
         
         known_faces_names = set()
         kf_path = "/app/data/known_faces.pkl"

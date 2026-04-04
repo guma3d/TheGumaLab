@@ -10,10 +10,35 @@ from qdrant_client.http.models import Filter, FieldCondition, MatchText, MatchAn
 
 router = APIRouter()
 
-# 전역 메모리 캐시: 디스크 I/O 병목 방지를 위한 이미지 해상도/용량 인메모리 저장소
-_IMAGE_META_CACHE = {}
-# 검색 속도 향상: Gemini NLP 분석 결과를 인메모리에 캐싱하여 중복 호출 방지 (스크롤 시 초고속)
+import json
+import hashlib
+import os
+
+_IMAGE_META_CACHE_FILE = "/app/data/image_meta_cache.json"
+try:
+    if os.path.exists(_IMAGE_META_CACHE_FILE):
+        with open(_IMAGE_META_CACHE_FILE, "r") as f:
+            _IMAGE_META_CACHE = json.load(f)
+    else:
+        _IMAGE_META_CACHE = {}
+except Exception:
+    _IMAGE_META_CACHE = {}
+
+def _get_auto_cache_version():
+    try:
+        # 이 파일(search.py)의 내용이 한 글자라도 바뀌면 해시값이 자동으로 바뀝니다.
+        with open(__file__, 'rb') as f:
+            return "v_" + hashlib.md5(f.read()).hexdigest()[:8]
+    except Exception:
+        return "v_auto"
+
 _NLP_CACHE = {}
+_NLP_CACHE_VERSION = _get_auto_cache_version() # 사람이 까먹어도 파일이 수정되면 즉시 캐시 무효화
+
+@router.post("/clear_nlp_cache")
+def clear_nlp_cache():
+    _NLP_CACHE.clear()
+    return {"status": "success", "message": "NLP 쿼리 캐시가 초기화되었습니다."}
 
 class SearchRequest(BaseModel):
     query: str = ""
@@ -55,7 +80,6 @@ async def perform_search(req: SearchRequest):
         try:
             cache_path = "/app/data/caches/timeline_cache.json"
             if os.path.exists(cache_path):
-                import json
                 with open(cache_path, "r", encoding="utf-8") as f:
                     t_cache = json.load(f)
                 
@@ -70,7 +94,8 @@ async def perform_search(req: SearchRequest):
                         sliced = cached_list[req.offset : end_idx]
                         if sliced:
                             print(f"🚀 [Baking Cache Hit] Guma Family 통합 아키텍처 JSON 반환: {target_key} ({req.offset}~{end_idx}장)")
-                            # [FIX] 캐시 반환 시에도 ইন메모리 해상도 사이즈 정보 강제 병합
+                            # [FIX] 캐시 반환 시에도 인메모리 해상도 사이즈 정보 강제 병합
+                            cache_updated = False
                             for res in sliced:
                                 orig_path = res.get("original_path", "")
                                 if orig_path in _IMAGE_META_CACHE:
@@ -81,12 +106,21 @@ async def perform_search(req: SearchRequest):
                                         with Image.open(orig_path) as img:
                                             w, h = img.size
                                         sz = os.path.getsize(orig_path)
-                                        _IMAGE_META_CACHE[orig_path] = (w, h, sz)
+                                        _IMAGE_META_CACHE[orig_path] = [w, h, sz]
+                                        cache_updated = True
                                     except Exception:
                                         w, h, sz = 800, 800, 0
                                 res["width"] = w
                                 res["height"] = h
                                 res["file_size_bytes"] = sz
+                            
+                            if cache_updated:
+                                try:
+                                    with open(_IMAGE_META_CACHE_FILE, "w") as f:
+                                        json.dump(_IMAGE_META_CACHE, f)
+                                except Exception as e:
+                                    print(f"[-] Image Meta Cache 영구 저장 실패: {e}")
+                                    
                             return {"results": sliced}
         except Exception as e:
             print(f"[-] File Cache Load Error: {e}")
@@ -95,8 +129,12 @@ async def perform_search(req: SearchRequest):
     extracted_years = []
     extracted_names = []
     extracted_locations = []
+    extracted_seasons = []
+    extracted_times = []
+    known_locs_str = ""
+    
     if search_text and state.gemini_client:
-        import os, pickle, re, json, datetime
+        import pickle, datetime
         
         known_names_list = []
         if os.path.exists('/app/data/known_faces.pkl'):
@@ -141,8 +179,9 @@ async def perform_search(req: SearchRequest):
             print(f"[*] ⚡ NLP 0-ms Direct Hit: Years={extracted_years}, People={extracted_names}, Visual='EMPTY'")
         else:
             # 캐시 확인
-            if visual_query_key in _NLP_CACHE:
-                parsed = _NLP_CACHE[visual_query_key]
+            cache_key = f"{_NLP_CACHE_VERSION}_{visual_query_key}"
+            if cache_key in _NLP_CACHE:
+                parsed = _NLP_CACHE[cache_key]
                 
                 # 병합: 로컬에서 찾은 것 + 캐시에서 꺼낸 것
                 extracted_years = list(set(local_years + parsed.get("years", [])))
@@ -161,7 +200,6 @@ async def perform_search(req: SearchRequest):
                     current_year = datetime.datetime.now().year
                     known_names_str = ", ".join(known_names_list)
                     
-                    known_locs_str = ""
                     if os.path.exists("/app/data/available_tags.json"):
                         with open("/app/data/available_tags.json", "r", encoding="utf-8") as fm:
                             tag_data = json.load(fm)
@@ -180,17 +218,19 @@ Parse the query into EXACTLY this JSON structure:
 {{
   "years": [], // list of integers, e.g., 2025. convert "작년" to {current_year - 1}. If none, []
   "people": [], // list of names exactly matching the Known People list. Fix misspellings if obvious. If none, []
-  "locations": [ // If any specific place, landmark, city, or province is mentioned (e.g. "하와이", "전라도", "오사카", "집근처"), convert it into GPS coordinates (WGS84).
+  "locations": [ // If a broad region ("전라도", "강원도", "제주도", "유럽") is queried, DO NOT output a massive single location. Instead, output MULTIPLE specific locations corresponding to actual cities/districts strictly derived from 'Known Locations in DB'. (e.g. for "강원도", select ["대한민국-강릉시", "대한민국-속초시", "대한민국-춘천시", "대한민국-삼척시"] if they exist in the DB list)
     {{
-      "lat": 21.3069,
-      "lon": -157.8583,
-      "radius": 300000,    // IMPORTANT: Estimate radius in METERS. Country: 1000000, State/Province (Hawaii, Jeju): 300000, City: 50000. DO NOT just copy this number.
-      "matched_word": "하와이", // The strict substring from the user query
-      "official_name": "Hawaii", // Official administrative name
-      "db_exact_locations": ["미국 하와이군", "미국 호놀룰루"] // MANDATORY: Select all heavily overlapping locations strictly from 'Known Locations in DB'.
+      "lat": 37.7518,
+      "lon": 128.876,
+      "radius": 20000,    // Provide small 20km radius. NEVER exceed 30000 (30km).
+      "matched_word": "강릉", // The strict substring from the user query
+      "official_name": "강릉시", // Official administrative name
+      "db_exact_locations": ["대한민국-강릉시"] // MANDATORY: Select all matching locations STRICTLY from 'Known Locations in DB'. Do not make up regions like '대한민국-강원도' if they are not in the list.
     }}
   ], // If none, []
-  "visual": "EMPTY" // Translate all remaining visual/abstract concepts to a concise English phrase. DO NOT include the extracted years, people, or locations. e.g. "수영하는" -> "swimming". If no visual meaning remains, output "EMPTY".
+  "seasons": [], // Extract mentioned seasons exactly matching ["봄", "여름", "가을", "겨울"]. If none, []
+  "time_of_days": [], // Extract mentioned times exactly matching ["아침", "낮", "오후", "저녁", "밤", "심야"]. If none, []
+  "visual": "EMPTY" // Translate all visual/abstract concepts (including seasons/times) into concise English keywords. For "겨울", output "winter, snow, cold, frozen". For "밤", output "night, dark, streetlights". DO NOT include people/locations. If none, "EMPTY".
 }}
 Output ONLY valid JSON without markup.
 """
@@ -211,12 +251,14 @@ Output ONLY valid JSON without markup.
                     parsed["people"] = clean_names 
                     
                     # '나머지 문장' 자체를 캐시 (다른 인물이 같은 행동을 검색할 때 100% 재활용)
-                    _NLP_CACHE[visual_query_key] = parsed
+                    _NLP_CACHE[cache_key] = parsed
                     
                     # 최종 병합
                     extracted_years = list(set(local_years + parsed.get("years", [])))
                     extracted_names = list(set(local_people + parsed.get("people", [])))
                     extracted_locations = parsed.get("locations", [])
+                    extracted_seasons = parsed.get("seasons", [])
+                    extracted_times = parsed.get("time_of_days", [])
                     visual_remainder = parsed.get("visual", "EMPTY")
                     
                     if visual_remainder.upper() != "EMPTY":
@@ -240,39 +282,40 @@ Output ONLY valid JSON without markup.
         for p_name in final_people:
             must_conds.append(FieldCondition(key="people", match=MatchValue(value=p_name)))
             
-    # [복구] 자연어 GPS GeoRadius 병합 + EXIF GPS 누락 사진을 위한 텍스트 위치 매칭 병합 (OR 조건)
-    for loc_obj in extracted_locations:
-        try:
-            if isinstance(loc_obj, dict) and "lat" in loc_obj and "lon" in loc_obj:
-                loc_shoulds = [
-                    FieldCondition(
-                        key="geo_point",
-                        geo_radius=GeoRadius(
-                            center=GeoPoint(lat=float(loc_obj["lat"]), lon=float(loc_obj["lon"])),
-                            radius=float(loc_obj.get("radius", 50000))
+    # [V2] 다중 중심점(Multi-Centroid) GPS 및 정확한 텍스트 매칭 OR(Should) 융합
+    if extracted_locations:
+        loc_shoulds = []
+        for loc_obj in extracted_locations:
+            try:
+                if isinstance(loc_obj, dict):
+                    if "lat" in loc_obj and "lon" in loc_obj:
+                        loc_shoulds.append(
+                            FieldCondition(
+                                key="geo_point",
+                                geo_radius=GeoRadius(
+                                    center=GeoPoint(lat=float(loc_obj["lat"]), lon=float(loc_obj["lon"])),
+                                    radius=min(float(loc_obj.get("radius", 20000)), 35000)
+                                )
+                            )
                         )
-                    )
-                ]
+                    
+                    matched_word = loc_obj.get("matched_word", "")
+                    official_name = loc_obj.get("official_name", "")
+                    db_exact_locations = loc_obj.get("db_exact_locations", [])
+                    
+                    if matched_word:
+                        loc_shoulds.append(FieldCondition(key="location", match=MatchText(text=matched_word)))
+                    if official_name:
+                        loc_shoulds.append(FieldCondition(key="location", match=MatchText(text=official_name)))
+                    
+                    if isinstance(db_exact_locations, list):
+                        for db_loc in db_exact_locations:
+                            loc_shoulds.append(FieldCondition(key="location", match=MatchText(text=db_loc)))
+            except Exception as e:
+                print(f"[-] GeoRadius 파싱 에러: {e}")
                 
-                # 사용자의 요청에 따라 캡션(caption)/폴더명 제외! 오직 DB에 입력된 공식 location 페이로드만 검색
-                matched_word = loc_obj.get("matched_word", "")
-                official_name = loc_obj.get("official_name", "")
-                db_exact_locations = loc_obj.get("db_exact_locations", [])
-                
-                if matched_word:
-                    loc_shoulds.append(FieldCondition(key="location", match=MatchText(text=matched_word)))
-                if official_name:
-                    loc_shoulds.append(FieldCondition(key="location", match=MatchText(text=official_name)))
-                
-                # AI가 DB에서 직접 찾아낸 정확한 매칭 키워드로 OR 조건 추가 (형태소 분석 오류 극복)
-                if isinstance(db_exact_locations, list):
-                    for db_loc in db_exact_locations:
-                        loc_shoulds.append(FieldCondition(key="location", match=MatchText(text=db_loc)))
-
-                # GPS 반경 안에 있거나, DB location 텍스트(공식 행정구역명 등)에 일치하는 결과 조회
-                must_conds.append(Filter(should=loc_shoulds))
-        except Exception as e:
-            print(f"[-] GeoRadius 파싱 에러: {e}")
+        if loc_shoulds:
+            must_conds.append(Filter(should=loc_shoulds))
             
     # UI 명시적 텍스트 Location 필터 병합
     if req.location and req.location != "All Locations":
@@ -304,6 +347,8 @@ Output ONLY valid JSON without markup.
         group_filter = Filter(must=g_musts)
     else:
         exact_filter = Filter(must=must_conds) if must_conds else None
+        
+    print(f"[*] EXACT_FILTER DUMP: {exact_filter}")
         
     q_filter = Filter(must=must_conds) if must_conds else None
 
@@ -355,6 +400,7 @@ Output ONLY valid JSON without markup.
                 })
             # 사용자가 강제한 필터 내역(장소, 인물 등)이 있음에도 0건일 시 억지로 제약을 푸는 현상을 방지합니다.
             # _IMAGE_META_CACHE 를 통해 프론트엔드 Masonry UI에서 박스가 깨지지 않도록 메타데이터를 직접 주입해 리턴.
+            cache_updated = False
             for res in formatted_results:
                 orig_path = res.get("original_path", "")
                 if orig_path in _IMAGE_META_CACHE:
@@ -362,16 +408,23 @@ Output ONLY valid JSON without markup.
                 else:
                     try:
                         from PIL import Image
-                        import os
                         with Image.open(orig_path) as img:
                             w, h = img.size
                         sz = os.path.getsize(orig_path)
-                        _IMAGE_META_CACHE[orig_path] = (w, h, sz)
+                        _IMAGE_META_CACHE[orig_path] = [w, h, sz]
+                        cache_updated = True
                     except Exception:
                         w, h, sz = 800, 800, 0
                 res["width"] = w
                 res["height"] = h
                 res["file_size_bytes"] = sz
+                
+            if cache_updated:
+                try:
+                    with open(_IMAGE_META_CACHE_FILE, "w") as f:
+                        json.dump(_IMAGE_META_CACHE, f)
+                except Exception as e:
+                    print(f"[-] Image Meta Cache 영구 저장 실패: {e}")
             
             print(f"✅ 엄격한 하드 필터 검색 완료: {len(formatted_results)}건 반환 / 총 {total_hits_count}건")
             return {"results": formatted_results, "total_hits": total_hits_count}
@@ -381,6 +434,8 @@ Output ONLY valid JSON without markup.
 
 
     try:
+        from qdrant_client.http.models import Prefetch, FusionQuery, Fusion
+        
         with torch.no_grad():
             inputs = state.siglip_processor(text=[search_text], padding="max_length", return_tensors="pt")
             inputs = {k: v.to(state.siglip_model.device) for k, v in inputs.items()}
@@ -389,18 +444,52 @@ Output ONLY valid JSON without markup.
             text_features = text_features / text_features.norm(p=2, dim=-1, keepdim=True)
             text_vector = text_features[0].cpu().numpy().tolist()
         
+        # [V2] RRF 기반 듀얼 라우팅 세팅 (계절/시간대 메타데이터 병합)
+        use_rrf = bool(extracted_seasons or extracted_times)
+        
+        def execute_qdrant_query(q_filter):
+            if use_rrf:
+                metadata_shoulds = []
+                if extracted_seasons:
+                    metadata_shoulds.extend([FieldCondition(key="season", match=MatchValue(value=s)) for s in extracted_seasons])
+                if extracted_times:
+                    metadata_shoulds.extend([FieldCondition(key="time_of_day", match=MatchValue(value=t)) for t in extracted_times])
+                    
+                meta_must = []
+                if q_filter and q_filter.must:
+                    meta_must.extend(q_filter.must)
+                
+                metadata_filter = Filter(must=meta_must, should=metadata_shoulds, must_not=q_filter.must_not if q_filter else None)
+                
+                # Prefetch 2개를 묶어 RRF Fusion
+                return state.qdrant_client.query_points(
+                    collection_name="gumaphoto_hybrid_kr",
+                    prefetch=[
+                        Prefetch(query=text_vector, using="scene", filter=q_filter, limit=req.offset + req.limit),
+                        Prefetch(query=metadata_filter, limit=req.offset + req.limit)
+                    ],
+                    query=FusionQuery(fusion=Fusion.RRF),
+                    limit=req.offset + req.limit,
+                    offset=0,
+                    with_payload=True
+                ).points
+            else:
+                return state.qdrant_client.query_points(
+                    collection_name="gumaphoto_hybrid_kr", 
+                    query=text_vector, 
+                    using="scene", 
+                    query_filter=q_filter, 
+                    limit=req.offset + req.limit, 
+                    offset=0, 
+                    with_payload=True
+                ).points
+                
         if group_filter is not None:
-            results_exact = state.qdrant_client.query_points(
-                collection_name="gumaphoto_hybrid_kr", query=text_vector, using="scene", query_filter=exact_filter, limit=req.offset + req.limit, offset=0, with_payload=True
-            ).points
-            results_group = state.qdrant_client.query_points(
-                collection_name="gumaphoto_hybrid_kr", query=text_vector, using="scene", query_filter=group_filter, limit=req.offset + req.limit, offset=0, with_payload=True
-            ).points
+            results_exact = execute_qdrant_query(exact_filter)
+            results_group = execute_qdrant_query(group_filter)
             results = results_exact + results_group
         else:
-            results = state.qdrant_client.query_points(
-                collection_name="gumaphoto_hybrid_kr", query=text_vector, using="scene", query_filter=exact_filter, limit=req.offset + req.limit, offset=0, with_payload=True
-            ).points
+            results = execute_qdrant_query(exact_filter)
             
         raw_results = results[req.offset:req.offset+req.limit]
         
@@ -471,7 +560,6 @@ Output ONLY valid JSON without markup.
             else:
                 try:
                     from PIL import Image
-                    import os
                     with Image.open(orig_path) as img:
                         w, h = img.size
                     sz = os.path.getsize(orig_path)
@@ -499,12 +587,10 @@ Output ONLY valid JSON without markup.
 
 @router.get("/api/filters")
 async def get_filters():
-    import os
     locations = []
     dates = []
     try:
         if os.path.exists("/app/data/available_tags.json"):
-            import json
             with open("/app/data/available_tags.json", "r", encoding="utf-8") as f:
                 tag_data = json.load(f)
                 locations = sorted(tag_data.get("locations", []))
@@ -582,8 +668,6 @@ def get_map_geojson():
         return {"type": "FeatureCollection", "features": []}
 
 import random
-import os
-import json
 
 @router.get("/api/themes")
 async def get_random_themes(limit: int = 9):
@@ -625,7 +709,6 @@ async def get_random_themes(limit: int = 9):
     # (실제 캐시는 새벽 3시나 인덱싱 완료 후 백그라운드 워커가 생성함)
     return {"themes": []}
 
-import os
 @router.get("/api/system/indexer-log")
 def get_indexer_log():
     try:

@@ -526,29 +526,7 @@ document.getElementById('gallery-grid').addEventListener('scroll', (e) => {
 });
 
 
-// ==========================================
-// Photo Modal & Feedback Logic
-// ==========================================
-let currentModalPhoto = null;
-const photoModal = document.getElementById('photo-modal');
-const modalImage = document.getElementById('modal-image');
-const modalClose = document.getElementById('modal-close');
-const deleteBtn = document.getElementById('modal-delete-btn');
-const shareBtn = document.getElementById('modal-share-btn');
-const downloadBtn = document.getElementById('modal-download-btn');
-const modalInfoBadges = document.getElementById('modal-info-badges');
-const modalActionsCenter = document.querySelector('.modal-actions-center');
 
-let pzInstance = null;
-
-// 모달창에서 이미지 클릭 시 정보 뱃지 & 액션버튼 토글 숨김 기능
-modalImage.addEventListener('click', () => {
-    if (modalInfoBadges) modalInfoBadges.classList.toggle('hidden');
-    if (modalActionsCenter) modalActionsCenter.classList.toggle('hidden');
-});
-
-// Live Progress Monitor Logic (Moved to monitor.js)
-// ---------------------------------------------------------------------------------
 
 window.showStatsModal = function (type) {
     if (!GumaState.advancedStatsData) {
@@ -575,14 +553,12 @@ window.showStatsModal = function (type) {
 
         const ukP1 = GumaState.advancedStatsData.people.find(p => p.name === "Unknown People")?.count || 0;
         const ukP2 = GumaState.advancedStatsData.people.find(p => p.name === "Unknown Person")?.count || 0;
-        const ukP3 = GumaState.advancedStatsData.people.find(p => p.name === "Unidentifiable Person")?.count || 0;
-        const ukP4 = GumaState.advancedStatsData.people.find(p => p.name === "No People")?.count || 0;
-        const ukPerson = ukP1 + ukP2 + ukP3 + ukP4;
+        const ukPerson = ukP1 + ukP2;
 
         items = [
             { name: "Unknown Date", count: ukDate, pct: ((ukDate / GumaState.advancedStatsData.total_photos) * 100).toFixed(1) + "%", color: "#f43f5e" },
             { name: "Unknown Location", count: ukLoc, pct: ((ukLoc / GumaState.advancedStatsData.total_photos) * 100).toFixed(1) + "%", color: "#eab308" },
-            { name: "Unknown Person", count: ukPerson, pct: ((ukPerson / GumaState.advancedStatsData.total_photos) * 100).toFixed(1) + "%", color: "#a855f7" },
+            { name: "Unknown People", count: ukPerson, pct: ((ukPerson / GumaState.advancedStatsData.total_photos) * 100).toFixed(1) + "%", color: "#a855f7" },
             { name: "보유 인물 데이터 총 사람수", count: GumaState.advancedStatsData.known_faces_count, pct: "-", color: "#10b981", isAbs: true }
         ];
 
@@ -846,41 +822,5 @@ document.getElementById('modal-manual-feedback-btn')?.addEventListener('click', 
     document.getElementById('manual-cancel-btn').onclick = () => cleanupAndGo(null);
 });
 
-document.getElementById('fb-no-learning-btn')?.addEventListener('click', async () => {
-    if (!GumaState.selectedFeedbackTarget) return;
-
-    const inputVal = document.getElementById('fb-input-val');
-    let correctValue = inputVal.value.trim();
-
-    if (!correctValue) {
-        alert("Please provide the correct information first!");
-        return;
-    }
-
-    // Check for unregistered names
-    if (GumaState.selectedFeedbackTarget && (GumaState.selectedFeedbackTarget.issue.includes('Person') || GumaState.selectedFeedbackTarget.issue.includes('People'))) {
-        let isKnown = false;
-        if (typeof GumaState.advancedStatsData !== 'undefined' && GumaState.advancedStatsData !== null && GumaState.advancedStatsData.people) {
-            isKnown = GumaState.advancedStatsData.people.some(p => p.name === correctValue);
-        }
-        if (!isKnown) {
-            const confirmed = confirm(`'${correctValue}'님은 기존에 등록된 이름이 아닙니다.\n오타가 아니라면 새로 추가하시겠습니까?`);
-            if (!confirmed) return;
-        }
-    }
-
-    const btn = document.getElementById('fb-no-learning-btn');
-    const ogHtml = btn.innerHTML;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending (No Feedback)...';
-    btn.disabled = true;
-
-    try {
-        await submitSharedFeedback(GumaState.selectedFeedbackTarget.id, GumaState.selectedFeedbackTarget.issue, correctValue, [GumaState.selectedFeedbackTarget.id], true);
-    } catch (err) {
-        console.error(err);
-        btn.innerHTML = ogHtml;
-        btn.disabled = false;
-    }
-});
 
 window.switchView = switchView;

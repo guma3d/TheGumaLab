@@ -1,3 +1,26 @@
+// ==========================================
+// Photo Modal & Feedback Variables Definitions
+// ==========================================
+let currentModalPhoto = null;
+const photoModal = document.getElementById('photo-modal');
+const modalImage = document.getElementById('modal-image');
+const modalClose = document.getElementById('modal-close');
+const deleteBtn = document.getElementById('modal-delete-btn');
+const shareBtn = document.getElementById('modal-share-btn');
+const downloadBtn = document.getElementById('modal-download-btn');
+const modalInfoBadges = document.getElementById('modal-info-badges');
+const modalActionsCenter = document.querySelector('.modal-actions-center');
+
+let pzInstance = null;
+
+// 모달창에서 이미지 클릭 시 정보 뱃지 & 액션버튼 토글 숨김 기능
+if (modalImage) {
+    modalImage.addEventListener('click', () => {
+        if (modalInfoBadges) modalInfoBadges.classList.toggle('hidden');
+        if (modalActionsCenter) modalActionsCenter.classList.toggle('hidden');
+    });
+}
+
 window.GumaLightbox = {};
 function openModal(photo, imgUrl) {
     currentModalPhoto = photo;

@@ -87,13 +87,15 @@ window.feedbackQueue = [];
 async function preloadFeedbackQueue(count = 5) {
     if (window.feedbackQueue.length >= count) return;
 
-    let apiUrl = '/api/feedback_v2/unknown';
-    if (window.location.pathname.startsWith('/GumaPhoto')) apiUrl = '/GumaPhoto' + apiUrl;
+    let baseUrl = '/api/feedback_v2/unknown';
+    if (window.location.pathname.startsWith('/GumaPhoto')) baseUrl = '/GumaPhoto' + baseUrl;
 
     // Load concurrently up to the needed amount
     const needed = count - window.feedbackQueue.length;
     const promises = [];
     for (let i = 0; i < needed; i++) {
+        // [캐시 버스팅] 브라우저 악성 캐싱을 막아 큐(Queue)가 온전히 5장 채워지도록 보강
+        const apiUrl = baseUrl + `?_rnd=${Date.now()}_${Math.random()}`;
         promises.push(fetch(apiUrl).then(r => r.json()).catch(e => null));
     }
 
@@ -102,11 +104,31 @@ async function preloadFeedbackQueue(count = 5) {
         if (data && !data.error && data.id) {
             // Avoid duplicates in queue
             if (!window.feedbackQueue.find(item => item.id === data.id)) {
-                // [프리미엄 최적화] 사진 URL 자체를 브라우저 백그라운드 캐시에 은밀히 올려둡니다. (진정한 Zero-Delay)
-                const preloadImg = new Image();
-                preloadImg.src = data.url;
+                
+                // WebP 썸네일 변환 (원천 소스 URL 분리)
+                let mockUrl = data.url;
+                const ogUrl = mockUrl;
+                const dotIndex = mockUrl.lastIndexOf('.');
+                mockUrl = dotIndex !== -1 ? mockUrl.substring(0, dotIndex) + '_' + mockUrl.substring(dotIndex + 1).toLowerCase() + '.webp' : mockUrl;
+                if (!mockUrl.startsWith('/GumaPhoto') && window.location.pathname.startsWith('/GumaPhoto')) mockUrl = '/GumaPhoto' + mockUrl;
 
-                window.feedbackQueue.push(data);
+                // 페이로드 재조립
+                const cachedPayload = {
+                    id: data.id, 
+                    url: mockUrl, 
+                    originalUrl: ogUrl, 
+                    issue: data.issue, 
+                    date: data.date, 
+                    location: data.location, 
+                    people: data.people, 
+                    face_bbox: data.face_bbox
+                };
+
+                // [프리미엄 최적화] 사진 URL(WebP 썸네일) 자체를 브라우저 백그라운드 캐시에 은밀히 올려둡니다. (진정한 Zero-Delay)
+                const preloadImg = new Image();
+                preloadImg.src = cachedPayload.url;
+
+                window.feedbackQueue.push(cachedPayload);
             }
         }
     });
@@ -134,6 +156,12 @@ async function loadUnknownPhoto(manualTargetPayload = null) {
 
     submitBtn.disabled = false;
     submitBtn.innerHTML = 'Send';
+
+    const noLearningBtn = document.getElementById('fb-no-learning-btn');
+    if (noLearningBtn) {
+        noLearningBtn.disabled = false;
+        noLearningBtn.innerHTML = 'Send But NoFeedback';
+    }
 
     // TempTest UI 초기화 및 메인 컨테이너 복구
     const mainContainer = document.getElementById('fb-unknown-photo-container');
@@ -234,11 +262,12 @@ async function loadUnknownPhoto(manualTargetPayload = null) {
                 imgEl.style.display = 'block';
             };
         } else {
-            imgEl.src = finalSrc;
+            // [무한 로딩 픽스] src를 삽입하기 전에 브라우저 메모리에 onload 이벤트를 확실히 선점(Attach)시킵니다.
             imgEl.onload = () => {
                 spinner.style.display = 'none';
                 imgEl.style.display = 'block';
             };
+            imgEl.src = finalSrc;
         }
 
         let badgeType = '';
@@ -423,9 +452,28 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
 
     // Check for unregistered names
     if (GumaState.selectedFeedbackTarget && (GumaState.selectedFeedbackTarget.issue.includes('Person') || GumaState.selectedFeedbackTarget.issue.includes('People'))) {
+        
+        // 통계 데이터가 아직 로드되지 않았다면(앱을 켜자마자 바로 피드백부터 누른 경우) 임시로 빠르게 Fetch
+        if (!GumaState.advancedStatsData) {
+            try {
+                let sUrl = '/api/system/advanced?cb=' + Date.now();
+                if (window.location.pathname.startsWith('/GumaPhoto')) sUrl = '/GumaPhoto' + sUrl;
+                const sRes = await fetch(sUrl);
+                if (sRes.ok) GumaState.advancedStatsData = await sRes.json();
+            } catch(e) {}
+        }
+
         let isKnown = false;
-        if (typeof GumaState.advancedStatsData !== 'undefined' && GumaState.advancedStatsData !== null && GumaState.advancedStatsData.people) {
-            isKnown = GumaState.advancedStatsData.people.some(p => p.name === correctValue);
+        if (GumaState.advancedStatsData) {
+            const enrolledNames = GumaState.advancedStatsData.known_faces_names || [];
+            // 1. 딥러닝(known_faces.pkl)에 정식 등록된 요원인지 최우선 확인
+            if (enrolledNames.includes(correctValue)) {
+                isKnown = true;
+            } 
+            // 2. Qdrant DB 카운팅 캐시에 남아있는지 2차 확인
+            else if (GumaState.advancedStatsData.people) {
+                isKnown = GumaState.advancedStatsData.people.some(p => p.name === correctValue);
+            }
         }
         if (!isKnown) {
             const confirmed = confirm(`'${correctValue}'님은 기존에 등록된 이름이 아닙니다.\n오타가 아니라면 새로 추가하시겠습니까?`);
@@ -478,7 +526,13 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
         }
 
         console.log("Auto-submitting feedback for targets count:", targetPoints.length);
-        await submitSharedFeedback(GumaState.selectedFeedbackTarget.id, GumaState.selectedFeedbackTarget.issue, correctValue, targetPoints);
+        
+        // [Fire & Forget 연속 피드백 서빙]
+        // 꼼짝없이 대기하지 않고, 백그라운드 서버에 통신을 사일런트 위임시킨 뒤 즉각 다음 사진 표출!
+        submitSharedFeedbackWithoutReload(GumaState.selectedFeedbackTarget.id, GumaState.selectedFeedbackTarget.issue, correctValue, targetPoints);
+        
+        // 버튼 멈춤 없이 즉각 다음 큐(Queue)를 팝(Pop)하여 0초 만에 화면 전환
+        loadUnknownPhoto();
 
     } catch (err) {
         console.error(err);
@@ -487,6 +541,65 @@ document.getElementById('fb-submit-btn')?.addEventListener('click', async () => 
         btn.disabled = false;
     }
 });
+
+// No Feedback 전송 이벤트 (딥러닝 학습 폴더 이동 제외용 - 이름 검증 불필요)
+document.getElementById('fb-no-learning-btn')?.addEventListener('click', async () => {
+    if (!GumaState.selectedFeedbackTarget) return;
+
+    const inputVal = document.getElementById('fb-input-val');
+    let correctValue = inputVal.value.trim();
+    if (inputVal.dataset.exactPayload && inputVal.dataset.exactDisplay === correctValue) {
+        correctValue = inputVal.dataset.exactPayload;
+    }
+
+    if (!correctValue) {
+        alert("Please provide the correct information first!");
+        return;
+    }
+
+    // 이름 존재 유무(오타 여부) 검사 로직 통스킵! (어차피 딥러닝 안할테니까 묻지않음)
+
+    const btn = document.getElementById('fb-no-learning-btn');
+    const ogHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> NoFeedback...';
+    btn.disabled = true;
+
+    try {
+        // [Fire & Forget 서빙] NoFeedback의 경우, 타겟포인트 수색 없이 1장만 바로 다이렉트 전송
+        submitSharedFeedbackWithoutReload(GumaState.selectedFeedbackTarget.id, GumaState.selectedFeedbackTarget.issue, correctValue, [GumaState.selectedFeedbackTarget.id], true);
+        
+        loadUnknownPhoto();
+
+    } catch (err) {
+        console.error(err);
+        alert("Feedback error: " + err.message);
+        btn.innerHTML = ogHtml;
+    } finally {
+        btn.disabled = false;
+    }
+});
+
+// 백그라운드 전용 사일런트 샌더 (페이지 고침, 팝업 차단 없이 뒷단에서 DB만 갱신)
+async function submitSharedFeedbackWithoutReload(pointId, issueType, correctValue, targetPointsArray, skipEnrolled = false) {
+    try {
+        let apiUrl = '/api/feedback_v2/submit';
+        if (window.location.pathname.startsWith('/GumaPhoto')) apiUrl = '/GumaPhoto' + apiUrl;
+
+        await fetch(apiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                point_id: pointId,
+                issue_type: issueType,
+                correct_value: correctValue,
+                target_points: targetPointsArray,
+                skip_enrolled_learning: skipEnrolled
+            })
+        });
+    } catch (e) {
+        console.error("Silent Submit Failed:", e);
+    }
+}
 
 // =========================================================================
 // Kakao Location Autocomplete UI Logic
