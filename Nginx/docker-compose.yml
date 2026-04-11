@@ -11,7 +11,7 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: HomeServer_Cloudflared
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    command: tunnel --no-autoupdate run
     env_file:
       - ../.env
     restart: unless-stopped
