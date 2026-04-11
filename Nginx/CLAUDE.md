@@ -2,6 +2,10 @@
 
 리버스 프록시 및 Cloudflare Tunnel 허브. 모든 `*.guma3d.com` 트래픽의 진입점.
 
+> **전역 규칙 참조**
+> - 환경변수 / API 키: 루트 `D:\TheGumaLab\.env` 사용
+> - 워크플로우·커밋·배포 규칙: 루트 `CLAUDE.md` 준수
+
 ---
 
 ## 구성

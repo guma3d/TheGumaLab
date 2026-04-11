@@ -5,6 +5,10 @@
 **URL**: gumaphoto.guma3d.com  
 **로컬 포트**: 8085
 
+> **전역 규칙 참조**
+> - 환경변수 / API 키: 루트 `D:\TheGumaLab\.env` 사용
+> - 워크플로우·커밋·배포 규칙: 루트 `CLAUDE.md` 준수
+
 ---
 
 ## 기술 스택
