@@ -1,5 +1,49 @@
-cd /d D:\TheGumaLab\GumaPhoto
-git fetch origin main
-git reset --hard origin/main
-docker compose up -d
-docker restart gumaphoto_celery
+@echo off
+REM ============================================================
+REM  TheGumaLab — Universal deploy script (HomeServer)
+REM  Usage:  pull_update.bat ^<ProjectName^> [container_to_restart]
+REM  Example: pull_update.bat GumaPhoto gumaphoto_celery
+REM           pull_update.bat GumaStockReport
+REM ============================================================
+
+setlocal
+
+if "%~1"=="" (
+    echo.
+    echo Usage: pull_update.bat ^<ProjectName^> [container_to_restart]
+    echo.
+    echo Available projects:
+    echo   GumaPhoto  GumaStockReport  GumaImageAnalyzer
+    echo   GumaServerStatus  GumaTube  Index  Nginx
+    echo.
+    exit /b 1
+)
+
+set PROJECT=%~1
+set CONTAINER=%~2
+set PROJECT_DIR=D:\TheGumaLab\%PROJECT%
+
+if not exist "%PROJECT_DIR%" (
+    echo [ERROR] Project directory not found: %PROJECT_DIR%
+    exit /b 1
+)
+
+cd /d "%PROJECT_DIR%"
+
+echo [1/3] Fetching latest from origin/main...
+git fetch origin main || exit /b 1
+
+echo [2/3] Resetting working tree to origin/main...
+git reset --hard origin/main || exit /b 1
+
+echo [3/3] Rebuilding docker compose...
+docker compose up -d || exit /b 1
+
+if not "%CONTAINER%"=="" (
+    echo Restarting container: %CONTAINER%
+    docker restart %CONTAINER% || exit /b 1
+)
+
+echo.
+echo === Deploy completed: %PROJECT% ===
+endlocal

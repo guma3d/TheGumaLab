@@ -2,22 +2,28 @@ param (
     [string]$TaskMessage = ""
 )
 
+# Detect current PC by hostname and map to commit prefix
+$HostName = [System.Net.Dns]::GetHostName()
+switch -Wildcard ($HostName) {
+    "Guma3D"    { $Prefix = "HomeServerMain" }
+    "guma3d-n"  { $Prefix = "Gram" }
+    default     { $Prefix = "SurfacePro" }
+}
+
 if ([string]::IsNullOrWhiteSpace($TaskMessage)) {
     $TaskMessage = Read-Host "Enter short commit message summary (in English)"
 }
 
-$CommitMessage = "(SurfacePro) $TaskMessage"
+$CommitMessage = "($Prefix) $TaskMessage"
 
-# Git 경로 환경변수 추가 (세션 내 적용)
+# Ensure Git is on PATH for this session
 $env:PATH += ";C:\Program Files\Git\cmd"
 
-Write-Host "========== Git Sync Started ==========" -ForegroundColor Cyan
+Write-Host "========== Git Sync Started — host=$HostName, prefix=($Prefix) ==========" -ForegroundColor Cyan
 
-# 변경 사항 확인 및 추가
 Write-Host "1. Adding files..."
 git add .
 
-# 변경 사항이 없을 경우 커밋 생략을 위한 확인
 $status = git status --porcelain
 if ([string]::IsNullOrWhiteSpace($status)) {
     Write-Host "No changes to commit." -ForegroundColor Yellow
@@ -26,11 +32,9 @@ if ([string]::IsNullOrWhiteSpace($status)) {
     git commit -m $CommitMessage
 }
 
-# 기존 변경사항 Pull (선택 사항: 충돌 발생 시 수동 해결해야 할 수 있음)
 Write-Host "3. Pulling latest from remote (rebase)..."
 git pull origin main --rebase
 
-# 서버에 푸시
 Write-Host "4. Pushing to GitHub..."
 git push origin main
 

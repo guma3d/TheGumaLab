@@ -42,7 +42,7 @@ HomeServer 중심의 **개인용 self-hosted 서비스 생태계**. 모든 서�
 - 수정 완료 시 별도 지시가 없어도 위 절차를 자동 One-Stop 수행.
 - 파괴적/비가역 작업(force push, reset --hard, 컨테이너·볼륨 삭제, DB 마이그레이션 등)은 **반드시 사용자 확인** 후 진행.
 - 배포 파이프라인 실패 시 임의로 우회/재시도하지 말고 **사용자에게 즉시 보고**.
-- 로컬 sync 편의 스크립트: `sync_github.ps1` (내부 PC prefix는 호스트에 맞게 교체).
+- 로컬 sync 편의 스크립트: `sync_github.ps1` — hostname 자동 감지로 3대 PC 모두에서 그대로 사용 가능 (`Guma3D`→HomeServerMain, `guma3d-n`→Gram, 그 외→SurfacePro).
 
 ---
 
@@ -82,13 +82,11 @@ HomeServer 중심의 **개인용 self-hosted 서비스 생태계**. 모든 서�
 - 모든 서비스는 `docker-compose.yml`로 정의. 통합 compose 또는 하위 프로젝트별 compose 사용.
 - 컨테이너 이름은 `{service}_{role}` 형식 (예: `gumaphoto_celery`, `gumaphoto_web`).
 - 신규 서비스 추가 시 `Nginx/` 하위 리버스 프록시 설정도 함께 갱신.
-- 배포 스크립트는 루트 `pull_update.bat` 패턴을 따름:
+- 범용 배포 스크립트 사용:
   ```bat
-  cd /d D:\TheGumaLab\{project}
-  git fetch origin main
-  git reset --hard origin/main
-  docker compose up -d
-  docker restart {critical_worker}
+  pull_update.bat <ProjectName> [container_to_restart]
+  REM 예: pull_update.bat GumaPhoto gumaphoto_celery
+  REM     pull_update.bat GumaStockReport
   ```
 
 ---
@@ -97,7 +95,7 @@ HomeServer 중심의 **개인용 self-hosted 서비스 생태계**. 모든 서�
 
 - **Monorepo**: 모든 하위 서비스는 `D:\TheGumaLab\` 아래 각자 루트 폴더로 존재.
 - 각 하위 프로젝트는 자체 `README.md`, `docker-compose.yml`, `.env.example` 보유 가능.
-- 공통 스크립트는 루트에 배치 (`pull_update.bat`, `sync_github.ps1`, `setup_git_hooks.bat`).
+- 공통 스크립트는 루트에 배치 (`pull_update.bat`, `sync_github.ps1`).
 - 신규 프로젝트 폴더는 `Guma{기능}` 네이밍 규칙 준수.
 
 ---
