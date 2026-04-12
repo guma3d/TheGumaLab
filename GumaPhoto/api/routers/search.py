@@ -771,6 +771,15 @@ async def get_filters():
     }
 
 
+@router.post("/api/rebuild_cache")
+async def api_rebuild_cache():
+    """수동으로 타임라인 캐시를 즉시 재생성합니다."""
+    try:
+        rebuild_timeline_cache()
+        return {"status": "success", "message": "타임라인 캐시 재생성 완료"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 @router.get("/api/family_tags")
 async def get_family_tags():
     """
@@ -797,4 +806,71 @@ async def get_family_tags():
     except Exception as e:
         print(f"[-] Family tags cache load error: {e}")
     return result
+
+
+def rebuild_timeline_cache():
+    """
+    Qdrant에서 최신 500장을 스캔하여 timeline_cache.json 을 재생성합니다.
+    업로드/인덱싱 완료 후 호출되어야 합니다.
+    """
+    import pickle
+    if not state.qdrant_client:
+        print("[Timeline Cache] Qdrant client not ready, skip.")
+        return
+
+    try:
+        qc = state.qdrant_client
+        coll = "gumaphoto_hybrid_kr"
+
+        # recent 500장 (최신순)
+        recent_points, _ = qc.scroll(
+            collection_name=coll, limit=500, with_payload=True, with_vectors=False,
+            order_by=OrderBy(key="sort_date", direction=Direction.DESC)
+        )
+
+        def point_to_dict(pt):
+            p = pt.payload or {}
+            filepath = p.get("filepath", "")
+            photo_url = filepath.replace("/app/data/organized", "/photos")
+            return {
+                "id": pt.id, "url": photo_url, "original_path": filepath,
+                "date": p.get("date", "Unknown"), "location": p.get("location", "Unknown Location"),
+                "people": p.get("people", []), "caption": p.get("caption", ""),
+                "season": p.get("season", "Unknown"), "time_of_day": p.get("time_of_day", "Unknown"),
+            }
+
+        cache = {"recent": [point_to_dict(pt) for pt in recent_points]}
+
+        # 인물별 태그 캐시
+        known_names = []
+        if os.path.exists("/app/data/known_faces.pkl"):
+            try:
+                with open("/app/data/known_faces.pkl", "rb") as f:
+                    known_names = list(pickle.load(f).keys())
+            except Exception:
+                pass
+
+        for name in known_names:
+            try:
+                person_filter = Filter(must=[FieldCondition(key="people", match=MatchValue(value=name))])
+                pts, _ = qc.scroll(
+                    collection_name=coll, scroll_filter=person_filter,
+                    limit=500, with_payload=True, with_vectors=False,
+                    order_by=OrderBy(key="sort_date", direction=Direction.DESC)
+                )
+                cache[name] = [point_to_dict(pt) for pt in pts]
+            except Exception as e:
+                print(f"[Timeline Cache] '{name}' 스캔 실패: {e}")
+                cache[name] = []
+
+        cache_path = "/app/data/caches/timeline_cache.json"
+        os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+        with open(cache_path, "w", encoding="utf-8") as f:
+            json.dump(cache, f, ensure_ascii=False)
+
+        print(f"✅ [Timeline Cache] 재생성 완료: recent={len(cache['recent'])}장, 인물 {len(known_names)}명")
+    except Exception as e:
+        import traceback
+        print(f"❌ [Timeline Cache] 재생성 실패: {e}")
+        traceback.print_exc()
 

@@ -21,6 +21,13 @@ def run_indexer_job():
         idx_bot = VectorIndexer()
         idx_bot.run()
         print("✅ [Celery] Vector Indexer 작업 완료!")
+
+        # 인덱싱 완료 후 타임라인 캐시 자동 갱신
+        try:
+            from api.routers.search import rebuild_timeline_cache
+            rebuild_timeline_cache()
+        except Exception as ce:
+            print(f"⚠️ [Celery] Timeline Cache 갱신 실패 (검색은 정상 작동): {ce}")
     except Exception as e:
         print(f"❌ [Celery] Vector Indexer 오류: {e}")
         raise
