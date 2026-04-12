@@ -41,59 +41,6 @@ if (document.readyState === 'loading') {
     initApp();
 }
 
-// Family tag click
-document.addEventListener('click', e => {
-    if (!e.target.classList.contains('tag-btn')) return;
-
-    document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('tag-active', 'active'));
-    e.target.classList.add('tag-active', 'active');
-    GumaState.currentGalleryFilter = e.target.dataset.tag;
-
-    if (abortController) abortController.abort();
-    GumaState.currentQuery = '';
-
-    if (GumaState.cachedTags[GumaState.currentGalleryFilter]) {
-        const c = GumaState.cachedTags[GumaState.currentGalleryFilter];
-        GumaState.currentOffset = c.offset;
-        GumaState.hasMore = c.hasMore;
-        GumaState.totalHits = c.totalHits;
-        document.getElementById('gallery-grid').innerHTML = '';
-        document.getElementById('search-grid').innerHTML = '';
-        window.GumaGallery.renderGallery(c.results, false, 'gallery-grid', true, false);
-        return;
-    }
-
-    GumaState.currentOffset = 0;
-    GumaState.hasMore = true;
-    GumaState.totalHits = 0;
-
-    const grid = document.getElementById('gallery-grid');
-    grid.style.minHeight = '144px';
-    grid.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:140px; width:100%;"><i class="fa-solid fa-spinner fa-spin" style="color:var(--text-muted);"></i></div>';
-    fetchPhotos(false);
-});
-
-// Preload family tags into memory
-async function preloadTags() {
-    let familyUrl = '/api/family_tags';
-    if (window.location.pathname.startsWith('/GumaPhoto')) {
-        familyUrl = '/GumaPhoto/api/family_tags';
-    }
-    try {
-        const res = await fetch(familyUrl);
-        if (res.ok) {
-            const data = await res.json();
-            for (let tag in data) {
-                if (!GumaState.cachedTags[tag]) {
-                    GumaState.cachedTags[tag] = data[tag];
-                }
-            }
-        }
-    } catch (e) {
-        console.error("Family tags preload failed:", e);
-    }
-}
-
 // Search form submit
 document.getElementById('search-form').addEventListener('submit', async function (e) {
     e.preventDefault();
@@ -127,102 +74,36 @@ async function fetchPhotos(isLoadMore) {
         }
 
         if (!GumaState.currentQuery) {
-            // Home timeline mode
-            const timelineHeader = document.getElementById('timeline-header');
+            // Home timeline mode (최신 사진 표시)
             const sliderGrid = document.getElementById('gallery-grid');
             const searchGrid = document.getElementById('search-grid');
             metaContainer.classList.add('hidden');
             searchGrid.classList.add('hidden');
             sliderGrid.classList.remove('hidden');
 
+            const timelineRes = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                signal,
+                body: JSON.stringify({
+                    query: "timeline_dummy", offset: GumaState.currentOffset, limit: GumaState.currentLimit, is_load_more: true,
+                    people: [], location: "", scene: "photo"
+                })
+            }).then(r => r.json()).catch(err => {
+                if (err.name !== 'AbortError') console.error("Timeline fetch error:", err);
+                return { results: [] };
+            });
+
+            const results = timelineRes.results || [];
+            GumaState.totalHits += results.length;
+            if (results.length < GumaState.currentLimit) GumaState.hasMore = false;
+            GumaState.currentOffset += GumaState.currentLimit;
+
             if (!isLoadMore) {
-                let t_query = "timeline_dummy";
-                let t_scene = "photo";
-                let t_people = [];
-                let t_limit = GumaState.currentLimit;
-
-                if (GumaState.currentGalleryFilter !== "recent") {
-                    t_query = "tag_dummy";
-                    t_scene = "";
-                    t_people = [GumaState.currentGalleryFilter];
-                    t_limit = 20;
-                }
-
-                const timelineRes = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    signal,
-                    body: JSON.stringify({
-                        query: t_query, offset: GumaState.currentOffset, limit: t_limit, is_load_more: true,
-                        people: t_people, location: "", scene: t_scene
-                    })
-                }).then(r => r.json()).catch(err => {
-                    if (err.name !== 'AbortError') console.error("Timeline fetch error:", err);
-                    return { results: [] };
-                });
-
-                timelineHeader.classList.remove('hidden');
-
-                let results = timelineRes.results || [];
-                if (GumaState.currentGalleryFilter !== "recent") {
-                    results = results.filter(p => p.people && p.people.length === 1 && p.people.includes(GumaState.currentGalleryFilter));
-                }
-
-                GumaState.totalHits += results.length;
-                if (timelineRes.results && timelineRes.results.length < t_limit) GumaState.hasMore = false;
-                GumaState.currentOffset += t_limit;
-
-                if (!GumaState.cachedTags[GumaState.currentGalleryFilter]) {
-                    GumaState.cachedTags[GumaState.currentGalleryFilter] = {
-                        results, offset: GumaState.currentOffset,
-                        totalHits: GumaState.totalHits, hasMore: GumaState.hasMore
-                    };
-                }
-
                 sliderGrid.innerHTML = '';
                 searchGrid.innerHTML = '';
-                window.GumaGallery.renderGallery(results, isLoadMore, 'gallery-grid', true, false);
-
-                if (!window._tagsPreloaded) {
-                    window._tagsPreloaded = true;
-                    setTimeout(preloadTags, 1500);
-                }
-
-            } else {
-                // Load more for home timeline
-                let t_query = "timeline_dummy";
-                let t_scene = "photo";
-                let t_people = [];
-                let t_limit = GumaState.currentLimit;
-
-                if (GumaState.currentGalleryFilter !== "recent") {
-                    t_query = "tag_dummy";
-                    t_scene = "";
-                    t_people = [GumaState.currentGalleryFilter];
-                    t_limit = 20;
-                }
-
-                const res = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    signal,
-                    body: JSON.stringify({
-                        query: t_query, offset: GumaState.currentOffset, limit: t_limit, is_load_more: true,
-                        people: t_people, location: "", scene: t_scene
-                    })
-                });
-                const timelineRes = await res.json();
-                let results = timelineRes.results || [];
-
-                if (GumaState.currentGalleryFilter !== "recent") {
-                    results = results.filter(p => p.people && p.people.length === 1 && p.people.includes(GumaState.currentGalleryFilter));
-                }
-
-                GumaState.totalHits += results.length;
-                if (timelineRes.results && timelineRes.results.length < t_limit) GumaState.hasMore = false;
-                GumaState.currentOffset += t_limit;
-                window.GumaGallery.renderGallery(results, true, 'gallery-grid', true, false);
             }
+            window.GumaGallery.renderGallery(results, isLoadMore, 'gallery-grid', true, false);
 
         } else {
             // Search mode
