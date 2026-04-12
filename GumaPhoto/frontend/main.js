@@ -575,25 +575,36 @@ function renderAuditLogs(logs) {
     return logs.map(log => {
         const before = log.before || {};
         const after = log.after || {};
-        const ts = after.timestamp || before.timestamp || '';
-        const field = before.field || after.field || '?';
-        const oldVal = before.value || '-';
-        const newVal = after.value || '-';
-        const filename = (before.filename || after.filename || '').split('/').pop();
+        const filename = (before.filepath || after.filepath || '').split('/').pop();
+
+        // 변경된 필드 자동 감지
+        const changes = [];
+        const fields = ['people', 'location', 'date'];
+        for (const f of fields) {
+            const bv = Array.isArray(before[f]) ? before[f].join(', ') : (before[f] || '');
+            const av = Array.isArray(after[f]) ? after[f].join(', ') : (after[f] || '');
+            if (bv !== av && (bv || av)) {
+                const icons = { people: 'fa-user', location: 'fa-location-dot', date: 'fa-calendar' };
+                const labels = { people: '인물', location: '장소', date: '날짜' };
+                changes.push({ field: labels[f], icon: icons[f], old: bv || '-', new: av || '-' });
+            }
+        }
+
+        if (changes.length === 0) return '';
+
+        const changeHtml = changes.map(c => `
+            <div style="display:flex;gap:8px;align-items:center;font-size:0.8rem;margin-top:4px;">
+                <i class="fa-solid ${c.icon}" style="color:#8b5cf6;font-size:0.7rem;width:14px;"></i>
+                <span style="color:#ef4444;text-decoration:line-through;">${c.old}</span>
+                <i class="fa-solid fa-arrow-right" style="color:#4b5563;font-size:0.6rem;"></i>
+                <span style="color:#10b981;font-weight:500;">${c.new}</span>
+            </div>`).join('');
 
         return `<div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:12px;border-left:3px solid #8b5cf6;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                <span style="color:#8b5cf6;font-weight:600;font-size:0.85rem;">${field}</span>
-                <span style="color:#6b7280;font-size:0.75rem;">${ts}</span>
-            </div>
-            <div style="font-size:0.8rem;color:#9ca3af;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${filename}">${filename}</div>
-            <div style="display:flex;gap:8px;align-items:center;font-size:0.8rem;">
-                <span style="color:#ef4444;text-decoration:line-through;">${oldVal}</span>
-                <i class="fa-solid fa-arrow-right" style="color:#4b5563;font-size:0.6rem;"></i>
-                <span style="color:#10b981;font-weight:500;">${newVal}</span>
-            </div>
+            <div style="font-size:0.8rem;color:#9ca3af;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${filename}"><i class="fa-solid fa-image" style="margin-right:4px;"></i>${filename}</div>
+            ${changeHtml}
         </div>`;
-    }).join('');
+    }).filter(x => x).join('');
 }
 
 window.switchView = switchView;
