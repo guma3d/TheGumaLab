@@ -35,6 +35,50 @@ def _get_auto_cache_version():
 _NLP_CACHE = {}
 _NLP_CACHE_VERSION = _get_auto_cache_version() # 사람이 까먹어도 파일이 수정되면 즉시 캐시 무효화
 
+# [Family Profile] 가족 개인화 프로필 로드
+_FAMILY_PROFILE = {}
+_FAMILY_ALIASES = {}  # alias → member_key 역매핑
+try:
+    _fp_path = "/app/data/family_profile.json"
+    if os.path.exists(_fp_path):
+        with open(_fp_path, "r", encoding="utf-8") as f:
+            _fp_data = json.load(f)
+            _FAMILY_PROFILE = _fp_data.get("members", {})
+            for key, member in _FAMILY_PROFILE.items():
+                for alias in member.get("aliases", []):
+                    _FAMILY_ALIASES[alias] = key
+                _FAMILY_ALIASES[key] = key
+        print(f"[Family Profile] 가족 프로필 로드 완료: {list(_FAMILY_PROFILE.keys())}")
+except Exception as e:
+    print(f"[Family Profile] 로드 실패: {e}")
+
+def _calc_age_at_year(birth_date_str: str, target_year: int) -> int:
+    """생년월일 문자열로부터 특정 연도의 만 나이 계산"""
+    birth_year = int(birth_date_str[:4])
+    return target_year - birth_year
+
+def _resolve_age_to_years(member_key: str, age: int) -> list:
+    """특정 가족 구성원의 나이를 해당 나이였던 연도(들)로 변환"""
+    member = _FAMILY_PROFILE.get(member_key)
+    if not member:
+        return []
+    birth_year = int(member["birth_date"][:4])
+    # 만 나이 기준: 해당 나이가 되는 해
+    target_year = birth_year + age
+    return [target_year]
+
+def _build_family_context_for_prompt(current_year: int) -> str:
+    """Gemini 프롬프트에 주입할 가족 컨텍스트 문자열 생성"""
+    if not _FAMILY_PROFILE:
+        return ""
+    lines = ["Family Profile (for age/relationship-based queries):"]
+    for key, m in _FAMILY_PROFILE.items():
+        birth_year = int(m["birth_date"][:4])
+        current_age = current_year - birth_year
+        aliases = ", ".join(m.get("aliases", []))
+        lines.append(f"  - {key} ({m['role']}): born {m['birth_date']}, currently {current_age}세 (만), aliases=[{aliases}]")
+    return "\n".join(lines)
+
 @router.post("/clear_nlp_cache")
 def clear_nlp_cache():
     _NLP_CACHE.clear()
@@ -149,29 +193,95 @@ async def perform_search(req: SearchRequest):
             except Exception:
                 pass
                 
-        # --- 1차: Local 파싱 (인물, 연도 분리) ---
+        # --- 1차: Local 파싱 (인물, 연도, 나이, 별명 분리) ---
         local_years = []
         local_people = []
         remaining_words = []
-        
-        for word in search_text.split():
+        local_age_context = {}  # {member_key: age} - 나이 기반 연도 변환용
+
+        words = search_text.split()
+        i = 0
+        while i < len(words):
+            word = words[i]
+
             # 1. 연도 추출 (정규식 기반)
             y_match = re.search(r'^(20\d{2})년?$', word)
             if y_match:
                 local_years.append(int(y_match.group(1)))
+                i += 1
                 continue
-                
-            # 2. 인물 추출 (이름으로 시작하는 단어 - 예: '준우가', '송이랑')
+
+            # 2. 나이 패턴 매칭 ("35살", "7세", "30대")
+            age_match = re.search(r'^(\d{1,3})(살|세)$', word)
+            decade_match = re.search(r'^(\d{1,2})0대$', word)
+            life_stage_map = {
+                "돌잔치": (0, 1), "돌": (0, 1), "신생아": (0, 0),
+                "유치원": (4, 7), "초등학교": (7, 13), "초등": (7, 13),
+                "중학교": (13, 16), "중학생": (13, 16),
+                "고등학교": (16, 19), "고등": (16, 19), "고등학생": (16, 19),
+                "대학교": (19, 23), "대학생": (19, 23), "대학": (19, 23),
+                "군대": (19, 22), "군인": (19, 22),
+                "결혼": (25, 35), "결혼식": (25, 35), "웨딩": (25, 35),
+            }
+
+            if age_match:
+                age_val = int(age_match.group(1))
+                # 앞 단어가 인물이면 해당 인물의 나이로 매칭
+                if local_people:
+                    member_key = local_people[-1]
+                    years = _resolve_age_to_years(member_key, age_val)
+                    local_years.extend(years)
+                    print(f"[*] 나이→연도 변환: {member_key} {age_val}살 → {years}")
+                i += 1
+                continue
+
+            if decade_match:
+                decade_base = int(decade_match.group(1)) * 10
+                if local_people:
+                    member_key = local_people[-1]
+                    decade_years = []
+                    for age in range(decade_base, decade_base + 10):
+                        decade_years.extend(_resolve_age_to_years(member_key, age))
+                    local_years.extend(decade_years)
+                    print(f"[*] 연대→연도 변환: {member_key} {decade_base}대 → {decade_years}")
+                i += 1
+                continue
+
+            if word in life_stage_map:
+                age_min, age_max = life_stage_map[word]
+                if local_people:
+                    member_key = local_people[-1]
+                    stage_years = []
+                    for age in range(age_min, age_max + 1):
+                        stage_years.extend(_resolve_age_to_years(member_key, age))
+                    local_years.extend(stage_years)
+                    print(f"[*] 생애단계→연도 변환: {member_key} '{word}' → {stage_years}")
+                else:
+                    # 인물 없이 생애단계만 있으면 visual로 넘김
+                    remaining_words.append(word)
+                i += 1
+                continue
+
+            # 3. 인물 추출 (이름 또는 별명으로 시작하는 단어)
             matched = False
             for kn in known_names_list:
                 if word.startswith(kn):
                     local_people.append(kn)
                     matched = True
                     break
+            if not matched:
+                # 별명/역할 매칭 (아빠, 엄마, 형 등)
+                for alias, member_key in _FAMILY_ALIASES.items():
+                    if word.startswith(alias) and member_key in known_names_list:
+                        local_people.append(member_key)
+                        matched = True
+                        break
             if matched:
+                i += 1
                 continue
-                
+
             remaining_words.append(word)
+            i += 1
             
         # 사람과 연도가 싹 떨어져 나간 순수 나머지 문장 (이것을 캐시 키로 씁니다!)
         visual_query_key = " ".join(remaining_words).strip()
@@ -211,18 +321,33 @@ async def perform_search(req: SearchRequest):
                             locs = tag_data.get("locations", [])
                             known_locs_str = ", ".join(locs)
                     
+                    # 가족 프로필 컨텍스트 생성
+                    family_context = _build_family_context_for_prompt(current_year)
+
                     # Gemini에게 남은 문장(visual_query_key)에 대해서만 분석 지시!
-                    prompt = f"""You are a Photo Search Query Parser.
+                    prompt = f"""You are a Photo Search Query Parser for a FAMILY photo album.
 Current Year: {current_year}
 Known People in DB: [{known_names_str}]
 Known Locations in DB: [{known_locs_str}]
 
+{family_context}
+
 User Query: "{visual_query_key}"
+
+IMPORTANT AGE/LIFE-STAGE RULES:
+- If a query mentions age (e.g., "35살", "7세"), calculate the year when that person was that age using their birth date from the Family Profile.
+  Example: 성욱(born 1991) + "35살" → year 2026. Output years: [2026].
+- If a query mentions a decade (e.g., "30대"), output ALL years in that age range.
+  Example: 성욱 + "30대" → ages 30-39 → years [2021,2022,2023,2024,2025,2026,2027,2028,2029,2030].
+- If a query mentions a life stage (e.g., "초등학교", "돌잔치", "유치원"), map it to an age range:
+  돌잔치/돌=0~1세, 유치원=4~7세, 초등학교=7~13세, 중학교=13~16세, 고등학교=16~19세, 대학교=19~23세
+  Then convert to years using the person's birth date.
+- Role/alias references (아빠, 엄마, 형, 첫째, 둘째) should map to the matching person from Family Profile.
 
 Parse the query into EXACTLY this JSON structure:
 {{
-  "years": [], // list of integers, e.g., 2025. convert "작년" to {current_year - 1}. If none, []
-  "people": [], // list of names exactly matching the Known People list. Fix misspellings if obvious. If none, []
+  "years": [], // list of integers, e.g., 2025. convert "작년" to {current_year - 1}. Convert age references using Family Profile birth dates. If none, []
+  "people": [], // list of names exactly matching the Known People list. Also resolve aliases (아빠→성욱, 엄마→민지, etc). Fix misspellings if obvious. If none, []
   "locations": [ // If a broad region ("전라도", "강원도", "제주도", "유럽") is queried, DO NOT output a massive single location. Instead, output MULTIPLE specific locations corresponding to actual cities/districts strictly derived from 'Known Locations in DB'. (e.g. for "강원도", select ["대한민국-강릉시", "대한민국-속초시", "대한민국-춘천시", "대한민국-삼척시"] if they exist in the DB list)
     {{
       "lat": 37.7518,
@@ -235,7 +360,7 @@ Parse the query into EXACTLY this JSON structure:
   ], // If none, []
   "seasons": [], // Extract mentioned seasons exactly matching ["봄", "여름", "가을", "겨울"]. If none, []
   "time_of_days": [], // Extract mentioned times exactly matching ["아침", "낮", "오후", "저녁", "밤", "심야"]. If none, []
-  "visual": "EMPTY" // Translate all visual/abstract concepts (including seasons/times) into concise English keywords. For "겨울", output "winter, snow, cold, frozen". For "밤", output "night, dark, streetlights". DO NOT include people/locations. If none, "EMPTY".
+  "visual": "EMPTY" // Translate all visual/abstract concepts (including seasons/times) into concise English keywords. For "겨울", output "winter, snow, cold, frozen". For "밤", output "night, dark, streetlights". DO NOT include people/locations/ages. If none, "EMPTY".
 }}
 Output ONLY valid JSON without markup.
 """
@@ -340,7 +465,24 @@ Output ONLY valid JSON without markup.
             
     if req.date and req.date != "All Dates":
         must_conds.append(FieldCondition(key="date", match=MatchValue(value=req.date)))
-        
+
+    # [계절/시간대 하드 필터] 사용자가 명시적으로 언급한 계절/시간대는 must 조건으로 강제
+    if extracted_seasons:
+        if len(extracted_seasons) == 1:
+            must_conds.append(FieldCondition(key="season", match=MatchValue(value=extracted_seasons[0])))
+        else:
+            s_shoulds = [FieldCondition(key="season", match=MatchValue(value=s)) for s in extracted_seasons]
+            must_conds.append(Filter(should=s_shoulds))
+        print(f"[*] 🌸 계절 하드 필터 적용: {extracted_seasons}")
+
+    if extracted_times:
+        if len(extracted_times) == 1:
+            must_conds.append(FieldCondition(key="time_of_day", match=MatchValue(value=extracted_times[0])))
+        else:
+            t_shoulds = [FieldCondition(key="time_of_day", match=MatchValue(value=t)) for t in extracted_times]
+            must_conds.append(Filter(should=t_shoulds))
+        print(f"[*] 🕐 시간대 하드 필터 적용: {extracted_times}")
+
     # === 단독 인물 우선 배치 (Pagination 보존) 로직 ===
     exact_filter = None
     group_filter = None
@@ -454,8 +596,8 @@ Output ONLY valid JSON without markup.
             text_features = text_features / text_features.norm(p=2, dim=-1, keepdim=True)
             text_vector = text_features[0].cpu().numpy().tolist()
         
-        # [V2] RRF 기반 듀얼 라우팅 세팅 (계절/시간대 메타데이터 병합)
-        use_rrf = bool(extracted_seasons or extracted_times)
+        # [V2] RRF는 계절/시간대가 must 하드필터로 이동했으므로 더 이상 불필요 → 항상 순수 벡터 검색
+        use_rrf = False
         
         def execute_qdrant_query(q_filter):
             if use_rrf:
