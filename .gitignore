@@ -8,3 +8,9 @@ GumaTube/__pycache__/
 GumaTube/huggingface-cache/
 *.pyc
 .env
+
+# Claude Code
+.claude/
+
+# WebAuthn credentials (민감 정보)
+Index/webauthn_credentials.json
