@@ -1,7 +1,7 @@
 import os
 from datetime import datetime, timedelta
 from fastapi import FastAPI, Request, Form, Response, Depends, HTTPException, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from jose import jwt, JWTError
@@ -27,6 +27,14 @@ CORRECT_HTTP_PASSWORD = os.getenv("GUMA_AUTH_PASSWORD", "iloveguma")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+
+@app.get("/sw.js")
+async def serve_sw():
+    return FileResponse("static/sw.js")
+
+@app.get("/manifest.json")
+async def serve_manifest():
+    return FileResponse("static/manifest.json")
 
 def create_access_token(data: dict, expires_delta: timedelta):
     to_encode = data.copy()

@@ -6,8 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GumaPhoto - AI Family Search</title>
     <meta name="description" content="AI-powered semantic search for family photos.">
-    <link rel="apple-touch-icon" href="frontend/apple-touch-icon.png">
-    <link rel="icon" type="image/png" href="frontend/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/frontend/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="/frontend/icons/icon-192x192.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -222,6 +225,13 @@
     <script src="frontend/js_modules/components/upload.js?v=2"></script>
     <script type="module" src="frontend/js_modules/api/fetcher.js?v=4"></script>
     <script src="frontend/main.js?v=12"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js');
+            });
+        }
+    </script>
 </body>
 
 </html>

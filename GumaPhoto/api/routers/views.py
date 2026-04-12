@@ -11,11 +11,11 @@ async def serve_frontend(request: Request):
 
 @router.get("/sw.js")
 async def serve_sw():
-    return FileResponse("static/sw.js")
+    return FileResponse("frontend/sw.js")
 
 @router.get("/manifest.json")
 async def serve_manifest():
-    return FileResponse("templates/manifest.json")
+    return FileResponse("frontend/manifest.json")
 
 @router.get("/map")
 async def serve_map(request: Request):

@@ -1,20 +1,20 @@
 {
-  "name": "GumaPhoto",
-  "short_name": "GumaPhoto",
-  "description": "AI-powered family photo search engine",
+  "name": "The Guma Lab",
+  "short_name": "GumaLab",
+  "description": "HomeServer portal and service hub",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#030303",
+  "background_color": "#050505",
   "theme_color": "#10b981",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/frontend/icons/icon-192x192.png",
+      "src": "/static/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/frontend/icons/icon-512x512.png",
+      "src": "/static/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
