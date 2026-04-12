@@ -244,8 +244,12 @@ class OrganizerPipeline:
                         if date_str == "Unknown-Year":
                             date_str = "UnknownDate"
                         
-                        # 요청하신 대로, 장소명이나 연도 독립 폴더를 없애고 심플하게 'YYYY-MM' (또는 UnknownDate) 폴더 하나로만 분류합니다.
-                        target_folder_path = os.path.join(TARGET_DIR, date_str)
+                        # YYYY/YYYY-MM 구조로 정리 (예: 2026/2026-04/)
+                        if date_str != "UnknownDate" and len(date_str) >= 4:
+                            year_str = date_str[:4]
+                            target_folder_path = os.path.join(TARGET_DIR, year_str, date_str)
+                        else:
+                            target_folder_path = os.path.join(TARGET_DIR, date_str)
                         os.makedirs(target_folder_path, exist_ok=True)
         
                         sequence = 1
