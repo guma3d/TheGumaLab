@@ -31,31 +31,83 @@ DB_PATH = 'watchlist.db'
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS watchlist (ticker TEXT PRIMARY KEY, name TEXT)''')
-    try:
-        c.execute('ALTER TABLE watchlist ADD COLUMN shares REAL DEFAULT 1')
-    except sqlite3.OperationalError:
-        pass  # Column already exists
-    # 기본 종목 셋팅
-    c.execute('SELECT count(*) FROM watchlist')
+
+    # 포트폴리오 테이블 생성
+    c.execute('''CREATE TABLE IF NOT EXISTS portfolios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        icon TEXT DEFAULT ''
+    )''')
+
+    # 기본 포트폴리오 4개 생성
+    c.execute('SELECT count(*) FROM portfolios')
     if c.fetchone()[0] == 0:
-        c.executemany('INSERT INTO watchlist (ticker, name, shares) VALUES (?, ?, ?)', [
+        c.executemany('INSERT INTO portfolios (name, icon) VALUES (?, ?)', [
+            ('나의 계좌', 'fa-user'),
+            ('퇴직연금', 'fa-piggy-bank'),
+            ('장준우 (큰아들)', 'fa-child'),
+            ('장지우 (작은아들)', 'fa-child-reaching'),
+        ])
+
+    # watchlist 마이그레이션: portfolio_id 컬럼 없으면 테이블 재생성
+    c.execute("PRAGMA table_info(watchlist)")
+    columns = [col[1] for col in c.fetchall()]
+
+    if not columns:
+        # watchlist 테이블이 아예 없는 경우
+        c.execute('''CREATE TABLE watchlist (
+            portfolio_id INTEGER NOT NULL DEFAULT 1,
+            ticker TEXT NOT NULL,
+            name TEXT,
+            shares REAL DEFAULT 1,
+            PRIMARY KEY (portfolio_id, ticker),
+            FOREIGN KEY (portfolio_id) REFERENCES portfolios(id)
+        )''')
+        c.executemany('INSERT INTO watchlist (portfolio_id, ticker, name, shares) VALUES (1, ?, ?, ?)', [
             ('AAPL', 'Apple Inc.', 10),
             ('005930.KS', '삼성전자', 100),
             ('NVDA', 'NVIDIA', 5)
         ])
+    elif 'portfolio_id' not in columns:
+        # 기존 테이블 → 마이그레이션
+        c.execute('SELECT ticker, name, shares FROM watchlist')
+        old_data = c.fetchall()
+        c.execute('DROP TABLE watchlist')
+        c.execute('''CREATE TABLE watchlist (
+            portfolio_id INTEGER NOT NULL DEFAULT 1,
+            ticker TEXT NOT NULL,
+            name TEXT,
+            shares REAL DEFAULT 1,
+            PRIMARY KEY (portfolio_id, ticker),
+            FOREIGN KEY (portfolio_id) REFERENCES portfolios(id)
+        )''')
+        for row in old_data:
+            c.execute('INSERT INTO watchlist (portfolio_id, ticker, name, shares) VALUES (1, ?, ?, ?)', row)
+
     conn.commit()
     conn.close()
 
 init_db()
 
-# 최신 분석 텍스트 저장용 (메모리)
-latest_portfolio_analysis = "AI가 아직 관심 종목을 실시간 시장 현황을 바탕으로 분석하고 있습니다. 잠시만 기다려주세요..."
+# 최신 분석 텍스트 저장용 (메모리, 포트폴리오별)
+latest_portfolio_analysis = {}
+DEFAULT_ANALYSIS_MSG = "AI가 아직 관심 종목을 실시간 시장 현황을 바탕으로 분석하고 있습니다. 잠시만 기다려주세요..."
 
-def get_watchlist():
+def get_all_portfolio_ids():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute('SELECT ticker, name, shares FROM watchlist')
+    c.execute('SELECT id FROM portfolios')
+    ids = [r[0] for r in c.fetchall()]
+    conn.close()
+    return ids
+
+def get_watchlist(portfolio_id=None):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    if portfolio_id:
+        c.execute('SELECT ticker, name, shares FROM watchlist WHERE portfolio_id=?', (portfolio_id,))
+    else:
+        c.execute('SELECT ticker, name, shares FROM watchlist')
     rows = c.fetchall()
     conn.close()
     return [{"ticker": r[0], "name": r[1], "shares": r[2]} for r in rows]
@@ -174,6 +226,15 @@ def serve_sw():
 def serve_frontend(filename):
     return send_from_directory("frontend", filename)
 
+@app.route("/api/portfolios", methods=["GET"])
+def api_portfolios():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('SELECT id, name, icon FROM portfolios ORDER BY id')
+    rows = c.fetchall()
+    conn.close()
+    return jsonify([{"id": r[0], "name": r[1], "icon": r[2]} for r in rows])
+
 @app.route("/api/market-indices")
 def api_market_indices():
     data = fetch_stock_data(INDICES)
@@ -181,7 +242,8 @@ def api_market_indices():
 
 @app.route("/api/watchlist", methods=["GET"])
 def api_watchlist():
-    watchlist = get_watchlist()
+    portfolio_id = request.args.get("portfolio_id", 1, type=int)
+    watchlist = get_watchlist(portfolio_id)
     data = fetch_stock_data(watchlist)
     return jsonify(data)
 
@@ -191,26 +253,29 @@ def add_watchlist():
     ticker = data.get("ticker", "").strip().upper()
     name = data.get("name", "").strip()
     shares = float(data.get("shares", 1))
+    portfolio_id = int(data.get("portfolio_id", 1))
     if ticker and name:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        c.execute('INSERT OR REPLACE INTO watchlist (ticker, name, shares) VALUES (?, ?, ?)', (ticker, name, shares))
+        c.execute('INSERT OR REPLACE INTO watchlist (portfolio_id, ticker, name, shares) VALUES (?, ?, ?, ?)',
+                  (portfolio_id, ticker, name, shares))
         conn.commit()
         conn.close()
-        trigger_analysis_bg()
+        trigger_analysis_bg(portfolio_id)
         return jsonify({"success": True})
     return jsonify({"success": False, "error": "잘못된 입력값입니다."}), 400
 
 @app.route("/api/watchlist/<ticker>", methods=["DELETE"])
 def remove_watchlist(ticker):
+    portfolio_id = request.args.get("portfolio_id", 1, type=int)
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute('DELETE FROM watchlist WHERE ticker=?', (ticker,))
+    c.execute('DELETE FROM watchlist WHERE portfolio_id=? AND ticker=?', (portfolio_id, ticker))
     if c.rowcount == 0:
-        c.execute('DELETE FROM watchlist WHERE ticker=?', (ticker + '.KS',))
+        c.execute('DELETE FROM watchlist WHERE portfolio_id=? AND ticker=?', (portfolio_id, ticker + '.KS'))
     conn.commit()
     conn.close()
-    trigger_analysis_bg()
+    trigger_analysis_bg(portfolio_id)
     return jsonify({"success": True})
 
 @app.route("/api/search-stock", methods=["POST"])
@@ -356,6 +421,7 @@ def import_portfolio():
     data = request.json
     stocks = data.get("stocks", [])
     mode = data.get("mode", "merge")  # "replace": 기존 전체 교체, "merge": 기존에 합치기
+    portfolio_id = int(data.get("portfolio_id", 1))
 
     if not stocks:
         return jsonify({"success": False, "error": "가져올 종목 데이터가 없습니다."}), 400
@@ -364,7 +430,7 @@ def import_portfolio():
     c = conn.cursor()
 
     if mode == "replace":
-        c.execute('DELETE FROM watchlist')
+        c.execute('DELETE FROM watchlist WHERE portfolio_id=?', (portfolio_id,))
 
     imported = 0
     for stock in stocks:
@@ -372,13 +438,13 @@ def import_portfolio():
         name = stock.get('name', '').strip()
         shares = float(stock.get('shares', 1))
         if ticker and name:
-            c.execute('INSERT OR REPLACE INTO watchlist (ticker, name, shares) VALUES (?, ?, ?)',
-                      (ticker, name, shares))
+            c.execute('INSERT OR REPLACE INTO watchlist (portfolio_id, ticker, name, shares) VALUES (?, ?, ?, ?)',
+                      (portfolio_id, ticker, name, shares))
             imported += 1
 
     conn.commit()
     conn.close()
-    trigger_analysis_bg()
+    trigger_analysis_bg(portfolio_id)
 
     return jsonify({"success": True, "imported": imported})
 
@@ -409,28 +475,32 @@ def fetch_latest_news_summary():
             news_text += f"\n[{cat}] (뉴스 데이터를 불러올 수 없습니다)\n"
     return news_text
 
-def generate_portfolio_analysis():
+def generate_portfolio_analysis(portfolio_id=1):
     global latest_portfolio_analysis
+    cache_key = f"portfolio_analysis:{portfolio_id}"
+
     if not GEMINI_API_KEY:
-        latest_portfolio_analysis = "Gemini API Key가 설정되지 않았습니다."
+        msg = "Gemini API Key가 설정되지 않았습니다."
+        latest_portfolio_analysis[portfolio_id] = msg
         if cache:
-            cache.set("portfolio_analysis", latest_portfolio_analysis)
+            cache.set(cache_key, msg)
         return
 
-    watchlist = get_watchlist()
+    watchlist = get_watchlist(portfolio_id)
     if not watchlist:
-        latest_portfolio_analysis = "관심 종목이 비어있습니다. 종목을 추가하시면 AI가 5분 단위로 시장을 분석해 드립니다!"
+        msg = "관심 종목이 비어있습니다. 종목을 추가하시면 AI가 5분 단위로 시장을 분석해 드립니다!"
+        latest_portfolio_analysis[portfolio_id] = msg
         if cache:
-            cache.set("portfolio_analysis", latest_portfolio_analysis)
+            cache.set(cache_key, msg)
         return
-        
+
     try:
         data = fetch_stock_data(watchlist)
-        portfolio_text = "현재 보유 포트폴리오 (My Portfolio):\n"
+        portfolio_text = "현재 보유 포트폴리오:\n"
         for item in data:
             sign = "+" if item['is_up'] else ""
             portfolio_text += f"- {item['name']} ({item['ticker']}): {item['shares']}주 보유, 현재가 {item['currency']}{item['price']}, 등락률 {sign}{item['change']}%, 총 가치: {item['currency']}{item['total_value']}\n"
-            
+
         news_summary = fetch_latest_news_summary()
 
         prompt = f"""
@@ -465,13 +535,13 @@ def generate_portfolio_analysis():
             model='gemini-3.1-flash-lite-preview',
             contents=prompt,
         )
-        
-        latest_portfolio_analysis = response.text
+
+        latest_portfolio_analysis[portfolio_id] = response.text
         if cache:
-            cache.set("portfolio_analysis", latest_portfolio_analysis, ex=600)  # 10분 TTL
-        print("Background AI Portfolio Analysis Updated.")
+            cache.set(cache_key, response.text, ex=600)  # 10분 TTL
+        print(f"Background AI Portfolio Analysis Updated (portfolio_id={portfolio_id}).")
     except Exception as e:
-        print(f"Background AI Error: {e}")
+        print(f"Background AI Error (portfolio_id={portfolio_id}): {e}")
 
 # 백그라운드 스케줄러 등록 (5분 마다 최신 주가 동기화 및 AI 분석 처리 수행)
 def background_sync_and_analyze():
@@ -479,12 +549,13 @@ def background_sync_and_analyze():
     try:
         # 1. 최신 주가 정보 동기화 가동 (캐시 만료와 상관없이 즉시 갱신)
         fetch_stock_data(INDICES, force_refresh=True)
-        watchlist = get_watchlist()
-        if watchlist:
-            fetch_stock_data(watchlist, force_refresh=True)
-            
-        # 2. 방금 갱신된 신선한 주가 데이터를 바탕으로 AI 분석 즉시 실시
-        generate_portfolio_analysis()
+
+        # 2. 모든 포트폴리오의 주가 갱신 및 AI 분석
+        for pid in get_all_portfolio_ids():
+            watchlist = get_watchlist(pid)
+            if watchlist:
+                fetch_stock_data(watchlist, force_refresh=True)
+                generate_portfolio_analysis(pid)
     except Exception as e:
         print(f"Background Sync Error: {e}")
 
@@ -492,25 +563,28 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(background_sync_and_analyze, 'interval', minutes=5)
 scheduler.start()
 
-def trigger_analysis_bg():
+def trigger_analysis_bg(portfolio_id=1):
     # 사용자가 종목을 추가/삭제할 때만 별도 스레드로 AI 분석 즉시 업데이트
-    thread = threading.Thread(target=generate_portfolio_analysis)
+    thread = threading.Thread(target=generate_portfolio_analysis, args=(portfolio_id,))
     thread.start()
 
-# 최초 1회 분석 돌려놓기
-trigger_analysis_bg()
+# 최초 1회 분석 돌려놓기 (포트폴리오 1번)
+trigger_analysis_bg(1)
 
 @app.route("/api/portfolio-analysis", methods=["GET"])
 def api_portfolio_analysis():
+    portfolio_id = request.args.get("portfolio_id", 1, type=int)
+    cache_key = f"portfolio_analysis:{portfolio_id}"
+
     analysis_text = None
     if cache:
-        cached = cache.get("portfolio_analysis")
+        cached = cache.get(cache_key)
         if cached:
             analysis_text = cached
-            
+
     if not analysis_text:
-        analysis_text = latest_portfolio_analysis
-        
+        analysis_text = latest_portfolio_analysis.get(portfolio_id, DEFAULT_ANALYSIS_MSG)
+
     return jsonify({"success": True, "analysis": analysis_text})
 
 if __name__ == "__main__":

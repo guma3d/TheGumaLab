@@ -616,6 +616,52 @@
             animation-delay: 0.3s;
         }
 
+        /* Portfolio Tabs */
+        .portfolio-tabs {
+            display: flex;
+            gap: 0.35rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
+            scrollbar-width: none;
+        }
+
+        .portfolio-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .portfolio-tab {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.45rem 0.8rem;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .portfolio-tab:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            color: var(--text-main);
+        }
+
+        .portfolio-tab.active {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            background: rgba(16, 185, 129, 0.08);
+        }
+
+        .portfolio-tab i {
+            font-size: 0.8rem;
+        }
+
         /* Screenshot Import Button */
         .btn-import {
             background: transparent;
@@ -905,6 +951,10 @@
                     </div>
                 </div>
 
+                <div class="portfolio-tabs" id="portfolio-tabs">
+                    <!-- Dynamically populated -->
+                </div>
+
                 <div class="add-form-container" id="add-form" style="flex-direction: column;">
                     <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
                         <input type="text" id="input-search" placeholder="Search company (e.g., 테슬라, Apple)..."
@@ -1006,6 +1056,43 @@
         document.addEventListener('DOMContentLoaded', () => {
             console.log('StockMaster UI Loaded');
 
+            // ====== Portfolio State ======
+            let currentPortfolioId = 1;
+            let portfolioList = [];
+
+            async function fetchPortfolios() {
+                try {
+                    const res = await fetch('/api/portfolios');
+                    portfolioList = await res.json();
+                    renderPortfolioTabs();
+                } catch (e) {
+                    console.error('Failed to fetch portfolios', e);
+                }
+            }
+
+            function renderPortfolioTabs() {
+                const container = document.getElementById('portfolio-tabs');
+                container.innerHTML = '';
+                portfolioList.forEach(p => {
+                    const tab = document.createElement('button');
+                    tab.className = 'portfolio-tab' + (p.id === currentPortfolioId ? ' active' : '');
+                    tab.innerHTML = `<i class="fa-solid ${p.icon || 'fa-briefcase'}"></i> ${p.name}`;
+                    tab.addEventListener('click', () => switchPortfolio(p.id));
+                    container.appendChild(tab);
+                });
+            }
+
+            function switchPortfolio(id) {
+                currentPortfolioId = id;
+                renderPortfolioTabs();
+                document.getElementById('watchlist-container').innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 1rem;">Loading...</div>';
+                document.getElementById('portfolio-analysis-container').innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 2rem;"><i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem; color: var(--accent-color);"></i><br>Loading analysis...</div>';
+                fetchWatchlistData();
+                fetchPortfolioAnalysis();
+            }
+
+            fetchPortfolios();
+
             // Add gentle 3D hover effects to cards matching the Portal style
             const cards = document.querySelectorAll('.card');
 
@@ -1068,7 +1155,7 @@
 
             async function fetchWatchlistData() {
                 try {
-                    const res = await fetch(`/api/watchlist?t=${new Date().getTime()}`);
+                    const res = await fetch(`/api/watchlist?portfolio_id=${currentPortfolioId}&t=${new Date().getTime()}`);
                     const data = await res.json();
 
                     const container = document.getElementById('watchlist-container');
@@ -1118,7 +1205,7 @@
                 try {
                     const container = document.getElementById('portfolio-analysis-container');
 
-                    const res = await fetch(`/api/portfolio-analysis?t=${new Date().getTime()}`);
+                    const res = await fetch(`/api/portfolio-analysis?portfolio_id=${currentPortfolioId}&t=${new Date().getTime()}`);
                     const data = await res.json();
 
                     if (data.success) {
@@ -1247,7 +1334,7 @@
                     const res = await fetch('/api/watchlist', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ticker, name, shares })
+                        body: JSON.stringify({ ticker, name, shares, portfolio_id: currentPortfolioId })
                     });
                     const data = await res.json();
                     if (data.success) {
@@ -1279,7 +1366,7 @@
                     const res = await fetch('/api/watchlist', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ticker: rawTicker, name: name, shares: shares })
+                        body: JSON.stringify({ ticker: rawTicker, name: name, shares: shares, portfolio_id: currentPortfolioId })
                     });
                     const data = await res.json();
                     if (data.success) {
@@ -1300,7 +1387,7 @@
                 if (!confirm("Are you sure you want to remove this stock?")) return;
 
                 try {
-                    const res = await fetch(`/api/watchlist/${rawTicker}`, { method: 'DELETE' });
+                    const res = await fetch(`/api/watchlist/${rawTicker}?portfolio_id=${currentPortfolioId}`, { method: 'DELETE' });
                     const data = await res.json();
                     if (data.success) {
                         document.getElementById('watchlist-container').innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 1rem;">Updating...</div>';
@@ -1489,7 +1576,7 @@
                     const res = await fetch('/api/import-portfolio', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ stocks: selectedStocks, mode: importMode })
+                        body: JSON.stringify({ stocks: selectedStocks, mode: importMode, portfolio_id: currentPortfolioId })
                     });
                     const data = await res.json();
 
