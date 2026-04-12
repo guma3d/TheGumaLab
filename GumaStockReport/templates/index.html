@@ -616,6 +616,229 @@
             animation-delay: 0.3s;
         }
 
+        /* Screenshot Import Button */
+        .btn-import {
+            background: transparent;
+            border: 1px solid #8b5cf6;
+            color: #8b5cf6;
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-import:hover {
+            background: rgba(139, 92, 246, 0.1);
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.2);
+        }
+
+        /* Import Modal Overlay */
+        .import-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .import-modal-overlay.active {
+            display: flex;
+        }
+
+        .import-modal {
+            background: #111;
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 500px;
+            max-height: 85vh;
+            overflow-y: auto;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        .import-modal h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .import-modal h3 i {
+            color: #8b5cf6;
+        }
+
+        .import-upload-area {
+            border: 2px dashed rgba(139, 92, 246, 0.4);
+            border-radius: 16px;
+            padding: 2rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        .import-upload-area:hover {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        .import-upload-area.dragover {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .import-upload-area i {
+            font-size: 2.5rem;
+            color: #8b5cf6;
+            margin-bottom: 0.75rem;
+        }
+
+        .import-upload-area p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .import-preview-img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            border: 1px solid var(--card-border);
+        }
+
+        .import-stock-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .import-stock-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.7rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .import-stock-item input[type="checkbox"] {
+            accent-color: #8b5cf6;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .import-stock-detail {
+            flex: 1;
+        }
+
+        .import-stock-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .import-stock-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.15rem;
+        }
+
+        .import-stock-shares {
+            font-weight: 700;
+            color: var(--accent-color);
+            font-size: 0.95rem;
+            white-space: nowrap;
+        }
+
+        .import-mode-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .import-mode-btn {
+            flex: 1;
+            padding: 0.6rem;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .import-mode-btn.selected {
+            border-color: #8b5cf6;
+            color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .import-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .import-actions button {
+            flex: 1;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .btn-import-confirm {
+            background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+            color: #fff;
+        }
+
+        .btn-import-confirm:hover {
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-import-confirm:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-import-cancel {
+            background: transparent;
+            border: 1px solid var(--text-muted) !important;
+            color: var(--text-muted);
+        }
+
+        .import-loading {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--text-muted);
+        }
+
+        .import-loading i {
+            font-size: 2rem;
+            color: #8b5cf6;
+            margin-bottom: 0.75rem;
+        }
+
         /* Responsive */
         @media (max-width: 900px) {
             .dashboard {
@@ -676,7 +899,10 @@
                             <!-- dynamically filled -->
                         </div>
                     </div>
-                    <button class="btn-add" id="btn-toggle-add"><i class="fa-solid fa-plus"></i> Add</button>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn-import" id="btn-open-import"><i class="fa-solid fa-camera"></i> Import</button>
+                        <button class="btn-add" id="btn-toggle-add"><i class="fa-solid fa-plus"></i> Add</button>
+                    </div>
                 </div>
 
                 <div class="add-form-container" id="add-form" style="flex-direction: column;">
@@ -714,6 +940,59 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- Screenshot Import Modal -->
+    <div class="import-modal-overlay" id="import-modal-overlay">
+        <div class="import-modal">
+            <h3><i class="fa-solid fa-camera"></i> 삼성증권 스크린샷 가져오기</h3>
+
+            <!-- Step 1: Upload -->
+            <div id="import-step-upload">
+                <div class="import-upload-area" id="import-drop-zone">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <div style="font-weight: 500; font-size: 1.05rem;">스크린샷을 선택하세요</div>
+                    <p>삼성증권 앱의 보유종목 화면을 캡처한 이미지</p>
+                    <p style="font-size: 0.8rem; margin-top: 0.25rem; color: rgba(255,255,255,0.3);">JPG, PNG (최대 16MB)</p>
+                </div>
+                <input type="file" id="import-file-input" accept="image/*" style="display: none;">
+                <div class="import-actions">
+                    <button class="btn-import-cancel" id="btn-import-close">닫기</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Loading -->
+            <div id="import-step-loading" style="display: none;">
+                <div class="import-loading">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    <div style="font-weight: 500; margin-top: 0.5rem;">AI가 스크린샷을 분석하고 있습니다...</div>
+                    <p style="font-size: 0.85rem; margin-top: 0.25rem;">종목명, 코드, 보유수량을 추출 중</p>
+                </div>
+            </div>
+
+            <!-- Step 3: Results -->
+            <div id="import-step-results" style="display: none;">
+                <img id="import-preview" class="import-preview-img" style="display: none;">
+                <div id="import-result-count" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.75rem;"></div>
+                <div class="import-stock-list" id="import-stock-list">
+                    <!-- Dynamically populated -->
+                </div>
+                <div class="import-mode-selector">
+                    <button class="import-mode-btn selected" data-mode="replace" id="mode-replace">
+                        <i class="fa-solid fa-arrows-rotate"></i> 전체 교체
+                    </button>
+                    <button class="import-mode-btn" data-mode="merge" id="mode-merge">
+                        <i class="fa-solid fa-code-merge"></i> 기존에 합치기
+                    </button>
+                </div>
+                <div class="import-actions">
+                    <button class="btn-import-cancel" id="btn-import-retry">다시 촬영</button>
+                    <button class="btn-import-confirm" id="btn-import-confirm">
+                        <i class="fa-solid fa-check"></i> 가져오기
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -1032,6 +1311,204 @@
                     console.error("Failed to remove stock", e);
                 }
             };
+
+            // ====== Screenshot Import Logic ======
+            const importOverlay = document.getElementById('import-modal-overlay');
+            const importFileInput = document.getElementById('import-file-input');
+            const importDropZone = document.getElementById('import-drop-zone');
+            const stepUpload = document.getElementById('import-step-upload');
+            const stepLoading = document.getElementById('import-step-loading');
+            const stepResults = document.getElementById('import-step-results');
+
+            let parsedStocks = [];
+            let importMode = 'replace';
+
+            // Open modal
+            document.getElementById('btn-open-import').addEventListener('click', () => {
+                importOverlay.classList.add('active');
+                resetImportModal();
+            });
+
+            // Close modal
+            document.getElementById('btn-import-close').addEventListener('click', () => {
+                importOverlay.classList.remove('active');
+            });
+
+            importOverlay.addEventListener('click', (e) => {
+                if (e.target === importOverlay) importOverlay.classList.remove('active');
+            });
+
+            // Click drop zone → open file picker
+            importDropZone.addEventListener('click', () => importFileInput.click());
+
+            // Drag & drop
+            importDropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                importDropZone.classList.add('dragover');
+            });
+            importDropZone.addEventListener('dragleave', () => importDropZone.classList.remove('dragover'));
+            importDropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                importDropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) {
+                    handleImportFile(e.dataTransfer.files[0]);
+                }
+            });
+
+            // File selected
+            importFileInput.addEventListener('change', () => {
+                if (importFileInput.files.length > 0) {
+                    handleImportFile(importFileInput.files[0]);
+                }
+            });
+
+            function resetImportModal() {
+                stepUpload.style.display = '';
+                stepLoading.style.display = 'none';
+                stepResults.style.display = 'none';
+                importFileInput.value = '';
+                parsedStocks = [];
+                importMode = 'replace';
+                document.getElementById('mode-replace').classList.add('selected');
+                document.getElementById('mode-merge').classList.remove('selected');
+            }
+
+            async function handleImportFile(file) {
+                if (!file.type.startsWith('image/')) {
+                    alert('이미지 파일만 업로드할 수 있습니다.');
+                    return;
+                }
+                if (file.size > 16 * 1024 * 1024) {
+                    alert('파일 크기가 16MB를 초과합니다.');
+                    return;
+                }
+
+                // Show loading
+                stepUpload.style.display = 'none';
+                stepLoading.style.display = '';
+
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const preview = document.getElementById('import-preview');
+                    preview.src = e.target.result;
+                    preview.style.display = '';
+                };
+                reader.readAsDataURL(file);
+
+                // Send to API
+                const formData = new FormData();
+                formData.append('image', file);
+
+                try {
+                    const res = await fetch('/api/parse-screenshot', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await res.json();
+
+                    stepLoading.style.display = 'none';
+
+                    if (data.success && data.stocks.length > 0) {
+                        parsedStocks = data.stocks;
+                        renderImportResults();
+                        stepResults.style.display = '';
+                    } else {
+                        alert(data.error || '종목 정보를 찾을 수 없습니다. 삼성증권 보유종목 화면을 캡처해주세요.');
+                        resetImportModal();
+                    }
+                } catch (e) {
+                    console.error('Screenshot parse failed', e);
+                    alert('스크린샷 분석 중 오류가 발생했습니다.');
+                    stepLoading.style.display = 'none';
+                    resetImportModal();
+                }
+            }
+
+            function renderImportResults() {
+                const list = document.getElementById('import-stock-list');
+                const countEl = document.getElementById('import-result-count');
+                countEl.textContent = `${parsedStocks.length}개 종목이 감지되었습니다.`;
+
+                list.innerHTML = '';
+                parsedStocks.forEach((stock, idx) => {
+                    const marketBadge = stock.market === 'US'
+                        ? '<span style="font-size:0.65rem; background:#3b82f6; color:#fff; padding:0.1rem 0.3rem; border-radius:3px; font-weight:700;">US</span>'
+                        : `<span style="font-size:0.65rem; background:var(--accent-color); color:#111; padding:0.1rem 0.3rem; border-radius:3px; font-weight:700;">${stock.market}</span>`;
+
+                    list.innerHTML += `
+                        <div class="import-stock-item">
+                            <input type="checkbox" checked data-idx="${idx}" class="import-checkbox">
+                            <div class="import-stock-detail">
+                                <div class="import-stock-name">${stock.name}</div>
+                                <div class="import-stock-meta">${marketBadge} ${stock.code}</div>
+                            </div>
+                            <div class="import-stock-shares">${stock.shares}주</div>
+                        </div>
+                    `;
+                });
+            }
+
+            // Mode selector
+            document.getElementById('mode-replace').addEventListener('click', function () {
+                importMode = 'replace';
+                this.classList.add('selected');
+                document.getElementById('mode-merge').classList.remove('selected');
+            });
+            document.getElementById('mode-merge').addEventListener('click', function () {
+                importMode = 'merge';
+                this.classList.add('selected');
+                document.getElementById('mode-replace').classList.remove('selected');
+            });
+
+            // Retry button
+            document.getElementById('btn-import-retry').addEventListener('click', () => {
+                resetImportModal();
+            });
+
+            // Confirm import
+            document.getElementById('btn-import-confirm').addEventListener('click', async () => {
+                const checkboxes = document.querySelectorAll('.import-checkbox');
+                const selectedStocks = [];
+                checkboxes.forEach(cb => {
+                    if (cb.checked) {
+                        selectedStocks.push(parsedStocks[parseInt(cb.dataset.idx)]);
+                    }
+                });
+
+                if (selectedStocks.length === 0) {
+                    alert('가져올 종목을 선택해주세요.');
+                    return;
+                }
+
+                const confirmBtn = document.getElementById('btn-import-confirm');
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 처리 중...';
+
+                try {
+                    const res = await fetch('/api/import-portfolio', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ stocks: selectedStocks, mode: importMode })
+                    });
+                    const data = await res.json();
+
+                    if (data.success) {
+                        importOverlay.classList.remove('active');
+                        document.getElementById('watchlist-container').innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 1rem;">Updating...</div>';
+                        fetchWatchlistData();
+                        fetchPortfolioAnalysis();
+                    } else {
+                        alert('가져오기 실패: ' + (data.error || '알 수 없는 오류'));
+                    }
+                } catch (e) {
+                    console.error('Import failed', e);
+                    alert('가져오기 중 오류가 발생했습니다.');
+                } finally {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = '<i class="fa-solid fa-check"></i> 가져오기';
+                }
+            });
         });
 
         // Register Service Worker for PWA

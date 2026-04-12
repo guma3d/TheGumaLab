@@ -1,18 +1,19 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request, send_from_directory
 import yfinance as yf
 import redis
 import json
 import sqlite3
 import os
 from google import genai
+from google.genai import types
 from datetime import datetime
-from flask import Flask, render_template, jsonify, request
 import threading
 from apscheduler.schedulers.background import BackgroundScheduler
 import urllib.request
 import xml.etree.ElementTree as ET
 
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB 업로드 제한
 
 # Redis 연결 (docker-compose의 서비스 이름 사용)
 try:
@@ -160,8 +161,6 @@ def home():
     # Render the styled dashboard
     return render_template("index.html")
 
-from flask import send_from_directory
-
 @app.route("/sw.js")
 def serve_sw():
     # Serve Service Worker from the frontend root with proper MIME type
@@ -257,6 +256,132 @@ def search_stock():
     except Exception as e:
         print(f"Search API Error: {e}")
         return jsonify({"success": False, "error": "종목을 검색하는 데 실패했습니다. 다시 시도해주세요."})
+
+@app.route("/api/parse-screenshot", methods=["POST"])
+def parse_screenshot():
+    """삼성증권 스크린샷에서 보유 종목 정보를 Gemini Vision으로 추출"""
+    if 'image' not in request.files:
+        return jsonify({"success": False, "error": "이미지를 업로드해주세요."}), 400
+
+    file = request.files['image']
+    if file.filename == '':
+        return jsonify({"success": False, "error": "파일이 선택되지 않았습니다."}), 400
+
+    if not GEMINI_API_KEY:
+        return jsonify({"success": False, "error": "Gemini API Key가 설정되지 않아 이미지 분석을 사용할 수 없습니다."}), 500
+
+    image_bytes = file.read()
+    mime_type = file.content_type or 'image/jpeg'
+
+    prompt = """이 이미지는 삼성증권 모바일 앱의 보유종목 화면 캡처입니다.
+이미지에서 보유 종목 정보를 모두 추출해주세요.
+
+각 종목에 대해 다음 정보를 추출하세요:
+1. name: 종목명 (한글 또는 영문, 이미지에 표시된 그대로)
+2. code: 종목코드 (6자리 숫자). 이미지에 표시되어 있다면 그대로, 없으면 종목명으로 유추
+3. shares: 보유수량 (정수). 이미지에서 '보유수량', '수량', 'N주' 등으로 표시된 값
+4. market: 'KOSPI' 또는 'KOSDAQ' (한국 주식의 경우). 미국 주식이면 'US'
+
+중요:
+- 이미지에 보이는 모든 종목을 빠짐없이 추출하세요.
+- 보유수량을 정확히 읽어주세요. 숫자 구분 쉼표(,)는 제거하세요.
+- ETF, 펀드도 포함하세요.
+- 미국 주식이 포함되어 있다면 ticker 심볼(예: AAPL, TSLA)을 code에 넣어주세요.
+
+반드시 아래 JSON 배열 형식으로만 응답하세요. 다른 텍스트는 절대 포함하지 마세요:
+[
+  {"name": "삼성전자", "code": "005930", "shares": 100, "market": "KOSPI"},
+  {"name": "SK하이닉스", "code": "000660", "shares": 50, "market": "KOSPI"}
+]
+
+만약 이미지에서 종목 정보를 찾을 수 없다면:
+{"error": "이미지에서 종목 정보를 찾을 수 없습니다. 삼성증권 보유종목 화면을 캡처해주세요."}
+"""
+
+    try:
+        image_part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
+        response = gemini_client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=[image_part, prompt],
+        )
+
+        text = response.text.strip()
+        if text.startswith('```json'):
+            text = text[7:]
+        if text.startswith('```'):
+            text = text[3:]
+        if text.endswith('```'):
+            text = text[:-3]
+
+        result = json.loads(text.strip())
+
+        if isinstance(result, dict) and 'error' in result:
+            return jsonify({"success": False, "error": result['error']})
+
+        # 종목코드 → Yahoo Finance ticker 변환
+        stocks = []
+        for stock in result:
+            code = str(stock.get('code', '')).strip()
+            name = stock.get('name', '').strip()
+            shares = int(float(stock.get('shares', 0)))
+            market = stock.get('market', 'KOSPI').upper()
+
+            if market == 'US':
+                ticker = code  # 미국 주식은 심볼 그대로 (AAPL, TSLA 등)
+            elif market == 'KOSDAQ':
+                ticker = f"{code.zfill(6)}.KQ"
+            else:
+                ticker = f"{code.zfill(6)}.KS"
+
+            stocks.append({
+                "name": name,
+                "code": code,
+                "ticker": ticker,
+                "shares": shares,
+                "market": market
+            })
+
+        return jsonify({"success": True, "stocks": stocks})
+    except json.JSONDecodeError:
+        print(f"Screenshot parse JSON error. Raw text: {text}")
+        return jsonify({"success": False, "error": "이미지 분석 결과를 파싱할 수 없습니다. 다시 시도해주세요."})
+    except Exception as e:
+        print(f"Screenshot parse error: {e}")
+        return jsonify({"success": False, "error": "스크린샷 분석에 실패했습니다. 다시 시도해주세요."})
+
+
+@app.route("/api/import-portfolio", methods=["POST"])
+def import_portfolio():
+    """파싱된 종목 데이터를 포트폴리오에 일괄 반영"""
+    data = request.json
+    stocks = data.get("stocks", [])
+    mode = data.get("mode", "merge")  # "replace": 기존 전체 교체, "merge": 기존에 합치기
+
+    if not stocks:
+        return jsonify({"success": False, "error": "가져올 종목 데이터가 없습니다."}), 400
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+
+    if mode == "replace":
+        c.execute('DELETE FROM watchlist')
+
+    imported = 0
+    for stock in stocks:
+        ticker = stock.get('ticker', '').strip()
+        name = stock.get('name', '').strip()
+        shares = float(stock.get('shares', 1))
+        if ticker and name:
+            c.execute('INSERT OR REPLACE INTO watchlist (ticker, name, shares) VALUES (?, ?, ?)',
+                      (ticker, name, shares))
+            imported += 1
+
+    conn.commit()
+    conn.close()
+    trigger_analysis_bg()
+
+    return jsonify({"success": True, "imported": imported})
+
 
 def fetch_latest_news_summary():
     urls = {
