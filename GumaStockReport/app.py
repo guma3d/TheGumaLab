@@ -89,8 +89,8 @@ def init_db():
 
 init_db()
 
-# 최신 분석 텍스트 저장용 (메모리, 포트폴리오별)
-latest_portfolio_analysis = {}
+# 최신 분석 텍스트 저장용 (메모리, 전체 종합)
+latest_portfolio_analysis = ""
 DEFAULT_ANALYSIS_MSG = "AI가 아직 관심 종목을 실시간 시장 현황을 바탕으로 분석하고 있습니다. 잠시만 기다려주세요..."
 
 def get_all_portfolio_ids():
@@ -261,7 +261,7 @@ def add_watchlist():
                   (portfolio_id, ticker, name, shares))
         conn.commit()
         conn.close()
-        trigger_analysis_bg(portfolio_id)
+        trigger_analysis_bg()
         return jsonify({"success": True})
     return jsonify({"success": False, "error": "잘못된 입력값입니다."}), 400
 
@@ -275,7 +275,7 @@ def remove_watchlist(ticker):
         c.execute('DELETE FROM watchlist WHERE portfolio_id=? AND ticker=?', (portfolio_id, ticker + '.KS'))
     conn.commit()
     conn.close()
-    trigger_analysis_bg(portfolio_id)
+    trigger_analysis_bg()
     return jsonify({"success": True})
 
 @app.route("/api/search-stock", methods=["POST"])
@@ -444,7 +444,7 @@ def import_portfolio():
 
     conn.commit()
     conn.close()
-    trigger_analysis_bg(portfolio_id)
+    trigger_analysis_bg()
 
     return jsonify({"success": True, "imported": imported})
 
@@ -475,43 +475,74 @@ def fetch_latest_news_summary():
             news_text += f"\n[{cat}] (뉴스 데이터를 불러올 수 없습니다)\n"
     return news_text
 
-def generate_portfolio_analysis(portfolio_id=1):
+def get_all_portfolios_with_stocks():
+    """전체 포트폴리오와 종목을 계좌별로 그룹핑해서 반환"""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('''SELECT p.name, w.ticker, w.name, w.shares
+                 FROM portfolios p
+                 LEFT JOIN watchlist w ON p.id = w.portfolio_id
+                 ORDER BY p.id, w.name''')
+    rows = c.fetchall()
+    conn.close()
+
+    portfolios = {}
+    for pname, ticker, sname, shares in rows:
+        if pname not in portfolios:
+            portfolios[pname] = []
+        if ticker:
+            portfolios[pname].append({"ticker": ticker, "name": sname, "shares": shares})
+    return portfolios
+
+def generate_portfolio_analysis():
     global latest_portfolio_analysis
-    cache_key = f"portfolio_analysis:{portfolio_id}"
+    cache_key = "portfolio_analysis"
 
     if not GEMINI_API_KEY:
         msg = "Gemini API Key가 설정되지 않았습니다."
-        latest_portfolio_analysis[portfolio_id] = msg
+        latest_portfolio_analysis = msg
         if cache:
             cache.set(cache_key, msg)
         return
 
-    watchlist = get_watchlist(portfolio_id)
-    if not watchlist:
+    all_portfolios = get_all_portfolios_with_stocks()
+    all_stocks = []
+    for stocks in all_portfolios.values():
+        all_stocks.extend(stocks)
+
+    if not all_stocks:
         msg = "관심 종목이 비어있습니다. 종목을 추가하시면 AI가 5분 단위로 시장을 분석해 드립니다!"
-        latest_portfolio_analysis[portfolio_id] = msg
+        latest_portfolio_analysis = msg
         if cache:
             cache.set(cache_key, msg)
         return
 
     try:
-        data = fetch_stock_data(watchlist)
-        portfolio_text = "현재 보유 포트폴리오:\n"
-        for item in data:
-            sign = "+" if item['is_up'] else ""
-            portfolio_text += f"- {item['name']} ({item['ticker']}): {item['shares']}주 보유, 현재가 {item['currency']}{item['price']}, 등락률 {sign}{item['change']}%, 총 가치: {item['currency']}{item['total_value']}\n"
+        data = fetch_stock_data(all_stocks)
+        # ticker → 실시간 가격 매핑
+        price_map = {item['raw_ticker']: item for item in data}
+
+        portfolio_text = ""
+        for pname, stocks in all_portfolios.items():
+            if not stocks:
+                continue
+            portfolio_text += f"\n[{pname}]\n"
+            for s in stocks:
+                info = price_map.get(s['ticker'], {})
+                sign = "+" if info.get('is_up', True) else ""
+                portfolio_text += f"- {s['name']} ({info.get('ticker', s['ticker'])}): {s['shares']}주 보유, 현재가 {info.get('currency','')}{info.get('price','N/A')}, 등락률 {sign}{info.get('change',0)}%, 총 가치: {info.get('currency','')}{info.get('total_value',0)}\n"
 
         news_summary = fetch_latest_news_summary()
 
         prompt = f"""
-다음은 사용자의 현재 주식 관심 종목 리스트와 전체 포트폴리오 현황입니다.
+다음은 사용자가 관리하는 전체 주식 포트폴리오 현황입니다. 여러 계좌로 나뉘어 있지만 하나의 종합 포트폴리오로 분석해주세요.
 
 {portfolio_text}
 
 다음은 현재 24시간 내 발생한 공신력 있는 정치, 경제, 사회, 주식, IT 분야의 핵심 뉴스 헤드라인 25개입니다:
 {news_summary}
 
-이 종목들을 포함한 관심 종목 포트폴리오를 분석해주세요. 위 제공된 뉴스 데이터를 꼼꼼히 읽어보고 최신 정세와 뉴스를 분석 리포트에 반영해 주세요.
+위 모든 계좌의 종목을 통합하여 하나의 종합 포트폴리오로 분석해주세요. 위 제공된 뉴스 데이터를 꼼꼼히 읽어보고 최신 정세와 뉴스를 분석 리포트에 반영해 주세요.
 사용자가 한눈에 파악하기 쉽도록 **뛰어난 가독성**을 최우선으로 작성하는 것이 당신의 목표입니다.
 
 **작성 지침 (필수):**
@@ -536,12 +567,12 @@ def generate_portfolio_analysis(portfolio_id=1):
             contents=prompt,
         )
 
-        latest_portfolio_analysis[portfolio_id] = response.text
+        latest_portfolio_analysis = response.text
         if cache:
             cache.set(cache_key, response.text, ex=600)  # 10분 TTL
-        print(f"Background AI Portfolio Analysis Updated (portfolio_id={portfolio_id}).")
+        print("Background AI Portfolio Analysis Updated (combined).")
     except Exception as e:
-        print(f"Background AI Error (portfolio_id={portfolio_id}): {e}")
+        print(f"Background AI Error: {e}")
 
 # 백그라운드 스케줄러 등록 (5분 마다 최신 주가 동기화 및 AI 분석 처리 수행)
 def background_sync_and_analyze():
@@ -549,13 +580,12 @@ def background_sync_and_analyze():
     try:
         # 1. 최신 주가 정보 동기화 가동 (캐시 만료와 상관없이 즉시 갱신)
         fetch_stock_data(INDICES, force_refresh=True)
+        all_watchlist = get_watchlist()  # 전체 종목 갱신
+        if all_watchlist:
+            fetch_stock_data(all_watchlist, force_refresh=True)
 
-        # 2. 모든 포트폴리오의 주가 갱신 및 AI 분석
-        for pid in get_all_portfolio_ids():
-            watchlist = get_watchlist(pid)
-            if watchlist:
-                fetch_stock_data(watchlist, force_refresh=True)
-                generate_portfolio_analysis(pid)
+        # 2. 전체 포트폴리오 종합 AI 분석
+        generate_portfolio_analysis()
     except Exception as e:
         print(f"Background Sync Error: {e}")
 
@@ -563,18 +593,17 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(background_sync_and_analyze, 'interval', minutes=5)
 scheduler.start()
 
-def trigger_analysis_bg(portfolio_id=1):
+def trigger_analysis_bg():
     # 사용자가 종목을 추가/삭제할 때만 별도 스레드로 AI 분석 즉시 업데이트
-    thread = threading.Thread(target=generate_portfolio_analysis, args=(portfolio_id,))
+    thread = threading.Thread(target=generate_portfolio_analysis)
     thread.start()
 
-# 최초 1회 분석 돌려놓기 (포트폴리오 1번)
-trigger_analysis_bg(1)
+# 최초 1회 분석 돌려놓기
+trigger_analysis_bg()
 
 @app.route("/api/portfolio-analysis", methods=["GET"])
 def api_portfolio_analysis():
-    portfolio_id = request.args.get("portfolio_id", 1, type=int)
-    cache_key = f"portfolio_analysis:{portfolio_id}"
+    cache_key = "portfolio_analysis"
 
     analysis_text = None
     if cache:
@@ -583,7 +612,7 @@ def api_portfolio_analysis():
             analysis_text = cached
 
     if not analysis_text:
-        analysis_text = latest_portfolio_analysis.get(portfolio_id, DEFAULT_ANALYSIS_MSG)
+        analysis_text = latest_portfolio_analysis if isinstance(latest_portfolio_analysis, str) else DEFAULT_ANALYSIS_MSG
 
     return jsonify({"success": True, "analysis": analysis_text})
 

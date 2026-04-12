@@ -1086,9 +1086,7 @@
                 currentPortfolioId = id;
                 renderPortfolioTabs();
                 document.getElementById('watchlist-container').innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 1rem;">Loading...</div>';
-                document.getElementById('portfolio-analysis-container').innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 2rem;"><i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem; color: var(--accent-color);"></i><br>Loading analysis...</div>';
                 fetchWatchlistData();
-                fetchPortfolioAnalysis();
             }
 
             fetchPortfolios();
@@ -1205,7 +1203,7 @@
                 try {
                     const container = document.getElementById('portfolio-analysis-container');
 
-                    const res = await fetch(`/api/portfolio-analysis?portfolio_id=${currentPortfolioId}&t=${new Date().getTime()}`);
+                    const res = await fetch(`/api/portfolio-analysis?t=${new Date().getTime()}`);
                     const data = await res.json();
 
                     if (data.success) {
