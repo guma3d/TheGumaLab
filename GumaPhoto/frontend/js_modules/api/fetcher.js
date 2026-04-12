@@ -74,7 +74,7 @@ window.GumaAPI.apiGetUnknownPhoto = apiGetUnknownPhoto;
  * 시스템 어드밴스드 통계 다운로드
  */
 export async function apiGetAdvancedStats() {
-    const url = `${getBaseUrl()}/api/system/advanced_stats`;
+    const url = `${getBaseUrl()}/api/system/advanced`;
     const response = await fetch(url);
     if (!response.ok) throw new Error('통계 로드 실패');
     return await response.json();

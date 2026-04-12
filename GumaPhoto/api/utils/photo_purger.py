@@ -127,42 +127,6 @@ class PhotoPurger:
                 print(f"   ⚠️ {err_msg}")
                 cache_errors.append(err_msg)
                 
-        # 2. Themes cache 방어
-        themes_path = "/app/data/caches/themes_cache.json"
-        if os.path.exists(themes_path):
-            try:
-                with open(themes_path, "r", encoding="utf-8") as f:
-                    th_cache = json.load(f)
-                changed = False
-                for theme in th_cache:
-                    photos = theme.get("photos", [])
-                    if isinstance(photos, list):
-                        original_len = len(photos)
-                        theme["photos"] = [p for p in photos if p.get("id") != point_id]
-                        if len(theme["photos"]) != original_len:
-                            changed = True
-                if changed:
-                    with open(themes_path, "w", encoding="utf-8") as f:
-                        json.dump(th_cache, f, ensure_ascii=False)
-                    print(f"   🧹 [캐싱 타겟 제거] themes_cache.json 에서 {point_id} 완벽 추방 완료!")
-            except Exception as e:
-                err_msg = f"themes_cache.json 업데이트 실패: {str(e)}"
-                print(f"   ⚠️ {err_msg}")
-                cache_errors.append(err_msg)
-                
-        # 3. Feedback cache 방어
-        try:
-            from api.services.feedback_cache import feedback_cache
-            with feedback_cache.lock:
-                original_len = len(feedback_cache.queue)
-                feedback_cache.queue = [item for item in feedback_cache.queue if str(item["raw"].id) != point_id]
-                if len(feedback_cache.queue) != original_len:
-                    feedback_cache.save_to_disk()
-                    print(f"   🧹 [캐싱 타겟 제거] feedback_cache 에서 {point_id} 완벽 추방 완료!")
-        except Exception as e:
-            err_msg = f"feedback_cache 업데이트 실패: {str(e)}"
-            print(f"   ⚠️ {err_msg}")
-            cache_errors.append(err_msg)
             
         if cache_errors:
             return "캐시 제거 실패 (" + " / ".join(cache_errors) + ")"

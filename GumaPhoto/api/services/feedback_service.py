@@ -192,12 +192,6 @@ def process_time_location_feedback(qdrant_id: str, target_date: str, target_loca
         except Exception as e:
             print(f"      [!] 시스템 로그 갱신 중 에러 (무시): {e}")
             
-        try:
-            from api.services.theme_service import build_timeline_cache_only
-            build_timeline_cache_only()
-        except Exception as e:
-            print(f"      [!] 타임라인 캐시 동기화 콜백 에러: {e}")
-        
         print("  [+] 메타데이터 EXIF 주입 및 DB 덮어쓰기가 초고속으로 완료되었습니다!")
 
 
@@ -392,11 +386,5 @@ def process_face_enrollment(qdrant_id: str, known_name: str, target_points_json:
         except: pass
         
         print(f"    - {os.path.basename(filepath)} : 영구 업데이트 완료 [{known_name}]")
-        
-    try:
-        from api.services.theme_service import build_timeline_cache_only
-        build_timeline_cache_only()
-    except Exception as e:
-        print(f"  [!] 타임라인 캐시 동기화 콜백 에러: {e}")
         
     print("  [+] 인물 사진 도감 축적 및 DB 반영 모두 완료되었습니다! (딥러닝 모델 병합은 새벽에 진행됩니다)")

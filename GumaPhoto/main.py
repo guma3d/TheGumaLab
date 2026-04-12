@@ -1,5 +1,4 @@
 import os
-import subprocess
 import pickle
 import numpy as np
 import asyncio
@@ -13,26 +12,17 @@ import torch
 from transformers import AutoProcessor, AutoModel
 from qdrant_client import QdrantClient
 from google import genai
-import sqlite3
 
-# Import central State & Services
 from core.state import state
 from services.background_tasks import trigger_upload_pipeline, scheduled_scan
 
-# Import Refactored Routers
 from api.routers import views, upload, search, download, feedback, organizer, ai_indexer, delete, system
 
 load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    import sys
-    from core.log_broadcaster import setup_unified_logging
-    setup_unified_logging("🚀[FastAPI]")
-    
-    # (legacy tracker and daemon processes were fully replaced by decoupled ORM API and Celery Event-Bus)
-    
-    # 2. Initialize SQLAlchemy Tables
+    # 1. Initialize SQLAlchemy Tables
     try:
         from core.database import engine
         from core.models import Base
@@ -40,11 +30,10 @@ async def lifespan(app: FastAPI):
         print("[*] SQLAlchemy ORM Database schemas synchronized.")
     except Exception as e:
         print(f"[*] DB init error: {e}")
-        
-    # 3. Load Known Faces
+
+    # 2. Load Known Faces
     try:
         state.upload_lock = threading.Lock()
-        
         if os.path.exists("/app/data/known_faces.pkl"):
             with open("/app/data/known_faces.pkl", "rb") as f:
                 raw_faces = pickle.load(f)
@@ -61,41 +50,39 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[*] Error loading known_faces.pkl: {e}")
 
-    # 4. Load AI Models
+    # 3. Load AI Models
     try:
-        print("[*] 🖼️ Loading High-End SigLIP (google/siglip-base-patch16-224)...")
+        print("[*] 🖼️ Loading SigLIP (google/siglip-base-patch16-224)...")
         state.siglip_processor = AutoProcessor.from_pretrained('google/siglip-base-patch16-224')
         state.siglip_model = AutoModel.from_pretrained('google/siglip-base-patch16-224').to("cuda" if torch.cuda.is_available() else "cpu")
         state.siglip_model.eval()
     except Exception as e:
         print(f"[-] Failed to load SigLIP model: {e}")
-    
-    # 5. Load DB Clients
-    print("[*] Connecting to Qdrant (http://qdrant:6333)...")
+
+    # 4. Load DB Clients
+    print("[*] Connecting to Qdrant...")
     state.qdrant_client = QdrantClient(url=os.getenv("QDRANT_URL", "http://qdrant:6333"))
-    
+
     gemini_key = os.getenv("GEMINI_API_KEY")
     if gemini_key:
         print("[*] Gemini API Key found. Initializing LLM Parser...")
         state.gemini_client = genai.Client(api_key=gemini_key)
     else:
-        print("[!] No GEMINI_API_KEY found. LLM Natural Language Parser is disabled.")
-        
-    # 6. Start Autonomous Scheduled Scanner
+        print("[!] No GEMINI_API_KEY found. LLM Natural Language Parser disabled.")
+
+    # 5. Start Autonomous Scheduled Scanner
     scan_task = asyncio.create_task(scheduled_scan(3600))
-        
+
     yield
-    
-    print("[*] Shutting down GumaPhoto logic...")
+
+    print("[*] Shutting down GumaPhoto...")
     scan_task.cancel()
 
 app = FastAPI(title="GumaPhoto API", lifespan=lifespan)
 
-# --- frontend assets ---
 app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
 app.mount("/photos", StaticFiles(directory="/app/data/organized"), name="photos")
 
-# --- routers (Domain-Driven Endpoints) ---
 app.include_router(views.router, tags=["Views"])
 app.include_router(upload.router, tags=["Upload"])
 app.include_router(search.router, tags=["Search"])
