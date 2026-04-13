@@ -1059,6 +1059,34 @@
             // ====== Portfolio State ======
             let currentPortfolioId = 1;
             let portfolioList = [];
+            let grandTotalKrw = null;
+            let grandTotalUsd = null;
+
+            async function fetchGrandTotal() {
+                try {
+                    const res = await fetch('/api/portfolio-total');
+                    const data = await res.json();
+                    grandTotalKrw = Math.round(data.krw);
+                    grandTotalUsd = data.usd;
+                    updatePortfolioTotalsDisplay();
+                } catch (e) {
+                    console.error('Failed to fetch grand total', e);
+                }
+            }
+
+            function updatePortfolioTotalsDisplay() {
+                const el = document.getElementById('portfolio-totals');
+                const tabKrw = parseInt(el.dataset.tabKrw || '0');
+                const tabUsd = parseFloat(el.dataset.tabUsd || '0');
+                let html = '';
+                if (grandTotalKrw !== null) {
+                    const usdPart = grandTotalUsd > 0 ? ` + $${formatNumberWithDot(grandTotalUsd.toFixed(2))}` : '';
+                    html += `<span>전체: ₩${formatNumberWithDot(grandTotalKrw)}${usdPart}</span>`;
+                }
+                const tabUsdPart = tabUsd > 0 ? ` + $${formatNumberWithDot(tabUsd)}` : '';
+                html += `<span style="color:var(--text-muted); font-size:0.8rem; margin-left:0.75rem;">현재 탭: ₩${formatNumberWithDot(tabKrw)}${tabUsdPart}</span>`;
+                el.innerHTML = html;
+            }
 
             async function fetchPortfolios() {
                 try {
@@ -1168,7 +1196,7 @@
                         if (item.is_cash) {
                             // 현금성 자산 렌더링
                             const balanceStr = item.currency === '₩'
-                                ? `${item.currency}${formatNumberWithDot(item.total_value)}`
+                                ? `${item.currency}${formatNumberWithDot(Math.round(item.total_value))}`
                                 : `${item.currency}${Number(item.total_value).toFixed(2)}`;
 
                             if (item.currency === '₩') totalKrw += item.total_value;
@@ -1194,7 +1222,7 @@
                             const iconStr = item.is_up ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
                             const changeStr = item.price === "N/A" || item.price === "Error" ? 'N/A' : `${signStr}${item.change}% <i class="fa-solid ${iconStr}"></i>`;
                             const priceStr = item.price === "N/A" || item.price === "Error" ? item.price : `${item.currency}${formatNumberWithDot(item.price)}`;
-                            const totalValStr = shares > 0 && item.total_value ? `<div style="font-size:0.85rem; color:var(--accent-color); margin-top:0.15rem;">보유: ${formatNumberWithDot(shares)}주 (${item.currency}${formatNumberWithDot(item.total_value)})</div>` : '';
+                            const totalValStr = shares > 0 && item.total_value ? `<div style="font-size:0.85rem; color:var(--accent-color); margin-top:0.15rem;">보유: ${formatNumberWithDot(Math.round(shares * 10000) / 10000)}주 (${item.currency}${formatNumberWithDot(Math.round(item.total_value))})</div>` : '';
 
                             if (item.currency === '₩' && item.total_value) totalKrw += item.total_value;
                             else if (item.currency === '$' && item.total_value) totalUsd += item.total_value;
@@ -1217,7 +1245,9 @@
                         }
                     });
 
-                    document.getElementById('portfolio-totals').innerHTML = `총 자산: ₩${formatNumberWithDot(totalKrw)} + $${formatNumberWithDot(totalUsd)}`;
+                    document.getElementById('portfolio-totals').dataset.tabKrw = Math.round(totalKrw);
+                    document.getElementById('portfolio-totals').dataset.tabUsd = totalUsd.toFixed(2);
+                    updatePortfolioTotalsDisplay();
                 } catch (e) {
                     console.error("Failed to fetch watchlist data", e);
                 }
@@ -1262,10 +1292,12 @@
             fetchMarketData();
             fetchWatchlistData();
             fetchPortfolioAnalysis();
+            fetchGrandTotal();
             setInterval(() => {
                 fetchMarketData();
                 fetchWatchlistData();
                 fetchPortfolioAnalysis();
+                fetchGrandTotal();
             }, 300000); // 5 minute refresh period
 
             // Watchlist Add/Remove interactions
@@ -1653,6 +1685,7 @@
                         document.getElementById('watchlist-container').innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 1rem;">Updating...</div>';
                         fetchWatchlistData();
                         fetchPortfolioAnalysis();
+                        fetchGrandTotal();
                     } else {
                         alert('가져오기 실패: ' + (data.error || '알 수 없는 오류'));
                     }

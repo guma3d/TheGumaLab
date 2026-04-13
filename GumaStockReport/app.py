@@ -291,6 +291,21 @@ def api_watchlist():
     data = fetch_stock_data(watchlist)
     return jsonify(data)
 
+@app.route("/api/portfolio-total")
+def api_portfolio_total():
+    """모든 포트폴리오 합산 총 자산 반환"""
+    all_stocks = get_watchlist()  # portfolio_id 없으면 전체 반환
+    data = fetch_stock_data(all_stocks)
+    total_krw = 0.0
+    total_usd = 0.0
+    for item in data:
+        tv = item.get('total_value') or 0
+        if item.get('currency') == '₩':
+            total_krw += tv
+        elif item.get('currency') == '$':
+            total_usd += tv
+    return jsonify({"krw": round(total_krw, 2), "usd": round(total_usd, 2)})
+
 @app.route("/api/watchlist", methods=["POST"])
 def add_watchlist():
     data = request.json
