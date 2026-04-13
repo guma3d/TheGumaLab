@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gumastock-v1-cache-breaker';
+const CACHE_NAME = 'gumastock-v2';
 
 self.addEventListener('install', (event) => {
     self.skipWaiting();

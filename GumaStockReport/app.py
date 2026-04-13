@@ -31,14 +31,18 @@ gemini_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 DB_PATH = 'watchlist.db'
 
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    # isolation_level=None = autocommit: DDL 실행 시 암묵적 롤백 방지
+    conn = sqlite3.connect(DB_PATH, isolation_level=None)
     c = conn.cursor()
+
+    # WAL 체크포인트
+    c.execute('PRAGMA wal_checkpoint(FULL)')
 
     # 포트폴리오 테이블 생성
     c.execute('''CREATE TABLE IF NOT EXISTS portfolios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
-        icon TEXT DEFAULT ''
+        icon TEXT DEFAULT ""
     )''')
 
     # 기본 포트폴리오 4개 생성
@@ -84,9 +88,8 @@ def init_db():
             FOREIGN KEY (portfolio_id) REFERENCES portfolios(id)
         )''')
         for row in old_data:
-            c.execute('INSERT INTO watchlist (portfolio_id, ticker, name, shares) VALUES (1, ?, ?, ?)', row)
+            c.execute('INSERT OR IGNORE INTO watchlist (portfolio_id, ticker, name, shares) VALUES (1, ?, ?, ?)', row)
 
-    conn.commit()
     conn.close()
 
 init_db()
