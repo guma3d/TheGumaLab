@@ -139,7 +139,7 @@ def main() -> int:
     if not raw_password:
         sys.exit("[ERROR] password is required")
 
-    print("\n[1/2] RSA 암호화 ...")
+    print("\n[1/3] RSA 암호화 ...")
     encrypted_pw = encrypt_rsa(raw_password, public_key)
     del raw_password
     print(f"    encrypted length = {len(encrypted_pw)}")
@@ -157,11 +157,11 @@ def main() -> int:
     account = build_account(organization_code, login_id, encrypted_pw)
 
     if primary_connected_id is None:
-        print(f"\n[2/2] create_account 호출 (DEMO) ...")
+        print(f"\n[2/3] create_account 호출 (DEMO) ...")
         param = {"accountList": [account]}
         raw_res = codef.create_account(ServiceType.DEMO, param)
     else:
-        print(f"\n[2/2] add_account 호출 (existing connectedId={primary_connected_id[:8]}...) ...")
+        print(f"\n[2/3] add_account 호출 (existing connectedId={primary_connected_id[:8]}...) ...")
         param = {"connectedId": primary_connected_id, "accountList": [account]}
         raw_res = codef.add_account(ServiceType.DEMO, param)
 
@@ -201,11 +201,49 @@ def main() -> int:
     }
     save_connected_ids(existing)
 
+    print(f"\n[3/3] 보유카드 조회 (/v1/kr/card/p/account/card-list) ...")
+    card_list_param = {
+        "organization": organization_code,
+        "connectedId": new_connected_id,
+    }
+    raw_list = codef.request_product(
+        "/v1/kr/card/p/account/card-list",
+        ServiceType.DEMO,
+        card_list_param,
+    )
+    try:
+        list_res = json.loads(raw_list)
+    except (ValueError, TypeError):
+        print(f"    [WARN] card-list 응답이 JSON이 아님:\n    {raw_list[:300]}")
+        list_res = None
+
+    discovered: list[dict] = []
+    if list_res is not None:
+        list_result = list_res.get("result", {})
+        list_code = list_result.get("code")
+        if list_code != "CF-00000":
+            print(f"    [WARN] card-list 실패: {list_code} — {list_result.get('message')}")
+            print(f"           extraMessage = {list_result.get('extraMessage')}")
+        else:
+            list_data = list_res.get("data") or []
+            if isinstance(list_data, dict):
+                list_data = [list_data]
+            discovered = list_data
+            print(f"    조회된 카드 {len(discovered)}개:")
+            for card in discovered:
+                name = card.get("resCardName", "(이름 없음)")
+                no = card.get("resCardNo", "")
+                ctype = card.get("resCardType", "")
+                state = card.get("resState", "")
+                masked = f"{no[:4]}****{no[-4:]}" if len(no) >= 8 else no
+                print(f"      - {name}  {masked}  type={ctype} state={state}")
+
     print()
     print("=" * 50)
     print(f"  PHASE 1b PASSED — {card_name} 등록 완료")
     print("=" * 50)
     print(f"  connectedId = {new_connected_id[:12]}...{new_connected_id[-6:]}")
+    print(f"  card count  = {len(discovered)}")
     print(f"  saved to    = {CONNECTED_IDS_PATH}")
     print()
     print("Next: python fetch_transactions.py 로 승인내역 조회 (Phase 1c)")
