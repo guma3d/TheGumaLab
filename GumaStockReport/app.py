@@ -420,21 +420,26 @@ JSON 형식으로만 응답:
     try:
         image_part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
 
-        # 503 과부하 시 최대 3회 재시도
+        # 503 과부하 시 모델 폴백: 2.5-flash → 2.0-flash → 1.5-flash
+        FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash']
         response = None
-        for attempt in range(3):
+        for model_name in FALLBACK_MODELS:
             try:
                 response = gemini_client.models.generate_content(
-                    model='gemini-2.5-flash',
+                    model=model_name,
                     contents=[image_part, prompt],
                 )
+                if model_name != FALLBACK_MODELS[0]:
+                    print(f"Screenshot parsed with fallback model: {model_name}")
                 break
             except Exception as e:
-                if "503" in str(e) and attempt < 2:
-                    print(f"Gemini 503, retrying ({attempt+1}/3)...")
-                    time.sleep(5)
+                if "503" in str(e):
+                    print(f"Gemini 503 on {model_name}, trying next model...")
+                    time.sleep(3)
                 else:
                     raise
+        if response is None:
+            return jsonify({"success": False, "error": "Gemini API가 일시적으로 사용 불가합니다. 잠시 후 다시 시도해주세요."})
 
         text = response.text.strip()
         for prefix in ['```json', '```']:
