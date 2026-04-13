@@ -63,7 +63,6 @@
             align-items: center;
             overflow-x: hidden;
             position: relative;
-            padding-bottom: 1rem;
         }
 
         /* Ambient Glows (from Portal) */
@@ -121,115 +120,95 @@
 
         .container {
             width: 100%;
-            max-width: 1200px;
+            max-width: 700px;
             padding: 1rem;
             z-index: 1;
         }
 
-        /* Header Config */
-        header {
-            margin-bottom: 1.5rem;
-            margin-top: 0.5rem;
-            animation: fadeInDown 0.8s ease-out;
-        }
-
-        .header-content {
+        /* Top Header */
+        .top-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background: rgba(5, 5, 5, 0.92);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--card-border);
             display: flex;
             align-items: center;
-            gap: 1.5rem;
+            justify-content: space-between;
+            padding: 0 1.2rem;
+            z-index: 100;
         }
 
-        .back-button {
-            font-size: 1.5rem;
-            color: var(--text-muted);
-            text-decoration: none;
-            transition: all var(--transition-speed) ease;
-            padding: 0.5rem;
-            border-radius: 50%;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
+        .logo {
             display: flex;
-            justify-content: center;
             align-items: center;
-            width: 50px;
-            height: 50px;
-        }
-
-        .back-button:hover {
-            color: var(--accent-color);
-            background: var(--card-hover-bg);
-            border-color: var(--accent-color);
-            transform: scale(1.1) translateX(-3px);
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
-        }
-
-        h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            letter-spacing: -1px;
-            margin-bottom: 0.2rem;
-            background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
-        }
-
-        .subtitle {
-            font-size: 1.1rem;
-            color: var(--text-muted);
-            font-weight: 300;
-        }
-
-        /* Base Card Style */
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 20px;
-            padding: 1.2rem;
-            backdrop-filter: blur(10px);
-            position: relative;
-            overflow: hidden;
-            animation: fadeInUp 0.8s ease-out backwards;
-            transition: all var(--transition-speed) ease;
-        }
-
-        .card:hover {
-            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
-            border-color: var(--card-hover-border);
-        }
-
-        .card h2 {
-            font-size: 1.4rem;
-            margin-bottom: 1rem;
+            gap: 0.5rem;
+            font-size: 1.2rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
             color: var(--text-main);
+            cursor: pointer;
+        }
+
+        .logo i { color: var(--accent-color); font-size: 1.1rem; }
+
+        .header-nav {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.35rem;
         }
 
-        .card h2 i {
+        .nav-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.05rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--card-bg);
+            color: var(--text-main);
+            border-color: var(--card-border);
+        }
+
+        .nav-btn.active {
+            background: rgba(16, 185, 129, 0.12);
             color: var(--accent-color);
+            border-color: rgba(16, 185, 129, 0.35);
         }
 
-        /* Grid Layout */
-        .dashboard {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1.2rem;
+        /* Tab Layout */
+        .tab-main {
+            width: 100%;
+            max-width: 700px;
+            padding: 76px 1rem 2rem 1rem;
         }
 
-        .panel-overview {
-            grid-column: span 1;
+        .tab-pane { display: none; animation: fadeInUp 0.25s ease-out; }
+        .tab-pane.active { display: block; }
+
+        .tab-section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
         }
 
-        .panel-watchlist {
-            grid-column: span 1;
-        }
-
-        .panel-ai-insight {
-            grid-column: span 2;
-        }
+        .tab-section-title i { color: var(--accent-color); }
 
         /* Market Indices */
         .market-indices {
@@ -604,18 +583,6 @@
             }
         }
 
-        .panel-overview {
-            animation-delay: 0.1s;
-        }
-
-        .panel-watchlist {
-            animation-delay: 0.2s;
-        }
-
-        .panel-ai-insight {
-            animation-delay: 0.3s;
-        }
-
         /* Portfolio Tabs */
         .portfolio-tabs {
             display: flex;
@@ -886,24 +853,8 @@
         }
 
         /* Responsive */
-        @media (max-width: 900px) {
-            .dashboard {
-                grid-template-columns: 1fr;
-            }
-
-            .panel-overview,
-            .panel-watchlist,
-            .panel-ai-insight {
-                grid-column: span 1;
-            }
-
-            .market-indices {
-                flex-direction: column;
-            }
-
-            h1 {
-                font-size: 2.2rem;
-            }
+        @media (max-width: 600px) {
+            .tab-main { padding-left: 0.75rem; padding-right: 0.75rem; }
         }
     </style>
 </head>
@@ -914,83 +865,87 @@
     <div class="ambient-glow-2"></div>
     <div class="ambient-glow-3"></div>
 
-    <div class="container">
-        <header>
-            <div class="header-content" style="justify-content: center;">
-                <div class="title-group" style="text-align: center;">
-                    <h1>Stock Analyzer</h1>
-                </div>
+    <!-- Fixed Header -->
+    <header class="top-header">
+        <div class="logo" onclick="location.reload()" title="Refresh">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Guma<span style="color:var(--accent-color)">Stock</span></span>
+        </div>
+        <nav class="header-nav">
+            <button class="nav-btn active" data-tab="market" title="Market Overview">
+                <i class="fa-solid fa-earth-americas"></i>
+            </button>
+            <button class="nav-btn" data-tab="portfolio" title="My Portfolio">
+                <i class="fa-solid fa-chart-pie"></i>
+            </button>
+            <button class="nav-btn" data-tab="analysis" title="Portfolio Analysis">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </button>
+        </nav>
+    </header>
+
+    <!-- Tab Content -->
+    <main class="tab-main">
+
+        <!-- Tab: Market Overview -->
+        <div id="tab-market" class="tab-pane active">
+            <div class="tab-section-title">
+                <i class="fa-solid fa-earth-americas"></i> Market Overview
+                <div class="status-dot" style="margin-left: auto;"></div>
             </div>
-        </header>
-
-        <!-- Dynamic Dashboard Grid -->
-        <main class="grid dashboard">
-            <!-- Market Overview Card -->
-            <div class="card panel-overview">
-                <div class="status-dot"></div>
-                <h2><i class="fa-solid fa-earth-americas"></i> Market Overview</h2>
-                <div class="market-indices" id="market-indices-container">
-                    <div style="color: var(--text-muted); text-align: center; width: 100%;">Loading market data...</div>
-                    <!-- Dynamically populated by JS -->
-                </div>
+            <div class="market-indices" id="market-indices-container">
+                <div style="color: var(--text-muted); text-align: center; width: 100%;">Loading market data...</div>
             </div>
+        </div>
 
-            <!-- Portfolio Watchlist Card -->
-            <div class="card panel-watchlist">
-                <div class="watchlist-header">
-                    <div style="display:flex; flex-direction:column; gap:0.25rem;">
-                        <h2><i class="fa-solid fa-chart-pie"></i> My Portfolio</h2>
-                        <div id="portfolio-totals"
-                            style="font-size: 0.95rem; color: var(--accent-color); font-weight: 500;">
-                            <!-- dynamically filled -->
-                        </div>
+        <!-- Tab: My Portfolio -->
+        <div id="tab-portfolio" class="tab-pane">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
+                <div>
+                    <div class="tab-section-title" style="margin-bottom:0.2rem;">
+                        <i class="fa-solid fa-chart-pie"></i> My Portfolio
                     </div>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <button class="btn-import" id="btn-open-import"><i class="fa-solid fa-camera"></i> Import</button>
-                        <button class="btn-add" id="btn-toggle-add"><i class="fa-solid fa-plus"></i> Add</button>
-                    </div>
+                    <div id="portfolio-totals" style="font-size:0.85rem; color:var(--accent-color); font-weight:500;"></div>
                 </div>
-
-                <div class="portfolio-tabs" id="portfolio-tabs">
-                    <!-- Dynamically populated -->
-                </div>
-
-                <div class="add-form-container" id="add-form" style="flex-direction: column;">
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
-                        <input type="text" id="input-search" placeholder="Search company (e.g., 테슬라, Apple)..."
-                            autocomplete="off" style="width: 100%; font-size: 1rem; padding: 0.75rem;">
-                        <div style="display: flex; gap: 0.5rem; width: 100%;">
-                            <button id="btn-search-stock" style="flex: 1; padding: 0.75rem;"><i
-                                    class="fa-solid fa-magnifying-glass"></i> Search</button>
-                            <button class="btn-cancel" id="btn-cancel-add"
-                                style="flex: 1; padding: 0.75rem;">Cancel</button>
-                        </div>
-                    </div>
-                    <div class="search-results" id="search-results-container">
-                        <!-- Search results will appear here -->
-                    </div>
-                </div>
-
-                <div class="stock-list" id="watchlist-container">
-                    <!-- Dynamically populated by JS -->
-                    <div style="color: var(--text-muted); text-align: center; padding: 1rem;">Loading portfolio data...
-                    </div>
+                <div style="display:flex; gap:0.5rem; flex-shrink:0;">
+                    <button class="btn-import" id="btn-open-import"><i class="fa-solid fa-camera"></i> Import</button>
+                    <button class="btn-add" id="btn-toggle-add"><i class="fa-solid fa-plus"></i> Add</button>
                 </div>
             </div>
 
-            <!-- AI News & Insight Card (Wide) -->
-            <div class="card panel-ai-insight">
-                <h2><i class="fa-solid fa-wand-magic-sparkles"></i> Portfolio Analysis</h2>
-                <div id="portfolio-analysis-container">
-                    <div style="color: var(--text-muted); text-align: center; padding: 2rem;">
-                        <i class="fa-solid fa-spinner fa-spin"
-                            style="font-size: 2rem; margin-bottom: 1rem; color: var(--accent-color);"></i>
-                        <br>AI is analyzing your portfolio...
+            <div class="portfolio-tabs" id="portfolio-tabs"></div>
+
+            <div class="add-form-container" id="add-form" style="flex-direction: column;">
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
+                    <input type="text" id="input-search" placeholder="Search company (e.g., 테슬라, Apple)..."
+                        autocomplete="off" style="width: 100%; font-size: 1rem; padding: 0.75rem;">
+                    <div style="display: flex; gap: 0.5rem; width: 100%;">
+                        <button id="btn-search-stock" style="flex: 1; padding: 0.75rem;"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+                        <button class="btn-cancel" id="btn-cancel-add" style="flex: 1; padding: 0.75rem;">Cancel</button>
                     </div>
                 </div>
+                <div class="search-results" id="search-results-container"></div>
             </div>
-        </main>
-    </div>
+
+            <div class="stock-list" id="watchlist-container">
+                <div style="color: var(--text-muted); text-align: center; padding: 1rem;">Loading portfolio data...</div>
+            </div>
+        </div>
+
+        <!-- Tab: Portfolio Analysis -->
+        <div id="tab-analysis" class="tab-pane">
+            <div class="tab-section-title">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Portfolio Analysis
+            </div>
+            <div id="portfolio-analysis-container">
+                <div style="color: var(--text-muted); text-align: center; padding: 2rem;">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem; color: var(--accent-color);"></i>
+                    <br>AI is analyzing your portfolio...
+                </div>
+            </div>
+        </div>
+
+    </main>
 
     <!-- Screenshot Import Modal -->
     <div class="import-modal-overlay" id="import-modal-overlay">
@@ -1056,6 +1011,17 @@
         document.addEventListener('DOMContentLoaded', () => {
             console.log('StockMaster UI Loaded');
 
+            // ====== Tab Navigation ======
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const target = btn.dataset.tab;
+                    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById('tab-' + target).classList.add('active');
+                });
+            });
+
             // ====== Portfolio State ======
             let currentPortfolioId = 1;
             let portfolioList = [];
@@ -1118,31 +1084,6 @@
             }
 
             fetchPortfolios();
-
-            // Add gentle 3D hover effects to cards matching the Portal style
-            const cards = document.querySelectorAll('.card');
-
-            cards.forEach(card => {
-                card.addEventListener('mousemove', (e) => {
-                    const rect = card.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-
-                    const centerX = rect.width / 2;
-                    const centerY = rect.height / 2;
-
-                    const rotateX = ((y - centerY) / centerY) * -3;
-                    const rotateY = ((x - centerX) / centerX) * 3;
-
-                    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.01)`;
-                    card.style.transition = 'none'; // remove transition for smooth tracking
-                });
-
-                card.addEventListener('mouseleave', () => {
-                    card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
-                    card.style.transition = 'all 0.4s ease'; // restore transition when leaving
-                });
-            });
 
             // Polling data functionality
             async function fetchMarketData() {
