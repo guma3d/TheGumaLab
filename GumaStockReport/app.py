@@ -46,8 +46,8 @@ def init_db():
         c.executemany('INSERT INTO portfolios (name, icon) VALUES (?, ?)', [
             ('나의 계좌', 'fa-user'),
             ('퇴직연금', 'fa-piggy-bank'),
-            ('장준우 (큰아들)', 'fa-child'),
-            ('장지우 (작은아들)', 'fa-child-reaching'),
+            ('장준우', 'fa-child'),
+            ('장지우', 'fa-child-reaching'),
         ])
 
     # watchlist 마이그레이션: portfolio_id 컬럼 없으면 테이블 재생성
