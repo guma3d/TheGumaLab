@@ -36,10 +36,10 @@
             --accent-color: #10b981;
             /* Cyan */
 
-            --positive-color: #10b981;
-            /* Green */
-            --negative-color: #ef4444;
-            /* Red */
+            --positive-color: #ef4444;
+            /* Red (한국: 상승=빨강) */
+            --negative-color: #3b82f6;
+            /* Blue (한국: 하락=파랑) */
 
             --text-main: #ffffff;
             --text-muted: #a1a1aa;
@@ -900,18 +900,16 @@
 
         <!-- Tab: My Portfolio -->
         <div id="tab-portfolio" class="tab-pane">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
-                <div>
-                    <div class="tab-section-title" style="margin-bottom:0.2rem;">
-                        <i class="fa-solid fa-chart-pie"></i> My Portfolio
-                    </div>
-                    <div id="portfolio-totals" style="font-size:0.85rem; color:var(--accent-color); font-weight:500;"></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+                <div class="tab-section-title" style="margin-bottom:0;">
+                    <i class="fa-solid fa-chart-pie"></i> My Portfolio
                 </div>
                 <div style="display:flex; gap:0.5rem; flex-shrink:0;">
                     <button class="btn-import" id="btn-open-import"><i class="fa-solid fa-camera"></i> Import</button>
                     <button class="btn-add" id="btn-toggle-add"><i class="fa-solid fa-plus"></i> Add</button>
                 </div>
             </div>
+            <div id="portfolio-totals" style="width:100%; font-size:0.85rem; color:var(--accent-color); font-weight:500; margin-bottom:0.75rem; line-height:1.6;"></div>
 
             <div class="portfolio-tabs" id="portfolio-tabs"></div>
 
@@ -1044,14 +1042,14 @@
                 const el = document.getElementById('portfolio-totals');
                 const tabKrw = parseInt(el.dataset.tabKrw || '0');
                 const tabUsd = parseFloat(el.dataset.tabUsd || '0');
-                let html = '';
+                let lines = [];
                 if (grandTotalKrw !== null) {
                     const usdPart = grandTotalUsd > 0 ? ` + $${formatNumberWithDot(grandTotalUsd.toFixed(2))}` : '';
-                    html += `<span>전체: ₩${formatNumberWithDot(grandTotalKrw)}${usdPart}</span>`;
+                    lines.push(`<div>전체 &nbsp;₩${formatNumberWithDot(grandTotalKrw)}${usdPart}</div>`);
                 }
                 const tabUsdPart = tabUsd > 0 ? ` + $${formatNumberWithDot(tabUsd)}` : '';
-                html += `<span style="color:var(--text-muted); font-size:0.8rem; margin-left:0.75rem;">현재 탭: ₩${formatNumberWithDot(tabKrw)}${tabUsdPart}</span>`;
-                el.innerHTML = html;
+                lines.push(`<div style="color:var(--text-muted);">현재 탭  ₩${formatNumberWithDot(tabKrw)}${tabUsdPart}</div>`);
+                el.innerHTML = lines.join('');
             }
 
             async function fetchPortfolios() {
