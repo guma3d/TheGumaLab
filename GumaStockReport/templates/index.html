@@ -1549,17 +1549,25 @@
                 if (parsedStocks.length > 0) {
                     list.innerHTML += `<div style="font-size:0.75rem; color:var(--text-muted); padding:0.25rem 0; margin-top:0.25rem;">📈 보유 종목</div>`;
                     parsedStocks.forEach((stock, idx) => {
-                        const marketBadge = stock.market === 'US'
-                            ? '<span style="font-size:0.65rem; background:#3b82f6; color:#fff; padding:0.1rem 0.3rem; border-radius:3px; font-weight:700;">US</span>'
-                            : `<span style="font-size:0.65rem; background:var(--accent-color); color:#111; padding:0.1rem 0.3rem; border-radius:3px; font-weight:700;">${stock.market}</span>`;
+                        let marketBadge;
+                        if (stock.market === 'US') {
+                            marketBadge = '<span style="font-size:0.65rem; background:#3b82f6; color:#fff; padding:0.1rem 0.3rem; border-radius:3px; font-weight:700;">US</span>';
+                        } else if (stock.market === 'FUND') {
+                            marketBadge = '<span style="font-size:0.65rem; background:#8b5cf6; color:#fff; padding:0.1rem 0.3rem; border-radius:3px; font-weight:700;">FUND</span>';
+                        } else {
+                            marketBadge = `<span style="font-size:0.65rem; background:var(--accent-color); color:#111; padding:0.1rem 0.3rem; border-radius:3px; font-weight:700;">${stock.market}</span>`;
+                        }
+                        const valueStr = stock.eval_krw
+                            ? '₩' + Number(stock.eval_krw).toLocaleString()
+                            : (stock.shares != null ? stock.shares + '주' : '-');
                         list.innerHTML += `
                             <div class="import-stock-item">
                                 <input type="checkbox" checked data-type="stock" data-idx="${idx}" class="import-checkbox">
                                 <div class="import-stock-detail">
                                     <div class="import-stock-name">${stock.name}</div>
-                                    <div class="import-stock-meta">${marketBadge} ${stock.code}</div>
+                                    <div class="import-stock-meta">${marketBadge} ${stock.code || ''}</div>
                                 </div>
-                                <div class="import-stock-shares">${stock.shares}주</div>
+                                <div class="import-stock-shares">${valueStr}</div>
                             </div>`;
                     });
                 }

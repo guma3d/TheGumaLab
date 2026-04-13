@@ -163,6 +163,26 @@ def fetch_stock_data(tickers, force_refresh=False):
             result.append(data)
             continue
 
+        # 펀드/연금 상품 처리 (TDF, 적립식펀드 등 거래소 미상장)
+        if ticker.startswith('FUND_'):
+            data = {
+                "raw_ticker": ticker,
+                "ticker": ticker,
+                "name": name,
+                "price": None,
+                "change": 0.0,
+                "is_up": True,
+                "currency": '₩',
+                "shares": shares,
+                "total_value": round(float(shares), 2),
+                "is_cash": True,
+                "is_fund": True
+            }
+            if cache:
+                cache.setex(cache_key, 300, json.dumps(data))
+            result.append(data)
+            continue
+
         try:
             stock = yf.Ticker(ticker)
             current_price = None
@@ -361,37 +381,39 @@ def parse_screenshot():
     image_bytes = file.read()
     mime_type = file.content_type or 'image/jpeg'
 
-    prompt = """이 이미지는 삼성증권 모바일 앱의 보유종목 화면 캡처입니다.
-이미지에서 다음 두 가지를 모두 추출해주세요.
+    prompt = """이 이미지는 삼성증권 모바일 앱의 계좌 화면 캡처입니다.
 
-[1] 보유 종목 (stocks):
-- name: 종목명 (이미지에 표시된 그대로)
-- code: 종목코드 (6자리 숫자). 이미지에 있으면 그대로, 없으면 종목명으로 유추. 미국 주식은 ticker 심볼(AAPL 등)
-- shares: 보유수량 (정수). 쉼표 제거
-- market: 'KOSPI' / 'KOSDAQ' / 'US'
-- ETF, 펀드 포함. 현금성 항목(예수금, 외화예수금, RP 등)은 제외
+이 화면에는 수량(주수)이 표시되지 않습니다. 숫자 구성:
+- 왼쪽 큰 숫자: 평가손익(원)
+- 왼쪽 %: 수익률
+- 오른쪽 위 숫자: 평가금액(원) ← 이것을 eval_krw로 사용
+- 오른쪽 아래 숫자: 매입금액(원)
+
+[1] 투자 자산 (stocks):
+주식, ETF, 펀드, TDF(타겟데이트펀드), 적립식펀드, 퇴직연금상품 등 투자성 자산을 모두 포함.
+예수금·현금잔고·외화예수금·RP 등 현금성만 제외.
+- name: 종목/상품명 그대로 (잘린 경우 보이는 대로)
+- code: ETF/주식이면 6자리 코드(없으면 이름으로 유추), 미국주식이면 심볼(GOOGL 등), 펀드면 빈 문자열
+- eval_krw: 오른쪽 위 숫자(평가금액), 정수
+- market: 'KOSPI' / 'KOSDAQ' / 'US' / 'FUND'(국내 펀드/연금상품)
 
 [2] 현금성 자산 (cash):
-- 예수금 / 원화예수금 / 현금잔고 → currency: "KRW"
-- 달러예수금 / USD 외화예수금 → currency: "USD"
-- 기타 외화예수금 → currency에 통화코드 (EUR, JPY, GBP 등)
-- name: 이미지에 표시된 항목명 그대로
-- amount: 금액 (소수점 허용, 쉼표 제거)
-- 현금성 자산이 없으면 cash는 빈 배열 []
+- 예수금 / 현금잔고 / 현금성자산 → currency: "KRW"
+- USD 외화예수금 → currency: "USD"
+- amount: 오른쪽 위 숫자(평가금액), 정수
 
-반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 절대 포함하지 마세요:
+JSON 형식으로만 응답:
 {
   "stocks": [
-    {"name": "삼성전자", "code": "005930", "shares": 100, "market": "KOSPI"}
+    {"name": "삼성전자", "code": "005930", "eval_krw": 20075000, "market": "KOSPI"},
+    {"name": "삼성글로벌적격TDF F2050UH", "code": "", "eval_krw": 8114576, "market": "FUND"}
   ],
   "cash": [
-    {"name": "예수금", "currency": "KRW", "amount": 1500000},
-    {"name": "외화예수금", "currency": "USD", "amount": 1000.5}
+    {"name": "현금잔고(예수금)", "currency": "KRW", "amount": 110343}
   ]
 }
 
-이미지에서 종목·현금 정보를 전혀 찾을 수 없다면:
-{"error": "이미지에서 정보를 찾을 수 없습니다. 삼성증권 보유종목 화면을 캡처해주세요."}
+전혀 정보가 없으면: {"error": "정보를 찾을 수 없습니다."}
 """
 
     try:
@@ -402,10 +424,9 @@ def parse_screenshot():
         )
 
         text = response.text.strip()
-        if text.startswith('```json'):
-            text = text[7:]
-        if text.startswith('```'):
-            text = text[3:]
+        for prefix in ['```json', '```']:
+            if text.startswith(prefix):
+                text = text[len(prefix):]
         if text.endswith('```'):
             text = text[:-3]
 
@@ -414,33 +435,35 @@ def parse_screenshot():
         if isinstance(result, dict) and 'error' in result:
             return jsonify({"success": False, "error": result['error']})
 
-        # 구 포맷(list) / 신 포맷(object) 모두 지원
-        stock_list = result if isinstance(result, list) else result.get('stocks', [])
-        cash_list = [] if isinstance(result, list) else result.get('cash', [])
+        stock_list = result.get('stocks', [])
+        cash_list = result.get('cash', [])
 
         # 종목코드 → Yahoo Finance ticker 변환
         stocks = []
         for stock in stock_list:
             code = str(stock.get('code', '')).strip()
             name = stock.get('name', '').strip()
-            shares = int(float(stock.get('shares', 0)))
+            eval_krw = int(float(stock.get('eval_krw', 0)))
             market = stock.get('market', 'KOSPI').upper()
 
-            if market == 'US':
+            if market == 'FUND':
+                safe_name = ''.join(c for c in name if c.isalnum())[:20]
+                ticker = f"FUND_{safe_name}" if safe_name else f"FUND_{len(stocks)+1}"
+            elif market == 'US':
                 ticker = code
             elif market == 'KOSDAQ':
                 ticker = f"{code.zfill(6)}.KQ"
             else:
                 ticker = f"{code.zfill(6)}.KS"
 
-            stocks.append({"name": name, "code": code, "ticker": ticker, "shares": shares, "market": market})
+            stocks.append({"name": name, "code": code, "ticker": ticker, "eval_krw": eval_krw, "market": market})
 
         # 현금성 자산 변환
         cash = []
         for item in cash_list:
             currency = item.get('currency', 'KRW').upper()
             name = item.get('name', '예수금').strip()
-            amount = float(item.get('amount', 0))
+            amount = int(float(item.get('amount', 0)))
             cash.append({
                 "name": name,
                 "currency": currency,
@@ -458,6 +481,45 @@ def parse_screenshot():
     except Exception as e:
         print(f"Screenshot parse error: {e}")
         return jsonify({"success": False, "error": "스크린샷 분석에 실패했습니다. 다시 시도해주세요."})
+
+
+def calculate_shares_from_eval(ticker, eval_krw, market):
+    """평가금액(eval_krw, 원)으로부터 보유 주수를 계산. 실패 시 1.0 반환."""
+    try:
+        if market == 'US':
+            stock = yf.Ticker(ticker)
+            price_usd = getattr(stock.fast_info, 'lastPrice', None)
+            if price_usd is None:
+                hist = stock.history(period="2d")
+                if not hist.empty:
+                    price_usd = float(hist['Close'].iloc[-1])
+            if not price_usd or price_usd <= 0:
+                return 1.0
+
+            usdkrw = yf.Ticker("USDKRW=X")
+            rate = getattr(usdkrw.fast_info, 'lastPrice', None)
+            if rate is None:
+                hist = usdkrw.history(period="2d")
+                if not hist.empty:
+                    rate = float(hist['Close'].iloc[-1])
+            if not rate or rate <= 0:
+                rate = 1350.0  # 환율 조회 실패 시 fallback
+            price_krw = price_usd * rate
+        else:
+            stock = yf.Ticker(ticker)
+            price_krw = getattr(stock.fast_info, 'lastPrice', None)
+            if price_krw is None:
+                hist = stock.history(period="2d")
+                if not hist.empty:
+                    price_krw = float(hist['Close'].iloc[-1])
+            if not price_krw or price_krw <= 0:
+                return 1.0
+
+        shares = eval_krw / price_krw
+        return round(shares, 4)
+    except Exception as e:
+        print(f"calculate_shares_from_eval error ({ticker}): {e}")
+        return 1.0
 
 
 @app.route("/api/import-portfolio", methods=["POST"])
@@ -481,7 +543,18 @@ def import_portfolio():
     for stock in stocks:
         ticker = stock.get('ticker', '').strip()
         name = stock.get('name', '').strip()
-        shares = float(stock.get('shares', 1))
+        market = stock.get('market', '').upper()
+        eval_krw = stock.get('eval_krw')
+
+        if eval_krw and market == 'FUND':
+            # 펀드/연금: eval_krw를 그대로 잔고(원)로 저장
+            shares = float(eval_krw)
+        elif eval_krw and ticker and market in ('KOSPI', 'KOSDAQ', 'US'):
+            # 주식/ETF: 현재가로 주수 역산
+            shares = calculate_shares_from_eval(ticker, float(eval_krw), market)
+        else:
+            shares = float(stock.get('shares', 1))
+
         if ticker and name:
             c.execute('INSERT OR REPLACE INTO watchlist (portfolio_id, ticker, name, shares) VALUES (?, ?, ?, ?)',
                       (portfolio_id, ticker, name, shares))
