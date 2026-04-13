@@ -5,6 +5,7 @@ import redis
 import json
 import sqlite3
 import os
+import time
 from google import genai
 from google.genai import types
 from datetime import datetime
@@ -418,10 +419,22 @@ JSON 형식으로만 응답:
 
     try:
         image_part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
-        response = gemini_client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=[image_part, prompt],
-        )
+
+        # 503 과부하 시 최대 3회 재시도
+        response = None
+        for attempt in range(3):
+            try:
+                response = gemini_client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=[image_part, prompt],
+                )
+                break
+            except Exception as e:
+                if "503" in str(e) and attempt < 2:
+                    print(f"Gemini 503, retrying ({attempt+1}/3)...")
+                    time.sleep(5)
+                else:
+                    raise
 
         text = response.text.strip()
         for prefix in ['```json', '```']:
