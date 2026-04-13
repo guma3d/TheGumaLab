@@ -16,5 +16,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 애플리케이션 코드 복사
 COPY . .
 
-# 실행 (추후 app.py 등으로 변경)
-CMD ["python", "app.py"]
+# 실행 — watchfiles로 .py 변경 감지 시 자동 재시작
+CMD ["python", "-m", "watchfiles", "--filter", "python", "python app.py", "/app"]

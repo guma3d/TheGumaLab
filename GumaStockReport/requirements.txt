@@ -6,3 +6,4 @@ pytz
 yfinance
 google-genai
 apscheduler
+watchfiles
