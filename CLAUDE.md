@@ -88,10 +88,47 @@ HomeServer 중심의 **개인용 self-hosted 서비스 생태계**. 모든 서�
   REM 예: pull_update.bat GumaPhoto gumaphoto_celery
   REM     pull_update.bat GumaStockReport
   ```
+- **주의**: 대부분의 서비스는 소스코드를 bind mount(`.:/app`)로 사용. `pull_update.bat` 실행 후 `docker compose up -d`는 이미 실행 중인 컨테이너를 재시작하지 않으므로, 코드 변경이 적용되려면 **컨테이너를 직접 재시작**해야 함:
+  ```bash
+  ssh HomeServer "docker restart <container_name>"
+  ```
 
 ---
 
-## 🗂️ 5. 리포지토리 구조
+## 🔌 5. HomeServer SSH 원격 작업
+
+**SSH 설정** (`~/.ssh/config`):
+```
+Host HomeServer
+    HostName 219.254.245.175
+    User guma3
+    IdentityFile ~/.ssh/id_ed25519_HomeServer
+```
+
+**중요 — HomeServer는 Windows (cmd.exe)**. SSH 접속 시 셸이 cmd.exe이므로 경로 표기에 주의:
+- ❌ 틀린 방식 (Git Bash 경로): `cd /d/TheGumaLab/GumaStockReport`
+- ✅ 올바른 방식 (Windows cmd): `cd /d D:\TheGumaLab\GumaStockReport`
+
+**자주 쓰는 SSH 명령 패턴**:
+```bash
+# git 상태 확인
+ssh HomeServer "cd /d D:\TheGumaLab\<Project> && git log --oneline -5"
+
+# 배포
+ssh HomeServer "D:\TheGumaLab\pull_update.bat <ProjectName>"
+
+# 컨테이너 재시작 (코드 변경 반영)
+ssh HomeServer "docker restart <container_name>"
+
+# 컨테이너 로그 확인
+ssh HomeServer "docker logs <container_name> --tail 20"
+```
+
+`pull_update.bat`은 내부에서 `cd /d` 처리를 하므로 경로 없이 바로 실행 가능.
+
+---
+
+## 🗂️ 6. 리포지토리 구조
 
 - **Monorepo**: 모든 하위 서비스는 `D:\TheGumaLab\` 아래 각자 루트 폴더로 존재.
 - 각 하위 프로젝트는 자체 `README.md`, `docker-compose.yml`, `.env.example` 보유 가능.
@@ -100,7 +137,7 @@ HomeServer 중심의 **개인용 self-hosted 서비스 생태계**. 모든 서�
 
 ---
 
-## 📝 6. 문서화 원칙
+## 📝 7. 문서화 원칙
 
 - 각 하위 프로젝트는 최소 `README.md` 보유. 포함 내용: 서비스 목적/URL, 로컬 실행 방법, 필요 환경변수, 재배포 명령.
 - 본 `CLAUDE.md`는 **글로벌 공통 규칙만** 담음. 프로젝트별 세부 사항은 해당 README로 분리.

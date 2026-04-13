@@ -30,5 +30,10 @@
 pull_update.bat GumaStockReport
 ```
 
+소스코드는 bind mount(`.:/app`) 방식이므로 `pull_update.bat` 후 **앱 컨테이너를 반드시 재시작**해야 코드가 반영됨:
+```bash
+ssh HomeServer "docker restart gumastockreport_app"
+```
+
 ## 주의사항
 - `watchlist.db` SQLite 파일은 git 추적 여부 확인 필요. 데이터 파일이므로 제외 권장.
