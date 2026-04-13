@@ -30,6 +30,10 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+
 
 TOKEN_ENDPOINT = "https://oauth.codef.io/oauth/token"
 
