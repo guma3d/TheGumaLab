@@ -140,7 +140,29 @@ def fetch_stock_data(tickers, force_refresh=False):
             if cached_data:
                 result.append(json.loads(cached_data))
                 continue
-                
+
+        # 현금성 자산 처리 (예수금, 외화예수금)
+        if ticker.startswith('CASH_'):
+            currency_code = ticker[5:]
+            currency_map = {'KRW': '₩', 'USD': '$', 'EUR': '€', 'JPY': '¥', 'GBP': '£', 'CNY': '¥'}
+            currency_symbol = currency_map.get(currency_code, currency_code + ' ')
+            data = {
+                "raw_ticker": ticker,
+                "ticker": ticker,
+                "name": name,
+                "price": None,
+                "change": 0.0,
+                "is_up": True,
+                "currency": currency_symbol,
+                "shares": shares,
+                "total_value": round(float(shares), 2),
+                "is_cash": True
+            }
+            if cache:
+                cache.setex(cache_key, 300, json.dumps(data))
+            result.append(data)
+            continue
+
         try:
             stock = yf.Ticker(ticker)
             current_price = None
@@ -340,28 +362,36 @@ def parse_screenshot():
     mime_type = file.content_type or 'image/jpeg'
 
     prompt = """이 이미지는 삼성증권 모바일 앱의 보유종목 화면 캡처입니다.
-이미지에서 보유 종목 정보를 모두 추출해주세요.
+이미지에서 다음 두 가지를 모두 추출해주세요.
 
-각 종목에 대해 다음 정보를 추출하세요:
-1. name: 종목명 (한글 또는 영문, 이미지에 표시된 그대로)
-2. code: 종목코드 (6자리 숫자). 이미지에 표시되어 있다면 그대로, 없으면 종목명으로 유추
-3. shares: 보유수량 (정수). 이미지에서 '보유수량', '수량', 'N주' 등으로 표시된 값
-4. market: 'KOSPI' 또는 'KOSDAQ' (한국 주식의 경우). 미국 주식이면 'US'
+[1] 보유 종목 (stocks):
+- name: 종목명 (이미지에 표시된 그대로)
+- code: 종목코드 (6자리 숫자). 이미지에 있으면 그대로, 없으면 종목명으로 유추. 미국 주식은 ticker 심볼(AAPL 등)
+- shares: 보유수량 (정수). 쉼표 제거
+- market: 'KOSPI' / 'KOSDAQ' / 'US'
+- ETF, 펀드 포함. 현금성 항목(예수금, 외화예수금, RP 등)은 제외
 
-중요:
-- 이미지에 보이는 모든 종목을 빠짐없이 추출하세요.
-- 보유수량을 정확히 읽어주세요. 숫자 구분 쉼표(,)는 제거하세요.
-- ETF, 펀드도 포함하세요.
-- 미국 주식이 포함되어 있다면 ticker 심볼(예: AAPL, TSLA)을 code에 넣어주세요.
+[2] 현금성 자산 (cash):
+- 예수금 / 원화예수금 / 현금잔고 → currency: "KRW"
+- 달러예수금 / USD 외화예수금 → currency: "USD"
+- 기타 외화예수금 → currency에 통화코드 (EUR, JPY, GBP 등)
+- name: 이미지에 표시된 항목명 그대로
+- amount: 금액 (소수점 허용, 쉼표 제거)
+- 현금성 자산이 없으면 cash는 빈 배열 []
 
-반드시 아래 JSON 배열 형식으로만 응답하세요. 다른 텍스트는 절대 포함하지 마세요:
-[
-  {"name": "삼성전자", "code": "005930", "shares": 100, "market": "KOSPI"},
-  {"name": "SK하이닉스", "code": "000660", "shares": 50, "market": "KOSPI"}
-]
+반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 절대 포함하지 마세요:
+{
+  "stocks": [
+    {"name": "삼성전자", "code": "005930", "shares": 100, "market": "KOSPI"}
+  ],
+  "cash": [
+    {"name": "예수금", "currency": "KRW", "amount": 1500000},
+    {"name": "외화예수금", "currency": "USD", "amount": 1000.5}
+  ]
+}
 
-만약 이미지에서 종목 정보를 찾을 수 없다면:
-{"error": "이미지에서 종목 정보를 찾을 수 없습니다. 삼성증권 보유종목 화면을 캡처해주세요."}
+이미지에서 종목·현금 정보를 전혀 찾을 수 없다면:
+{"error": "이미지에서 정보를 찾을 수 없습니다. 삼성증권 보유종목 화면을 캡처해주세요."}
 """
 
     try:
@@ -384,30 +414,44 @@ def parse_screenshot():
         if isinstance(result, dict) and 'error' in result:
             return jsonify({"success": False, "error": result['error']})
 
+        # 구 포맷(list) / 신 포맷(object) 모두 지원
+        stock_list = result if isinstance(result, list) else result.get('stocks', [])
+        cash_list = [] if isinstance(result, list) else result.get('cash', [])
+
         # 종목코드 → Yahoo Finance ticker 변환
         stocks = []
-        for stock in result:
+        for stock in stock_list:
             code = str(stock.get('code', '')).strip()
             name = stock.get('name', '').strip()
             shares = int(float(stock.get('shares', 0)))
             market = stock.get('market', 'KOSPI').upper()
 
             if market == 'US':
-                ticker = code  # 미국 주식은 심볼 그대로 (AAPL, TSLA 등)
+                ticker = code
             elif market == 'KOSDAQ':
                 ticker = f"{code.zfill(6)}.KQ"
             else:
                 ticker = f"{code.zfill(6)}.KS"
 
-            stocks.append({
+            stocks.append({"name": name, "code": code, "ticker": ticker, "shares": shares, "market": market})
+
+        # 현금성 자산 변환
+        cash = []
+        for item in cash_list:
+            currency = item.get('currency', 'KRW').upper()
+            name = item.get('name', '예수금').strip()
+            amount = float(item.get('amount', 0))
+            cash.append({
                 "name": name,
-                "code": code,
-                "ticker": ticker,
-                "shares": shares,
-                "market": market
+                "currency": currency,
+                "ticker": f"CASH_{currency}",
+                "amount": amount
             })
 
-        return jsonify({"success": True, "stocks": stocks})
+        if not stocks and not cash:
+            return jsonify({"success": False, "error": "종목 및 현금 정보를 찾을 수 없습니다."})
+
+        return jsonify({"success": True, "stocks": stocks, "cash": cash})
     except json.JSONDecodeError:
         print(f"Screenshot parse JSON error. Raw text: {text}")
         return jsonify({"success": False, "error": "이미지 분석 결과를 파싱할 수 없습니다. 다시 시도해주세요."})
@@ -530,8 +574,11 @@ def generate_portfolio_analysis():
             portfolio_text += f"\n[{pname}]\n"
             for s in stocks:
                 info = price_map.get(s['ticker'], {})
-                sign = "+" if info.get('is_up', True) else ""
-                portfolio_text += f"- {s['name']} ({info.get('ticker', s['ticker'])}): {s['shares']}주 보유, 현재가 {info.get('currency','')}{info.get('price','N/A')}, 등락률 {sign}{info.get('change',0)}%, 총 가치: {info.get('currency','')}{info.get('total_value',0)}\n"
+                if info.get('is_cash'):
+                    portfolio_text += f"- {s['name']}: 잔고 {info.get('currency','')}{info.get('total_value', s['shares'])}\n"
+                else:
+                    sign = "+" if info.get('is_up', True) else ""
+                    portfolio_text += f"- {s['name']} ({info.get('ticker', s['ticker'])}): {s['shares']}주 보유, 현재가 {info.get('currency','')}{info.get('price','N/A')}, 등락률 {sign}{info.get('change',0)}%, 총 가치: {info.get('currency','')}{info.get('total_value',0)}\n"
 
         news_summary = fetch_latest_news_summary()
 

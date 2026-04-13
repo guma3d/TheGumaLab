@@ -1163,34 +1163,58 @@
                     let totalUsd = 0;
 
                     data.forEach(item => {
-                        const isUpStr = item.is_up ? 'positive' : 'negative';
-                        const signStr = item.is_up ? '+' : '';
-                        const iconStr = item.is_up ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
-                        const changeStr = item.price === "N/A" || item.price === "Error" ? 'N/A' : `${signStr}${item.change}% <i class="fa-solid ${iconStr}"></i>`;
-                        const priceStr = item.price === "N/A" || item.price === "Error" ? item.price : `${item.currency}${formatNumberWithDot(item.price)}`;
-
                         const shares = item.shares || 0;
-                        const totalValStr = shares > 0 && item.total_value ? `<div style="font-size:0.85rem; color:var(--accent-color); margin-top:0.15rem;">보유: ${formatNumberWithDot(shares)}주 (${item.currency}${formatNumberWithDot(item.total_value)})</div>` : '';
 
-                        if (item.currency === '₩' && item.total_value) totalKrw += item.total_value;
-                        else if (item.currency === '$' && item.total_value) totalUsd += item.total_value;
+                        if (item.is_cash) {
+                            // 현금성 자산 렌더링
+                            const balanceStr = item.currency === '₩'
+                                ? `${item.currency}${formatNumberWithDot(item.total_value)}`
+                                : `${item.currency}${Number(item.total_value).toFixed(2)}`;
 
-                        container.innerHTML += `
-                            <div class="stock-row">
-                                <div class="stock-info">
-                                    <span class="stock-ticker">${item.name}</span>
-                                    ${totalValStr}
-                                </div>
-                                <div style="display: flex; align-items: center;">
-                                    <div class="stock-numbers ${isUpStr}">
-                                        <span class="price">${priceStr}</span>
-                                        <span class="change">${changeStr}</span>
+                            if (item.currency === '₩') totalKrw += item.total_value;
+                            else if (item.currency === '$') totalUsd += item.total_value;
+
+                            container.innerHTML += `
+                                <div class="stock-row" style="opacity:0.85;">
+                                    <div class="stock-info">
+                                        <span class="stock-ticker" style="color:var(--text-muted);">
+                                            <i class="fa-solid fa-wallet" style="font-size:0.85rem; margin-right:0.3rem;"></i>${item.name}
+                                        </span>
+                                        <div style="font-size:0.85rem; color:var(--accent-color); margin-top:0.15rem;">잔고: ${balanceStr}</div>
                                     </div>
-                                    <button class="btn-edit" onclick="editStockShares('${item.raw_ticker}', '${item.name}', ${shares})" title="Edit Shares"><i class="fa-solid fa-pen"></i></button>
-                                    <button class="btn-remove" onclick="removeStock('${item.raw_ticker}')" title="Remove"><i class="fa-solid fa-trash"></i></button>
-                                </div>
-                            </div>
-                        `;
+                                    <div style="display: flex; align-items: center;">
+                                        <button class="btn-edit" onclick="editStockShares('${item.raw_ticker}', '${item.name}', ${shares})" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                                        <button class="btn-remove" onclick="removeStock('${item.raw_ticker}')" title="Remove"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                </div>`;
+                        } else {
+                            // 일반 종목 렌더링
+                            const isUpStr = item.is_up ? 'positive' : 'negative';
+                            const signStr = item.is_up ? '+' : '';
+                            const iconStr = item.is_up ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
+                            const changeStr = item.price === "N/A" || item.price === "Error" ? 'N/A' : `${signStr}${item.change}% <i class="fa-solid ${iconStr}"></i>`;
+                            const priceStr = item.price === "N/A" || item.price === "Error" ? item.price : `${item.currency}${formatNumberWithDot(item.price)}`;
+                            const totalValStr = shares > 0 && item.total_value ? `<div style="font-size:0.85rem; color:var(--accent-color); margin-top:0.15rem;">보유: ${formatNumberWithDot(shares)}주 (${item.currency}${formatNumberWithDot(item.total_value)})</div>` : '';
+
+                            if (item.currency === '₩' && item.total_value) totalKrw += item.total_value;
+                            else if (item.currency === '$' && item.total_value) totalUsd += item.total_value;
+
+                            container.innerHTML += `
+                                <div class="stock-row">
+                                    <div class="stock-info">
+                                        <span class="stock-ticker">${item.name}</span>
+                                        ${totalValStr}
+                                    </div>
+                                    <div style="display: flex; align-items: center;">
+                                        <div class="stock-numbers ${isUpStr}">
+                                            <span class="price">${priceStr}</span>
+                                            <span class="change">${changeStr}</span>
+                                        </div>
+                                        <button class="btn-edit" onclick="editStockShares('${item.raw_ticker}', '${item.name}', ${shares})" title="Edit Shares"><i class="fa-solid fa-pen"></i></button>
+                                        <button class="btn-remove" onclick="removeStock('${item.raw_ticker}')" title="Remove"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                </div>`;
+                        }
                     });
 
                     document.getElementById('portfolio-totals').innerHTML = `총 자산: ₩${formatNumberWithDot(totalKrw)} + $${formatNumberWithDot(totalUsd)}`;
@@ -1406,6 +1430,7 @@
             const stepResults = document.getElementById('import-step-results');
 
             let parsedStocks = [];
+            let parsedCash = [];
             let importMode = 'replace';
 
             // Open modal
@@ -1453,6 +1478,7 @@
                 stepResults.style.display = 'none';
                 importFileInput.value = '';
                 parsedStocks = [];
+                parsedCash = [];
                 importMode = 'replace';
                 document.getElementById('mode-replace').classList.add('selected');
                 document.getElementById('mode-merge').classList.remove('selected');
@@ -1494,8 +1520,9 @@
 
                     stepLoading.style.display = 'none';
 
-                    if (data.success && data.stocks.length > 0) {
-                        parsedStocks = data.stocks;
+                    if (data.success && (data.stocks.length > 0 || (data.cash && data.cash.length > 0))) {
+                        parsedStocks = data.stocks || [];
+                        parsedCash = data.cash || [];
                         renderImportResults();
                         stepResults.style.display = '';
                     } else {
@@ -1513,25 +1540,50 @@
             function renderImportResults() {
                 const list = document.getElementById('import-stock-list');
                 const countEl = document.getElementById('import-result-count');
-                countEl.textContent = `${parsedStocks.length}개 종목이 감지되었습니다.`;
+                const total = parsedStocks.length + parsedCash.length;
+                countEl.textContent = `종목 ${parsedStocks.length}개 + 현금 ${parsedCash.length}개 감지되었습니다.`;
 
                 list.innerHTML = '';
-                parsedStocks.forEach((stock, idx) => {
-                    const marketBadge = stock.market === 'US'
-                        ? '<span style="font-size:0.65rem; background:#3b82f6; color:#fff; padding:0.1rem 0.3rem; border-radius:3px; font-weight:700;">US</span>'
-                        : `<span style="font-size:0.65rem; background:var(--accent-color); color:#111; padding:0.1rem 0.3rem; border-radius:3px; font-weight:700;">${stock.market}</span>`;
 
-                    list.innerHTML += `
-                        <div class="import-stock-item">
-                            <input type="checkbox" checked data-idx="${idx}" class="import-checkbox">
-                            <div class="import-stock-detail">
-                                <div class="import-stock-name">${stock.name}</div>
-                                <div class="import-stock-meta">${marketBadge} ${stock.code}</div>
-                            </div>
-                            <div class="import-stock-shares">${stock.shares}주</div>
-                        </div>
-                    `;
-                });
+                // 종목 섹션
+                if (parsedStocks.length > 0) {
+                    list.innerHTML += `<div style="font-size:0.75rem; color:var(--text-muted); padding:0.25rem 0; margin-top:0.25rem;">📈 보유 종목</div>`;
+                    parsedStocks.forEach((stock, idx) => {
+                        const marketBadge = stock.market === 'US'
+                            ? '<span style="font-size:0.65rem; background:#3b82f6; color:#fff; padding:0.1rem 0.3rem; border-radius:3px; font-weight:700;">US</span>'
+                            : `<span style="font-size:0.65rem; background:var(--accent-color); color:#111; padding:0.1rem 0.3rem; border-radius:3px; font-weight:700;">${stock.market}</span>`;
+                        list.innerHTML += `
+                            <div class="import-stock-item">
+                                <input type="checkbox" checked data-type="stock" data-idx="${idx}" class="import-checkbox">
+                                <div class="import-stock-detail">
+                                    <div class="import-stock-name">${stock.name}</div>
+                                    <div class="import-stock-meta">${marketBadge} ${stock.code}</div>
+                                </div>
+                                <div class="import-stock-shares">${stock.shares}주</div>
+                            </div>`;
+                    });
+                }
+
+                // 현금 섹션
+                if (parsedCash.length > 0) {
+                    list.innerHTML += `<div style="font-size:0.75rem; color:var(--text-muted); padding:0.25rem 0; margin-top:0.5rem;">💰 현금성 자산</div>`;
+                    const currencySymbols = {'KRW':'₩','USD':'$','EUR':'€','JPY':'¥','GBP':'£'};
+                    parsedCash.forEach((item, idx) => {
+                        const sym = currencySymbols[item.currency] || item.currency + ' ';
+                        const amountStr = item.currency === 'KRW'
+                            ? sym + Number(item.amount).toLocaleString()
+                            : sym + Number(item.amount).toFixed(2);
+                        list.innerHTML += `
+                            <div class="import-stock-item">
+                                <input type="checkbox" checked data-type="cash" data-idx="${idx}" class="import-checkbox">
+                                <div class="import-stock-detail">
+                                    <div class="import-stock-name">${item.name}</div>
+                                    <div class="import-stock-meta"><span style="font-size:0.65rem; background:#6b7280; color:#fff; padding:0.1rem 0.3rem; border-radius:3px; font-weight:700;">${item.currency}</span></div>
+                                </div>
+                                <div class="import-stock-shares">${amountStr}</div>
+                            </div>`;
+                    });
+                }
             }
 
             // Mode selector
@@ -1556,13 +1608,23 @@
                 const checkboxes = document.querySelectorAll('.import-checkbox');
                 const selectedStocks = [];
                 checkboxes.forEach(cb => {
-                    if (cb.checked) {
-                        selectedStocks.push(parsedStocks[parseInt(cb.dataset.idx)]);
+                    if (!cb.checked) return;
+                    const idx = parseInt(cb.dataset.idx);
+                    if (cb.dataset.type === 'cash') {
+                        const item = parsedCash[idx];
+                        // 현금 항목을 watchlist 호환 포맷으로 변환
+                        selectedStocks.push({
+                            ticker: item.ticker,
+                            name: item.name,
+                            shares: item.amount
+                        });
+                    } else {
+                        selectedStocks.push(parsedStocks[idx]);
                     }
                 });
 
                 if (selectedStocks.length === 0) {
-                    alert('가져올 종목을 선택해주세요.');
+                    alert('가져올 항목을 선택해주세요.');
                     return;
                 }
 
