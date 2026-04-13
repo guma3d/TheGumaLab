@@ -763,7 +763,8 @@ def api_portfolio_analysis():
             analysis_text = cached
 
     if not analysis_text:
-        analysis_text = latest_portfolio_analysis if isinstance(latest_portfolio_analysis, str) else DEFAULT_ANALYSIS_MSG
+        pf = latest_portfolio_analysis
+        analysis_text = pf if (isinstance(pf, str) and pf.strip()) else DEFAULT_ANALYSIS_MSG
 
     return jsonify({"success": True, "analysis": analysis_text})
 
