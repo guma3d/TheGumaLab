@@ -188,45 +188,68 @@ def fetch_stock_data(tickers, force_refresh=False):
             continue
 
         try:
-            stock = yf.Ticker(ticker)
+            # .KQ로 조회 실패 시 .KS로 자동 재시도
+            tickers_to_try = [ticker]
+            if ticker.endswith('.KQ'):
+                tickers_to_try.append(ticker[:-3] + '.KS')
+
             current_price = None
             prev_close = None
-            
-            # 1. fast_info를 통해 장전/장후(프리마켓/애프터마켓) 실시간 가격 우선 추출
-            try:
-                current_price = getattr(stock.fast_info, 'lastPrice', stock.fast_info.get('lastPrice', None))
-                prev_close = getattr(stock.fast_info, 'previousClose', stock.fast_info.get('previousClose', None))
-            except Exception:
-                pass
-                
-            # 2. fast_info 추출 실패 시 일반 history(prepost=True) 로 백업 데이터 호출
-            if current_price is None or prev_close is None:
-                hist = stock.history(period="5d", prepost=True)
-                hist = hist.dropna(subset=['Close'])
-                if len(hist) >= 2:
-                    current_price = hist['Close'].iloc[-1]
-                    prev_close = hist['Close'].iloc[-2]
-            
+            resolved_ticker = ticker
+
+            for try_ticker in tickers_to_try:
+                stock = yf.Ticker(try_ticker)
+
+                # 1. fast_info를 통해 장전/장후(프리마켓/애프터마켓) 실시간 가격 우선 추출
+                try:
+                    current_price = getattr(stock.fast_info, 'lastPrice', stock.fast_info.get('lastPrice', None))
+                    prev_close = getattr(stock.fast_info, 'previousClose', stock.fast_info.get('previousClose', None))
+                except Exception:
+                    pass
+
+                # 2. fast_info 추출 실패 시 일반 history(prepost=True) 로 백업 데이터 호출
+                if current_price is None or prev_close is None:
+                    hist = stock.history(period="5d", prepost=True)
+                    hist = hist.dropna(subset=['Close'])
+                    if len(hist) >= 2:
+                        current_price = hist['Close'].iloc[-1]
+                        prev_close = hist['Close'].iloc[-2]
+
+                if current_price is not None and prev_close is not None:
+                    resolved_ticker = try_ticker
+                    # .KQ → .KS로 자동 교정 시 DB 업데이트
+                    if try_ticker != ticker:
+                        print(f"Auto-corrected ticker: {ticker} → {try_ticker}")
+                        try:
+                            conn2 = sqlite3.connect(DB_PATH, isolation_level=None)
+                            conn2.execute(
+                                'UPDATE watchlist SET ticker=? WHERE ticker=?',
+                                (try_ticker, ticker)
+                            )
+                            conn2.close()
+                        except Exception as db_err:
+                            print(f"DB ticker correction failed: {db_err}")
+                    break
+
             if current_price is not None and prev_close is not None:
-                
                 # 등락률 계산
                 change_percent = ((current_price - prev_close) / prev_close) * 100
-                
+
                 data = {
-                    "raw_ticker": ticker,
-                    "ticker": ticker.replace(".KS", ""), # 한국 주식의 경우 UI 표시용으로 .KS 제거
+                    "raw_ticker": resolved_ticker,
+                    "ticker": resolved_ticker.replace(".KS", "").replace(".KQ", ""),
                     "name": name,
                     "price": float(round(current_price, 2)),
                     "change": float(round(change_percent, 2)),
                     "is_up": bool(change_percent >= 0),
-                    "currency": "₩" if any(x in ticker for x in [".KS", ".KQ", "^KS11", "^KQ11"]) else "$",
+                    "currency": "₩" if any(x in resolved_ticker for x in [".KS", ".KQ", "^KS11", "^KQ11"]) else "$",
                     "shares": shares,
                     "total_value": round(current_price * shares, 2) if shares > 0 else 0.0
                 }
             else:
                 data = {
                     "raw_ticker": ticker,
-                    "ticker": ticker.replace(".KS", ""),
+                    "ticker": ticker.replace(".KS", "").replace(".KQ", ""),
                     "name": name,
                     "price": "N/A",
                     "change": 0.0,
