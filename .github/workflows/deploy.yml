@@ -1,0 +1,50 @@
+name: Deploy to HomeServer
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.HOMESERVER_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 219.254.245.175 >> ~/.ssh/known_hosts
+
+      - name: Detect changed projects and deploy
+        run: |
+          PROJECTS="GumaStockReport GumaPhoto GumaImageAnalyzer GumaServerStatus GumaTube Index Nginx"
+
+          # 변경된 파일 목록 추출 (초기 커밋 대응)
+          if git rev-parse HEAD~1 > /dev/null 2>&1; then
+            CHANGED=$(git diff --name-only HEAD~1 HEAD)
+          else
+            CHANGED=$(git ls-files)
+          fi
+
+          echo "Changed files:"
+          echo "$CHANGED"
+
+          DEPLOYED=0
+          for project in $PROJECTS; do
+            if echo "$CHANGED" | grep -q "^${project}/"; then
+              echo ">>> Deploying $project ..."
+              ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no \
+                guma3@219.254.245.175 \
+                "D:\\TheGumaLab\\pull_update.bat $project"
+              DEPLOYED=1
+            fi
+          done
+
+          if [ "$DEPLOYED" -eq 0 ]; then
+            echo "No project-specific changes detected. Skipping deploy."
+          fi
