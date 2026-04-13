@@ -420,22 +420,19 @@ JSON 형식으로만 응답:
     try:
         image_part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
 
-        # 503 과부하 시 모델 폴백: 2.5-flash → 2.0-flash → 1.5-flash
-        FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash']
+        # 503 과부하 시 최대 3회 재시도
         response = None
-        for model_name in FALLBACK_MODELS:
+        for attempt in range(3):
             try:
                 response = gemini_client.models.generate_content(
-                    model=model_name,
+                    model='gemini-3.1-flash-lite-preview',
                     contents=[image_part, prompt],
                 )
-                if model_name != FALLBACK_MODELS[0]:
-                    print(f"Screenshot parsed with fallback model: {model_name}")
                 break
             except Exception as e:
-                if "503" in str(e):
-                    print(f"Gemini 503 on {model_name}, trying next model...")
-                    time.sleep(3)
+                if "503" in str(e) and attempt < 2:
+                    print(f"Gemini 503, retrying ({attempt+1}/3)...")
+                    time.sleep(5)
                 else:
                     raise
         if response is None:
