@@ -814,12 +814,21 @@ def rebuild_timeline_cache():
     업로드/인덱싱 완료 후 호출되어야 합니다.
     """
     import pickle
-    if not state.qdrant_client:
-        print("[Timeline Cache] Qdrant client not ready, skip.")
-        return
+
+    # Celery 워커 프로세스는 FastAPI lifespan을 타지 않아 state.qdrant_client가 None.
+    # 여기서 lazy init하여 재사용(같은 워커 프로세스 내) 및 skip 방지.
+    qc = state.qdrant_client
+    if qc is None:
+        try:
+            from qdrant_client import QdrantClient
+            qc = QdrantClient(url=os.getenv("QDRANT_URL", "http://qdrant:6333"))
+            state.qdrant_client = qc
+            print("[Timeline Cache] Celery context: Qdrant client lazy-initialized.")
+        except Exception as init_err:
+            print(f"[Timeline Cache] Qdrant client 초기화 실패: {init_err}")
+            return
 
     try:
-        qc = state.qdrant_client
         coll = "gumaphoto_hybrid_kr"
 
         # recent 500장 (최신순)

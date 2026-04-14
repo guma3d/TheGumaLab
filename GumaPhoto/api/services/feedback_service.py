@@ -255,7 +255,6 @@ def process_face_enrollment(qdrant_id: str, known_name: str, target_points_json:
     raw_faces = {}
     if os.path.exists(pkl_path):
         import pickle
-        import numpy as np
         try:
             with open(pkl_path, "rb") as f:
                 raw_faces = pickle.load(f)
@@ -300,7 +299,6 @@ def process_face_enrollment(qdrant_id: str, known_name: str, target_points_json:
         if len(candidates) >= 1:
             print(f"  [*] '{known_name}' 관련 폴더가 {len(candidates)}개 발견되었습니다. 가장 유사한 얼굴 중심점(Centroid)을 찾습니다...")
             if face_vec:
-                import numpy as np
                 face_vec_np = np.array(face_vec)
                 face_vec_np = face_vec_np / np.linalg.norm(face_vec_np)
                 

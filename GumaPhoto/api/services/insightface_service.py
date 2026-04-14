@@ -57,7 +57,6 @@ class InsightFaceModule:
                 try:
                     from pillow_heif import register_heif_opener
                     from PIL import Image, ImageOps
-                    import numpy as np
                     register_heif_opener()
                     pil_img = Image.open(filepath)
                     pil_img = ImageOps.exif_transpose(pil_img)
