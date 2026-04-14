@@ -488,6 +488,40 @@
             font-weight: 700;
         }
 
+        /* Analysis inner tabs */
+        .analysis-inner-tabs {
+            display: flex;
+            gap: 0.4rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.6rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            overflow-x: auto;
+        }
+        .analysis-inner-tab {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.15);
+            color: var(--text-muted);
+            padding: 0.35rem 0.9rem;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .analysis-inner-tab:hover {
+            border-color: var(--accent-color);
+            color: var(--text-main);
+        }
+        .analysis-inner-tab.active {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            color: #111;
+            font-weight: 700;
+        }
+        .analysis-pane { display: none; }
+        .analysis-pane.active { display: block; animation: fadeInUp 0.2s ease-out; }
+
         /* AI Panel Markdown Styling */
         .ai-markdown {
             color: var(--text-main);
@@ -935,11 +969,30 @@
             <div class="tab-section-title">
                 <i class="fa-solid fa-wand-magic-sparkles"></i> Portfolio Analysis
             </div>
-            <div id="portfolio-analysis-container">
-                <div style="color: var(--text-muted); text-align: center; padding: 2rem;">
-                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem; color: var(--accent-color);"></i>
-                    <br>AI is analyzing your portfolio...
+
+            <!-- Inner tabs -->
+            <div class="analysis-inner-tabs">
+                <button class="analysis-inner-tab active" data-atab="status">📊 포트폴리오 현황</button>
+                <button class="analysis-inner-tab" data-atab="news">🌍 시장 &amp; 뉴스</button>
+                <button class="analysis-inner-tab" data-atab="recommend">💡 추천 &amp; 개선</button>
+            </div>
+
+            <!-- Pane: 현황 -->
+            <div id="analysis-pane-status" class="analysis-pane active">
+                <div class="ai-markdown" id="analysis-content-status">
+                    <div style="color: var(--text-muted); text-align: center; padding: 2rem;">
+                        <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem; color: var(--accent-color);"></i>
+                        <br>AI is analyzing your portfolio...
+                    </div>
                 </div>
+            </div>
+            <!-- Pane: 시장·뉴스 -->
+            <div id="analysis-pane-news" class="analysis-pane">
+                <div class="ai-markdown" id="analysis-content-news"></div>
+            </div>
+            <!-- Pane: 추천·개선 -->
+            <div id="analysis-pane-recommend" class="analysis-pane">
+                <div class="ai-markdown" id="analysis-content-recommend"></div>
             </div>
         </div>
 
@@ -1016,6 +1069,16 @@
                     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
                     btn.classList.add('active');
                     document.getElementById('tab-' + target).classList.add('active');
+                });
+            });
+
+            // ====== Analysis Inner Tabs ======
+            document.querySelectorAll('.analysis-inner-tab').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.analysis-inner-tab').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.analysis-pane').forEach(p => p.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById('analysis-pane-' + btn.dataset.atab).classList.add('active');
                 });
             });
 
@@ -1195,35 +1258,53 @@
                 }
             }
 
+            function parseAnalysisSections(rawText) {
+                const markers = [
+                    { key: 'status',    pattern: '[Current Portfolio Status]' },
+                    { key: 'news',      pattern: '[Market News & Portfolio Direction]' },
+                    { key: 'recommend', pattern: '[Recommended Modifications]' },
+                ];
+                const positions = markers.map(m => ({
+                    key: m.key,
+                    idx: rawText.indexOf(m.pattern),
+                    len: m.pattern.length,
+                })).filter(m => m.idx !== -1).sort((a, b) => a.idx - b.idx);
+
+                const sections = { status: rawText, news: '', recommend: '' };
+
+                if (positions.length > 0) {
+                    sections.status    = '';
+                    sections.news      = '';
+                    sections.recommend = '';
+                    for (let i = 0; i < positions.length; i++) {
+                        const start = positions[i].idx + positions[i].len;
+                        const end   = i + 1 < positions.length ? positions[i + 1].idx : rawText.length;
+                        sections[positions[i].key] = rawText.slice(start, end).trim();
+                    }
+                }
+                return sections;
+            }
+
+            function renderMarkdown(text) {
+                if (!text) return '';
+                return typeof marked !== 'undefined' ? marked.parse(text) : text.replace(/\n/g, '<br>');
+            }
+
             async function fetchPortfolioAnalysis() {
                 try {
-                    const container = document.getElementById('portfolio-analysis-container');
-
                     const res = await fetch(`/api/portfolio-analysis?t=${new Date().getTime()}`);
                     const data = await res.json();
 
                     if (data.success) {
-                        let rawText = data.analysis;
-                        // Pre-process section headers to markdown h3
-                        rawText = rawText.replace(/\[Current Portfolio Status\]/gi, '### 📊 Current Portfolio Status');
-                        rawText = rawText.replace(/\[Market News & Portfolio Direction\]/gi, '### 🌍 Market News & Portfolio Direction');
-                        rawText = rawText.replace(/\[Recommended Modifications\]/gi, '### 💡 Recommended Modifications');
-                        
-                        let htmlContent = rawText;
-                        if (typeof marked !== 'undefined') {
-                            htmlContent = marked.parse(rawText);
-                        } else {
-                            // Fallback just in case marked is not loaded
-                            htmlContent = rawText.replace(/\n/g, '<br>');
-                        }
-
-                        container.innerHTML = `
-                            <div class="ai-markdown">${htmlContent}</div>
-                        `;
+                        const sections = parseAnalysisSections(data.analysis);
+                        document.getElementById('analysis-content-status').innerHTML    = renderMarkdown(sections.status)    || '<p style="color:var(--text-muted)">분석 데이터 없음</p>';
+                        document.getElementById('analysis-content-news').innerHTML      = renderMarkdown(sections.news)      || '<p style="color:var(--text-muted)">분석 데이터 없음</p>';
+                        document.getElementById('analysis-content-recommend').innerHTML = renderMarkdown(sections.recommend) || '<p style="color:var(--text-muted)">분석 데이터 없음</p>';
                     } else if (data.error) {
-                        container.innerHTML = `
-                            <p style="color: var(--negative-color);">Error: ${data.error}</p>
-                        `;
+                        const errHtml = `<p style="color: var(--negative-color);">Error: ${data.error}</p>`;
+                        ['status', 'news', 'recommend'].forEach(k =>
+                            document.getElementById('analysis-content-' + k).innerHTML = errHtml
+                        );
                     }
                 } catch (e) {
                     console.error("Failed to fetch portfolio analysis", e);
