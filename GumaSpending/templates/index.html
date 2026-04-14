@@ -208,6 +208,31 @@
             color: var(--text-muted);
             margin-top: 0.3rem;
         }
+        .month-source-split {
+            display: flex;
+            gap: 0.6rem;
+            margin-top: 0.7rem;
+            flex-wrap: wrap;
+        }
+        .source-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.35rem 0.7rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .source-chip .chip-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-color);
+        }
+        .source-chip.bank .chip-dot { background: var(--warn-color); }
+        .source-chip .chip-label { color: var(--text-dim); }
+        .source-chip .chip-amt { color: var(--text-main); font-weight: 600; }
 
         /* Calendar grid */
         .calendar {
@@ -397,6 +422,10 @@
             font-size: 0.65rem;
             font-weight: 500;
         }
+        .tx-meta .card-tag.bank {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warn-color);
+        }
         .tx-amount {
             font-size: 0.95rem;
             font-weight: 600;
@@ -484,6 +513,7 @@
                 <span class="currency">KRW</span>
             </div>
             <div class="month-total-count" id="month-count">—</div>
+            <div class="month-source-split" id="month-source-split"></div>
         </section>
 
         <section class="calendar">
@@ -542,8 +572,23 @@
             document.getElementById('month-count').textContent =
                 `${data.month_count || 0}건`;
 
+            renderSourceSplit(data.by_source || {});
             renderCalendar(y, m);
             renderCardBreakdown(data.by_card || []);
+        }
+
+        function renderSourceSplit(bySource) {
+            const box = document.getElementById('month-source-split');
+            const card = bySource.card || { total: 0, count: 0 };
+            const bank = bySource.bank || { total: 0, count: 0 };
+            const parts = [];
+            if (card.total > 0) {
+                parts.push(`<div class="source-chip"><span class="chip-dot"></span><span class="chip-label">카드</span><span class="chip-amt">${fmt(card.total)}원</span></div>`);
+            }
+            if (bank.total > 0) {
+                parts.push(`<div class="source-chip bank"><span class="chip-dot"></span><span class="chip-label">계좌</span><span class="chip-amt">${fmt(bank.total)}원</span></div>`);
+            }
+            box.innerHTML = parts.join('');
         }
 
         function renderCalendar(y, m) {
@@ -655,12 +700,15 @@
                 const time = tx.used_time
                     ? `${tx.used_time.slice(0,2)}:${tx.used_time.slice(2,4)}`
                     : '';
+                const isBank = tx.source === 'bank';
+                const tagClass = isBank ? 'card-tag bank' : 'card-tag';
+                const icon = isBank ? 'fa-building-columns' : 'fa-credit-card';
                 html += `
                     <div class="tx-item">
                         <div class="tx-info">
-                            <div class="tx-store">${escapeHtml(tx.store_name || '(가맹점 미상)')}</div>
+                            <div class="tx-store">${escapeHtml(tx.store_name || '(내역 없음)')}</div>
                             <div class="tx-meta">
-                                <span class="card-tag">${escapeHtml(tx.org_name)}</span>
+                                <span class="${tagClass}"><i class="fa-solid ${icon}"></i> ${escapeHtml(tx.org_name)}</span>
                                 ${time ? `<span>${time}</span>` : ''}
                                 ${tx.store_category ? `<span>· ${escapeHtml(tx.store_category)}</span>` : ''}
                             </div>
@@ -678,12 +726,16 @@
             const list = document.getElementById('card-breakdown-list');
             if (!byCard.length) { box.style.display = 'none'; return; }
             box.style.display = 'block';
-            list.innerHTML = byCard.map(c => `
+            list.innerHTML = byCard.map(c => {
+                const isBank = c.source === 'bank';
+                const icon = isBank ? 'fa-building-columns' : 'fa-credit-card';
+                const color = isBank ? 'var(--warn-color)' : 'var(--accent-color)';
+                return `
                 <div class="card-bar">
-                    <div class="card-bar-name"><i class="fa-solid fa-credit-card"></i> ${escapeHtml(c.card_name || c.org)}</div>
+                    <div class="card-bar-name"><i class="fa-solid ${icon}" style="color:${color}"></i> ${escapeHtml(c.card_name || c.org_name || c.org)}</div>
                     <div class="card-bar-amt">${fmt(c.total)}원 <span style="color:var(--text-dim); font-size:0.72rem;">${c.cnt}건</span></div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         }
 
         function escapeHtml(s) {

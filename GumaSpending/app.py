@@ -1,8 +1,11 @@
 """
 GumaSpending — Flask calendar dashboard.
 
-Loads transactions_*.json files produced by fetch_transactions.py into SQLite,
-then serves a month-grid calendar UI and detail-per-day API.
+Loads transactions_*.json (card) and bank_transactions_*.json (bank) into
+SQLite, then serves a month-grid calendar UI and detail-per-day API.
+
+Bank withdrawals with descriptions matching BANK_DEDUP_PATTERNS (e.g., 카드대금)
+are skipped at ingestion time to avoid double-counting with card approval data.
 """
 
 from __future__ import annotations
@@ -10,6 +13,7 @@ from __future__ import annotations
 import glob
 import json
 import os
+import re
 import sqlite3
 from datetime import date, datetime
 from pathlib import Path
@@ -18,9 +22,11 @@ from flask import Flask, jsonify, render_template, send_from_directory
 
 APP_DIR = Path(__file__).resolve().parent
 DB_PATH = APP_DIR / "spending.db"
-TX_GLOB = str(APP_DIR / "transactions_*.json")
+CARD_TX_GLOB = str(APP_DIR / "transactions_*.json")
+BANK_TX_GLOB = str(APP_DIR / "bank_transactions_*.json")
 
 ORG_NAMES = {
+    # cards
     "0301": "KB카드",
     "0302": "현대카드",
     "0303": "삼성카드",
@@ -31,7 +37,31 @@ ORG_NAMES = {
     "0309": "우리카드",
     "0311": "롯데카드",
     "0313": "하나카드",
+    # banks
+    "0002": "산업은행",
+    "0003": "기업은행",
+    "0004": "국민은행",
+    "0007": "수협은행",
+    "0011": "농협은행",
+    "0020": "우리은행",
+    "0023": "SC제일은행",
+    "0027": "한국씨티은행",
+    "0071": "우체국",
+    "0081": "하나은행",
+    "0088": "신한은행",
+    "0089": "케이뱅크",
+    "0090": "카카오뱅크",
+    "0092": "토스뱅크",
 }
+
+BANK_DEDUP_PATTERNS = [
+    "카드대금",
+    "카드결제",
+    "신용카드",
+    "체크카드",
+    "카드자동",
+]
+_DEDUP_RE = re.compile("|".join(BANK_DEDUP_PATTERNS))
 
 app = Flask(__name__)
 app.config["JSON_AS_ASCII"] = False
@@ -44,26 +74,30 @@ def _db() -> sqlite3.Connection:
 
 
 def init_db() -> None:
+    """Drop-and-recreate — spending.db is fully derived from JSON files."""
     with _db() as conn:
+        conn.execute("DROP TABLE IF EXISTS transactions")
         conn.execute(
             """
-            CREATE TABLE IF NOT EXISTS transactions (
+            CREATE TABLE transactions (
+                source TEXT NOT NULL,           -- 'card' | 'bank'
                 org TEXT NOT NULL,
-                card_name TEXT,
-                sub_card_name TEXT,
-                card_no_masked TEXT,
-                used_date TEXT NOT NULL,
-                used_time TEXT,
-                store_name TEXT,
-                store_category TEXT,
-                amount INTEGER NOT NULL,
-                cancel_yn TEXT,
-                approval_no TEXT,
-                PRIMARY KEY (org, approval_no, used_date, used_time)
+                card_name TEXT,                 -- 카드사/은행 이름
+                sub_card_name TEXT,             -- 세부 카드명 / 계좌명
+                card_no_masked TEXT,            -- 마스킹된 카드번호/계좌번호
+                used_date TEXT NOT NULL,        -- YYYY-MM-DD
+                used_time TEXT,                 -- HHMMSS
+                store_name TEXT,                -- 가맹점명 / 이체적요
+                store_category TEXT,            -- 업종 / 거래타입
+                amount INTEGER NOT NULL,        -- 금액 (출금/승인)
+                dedup_key TEXT NOT NULL         -- 중복 제거용 키
             )
             """
         )
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_used_date ON transactions(used_date)")
+        conn.execute(
+            "CREATE UNIQUE INDEX idx_dedup ON transactions(source, org, dedup_key)"
+        )
+        conn.execute("CREATE INDEX idx_used_date ON transactions(used_date)")
         conn.commit()
 
 
@@ -73,74 +107,156 @@ def _mask(card_no: str) -> str:
     return f"{card_no[:4]}****{card_no[-4:]}"
 
 
-def reload_transactions() -> dict:
-    """Re-scan transactions_*.json files and upsert into SQLite."""
-    init_db()
+def _parse_yyyymmdd(raw: str) -> str:
+    if len(raw) == 8:
+        return f"{raw[:4]}-{raw[4:6]}-{raw[6:8]}"
+    return raw
+
+
+def _ingest_cards(conn: sqlite3.Connection) -> dict:
     inserted = 0
     skipped_cancel = 0
-    files = sorted(glob.glob(TX_GLOB))
+    files = sorted(glob.glob(CARD_TX_GLOB))
+    for path in files:
+        try:
+            payload = json.loads(Path(path).read_text(encoding="utf-8"))
+        except (OSError, ValueError) as e:
+            print(f"[WARN] failed to read {path}: {e}")
+            continue
 
-    with _db() as conn:
-        for path in files:
+        org = payload.get("organization", "")
+        card_name = payload.get("card_name", "")
+        for tx in payload.get("transactions", []):
+            if tx.get("resCancelYN") == "Y":
+                skipped_cancel += 1
+                continue
             try:
-                payload = json.loads(Path(path).read_text(encoding="utf-8"))
-            except (OSError, ValueError) as e:
-                print(f"[WARN] failed to read {path}: {e}")
+                amount = int(tx.get("resUsedAmount", "0") or "0")
+            except ValueError:
+                amount = 0
+            if amount <= 0:
                 continue
 
-            org = payload.get("organization", "")
-            card_name = payload.get("card_name", "")
-            for tx in payload.get("transactions", []):
-                if tx.get("resCancelYN") == "Y":
-                    skipped_cancel += 1
-                    continue
-                try:
-                    amount = int(tx.get("resUsedAmount", "0") or "0")
-                except ValueError:
-                    amount = 0
-                if amount <= 0:
-                    continue
+            used_date = _parse_yyyymmdd(tx.get("resUsedDate", ""))
+            used_time = tx.get("resUsedTime", "")
+            approval_no = tx.get("resApprovalNo", "")
+            card_no = tx.get("resCardNo", "")
+            dedup = f"{approval_no}|{used_date}|{used_time}|{card_no[-4:]}"
 
-                used_date_raw = tx.get("resUsedDate", "")
-                if len(used_date_raw) == 8:
-                    used_date = f"{used_date_raw[:4]}-{used_date_raw[4:6]}-{used_date_raw[6:8]}"
-                else:
-                    used_date = used_date_raw
-
-                row = (
-                    org,
-                    card_name,
-                    tx.get("resCardName", ""),
-                    _mask(tx.get("resCardNo", "")),
-                    used_date,
-                    tx.get("resUsedTime", ""),
-                    tx.get("resMemberStoreName", ""),
-                    tx.get("resMemberStoreBusinessType", ""),
-                    amount,
-                    tx.get("resCancelYN", "N"),
-                    tx.get("resApprovalNo", ""),
+            try:
+                conn.execute(
+                    """
+                    INSERT OR REPLACE INTO transactions
+                    (source, org, card_name, sub_card_name, card_no_masked,
+                     used_date, used_time, store_name, store_category,
+                     amount, dedup_key)
+                    VALUES ('card', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        org,
+                        card_name,
+                        tx.get("resCardName", ""),
+                        _mask(card_no),
+                        used_date,
+                        used_time,
+                        tx.get("resMemberStoreName", ""),
+                        tx.get("resMemberStoreBusinessType", ""),
+                        amount,
+                        dedup,
+                    ),
                 )
-                try:
-                    conn.execute(
-                        """
-                        INSERT OR REPLACE INTO transactions
-                        (org, card_name, sub_card_name, card_no_masked,
-                         used_date, used_time, store_name, store_category,
-                         amount, cancel_yn, approval_no)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """,
-                        row,
-                    )
-                    inserted += 1
-                except sqlite3.Error as e:
-                    print(f"[WARN] insert failed: {e}")
-        conn.commit()
+                inserted += 1
+            except sqlite3.Error as e:
+                print(f"[WARN] card insert failed: {e}")
+
+    return {"files": len(files), "inserted": inserted, "skipped_cancel": skipped_cancel}
+
+
+def _ingest_banks(conn: sqlite3.Connection) -> dict:
+    inserted = 0
+    skipped_dedup = 0
+    skipped_deposit = 0
+    files = sorted(glob.glob(BANK_TX_GLOB))
+    for path in files:
+        try:
+            payload = json.loads(Path(path).read_text(encoding="utf-8"))
+        except (OSError, ValueError) as e:
+            print(f"[WARN] failed to read {path}: {e}")
+            continue
+
+        org = payload.get("organization", "")
+        bank_name = payload.get("bank_name", "")
+        for tx in payload.get("transactions", []):
+            try:
+                out_amt = int(tx.get("resAccountOut", "0") or "0")
+            except ValueError:
+                out_amt = 0
+            if out_amt <= 0:
+                skipped_deposit += 1
+                continue
+
+            desc1 = (tx.get("resAccountDesc1") or "").strip()
+            desc2 = (tx.get("resAccountDesc2") or "").strip()
+            desc3 = (tx.get("resAccountDesc3") or "").strip()
+            desc4 = (tx.get("resAccountDesc4") or "").strip()
+            desc_all = " ".join(filter(None, [desc1, desc2, desc3, desc4]))
+
+            if _DEDUP_RE.search(desc_all):
+                skipped_dedup += 1
+                continue
+
+            store_name = desc3 or desc1 or desc2 or "(내역 없음)"
+            store_category = desc2 or desc4 or ""
+
+            used_date = _parse_yyyymmdd(tx.get("resAccountTrDate", ""))
+            used_time = tx.get("resAccountTrTime", "")
+            account_no = tx.get("_account_no", "")
+            account_name = tx.get("_account_name", "")
+            balance_after = tx.get("resAfterTranBalance", "")
+            dedup = f"{account_no}|{used_date}|{used_time}|{out_amt}|{balance_after}"
+
+            try:
+                conn.execute(
+                    """
+                    INSERT OR REPLACE INTO transactions
+                    (source, org, card_name, sub_card_name, card_no_masked,
+                     used_date, used_time, store_name, store_category,
+                     amount, dedup_key)
+                    VALUES ('bank', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        org,
+                        bank_name,
+                        account_name,
+                        _mask(account_no),
+                        used_date,
+                        used_time,
+                        store_name,
+                        store_category,
+                        out_amt,
+                        dedup,
+                    ),
+                )
+                inserted += 1
+            except sqlite3.Error as e:
+                print(f"[WARN] bank insert failed: {e}")
 
     return {
         "files": len(files),
-        "inserted_or_updated": inserted,
-        "skipped_cancel": skipped_cancel,
+        "inserted": inserted,
+        "skipped_dedup": skipped_dedup,
+        "skipped_deposit": skipped_deposit,
     }
+
+
+def reload_transactions() -> dict:
+    """Drop and re-ingest all transactions from JSON files."""
+    init_db()
+    with _db() as conn:
+        card_stats = _ingest_cards(conn)
+        bank_stats = _ingest_banks(conn)
+        conn.commit()
+    return {"card": card_stats, "bank": bank_stats}
 
 
 @app.route("/")
@@ -192,23 +308,40 @@ def api_month(ym: str):
 
         by_card_rows = conn.execute(
             """
-            SELECT org, card_name, SUM(amount) AS total, COUNT(*) AS cnt
+            SELECT source, org, card_name, SUM(amount) AS total, COUNT(*) AS cnt
             FROM transactions
             WHERE used_date >= ? AND used_date < ?
-            GROUP BY org, card_name
+            GROUP BY source, org, card_name
             ORDER BY total DESC
             """,
             (start, end),
         ).fetchall()
 
+        by_source_row = conn.execute(
+            """
+            SELECT source, COALESCE(SUM(amount), 0) AS total, COUNT(*) AS cnt
+            FROM transactions
+            WHERE used_date >= ? AND used_date < ?
+            GROUP BY source
+            """,
+            (start, end),
+        ).fetchall()
+
     days = {r["used_date"]: {"total": r["total"], "count": r["cnt"]} for r in rows}
+    by_card = []
+    for r in by_card_rows:
+        d = dict(r)
+        d["org_name"] = ORG_NAMES.get(d["org"], d["org"])
+        by_card.append(d)
+
     return jsonify(
         {
             "ym": ym,
             "month_total": month_total_row["total"],
             "month_count": month_total_row["cnt"],
             "days": days,
-            "by_card": [dict(r) for r in by_card_rows],
+            "by_card": by_card,
+            "by_source": {r["source"]: {"total": r["total"], "count": r["cnt"]} for r in by_source_row},
         }
     )
 
@@ -224,11 +357,11 @@ def api_day(ymd: str):
     with _db() as conn:
         rows = conn.execute(
             """
-            SELECT org, card_name, sub_card_name, card_no_masked, used_time,
+            SELECT source, org, card_name, sub_card_name, card_no_masked, used_time,
                    store_name, store_category, amount
             FROM transactions
             WHERE used_date = ?
-            ORDER BY used_time DESC
+            ORDER BY amount DESC, used_time DESC
             """,
             (ymd,),
         ).fetchall()

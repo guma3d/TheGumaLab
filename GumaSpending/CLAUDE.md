@@ -125,7 +125,7 @@ DEMO 모드에서 `businessType`에 따라 동작이 완전히 다르다:
 |---|---|---|---|
 | `CD` | 카드 (Card) | **실계정 수용** → 실 데이터 | ✅ NH/신한/KB 성공 |
 | `ST` | 증권 (Stock) | **실계정 거부** → `CF-04000/CF-00007` | ❌ 삼성증권 실패 |
-| `BK` | 은행 (Bank) | 미검증 | ? |
+| `BK` | 은행 (Bank) | **실계정 수용** → 실 데이터 | ✅ 농협은행 성공 |
 
 ### 증권 실패 사례 (참고용)
 
@@ -278,6 +278,76 @@ argparse 단계에서 거부. 장기 백필이 필요하면 chunk 루프를 추�
 
 결과 **5000건 단위로 1콜 과금**. 예: 3000건 = 1콜, 5500건 = 2콜. 개인
 사용 패턴은 대부분 월 100건 미만 → 사실상 1콜.
+
+## 은행 통합 (`businessType=BK`)
+
+카드와 동일한 패턴으로 DEMO에서 실계정 동작 확인 (2026-04 농협은행 검증).
+카드와 달리 **출금/입금이 구분되므로 출금만 "지출"로 집계**하며, 카드 청구금
+출금(예: `NH카드대금`)은 카드 approval-list 데이터와 **이중 집계 위험**이 있어
+ingestion 단계에서 제외 처리한다.
+
+### 사용 가능한 은행 organization 코드
+
+| 은행 | 코드 | 검증 상태 |
+|---|---|---|
+| 산업은행 | 0002 | 미검증 |
+| 기업은행 | 0003 | 미검증 |
+| 국민은행 | 0004 | 미검증 |
+| 수협은행 | 0007 | 미검증 |
+| 농협은행 | 0011 | ✅ 성공 (자립예탁금/주거래우대통장) |
+| 우리은행 | 0020 | 미검증 |
+| SC제일은행 | 0023 | 미검증 |
+| 한국씨티은행 | 0027 | 미검증 |
+| 우체국 | 0071 | 미검증 |
+| 하나은행 | 0081 | 미검증 |
+| 신한은행 | 0088 | 미검증 |
+| 케이뱅크 | 0089 | 미검증 |
+| 카카오뱅크 | 0090 | 미검증 |
+| 토스뱅크 | 0092 | 미검증 |
+
+### API 엔드포인트 (`businessType=BK`)
+
+| 용도 | Path | 필수 파라미터 | 비고 |
+|---|---|---|---|
+| 보유계좌 조회 | `/v1/kr/bank/p/account/account-list` | organization, connectedId | `resDepositTrust` 배열로 반환 |
+| 거래내역 ⭐ | `/v1/kr/bank/p/account/transaction-list` | organization, connectedId, account, startDate, endDate, orderBy, inquiryType | 출금/입금 분리 |
+
+### transaction-list 응답 필드
+
+| 필드 | 의미 |
+|---|---|
+| `resAccountTrDate` | 거래일자 YYYYMMDD |
+| `resAccountTrTime` | 거래시각 HHMMSS |
+| `resAccountOut` | 출금액 (지출) |
+| `resAccountIn` | 입금액 |
+| `resAccountDesc1` | 적요1 (비어있는 경우 많음) |
+| `resAccountDesc2` | 적요2 — 거래 유형 (예: "스마트당행", "NH카드대금") |
+| `resAccountDesc3` | 적요3 — 거래 상대방 (예: "장성욱", "NH농협카드") |
+| `resAccountDesc4` | 적요4 — 처리 지점 (예: "농협 000998") |
+| `resAfterTranBalance` | 거래 후 잔액 |
+
+### 이중 집계 방지 패턴
+
+`app.py`의 `BANK_DEDUP_PATTERNS` 에 포함된 키워드가 `resAccountDesc1~4` 조합
+내에 등장하면 해당 은행 출금 건을 SKIP:
+
+```python
+BANK_DEDUP_PATTERNS = ["카드대금", "카드결제", "신용카드", "체크카드", "카드자동"]
+```
+
+이유: 카드 청구대금이 통장에서 빠져나가는 이벤트는 카드 approval-list의
+승인건 합계와 **같은 돈의 다른 시점 기록**이므로, 둘 다 집계하면 월 지출이
+2배가 됨. 카드 approval 데이터가 더 정밀(건별 가맹점명/카테고리 포함)하므로
+그쪽을 신뢰하고 은행 쪽 카드대금은 버린다.
+
+### 농협은행 실전 특이사항
+
+- 계좌 목록은 `data.resDepositTrust` (예금/저축), 대출은 `data.resLoan`
+- 계좌번호는 하이픈 제거 형식(`resAccount`)과 하이픈 포함(`resAccountDisplay`)
+  둘 다 반환
+- `inquiryType="1"` 전체, `"2"` 입금만, `"3"` 출금만
+
+---
 
 ## 카드사별 실전 특이사항
 
