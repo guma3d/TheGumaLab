@@ -391,10 +391,18 @@ def search_stock():
 ]
 """
     try:
-        response = gemini_client.models.generate_content(
-            model='gemini-3.1-flash-lite-preview',
-            contents=prompt,
-        )
+        response = None
+        for model_name in ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-3.1-flash-lite-preview']:
+            try:
+                response = gemini_client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                )
+                break
+            except Exception as e:
+                print(f"Gemini {model_name} failed for ticker search: {e}")
+        if response is None:
+            return None
         text = response.text.strip()
         if text.startswith('```json'):
             text = text[7:-3]
@@ -435,7 +443,7 @@ def parse_screenshot():
 주식, ETF, 펀드, TDF, 퇴직연금 상품 등 투자성 자산 포함.
 현금잔고(예수금)·현금성자산·단기상품·외화예수금은 [2] cash로 분류.
 - name: 종목/상품명 그대로 (잘린 경우 보이는 대로)
-- code: 국내주식/ETF이면 6자리 종목코드(없으면 이름으로 추정), 미국주식이면 티커심볼(GOOGL 등), 펀드·연금상품이면 ""
+- code: 국내주식/ETF이면 6자리 숫자만 ($ 등 기호 없이, 없으면 이름으로 추정), 미국주식이면 티커심볼(GOOGL 등), 펀드·연금상품이면 ""
 - eval_krw: 평가금액 정수
 - market: "KOSPI"(국내주식·국내ETF) / "KOSDAQ"(코스닥 종목) / "US"(해외주식) / "FUND"(펀드·TDF·퇴직연금 상품)
 - quantity: 수량(주수) 정수. 수량 표시가 없으면 null
@@ -463,21 +471,30 @@ JSON 형식으로만 응답:
     try:
         image_part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
 
-        # 503 과부하 시 최대 3회 재시도
+        # 모델 목록 순서대로 시도 (503/429 시 다음 모델 fallback)
+        VISION_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-3.1-flash-lite-preview']
         response = None
-        for attempt in range(3):
-            try:
-                response = gemini_client.models.generate_content(
-                    model='gemini-3.1-flash-lite-preview',
-                    contents=[image_part, prompt],
-                )
+        last_error = None
+        for model_name in VISION_MODELS:
+            for attempt in range(2):
+                try:
+                    response = gemini_client.models.generate_content(
+                        model=model_name,
+                        contents=[image_part, prompt],
+                    )
+                    break
+                except Exception as e:
+                    last_error = e
+                    err_str = str(e)
+                    if ("503" in err_str or "429" in err_str) and attempt < 1:
+                        print(f"Gemini {model_name} overloaded, retrying...")
+                        time.sleep(3)
+                    else:
+                        break
+            if response is not None:
                 break
-            except Exception as e:
-                if "503" in str(e) and attempt < 2:
-                    print(f"Gemini 503, retrying ({attempt+1}/3)...")
-                    time.sleep(5)
-                else:
-                    raise
+            print(f"Gemini {model_name} failed: {last_error}")
+
         if response is None:
             return jsonify({"success": False, "error": "Gemini API가 일시적으로 사용 불가합니다. 잠시 후 다시 시도해주세요."})
 
@@ -499,7 +516,7 @@ JSON 형식으로만 응답:
         # 종목코드 → Yahoo Finance ticker 변환
         stocks = []
         for stock in stock_list:
-            code = str(stock.get('code', '')).strip()
+            raw_code = str(stock.get('code', '')).strip()
             name = stock.get('name', '').strip()
             eval_krw = int(float(stock.get('eval_krw', 0)))
             market = stock.get('market', 'KOSPI').upper()
@@ -508,11 +525,18 @@ JSON 형식으로만 응답:
             if market == 'FUND':
                 safe_name = ''.join(c for c in name if c.isalnum())[:20]
                 ticker = f"FUND_{safe_name}" if safe_name else f"FUND_{len(stocks)+1}"
+                code = raw_code
             elif market == 'US':
+                # 알파벳+숫자만 ($ 등 기호 제거)
+                code = ''.join(c for c in raw_code if c.isalnum())
                 ticker = code
             elif market == 'KOSDAQ':
+                # 숫자만 ($ 등 기호 제거)
+                code = ''.join(c for c in raw_code if c.isdigit())
                 ticker = f"{code.zfill(6)}.KQ"
-            else:
+            else:  # KOSPI
+                # 숫자만 ($ 등 기호 제거)
+                code = ''.join(c for c in raw_code if c.isdigit())
                 ticker = f"{code.zfill(6)}.KS"
 
             stocks.append({"name": name, "code": code, "ticker": ticker, "eval_krw": eval_krw, "market": market, "quantity": quantity})
@@ -746,10 +770,18 @@ def generate_portfolio_analysis():
 
 섹션 제목은 위에서 지정한 영어 텍스트 그대로 사용하시고, 다른 HTML 태그는 사용하지 마세요. 내용 본문은 한국어로 전문적으로 작성해 주세요.
 """
-        response = gemini_client.models.generate_content(
-            model='gemini-3.1-flash-lite-preview',
-            contents=prompt,
-        )
+        response = None
+        for model_name in ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-3.1-flash-lite-preview']:
+            try:
+                response = gemini_client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                )
+                break
+            except Exception as e:
+                print(f"Gemini {model_name} failed for analysis: {e}")
+        if response is None:
+            raise Exception("All Gemini models failed")
 
         latest_portfolio_analysis = response.text
         if cache:
