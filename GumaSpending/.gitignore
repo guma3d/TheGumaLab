@@ -1,0 +1,6 @@
+.env
+connected_ids_securities.json
+holdings_result.json
+__pycache__/
+*.pyc
+test_demo*.py

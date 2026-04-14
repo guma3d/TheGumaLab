@@ -122,7 +122,7 @@ def main() -> int:
     print()
 
     # ── Step 2: 계좌별 종합자산 조회 ────────────────────────────────
-    account_password_raw = getpass.getpass("계좌비밀번호 (모든 계좌 공통, 입력 시 화면 미표시): ")
+    account_password_raw = os.getenv("SAMSUNG_ACCOUNT_PW", "").strip() or getpass.getpass("계좌비밀번호 (모든 계좌 공통, 입력 시 화면 미표시): ")
     if not account_password_raw:
         sys.exit("[ERROR] 계좌비밀번호는 필수입니다.")
     account_password_enc = encrypt_rsa(account_password_raw, public_key)
@@ -155,8 +155,11 @@ def main() -> int:
         items    = holdings_res.get("data", {}).get("resItemList", [])
         deposit  = holdings_res.get("data", {}).get("resDepositReceived", "0")
 
-        if deposit and deposit != "0":
-            print(f"    예수금: ₩{int(deposit):,}")
+        if deposit and deposit not in ("0", "", "****"):
+            try:
+                print(f"    예수금: ₩{int(deposit):,}")
+            except ValueError:
+                print(f"    예수금: {deposit}")
 
         if not items:
             print("    보유 종목 없음")
@@ -173,11 +176,7 @@ def main() -> int:
             cur_price= item.get("resPresentAmt", "0")
             currency = item.get("resAccountCurrency", "KRW")
 
-            try:
-                val_int = int(val_amt) if val_amt else 0
-                print(f"      [{pname}] {name} (코드:{code or '-'})  수량={qty}  평가금액=₩{val_int:,}  통화={currency}")
-            except ValueError:
-                print(f"      [{pname}] {name} (코드:{code or '-'})  수량={qty}  평가금액={val_amt}  통화={currency}")
+            print(f"      [{pname}] {name} (코드:{code or '-'})  수량={qty}  평가금액={val_amt}  통화={currency}")
 
             all_holdings.append({
                 "account":         acc_no,

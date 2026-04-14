@@ -78,23 +78,19 @@ def save_connected_ids(data: dict) -> None:
 
 
 def pick_securities() -> tuple[str, str]:
-    print()
-    print("등록 가능한 증권사:")
-    for idx, (name, code) in enumerate(SECURITIES_ORGS.items(), start=1):
-        print(f"  {idx:2d}. {name}  ({code})")
-    print()
-    raw = input("등록할 증권사 번호 또는 이름 (기본: 삼성증권, Enter): ").strip() or "삼성증권"
+    # 환경변수로 지정 가능 (비대화형 실행 지원)
+    env_org = os.getenv("SAMSUNG_ORG_CODE", "").strip()
+    if env_org:
+        for name, code in SECURITIES_ORGS.items():
+            if code == env_org:
+                print(f"증권사 (env): {name} ({code})")
+                return name, code
+        sys.exit(f"[ERROR] unknown org code: {env_org}")
 
-    if raw.isdigit():
-        idx = int(raw) - 1
-        items = list(SECURITIES_ORGS.items())
-        if not (0 <= idx < len(items)):
-            sys.exit(f"[ERROR] invalid index: {raw}")
-        return items[idx]
-
-    if raw not in SECURITIES_ORGS:
-        sys.exit(f"[ERROR] unknown securities company: {raw}")
-    return raw, SECURITIES_ORGS[raw]
+    # 기본값: 삼성증권
+    default = "삼성증권"
+    print(f"증권사 기본값 사용: {default} ({SECURITIES_ORGS[default]})")
+    return default, SECURITIES_ORGS[default]
 
 
 def build_account(organization_code: str, login_id: str, encrypted_pw: str) -> dict:
@@ -151,7 +147,7 @@ def main() -> int:
         param = {"accountList": [account]}
         raw_res = codef.create_account(ServiceType.DEMO, param)
     else:
-        print(f"\n[2/3] add_account 호출 (existing connectedId={primary_connected_id[:8]}...) ...")
+        print(f"\n[2/3] add_account 호출 (DEMO, existing connectedId={primary_connected_id[:8]}...) ...")
         param = {"connectedId": primary_connected_id, "accountList": [account]}
         raw_res = codef.add_account(ServiceType.DEMO, param)
 
