@@ -27,15 +27,14 @@ if hasattr(sys.stdout, "reconfigure"):
 
 
 SECURITIES_ORGS: dict[str, str] = {
-    "키움증권":     "0217",
-    "신한투자증권": "0227",
-    "미래에셋증권": "0238",
-    "삼성증권":     "0240",
-    "NH투자증권":   "0247",
-    "KB증권":       "0218",
+    "삼성증권":     "0264",
     "한국투자증권": "0243",
+    "키움증권":     "0217",
+    "미래에셋증권": "0238",
+    "NH투자증권":   "0247",
+    "신한투자증권": "0227",
+    "KB증권":       "0218",
     "대신증권":     "0221",
-    "하나증권":     "0218",
 }
 
 SCRIPT_DIR = Path(__file__).parent
@@ -82,7 +81,7 @@ def pick_securities() -> tuple[str, str]:
     for idx, (name, code) in enumerate(SECURITIES_ORGS.items(), start=1):
         print(f"  {idx:2d}. {name}  ({code})")
     print()
-    raw = input("등록할 증권사 번호 또는 이름 (기본: 삼성증권): ").strip() or "삼성증권"
+    raw = input("등록할 증권사 번호 또는 이름 (기본: 삼성증권, Enter): ").strip() or "삼성증권"
 
     if raw.isdigit():
         idx = int(raw) - 1
