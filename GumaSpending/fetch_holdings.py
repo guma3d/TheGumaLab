@@ -26,6 +26,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
 SCRIPT_DIR = Path(__file__).parent
+GLOBAL_ENV_PATH = SCRIPT_DIR.parent / ".env"   # D:\TheGumaLab\.env
 CONNECTED_IDS_PATH = SCRIPT_DIR / "connected_ids_securities.json"
 
 # 상품유형코드 → 한글
@@ -49,7 +50,7 @@ PRODUCT_TYPE_MAP = {
 
 
 def load_credentials() -> tuple[str, str, str, str]:
-    env_path = SCRIPT_DIR / ".env"
+    env_path = GLOBAL_ENV_PATH if GLOBAL_ENV_PATH.exists() else SCRIPT_DIR / ".env"
     load_dotenv(env_path)
     client_id     = os.getenv("CODEF_CLIENT_ID",     "").strip()
     client_secret = os.getenv("CODEF_CLIENT_SECRET", "").strip()

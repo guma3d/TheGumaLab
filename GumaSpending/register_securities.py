@@ -38,14 +38,16 @@ SECURITIES_ORGS: dict[str, str] = {
 }
 
 SCRIPT_DIR = Path(__file__).parent
+GLOBAL_ENV_PATH = SCRIPT_DIR.parent / ".env"   # D:\TheGumaLab\.env
 CONNECTED_IDS_PATH = SCRIPT_DIR / "connected_ids_securities.json"
 
 
 def load_credentials() -> tuple[str, str, str, str]:
-    env_path = SCRIPT_DIR / ".env"
+    env_path = GLOBAL_ENV_PATH if GLOBAL_ENV_PATH.exists() else SCRIPT_DIR / ".env"
     if not env_path.exists():
         sys.exit(f"[ERROR] .env not found at {env_path}")
     load_dotenv(env_path)
+    print(f"[env] {env_path}")
 
     client_id     = os.getenv("CODEF_CLIENT_ID",     "").strip()
     client_secret = os.getenv("CODEF_CLIENT_SECRET", "").strip()
@@ -119,11 +121,11 @@ def main() -> int:
     sec_name, organization_code = pick_securities()
     print(f"\n선택: {sec_name} (organization={organization_code})")
 
-    login_id = input(f"{sec_name} 로그인 아이디: ").strip()
+    login_id = os.getenv("SAMSUNG_LOGIN_ID", "").strip() or input(f"{sec_name} 로그인 아이디: ").strip()
     if not login_id:
         sys.exit("[ERROR] login id is required")
 
-    raw_password = getpass.getpass(f"{sec_name} 로그인 비밀번호 (입력 시 화면에 표시되지 않음): ")
+    raw_password = os.getenv("SAMSUNG_LOGIN_PW", "").strip() or getpass.getpass(f"{sec_name} 로그인 비밀번호 (입력 시 화면에 표시되지 않음): ")
     if not raw_password:
         sys.exit("[ERROR] password is required")
 
