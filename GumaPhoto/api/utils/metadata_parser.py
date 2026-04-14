@@ -228,30 +228,32 @@ class MetadataParser:
         season = "Unknown"
 
         # 1. date_val 형태가 들어온 경우 (우선)
+        # 지원 형식: "YYYY:MM:DD HH:MM:SS", "YYYY-MM-DD HH:MM:SS", "YYYY-MM-DD", "YYYY-MM", "YYYY:MM"
         if date_val and str(date_val) not in ["Unknown Date", "Unknown-Year"]:
             try:
-                # 형태: "2023:10:15 14:30:00" 혹은 "2023-10-15 14:30:00"
                 date_str = str(date_val).strip()
                 parts = date_str.split(' ')
-                
-                if len(parts) >= 2:
-                    date_part, time_part = parts[0], parts[1]
-                    
-                    # 시간대 구분
+                date_part = parts[0]
+                time_part = parts[1] if len(parts) >= 2 else None
+
+                # 시간대 구분 (시간 정보가 있을 때만)
+                if time_part:
                     hour = int(time_part.split(':')[0])
                     if 0 <= hour < 6: time_of_day = "새벽"
                     elif 6 <= hour < 12: time_of_day = "아침"
                     elif 12 <= hour < 18: time_of_day = "낮"
                     else: time_of_day = "밤/저녁"
-                    
-                    # 계절 구분 (월 기반)
-                    month_str = date_part.split(':')[1] if ':' in date_part else date_part.split('-')[1]
-                    month = int(month_str)
+
+                # 계절 구분 (월 기반) — date_part만으로도 추출 가능
+                sep = ':' if ':' in date_part else '-'
+                date_tokens = date_part.split(sep)
+                if len(date_tokens) >= 2:
+                    month = int(date_tokens[1])
                     if month in [3, 4, 5]: season = "봄"
                     elif month in [6, 7, 8]: season = "여름"
                     elif month in [9, 10, 11]: season = "가을"
                     elif month in [12, 1, 2]: season = "겨울"
-                    
+
                 return time_of_day, season
             except Exception:
                 pass
