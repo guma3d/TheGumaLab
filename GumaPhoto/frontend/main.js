@@ -471,6 +471,17 @@ function renderAuditLogs(logs) {
             }
         }
 
+        // GPS 좌표(geo_point) 변경도 감지 — location 텍스트는 같지만 좌표만 바뀐 경우
+        const fmtGeo = (g) => {
+            if (!g || g.lat == null || g.lon == null) return '';
+            return `${(+g.lat).toFixed(5)}, ${(+g.lon).toFixed(5)}`;
+        };
+        const bgeo = fmtGeo(before.geo_point);
+        const ageo = fmtGeo(after.geo_point);
+        if (bgeo !== ageo && (bgeo || ageo)) {
+            changes.push({ field: 'GPS', icon: 'fa-location-crosshairs', old: bgeo || '-', new: ageo || '-' });
+        }
+
         if (changes.length === 0) return '';
 
         const changeHtml = changes.map(c => `

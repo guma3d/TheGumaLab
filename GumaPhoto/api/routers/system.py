@@ -169,35 +169,36 @@ async def get_audit_logs(limit: int = 50):
         try:
             with open(trace_file, "r", encoding="utf-8") as f:
                 lines = f.readlines()
-                
-            before_dict = {}
-            after_dict = {}
-            
+
+            # BEFORE/AFTER를 순차적으로 페어링 (같은 trace_id의 여러 피드백을 모두 보존)
+            pending_before = {}  # trace_id -> 가장 최근의 짝이 안 맞춰진 BEFORE
+            pairs = []  # (before, after) 순서대로
+
             for line in lines:
                 try:
                     data = json.loads(line)
                     tid = data.get("trace_id")
                     if not tid: continue
                     ctype = data.get("type", "")
-                    
+
                     if ctype == "BEFORE":
-                        before_dict[tid] = data
+                        pending_before[tid] = data
                     elif ctype == "AFTER":
-                        after_dict[tid] = data
-                        
+                        before_data = pending_before.pop(tid, None)
+                        if before_data is not None:
+                            pairs.append((tid, before_data, data))
                 except:
                     pass
-                    
-            # 역순으로 최신 완료본부터 추출
-            for tid, after_data in reversed(after_dict.items()):
-                if tid in before_dict:
-                    results.append({
-                        "trace_id": tid,
-                        "before": before_dict[tid],
-                        "after": after_data
-                    })
-                    if len(results) >= limit:
-                        break
+
+            # 최신 페어부터 limit만큼 추출
+            for tid, before_data, after_data in reversed(pairs):
+                results.append({
+                    "trace_id": tid,
+                    "before": before_data,
+                    "after": after_data
+                })
+                if len(results) >= limit:
+                    break
         except Exception as e:
             print("Audit log load error:", e)
             pass
