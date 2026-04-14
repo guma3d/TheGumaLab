@@ -15,5 +15,6 @@ GumaTube/huggingface-cache/
 # WebAuthn credentials (민감 정보)
 Index/webauthn_credentials.json
 
-# GumaSpending — connected IDs (민감 정보, 카드사 인증 토큰)
+# GumaSpending — connected IDs + 조회 결과 (민감 정보: 카드사 인증 토큰, 승인내역)
 GumaSpending/connected_ids.json
+GumaSpending/transactions_*.json
