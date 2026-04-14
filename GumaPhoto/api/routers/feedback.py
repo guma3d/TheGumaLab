@@ -297,7 +297,15 @@ async def submit_feedback_v2(req: FeedbackV2Request, background_tasks: Backgroun
             
             if db_correct_value.startswith("DATE|"):
                 target_date = db_correct_value.split("|", 1)[1]
-                state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload={"date": target_date}, points=all_pts)
+                date_payload = {"date": target_date}
+                try:
+                    from api.utils.metadata_parser import MetadataParser
+                    time_of_day, season = MetadataParser.parse_time_and_season(date_val=target_date)
+                    if season != "Unknown": date_payload["season"] = season
+                    if time_of_day != "Unknown": date_payload["time_of_day"] = time_of_day
+                except Exception as e:
+                    print(f"[Instant Feedback] season/time_of_day 산출 실패: {e}")
+                state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload=date_payload, points=all_pts)
             else:
                 target_loc = db_correct_value.split("|", 1)[1] if db_correct_value.startswith("LOC|") else db_correct_value
                 
