@@ -319,13 +319,17 @@ async def submit_feedback_v2(req: FeedbackV2Request, background_tasks: Backgroun
             from api.services.feedback_service import process_time_location_feedback
             old_snapshots_json = json.dumps(old_snapshots)
             background_tasks.add_task(process_time_location_feedback, real_point_id, target_date, target_loc, tp_json, old_snapshots_json)
-                
+
+            # 3. 홈 타임라인 캐시가 예전 payload를 갖고 있으므로 백그라운드로 재생성 (라이트박스 잔상 방지)
+            from api.routers.search import rebuild_timeline_cache
+            background_tasks.add_task(rebuild_timeline_cache)
+
         try:
             from api.services.feedback_cache import feedback_cache
-            processed_id_list = [s['id'] for s in similars]
+            processed_id_list = [str(pid) for pid in all_pts]
             feedback_cache.remove_processed(processed_id_list, req.issue_type)
         except Exception as e:
-            pass
+            print(f"[FeedbackCache] remove_processed 실패: {e}")
 
         print(f"✅ [Instant Feedback] Qdrant 즉시 반영 및 EXIF 처리 프로세스 인계 완료 (ID: {real_point_id})")
         return {"message": "Feedback submitted successfully."}
