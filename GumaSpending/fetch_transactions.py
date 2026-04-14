@@ -34,6 +34,13 @@ CONNECTED_IDS_PATH = SCRIPT_DIR / "connected_ids.json"
 APPROVAL_LIST_PATH = "/v1/kr/card/p/account/approval-list"
 CARD_LIST_PATH = "/v1/kr/card/p/account/card-list"
 
+# 카드 자체 구조 문제로 approval-list가 실패하는 정상 케이스.
+# 치명적 에러가 아닌 경고로 분류하고 다음 카드로 넘어간다.
+SKIPPABLE_CODES = {
+    "CF-13101",  # 카드번호 List 불일치 — 모바일 Pay/가상카드 등
+    "CF-13100",  # 카드번호 미입력 — 기본적으로 우리가 넣지만 일부 카드에서 발생 가능
+}
+
 
 def load_credentials() -> tuple[str, str, str]:
     env_path = SCRIPT_DIR / ".env"
@@ -127,8 +134,10 @@ def fetch_one(
         result = res.get("result", {})
         code = result.get("code")
         if code != "CF-00000":
-            print(f"    [FAIL] {code} - {result.get('message')}")
-            print(f"           extraMessage = {result.get('extraMessage')}")
+            tag = "SKIP" if code in SKIPPABLE_CODES else "FAIL"
+            print(f"    [{tag}] {code} - {result.get('message')}")
+            if result.get("extraMessage"):
+                print(f"           extraMessage = {result.get('extraMessage')}")
             continue
 
         data = res.get("data") or []
