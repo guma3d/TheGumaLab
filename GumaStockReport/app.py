@@ -392,7 +392,7 @@ def search_stock():
 """
     try:
         response = None
-        for model_name in ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-3.1-flash-lite-preview']:
+        for model_name in ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-3.1-flash-lite-preview']:
             try:
                 response = gemini_client.models.generate_content(
                     model=model_name,
@@ -472,7 +472,7 @@ JSON 형식으로만 응답:
         image_part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
 
         # 모델 목록 순서대로 시도 (503/429 시 다음 모델 fallback)
-        VISION_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-3.1-flash-lite-preview']
+        VISION_MODELS = ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-3.1-flash-lite-preview']
         response = None
         last_error = None
         for model_name in VISION_MODELS:
@@ -513,14 +513,28 @@ JSON 형식으로만 응답:
         stock_list = result.get('stocks', [])
         cash_list = result.get('cash', [])
 
+        # 현금성 자산 키워드 — Gemini가 stocks에 잘못 넣은 경우 걸러냄
+        CASH_KEYWORDS = ('현금', '예수금', '외화예수금', '단기상품', '현금성자산')
+
         # 종목코드 → Yahoo Finance ticker 변환
         stocks = []
         for stock in stock_list:
-            raw_code = str(stock.get('code', '')).strip()
+            raw_code = str(stock.get('code', '') or '').strip()
             name = stock.get('name', '').strip()
-            eval_krw = int(float(stock.get('eval_krw', 0)))
-            market = stock.get('market', 'KOSPI').upper()
+            eval_krw = int(float(stock.get('eval_krw', 0) or 0))
+            market = str(stock.get('market', 'KOSPI') or 'KOSPI').upper()
             quantity = stock.get('quantity')  # 신형 스크린샷에서 직접 추출된 수량
+
+            # Gemini가 현금성 자산을 stocks에 잘못 분류한 경우 → cash_list로 이동
+            if any(k in name for k in CASH_KEYWORDS) or market in ('KRW', 'USD'):
+                currency = 'USD' if market == 'USD' else 'KRW'
+                cash_list.append({'name': name, 'currency': currency, 'amount': eval_krw})
+                continue
+
+            # 6자리 숫자 코드면 무조건 한국 시장 (Gemini가 US로 잘못 분류 방지)
+            digits_only = ''.join(c for c in raw_code if c.isdigit())
+            if len(digits_only) == 6 and market == 'US':
+                market = 'KOSPI'
 
             if market == 'FUND':
                 safe_name = ''.join(c for c in name if c.isalnum())[:20]
@@ -532,11 +546,11 @@ JSON 형식으로만 응답:
                 ticker = code
             elif market == 'KOSDAQ':
                 # 숫자만 ($ 등 기호 제거)
-                code = ''.join(c for c in raw_code if c.isdigit())
+                code = digits_only
                 ticker = f"{code.zfill(6)}.KQ"
             else:  # KOSPI
                 # 숫자만 ($ 등 기호 제거)
-                code = ''.join(c for c in raw_code if c.isdigit())
+                code = digits_only
                 ticker = f"{code.zfill(6)}.KS"
 
             stocks.append({"name": name, "code": code, "ticker": ticker, "eval_krw": eval_krw, "market": market, "quantity": quantity})
@@ -771,7 +785,7 @@ def generate_portfolio_analysis():
 섹션 제목은 위에서 지정한 영어 텍스트 그대로 사용하시고, 다른 HTML 태그는 사용하지 마세요. 내용 본문은 한국어로 전문적으로 작성해 주세요.
 """
         response = None
-        for model_name in ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-3.1-flash-lite-preview']:
+        for model_name in ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-3.1-flash-lite-preview']:
             try:
                 response = gemini_client.models.generate_content(
                     model=model_name,
