@@ -955,10 +955,10 @@
                 <div class="import-upload-area" id="import-drop-zone">
                     <i class="fa-solid fa-cloud-arrow-up"></i>
                     <div style="font-weight: 500; font-size: 1.05rem;">스크린샷을 선택하세요</div>
-                    <p>삼성증권 앱의 보유종목 화면을 캡처한 이미지</p>
-                    <p style="font-size: 0.8rem; margin-top: 0.25rem; color: rgba(255,255,255,0.3);">JPG, PNG (최대 16MB)</p>
+                    <p>여러 장 선택 가능 — 스크롤 캡처한 이미지를 모두 선택</p>
+                    <p style="font-size: 0.8rem; margin-top: 0.25rem; color: rgba(255,255,255,0.3);">JPG, PNG · 장당 최대 16MB</p>
                 </div>
-                <input type="file" id="import-file-input" accept="image/*" style="display: none;">
+                <input type="file" id="import-file-input" accept="image/*" multiple style="display: none;">
                 <div class="import-actions">
                     <button class="btn-import-cancel" id="btn-import-close">닫기</button>
                 </div>
@@ -968,14 +968,13 @@
             <div id="import-step-loading" style="display: none;">
                 <div class="import-loading">
                     <i class="fa-solid fa-spinner fa-spin"></i>
-                    <div style="font-weight: 500; margin-top: 0.5rem;">AI가 스크린샷을 분석하고 있습니다...</div>
-                    <p style="font-size: 0.85rem; margin-top: 0.25rem;">종목명, 코드, 보유수량을 추출 중</p>
+                    <div id="import-loading-text" style="font-weight: 500; margin-top: 0.5rem;">AI가 스크린샷을 분석하고 있습니다...</div>
+                    <p id="import-loading-progress" style="font-size: 0.85rem; margin-top: 0.25rem;">종목명, 코드, 보유수량을 추출 중</p>
                 </div>
             </div>
 
             <!-- Step 3: Results -->
             <div id="import-step-results" style="display: none;">
-                <img id="import-preview" class="import-preview-img" style="display: none;">
                 <div id="import-result-count" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.75rem;"></div>
                 <div class="import-stock-list" id="import-stock-list">
                     <!-- Dynamically populated -->
@@ -1436,14 +1435,14 @@
                 e.preventDefault();
                 importDropZone.classList.remove('dragover');
                 if (e.dataTransfer.files.length > 0) {
-                    handleImportFile(e.dataTransfer.files[0]);
+                    handleImportFiles(e.dataTransfer.files);
                 }
             });
 
-            // File selected
+            // File selected (multiple)
             importFileInput.addEventListener('change', () => {
                 if (importFileInput.files.length > 0) {
-                    handleImportFile(importFileInput.files[0]);
+                    handleImportFiles(importFileInput.files);
                 }
             });
 
@@ -1459,64 +1458,67 @@
                 document.getElementById('mode-merge').classList.remove('selected');
             }
 
-            async function handleImportFile(file) {
-                if (!file.type.startsWith('image/')) {
-                    alert('이미지 파일만 업로드할 수 있습니다.');
+            async function handleImportFiles(fileList) {
+                const files = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+                if (files.length === 0) {
+                    alert('이미지 파일을 선택해주세요.');
                     return;
                 }
-                if (file.size > 16 * 1024 * 1024) {
-                    alert('파일 크기가 16MB를 초과합니다.');
+                const oversized = files.filter(f => f.size > 16 * 1024 * 1024);
+                if (oversized.length > 0) {
+                    alert(`파일 크기가 16MB를 초과하는 이미지가 ${oversized.length}개 있습니다.`);
                     return;
                 }
 
-                // Show loading
                 stepUpload.style.display = 'none';
                 stepLoading.style.display = '';
 
-                // Show preview
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const preview = document.getElementById('import-preview');
-                    preview.src = e.target.result;
-                    preview.style.display = '';
-                };
-                reader.readAsDataURL(file);
+                const stockMap = new Map(); // ticker → stock (중복 제거)
+                const cashMap  = new Map(); // ticker → cash
 
-                // Send to API
-                const formData = new FormData();
-                formData.append('image', file);
+                for (let i = 0; i < files.length; i++) {
+                    document.getElementById('import-loading-text').textContent =
+                        files.length > 1
+                            ? `이미지 ${i + 1} / ${files.length} 분석 중...`
+                            : 'AI가 스크린샷을 분석하고 있습니다...';
 
-                try {
-                    const res = await fetch('/api/parse-screenshot', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    const data = await res.json();
+                    const formData = new FormData();
+                    formData.append('image', files[i]);
 
-                    stepLoading.style.display = 'none';
-
-                    if (data.success && (data.stocks.length > 0 || (data.cash && data.cash.length > 0))) {
-                        parsedStocks = data.stocks || [];
-                        parsedCash = data.cash || [];
-                        renderImportResults();
-                        stepResults.style.display = '';
-                    } else {
-                        alert(data.error || '종목 정보를 찾을 수 없습니다. 삼성증권 보유종목 화면을 캡처해주세요.');
-                        resetImportModal();
+                    try {
+                        const res = await fetch('/api/parse-screenshot', { method: 'POST', body: formData });
+                        const data = await res.json();
+                        if (data.success) {
+                            (data.stocks || []).forEach(s => stockMap.set(s.ticker, s));
+                            (data.cash  || []).forEach(c => cashMap.set(c.ticker, c));
+                        } else {
+                            console.warn(`이미지 ${i + 1} 파싱 실패:`, data.error);
+                        }
+                    } catch (e) {
+                        console.error(`이미지 ${i + 1} 처리 오류:`, e);
                     }
-                } catch (e) {
-                    console.error('Screenshot parse failed', e);
-                    alert('스크린샷 분석 중 오류가 발생했습니다.');
-                    stepLoading.style.display = 'none';
-                    resetImportModal();
                 }
+
+                stepLoading.style.display = 'none';
+
+                parsedStocks = Array.from(stockMap.values());
+                parsedCash   = Array.from(cashMap.values());
+
+                if (parsedStocks.length === 0 && parsedCash.length === 0) {
+                    alert('종목 정보를 찾을 수 없습니다. 삼성증권 보유종목 화면을 캡처해주세요.');
+                    resetImportModal();
+                    return;
+                }
+
+                renderImportResults(files.length);
+                stepResults.style.display = '';
             }
 
-            function renderImportResults() {
+            function renderImportResults(imageCount) {
                 const list = document.getElementById('import-stock-list');
                 const countEl = document.getElementById('import-result-count');
-                const total = parsedStocks.length + parsedCash.length;
-                countEl.textContent = `종목 ${parsedStocks.length}개 + 현금 ${parsedCash.length}개 감지되었습니다.`;
+                const imgText = imageCount > 1 ? `이미지 ${imageCount}장에서 ` : '';
+                countEl.textContent = `${imgText}종목 ${parsedStocks.length}개 + 현금 ${parsedCash.length}개 감지되었습니다.`;
 
                 list.innerHTML = '';
 
