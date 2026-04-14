@@ -299,8 +299,15 @@ async def submit_feedback_v2(req: FeedbackV2Request, background_tasks: Backgroun
                 target_date = db_correct_value.split("|", 1)[1]
                 date_payload = {"date": target_date}
                 try:
+                    # YYYY-MM만 왔으면 stamp_metadata가 EXIF에 '-15 12:00:00' 기본값을 찍으므로
+                    # time_of_day도 동일한 기준(낮)을 쓰도록 날짜를 합성해 파서에 전달
+                    import re as _re
+                    date_for_parse = target_date
+                    if _re.fullmatch(r'\d{4}[-:]\d{2}', target_date.strip()):
+                        date_for_parse = f"{target_date.strip()}-15 12:00:00" if '-' in target_date else f"{target_date.strip()}:15 12:00:00"
+
                     from api.utils.metadata_parser import MetadataParser
-                    time_of_day, season = MetadataParser.parse_time_and_season(date_val=target_date)
+                    time_of_day, season = MetadataParser.parse_time_and_season(date_val=date_for_parse)
                     if season != "Unknown": date_payload["season"] = season
                     if time_of_day != "Unknown": date_payload["time_of_day"] = time_of_day
                 except Exception as e:

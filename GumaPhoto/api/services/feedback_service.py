@@ -154,7 +154,12 @@ def process_time_location_feedback(qdrant_id: str, target_date: str, target_loca
             
         if target_date and "Unknown" not in target_date:
             from api.utils.metadata_parser import MetadataParser
-            time_of_day, season = MetadataParser.parse_time_and_season(date_val=target_date)
+            # YYYY-MM만 왔으면 EXIF 기본값('-15 12:00:00')과 동일하게 합성해 time_of_day 추출
+            import re as _re
+            date_for_parse = target_date
+            if _re.fullmatch(r'\d{4}[-:]\d{2}', target_date.strip()):
+                date_for_parse = f"{target_date.strip()}-15 12:00:00" if '-' in target_date else f"{target_date.strip()}:15 12:00:00"
+            time_of_day, season = MetadataParser.parse_time_and_season(date_val=date_for_parse)
             payload_update["date"] = target_date
             if time_of_day != "Unknown": payload_update["time_of_day"] = time_of_day
             if season != "Unknown": payload_update["season"] = season
