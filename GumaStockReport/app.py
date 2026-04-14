@@ -423,35 +423,37 @@ def parse_screenshot():
     image_bytes = file.read()
     mime_type = file.content_type or 'image/jpeg'
 
-    prompt = """이 이미지는 삼성증권 모바일 앱의 계좌 화면 캡처입니다.
+    prompt = """이 이미지는 삼성증권 모바일 앱의 보유 자산 목록 화면입니다.
 
-이 화면에는 수량(주수)이 표시되지 않습니다. 숫자 구성:
-- 왼쪽 큰 숫자: 평가손익(원)
-- 왼쪽 %: 수익률
-- 오른쪽 위 숫자: 평가금액(원) ← 이것을 eval_krw로 사용
-- 오른쪽 아래 숫자: 매입금액(원)
+각 항목의 레이아웃:
+- 1행: 종목명/상품명
+- 2행: 자산유형 + 수량 (예: "국내주식 120주", "해외주식 41주", "펀드", "단기상품", "퇴직연금")
+- 3행: 평가금액(원) ← eval_krw
+- 4행: 손익금액(손익률) — 무시
 
 [1] 투자 자산 (stocks):
-주식, ETF, 펀드, TDF(타겟데이트펀드), 적립식펀드, 퇴직연금상품 등 투자성 자산을 모두 포함.
-예수금·현금잔고·외화예수금·RP 등 현금성만 제외.
+주식, ETF, 펀드, TDF, 퇴직연금 상품 등 투자성 자산 포함.
+현금잔고(예수금)·현금성자산·단기상품·외화예수금은 [2] cash로 분류.
 - name: 종목/상품명 그대로 (잘린 경우 보이는 대로)
-- code: ETF/주식이면 6자리 코드(없으면 이름으로 유추), 미국주식이면 심볼(GOOGL 등), 펀드면 빈 문자열
-- eval_krw: 오른쪽 위 숫자(평가금액), 정수
-- market: 'KOSPI' / 'KOSDAQ' / 'US' / 'FUND'(국내 펀드/연금상품)
+- code: 국내주식/ETF이면 6자리 종목코드(없으면 이름으로 추정), 미국주식이면 티커심볼(GOOGL 등), 펀드·연금상품이면 ""
+- eval_krw: 평가금액 정수
+- market: "KOSPI"(국내주식·국내ETF) / "KOSDAQ"(코스닥 종목) / "US"(해외주식) / "FUND"(펀드·TDF·퇴직연금 상품)
+- quantity: 수량(주수) 정수. 수량 표시가 없으면 null
 
 [2] 현금성 자산 (cash):
-- 예수금 / 현금잔고 / 현금성자산 → currency: "KRW"
-- USD 외화예수금 → currency: "USD"
-- amount: 오른쪽 위 숫자(평가금액), 정수
+현금잔고(예수금) / 현금성자산(삼성증권) / 단기상품 / 외화예수금
+- currency: "KRW" 또는 "USD"
+- amount: 평가금액 정수
 
 JSON 형식으로만 응답:
 {
   "stocks": [
-    {"name": "삼성전자", "code": "005930", "eval_krw": 20075000, "market": "KOSPI"},
-    {"name": "삼성글로벌적격TDF F2050UH", "code": "", "eval_krw": 8114576, "market": "FUND"}
+    {"name": "삼성전자", "code": "005930", "eval_krw": 24900000, "market": "KOSPI", "quantity": 120},
+    {"name": "알파벳 Class A", "code": "GOOGL", "eval_krw": 19607257, "market": "US", "quantity": 41},
+    {"name": "삼성글로벌적격TDF2050UH(주혼재)Cpe퇴", "code": "", "eval_krw": 8146499, "market": "FUND", "quantity": null}
   ],
   "cash": [
-    {"name": "현금잔고(예수금)", "currency": "KRW", "amount": 110343}
+    {"name": "현금잔고(예수금)", "currency": "KRW", "amount": 8359796}
   ]
 }
 
@@ -501,6 +503,7 @@ JSON 형식으로만 응답:
             name = stock.get('name', '').strip()
             eval_krw = int(float(stock.get('eval_krw', 0)))
             market = stock.get('market', 'KOSPI').upper()
+            quantity = stock.get('quantity')  # 신형 스크린샷에서 직접 추출된 수량
 
             if market == 'FUND':
                 safe_name = ''.join(c for c in name if c.isalnum())[:20]
@@ -512,7 +515,7 @@ JSON 형식으로만 응답:
             else:
                 ticker = f"{code.zfill(6)}.KS"
 
-            stocks.append({"name": name, "code": code, "ticker": ticker, "eval_krw": eval_krw, "market": market})
+            stocks.append({"name": name, "code": code, "ticker": ticker, "eval_krw": eval_krw, "market": market, "quantity": quantity})
 
         # 현금성 자산 변환
         cash = []
@@ -602,11 +605,15 @@ def import_portfolio():
         market = stock.get('market', '').upper()
         eval_krw = stock.get('eval_krw')
 
-        if eval_krw and market == 'FUND':
+        quantity = stock.get('quantity')
+        if market == 'FUND':
             # 펀드/연금: eval_krw를 그대로 잔고(원)로 저장
-            shares = float(eval_krw)
+            shares = float(eval_krw) if eval_krw else 1.0
+        elif quantity is not None:
+            # 신형 스크린샷: 수량이 직접 표시됨
+            shares = float(quantity)
         elif eval_krw and ticker and market in ('KOSPI', 'KOSDAQ', 'US'):
-            # 주식/ETF: 현재가로 주수 역산
+            # 구형 스크린샷 fallback: 현재가로 주수 역산
             shares = calculate_shares_from_eval(ticker, float(eval_krw), market)
         else:
             shares = float(stock.get('shares', 1))
