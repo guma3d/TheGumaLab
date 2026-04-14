@@ -32,6 +32,7 @@ if hasattr(sys.stdout, "reconfigure"):
 SCRIPT_DIR = Path(__file__).parent
 CONNECTED_IDS_PATH = SCRIPT_DIR / "connected_ids.json"
 APPROVAL_LIST_PATH = "/v1/kr/card/p/account/approval-list"
+CARD_LIST_PATH = "/v1/kr/card/p/account/card-list"
 
 
 def load_credentials() -> tuple[str, str, str]:
@@ -59,6 +60,32 @@ def fmt_date(d: date) -> str:
     return d.strftime("%Y%m%d")
 
 
+def _call(codef: Codef, path: str, param: dict) -> dict | None:
+    raw = codef.request_product(path, ServiceType.DEMO, param)
+    try:
+        return json.loads(raw)
+    except (ValueError, TypeError):
+        print(f"  [FAIL] non-JSON response from {path}: {raw[:300]}")
+        return None
+
+
+def fetch_card_list(codef: Codef, org: str, connected_id: str) -> list[dict]:
+    res = _call(codef, CARD_LIST_PATH, {"organization": org, "connectedId": connected_id})
+    if res is None:
+        return []
+    result = res.get("result", {})
+    if result.get("code") != "CF-00000":
+        print(
+            f"  [FAIL] card-list {result.get('code')} - {result.get('message')}"
+        )
+        print(f"         extraMessage = {result.get('extraMessage')}")
+        return []
+    data = res.get("data") or []
+    if isinstance(data, dict):
+        data = [data]
+    return data
+
+
 def fetch_one(
     codef: Codef,
     org: str,
@@ -67,69 +94,95 @@ def fetch_one(
     start: date,
     end: date,
 ) -> dict | None:
-    param = {
-        "organization": org,
-        "connectedId": connected_id,
-        "startDate": fmt_date(start),
-        "endDate": fmt_date(end),
-        "orderBy": "1",              # 최신순
-        "memberStoreInfoType": "1",  # 사업자번호/업종/주소 포함
-        "inquiryType": "0",
-    }
-    print(f"\n[{card_name}] approval-list {fmt_date(start)} ~ {fmt_date(end)}")
-    raw = codef.request_product(APPROVAL_LIST_PATH, ServiceType.DEMO, param)
-    try:
-        res = json.loads(raw)
-    except (ValueError, TypeError):
-        print(f"  [FAIL] non-JSON response: {raw[:300]}")
+    print(f"\n[{card_name}] card-list 조회 ...")
+    cards = fetch_card_list(codef, org, connected_id)
+    if not cards:
+        print("  [FAIL] 보유카드 없음 — 승인내역 조회 불가")
         return None
+    print(f"  [OK] 카드 {len(cards)}개 확인")
 
-    result = res.get("result", {})
-    code = result.get("code")
-    if code != "CF-00000":
-        print(f"  [FAIL] {code} - {result.get('message')}")
-        print(f"         extraMessage = {result.get('extraMessage')}")
-        return None
-
-    data = res.get("data") or []
-    if isinstance(data, dict):
-        data = [data]
-
-    total_amt = 0
-    active_count = 0
-    for tx in data:
-        if tx.get("resCancelYN") == "Y":
+    all_tx: list[dict] = []
+    per_card_summary: list[dict] = []
+    for card in cards:
+        card_no = card.get("resCardNo", "")
+        sub_name = card.get("resCardName", "(이름 없음)")
+        masked = f"{card_no[:4]}****{card_no[-4:]}" if len(card_no) >= 8 else card_no
+        print(
+            f"\n  [{sub_name} {masked}] approval-list "
+            f"{fmt_date(start)} ~ {fmt_date(end)}"
+        )
+        param = {
+            "organization": org,
+            "connectedId": connected_id,
+            "cardNo": card_no,
+            "startDate": fmt_date(start),
+            "endDate": fmt_date(end),
+            "orderBy": "1",              # 최신순
+            "memberStoreInfoType": "1",  # 사업자번호/업종/주소 포함
+            "inquiryType": "0",
+        }
+        res = _call(codef, APPROVAL_LIST_PATH, param)
+        if res is None:
             continue
-        try:
-            total_amt += int(tx.get("resUsedAmount", "0") or "0")
-            active_count += 1
-        except ValueError:
-            pass
+        result = res.get("result", {})
+        code = result.get("code")
+        if code != "CF-00000":
+            print(f"    [FAIL] {code} - {result.get('message')}")
+            print(f"           extraMessage = {result.get('extraMessage')}")
+            continue
 
-    print(
-        f"  [OK] 전체 {len(data)}건 / 유효(취소 제외) {active_count}건 / "
-        f"합계 {total_amt:,}원"
-    )
+        data = res.get("data") or []
+        if isinstance(data, dict):
+            data = [data]
 
-    preview = data[:3]
-    for tx in preview:
-        when = f"{tx.get('resUsedDate', '')} {tx.get('resUsedTime', '')}"
-        store = tx.get("resMemberStoreName", "")
-        amt = tx.get("resUsedAmount", "0")
-        cancel = " (취소)" if tx.get("resCancelYN") == "Y" else ""
-        print(f"      {when}  {store}  {amt}원{cancel}")
-    if len(data) > 3:
-        print(f"      ... 외 {len(data) - 3}건")
+        sub_total = 0
+        sub_active = 0
+        for tx in data:
+            if tx.get("resCancelYN") == "Y":
+                continue
+            try:
+                sub_total += int(tx.get("resUsedAmount", "0") or "0")
+                sub_active += 1
+            except ValueError:
+                pass
+
+        print(
+            f"    [OK] 전체 {len(data)}건 / 유효 {sub_active}건 / "
+            f"합계 {sub_total:,}원"
+        )
+        for tx in data[:3]:
+            when = f"{tx.get('resUsedDate', '')} {tx.get('resUsedTime', '')}"
+            store = tx.get("resMemberStoreName", "")
+            amt = tx.get("resUsedAmount", "0")
+            cancel = " (취소)" if tx.get("resCancelYN") == "Y" else ""
+            print(f"        {when}  {store}  {amt}원{cancel}")
+        if len(data) > 3:
+            print(f"        ... 외 {len(data) - 3}건")
+
+        all_tx.extend(data)
+        per_card_summary.append(
+            {
+                "card_no_masked": masked,
+                "sub_card_name": sub_name,
+                "total_count": len(data),
+                "active_count": sub_active,
+                "active_total_amount": sub_total,
+            }
+        )
+
+    active_total = sum(s["active_total_amount"] for s in per_card_summary)
+    active_count = sum(s["active_count"] for s in per_card_summary)
 
     return {
         "organization": org,
         "card_name": card_name,
         "start_date": fmt_date(start),
         "end_date": fmt_date(end),
-        "total_count": len(data),
+        "total_count": len(all_tx),
         "active_count": active_count,
-        "active_total_amount": total_amt,
-        "transactions": data,
+        "active_total_amount": active_total,
+        "per_card": per_card_summary,
+        "transactions": all_tx,
     }
 
 
