@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guma Spending</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#050505">
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    <style>
+        :root {
+            --bg-color: #050505;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --card-hover-bg: rgba(255, 255, 255, 0.07);
+            --card-hover-border: rgba(255, 255, 255, 0.2);
+            --primary-glow: #10b981;
+            --secondary-glow: #34d399;
+            --accent-color: #10b981;
+            --warn-color: #f59e0b;
+            --text-main: #ffffff;
+            --text-muted: #a1a1aa;
+            --text-dim: #71717a;
+            --transition-speed: 0.3s;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .ambient-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+            opacity: 0.15;
+            filter: blur(80px);
+            z-index: -1;
+            top: -100px;
+            left: 10%;
+            animation: pulse 10s infinite alternate;
+        }
+
+        .ambient-glow-2 {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, var(--accent-color) 0%, transparent 70%);
+            opacity: 0.12;
+            filter: blur(80px);
+            z-index: -1;
+            bottom: -100px;
+            right: 15%;
+            animation: pulse 8s infinite alternate-reverse;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.10; }
+            100% { transform: scale(1.1); opacity: 0.18; }
+        }
+
+        /* Top header */
+        .top-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background: rgba(5, 5, 5, 0.92);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.2rem;
+            z-index: 100;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .logo i { color: var(--accent-color); font-size: 1.25rem; }
+        .logo span { color: var(--accent-color); }
+
+        .header-actions {
+            display: flex;
+            gap: 0.35rem;
+        }
+        .nav-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.05rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .nav-btn:hover {
+            background: var(--card-bg);
+            color: var(--text-main);
+            border-color: var(--card-border);
+        }
+
+        /* Main container */
+        .container {
+            width: 100%;
+            max-width: 720px;
+            padding: 76px 1rem 2rem 1rem;
+            z-index: 1;
+        }
+
+        /* Month header card */
+        .month-header {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 1.4rem 1.5rem;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+        .month-header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+            opacity: 0.5;
+        }
+
+        .month-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.8rem;
+        }
+        .month-title {
+            font-size: 1.15rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+        .month-nav button {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: 1px solid var(--card-border);
+            background: rgba(255,255,255,0.02);
+            color: var(--text-main);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+        .month-nav button:hover:not(:disabled) {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.35);
+            color: var(--accent-color);
+        }
+        .month-nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .month-total-label {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.3rem;
+        }
+        .month-total-amount {
+            font-size: 2.4rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: baseline;
+            gap: 0.4rem;
+        }
+        .month-total-amount .currency {
+            font-size: 1rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+        .month-total-count {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+        }
+
+        /* Calendar grid */
+        .calendar {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(10px);
+        }
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 6px;
+        }
+        .weekday {
+            text-align: center;
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            font-weight: 500;
+            padding: 0.3rem 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .weekday.sun { color: #ef4444; }
+        .weekday.sat { color: #3b82f6; }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        .day-cell {
+            aspect-ratio: 1 / 1;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            padding: 0.35rem 0.4rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.015);
+            transition: all 0.2s ease;
+            position: relative;
+            min-height: 62px;
+            overflow: hidden;
+        }
+        .day-cell.empty {
+            background: transparent;
+            cursor: default;
+            pointer-events: none;
+        }
+        .day-cell.has-spending {
+            background: rgba(16, 185, 129, 0.06);
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+        .day-cell.has-spending:hover {
+            background: rgba(16, 185, 129, 0.12);
+            border-color: rgba(16, 185, 129, 0.4);
+            transform: translateY(-1px);
+        }
+        .day-cell.today {
+            border-color: rgba(16, 185, 129, 0.55);
+            box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.3);
+        }
+        .day-cell.selected {
+            background: rgba(16, 185, 129, 0.22) !important;
+            border-color: var(--accent-color) !important;
+            box-shadow: 0 0 18px rgba(16, 185, 129, 0.35);
+        }
+        .day-cell.future {
+            opacity: 0.35;
+            cursor: default;
+        }
+        .day-num {
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+        .day-cell.sun .day-num { color: #ef4444; }
+        .day-cell.sat .day-num { color: #3b82f6; }
+        .day-cell.has-spending .day-num { color: var(--text-main); font-weight: 600; }
+        .day-amount {
+            font-size: 0.7rem;
+            color: var(--accent-color);
+            font-weight: 600;
+            text-align: right;
+            line-height: 1;
+            word-break: break-all;
+        }
+        .day-amount.hidden { display: none; }
+
+        /* Detail panel */
+        .detail-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 1.2rem;
+            backdrop-filter: blur(10px);
+            min-height: 120px;
+        }
+        .detail-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-dim);
+            padding: 1.5rem 0.5rem;
+            text-align: center;
+            gap: 0.5rem;
+        }
+        .detail-empty i { font-size: 1.8rem; color: rgba(16, 185, 129, 0.35); }
+        .detail-empty span { font-size: 0.85rem; }
+
+        .detail-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.9rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+        .detail-date {
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+        .detail-date-sub {
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            margin-top: 0.1rem;
+        }
+        .detail-total {
+            text-align: right;
+        }
+        .detail-total-amount {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+        .detail-total-count {
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            margin-top: 0.1rem;
+        }
+
+        .tx-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .tx-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 0.7rem 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.8rem;
+        }
+        .tx-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .tx-store {
+            font-size: 0.92rem;
+            font-weight: 500;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .tx-meta {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-top: 0.15rem;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .tx-meta .card-tag {
+            padding: 0.1rem 0.45rem;
+            border-radius: 5px;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-color);
+            font-size: 0.65rem;
+            font-weight: 500;
+        }
+        .tx-amount {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-main);
+            white-space: nowrap;
+        }
+
+        /* Card breakdown */
+        .card-breakdown {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--card-border);
+        }
+        .card-breakdown-title {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.6rem;
+        }
+        .card-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.45rem 0;
+            font-size: 0.82rem;
+        }
+        .card-bar-name {
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .card-bar-name i { color: var(--accent-color); font-size: 0.75rem; }
+        .card-bar-amt { color: var(--text-main); font-weight: 500; }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            color: var(--text-dim);
+        }
+        .loading i { margin-right: 0.5rem; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 520px) {
+            .container { padding: 70px 0.7rem 2rem 0.7rem; }
+            .month-total-amount { font-size: 2rem; }
+            .day-cell { min-height: 54px; padding: 0.3rem 0.3rem; }
+            .day-num { font-size: 0.75rem; }
+            .day-amount { font-size: 0.6rem; }
+            .calendar { padding: 0.7rem; }
+            .calendar-grid, .calendar-weekdays { gap: 3px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-glow"></div>
+    <div class="ambient-glow-2"></div>
+
+    <header class="top-header">
+        <div class="logo">
+            <i class="fa-solid fa-won-sign"></i>
+            <span>Guma</span>Spending
+        </div>
+        <div class="header-actions">
+            <button class="nav-btn" id="refresh-btn" title="데이터 새로고침">
+                <i class="fa-solid fa-rotate"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="month-header">
+            <div class="month-nav">
+                <button id="prev-month" title="이전 달"><i class="fa-solid fa-chevron-left"></i></button>
+                <div class="month-title" id="month-title">—</div>
+                <button id="next-month" title="다음 달"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+            <div class="month-total-label">Total spending</div>
+            <div class="month-total-amount">
+                <span id="month-total">0</span>
+                <span class="currency">KRW</span>
+            </div>
+            <div class="month-total-count" id="month-count">—</div>
+        </section>
+
+        <section class="calendar">
+            <div class="calendar-weekdays">
+                <div class="weekday sun">Sun</div>
+                <div class="weekday">Mon</div>
+                <div class="weekday">Tue</div>
+                <div class="weekday">Wed</div>
+                <div class="weekday">Thu</div>
+                <div class="weekday">Fri</div>
+                <div class="weekday sat">Sat</div>
+            </div>
+            <div class="calendar-grid" id="calendar-grid"></div>
+        </section>
+
+        <section class="detail-panel" id="detail-panel">
+            <div class="detail-empty">
+                <i class="fa-solid fa-calendar-day"></i>
+                <span>날짜를 선택하면 상세 거래가 표시됩니다</span>
+            </div>
+            <div class="card-breakdown" id="card-breakdown" style="display:none;">
+                <div class="card-breakdown-title">This month by card</div>
+                <div id="card-breakdown-list"></div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const fmt = (n) => new Intl.NumberFormat('ko-KR').format(n);
+        const pad = (n) => String(n).padStart(2, '0');
+
+        let state = {
+            year: 0,
+            month: 0,   // 1-12
+            days: {},
+            selectedDate: null,
+        };
+
+        function ymStr(y, m) { return `${y}-${pad(m)}`; }
+        function ymdStr(y, m, d) { return `${y}-${pad(m)}-${pad(d)}`; }
+
+        async function loadMonth(y, m) {
+            state.year = y;
+            state.month = m;
+            const ym = ymStr(y, m);
+            document.getElementById('month-title').textContent =
+                `${y}년 ${m}월`;
+            document.getElementById('month-total').textContent = '...';
+            document.getElementById('month-count').textContent = '불러오는 중...';
+
+            const r = await fetch(`/api/month/${ym}`);
+            const data = await r.json();
+            state.days = data.days || {};
+
+            document.getElementById('month-total').textContent = fmt(data.month_total || 0);
+            document.getElementById('month-count').textContent =
+                `${data.month_count || 0}건`;
+
+            renderCalendar(y, m);
+            renderCardBreakdown(data.by_card || []);
+        }
+
+        function renderCalendar(y, m) {
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+            const firstDay = new Date(y, m - 1, 1);
+            const lastDay = new Date(y, m, 0);
+            const startWeekday = firstDay.getDay();  // 0 = Sun
+            const total = lastDay.getDate();
+            const today = new Date();
+            const todayY = today.getFullYear();
+            const todayM = today.getMonth() + 1;
+            const todayD = today.getDate();
+
+            for (let i = 0; i < startWeekday; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'day-cell empty';
+                grid.appendChild(cell);
+            }
+
+            for (let d = 1; d <= total; d++) {
+                const cell = document.createElement('div');
+                cell.className = 'day-cell';
+                const dayOfWeek = new Date(y, m - 1, d).getDay();
+                if (dayOfWeek === 0) cell.classList.add('sun');
+                if (dayOfWeek === 6) cell.classList.add('sat');
+
+                const ymd = ymdStr(y, m, d);
+                const info = state.days[ymd];
+                const isFuture = (y > todayY) ||
+                    (y === todayY && m > todayM) ||
+                    (y === todayY && m === todayM && d > todayD);
+
+                if (isFuture) cell.classList.add('future');
+                if (info && info.total > 0) cell.classList.add('has-spending');
+                if (y === todayY && m === todayM && d === todayD) cell.classList.add('today');
+                if (state.selectedDate === ymd) cell.classList.add('selected');
+
+                const num = document.createElement('div');
+                num.className = 'day-num';
+                num.textContent = d;
+                cell.appendChild(num);
+
+                const amt = document.createElement('div');
+                amt.className = 'day-amount';
+                if (info && info.total > 0) {
+                    amt.textContent = compact(info.total);
+                } else {
+                    amt.classList.add('hidden');
+                }
+                cell.appendChild(amt);
+
+                if (!isFuture) {
+                    cell.addEventListener('click', () => selectDate(ymd));
+                }
+                grid.appendChild(cell);
+            }
+        }
+
+        function compact(n) {
+            if (n >= 10000000) return (n/10000000).toFixed(1) + '천만';
+            if (n >= 10000) return Math.round(n/10000) + '만';
+            if (n >= 1000) return Math.round(n/1000) + '천';
+            return String(n);
+        }
+
+        async function selectDate(ymd) {
+            state.selectedDate = ymd;
+            document.querySelectorAll('.day-cell').forEach(c => c.classList.remove('selected'));
+            renderCalendar(state.year, state.month);
+
+            const panel = document.getElementById('detail-panel');
+            panel.innerHTML = '<div class="loading"><i class="fa-solid fa-spinner"></i>불러오는 중...</div>';
+
+            const r = await fetch(`/api/day/${ymd}`);
+            const data = await r.json();
+            renderDetail(data);
+        }
+
+        function renderDetail(data) {
+            const panel = document.getElementById('detail-panel');
+            if (!data.transactions || data.transactions.length === 0) {
+                panel.innerHTML = `
+                    <div class="detail-empty">
+                        <i class="fa-solid fa-ghost"></i>
+                        <span>${data.date} — 지출 없음</span>
+                    </div>`;
+                return;
+            }
+
+            const dateObj = new Date(data.date);
+            const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+            const sub = `${dateObj.getFullYear()}년 ${dateObj.getMonth()+1}월 ${dateObj.getDate()}일 (${weekdays[dateObj.getDay()]})`;
+
+            let html = `
+                <div class="detail-header">
+                    <div>
+                        <div class="detail-date">${data.date}</div>
+                        <div class="detail-date-sub">${sub}</div>
+                    </div>
+                    <div class="detail-total">
+                        <div class="detail-total-amount">${fmt(data.total)}원</div>
+                        <div class="detail-total-count">${data.count}건</div>
+                    </div>
+                </div>
+                <div class="tx-list">`;
+
+            data.transactions.forEach(tx => {
+                const time = tx.used_time
+                    ? `${tx.used_time.slice(0,2)}:${tx.used_time.slice(2,4)}`
+                    : '';
+                html += `
+                    <div class="tx-item">
+                        <div class="tx-info">
+                            <div class="tx-store">${escapeHtml(tx.store_name || '(가맹점 미상)')}</div>
+                            <div class="tx-meta">
+                                <span class="card-tag">${escapeHtml(tx.org_name)}</span>
+                                ${time ? `<span>${time}</span>` : ''}
+                                ${tx.store_category ? `<span>· ${escapeHtml(tx.store_category)}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="tx-amount">${fmt(tx.amount)}원</div>
+                    </div>`;
+            });
+
+            html += '</div>';
+            panel.innerHTML = html;
+        }
+
+        function renderCardBreakdown(byCard) {
+            const box = document.getElementById('card-breakdown');
+            const list = document.getElementById('card-breakdown-list');
+            if (!byCard.length) { box.style.display = 'none'; return; }
+            box.style.display = 'block';
+            list.innerHTML = byCard.map(c => `
+                <div class="card-bar">
+                    <div class="card-bar-name"><i class="fa-solid fa-credit-card"></i> ${escapeHtml(c.card_name || c.org)}</div>
+                    <div class="card-bar-amt">${fmt(c.total)}원 <span style="color:var(--text-dim); font-size:0.72rem;">${c.cnt}건</span></div>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(s) {
+            if (s == null) return '';
+            return String(s).replace(/[&<>"']/g, c => ({
+                '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+            }[c]));
+        }
+
+        document.getElementById('prev-month').addEventListener('click', () => {
+            let y = state.year, m = state.month - 1;
+            if (m < 1) { m = 12; y -= 1; }
+            state.selectedDate = null;
+            loadMonth(y, m);
+        });
+        document.getElementById('next-month').addEventListener('click', () => {
+            const today = new Date();
+            if (state.year === today.getFullYear() && state.month === today.getMonth() + 1) return;
+            let y = state.year, m = state.month + 1;
+            if (m > 12) { m = 1; y += 1; }
+            state.selectedDate = null;
+            loadMonth(y, m);
+        });
+        document.getElementById('refresh-btn').addEventListener('click', async () => {
+            const btn = document.getElementById('refresh-btn');
+            btn.querySelector('i').classList.add('fa-spin');
+            try {
+                await fetch('/api/refresh', { method: 'POST' });
+                await loadMonth(state.year, state.month);
+            } finally {
+                btn.querySelector('i').classList.remove('fa-spin');
+            }
+        });
+
+        // boot
+        const now = new Date();
+        loadMonth(now.getFullYear(), now.getMonth() + 1);
+
+        // PWA service worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
+            });
+        }
+    </script>
+</body>
+</html>
