@@ -426,13 +426,13 @@ def api_refresh():
 def scheduled_codef_fetch() -> None:
     print("[scheduler] CODEF 수집 시작", flush=True)
     try:
-        run_card_fetch(days=30)
+        run_card_fetch(days=1)
     except SystemExit as e:
         print(f"[scheduler] 카드 수집 SystemExit: {e}", flush=True)
     except Exception as e:
         print(f"[scheduler] 카드 수집 실패: {type(e).__name__}: {e}", flush=True)
     try:
-        run_bank_fetch(days=30)
+        run_bank_fetch(days=1)
     except SystemExit as e:
         print(f"[scheduler] 은행 수집 SystemExit: {e}", flush=True)
     except Exception as e:
