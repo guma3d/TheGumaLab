@@ -10,7 +10,8 @@ GumaTube/huggingface-cache/
 .env
 
 # Claude Code
-.claude/
+.claude/*
+!.claude/settings.json
 
 # WebAuthn credentials (민감 정보)
 Index/webauthn_credentials.json
