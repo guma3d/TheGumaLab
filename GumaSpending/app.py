@@ -75,6 +75,14 @@ BANK_DEDUP_PATTERNS = [
 ]
 _DEDUP_RE = re.compile("|".join(BANK_DEDUP_PATTERNS))
 
+# 본인 명의 계좌 간 이체 필터 — .env의 OWNER_NAME과 일치하는 store_name은 skip.
+# 여러 명의가 있으면 쉼표로 구분: OWNER_NAME=홍길동,Hong Gil Dong
+_OWNER_NAMES: set[str] = {
+    unicodedata.normalize("NFKC", n.strip())
+    for n in os.getenv("OWNER_NAME", "").split(",")
+    if n.strip()
+}
+
 # store_category 접미사가 "체크"/"신용"이면 카드 approval과 중복.
 # 예) "NH체크", "NH신용", "KB체크" — 은행 쪽 기록은 skip.
 _CARD_CATEGORY_RE = re.compile(r"(체크|신용)$")
@@ -225,6 +233,10 @@ def _ingest_banks(conn: sqlite3.Connection) -> dict:
 
             store_name = desc3 or desc1 or desc2 or "(내역 없음)"
             store_category = desc2 or desc4 or ""
+
+            if _OWNER_NAMES and unicodedata.normalize("NFKC", store_name.strip()) in _OWNER_NAMES:
+                skipped_dedup += 1
+                continue
 
             if _CARD_CATEGORY_RE.search(unicodedata.normalize("NFKC", store_category)):
                 skipped_dedup += 1
