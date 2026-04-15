@@ -425,7 +425,8 @@ def _call_gemini(prompt: str) -> str:
             )
             if resp.status_code == 200:
                 return resp.json()["candidates"][0]["content"]["parts"][0]["text"]
-            if resp.status_code == 503:
+            if resp.status_code in (429, 503):
+                print(f"[gemini] {model} {resp.status_code} — 다음 모델 시도", flush=True)
                 continue
             return f"API 오류 ({resp.status_code}): {resp.text[:200]}"
         except Exception as e:
