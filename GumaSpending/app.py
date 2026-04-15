@@ -15,6 +15,7 @@ import json
 import os
 import re
 import sqlite3
+import unicodedata
 from datetime import date, datetime
 from pathlib import Path
 
@@ -62,11 +63,16 @@ ORG_NAMES = {
 BANK_DEDUP_PATTERNS = [
     "카드대금",
     "카드결제",
+    "카드출금",
+    "카드자동",
     "신용카드",
     "체크카드",
-    "카드자동",
 ]
 _DEDUP_RE = re.compile("|".join(BANK_DEDUP_PATTERNS))
+
+# store_category 접미사가 "체크"/"신용"이면 카드 approval과 중복.
+# 예) "NH체크", "NH신용", "KB체크" — 은행 쪽 기록은 skip.
+_CARD_CATEGORY_RE = re.compile(r"(체크|신용)$")
 
 app = Flask(__name__)
 app.config["JSON_AS_ASCII"] = False
@@ -204,7 +210,9 @@ def _ingest_banks(conn: sqlite3.Connection) -> dict:
             desc2 = (tx.get("resAccountDesc2") or "").strip()
             desc3 = (tx.get("resAccountDesc3") or "").strip()
             desc4 = (tx.get("resAccountDesc4") or "").strip()
-            desc_all = " ".join(filter(None, [desc1, desc2, desc3, desc4]))
+            desc_all = unicodedata.normalize(
+                "NFKC", " ".join(filter(None, [desc1, desc2, desc3, desc4]))
+            )
 
             if _DEDUP_RE.search(desc_all):
                 skipped_dedup += 1
@@ -212,6 +220,10 @@ def _ingest_banks(conn: sqlite3.Connection) -> dict:
 
             store_name = desc3 or desc1 or desc2 or "(내역 없음)"
             store_category = desc2 or desc4 or ""
+
+            if _CARD_CATEGORY_RE.search(unicodedata.normalize("NFKC", store_category)):
+                skipped_dedup += 1
+                continue
 
             used_date = _parse_yyyymmdd(tx.get("resAccountTrDate", ""))
             used_time = tx.get("resAccountTrTime", "")
