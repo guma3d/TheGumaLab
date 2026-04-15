@@ -6,9 +6,7 @@ The function avoids repeating any of the previous questions passed in.
 """
 import json
 
-from google.genai import types
-
-from gemini_client import get_client, get_model_name
+from gemini_client import generate_content
 
 SYSTEM_INSTRUCTION = """You are Guma, a friendly robot talking to a 7-9 year old Korean child who is learning English.
 
@@ -52,15 +50,12 @@ PREVIOUS_QUESTIONS (do not repeat these, even loosely):
 Now output ONE new English question that will elicit the target pattern.
 """
 
-    response = get_client().models.generate_content(
-        model=get_model_name(),
-        contents=user_prompt,
-        config=types.GenerateContentConfig(
-            system_instruction=SYSTEM_INSTRUCTION,
-            temperature=1.0,
-        ),
+    text = generate_content(
+        user_prompt,
+        system_instruction=SYSTEM_INSTRUCTION,
+        temperature=1.0,
     )
-    return response.text.strip().strip('"').strip("'")
+    return text.strip().strip('"').strip("'")
 
 
 if __name__ == "__main__":
