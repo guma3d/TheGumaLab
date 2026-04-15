@@ -78,7 +78,13 @@ BANK_DEDUP_PATTERNS = [
 _DEDUP_RE = re.compile("|".join(BANK_DEDUP_PATTERNS))
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-_GEMINI_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"]
+_GEMINI_MODELS = [
+    "gemini-3.1-flash-lite-preview",
+    "gemini-2.5-flash-lite",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash-lite",
+    "gemini-2.0-flash",
+]
 
 # 본인 명의 계좌 간 이체 필터 — .env의 OWNER_NAME과 일치하는 store_name은 skip.
 # 여러 명의가 있으면 쉼표로 구분: OWNER_NAME=홍길동,Hong Gil Dong
