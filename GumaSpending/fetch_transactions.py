@@ -195,18 +195,9 @@ def fetch_one(
     }
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument(
-        "--days", type=int, default=30, help="lookback days (default 30, max 92)"
-    )
-    ap.add_argument(
-        "--org", type=str, default=None, help="organization code filter (e.g. 0304)"
-    )
-    args = ap.parse_args()
-
-    if not 1 <= args.days <= 92:
-        sys.exit("[ERROR] --days must be between 1 and 92 (single-chunk limit)")
+def run(days: int = 30, org_filter: str | None = None) -> int:
+    if not 1 <= days <= 92:
+        raise ValueError("days must be between 1 and 92 (single-chunk limit)")
 
     client_id, client_secret, public_key = load_credentials()
     connected = load_connected_ids()
@@ -216,18 +207,20 @@ def main() -> int:
     codef.set_demo_client_info(client_id, client_secret)
 
     end_date = date.today()
-    start_date = end_date - timedelta(days=args.days)
+    start_date = end_date - timedelta(days=days)
 
     targets = []
     for org, entry in connected.items():
-        if args.org and org != args.org:
+        if entry.get("type") == "bank":
+            continue
+        if org_filter and org != org_filter:
             continue
         targets.append((org, entry["card_name"], entry["connected_id"]))
 
     if not targets:
-        sys.exit("[ERROR] no matching organizations in connected_ids.json")
+        raise RuntimeError("no matching card organizations in connected_ids.json")
 
-    print(f"조회 기간 : {fmt_date(start_date)} ~ {fmt_date(end_date)} ({args.days}일)")
+    print(f"조회 기간 : {fmt_date(start_date)} ~ {fmt_date(end_date)} ({days}일)")
     print(f"대상 카드사: {len(targets)}개")
 
     results: dict[str, dict] = {}
@@ -255,6 +248,21 @@ def main() -> int:
     grand_count = sum(r["active_count"] for r in results.values())
     print(f"  합계: {grand_count}건 / {grand_total:,}원")
     return 0 if len(results) == len(targets) else 1
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument(
+        "--days", type=int, default=30, help="lookback days (default 30, max 92)"
+    )
+    ap.add_argument(
+        "--org", type=str, default=None, help="organization code filter (e.g. 0304)"
+    )
+    args = ap.parse_args()
+    try:
+        return run(days=args.days, org_filter=args.org)
+    except (ValueError, RuntimeError) as e:
+        sys.exit(f"[ERROR] {e}")
 
 
 if __name__ == "__main__":

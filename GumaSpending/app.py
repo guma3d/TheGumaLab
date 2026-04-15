@@ -18,7 +18,12 @@ import sqlite3
 from datetime import date, datetime
 from pathlib import Path
 
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 from flask import Flask, jsonify, render_template, send_from_directory
+
+from fetch_bank_transactions import run as run_bank_fetch
+from fetch_transactions import run as run_card_fetch
 
 APP_DIR = Path(__file__).resolve().parent
 DB_PATH = APP_DIR / "spending.db"
@@ -406,7 +411,46 @@ def api_refresh():
     return jsonify(stats)
 
 
+def scheduled_codef_fetch() -> None:
+    print("[scheduler] CODEF 수집 시작", flush=True)
+    try:
+        run_card_fetch(days=30)
+    except SystemExit as e:
+        print(f"[scheduler] 카드 수집 SystemExit: {e}", flush=True)
+    except Exception as e:
+        print(f"[scheduler] 카드 수집 실패: {type(e).__name__}: {e}", flush=True)
+    try:
+        run_bank_fetch(days=30)
+    except SystemExit as e:
+        print(f"[scheduler] 은행 수집 SystemExit: {e}", flush=True)
+    except Exception as e:
+        print(f"[scheduler] 은행 수집 실패: {type(e).__name__}: {e}", flush=True)
+    try:
+        stats = reload_transactions()
+        print(f"[scheduler] DB 재적재 완료: {stats}", flush=True)
+    except Exception as e:
+        print(f"[scheduler] DB 재적재 실패: {type(e).__name__}: {e}", flush=True)
+
+
+def start_scheduler() -> None:
+    scheduler = BackgroundScheduler(timezone="Asia/Seoul")
+    scheduler.add_job(
+        scheduled_codef_fetch,
+        CronTrigger(hour="1,5,9,13,17,21", minute=0, timezone="Asia/Seoul"),
+        id="codef_fetch",
+        replace_existing=True,
+        misfire_grace_time=300,
+        coalesce=True,
+        max_instances=1,
+    )
+    scheduler.start()
+    job = scheduler.get_job("codef_fetch")
+    if job:
+        print(f"[scheduler] 다음 실행: {job.next_run_time}", flush=True)
+
+
 if __name__ == "__main__":
     reload_transactions()
+    start_scheduler()
     port = int(os.getenv("PORT", "8060"))
     app.run(host="0.0.0.0", port=port, debug=False)

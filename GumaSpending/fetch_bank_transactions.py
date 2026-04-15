@@ -184,14 +184,9 @@ def fetch_one_bank(
     }
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--days", type=int, default=30, help="lookback days (1-92)")
-    ap.add_argument("--org", type=str, default=None, help="bank org filter")
-    args = ap.parse_args()
-
-    if not 1 <= args.days <= 92:
-        sys.exit("[ERROR] --days must be 1..92")
+def run(days: int = 30, org_filter: str | None = None) -> int:
+    if not 1 <= days <= 92:
+        raise ValueError("days must be between 1 and 92")
 
     cid, csec, pub = load_credentials()
     connected = load_connected()
@@ -201,13 +196,13 @@ def main() -> int:
     codef.set_demo_client_info(cid, csec)
 
     end = date.today()
-    start = end - timedelta(days=args.days)
+    start = end - timedelta(days=days)
 
     targets: list[tuple[str, str, str, list[dict]]] = []
     for org, entry in connected.items():
         if entry.get("type") != "bank":
             continue
-        if args.org and org != args.org:
+        if org_filter and org != org_filter:
             continue
         name = entry.get("card_name", f"bank-{org}")
         conn_id = entry.get("connected_id", "")
@@ -218,9 +213,9 @@ def main() -> int:
         targets.append((org, name, conn_id, accounts))
 
     if not targets:
-        sys.exit("[ERROR] no bank entries in connected_ids.json (run register_bank.py first)")
+        raise RuntimeError("no bank entries in connected_ids.json (run register_bank.py first)")
 
-    print(f"기간 : {fmt_date(start)} ~ {fmt_date(end)} ({args.days}일)")
+    print(f"기간 : {fmt_date(start)} ~ {fmt_date(end)} ({days}일)")
     print(f"대상 : {len(targets)}개 은행")
 
     results: dict[str, dict] = {}
@@ -246,6 +241,17 @@ def main() -> int:
     grand_cnt = sum(r["total_count"] for r in results.values())
     print(f"  합계: {grand_cnt}건 / 출금 {grand_out:,}원")
     return 0 if len(results) == len(targets) else 1
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--days", type=int, default=30, help="lookback days (1-92)")
+    ap.add_argument("--org", type=str, default=None, help="bank org filter")
+    args = ap.parse_args()
+    try:
+        return run(days=args.days, org_filter=args.org)
+    except (ValueError, RuntimeError) as e:
+        sys.exit(f"[ERROR] {e}")
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - PORT=8060
+      - TZ=Asia/Seoul
     env_file:
       - .env
     volumes:
