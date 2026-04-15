@@ -475,6 +475,157 @@
         .loading i { margin-right: 0.5rem; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* Analyze button */
+        .analyze-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-top: 0.9rem;
+            padding: 0.45rem 1rem;
+            border-radius: 10px;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            background: rgba(16, 185, 129, 0.08);
+            color: var(--accent-color);
+            font-size: 0.82rem;
+            font-weight: 500;
+            font-family: 'Outfit', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: 0.3px;
+        }
+        .analyze-btn:hover {
+            background: rgba(16, 185, 129, 0.16);
+            border-color: rgba(16, 185, 129, 0.6);
+        }
+        .analyze-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Analysis modal (bottom sheet) */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+            z-index: 200;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .modal-sheet {
+            width: 100%;
+            max-width: 720px;
+            background: #111111;
+            border: 1px solid var(--card-border);
+            border-bottom: none;
+            border-radius: 24px 24px 0 0;
+            padding: 1.4rem 1.5rem 2rem;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        .modal-overlay.active .modal-sheet {
+            transform: translateY(0);
+        }
+        .modal-handle {
+            width: 40px;
+            height: 4px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 2px;
+            margin: 0 auto 1.2rem;
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.2rem;
+            padding-bottom: 0.9rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+        .modal-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--accent-color);
+        }
+        .modal-meta {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-top: 0.2rem;
+        }
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .modal-close:hover {
+            background: var(--card-bg);
+            color: var(--text-main);
+        }
+        .modal-body {
+            font-size: 0.9rem;
+            line-height: 1.8;
+            color: var(--text-muted);
+            white-space: pre-wrap;
+            word-break: keep-all;
+        }
+        .modal-footer {
+            margin-top: 1.2rem;
+            padding-top: 0.9rem;
+            border-top: 1px solid var(--card-border);
+            display: flex;
+            justify-content: flex-end;
+        }
+        .regen-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem 0.85rem;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            background: transparent;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-family: 'Outfit', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .regen-btn:hover {
+            color: var(--text-main);
+            border-color: rgba(255,255,255,0.2);
+        }
+        .modal-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.9rem;
+            padding: 3rem 0;
+            color: var(--text-dim);
+        }
+        .modal-loading i { font-size: 1.5rem; color: var(--accent-color); }
+        .modal-loading span { font-size: 0.85rem; }
+
         @media (max-width: 520px) {
             .container { padding: 70px 0.7rem 2rem 0.7rem; }
             .month-total-amount { font-size: 2rem; }
@@ -516,7 +667,28 @@
             </div>
             <div class="month-total-count" id="month-count">—</div>
             <div class="month-source-split" id="month-source-split"></div>
+            <button class="analyze-btn" id="analyze-btn">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> 분석
+            </button>
         </section>
+
+        <!-- AI Analysis Modal -->
+        <div class="modal-overlay" id="modal-overlay">
+            <div class="modal-sheet" id="modal-sheet">
+                <div class="modal-handle"></div>
+                <div class="modal-header">
+                    <div>
+                        <div class="modal-title">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span id="modal-title-text">AI 지출 분석</span>
+                        </div>
+                        <div class="modal-meta" id="modal-meta"></div>
+                    </div>
+                    <button class="modal-close" id="modal-close"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div id="modal-body"></div>
+            </div>
+        </div>
 
         <section class="calendar">
             <div class="calendar-weekdays">
@@ -764,6 +936,68 @@
                 btn.querySelector('i').classList.remove('fa-spin');
             }
         });
+
+        // ── AI 분석 모달 ───────────────────────────────────────────────────────
+        const overlay = document.getElementById('modal-overlay');
+        const modalBody = document.getElementById('modal-body');
+        const modalMeta = document.getElementById('modal-meta');
+        const modalTitleText = document.getElementById('modal-title-text');
+
+        function openModal() { overlay.classList.add('active'); }
+        function closeModal() { overlay.classList.remove('active'); }
+
+        document.getElementById('modal-close').addEventListener('click', closeModal);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+
+        function showAnalysisLoading() {
+            modalBody.innerHTML = `
+                <div class="modal-loading">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    <span>AI가 지출을 분석하고 있습니다...</span>
+                </div>`;
+            modalMeta.textContent = '';
+        }
+
+        function showAnalysisContent(data) {
+            const ts = data.generated_at
+                ? new Date(data.generated_at).toLocaleString('ko-KR', { month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' })
+                : '';
+            const cachedLabel = data.cached ? ' · 캐시됨' : '';
+            modalMeta.textContent = ts ? `${ts}${cachedLabel}` : '';
+            modalBody.innerHTML = `
+                <div class="modal-body">${escapeHtml(data.content)}</div>
+                <div class="modal-footer">
+                    <button class="regen-btn" id="regen-btn">
+                        <i class="fa-solid fa-rotate"></i> 재생성
+                    </button>
+                </div>`;
+            document.getElementById('regen-btn').addEventListener('click', () => runAnalysis(true));
+        }
+
+        async function runAnalysis(force = false) {
+            const ym = `${state.year}-${pad(state.month)}`;
+            const today = new Date();
+            const isCurrentMonth = (state.year === today.getFullYear() && state.month === today.getMonth() + 1);
+            modalTitleText.textContent = isCurrentMonth ? `${state.month}월 분석 · 지금까지 & 앞으로` : `${state.month}월 총평`;
+
+            showAnalysisLoading();
+            openModal();
+
+            try {
+                const url = `/api/analyze/${ym}${force ? '?force=1' : ''}`;
+                const r = await fetch(url, { method: 'POST' });
+                const data = await r.json();
+                if (data.error) {
+                    modalBody.innerHTML = `<div class="modal-body" style="color:var(--warn-color)">${escapeHtml(data.error)}</div>`;
+                } else {
+                    showAnalysisContent(data);
+                }
+            } catch (e) {
+                modalBody.innerHTML = `<div class="modal-body" style="color:var(--warn-color)">오류가 발생했습니다. 다시 시도해주세요.</div>`;
+            }
+        }
+
+        document.getElementById('analyze-btn').addEventListener('click', () => runAnalysis(false));
 
         // boot
         const now = new Date();

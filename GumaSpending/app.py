@@ -10,19 +10,21 @@ are skipped at ingestion time to avoid double-counting with card approval data.
 
 from __future__ import annotations
 
+import calendar as calendar_mod
 import glob
 import json
 import os
 import re
 import sqlite3
 import unicodedata
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
+import requests as http_requests
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
-from flask import Flask, jsonify, render_template, send_from_directory
+from flask import Flask, jsonify, render_template, request, send_from_directory
 
 from fetch_bank_transactions import run as run_bank_fetch
 from fetch_transactions import (
@@ -74,6 +76,9 @@ BANK_DEDUP_PATTERNS = [
     "체크카드",
 ]
 _DEDUP_RE = re.compile("|".join(BANK_DEDUP_PATTERNS))
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+_GEMINI_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"]
 
 # 본인 명의 계좌 간 이체 필터 — .env의 OWNER_NAME과 일치하는 store_name은 skip.
 # 여러 명의가 있으면 쉼표로 구분: OWNER_NAME=홍길동,Hong Gil Dong
@@ -291,6 +296,183 @@ def reload_transactions() -> dict:
         bank_stats = _ingest_banks(conn)
         conn.commit()
     return {"card": card_stats, "bank": bank_stats}
+
+
+# ── AI 분석 ──────────────────────────────────────────────────────────────────
+
+def ensure_analyses_table() -> None:
+    """analyses 테이블 생성 (transactions 새로고침에도 유지)."""
+    with _db() as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS analyses (
+                ym TEXT PRIMARY KEY,
+                content TEXT NOT NULL,
+                generated_at TEXT NOT NULL
+            )
+            """
+        )
+        conn.commit()
+
+
+def _prepare_month_data(ym: str) -> dict:
+    """Gemini 프롬프트용 월별 집계 데이터 구성."""
+    y, m = map(int, ym.split("-"))
+    start = f"{ym}-01"
+    next_m = m + 1 if m < 12 else 1
+    next_y = y if m < 12 else y + 1
+    end = f"{next_y:04d}-{next_m:02d}-01"
+
+    with _db() as conn:
+        total_row = conn.execute(
+            "SELECT COALESCE(SUM(amount),0), COUNT(*) FROM transactions WHERE used_date>=? AND used_date<?",
+            (start, end),
+        ).fetchone()
+        source_rows = conn.execute(
+            "SELECT source, COALESCE(SUM(amount),0), COUNT(*) FROM transactions "
+            "WHERE used_date>=? AND used_date<? GROUP BY source",
+            (start, end),
+        ).fetchall()
+        store_rows = conn.execute(
+            "SELECT store_name, store_category, SUM(amount) AS total, COUNT(*) AS cnt "
+            "FROM transactions WHERE used_date>=? AND used_date<? "
+            "GROUP BY store_name ORDER BY total DESC LIMIT 20",
+            (start, end),
+        ).fetchall()
+
+    return {
+        "ym": ym,
+        "total": total_row[0],
+        "count": total_row[1],
+        "by_source": {r[0]: {"total": r[1], "count": r[2]} for r in source_rows},
+        "top_stores": [
+            {"name": r[0], "category": r[1] or "기타", "total": r[2], "count": r[3]}
+            for r in store_rows
+        ],
+    }
+
+
+def _build_prompt(data: dict, is_current: bool) -> str:
+    """월별 데이터로 Gemini 프롬프트 생성."""
+    y, m = map(int, data["ym"].split("-"))
+    month_name = f"{y}년 {m}월"
+    card_total = data["by_source"].get("card", {}).get("total", 0)
+    bank_total = data["by_source"].get("bank", {}).get("total", 0)
+
+    stores_text = "\n".join(
+        f"  {i+1}. {s['name']} ({s['category']}): {s['total']:,}원 ({s['count']}건)"
+        for i, s in enumerate(data["top_stores"])
+    )
+
+    lines = [
+        f"당신은 개인 재무 분석가입니다. 아래는 {month_name} 실제 지출 데이터입니다.",
+        "",
+        f"[총 지출] {data['total']:,}원 ({data['count']}건)",
+        f"  - 카드 승인: {card_total:,}원",
+        f"  - 계좌 출금/현금: {bank_total:,}원",
+        "",
+        "[주요 지출처 Top 20]",
+        stores_text,
+    ]
+
+    if is_current:
+        today = date.today()
+        days_passed = today.day
+        days_in_month = calendar_mod.monthrange(y, m)[1]
+        days_left = days_in_month - days_passed
+        daily_avg = data["total"] // days_passed if days_passed > 0 else 0
+        projected = daily_avg * days_in_month
+        lines += [
+            "",
+            f"[현재 기준] {month_name} {today.day}일 (경과 {days_passed}일, 남은 {days_left}일)",
+            f"  - 일평균 지출: {daily_avg:,}원 / 이달 말 예상 누적: {projected:,}원",
+            "",
+            "다음 항목을 한국어로 분석해주세요:",
+            "1. 지금까지 지출에서 과도하거나 줄일 수 있는 부분 (구체적 금액 언급)",
+            "2. 남은 기간 소비 조언 및 주의사항",
+            "3. 이번 달 예상 총 지출과 절약 목표 제안",
+            "",
+            "형식: 마크다운 없이 자연스러운 문단. 500자 내외.",
+        ]
+    else:
+        lines += [
+            "",
+            "다음을 한국어로 작성해주세요 (이달 총평):",
+            "1. 이달 지출 패턴의 핵심 특징",
+            "2. 과도했거나 아쉬웠던 지출",
+            "3. 잘한 점 또는 특이사항",
+            "4. 다음 달을 위한 한 줄 조언",
+            "",
+            "형식: 마크다운 없이 자연스러운 문단. 400자 내외.",
+        ]
+    return "\n".join(lines)
+
+
+def _call_gemini(prompt: str) -> str:
+    """Gemini REST API 호출 (모델 폴백 체인)."""
+    if not GEMINI_API_KEY:
+        return "GEMINI_API_KEY가 설정되지 않았습니다."
+    for model in _GEMINI_MODELS:
+        try:
+            url = (
+                f"https://generativelanguage.googleapis.com/v1beta/models/"
+                f"{model}:generateContent?key={GEMINI_API_KEY}"
+            )
+            resp = http_requests.post(
+                url,
+                json={"contents": [{"parts": [{"text": prompt}]}]},
+                timeout=30,
+            )
+            if resp.status_code == 200:
+                return resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+            if resp.status_code == 503:
+                continue
+            return f"API 오류 ({resp.status_code}): {resp.text[:200]}"
+        except Exception as e:
+            print(f"[gemini] {model} 실패: {e}", flush=True)
+            continue
+    return "AI 분석을 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해주세요."
+
+
+@app.route("/api/analyze/<ym>", methods=["GET"])
+def api_analyze_get(ym: str):
+    """캐시된 분석 조회."""
+    with _db() as conn:
+        row = conn.execute(
+            "SELECT content, generated_at FROM analyses WHERE ym=?", (ym,)
+        ).fetchone()
+    if row:
+        return jsonify({"ym": ym, "content": row[0], "generated_at": row[1], "cached": True})
+    return jsonify({"ym": ym, "content": None, "cached": False})
+
+
+@app.route("/api/analyze/<ym>", methods=["POST"])
+def api_analyze_post(ym: str):
+    """AI 분석 생성 (force=1이면 캐시 무시)."""
+    force = request.args.get("force", "0") == "1"
+    if not force:
+        with _db() as conn:
+            row = conn.execute(
+                "SELECT content, generated_at FROM analyses WHERE ym=?", (ym,)
+            ).fetchone()
+        if row:
+            return jsonify({"ym": ym, "content": row[0], "generated_at": row[1], "cached": True})
+
+    today = date.today()
+    current_ym = f"{today.year:04d}-{today.month:02d}"
+    data = _prepare_month_data(ym)
+    if data["total"] == 0:
+        return jsonify({"error": "해당 월의 지출 데이터가 없습니다."}), 404
+
+    content = _call_gemini(_build_prompt(data, is_current=(ym == current_ym)))
+    now_str = datetime.now().isoformat()
+    with _db() as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO analyses (ym, content, generated_at) VALUES (?,?,?)",
+            (ym, content, now_str),
+        )
+        conn.commit()
+    return jsonify({"ym": ym, "content": content, "generated_at": now_str, "cached": False})
 
 
 @app.route("/")
@@ -536,6 +718,34 @@ def scheduled_bank_backfill() -> None:
         print(f"[scheduler] 은행 백필 실패: {type(e).__name__}: {e}", flush=True)
 
 
+def scheduled_auto_analyze() -> None:
+    """매월 1일 02:00 — 지난달 분석 자동 생성."""
+    last_month = date.today().replace(day=1) - timedelta(days=1)
+    ym = f"{last_month.year:04d}-{last_month.month:02d}"
+    with _db() as conn:
+        exists = conn.execute("SELECT 1 FROM analyses WHERE ym=?", (ym,)).fetchone()
+    if exists:
+        print(f"[auto-analyze] {ym} 이미 분석됨", flush=True)
+        return
+    print(f"[auto-analyze] {ym} 분석 시작", flush=True)
+    try:
+        data = _prepare_month_data(ym)
+        if data["total"] == 0:
+            print(f"[auto-analyze] {ym} 데이터 없음", flush=True)
+            return
+        content = _call_gemini(_build_prompt(data, is_current=False))
+        now_str = datetime.now().isoformat()
+        with _db() as conn:
+            conn.execute(
+                "INSERT OR REPLACE INTO analyses (ym, content, generated_at) VALUES (?,?,?)",
+                (ym, content, now_str),
+            )
+            conn.commit()
+        print(f"[auto-analyze] {ym} 완료", flush=True)
+    except Exception as e:
+        print(f"[auto-analyze] 실패: {e}", flush=True)
+
+
 def start_scheduler() -> None:
     from datetime import datetime
     from zoneinfo import ZoneInfo
@@ -568,6 +778,17 @@ def start_scheduler() -> None:
         max_instances=1,
     )
 
+    # 매월 1일 02:00 KST — 지난달 AI 분석 자동 생성
+    scheduler.add_job(
+        scheduled_auto_analyze,
+        CronTrigger(day=1, hour=2, minute=0, timezone=kst),
+        id="auto_analyze",
+        replace_existing=True,
+        misfire_grace_time=3600,
+        coalesce=True,
+        max_instances=1,
+    )
+
     # 매일 06:00 KST — 수집 JSON + spending.db 스냅샷 백업
     scheduler.add_job(
         scheduled_daily_backup,
@@ -580,13 +801,14 @@ def start_scheduler() -> None:
     )
 
     scheduler.start()
-    for job_id in ("bank_backfill_oneshot", "codef_fetch", "daily_backup"):
+    for job_id in ("bank_backfill_oneshot", "codef_fetch", "daily_backup", "auto_analyze"):
         job = scheduler.get_job(job_id)
         if job:
             print(f"[scheduler] {job_id} 다음 실행: {job.next_run_time}", flush=True)
 
 
 if __name__ == "__main__":
+    ensure_analyses_table()
     reload_transactions()
     start_scheduler()
     port = int(os.getenv("PORT", "8060"))
