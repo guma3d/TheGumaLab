@@ -448,7 +448,7 @@ def start_scheduler() -> None:
     scheduler = BackgroundScheduler(timezone="Asia/Seoul")
     scheduler.add_job(
         scheduled_codef_fetch,
-        CronTrigger(hour="1,5,9,13,17,21", minute=0, timezone="Asia/Seoul"),
+        CronTrigger(hour="1,5,9,13,17,21", minute=30, timezone="Asia/Seoul"),
         id="codef_fetch",
         replace_existing=True,
         misfire_grace_time=300,
