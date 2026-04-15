@@ -1,0 +1,108 @@
+{
+  "stageNumber": 1,
+  "theme": "원하는 것 말하기",
+  "robotName": "Scout",
+  "pattern": {
+    "id": "s001",
+    "english": "Can I have a ___?",
+    "korean": "~를 가질 수 있을까요?",
+    "sentences": [
+      { "en": "Can I have a cookie?", "ko": "쿠키 하나 가질 수 있을까요?" },
+      { "en": "Can I have some water?", "ko": "물 좀 가질 수 있을까요?" },
+      { "en": "Can I have a pencil?", "ko": "연필 하나 가질 수 있을까요?" }
+    ]
+  },
+  "weeks": [
+    {
+      "weekNumber": 1,
+      "practiceContexts": ["snack shop", "library", "playground"],
+      "quiz": {
+        "questions": [
+          {
+            "type": "fillBlank",
+            "prompt": "Can I ___ a cookie?",
+            "answer": "have"
+          },
+          {
+            "type": "fillBlank",
+            "prompt": "___ I have some water?",
+            "answer": "Can"
+          },
+          {
+            "type": "multipleChoice",
+            "prompt": "연필 하나 달라고 할 때?",
+            "answer": "Can I have a pencil?",
+            "choices": [
+              "Can I have a pencil?",
+              "I have a pencil.",
+              "Do you pencil?",
+              "Where pencil?"
+            ]
+          },
+          {
+            "type": "koreanToEnglish",
+            "prompt": "쿠키 하나 가질 수 있을까요?",
+            "answer": "Can I have a cookie?"
+          },
+          {
+            "type": "koreanToEnglish",
+            "prompt": "물 좀 가질 수 있을까요?",
+            "answer": "Can I have some water?"
+          }
+        ]
+      },
+      "dialogueTest": {
+        "rounds": 3,
+        "contexts": ["birthday party", "classroom", "kitchen"]
+      }
+    },
+    {
+      "weekNumber": 2,
+      "practiceContexts": ["restaurant", "friend's house", "art class"],
+      "quiz": {
+        "questions": [
+          {
+            "type": "fillBlank",
+            "prompt": "Can I have ___ water?",
+            "answer": "some"
+          },
+          {
+            "type": "fillBlank",
+            "prompt": "Can I ___ a pencil?",
+            "answer": "have"
+          },
+          {
+            "type": "multipleChoice",
+            "prompt": "물 달라고 할 때?",
+            "answer": "Can I have some water?",
+            "choices": [
+              "Can I have some water?",
+              "I water please.",
+              "Water is good.",
+              "Where water?"
+            ]
+          },
+          {
+            "type": "koreanToEnglish",
+            "prompt": "연필 하나 가질 수 있을까요?",
+            "answer": "Can I have a pencil?"
+          },
+          {
+            "type": "koreanToEnglish",
+            "prompt": "쿠키 하나 가질 수 있을까요?",
+            "answer": "Can I have a cookie?"
+          }
+        ]
+      },
+      "dialogueTest": {
+        "rounds": 3,
+        "contexts": ["snack time", "school", "park"]
+      }
+    }
+  ],
+  "passCriteria": {
+    "quizMinCorrect": 4,
+    "quizTotal": 5,
+    "dialoguePatternUsageMin": 2
+  }
+}

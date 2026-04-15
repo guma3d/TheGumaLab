@@ -22,7 +22,7 @@ jobs:
 
       - name: Detect changed projects and deploy
         run: |
-          PROJECTS="GumaStockReport GumaPhoto GumaImageAnalyzer GumaServerStatus GumaTube GumaSpending Index Nginx"
+          PROJECTS="GumaStockReport GumaPhoto GumaImageAnalyzer GumaServerStatus GumaTube GumaSpending GumaEnglish Index Nginx"
 
           # 변경된 파일 목록 추출 (초기 커밋 대응)
           if git rev-parse HEAD~1 > /dev/null 2>&1; then

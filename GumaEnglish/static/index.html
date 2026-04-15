@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>GumaEnglish</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <main id="app">
+    <header>
+      <div class="stage-badge">Stage <span id="stage-num">1</span></div>
+      <div class="robot-name" id="robot-name">Scout</div>
+    </header>
+
+    <section id="pattern-card">
+      <div class="label">오늘의 패턴</div>
+      <div class="pattern-en" id="pattern-en">…</div>
+      <div class="pattern-ko" id="pattern-ko">…</div>
+      <ul class="examples" id="examples"></ul>
+    </section>
+
+    <section id="chat">
+      <div id="chat-log" aria-live="polite"></div>
+    </section>
+
+    <section id="controls">
+      <button id="start-btn" type="button">연습 시작</button>
+      <div id="input-row" hidden>
+        <input id="text-input" type="text" placeholder="영어로 대답해보세요…" autocomplete="off" />
+        <button id="mic-btn" type="button" title="음성으로 말하기">🎤</button>
+        <button id="send-btn" type="button">보내기</button>
+      </div>
+      <button id="next-btn" type="button" hidden>다음 라운드</button>
+      <button id="restart-btn" type="button" hidden>다시 연습</button>
+    </section>
+
+    <footer>
+      <small>GumaEnglish · TheGumaLab</small>
+    </footer>
+  </main>
+
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>
