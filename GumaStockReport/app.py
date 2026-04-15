@@ -415,6 +415,43 @@ def search_stock():
         print(f"Search API Error: {e}")
         return jsonify({"success": False, "error": "종목을 검색하는 데 실패했습니다. 다시 시도해주세요."})
 
+def lookup_korean_codes_by_name(names):
+    """종목명 리스트로 KRX 6자리 코드를 배치 조회 (텍스트 API 사용)"""
+    if not names or not gemini_client:
+        return {}
+    names_json = json.dumps(names, ensure_ascii=False)
+    prompt = f"""다음 한국 주식/ETF 종목명의 KRX 표준 6자리 종목코드를 찾아주세요.
+반드시 입력된 종목명과 정확히 일치하는 종목의 코드만 반환하세요. 유사하지만 다른 종목 코드를 반환하면 안 됩니다.
+
+종목명 목록:
+{names_json}
+
+JSON 형식으로만 응답 (키: 종목명 그대로, 값: 6자리 숫자 코드. 확실하지 않으면 빈 문자열):
+예시: {{"삼성전자": "005930", "TIGER 미국S&P500": "360750", "ACE 구글밸류체인액티브": "465560"}}"""
+    try:
+        response = None
+        for model_name in ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-3.1-flash-lite-preview']:
+            try:
+                response = gemini_client.models.generate_content(model=model_name, contents=prompt)
+                break
+            except Exception as e:
+                print(f"Gemini {model_name} failed for code lookup: {e}")
+        if response is None:
+            return {}
+        text = response.text.strip()
+        for prefix in ['```json', '```']:
+            if text.startswith(prefix):
+                text = text[len(prefix):]
+        if text.endswith('```'):
+            text = text[:-3]
+        result = json.loads(text.strip())
+        print(f"Korean code lookup result: {result}")
+        return result if isinstance(result, dict) else {}
+    except Exception as e:
+        print(f"Korean code lookup error: {e}")
+        return {}
+
+
 @app.route("/api/parse-screenshot", methods=["POST"])
 def parse_screenshot():
     """삼성증권 스크린샷에서 보유 종목 정보를 Gemini Vision으로 추출"""
@@ -439,11 +476,13 @@ def parse_screenshot():
 - 3행: 평가금액(원) ← eval_krw
 - 4행: 손익금액(손익률) — 무시
 
+⚠️ 중요: 이미지에 보이는 텍스트를 한 글자도 바꾸지 말고 정확히 그대로 읽어라. ETF나 펀드 이름을 알고 있더라도 절대로 수정하거나 유사한 다른 이름으로 대체하지 말 것.
+
 [1] 투자 자산 (stocks):
 주식, ETF, 펀드, TDF, 퇴직연금 상품 등 투자성 자산 포함.
 현금잔고(예수금)·현금성자산·단기상품·외화예수금은 [2] cash로 분류.
-- name: 종목/상품명 그대로 (잘린 경우 보이는 대로)
-- code: 국내주식/ETF이면 6자리 숫자만 ($ 등 기호 없이, 없으면 이름으로 추정), 미국주식이면 티커심볼(GOOGL 등), 펀드·연금상품이면 ""
+- name: 이미지에 보이는 종목/상품명을 글자 하나도 변경 없이 그대로 (잘린 경우 보이는 대로)
+- code: 미국주식이면 티커심볼(GOOGL 등). 국내주식/ETF·펀드이면 반드시 "" (이미지에 코드가 안 보이므로 추측 금지)
 - eval_krw: 평가금액 정수
 - market: "KOSPI"(국내주식·국내ETF) / "KOSDAQ"(코스닥 종목) / "US"(해외주식) / "FUND"(펀드·TDF·퇴직연금 상품)
 - quantity: 수량(주수) 정수. 수량 표시가 없으면 null
@@ -456,7 +495,7 @@ def parse_screenshot():
 JSON 형식으로만 응답:
 {
   "stocks": [
-    {"name": "삼성전자", "code": "005930", "eval_krw": 24900000, "market": "KOSPI", "quantity": 120},
+    {"name": "삼성전자", "code": "", "eval_krw": 24900000, "market": "KOSPI", "quantity": 120},
     {"name": "알파벳 Class A", "code": "GOOGL", "eval_krw": 19607257, "market": "US", "quantity": 41},
     {"name": "삼성글로벌적격TDF2050UH(주혼재)Cpe퇴", "code": "", "eval_krw": 8146499, "market": "FUND", "quantity": null}
   ],
@@ -516,6 +555,21 @@ JSON 형식으로만 응답:
         # 현금성 자산 키워드 — Gemini가 stocks에 잘못 넣은 경우 걸러냄
         CASH_KEYWORDS = ('현금', '예수금', '외화예수금', '단기상품', '현금성자산')
 
+        # 코드 없는 한국 주식 → 배치 조회 (Vision으로 읽을 수 없으므로 텍스트 API 활용)
+        korean_no_code = [
+            s for s in stock_list
+            if str(s.get('market', '') or '').upper() in ('KOSPI', 'KOSDAQ')
+            and not str(s.get('code', '') or '').strip()
+        ]
+        code_map = {}
+        if korean_no_code:
+            names_to_lookup = [s['name'] for s in korean_no_code if s.get('name')]
+            code_map = lookup_korean_codes_by_name(names_to_lookup)
+            # 조회 결과를 stock_list에 반영
+            for s in stock_list:
+                if s.get('name') in code_map and code_map[s['name']]:
+                    s['code'] = code_map[s['name']]
+
         # 종목코드 → Yahoo Finance ticker 변환
         stocks = []
         for stock in stock_list:
@@ -547,11 +601,11 @@ JSON 형식으로만 응답:
             elif market == 'KOSDAQ':
                 # 숫자만 ($ 등 기호 제거)
                 code = digits_only
-                ticker = f"{code.zfill(6)}.KQ"
+                ticker = f"{code.zfill(6)}.KQ" if code else f"SEARCH_{name[:15]}"
             else:  # KOSPI
                 # 숫자만 ($ 등 기호 제거)
                 code = digits_only
-                ticker = f"{code.zfill(6)}.KS"
+                ticker = f"{code.zfill(6)}.KS" if code else f"SEARCH_{name[:15]}"
 
             stocks.append({"name": name, "code": code, "ticker": ticker, "eval_krw": eval_krw, "market": market, "quantity": quantity})
 
