@@ -72,6 +72,32 @@ Claude는 이 프로젝트에서 **시니어 프로그래머** 역할을 맡는�
 → Timeline Cache 자동 재생성
 ```
 
+## 작업 라우팅 — 어느 컨테이너에서 실행되나
+**gumaphoto_celery** (task 등록: `tasks.dispatch_event`, `tasks.indexer`, `tasks.organizer`)
+- FileUploaded/FileOrganized 이벤트 디스패처, 벡터 인덱서, 파일 정리기
+- 재시작 대상: `Scripts/vector_indexer.py`, `api/tasks.py`, `Scripts/organizer*.py`, 그리고 인덱서가 직접 쓰는 공용 모듈(`api/services/insightface_service.py` 등)
+
+**gumaphoto_app** (FastAPI + `BackgroundTasks`)
+- 모든 REST 라우터, **피드백 처리(`process_time_location_feedback`, `process_face_enrollment`)**, 타임라인 캐시 재생성, 검색 쿼리
+- 재시작 대상: `api/routers/*.py`, `api/services/feedback_service.py`, `api/services/feedback_cache.py`, `api/utils/metadata_parser.py`, `api/utils/metadata_editor.py`, `core/state.py`, `main.py`
+
+> ⚠️ **흔한 함정**: "피드백이 안 먹어요" 류 버그를 잡을 때 `gumaphoto_celery`만 재시작하면 의미 없음. 피드백은 Celery가 아니라 app 프로세스의 `BackgroundTasks`로 돌아간다. 공용 모듈(`api/services/feedback_service.py`, `api/utils/metadata_parser.py` 등)을 수정했다면 **양쪽 다** 재시작하는 것이 안전.
+
+## 피드백 파이프라인 (`/api/feedback_v2/submit`)
+1. **라우터 (app 프로세스, 동기)**: 이슈 타입별 Gemini 교정 → **Qdrant payload 즉시 업데이트** (UI 실시간 반영용)
+2. **BackgroundTasks (app 프로세스, 비동기)**
+   - `process_time_location_feedback`: 물리 EXIF 덮어쓰기 (`MetadataEditor.stamp_metadata`) + Qdrant 재병합 + audit trace 기록 + Auto Rollback
+   - `rebuild_timeline_cache`: 홈 타임라인 캐시 재생성 (라이트박스 잔상 방지)
+   - 인물 피드백은 `process_face_enrollment`가 `known_faces.pkl` 갱신
+3. **FeedbackCache**: 처리된 ID를 디스크 큐에서 제거 (`remove_processed`)
+
+**날짜 피드백 시 주의**: UI는 `YYYY-MM` 형식만 전송하지만, `stamp_metadata`는 EXIF에 `YYYY-MM-15 12:00:00`을 기본값으로 찍음. 라우터/서비스 양쪽 모두 이와 동일한 합성 날짜로 `parse_time_and_season`을 호출해 `season` + `time_of_day(=낮)`을 Qdrant에도 맞춰 넣는다. EXIF와 Qdrant의 불일치 방지.
+
+## audit_trace.json (피드백 감사 로그)
+- **형식**: JSONL. 한 줄 = `{"type": "BEFORE"|"AFTER", "trace_id": <point_id>, ...}`
+- **페어링 규칙**: `trace_id`는 point_id이므로 같은 사진의 여러 피드백이 있을 수 있음. `GET /api/system/audit_logs`는 **순차 페어링**(`pending_before` 딕셔너리) 방식으로 모든 BEFORE/AFTER 쌍을 보존한다 — dict overwrite로 최신 1건만 남기면 안 됨.
+- **프론트 렌더러**: `people`/`location`/`date` 텍스트 변경 + `geo_point` 좌표 변경을 모두 감지. 텍스트가 동일해도 좌표만 바뀐 피드백이 화면에서 사라지지 않도록 함.
+
 ## 검색 아키텍처
 1. **로컬 파싱**: 인물명, 연도, 나이(`35살`), 연대(`30대`), 생애단계(`초등학교`) 추출
 2. **Gemini NLP**: 나머지 텍스트에서 장소/계절/시간대/시각적 키워드 추출 (가족 프로필 컨텍스트 주입)
@@ -90,9 +116,16 @@ Claude는 이 프로젝트에서 **시니어 프로그래머** 역할을 맡는�
 
 ## 배포
 ```bat
+REM 인덱서/organizer/이벤트 디스패처 변경
 pull_update.bat GumaPhoto gumaphoto_celery
+
+REM 라우터/피드백 처리/검색 변경 (대부분의 작업)
+ssh HomeServer "docker restart gumaphoto_app"
+
+REM 공용 모듈(utils/services) 변경 → 양쪽 모두
+ssh HomeServer "docker restart gumaphoto_app gumaphoto_celery"
 ```
-코드 변경 후 Celery는 **반드시 수동 재시작** 필요 (Python 코드 캐싱).
+Python `sys.modules` 캐시 때문에 파일 bind mount만으로는 핫스왑이 안 된다. 함수 내부 `from ... import`도 최초 로드된 모듈을 재사용하므로 반드시 **프로세스 재시작**이 필요하다.
 
 ## 주의사항
 - GPU 없으면 컨테이너 기동 불가. `docker-compose.yml`의 `deploy.resources` 확인.
