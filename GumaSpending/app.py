@@ -449,6 +449,58 @@ def scheduled_codef_fetch() -> None:
         print(f"[scheduler] DB 재적재 실패: {type(e).__name__}: {e}", flush=True)
 
 
+BACKUP_ROOT = Path("/backups")
+BACKUP_RETAIN_DAYS = 30
+
+
+def scheduled_daily_backup() -> None:
+    """수집 JSON + spending.db + connected_ids.json을 /backups/<YYYYMMDD>/로 복제.
+
+    컨테이너에 /backups가 bind mount되어 있어야 호스트 디스크에 저장됨. 최근
+    BACKUP_RETAIN_DAYS일만 보관. 파괴적 작업은 하지 않음 — 오래된 폴더만 삭제.
+    """
+    import shutil
+    from datetime import date, timedelta
+
+    if not BACKUP_ROOT.exists():
+        print(f"[backup] {BACKUP_ROOT} 마운트 없음 — skip", flush=True)
+        return
+
+    stamp = date.today().strftime("%Y%m%d")
+    dest = BACKUP_ROOT / stamp
+    dest.mkdir(parents=True, exist_ok=True)
+
+    copied = 0
+    total_bytes = 0
+    patterns = [
+        APP_DIR.glob("transactions_*.json"),
+        APP_DIR.glob("bank_transactions_*.json"),
+        iter([APP_DIR / "spending.db"]),
+        iter([APP_DIR / "connected_ids.json"]),
+    ]
+    for group in patterns:
+        for src in group:
+            if not src.exists():
+                continue
+            target = dest / src.name
+            shutil.copy2(src, target)
+            copied += 1
+            total_bytes += target.stat().st_size
+    print(f"[backup] {stamp}: {copied}개 / {total_bytes:,}B → {dest}", flush=True)
+
+    cutoff = date.today() - timedelta(days=BACKUP_RETAIN_DAYS)
+    for child in BACKUP_ROOT.iterdir():
+        if not child.is_dir() or len(child.name) != 8 or not child.name.isdigit():
+            continue
+        try:
+            folder_date = datetime.strptime(child.name, "%Y%m%d").date()
+        except ValueError:
+            continue
+        if folder_date < cutoff:
+            shutil.rmtree(child)
+            print(f"[backup] 오래된 스냅샷 삭제: {child.name}", flush=True)
+
+
 def scheduled_bank_backfill() -> None:
     from datetime import date, timedelta
 
@@ -504,8 +556,19 @@ def start_scheduler() -> None:
         max_instances=1,
     )
 
+    # 매일 06:00 KST — 수집 JSON + spending.db 스냅샷 백업
+    scheduler.add_job(
+        scheduled_daily_backup,
+        CronTrigger(hour=6, minute=0, timezone=kst),
+        id="daily_backup",
+        replace_existing=True,
+        misfire_grace_time=3600,
+        coalesce=True,
+        max_instances=1,
+    )
+
     scheduler.start()
-    for job_id in ("bank_backfill_oneshot", "codef_fetch"):
+    for job_id in ("bank_backfill_oneshot", "codef_fetch", "daily_backup"):
         job = scheduler.get_job(job_id)
         if job:
             print(f"[scheduler] {job_id} 다음 실행: {job.next_run_time}", flush=True)
