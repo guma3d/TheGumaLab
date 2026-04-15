@@ -6,7 +6,9 @@ The function avoids repeating any of the previous questions passed in.
 """
 import json
 
-from gemini_client import get_model
+from google.genai import types
+
+from gemini_client import get_client, get_model_name
 
 SYSTEM_INSTRUCTION = """You are Guma, a friendly robot talking to a 7-9 year old Korean child who is learning English.
 
@@ -29,14 +31,7 @@ def generate_question(
     context_hint: str | None = None,
     previous_questions: list[str] | None = None,
 ) -> str:
-    """Return a fresh eliciting question for the given pattern.
-
-    Args:
-        pattern_english: The pattern skeleton, e.g. "Can I have a ___?".
-        example_sentences: Filled example sentences sharing the pattern.
-        context_hint: Optional situation hint (e.g. "snack shop"). None = free.
-        previous_questions: Questions already asked in this session.
-    """
+    """Return a fresh eliciting question for the given pattern."""
     previous = previous_questions or []
     context_line = (
         f"SITUATION: {context_hint}"
@@ -57,10 +52,13 @@ PREVIOUS_QUESTIONS (do not repeat these, even loosely):
 Now output ONE new English question that will elicit the target pattern.
 """
 
-    model = get_model()
-    response = model.generate_content(
-        [SYSTEM_INSTRUCTION, user_prompt],
-        generation_config={"temperature": 1.0},
+    response = get_client().models.generate_content(
+        model=get_model_name(),
+        contents=user_prompt,
+        config=types.GenerateContentConfig(
+            system_instruction=SYSTEM_INSTRUCTION,
+            temperature=1.0,
+        ),
     )
     return response.text.strip().strip('"').strip("'")
 

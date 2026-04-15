@@ -8,7 +8,9 @@ the round (no further conversation).
 import json
 import re
 
-from gemini_client import get_model
+from google.genai import types
+
+from gemini_client import get_client, get_model_name
 
 SYSTEM_INSTRUCTION = """You are Guma, a friendly robot talking to a 7-9 year old Korean child learning English.
 
@@ -46,10 +48,13 @@ CHILD_RESPONSE: {learner_response}
 
 Output the JSON now.
 """
-    model = get_model()
-    response = model.generate_content(
-        [SYSTEM_INSTRUCTION, user_prompt],
-        generation_config={"temperature": 0.4},
+    response = get_client().models.generate_content(
+        model=get_model_name(),
+        contents=user_prompt,
+        config=types.GenerateContentConfig(
+            system_instruction=SYSTEM_INSTRUCTION,
+            temperature=0.4,
+        ),
     )
     return _extract_json(response.text)
 

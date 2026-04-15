@@ -1,9 +1,9 @@
-"""Shared Gemini client setup for GumaEnglish prototype."""
+"""Shared Gemini client setup for GumaEnglish (google-genai SDK)."""
 import os
 from pathlib import Path
 
-import google.generativeai as genai
 from dotenv import load_dotenv
+from google import genai
 
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
@@ -16,8 +16,12 @@ if not API_KEY:
         f"GEMINI_API_KEY not found. Expected in {ROOT / '.env'}"
     )
 
-genai.configure(api_key=API_KEY)
+client = genai.Client(api_key=API_KEY)
 
 
-def get_model() -> genai.GenerativeModel:
-    return genai.GenerativeModel(MODEL_NAME)
+def get_client() -> genai.Client:
+    return client
+
+
+def get_model_name() -> str:
+    return MODEL_NAME
