@@ -21,10 +21,15 @@ from pathlib import Path
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.date import DateTrigger
 from flask import Flask, jsonify, render_template, send_from_directory
 
 from fetch_bank_transactions import run as run_bank_fetch
-from fetch_transactions import run as run_card_fetch
+from fetch_transactions import (
+    load_connected_ids,
+    load_credentials as load_codef_credentials,
+    run as run_card_fetch,
+)
 
 APP_DIR = Path(__file__).resolve().parent
 DB_PATH = APP_DIR / "spending.db"
@@ -444,21 +449,66 @@ def scheduled_codef_fetch() -> None:
         print(f"[scheduler] DB 재적재 실패: {type(e).__name__}: {e}", flush=True)
 
 
+def scheduled_bank_backfill() -> None:
+    from datetime import date, timedelta
+
+    from easycodefpy import Codef
+
+    from backfill import backfill_banks, make_chunks
+
+    print("[scheduler] 은행 730일 백필 시작", flush=True)
+    try:
+        cid, csec, pub = load_codef_credentials()
+        connected = load_connected_ids()
+        codef = Codef()
+        codef.public_key = pub
+        codef.set_demo_client_info(cid, csec)
+        end = date.today()
+        start = end - timedelta(days=730)
+        backfill_banks(codef, connected, make_chunks(start, end))
+        stats = reload_transactions()
+        print(f"[scheduler] 은행 백필 완료, DB 재적재: {stats}", flush=True)
+    except Exception as e:
+        print(f"[scheduler] 은행 백필 실패: {type(e).__name__}: {e}", flush=True)
+
+
 def start_scheduler() -> None:
-    scheduler = BackgroundScheduler(timezone="Asia/Seoul")
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    kst = ZoneInfo("Asia/Seoul")
+    scheduler = BackgroundScheduler(timezone=kst)
+
+    # 1회성: 내일 01:00 KST 은행 730일 백필 (CODEF 일 100건 리셋 후)
+    scheduler.add_job(
+        scheduled_bank_backfill,
+        DateTrigger(run_date=datetime(2026, 4, 16, 1, 0, tzinfo=kst)),
+        id="bank_backfill_oneshot",
+        replace_existing=True,
+        misfire_grace_time=3600,
+    )
+
+    # 정기: 2026-04-16 16:00 KST부터 매 4시간 (16/20/00/04/08/12)
     scheduler.add_job(
         scheduled_codef_fetch,
-        CronTrigger(hour="1,5,9,13,17,21", minute=30, timezone="Asia/Seoul"),
+        CronTrigger(
+            hour="0,4,8,12,16,20",
+            minute=0,
+            start_date=datetime(2026, 4, 16, 16, 0, tzinfo=kst),
+            timezone=kst,
+        ),
         id="codef_fetch",
         replace_existing=True,
         misfire_grace_time=300,
         coalesce=True,
         max_instances=1,
     )
+
     scheduler.start()
-    job = scheduler.get_job("codef_fetch")
-    if job:
-        print(f"[scheduler] 다음 실행: {job.next_run_time}", flush=True)
+    for job_id in ("bank_backfill_oneshot", "codef_fetch"):
+        job = scheduler.get_job(job_id)
+        if job:
+            print(f"[scheduler] {job_id} 다음 실행: {job.next_run_time}", flush=True)
 
 
 if __name__ == "__main__":
