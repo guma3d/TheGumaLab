@@ -54,6 +54,11 @@ function currentContext() {
   return contexts[state.roundIdx % contexts.length];
 }
 
+function currentTarget() {
+  const sentences = state.stage.pattern.sentences;
+  return sentences[state.roundIdx % sentences.length].en;
+}
+
 async function startRound() {
   $("start-btn").hidden = true;
   $("next-btn").hidden = true;
@@ -66,7 +71,7 @@ async function startRound() {
   try {
     const question = await askQuestion({
       pattern: state.stage.pattern.english,
-      examples: state.stage.pattern.sentences.map((s) => s.en),
+      target: currentTarget(),
       context: currentContext(),
       history: state.history,
     });

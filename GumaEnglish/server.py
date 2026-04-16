@@ -44,7 +44,7 @@ def api_question():
     data = request.get_json(force=True)
     question = generate_question(
         pattern_english=data["pattern"],
-        example_sentences=data["examples"],
+        target_sentence=data["target"],
         context_hint=data.get("context"),
         previous_questions=data.get("history", []),
     )

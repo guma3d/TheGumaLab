@@ -1,8 +1,9 @@
-"""Generate varied eliciting questions for a given pattern.
+"""Generate an eliciting question that targets ONE specific memorized sentence.
 
-Each call should return a fresh English question designed to make a
-7-9 year old child naturally produce a sentence in the target pattern.
-The function avoids repeating any of the previous questions passed in.
+Each round aims to pull the child toward one exact target sentence (e.g.
+"Can I have a cookie?") — not just "any sentence that fits the pattern".
+The question funnels the child toward the target's key word via the
+situation, without saying the key word itself.
 """
 import json
 
@@ -10,26 +11,27 @@ from gemini_client import generate_content
 
 SYSTEM_INSTRUCTION = """You are Guma, a friendly robot talking to a 7-9 year old Korean child who is learning English.
 
-Your single job: ask ONE short English question that naturally makes the child respond using the target PATTERN.
+Your single job: ask ONE short English question whose most natural answer is the TARGET_SENTENCE.
 
 Rules:
 - One question only. No explanation, no preface, no translation.
 - 8 words or fewer.
 - Warm, playful tone. Use simple vocabulary a 7-year-old knows.
-- The question must pull the child toward the target PATTERN — NOT toward other patterns.
-- Do NOT repeat any of the PREVIOUS_QUESTIONS. Vary the situation, wording, and angle.
-- Do NOT say the pattern yourself. The child should say it.
+- The question must funnel the child toward the TARGET_SENTENCE specifically — so they will naturally want to say that exact key word (cookie / water / pencil / etc.).
+- Do NOT say the key word itself in the question (don't leak the answer).
+- Do NOT say the pattern skeleton itself. The child should produce it.
+- Do NOT repeat any of the PREVIOUS_QUESTIONS. Vary wording and angle even when re-eliciting the same target.
 - Output ONLY the question text. No quotes, no JSON, no markdown.
 """
 
 
 def generate_question(
     pattern_english: str,
-    example_sentences: list[str],
+    target_sentence: str,
     context_hint: str | None = None,
     previous_questions: list[str] | None = None,
 ) -> str:
-    """Return a fresh eliciting question for the given pattern."""
+    """Return a fresh question whose natural answer is target_sentence."""
     previous = previous_questions or []
     context_line = (
         f"SITUATION: {context_hint}"
@@ -39,15 +41,13 @@ def generate_question(
 
     user_prompt = f"""{context_line}
 
-TARGET PATTERN: {pattern_english}
-
-EXAMPLES OF SENTENCES THE CHILD SHOULD PRODUCE:
-{chr(10).join(f'- {s}' for s in example_sentences)}
+PATTERN SKELETON (for reference): {pattern_english}
+TARGET_SENTENCE (the exact answer you want the child to say): {target_sentence}
 
 PREVIOUS_QUESTIONS (do not repeat these, even loosely):
 {json.dumps(previous, ensure_ascii=False) if previous else '(none)'}
 
-Now output ONE new English question that will elicit the target pattern.
+Now output ONE short question that will naturally make the child answer with the TARGET_SENTENCE.
 """
 
     text = generate_content(
@@ -60,18 +60,19 @@ Now output ONE new English question that will elicit the target pattern.
 
 if __name__ == "__main__":
     pattern = "Can I have a ___?"
-    examples = [
-        "Can I have a cookie?",
-        "Can I have some water?",
-        "Can I have a pencil?",
+    sentences = [
+        ("Can I have a cookie?", "snack shop"),
+        ("Can I have some water?", "playground"),
+        ("Can I have a pencil?", "library"),
     ]
     history: list[str] = []
-    for i in range(5):
+    for i, (target, ctx) in enumerate(sentences, start=1):
         q = generate_question(
             pattern_english=pattern,
-            example_sentences=examples,
-            context_hint=None,
+            target_sentence=target,
+            context_hint=ctx,
             previous_questions=history,
         )
-        print(f"[{i + 1}] {q}")
+        print(f"[{i}] target={target!r} ctx={ctx!r}")
+        print(f"    Q: {q}")
         history.append(q)

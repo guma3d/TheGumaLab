@@ -22,11 +22,11 @@ STAGE = {
 }
 
 
-def run_round(round_num: int, history: list[str], context: str | None) -> None:
-    print(f"\n===== Round {round_num} =====")
+def run_round(round_num: int, history: list[str], target: str, context: str) -> None:
+    print(f"\n===== Round {round_num} — target: {target!r} (ctx: {context}) =====")
     question = generate_question(
         pattern_english=STAGE["pattern_english"],
-        example_sentences=STAGE["examples"],
+        target_sentence=target,
         context_hint=context,
         previous_questions=history,
     )
@@ -56,8 +56,10 @@ def main() -> None:
 
     history: list[str] = []
     try:
-        for i, ctx in enumerate(STAGE["contexts"], start=1):
-            run_round(i, history, ctx)
+        for i, (target, ctx) in enumerate(
+            zip(STAGE["examples"], STAGE["contexts"]), start=1
+        ):
+            run_round(i, history, target, ctx)
     except KeyboardInterrupt:
         print("\n\nBye!")
 
