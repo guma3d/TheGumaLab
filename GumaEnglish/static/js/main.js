@@ -15,7 +15,6 @@ const state = {
   sentences: [],
   idx: 0,
   busy: false,
-  useVoice: speechSupported,
 };
 
 function normalize(text) {
@@ -97,18 +96,8 @@ function renderRound() {
   $("retry-btn").hidden = true;
   $("skip-btn").hidden = true;
   $("next-btn").hidden = true;
-
-  if (state.useVoice) {
-    $("speak-btn").hidden = false;
-    $("speak-btn").disabled = false;
-    $("text-input-row").hidden = true;
-  } else {
-    $("speak-btn").hidden = true;
-    $("text-input-row").hidden = false;
-    $("text-input").value = "";
-    $("text-input").disabled = false;
-    $("submit-text-btn").disabled = false;
-  }
+  $("speak-btn").hidden = false;
+  $("speak-btn").disabled = false;
 
   if (phase.playAudio) {
     setTimeout(() => speak(sent.en), 250);
@@ -123,14 +112,12 @@ function evaluateAnswer(heard) {
   if (isMatch(heard, sent.en)) {
     showFeedback("정확해요! 잘 말했어요 🎉", "ok");
     $("speak-btn").hidden = true;
-    $("text-input-row").hidden = true;
     $("next-btn").hidden = false;
   } else {
     showFeedback(`정답: "${sent.en}"`, "miss");
     $("retry-btn").hidden = false;
     $("skip-btn").hidden = false;
     $("speak-btn").hidden = true;
-    $("text-input-row").hidden = true;
   }
 }
 
@@ -145,23 +132,15 @@ async function handleSpeak() {
     const heard = await listenOnce({ lang: "en-US" });
     evaluateAnswer(heard);
   } catch (err) {
-    // STT가 사용 불가한 상황이면 텍스트 입력으로 전환
-    state.useVoice = false;
-    showBanner("음성 인식을 사용할 수 없어요. 텍스트로 입력해주세요.");
+    showFeedback(`음성 인식 실패: ${err.message}. 다시 시도해보세요.`, "miss");
+    $("retry-btn").hidden = false;
+    $("skip-btn").hidden = false;
     $("speak-btn").hidden = true;
-    $("text-input-row").hidden = false;
-    $("text-input").focus();
   } finally {
     state.busy = false;
     $("speak-btn").textContent = "🎤 말하기";
     $("speak-btn").disabled = false;
   }
-}
-
-function handleTextSubmit() {
-  const val = $("text-input").value.trim();
-  if (!val) return;
-  evaluateAnswer(val);
 }
 
 function showFeedback(text, kind) {
@@ -176,13 +155,7 @@ function handleRetry() {
   $("transcript").hidden = true;
   $("retry-btn").hidden = true;
   $("skip-btn").hidden = true;
-  if (state.useVoice) {
-    $("speak-btn").hidden = false;
-  } else {
-    $("text-input-row").hidden = false;
-    $("text-input").value = "";
-    $("text-input").focus();
-  }
+  $("speak-btn").hidden = false;
   const phase = currentPhase();
   if (phase.playAudio) speak(currentSentence().en);
 }
@@ -198,7 +171,6 @@ function handleNext() {
 
 function finishStage() {
   $("speak-btn").hidden = true;
-  $("text-input-row").hidden = true;
   $("next-btn").hidden = true;
   $("retry-btn").hidden = true;
   $("skip-btn").hidden = true;
@@ -233,7 +205,8 @@ async function main() {
   }
 
   if (!speechSupported) {
-    showBanner("이 브라우저는 음성 인식을 지원하지 않아요. 텍스트로 입력해 연습할 수 있어요.");
+    showBanner("이 브라우저는 음성 인식을 지원하지 않아요. Safari로 gumaenglish.guma3d.com 을 직접 열어 연습해주세요.");
+    $("start-btn").disabled = true;
   }
 
   $("start-btn").addEventListener("click", startPractice);
@@ -243,10 +216,6 @@ async function main() {
   $("next-btn").addEventListener("click", handleNext);
   $("restart-btn").addEventListener("click", restart);
   $("replay-btn").addEventListener("click", () => speak(currentSentence().en));
-  $("submit-text-btn").addEventListener("click", handleTextSubmit);
-  $("text-input").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") handleTextSubmit();
-  });
 }
 
 main();

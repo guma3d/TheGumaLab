@@ -161,26 +161,6 @@ header {
   line-height: 1.4;
 }
 
-#text-input-row {
-  display: flex;
-  gap: 8px;
-}
-#text-input {
-  flex: 1;
-  padding: 12px 14px;
-  border-radius: 10px;
-  border: 2px solid var(--panel-2);
-  background: var(--panel);
-  color: var(--fg);
-  font-size: 16px;
-  min-height: 44px;
-}
-#text-input:focus { outline: none; border-color: var(--accent); }
-#submit-text-btn {
-  font-size: 15px;
-  padding: 10px 16px;
-  min-height: 44px;
-}
 
 #controls {
   display: flex;
