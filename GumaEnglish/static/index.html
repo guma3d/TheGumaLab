@@ -17,22 +17,31 @@
       <div class="label">오늘의 패턴</div>
       <div class="pattern-en" id="pattern-en">…</div>
       <div class="pattern-ko" id="pattern-ko">…</div>
-      <ul class="examples" id="examples"></ul>
     </section>
 
-    <section id="chat">
-      <div id="chat-log" aria-live="polite"></div>
+    <section id="practice" hidden>
+      <div class="round-info">
+        <span id="round-label">라운드 1 / 12</span>
+        <span id="phase-label" class="phase-pill">1단계 · 보고 듣고 따라 말하기</span>
+      </div>
+
+      <div class="sentence-card">
+        <div class="sentence-en" id="sentence-en">…</div>
+        <div class="sentence-ko" id="sentence-ko">…</div>
+        <button id="replay-btn" type="button" class="ghost-btn" hidden>🔊 다시 듣기</button>
+      </div>
+
+      <div class="transcript" id="transcript" hidden></div>
+      <div class="feedback" id="feedback" hidden></div>
     </section>
 
     <section id="controls">
       <button id="start-btn" type="button">연습 시작</button>
-      <div id="input-row" hidden>
-        <input id="text-input" type="text" placeholder="영어로 대답해보세요…" autocomplete="off" />
-        <button id="mic-btn" type="button" title="음성으로 말하기">🎤</button>
-        <button id="send-btn" type="button">보내기</button>
-      </div>
-      <button id="next-btn" type="button" hidden>다음 라운드</button>
-      <button id="restart-btn" type="button" hidden>다시 연습</button>
+      <button id="speak-btn" type="button" hidden>🎤 말하기</button>
+      <button id="retry-btn" type="button" class="ghost-btn" hidden>다시 시도</button>
+      <button id="skip-btn" type="button" class="ghost-btn" hidden>넘어가기</button>
+      <button id="next-btn" type="button" hidden>다음 →</button>
+      <button id="restart-btn" type="button" hidden>처음부터 다시</button>
     </section>
 
     <footer>

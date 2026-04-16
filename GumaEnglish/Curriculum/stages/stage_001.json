@@ -7,9 +7,9 @@
     "english": "Can I have a ___?",
     "korean": "~를 가질 수 있을까요?",
     "sentences": [
-      { "en": "Can I have a cookie?", "ko": "쿠키 하나 가질 수 있을까요?" },
-      { "en": "Can I have some water?", "ko": "물 좀 가질 수 있을까요?" },
-      { "en": "Can I have a pencil?", "ko": "연필 하나 가질 수 있을까요?" }
+      { "en": "Can I have a cookie?", "ko": "쿠키 하나 가질 수 있을까요?", "keyword": "cookie" },
+      { "en": "Can I have some water?", "ko": "물 좀 가질 수 있을까요?", "keyword": "some water" },
+      { "en": "Can I have a pencil?", "ko": "연필 하나 가질 수 있을까요?", "keyword": "pencil" }
     ]
   },
   "weeks": [
