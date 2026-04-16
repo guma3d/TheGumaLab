@@ -607,8 +607,25 @@
             margin-bottom: 0.55rem;
             letter-spacing: -0.2px;
         }
+        .analysis-section-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.35rem;
+            height: 1.35rem;
+            border-radius: 50%;
+            background: var(--accent-color);
+            color: #000;
+            font-size: 0.72rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
         .analysis-section-title i {
             font-size: 0.75rem;
+        }
+        .analysis-highlight {
+            color: var(--accent-color);
+            font-weight: 600;
         }
         .analysis-section-body {
             font-size: 0.88rem;
@@ -1009,37 +1026,39 @@
         }
 
         function renderAnalysisBody(raw) {
-            // Split on `## 제목` markdown headers. Everything before the first header
-            // (if any) becomes an "개요" section so nothing is dropped.
             const text = (raw || '').trim();
-            const parts = text.split(/^##\s+/m).map(s => s.trim()).filter(Boolean);
+
+            // Parse sections: "1. Title", "2. Title", "## Title" patterns
+            const sectionRe = /^(?:(\d+)\.\s+|##\s+)(.+)$/;
             const sections = [];
-            if (parts.length && !/^##\s/m.test(text.split(/\r?\n/)[0] || '')) {
-                // Content before first header
-                const firstHeaderIdx = text.search(/^##\s+/m);
-                if (firstHeaderIdx > 0) {
-                    const preface = text.slice(0, firstHeaderIdx).trim();
-                    if (preface) sections.push({ title: '개요', body: preface });
-                    parts.shift();
-                    for (const p of parts) {
-                        const nl = p.indexOf('\n');
-                        sections.push({
-                            title: (nl === -1 ? p : p.slice(0, nl)).trim(),
-                            body: (nl === -1 ? '' : p.slice(nl + 1)).trim(),
-                        });
-                    }
-                } else {
-                    for (const p of parts) {
-                        const nl = p.indexOf('\n');
-                        sections.push({
-                            title: (nl === -1 ? p : p.slice(0, nl)).trim(),
-                            body: (nl === -1 ? '' : p.slice(nl + 1)).trim(),
-                        });
-                    }
+            let curTitle = null, curLines = [];
+            const flush = () => {
+                if (curTitle !== null) {
+                    sections.push({ title: curTitle, body: curLines.join('\n').trim() });
+                    curLines = [];
                 }
-            } else {
+            };
+            for (const line of text.split(/\r?\n/)) {
+                const m = line.trim().match(sectionRe);
+                if (m) {
+                    flush();
+                    curTitle = m[2].trim();
+                } else {
+                    curLines.push(line);
+                }
+            }
+            flush();
+            if (!sections.length) {
                 sections.push({ title: '분석', body: text });
             }
+
+            // Bold markdown **text** → highlighted span
+            const renderInline = (str) => {
+                return escapeHtml(str).replace(
+                    /\*\*(.+?)\*\*/g,
+                    '<span class="analysis-highlight">$1</span>'
+                );
+            };
 
             const renderBody = (body) => {
                 const lines = body.split(/\r?\n/).map(l => l.replace(/\s+$/, ''));
@@ -1048,13 +1067,13 @@
                 let paraBuf = [];
                 const flushList = () => {
                     if (listBuf.length) {
-                        out.push('<ul>' + listBuf.map(li => `<li>${escapeHtml(li)}</li>`).join('') + '</ul>');
+                        out.push('<ul>' + listBuf.map(li => `<li>${renderInline(li)}</li>`).join('') + '</ul>');
                         listBuf = [];
                     }
                 };
                 const flushPara = () => {
                     if (paraBuf.length) {
-                        out.push(`<p>${escapeHtml(paraBuf.join(' '))}</p>`);
+                        out.push(`<p>${renderInline(paraBuf.join(' '))}</p>`);
                         paraBuf = [];
                     }
                 };
@@ -1069,10 +1088,17 @@
                 return out.join('');
             };
 
-            return sections.map(sec => `
+            const sectionIcons = [
+                'fa-solid fa-chart-line',
+                'fa-solid fa-triangle-exclamation',
+                'fa-solid fa-cart-shopping',
+            ];
+
+            return sections.map((sec, idx) => `
                 <div class="analysis-section">
                     <div class="analysis-section-title">
-                        <i class="fa-solid fa-circle-dot"></i>${escapeHtml(sec.title)}
+                        <span class="analysis-section-num">${idx + 1}</span>
+                        <i class="${sectionIcons[idx] || 'fa-solid fa-circle-dot'}"></i>${escapeHtml(sec.title)}
                     </div>
                     <div class="analysis-section-body">${renderBody(sec.body)}</div>
                 </div>
