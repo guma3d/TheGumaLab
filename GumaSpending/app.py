@@ -356,6 +356,37 @@ def _prepare_month_data(ym: str) -> dict:
             (start, end),
         ).fetchall()
 
+        # 전후 월 대형 정기 이체 컨텍스트 (같은 store_name이 월에 걸쳐 밀림 감지)
+        # 해당 월 은행 출금 중 100만원 이상인 store_name을 기준으로 전월/차월 건수·금액 비교
+        big_bank_names = conn.execute(
+            "SELECT DISTINCT store_name FROM transactions "
+            "WHERE source='bank' AND used_date>=? AND used_date<? AND amount>=1000000",
+            (start, end),
+        ).fetchall()
+
+        adjacent_context: list[dict] = []
+        if big_bank_names:
+            prev_m = m - 1 if m > 1 else 12
+            prev_y = y if m > 1 else y - 1
+            prev_start = f"{prev_y:04d}-{prev_m:02d}-01"
+            next_next_m = next_m + 1 if next_m < 12 else 1
+            next_next_y = next_y if next_m < 12 else next_y + 1
+            next_end = f"{next_next_y:04d}-{next_next_m:02d}-01"
+
+            for (name,) in big_bank_names:
+                rows = conn.execute(
+                    "SELECT used_date, amount FROM transactions "
+                    "WHERE source='bank' AND store_name=? AND used_date>=? AND used_date<? "
+                    "ORDER BY used_date",
+                    (name, prev_start, next_end),
+                ).fetchall()
+                if rows:
+                    months_map: dict[str, list] = {}
+                    for rd, ra in rows:
+                        mk = rd[:7]
+                        months_map.setdefault(mk, []).append({"date": rd, "amount": ra})
+                    adjacent_context.append({"name": name, "months": months_map})
+
     return {
         "ym": ym,
         "total": total_row[0],
@@ -365,6 +396,7 @@ def _prepare_month_data(ym: str) -> dict:
             {"name": r[0], "category": r[1] or "기타", "total": r[2], "count": r[3]}
             for r in store_rows
         ],
+        "adjacent_transfers": adjacent_context,
     }
 
 
@@ -390,6 +422,24 @@ def _build_prompt(data: dict, is_current: bool) -> str:
         "[주요 지출처 Top 20]",
         stores_text,
     ]
+
+    # 전후 월 대형 정기 이체 컨텍스트
+    adj = data.get("adjacent_transfers", [])
+    if adj:
+        lines += ["", "[대형 정기 이체 — 전월/당월/차월 비교]"]
+        for item in adj:
+            lines.append(f"  ▸ {item['name']}:")
+            for mk in sorted(item["months"]):
+                entries = item["months"][mk]
+                total = sum(e["amount"] for e in entries)
+                dates = ", ".join(e["date"] for e in entries)
+                lines.append(f"    {mk}: {len(entries)}건 {total:,}원 ({dates})")
+        lines += [
+            "",
+            "※ 위 정기 이체가 한 달에 2회 발생하면 전후 달에 0회인 경우가 많습니다.",
+            "  이 경우 실질적으로 월 1회 비용이므로 해당 월 지출이 과대 계상된 것이 아닙니다.",
+            "  분석 시 이 맥락을 반드시 반영해주세요.",
+        ]
 
     if is_current:
         today = date.today()
