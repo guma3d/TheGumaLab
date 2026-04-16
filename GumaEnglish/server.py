@@ -18,6 +18,15 @@ app = Flask(__name__, static_folder=None)
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
 
 
+@app.after_request
+def no_store(resp):
+    # 인앱 WebView(iOS WKWebView 등)가 JS를 눌러붙이는 걸 막으려면 no-store가 제일 확실.
+    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    return resp
+
+
 @app.get("/")
 def index():
     return send_from_directory(STATIC_DIR, "index.html")
