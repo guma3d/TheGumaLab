@@ -190,6 +190,12 @@
             letter-spacing: 1px;
             margin-bottom: 0.3rem;
         }
+        .month-total-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.8rem;
+        }
         .month-total-amount {
             font-size: 2.4rem;
             font-weight: 700;
@@ -480,8 +486,8 @@
             display: inline-flex;
             align-items: center;
             gap: 0.4rem;
-            margin-top: 0.9rem;
             padding: 0.45rem 1rem;
+            flex-shrink: 0;
             border-radius: 10px;
             border: 1px solid rgba(16, 185, 129, 0.35);
             background: rgba(16, 185, 129, 0.08);
@@ -728,15 +734,17 @@
                 <button id="next-month" title="다음 달"><i class="fa-solid fa-chevron-right"></i></button>
             </div>
             <div class="month-total-label">Total spending</div>
-            <div class="month-total-amount">
-                <span id="month-total">0</span>
-                <span class="currency">KRW</span>
+            <div class="month-total-row">
+                <div class="month-total-amount">
+                    <span id="month-total">0</span>
+                    <span class="currency">KRW</span>
+                </div>
+                <button class="analyze-btn" id="analyze-btn">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> 분석
+                </button>
             </div>
             <div class="month-total-count" id="month-count">—</div>
             <div class="month-source-split" id="month-source-split"></div>
-            <button class="analyze-btn" id="analyze-btn">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> 분석
-            </button>
         </section>
 
         <!-- AI Analysis Modal -->
