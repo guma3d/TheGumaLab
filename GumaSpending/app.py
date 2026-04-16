@@ -16,6 +16,7 @@ import json
 import os
 import re
 import sqlite3
+import time
 import unicodedata
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -621,6 +622,51 @@ def api_summary():
             "months": [r["ym"] for r in months_row],
         }
     )
+
+
+@app.route("/api/analyze/backfill", methods=["POST"])
+def api_analyze_backfill():
+    """미분석 과거 월 전체를 백그라운드 스레드로 순차 생성."""
+    import threading
+
+    def _run():
+        with _db() as conn:
+            all_months = [
+                r[0]
+                for r in conn.execute(
+                    "SELECT DISTINCT SUBSTR(used_date,1,7) FROM transactions ORDER BY 1"
+                ).fetchall()
+            ]
+            analyzed = {
+                r[0] for r in conn.execute("SELECT ym FROM analyses").fetchall()
+            }
+        today = date.today()
+        current_ym = f"{today.year:04d}-{today.month:02d}"
+        targets = [m for m in all_months if m < current_ym and m not in analyzed]
+        print(f"[backfill] 대상 {len(targets)}개월: {targets}", flush=True)
+        for i, ym in enumerate(targets):
+            try:
+                data = _prepare_month_data(ym)
+                if data["total"] == 0:
+                    print(f"[backfill] {ym} 데이터 없음 skip", flush=True)
+                    continue
+                content = _call_gemini(_build_prompt(data, is_current=False))
+                now_str = datetime.now().isoformat()
+                with _db() as conn:
+                    conn.execute(
+                        "INSERT OR REPLACE INTO analyses (ym,content,generated_at) VALUES (?,?,?)",
+                        (ym, content, now_str),
+                    )
+                    conn.commit()
+                ok = "OK" if len(content) > 50 else "FAIL"
+                print(f"[backfill] [{i+1}/{len(targets)}] {ym} {ok}", flush=True)
+            except Exception as e:
+                print(f"[backfill] [{i+1}/{len(targets)}] {ym} ERROR: {e}", flush=True)
+            time.sleep(2)
+        print("[backfill] 완료", flush=True)
+
+    threading.Thread(target=_run, daemon=True).start()
+    return jsonify({"status": "started"})
 
 
 @app.route("/api/refresh", methods=["POST"])
