@@ -725,6 +725,28 @@ def scheduled_bank_backfill() -> None:
         print(f"[scheduler] 은행 백필 실패: {type(e).__name__}: {e}", flush=True)
 
 
+def scheduled_update_current_analysis() -> None:
+    """수집 1시간 후 — 현재 월 분석을 강제 갱신."""
+    today = date.today()
+    ym = f"{today.year:04d}-{today.month:02d}"
+    print(f"[auto-analyze] 현재 월 {ym} 분석 갱신", flush=True)
+    try:
+        data = _prepare_month_data(ym)
+        if data["total"] == 0:
+            return
+        content = _call_gemini(_build_prompt(data, is_current=True))
+        now_str = datetime.now().isoformat()
+        with _db() as conn:
+            conn.execute(
+                "INSERT OR REPLACE INTO analyses (ym, content, generated_at) VALUES (?,?,?)",
+                (ym, content, now_str),
+            )
+            conn.commit()
+        print(f"[auto-analyze] {ym} 갱신 완료", flush=True)
+    except Exception as e:
+        print(f"[auto-analyze] {ym} 갱신 실패: {e}", flush=True)
+
+
 def scheduled_auto_analyze() -> None:
     """매월 1일 02:00 — 지난달 분석 자동 생성."""
     last_month = date.today().replace(day=1) - timedelta(days=1)
@@ -785,6 +807,17 @@ def start_scheduler() -> None:
         max_instances=1,
     )
 
+    # 수집(0,4,8,12,16,20시) 1시간 후 — 현재 월 분석 갱신
+    scheduler.add_job(
+        scheduled_update_current_analysis,
+        CronTrigger(hour="1,5,9,13,17,21", minute=0, timezone=kst),
+        id="update_current_analysis",
+        replace_existing=True,
+        misfire_grace_time=300,
+        coalesce=True,
+        max_instances=1,
+    )
+
     # 매월 1일 02:00 KST — 지난달 AI 분석 자동 생성
     scheduler.add_job(
         scheduled_auto_analyze,
@@ -808,7 +841,7 @@ def start_scheduler() -> None:
     )
 
     scheduler.start()
-    for job_id in ("bank_backfill_oneshot", "codef_fetch", "daily_backup", "auto_analyze"):
+    for job_id in ("bank_backfill_oneshot", "codef_fetch", "daily_backup", "auto_analyze", "update_current_analysis"):
         job = scheduler.get_job(job_id)
         if job:
             print(f"[scheduler] {job_id} 다음 실행: {job.next_run_time}", flush=True)
