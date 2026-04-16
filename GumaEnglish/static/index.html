@@ -9,6 +9,7 @@
 <body>
   <div id="fatal-error" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff6b9d;color:#0d1020;padding:12px 16px;font:14px system-ui;white-space:pre-wrap;word-break:break-all;"></div>
   <script>
+    // 예외 시에만 표시되는 최후 수단 에러 배너. 평소엔 숨김.
     (function() {
       function showErr(msg) {
         var el = document.getElementById('fatal-error');

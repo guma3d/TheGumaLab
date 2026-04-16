@@ -223,30 +223,10 @@ function restart() {
   startPractice();
 }
 
-function debug(msg) {
-  const el = document.getElementById("fatal-error");
-  if (!el) return;
-  el.style.background = "#7cf0ff";
-  el.style.display = "block";
-  const prev = el.textContent;
-  el.textContent = (prev ? prev + "\n" : "") + "[debug] " + msg;
-}
-
 async function main() {
-  debug("main.js v4 loaded; speechSupported=" + speechSupported);
-
-  const required = ["start-btn","speak-btn","retry-btn","skip-btn","next-btn","restart-btn","replay-btn","submit-text-btn","text-input","practice","sentence-en","sentence-ko","feedback","transcript","round-label","phase-label","banner","pattern-en","pattern-ko","stage-num","robot-name"];
-  const missing = required.filter((id) => !document.getElementById(id));
-  if (missing.length) {
-    debug("MISSING elements: " + missing.join(", "));
-    return;
-  }
-
   try {
     await loadStage(1);
-    debug("stage loaded: " + state.stage.pattern.english);
   } catch (err) {
-    debug("loadStage failed: " + err.message);
     $("pattern-en").textContent = "스테이지 로드 실패";
     $("pattern-ko").textContent = err.message;
     return;
@@ -256,7 +236,7 @@ async function main() {
     showBanner("이 브라우저는 음성 인식을 지원하지 않아요. 텍스트로 입력해 연습할 수 있어요.");
   }
 
-  $("start-btn").addEventListener("click", () => { debug("start clicked"); startPractice(); });
+  $("start-btn").addEventListener("click", startPractice);
   $("speak-btn").addEventListener("click", handleSpeak);
   $("retry-btn").addEventListener("click", handleRetry);
   $("skip-btn").addEventListener("click", handleNext);
@@ -267,7 +247,6 @@ async function main() {
   $("text-input").addEventListener("keydown", (e) => {
     if (e.key === "Enter") handleTextSubmit();
   });
-  debug("listeners attached; ready");
 }
 
 main();
