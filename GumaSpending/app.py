@@ -163,14 +163,23 @@ def _ingest_cards(conn: sqlite3.Connection) -> dict:
         org = payload.get("organization", "")
         card_name = payload.get("card_name", "")
         for tx in payload.get("transactions", []):
-            if tx.get("resCancelYN") == "Y":
+            cancel_yn = (tx.get("resCancelYN") or "").strip()
+            if cancel_yn in ("Y", "1"):
                 skipped_cancel += 1
                 continue
             try:
                 amount = int(tx.get("resUsedAmount", "0") or "0")
             except ValueError:
                 amount = 0
+            # 부분 환불: cancelAmount만큼 차감
+            try:
+                cancel_amt = int(tx.get("resCancelAmount", "0") or "0")
+            except ValueError:
+                cancel_amt = 0
+            if cancel_amt > 0:
+                amount -= cancel_amt
             if amount <= 0:
+                skipped_cancel += 1
                 continue
 
             used_date = _parse_yyyymmdd(tx.get("resUsedDate", ""))
