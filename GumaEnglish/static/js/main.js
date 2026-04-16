@@ -1,5 +1,5 @@
-import { fetchStage } from "/js/api.js?v=4";
-import { speak, listenOnce, speechSupported } from "/js/voice.js?v=4";
+import { fetchStage } from "/js/api.js?v=5";
+import { speak, listenOnce, speechSupported } from "/js/voice.js?v=5";
 
 const $ = (id) => document.getElementById(id);
 
@@ -10,12 +10,19 @@ const PHASES = [
   { id: 4, label: "4단계 · 보지도 듣지도 않고 말하기", showEn: "hidden",  playAudio: false },
 ];
 
+const INTRO_KO = "문장을 듣고 똑같이 따라해 주세요.";
+const CORRECT_KO = ["정답이에요!", "잘 했어요!", "완벽해요!"];
+const WRONG_KO = ["다시 해볼까요?", "한 번 더 들어볼게요.", "천천히 따라해 볼게요."];
+
 const state = {
   stage: null,
   sentences: [],
   idx: 0,
   busy: false,
+  cancelled: false,
 };
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 function normalize(text) {
   return (text || "")
@@ -38,17 +45,9 @@ function maskKeyword(sentence, keyword) {
   return sentence.replace(re, (m) => m.replace(/\S/g, "▁"));
 }
 
-function totalRounds() {
-  return state.sentences.length * PHASES.length;
-}
-
-function currentPhase() {
-  return PHASES[state.idx % PHASES.length];
-}
-
-function currentSentence() {
-  return state.sentences[Math.floor(state.idx / PHASES.length)];
-}
+function totalRounds() { return state.sentences.length * PHASES.length; }
+function currentPhase() { return PHASES[state.idx % PHASES.length]; }
+function currentSentence() { return state.sentences[Math.floor(state.idx / PHASES.length)]; }
 
 async function loadStage(num) {
   state.stage = await fetchStage(num);
@@ -65,7 +64,20 @@ function showBanner(text) {
   el.hidden = false;
 }
 
-function renderRound() {
+function showFeedback(text, kind) {
+  const el = $("feedback");
+  el.hidden = false;
+  el.textContent = text;
+  el.className = `feedback ${kind}`;
+}
+
+function hideFeedback() {
+  $("feedback").hidden = true;
+  $("feedback").textContent = "";
+  $("feedback").className = "feedback";
+}
+
+function renderRoundUI() {
   const phase = currentPhase();
   const sent = currentSentence();
 
@@ -90,86 +102,80 @@ function renderRound() {
   $("replay-btn").hidden = !phase.playAudio;
   $("transcript").hidden = true;
   $("transcript").textContent = "";
-  $("feedback").hidden = true;
-  $("feedback").textContent = "";
-  $("feedback").className = "feedback";
+  hideFeedback();
+  $("speak-btn").hidden = true;
   $("retry-btn").hidden = true;
-  $("skip-btn").hidden = true;
   $("next-btn").hidden = true;
-  $("speak-btn").hidden = false;
-  $("speak-btn").disabled = false;
+  $("skip-btn").hidden = false;
+}
+
+async function runCurrentRound() {
+  if (state.cancelled) return;
+  const phase = currentPhase();
+  const sent = currentSentence();
+  renderRoundUI();
 
   if (phase.playAudio) {
-    setTimeout(() => speak(sent.en), 250);
+    showFeedback("🔊 잘 들어보세요…", "listening");
+    await speak(sent.en);
+    if (state.cancelled) return;
+  }
+
+  await autoListen();
+}
+
+async function autoListen() {
+  if (state.cancelled) return;
+  state.busy = true;
+  showFeedback("🎤 지금 따라 말해보세요!", "listening");
+
+  try {
+    const heard = await listenOnce({ lang: "en-US" });
+    if (state.cancelled) return;
+    await evaluateAnswer(heard);
+  } catch (err) {
+    if (state.cancelled) return;
+    // STT 실패 — 재시도 버튼 노출. 자동 재시도는 iOS 제약 때문에 사용자 한 번의 탭 필요.
+    showFeedback("음성이 잘 들리지 않아요. '다시 시도'를 눌러주세요.", "miss");
+    $("retry-btn").hidden = false;
+  } finally {
+    state.busy = false;
   }
 }
 
-function evaluateAnswer(heard) {
+async function evaluateAnswer(heard) {
   const sent = currentSentence();
   $("transcript").hidden = false;
   $("transcript").textContent = `내가 말한 것: "${heard}"`;
 
   if (isMatch(heard, sent.en)) {
-    showFeedback("정확해요! 잘 말했어요 🎉", "ok");
-    $("speak-btn").hidden = true;
-    $("next-btn").hidden = false;
+    showFeedback(`✅ 정답: "${sent.en}"`, "ok");
+    await speak(pick(CORRECT_KO), { lang: "ko-KR" });
+    if (state.cancelled) return;
+    await sleep(500);
+    advanceToNext();
   } else {
-    showFeedback(`정답: "${sent.en}"`, "miss");
-    $("retry-btn").hidden = false;
-    $("skip-btn").hidden = false;
-    $("speak-btn").hidden = true;
+    showFeedback(`🔁 정답은 "${sent.en}" 이에요`, "miss");
+    await speak(pick(WRONG_KO), { lang: "ko-KR" });
+    if (state.cancelled) return;
+    await sleep(400);
+    await runCurrentRound(); // auto-retry same round
   }
 }
 
-async function handleSpeak() {
-  if (state.busy) return;
-  state.busy = true;
-  $("speak-btn").disabled = true;
-  $("speak-btn").textContent = "🎤 듣는 중…";
-  $("feedback").hidden = true;
+function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
-  try {
-    const heard = await listenOnce({ lang: "en-US" });
-    evaluateAnswer(heard);
-  } catch (err) {
-    showFeedback(`음성 인식 실패: ${err.message}. 다시 시도해보세요.`, "miss");
-    $("retry-btn").hidden = false;
-    $("skip-btn").hidden = false;
-    $("speak-btn").hidden = true;
-  } finally {
-    state.busy = false;
-    $("speak-btn").textContent = "🎤 말하기";
-    $("speak-btn").disabled = false;
-  }
-}
-
-function showFeedback(text, kind) {
-  const el = $("feedback");
-  el.hidden = false;
-  el.textContent = text;
-  el.className = `feedback ${kind}`;
-}
-
-function handleRetry() {
-  $("feedback").hidden = true;
-  $("transcript").hidden = true;
-  $("retry-btn").hidden = true;
-  $("skip-btn").hidden = true;
-  $("speak-btn").hidden = false;
-  const phase = currentPhase();
-  if (phase.playAudio) speak(currentSentence().en);
-}
-
-function handleNext() {
+function advanceToNext() {
   state.idx += 1;
   if (state.idx >= totalRounds()) {
     finishStage();
   } else {
-    renderRound();
+    runCurrentRound();
   }
 }
 
 function finishStage() {
+  state.cancelled = true;
   $("speak-btn").hidden = true;
   $("next-btn").hidden = true;
   $("retry-btn").hidden = true;
@@ -179,19 +185,37 @@ function finishStage() {
   $("sentence-en").textContent = "";
   $("sentence-ko").textContent = "";
   showFeedback("이 스테이지 연습을 모두 마쳤어요! 🏆", "ok");
+  speak("잘 했어요! 오늘 연습 끝!", { lang: "ko-KR" });
 }
 
-function startPractice() {
+async function startPractice() {
   $("start-btn").hidden = true;
   $("restart-btn").hidden = true;
   $("practice").hidden = false;
   state.idx = 0;
-  renderRound();
+  state.cancelled = false;
+  renderRoundUI();
+  showFeedback("🔊 안내를 듣고 있어요…", "listening");
+  await speak(INTRO_KO, { lang: "ko-KR" });
+  if (state.cancelled) return;
+  await runCurrentRound();
+}
+
+function handleSkip() {
+  state.busy = false;
+  advanceToNext();
+}
+
+async function handleRetry() {
+  $("retry-btn").hidden = true;
+  await runCurrentRound();
 }
 
 function restart() {
-  $("feedback").hidden = true;
-  $("feedback").textContent = "";
+  state.cancelled = true;
+  try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch {}
+  state.idx = 0;
+  hideFeedback();
   startPractice();
 }
 
@@ -205,15 +229,13 @@ async function main() {
   }
 
   if (!speechSupported) {
-    showBanner("이 브라우저는 음성 인식을 지원하지 않아요. Safari로 gumaenglish.guma3d.com 을 직접 열어 연습해주세요.");
+    showBanner("이 브라우저는 음성 인식을 지원하지 않아요. Safari로 gumaenglish.guma3d.com 을 직접 열어주세요.");
     $("start-btn").disabled = true;
   }
 
   $("start-btn").addEventListener("click", startPractice);
-  $("speak-btn").addEventListener("click", handleSpeak);
   $("retry-btn").addEventListener("click", handleRetry);
-  $("skip-btn").addEventListener("click", handleNext);
-  $("next-btn").addEventListener("click", handleNext);
+  $("skip-btn").addEventListener("click", handleSkip);
   $("restart-btn").addEventListener("click", restart);
   $("replay-btn").addEventListener("click", () => speak(currentSentence().en));
 }

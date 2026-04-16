@@ -4,12 +4,16 @@ const SpeechRecognition =
 export const speechSupported = !!SpeechRecognition;
 
 export function speak(text, { lang = "en-US", rate = 0.95 } = {}) {
-  if (!("speechSynthesis" in window)) return;
-  try { window.speechSynthesis.cancel(); } catch {}
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = lang;
-  u.rate = rate;
-  window.speechSynthesis.speak(u);
+  return new Promise((resolve) => {
+    if (!("speechSynthesis" in window)) return resolve();
+    try { window.speechSynthesis.cancel(); } catch {}
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang;
+    u.rate = rate;
+    u.onend = () => resolve();
+    u.onerror = () => resolve();
+    window.speechSynthesis.speak(u);
+  });
 }
 
 export function listenOnce({ lang = "en-US" } = {}) {
