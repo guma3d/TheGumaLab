@@ -39,6 +39,9 @@ DB_PATH = APP_DIR / "spending.db"
 CARD_TX_GLOB = str(APP_DIR / "transactions_*.json")
 BANK_TX_GLOB = str(APP_DIR / "bank_transactions_*.json")
 
+EXCLUDED_STORE_NAMES = ("정자아이파크입주자대표회의",)
+_EXCL_CLAUSE = " AND store_name NOT IN (" + ",".join("?" * len(EXCLUDED_STORE_NAMES)) + ")"
+
 ORG_NAMES = {
     # cards
     "0301": "KB카드",
@@ -341,27 +344,29 @@ def _prepare_month_data(ym: str) -> dict:
 
     with _db() as conn:
         total_row = conn.execute(
-            "SELECT COALESCE(SUM(amount),0), COUNT(*) FROM transactions WHERE used_date>=? AND used_date<?",
-            (start, end),
+            "SELECT COALESCE(SUM(amount),0), COUNT(*) FROM transactions "
+            "WHERE used_date>=? AND used_date<?" + _EXCL_CLAUSE,
+            (start, end, *EXCLUDED_STORE_NAMES),
         ).fetchone()
         source_rows = conn.execute(
             "SELECT source, COALESCE(SUM(amount),0), COUNT(*) FROM transactions "
-            "WHERE used_date>=? AND used_date<? GROUP BY source",
-            (start, end),
+            "WHERE used_date>=? AND used_date<?" + _EXCL_CLAUSE + " GROUP BY source",
+            (start, end, *EXCLUDED_STORE_NAMES),
         ).fetchall()
         store_rows = conn.execute(
             "SELECT store_name, store_category, SUM(amount) AS total, COUNT(*) AS cnt "
-            "FROM transactions WHERE used_date>=? AND used_date<? "
+            "FROM transactions WHERE used_date>=? AND used_date<?" + _EXCL_CLAUSE + " "
             "GROUP BY store_name ORDER BY total DESC LIMIT 20",
-            (start, end),
+            (start, end, *EXCLUDED_STORE_NAMES),
         ).fetchall()
 
         # 전후 월 대형 정기 이체 컨텍스트 (같은 store_name이 월에 걸쳐 밀림 감지)
         # 해당 월 은행 출금 중 100만원 이상인 store_name을 기준으로 전월/차월 건수·금액 비교
         big_bank_names = conn.execute(
             "SELECT DISTINCT store_name FROM transactions "
-            "WHERE source='bank' AND used_date>=? AND used_date<? AND amount>=1000000",
-            (start, end),
+            "WHERE source='bank' AND used_date>=? AND used_date<? AND amount>=1000000"
+            + _EXCL_CLAUSE,
+            (start, end, *EXCLUDED_STORE_NAMES),
         ).fetchall()
 
         adjacent_context: list[dict] = []
@@ -441,6 +446,13 @@ def _build_prompt(data: dict, is_current: bool) -> str:
             "  분석 시 이 맥락을 반드시 반영해주세요.",
         ]
 
+    exclusion_rules = [
+        "",
+        "[분석 제외 규칙 — 반드시 지켜주세요]",
+        "- 편의점 지출(GS25, CU, 세븐일레븐, 이마트24 등)은 불가피한 소비이므로 분석·조언에서 언급하지 마세요.",
+        "- '편의점', 'GS25', 'CU', '세븐일레븐' 같은 단어를 출력에 포함하지 마세요.",
+    ]
+
     if is_current:
         today = date.today()
         days_passed = today.day
@@ -448,28 +460,51 @@ def _build_prompt(data: dict, is_current: bool) -> str:
         days_left = days_in_month - days_passed
         daily_avg = data["total"] // days_passed if days_passed > 0 else 0
         projected = daily_avg * days_in_month
-        lines += [
+        lines += exclusion_rules + [
             "",
             f"[현재 기준] {month_name} {today.day}일 (경과 {days_passed}일, 남은 {days_left}일)",
             f"  - 일평균 지출: {daily_avg:,}원 / 이달 말 예상 누적: {projected:,}원",
             "",
-            "다음 항목을 한국어로 분석해주세요:",
-            "1. 지금까지 지출에서 과도하거나 줄일 수 있는 부분 (구체적 금액 언급)",
-            "2. 남은 기간 소비 조언 및 주의사항",
-            "3. 이번 달 예상 총 지출과 절약 목표 제안",
+            "아래 구조로 한국어 분석을 작성해주세요. 각 섹션은 `## 제목` 마크다운 헤더로 시작합니다.",
             "",
-            "형식: 마크다운 없이 자연스러운 문단. 500자 내외.",
+            "## 지출 현황",
+            "- 지금까지의 지출 규모와 주요 카테고리별 분포를 설명",
+            "",
+            "## 과도하거나 줄일 수 있는 지출",
+            "- 구체적 금액·가맹점을 짚어가며 분석 (편의점·정자아이파크 주차는 제외)",
+            "",
+            "## 남은 기간 소비 조언",
+            "- 남은 일수 동안 주의할 지점과 실천 가능한 조언",
+            "",
+            "## 예상 총 지출 & 절약 목표",
+            "- 이달 말 예상 누적과 달성 가능한 절약 목표 제안",
+            "",
+            "작성 규칙:",
+            "- 각 섹션 제목은 위에 명시된 4개를 그대로 사용하세요.",
+            "- 섹션 본문은 자연스러운 문장으로 작성하되, 필요하면 `- ` 불릿을 사용해도 됩니다.",
+            "- 요약하지 말고 필요한 내용은 모두 담되, 불필요한 수식·반복은 줄여주세요.",
         ]
     else:
-        lines += [
+        lines += exclusion_rules + [
             "",
-            "다음을 한국어로 작성해주세요 (이달 총평):",
-            "1. 이달 지출 패턴의 핵심 특징",
-            "2. 과도했거나 아쉬웠던 지출",
-            "3. 잘한 점 또는 특이사항",
-            "4. 다음 달을 위한 한 줄 조언",
+            "아래 구조로 이달 총평을 한국어로 작성해주세요. 각 섹션은 `## 제목` 마크다운 헤더로 시작합니다.",
             "",
-            "형식: 마크다운 없이 자연스러운 문단. 400자 내외.",
+            "## 지출 패턴의 핵심 특징",
+            "- 이달 지출을 관통하는 핵심 패턴",
+            "",
+            "## 과도했거나 아쉬웠던 지출",
+            "- 구체적 금액·가맹점과 함께 (편의점·정자아이파크 주차는 제외)",
+            "",
+            "## 잘한 점 또는 특이사항",
+            "- 긍정적으로 볼 만한 지출 습관 또는 이례적인 항목",
+            "",
+            "## 다음 달을 위한 조언",
+            "- 다음 달에 적용할 수 있는 구체적 행동 제안",
+            "",
+            "작성 규칙:",
+            "- 각 섹션 제목은 위에 명시된 4개를 그대로 사용하세요.",
+            "- 섹션 본문은 자연스러운 문장으로 작성하되, 필요하면 `- ` 불릿을 사용해도 됩니다.",
+            "- 요약하지 말고 필요한 내용은 모두 담되, 불필요한 수식·반복은 줄여주세요.",
         ]
     return "\n".join(lines)
 
@@ -570,44 +605,44 @@ def api_month(ym: str):
 
     with _db() as conn:
         rows = conn.execute(
-            """
+            f"""
             SELECT used_date, SUM(amount) AS total, COUNT(*) AS cnt
             FROM transactions
-            WHERE used_date >= ? AND used_date < ?
+            WHERE used_date >= ? AND used_date < ?{_EXCL_CLAUSE}
             GROUP BY used_date
             ORDER BY used_date
             """,
-            (start, end),
+            (start, end, *EXCLUDED_STORE_NAMES),
         ).fetchall()
 
         month_total_row = conn.execute(
-            """
+            f"""
             SELECT COALESCE(SUM(amount), 0) AS total, COUNT(*) AS cnt
             FROM transactions
-            WHERE used_date >= ? AND used_date < ?
+            WHERE used_date >= ? AND used_date < ?{_EXCL_CLAUSE}
             """,
-            (start, end),
+            (start, end, *EXCLUDED_STORE_NAMES),
         ).fetchone()
 
         by_card_rows = conn.execute(
-            """
+            f"""
             SELECT source, org, card_name, SUM(amount) AS total, COUNT(*) AS cnt
             FROM transactions
-            WHERE used_date >= ? AND used_date < ?
+            WHERE used_date >= ? AND used_date < ?{_EXCL_CLAUSE}
             GROUP BY source, org, card_name
             ORDER BY total DESC
             """,
-            (start, end),
+            (start, end, *EXCLUDED_STORE_NAMES),
         ).fetchall()
 
         by_source_row = conn.execute(
-            """
+            f"""
             SELECT source, COALESCE(SUM(amount), 0) AS total, COUNT(*) AS cnt
             FROM transactions
-            WHERE used_date >= ? AND used_date < ?
+            WHERE used_date >= ? AND used_date < ?{_EXCL_CLAUSE}
             GROUP BY source
             """,
-            (start, end),
+            (start, end, *EXCLUDED_STORE_NAMES),
         ).fetchall()
 
     days = {r["used_date"]: {"total": r["total"], "count": r["cnt"]} for r in rows}
@@ -639,14 +674,14 @@ def api_day(ymd: str):
 
     with _db() as conn:
         rows = conn.execute(
-            """
+            f"""
             SELECT source, org, card_name, sub_card_name, card_no_masked, used_time,
                    store_name, store_category, amount
             FROM transactions
-            WHERE used_date = ?
+            WHERE used_date = ?{_EXCL_CLAUSE}
             ORDER BY amount DESC, used_time DESC
             """,
-            (ymd,),
+            (ymd, *EXCLUDED_STORE_NAMES),
         ).fetchall()
 
     txs = []
@@ -664,14 +699,18 @@ def api_summary():
     """Overall totals + available months (for month-picker)."""
     with _db() as conn:
         months_row = conn.execute(
-            """
+            f"""
             SELECT DISTINCT SUBSTR(used_date, 1, 7) AS ym
             FROM transactions
+            WHERE 1=1{_EXCL_CLAUSE}
             ORDER BY ym DESC
-            """
+            """,
+            EXCLUDED_STORE_NAMES,
         ).fetchall()
         grand = conn.execute(
-            "SELECT COALESCE(SUM(amount), 0) AS total, COUNT(*) AS cnt FROM transactions"
+            f"SELECT COALESCE(SUM(amount), 0) AS total, COUNT(*) AS cnt FROM transactions "
+            f"WHERE 1=1{_EXCL_CLAUSE}",
+            EXCLUDED_STORE_NAMES,
         ).fetchone()
 
     return jsonify(

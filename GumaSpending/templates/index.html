@@ -502,7 +502,7 @@
             cursor: not-allowed;
         }
 
-        /* Analysis modal (bottom sheet) */
+        /* Analysis modal (full height, starts just below top header) */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -510,8 +510,9 @@
             backdrop-filter: blur(6px);
             z-index: 200;
             display: flex;
-            align-items: flex-end;
+            align-items: stretch;
             justify-content: center;
+            padding-top: 56px;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.25s ease;
@@ -526,9 +527,10 @@
             background: #111111;
             border: 1px solid var(--card-border);
             border-bottom: none;
-            border-radius: 24px 24px 0 0;
-            padding: 1.4rem 1.5rem 2rem;
-            max-height: 80vh;
+            border-radius: 20px 20px 0 0;
+            padding: 1.2rem 1.5rem 2rem;
+            height: 100%;
+            max-height: 100%;
             overflow-y: auto;
             transform: translateY(100%);
             transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
@@ -584,11 +586,59 @@
         }
         .modal-body {
             font-size: 0.9rem;
-            line-height: 1.8;
+            line-height: 1.75;
             color: var(--text-muted);
-            white-space: pre-wrap;
             word-break: keep-all;
         }
+        .analysis-section {
+            margin-bottom: 1.1rem;
+            padding: 0.9rem 1rem;
+            background: rgba(255,255,255,0.025);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+        }
+        .analysis-section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 0.55rem;
+            letter-spacing: -0.2px;
+        }
+        .analysis-section-title i {
+            font-size: 0.75rem;
+        }
+        .analysis-section-body {
+            font-size: 0.88rem;
+            line-height: 1.75;
+            color: var(--text-muted);
+        }
+        .analysis-section-body p { margin: 0 0 0.4rem; }
+        .analysis-section-body p:last-child { margin-bottom: 0; }
+        .analysis-section-body ul {
+            margin: 0.2rem 0 0.2rem 0.2rem;
+            padding-left: 1rem;
+            list-style: none;
+        }
+        .analysis-section-body li {
+            position: relative;
+            padding-left: 0.8rem;
+            margin-bottom: 0.3rem;
+        }
+        .analysis-section-body li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.65em;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            opacity: 0.6;
+        }
+        .analysis-section-body li:last-child { margin-bottom: 0; }
         .modal-footer {
             margin-top: 1.2rem;
             padding-top: 0.9rem;
@@ -958,6 +1008,77 @@
             modalMeta.textContent = '';
         }
 
+        function renderAnalysisBody(raw) {
+            // Split on `## 제목` markdown headers. Everything before the first header
+            // (if any) becomes an "개요" section so nothing is dropped.
+            const text = (raw || '').trim();
+            const parts = text.split(/^##\s+/m).map(s => s.trim()).filter(Boolean);
+            const sections = [];
+            if (parts.length && !/^##\s/m.test(text.split(/\r?\n/)[0] || '')) {
+                // Content before first header
+                const firstHeaderIdx = text.search(/^##\s+/m);
+                if (firstHeaderIdx > 0) {
+                    const preface = text.slice(0, firstHeaderIdx).trim();
+                    if (preface) sections.push({ title: '개요', body: preface });
+                    parts.shift();
+                    for (const p of parts) {
+                        const nl = p.indexOf('\n');
+                        sections.push({
+                            title: (nl === -1 ? p : p.slice(0, nl)).trim(),
+                            body: (nl === -1 ? '' : p.slice(nl + 1)).trim(),
+                        });
+                    }
+                } else {
+                    for (const p of parts) {
+                        const nl = p.indexOf('\n');
+                        sections.push({
+                            title: (nl === -1 ? p : p.slice(0, nl)).trim(),
+                            body: (nl === -1 ? '' : p.slice(nl + 1)).trim(),
+                        });
+                    }
+                }
+            } else {
+                sections.push({ title: '분석', body: text });
+            }
+
+            const renderBody = (body) => {
+                const lines = body.split(/\r?\n/).map(l => l.replace(/\s+$/, ''));
+                const out = [];
+                let listBuf = [];
+                let paraBuf = [];
+                const flushList = () => {
+                    if (listBuf.length) {
+                        out.push('<ul>' + listBuf.map(li => `<li>${escapeHtml(li)}</li>`).join('') + '</ul>');
+                        listBuf = [];
+                    }
+                };
+                const flushPara = () => {
+                    if (paraBuf.length) {
+                        out.push(`<p>${escapeHtml(paraBuf.join(' '))}</p>`);
+                        paraBuf = [];
+                    }
+                };
+                for (const raw of lines) {
+                    const line = raw.trim();
+                    if (!line) { flushList(); flushPara(); continue; }
+                    const m = line.match(/^[-*]\s+(.*)$/);
+                    if (m) { flushPara(); listBuf.push(m[1]); }
+                    else { flushList(); paraBuf.push(line); }
+                }
+                flushList(); flushPara();
+                return out.join('');
+            };
+
+            return sections.map(sec => `
+                <div class="analysis-section">
+                    <div class="analysis-section-title">
+                        <i class="fa-solid fa-circle-dot"></i>${escapeHtml(sec.title)}
+                    </div>
+                    <div class="analysis-section-body">${renderBody(sec.body)}</div>
+                </div>
+            `).join('');
+        }
+
         function showAnalysisContent(data) {
             const ts = data.generated_at
                 ? new Date(data.generated_at).toLocaleString('ko-KR', { month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' })
@@ -965,7 +1086,7 @@
             const cachedLabel = data.cached ? ' · 캐시됨' : '';
             modalMeta.textContent = ts ? `${ts}${cachedLabel}` : '';
             modalBody.innerHTML = `
-                <div class="modal-body">${escapeHtml(data.content)}</div>
+                <div class="modal-body">${renderAnalysisBody(data.content)}</div>
                 <div class="modal-footer">
                     <button class="regen-btn" id="regen-btn">
                         <i class="fa-solid fa-rotate"></i> 재생성
