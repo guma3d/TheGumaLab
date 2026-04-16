@@ -13,6 +13,9 @@ STATIC_DIR = ROOT / "static"
 STAGES_DIR = ROOT / "Curriculum" / "stages"
 
 app = Flask(__name__, static_folder=None)
+# Dev 중에는 브라우저가 매 요청마다 재검증하도록 캐시 TTL 0.
+# 정적 파일(HTML/JS/CSS) 바꿨는데 반영 안 되는 문제 방지.
+app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
 
 
 @app.get("/")
