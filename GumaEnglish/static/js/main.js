@@ -119,6 +119,10 @@ async function runCurrentRound() {
     showFeedback("🔊 잘 들어보세요…", "listening");
     await speak(sent.en);
     if (state.cancelled) return;
+  } else {
+    showFeedback("🔊 안내를 듣고 있어요…", "listening");
+    await speak("이번에는 듣지 않고 말해보세요.", { lang: "ko-KR" });
+    if (state.cancelled) return;
   }
 
   await autoListen();
