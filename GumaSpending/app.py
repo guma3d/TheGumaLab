@@ -685,8 +685,10 @@ def api_summary():
 
 @app.route("/api/analyze/backfill", methods=["POST"])
 def api_analyze_backfill():
-    """미분석 과거 월 전체를 백그라운드 스레드로 순차 생성."""
+    """과거 월 분석을 백그라운드 스레드로 순차 생성. force=1이면 기존 분석도 재생성."""
     import threading
+
+    force = request.args.get("force", "0") == "1"
 
     def _run():
         with _db() as conn:
@@ -701,13 +703,17 @@ def api_analyze_backfill():
             }
         today = date.today()
         current_ym = f"{today.year:04d}-{today.month:02d}"
-        targets = [m for m in all_months if m < current_ym and m not in analyzed]
-        print(f"[backfill] 대상 {len(targets)}개월: {targets}", flush=True)
+        if force:
+            targets = [m for m in all_months if m < current_ym]
+        else:
+            targets = [m for m in all_months if m < current_ym and m not in analyzed]
+        label = "force-backfill" if force else "backfill"
+        print(f"[{label}] 대상 {len(targets)}개월: {targets}", flush=True)
         for i, ym in enumerate(targets):
             try:
                 data = _prepare_month_data(ym)
                 if data["total"] == 0:
-                    print(f"[backfill] {ym} 데이터 없음 skip", flush=True)
+                    print(f"[{label}] {ym} 데이터 없음 skip", flush=True)
                     continue
                 content = _call_gemini(_build_prompt(data, is_current=False))
                 now_str = datetime.now().isoformat()
@@ -718,14 +724,14 @@ def api_analyze_backfill():
                     )
                     conn.commit()
                 ok = "OK" if len(content) > 50 else "FAIL"
-                print(f"[backfill] [{i+1}/{len(targets)}] {ym} {ok}", flush=True)
+                print(f"[{label}] [{i+1}/{len(targets)}] {ym} {ok}", flush=True)
             except Exception as e:
-                print(f"[backfill] [{i+1}/{len(targets)}] {ym} ERROR: {e}", flush=True)
+                print(f"[{label}] [{i+1}/{len(targets)}] {ym} ERROR: {e}", flush=True)
             time.sleep(2)
-        print("[backfill] 완료", flush=True)
+        print(f"[{label}] 완료", flush=True)
 
     threading.Thread(target=_run, daemon=True).start()
-    return jsonify({"status": "started"})
+    return jsonify({"status": "started", "force": force})
 
 
 @app.route("/api/refresh", methods=["POST"])
