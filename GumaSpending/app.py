@@ -360,13 +360,17 @@ def _prepare_month_data(ym: str) -> dict:
             (start, end, *EXCLUDED_STORE_NAMES),
         ).fetchall()
 
-        # 전후 월 대형 정기 이체 컨텍스트 (같은 store_name이 월에 걸쳐 밀림 감지)
-        # 해당 월 은행 출금 중 100만원 이상인 store_name을 기준으로 전월/차월 건수·금액 비교
+        # 전후 월 정기 이체 컨텍스트 (같은 store_name이 월에 걸쳐 밀림 감지)
+        # 조건: 100만원 이상 대형 이체 OR 키워드 매칭 정기 이체 (관리비, 생활비 등)
+        _RECURRING_KW = ["관리비", "생활비"]
+        kw_clause = " OR ".join("store_name LIKE ?" for _ in _RECURRING_KW)
+        kw_params = [f"%{kw}%" for kw in _RECURRING_KW]
         big_bank_names = conn.execute(
             "SELECT DISTINCT store_name FROM transactions "
-            "WHERE source='bank' AND used_date>=? AND used_date<? AND amount>=1000000"
+            "WHERE source='bank' AND used_date>=? AND used_date<? "
+            f"AND (amount>=1000000 OR ({kw_clause}))"
             + _EXCL_CLAUSE,
-            (start, end, *EXCLUDED_STORE_NAMES),
+            (start, end, *kw_params, *EXCLUDED_STORE_NAMES),
         ).fetchall()
 
         adjacent_context: list[dict] = []
