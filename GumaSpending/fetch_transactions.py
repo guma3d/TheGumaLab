@@ -144,6 +144,11 @@ def fetch_one(
         if isinstance(data, dict):
             data = [data]
 
+        # card-list의 카드명을 각 거래에 주입 (approval-list는 빈 문자열 반환하는 경우 있음)
+        for tx in data:
+            if not (tx.get("resCardName") or "").strip():
+                tx["resCardName"] = sub_name
+
         sub_total = 0
         sub_active = 0
         for tx in data:

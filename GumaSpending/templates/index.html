@@ -209,11 +209,6 @@
             color: var(--text-muted);
             font-weight: 400;
         }
-        .month-total-count {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-top: 0.3rem;
-        }
         .month-source-split {
             display: flex;
             gap: 0.6rem;
@@ -381,12 +376,6 @@
             font-weight: 700;
             color: var(--accent-color);
         }
-        .detail-total-count {
-            font-size: 0.72rem;
-            color: var(--text-dim);
-            margin-top: 0.1rem;
-        }
-
         .tx-list {
             display: flex;
             flex-direction: column;
@@ -425,14 +414,8 @@
         .tx-meta .card-tag {
             padding: 0.1rem 0.45rem;
             border-radius: 5px;
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--accent-color);
             font-size: 0.65rem;
             font-weight: 500;
-        }
-        .tx-meta .card-tag.bank {
-            background: rgba(245, 158, 11, 0.1);
-            color: var(--warn-color);
         }
         .tx-amount {
             font-size: 0.95rem;
@@ -743,7 +726,6 @@
                     <i class="fa-solid fa-wand-magic-sparkles"></i> 분석
                 </button>
             </div>
-            <div class="month-total-count" id="month-count">—</div>
             <div class="month-source-split" id="month-source-split"></div>
         </section>
 
@@ -794,6 +776,16 @@
         const fmt = (n) => new Intl.NumberFormat('ko-KR').format(n);
         const pad = (n) => String(n).padStart(2, '0');
 
+        const ORG_COLORS = {
+            '0301': { bg: '#E5393520', text: '#E53935' },  // KB카드
+            '0304': { bg: '#43A04720', text: '#43A047' },  // NH카드
+            '0306': { bg: '#1E88E520', text: '#1E88E5' },  // 신한카드
+            '0011': { bg: '#FFA72620', text: '#FFA726' },  // 농협은행
+        };
+        function orgColor(org) {
+            return ORG_COLORS[org] || { bg: 'rgba(255,255,255,0.08)', text: '#a1a1aa' };
+        }
+
         let state = {
             year: 0,
             month: 0,   // 1-12
@@ -811,15 +803,12 @@
             document.getElementById('month-title').textContent =
                 `${y}년 ${m}월`;
             document.getElementById('month-total').textContent = '...';
-            document.getElementById('month-count').textContent = '불러오는 중...';
 
             const r = await fetch(`/api/month/${ym}`);
             const data = await r.json();
             state.days = data.days || {};
 
             document.getElementById('month-total').textContent = fmt(data.month_total || 0);
-            document.getElementById('month-count').textContent =
-                `${data.month_count || 0}건`;
 
             renderSourceSplit(data.by_source || {});
             renderCalendar(y, m);
@@ -933,7 +922,6 @@
                     </div>
                     <div class="detail-total">
                         <div class="detail-total-amount">${fmt(data.total)}원</div>
-                        <div class="detail-total-count">${data.count}건</div>
                     </div>
                 </div>
                 <div class="tx-list">`;
@@ -943,14 +931,14 @@
                     ? `${tx.used_time.slice(0,2)}:${tx.used_time.slice(2,4)}`
                     : '';
                 const isBank = tx.source === 'bank';
-                const tagClass = isBank ? 'card-tag bank' : 'card-tag';
                 const icon = isBank ? 'fa-building-columns' : 'fa-credit-card';
+                const oc = orgColor(tx.org);
                 html += `
                     <div class="tx-item">
                         <div class="tx-info">
                             <div class="tx-store">${escapeHtml(tx.store_name || '(내역 없음)')}</div>
                             <div class="tx-meta">
-                                <span class="${tagClass}"><i class="fa-solid ${icon}"></i> ${escapeHtml(tx.org_name)}</span>
+                                <span class="card-tag" style="background:${oc.bg};color:${oc.text}"><i class="fa-solid ${icon}"></i> ${escapeHtml(tx.sub_card_name || tx.org_name)}</span>
                                 ${time ? `<span>${time}</span>` : ''}
                                 ${tx.store_category ? `<span>· ${escapeHtml(tx.store_category)}</span>` : ''}
                             </div>
@@ -971,11 +959,11 @@
             list.innerHTML = byCard.map(c => {
                 const isBank = c.source === 'bank';
                 const icon = isBank ? 'fa-building-columns' : 'fa-credit-card';
-                const color = isBank ? 'var(--warn-color)' : 'var(--accent-color)';
+                const oc = orgColor(c.org);
                 return `
                 <div class="card-bar">
-                    <div class="card-bar-name"><i class="fa-solid ${icon}" style="color:${color}"></i> ${escapeHtml(c.card_name || c.org_name || c.org)}</div>
-                    <div class="card-bar-amt">${fmt(c.total)}원 <span style="color:var(--text-dim); font-size:0.72rem;">${c.cnt}건</span></div>
+                    <div class="card-bar-name"><i class="fa-solid ${icon}" style="color:${oc.text}"></i> ${escapeHtml(c.sub_card_name || c.card_name || c.org_name || c.org)}</div>
+                    <div class="card-bar-amt">${fmt(c.total)}원</div>
                 </div>`;
             }).join('');
         }

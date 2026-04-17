@@ -71,6 +71,15 @@ ORG_NAMES = {
     "0092": "토스뱅크",
 }
 
+# NH카드 세부 카드명: card-list에서는 이름이 나오지만 approval-list에서는 빈 문자열.
+# 카드번호 끝 4자리 → 실제 카드명 매핑.
+NH_CARD_NAMES = {
+    "4256": "올바른GLOBAL체크",
+    "0653": "채움 BAZIC",
+    "6377": "채움 뉴 후불 하이패스",
+    "1224": "채움 BAZIC",
+}
+
 BANK_DEDUP_PATTERNS = [
     "카드대금",
     "카드결제",
@@ -191,6 +200,11 @@ def _ingest_cards(conn: sqlite3.Connection) -> dict:
             card_no = tx.get("resCardNo", "")
             dedup = f"{approval_no}|{used_date}|{used_time}|{card_no[-4:]}"
 
+            # NH카드 sub_card_name fallback: approval-list는 빈 문자열 반환
+            sub_card = (tx.get("resCardName") or "").strip()
+            if not sub_card and org == "0304" and len(card_no) >= 4:
+                sub_card = NH_CARD_NAMES.get(card_no[-4:], "")
+
             try:
                 conn.execute(
                     """
@@ -203,7 +217,7 @@ def _ingest_cards(conn: sqlite3.Connection) -> dict:
                     (
                         org,
                         card_name,
-                        tx.get("resCardName", ""),
+                        sub_card,
                         _mask(card_no),
                         used_date,
                         used_time,
@@ -626,10 +640,11 @@ def api_month(ym: str):
 
         by_card_rows = conn.execute(
             f"""
-            SELECT source, org, card_name, SUM(amount) AS total, COUNT(*) AS cnt
+            SELECT source, org, card_name, sub_card_name,
+                   SUM(amount) AS total, COUNT(*) AS cnt
             FROM transactions
             WHERE used_date >= ? AND used_date < ?{_EXCL_CLAUSE}
-            GROUP BY source, org, card_name
+            GROUP BY source, org, card_name, sub_card_name
             ORDER BY total DESC
             """,
             (start, end, *EXCLUDED_STORE_NAMES),
