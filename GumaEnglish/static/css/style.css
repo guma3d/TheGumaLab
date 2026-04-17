@@ -211,6 +211,12 @@ body {
   border-radius: 6px;
   padding: 0 2px;
   display: inline-block;
+  transition: background 0.3s, border-color 0.3s, color 0.3s;
+}
+.word-box.wrong {
+  color: transparent;
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.5);
 }
 .sentence-ko {
   font-size: 0.9rem;

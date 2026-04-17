@@ -269,27 +269,54 @@ async function autoListen(sent) {
   }
 }
 
+/** Reveal the full sentence (remove boxes) */
+function revealSentence(sentence) {
+  const enEl = $("sentence-en");
+  enEl.textContent = sentence;
+  enEl.classList.remove("has-boxes");
+}
+
+/** Show which words were wrong with red boxes, correct words revealed */
+function showWordDiff(sentence, heard) {
+  const correctWords = sentence.split(/\s+/);
+  const heardWords = normalize(heard).split(/\s+/);
+  const enEl = $("sentence-en");
+
+  enEl.innerHTML = correctWords.map((word, i) => {
+    const heardNorm = (heardWords[i] || "");
+    const correctNorm = normalize(word);
+    if (heardNorm === correctNorm) {
+      return esc(word);
+    }
+    return `<span class="word-box wrong">${esc(word)}</span>`;
+  }).join(" ");
+  enEl.classList.add("has-boxes");
+}
+
 async function evaluateAnswer(heard, sent) {
   $("transcript").textContent = `"${heard}"`;
 
   if (isMatch(heard, sent.en)) {
     state.wrongCount = 0;
-    showStatus(`정답: "${sent.en}"`, "ok", "");
+    revealSentence(sent.en);
+    showStatus(pick(CORRECT_KO), "ok", "");
     await speak(pick(CORRECT_KO), { lang: "ko-KR" });
     if (state.cancelled) return;
     await sleep(500);
     advanceToNext();
   } else {
     state.wrongCount += 1;
+    showWordDiff(sent.en, heard);
     if (state.wrongCount >= 3) {
       state.wrongCount = 0;
-      showStatus(`정답은 "${sent.en}" 이에요. 넘어갈게요.`, "miss", "");
+      revealSentence(sent.en);
+      showStatus("넘어갈게요.", "miss", "");
       await speak(`정답은 "${sent.en}" 이에요. 다음으로 넘어갈게요.`, { lang: "ko-KR" });
       if (state.cancelled) return;
       await sleep(500);
       advanceToNext();
     } else {
-      showStatus(`정답은 "${sent.en}" 이에요`, "miss", "");
+      showStatus(pick(WRONG_KO), "miss", "");
       await speak(pick(WRONG_KO), { lang: "ko-KR" });
       if (state.cancelled) return;
       await sleep(400);
