@@ -162,6 +162,34 @@ ssh HomeServer "docker logs <container_name> --tail 20"
 
 ---
 
+## 📱 6-1. 모바일 Claude Code — HomeServer 원격 제어
+
+외출 중 모바일(claude.ai/code)에서 HomeServer를 조작하기 위한 경로. 웹 샌드박스는 직접 SSH 불가 → **GitHub Actions `workflow_dispatch`를 프록시**로 사용.
+
+**워크플로우 파일**: `.github/workflows/server-control.yml`
+
+**지원 action**:
+- `status` — `docker ps` 전체 컨테이너 상태
+- `logs` — `docker logs <container> --tail N` (입력: `container`, 선택 `log_lines`)
+- `restart` — `docker restart <container>` (입력: `container`)
+- `pull` — `pull_update.bat <project>` 실행 = git reset --hard origin/main + `docker compose up -d` (입력: `project`)
+- `rebuild` — `docker compose up --build -d` (입력: `project`, Dockerfile 변경·신규 패키지 반영용)
+- `compose-ps` — 프로젝트의 docker compose ps (입력: `project`)
+- `disk` — `docker system df`
+
+**실행 방법**
+- 웹 UI: Actions → "HomeServer Control" → Run workflow → 입력 후 실행
+- 모바일 Claude Code: MCP GitHub 툴로 workflow_dispatch 트리거 → 완료 후 Job Summary 조회
+
+**결과 확인**: 모든 출력은 Job Summary에 마크다운 표 + 코드블록으로 기록 (tail 2000줄 제한).
+
+**주의**
+- 본 워크플로우는 `HOMESERVER_SSH_KEY` 시크릿에 의존. 키 유출 시 즉시 rotate.
+- `concurrency` 그룹으로 동시 실행 방지 — 요청 중첩 시 순차 처리.
+- 파괴적 작업(rebuild, pull — git reset --hard 포함)은 모바일에서도 신중히. 미커밋 홈서버 변경분은 `pull`/`rebuild` 시 소실됨.
+
+---
+
 ## 🗂️ 7. 리포지토리 구조
 
 - **Monorepo**: 모든 하위 서비스는 `D:\TheGumaLab\` 아래 각자 루트 폴더로 존재.

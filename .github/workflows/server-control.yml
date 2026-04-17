@@ -1,0 +1,181 @@
+name: HomeServer Control
+
+# 모바일 Claude Code에서 HomeServer를 원격 제어하기 위한 수동 워크플로우.
+# GitHub Actions UI 또는 MCP GitHub 툴(trigger workflow)로 실행.
+#
+# 사용 예:
+#   action=status                       → docker ps 전체 상태
+#   action=logs   container=gumaphoto_web log_lines=200
+#   action=restart container=gumaphoto_celery
+#   action=pull    project=GumaPhoto    → git reset --hard origin/main + compose up -d
+#   action=rebuild project=GumaPhoto    → docker compose up --build -d (패키지 추가 시)
+#   action=compose-ps project=GumaPhoto → 해당 프로젝트의 docker compose ps
+#   action=disk                         → docker system df
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: '실행할 작업'
+        required: true
+        type: choice
+        default: status
+        options:
+          - status
+          - logs
+          - restart
+          - pull
+          - rebuild
+          - compose-ps
+          - disk
+      project:
+        description: '대상 프로젝트 (pull / rebuild / compose-ps)'
+        required: false
+        type: choice
+        default: '-'
+        options:
+          - '-'
+          - GumaPhoto
+          - GumaStockReport
+          - GumaImageAnalyzer
+          - GumaServerStatus
+          - GumaTube
+          - GumaSpending
+          - GumaEnglish
+          - Index
+          - Nginx
+      container:
+        description: '대상 컨테이너 이름 (restart / logs)'
+        required: false
+        type: string
+        default: ''
+      log_lines:
+        description: '로그 tail 라인 수 (logs 전용)'
+        required: false
+        type: string
+        default: '100'
+
+concurrency:
+  group: homeserver-control
+  cancel-in-progress: false
+
+jobs:
+  control:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.HOMESERVER_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 219.254.245.175 >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Execute action
+        id: exec
+        env:
+          ACTION: ${{ inputs.action }}
+          PROJECT: ${{ inputs.project }}
+          CONTAINER: ${{ inputs.container }}
+          LOG_LINES: ${{ inputs.log_lines }}
+        run: |
+          set -uo pipefail
+          SSH=(ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no -o BatchMode=yes guma3@219.254.245.175)
+          OUT=/tmp/remote_output.txt
+          : > "$OUT"
+
+          require_project() {
+            if [ -z "${PROJECT}" ] || [ "${PROJECT}" = "-" ]; then
+              echo "❌ '$ACTION' 액션은 project 입력이 필수입니다." | tee -a "$OUT"
+              exit 2
+            fi
+          }
+          require_container() {
+            if [ -z "${CONTAINER}" ]; then
+              echo "❌ '$ACTION' 액션은 container 입력이 필수입니다." | tee -a "$OUT"
+              exit 2
+            fi
+            # 기본적인 입력 검증: 영숫자 + _ - . 만 허용
+            if ! [[ "$CONTAINER" =~ ^[A-Za-z0-9_.-]+$ ]]; then
+              echo "❌ container 이름에 허용되지 않은 문자가 있습니다: $CONTAINER" | tee -a "$OUT"
+              exit 2
+            fi
+          }
+
+          case "$ACTION" in
+            status)
+              "${SSH[@]}" 'docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"' 2>&1 | tee -a "$OUT"
+              RC=${PIPESTATUS[0]}
+              ;;
+            logs)
+              require_container
+              "${SSH[@]}" "docker logs $CONTAINER --tail $LOG_LINES --timestamps" 2>&1 | tee -a "$OUT"
+              RC=${PIPESTATUS[0]}
+              ;;
+            restart)
+              require_container
+              "${SSH[@]}" "docker restart $CONTAINER" 2>&1 | tee -a "$OUT"
+              RC=${PIPESTATUS[0]}
+              echo "" | tee -a "$OUT"
+              echo "--- 재시작 후 상태 ---" | tee -a "$OUT"
+              "${SSH[@]}" "docker ps --filter name=^${CONTAINER}$ --format \"table {{.Names}}\t{{.Status}}\"" 2>&1 | tee -a "$OUT"
+              ;;
+            pull)
+              require_project
+              "${SSH[@]}" "D:\\TheGumaLab\\pull_update.bat $PROJECT" 2>&1 | tee -a "$OUT"
+              RC=${PIPESTATUS[0]}
+              ;;
+            rebuild)
+              require_project
+              "${SSH[@]}" "cd /d D:\\TheGumaLab\\$PROJECT && git fetch origin main && git reset --hard origin/main && docker compose up --build -d" 2>&1 | tee -a "$OUT"
+              RC=${PIPESTATUS[0]}
+              ;;
+            compose-ps)
+              require_project
+              "${SSH[@]}" "cd /d D:\\TheGumaLab\\$PROJECT && docker compose ps" 2>&1 | tee -a "$OUT"
+              RC=${PIPESTATUS[0]}
+              ;;
+            disk)
+              "${SSH[@]}" 'docker system df' 2>&1 | tee -a "$OUT"
+              RC=${PIPESTATUS[0]}
+              ;;
+            *)
+              echo "❌ 알 수 없는 action: $ACTION" | tee -a "$OUT"
+              exit 2
+              ;;
+          esac
+
+          echo "exit_code=$RC" >> "$GITHUB_OUTPUT"
+          exit "$RC"
+
+      - name: Write Job Summary
+        if: always()
+        env:
+          ACTION: ${{ inputs.action }}
+          PROJECT: ${{ inputs.project }}
+          CONTAINER: ${{ inputs.container }}
+          LOG_LINES: ${{ inputs.log_lines }}
+          RC: ${{ steps.exec.outputs.exit_code }}
+        run: |
+          {
+            if [ "${RC:-1}" = "0" ]; then
+              echo "## ✅ HomeServer \`$ACTION\`"
+            else
+              echo "## ❌ HomeServer \`$ACTION\` (exit=${RC:-unknown})"
+            fi
+            echo ""
+            echo "| 입력 | 값 |"
+            echo "| --- | --- |"
+            echo "| action | \`$ACTION\` |"
+            [ "$PROJECT" != "-" ] && [ -n "$PROJECT" ] && echo "| project | \`$PROJECT\` |"
+            [ -n "$CONTAINER" ] && echo "| container | \`$CONTAINER\` |"
+            [ "$ACTION" = "logs" ] && echo "| log_lines | \`$LOG_LINES\` |"
+            echo ""
+            echo "### 출력"
+            echo ''
+            echo '```'
+            # Job Summary 1MB 제한 대응: 끝 2000줄만 유지
+            tail -n 2000 /tmp/remote_output.txt 2>/dev/null || echo "(no output)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
