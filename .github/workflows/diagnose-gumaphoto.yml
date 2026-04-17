@@ -11,6 +11,12 @@ on:
         options:
           - "false"
           - "true"
+  push:
+    branches:
+      - "claude/fix-photo-visibility-**"
+    paths:
+      - ".github/workflows/diagnose-gumaphoto.yml"
+      - ".github/triggers/diagnose.trigger"
 
 jobs:
   diagnose:
