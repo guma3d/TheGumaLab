@@ -1,5 +1,5 @@
-import { fetchStage } from "/js/api.js?v=6";
-import { speak, listenOnce, speechSupported } from "/js/voice.js?v=6";
+import { fetchStage } from "/js/api.js?v=7";
+import { speak, listenOnce, speechSupported } from "/js/voice.js?v=7";
 
 const $ = (id) => document.getElementById(id);
 
@@ -64,17 +64,21 @@ function showBanner(text) {
   el.hidden = false;
 }
 
-function showFeedback(text, kind) {
-  const el = $("feedback");
-  el.hidden = false;
-  el.textContent = text;
-  el.className = `feedback ${kind}`;
+const WAVE_HTML = `<div class="wave-bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>`;
+const MIC_HTML = `<div class="mic-pulse"><i class="fa-solid fa-microphone"></i></div>`;
+
+function showStatus(text, kind, icon) {
+  const area = $("feedback").parentElement;
+  area.className = `status-area ${kind}`;
+  $("feedback").textContent = text;
+  $("status-icon").innerHTML = icon || "";
 }
 
-function hideFeedback() {
-  $("feedback").hidden = true;
+function clearStatus() {
+  const area = $("feedback").parentElement;
+  area.className = "status-area";
   $("feedback").textContent = "";
-  $("feedback").className = "feedback";
+  $("status-icon").innerHTML = "";
 }
 
 function renderRoundUI() {
@@ -100,9 +104,8 @@ function renderRoundUI() {
   }
 
   $("replay-btn").hidden = !phase.playAudio;
-  $("transcript").hidden = true;
-  $("transcript").textContent = "";
-  hideFeedback();
+  $("transcript").textContent = "\u00a0";
+  clearStatus();
 }
 
 async function runCurrentRound() {
@@ -112,11 +115,11 @@ async function runCurrentRound() {
   renderRoundUI();
 
   if (phase.playAudio) {
-    showFeedback("🔊 잘 들어보세요…", "listening");
+    showStatus("잘 들어보세요…", "listening", WAVE_HTML);
     await speak(sent.en);
     if (state.cancelled) return;
   } else {
-    showFeedback("🔊 안내를 듣고 있어요…", "listening");
+    showStatus("안내를 듣고 있어요…", "listening", WAVE_HTML);
     await speak("이번에는 듣지 않고 말해보세요.", { lang: "ko-KR" });
     if (state.cancelled) return;
   }
@@ -127,7 +130,7 @@ async function runCurrentRound() {
 async function autoListen() {
   if (state.cancelled) return;
   state.busy = true;
-  showFeedback("🎤 지금 따라 말해보세요!", "listening");
+  showStatus("지금 따라 말해보세요!", "listening", MIC_HTML);
 
   try {
     const heard = await listenOnce({ lang: "en-US" });
@@ -136,7 +139,7 @@ async function autoListen() {
   } catch (err) {
     if (state.cancelled) return;
     // STT 실패 — 자동 재시도
-    showFeedback("음성이 잘 들리지 않았어요. 다시 들어볼게요.", "miss");
+    showStatus("음성이 잘 들리지 않았어요. 다시 들어볼게요.", "miss", "");
     await sleep(1000);
     if (!state.cancelled) await runCurrentRound();
   } finally {
@@ -146,17 +149,16 @@ async function autoListen() {
 
 async function evaluateAnswer(heard) {
   const sent = currentSentence();
-  $("transcript").hidden = false;
-  $("transcript").textContent = `내가 말한 것: "${heard}"`;
+  $("transcript").textContent = `"${heard}"`;
 
   if (isMatch(heard, sent.en)) {
-    showFeedback(`✅ 정답: "${sent.en}"`, "ok");
+    showStatus(`정답: "${sent.en}"`, "ok", "");
     await speak(pick(CORRECT_KO), { lang: "ko-KR" });
     if (state.cancelled) return;
     await sleep(500);
     advanceToNext();
   } else {
-    showFeedback(`🔁 정답은 "${sent.en}" 이에요`, "miss");
+    showStatus(`정답은 "${sent.en}" 이에요`, "miss", "");
     await speak(pick(WRONG_KO), { lang: "ko-KR" });
     if (state.cancelled) return;
     await sleep(400);
@@ -179,17 +181,18 @@ function finishStage() {
   state.cancelled = true;
   $("practice").hidden = true;
   $("start-btn").hidden = false;
-  showFeedback("이 스테이지 학습을 모두 마쳤어요! 🏆", "ok");
+  showBanner("이 스테이지 학습을 모두 마쳤어요!");
   speak("잘 했어요! 오늘 학습 끝!", { lang: "ko-KR" });
 }
 
 async function startPractice() {
   $("start-btn").hidden = true;
+  $("banner").hidden = true;
   $("practice").hidden = false;
   state.idx = 0;
   state.cancelled = false;
   renderRoundUI();
-  showFeedback("🔊 안내를 듣고 있어요…", "listening");
+  showStatus("안내를 듣고 있어요…", "listening", WAVE_HTML);
   await speak(INTRO_KO, { lang: "ko-KR" });
   if (state.cancelled) return;
   await runCurrentRound();

@@ -215,7 +215,106 @@ body {
   color: var(--text-muted);
 }
 
-/* Transcript */
+/* Status Area — fixed layout, never hides */
+.status-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  min-height: 48px;
+  padding: 0.6rem 1rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background 0.3s, border-color 0.3s;
+}
+.status-area.ok {
+  background: rgba(52, 211, 153, 0.08);
+  border-color: rgba(52, 211, 153, 0.25);
+}
+.status-area.miss {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+.status-area.listening {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+/* Status icon container */
+.status-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Sound wave bars animation (TTS playing / listening) */
+.wave-bars {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 24px;
+}
+.wave-bars .bar {
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent-color);
+  animation: wave 1s ease-in-out infinite;
+}
+.wave-bars .bar:nth-child(1) { height: 8px;  animation-delay: 0s; }
+.wave-bars .bar:nth-child(2) { height: 16px; animation-delay: 0.15s; }
+.wave-bars .bar:nth-child(3) { height: 24px; animation-delay: 0.3s; }
+.wave-bars .bar:nth-child(4) { height: 16px; animation-delay: 0.45s; }
+.wave-bars .bar:nth-child(5) { height: 8px;  animation-delay: 0.6s; }
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.4); }
+  50% { transform: scaleY(1); }
+}
+
+/* Mic pulse animation (STT listening) */
+.mic-pulse {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mic-pulse i {
+  color: var(--accent-color);
+  font-size: 1rem;
+  z-index: 1;
+}
+.mic-pulse::before {
+  content: '';
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  opacity: 0.2;
+  animation: mic-ring 1.2s ease-out infinite;
+}
+@keyframes mic-ring {
+  0% { transform: scale(0.8); opacity: 0.3; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* Status text */
+.status-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: center;
+}
+.status-area.ok .status-text { color: var(--ok); }
+.status-area.miss .status-text { color: var(--miss); }
+.status-area.listening .status-text { color: var(--accent-color); }
+
+/* Transcript — always visible, fixed height */
 .transcript {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -224,30 +323,10 @@ body {
   font-size: 0.85rem;
   color: var(--text-muted);
   text-align: center;
-}
-
-/* Feedback */
-.feedback {
-  padding: 0.8rem 1rem;
-  border-radius: 12px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  text-align: center;
-}
-.feedback.ok {
-  background: rgba(52, 211, 153, 0.08);
-  color: var(--ok);
-  border: 1px solid rgba(52, 211, 153, 0.25);
-}
-.feedback.miss {
-  background: rgba(239, 68, 68, 0.08);
-  color: var(--miss);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-}
-.feedback.listening {
-  background: rgba(16, 185, 129, 0.08);
-  color: var(--accent-color);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Banner */
