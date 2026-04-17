@@ -1,24 +1,23 @@
 # GumaPhoto Diagnostic Run
 
-- Run: `24555306115`
-- Commit: `9b7c7a9ddd16069d0b226343971ab4191a2a45bd`
-- Timestamp (UTC): 2026-04-17 08:19:54
+- Run: `24561155694`
+- Commit: `281f87d802f82ae3ea94d01de0b012e49c5a2b26`
+- Timestamp (UTC): 2026-04-17 10:45:29
 
 ## 1. Container status
 ```
 NAMES              STATUS        CREATED
-gumaphoto_app      Up 33 hours   2 days ago
-gumaphoto_celery   Up 33 hours   2 days ago
-gumaphoto_redis    Up 33 hours   3 weeks ago
-gumaphoto_qdrant   Up 33 hours   4 weeks ago
+gumaphoto_app      Up 36 hours   3 days ago
+gumaphoto_celery   Up 36 hours   3 days ago
+gumaphoto_redis    Up 36 hours   3 weeks ago
+gumaphoto_qdrant   Up 36 hours   4 weeks ago
 ```
 
 ## 1b. Migration process probe (celery container)
 ```
 UID        PID  PPID  C STIME TTY          TIME CMD
-root       375     0  0 08:04 ?        00:00:08 python /app/Scripts/migrate_sort_date_from_exif.py --dry-run
 --- celery container top (5s sample) ---
-cpu=26.96% mem=2.784GiB / 15.48GiB
+cpu=0.11% mem=2.669GiB / 15.48GiB
 ```
 
 ## 2. Timeline cache file (mtime / size)
@@ -30,7 +29,7 @@ cpu=26.96% mem=2.784GiB / 15.48GiB
 
 2026-04-17  ø¿»ƒ 04:38         4,827,717 timeline_cache.json
                1∞≥ ∆ƒ¿œ           4,827,717 πŸ¿Ã∆Æ
-               0∞≥ µ∑∫≈Õ∏Æ  427,846,246,400 πŸ¿Ã∆Æ ≥≤¿Ω
+               0∞≥ µ∑∫≈Õ∏Æ  427,846,254,592 πŸ¿Ã∆Æ ≥≤¿Ω
 ```
 
 ## 3. uploads_raw/ recent files (stuck = Organizer didn't pick up)
@@ -43,7 +42,7 @@ cpu=26.96% mem=2.784GiB / 15.48GiB
 2026-04-17  ø¿»ƒ 04:38    <DIR>          .
 2026-04-12  ø¿»ƒ 05:15    <DIR>          ..
                0∞≥ ∆ƒ¿œ                   0 πŸ¿Ã∆Æ
-               2∞≥ µ∑∫≈Õ∏Æ  427,846,246,400 πŸ¿Ã∆Æ ≥≤¿Ω
+               2∞≥ µ∑∫≈Õ∏Æ  427,846,254,592 πŸ¿Ã∆Æ ≥≤¿Ω
 ```
 
 ## 4. Pictures/ recently modified folders (Organizer output)
@@ -77,7 +76,7 @@ cpu=26.96% mem=2.784GiB / 15.48GiB
 2026-03-29  ø¿»ƒ 06:37    <DIR>          2024
 2026-03-29  ø¿»ƒ 06:37    <DIR>          2025
                0∞≥ ∆ƒ¿œ                   0 πŸ¿Ã∆Æ
-              23∞≥ µ∑∫≈Õ∏Æ  427,846,246,400 πŸ¿Ã∆Æ ≥≤¿Ω
+              23∞≥ µ∑∫≈Õ∏Æ  427,846,254,592 πŸ¿Ã∆Æ ≥≤¿Ω
 ```
 
 ## 5. Celery worker ‚Äî last 200 log lines
@@ -390,106 +389,106 @@ cpu=26.96% mem=2.784GiB / 15.48GiB
 
 ## 7. FastAPI app ‚Äî last 100 log lines
 ```
-INFO:     172.24.0.1:54568 - "GET /photos/2026/2026-02/2026-02_0128_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54562 - "GET /photos/2026/2026-02/2026-02_0217_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54654 - "GET /photos/2026/2026-02/2026-02_0224_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54620 - "GET /photos/2026/2026-02/2026-02_0228_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54658 - "GET /photos/2026/2026-02/2026-02_0107_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54660 - "GET /photos/2026/2026-02/2026-02_0100_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54666 - "GET /photos/2026/2026-02/2026-02_0106_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54570 - "GET /photos/2026/2026-02/2026-02_0134_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54672 - "GET /photos/2026/2026-02/2026-02_0099_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54698 - "GET /photos/2026/2026-02/2026-02_0108_jpg.webp HTTP/1.0" 304 Not Modified
-INFO:     172.24.0.1:54708 - "GET /photos/2026/2026-02/2026-02_0225_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54702 - "GET /photos/2026/2026-02/2026-02_0095_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54704 - "GET /photos/2026/2026-02/2026-02_0102_heic.webp HTTP/1.0" 304 Not Modified
-INFO:     172.24.0.1:54718 - "GET /photos/2026/2026-02/2026-02_0104_jpg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54732 - "GET /photos/2026/2026-02/2026-02_0097_heic.webp HTTP/1.0" 304 Not Modified
-INFO:     172.24.0.1:54748 - "GET /photos/2026/2026-02/2026-02_0121_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54762 - "GET /photos/2026/2026-02/2026-02_0124_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54778 - "GET /photos/2026/2026-02/2026-02_0101_heic.webp HTTP/1.0" 304 Not Modified
-INFO:     172.24.0.1:54792 - "GET /photos/2026/2026-02/2026-02_0109_jpg.webp HTTP/1.0" 200 OK
-
-[üîç Search API] ÏöîÏ≤≠ ÏàòÏã†: ÏøºÎ¶¨='timeline_dummy', offset=140, limit=20
-üöÄ [Baking Cache Hit] Guma Family ÌÜµÌï© ÏïÑÌÇ§ÌÖçÏ≤ò JSON Î∞òÌôò: recent (140~160Ïû•)
-INFO:     172.24.0.1:54884 - "POST /api/search HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54808 - "GET /photos/2026/2026-02/2026-02_0237_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54810 - "GET /photos/2026/2026-02/2026-02_0236_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54818 - "GET /photos/2026/2026-02/2026-02_0105_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54824 - "GET /photos/2026/2026-02/2026-02_0241_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54838 - "GET /photos/2026/2026-02/2026-02_0120_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54862 - "GET /photos/2026/2026-02/2026-02_0113_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54836 - "GET /photos/2026/2026-02/2026-02_0239_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54848 - "GET /photos/2026/2026-02/2026-02_0103_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54872 - "GET /photos/2026/2026-02/2026-02_0098_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54878 - "GET /photos/2026/2026-02/2026-02_0110_jpg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54870 - "GET /photos/2026/2026-02/2026-02_0115_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54896 - "GET /photos/2026/2026-02/2026-02_0112_jpg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54912 - "GET /photos/2026/2026-02/2026-02_0117_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54928 - "GET /photos/2026/2026-02/2026-02_0111_jpg.webp HTTP/1.0" 304 Not Modified
-INFO:     172.24.0.1:54942 - "GET /photos/2026/2026-02/2026-02_0116_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54976 - "GET / HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54954 - "GET /photos/2026/2026-02/2026-02_0037_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54966 - "GET /photos/2026/2026-02/2026-02_0004_jpg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54982 - "GET /photos/2026/2026-02/2026-02_0118_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:55024 - "GET /photos/2026/2026-02/2026-02_0122_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:55038 - "GET /photos/2026/2026-02/2026-02_0123_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:54992 - "GET /photos/2026/2026-02/2026-02_0002_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:55010 - "GET /photos/2026/2026-02/2026-02_0119_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:55008 - "GET /photos/2026/2026-02/2026-02_0114_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:55046 - "GET /photos/2026/2026-02/2026-02_0001_jpg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:55070 - "GET /photos/2026/2026-02/2026-02_0003_jpg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:55054 - "GET /photos/2026/2026-02/2026-02_0044_jpg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:55074 - "GET /photos/2026/2026-02/2026-02_0038_jpg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:55076 - "GET /photos/2026/2026-02/2026-02_0041_jpg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:55086 - "GET /photos/2026/2026-02/2026-02_0045_jpg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:55098 - "GET /photos/2026/2026-02/2026-02_0039_jpg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:55100 - "GET /photos/2026/2026-02/2026-02_0047_jpg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:55110 - "GET /photos/2026/2026-02/2026-02_0049_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:55114 - "GET /photos/2026/2026-02/2026-02_0042_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:55116 - "GET /photos/2026/2026-02/2026-02_0036_heic.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:39090 - "GET /photos/2026/2026-04/2026-04_06.jpeg HTTP/1.0" 200 OK
+INFO:     172.24.0.1:43830 - "GET / HTTP/1.0" 200 OK
 
 [üîç Search API] ÏöîÏ≤≠ ÏàòÏã†: ÏøºÎ¶¨='timeline_dummy', offset=0, limit=20
 üöÄ [Baking Cache Hit] Guma Family ÌÜµÌï© ÏïÑÌÇ§ÌÖçÏ≤ò JSON Î∞òÌôò: recent (0~20Ïû•)
-INFO:     172.24.0.1:60054 - "POST /api/search HTTP/1.0" 200 OK
+INFO:     172.24.0.1:43836 - "POST /api/search HTTP/1.0" 200 OK
 [FeedbackCache] üíæ Successfully saved queue to disk persistence.
-INFO:     172.24.0.1:60058 - "GET /api/feedback_v2/unknown?_rnd=1776411827436_0.5640714413107584 HTTP/1.0" 200 OK
+INFO:     172.24.0.1:43868 - "GET /api/feedback_v2/unknown?_rnd=1776422098379_0.04133608921520093 HTTP/1.0" 200 OK
 [FeedbackCache] üíæ Successfully saved queue to disk persistence.
-INFO:     172.24.0.1:60074 - "GET /api/feedback_v2/unknown?_rnd=1776411827436_0.33885715814686135 HTTP/1.0" 200 OK
+INFO:     172.24.0.1:43852 - "GET /api/feedback_v2/unknown?_rnd=1776422098379_0.3300427717765134 HTTP/1.0" 200 OK
 [FeedbackCache] üíæ Successfully saved queue to disk persistence.
-INFO:     172.24.0.1:60076 - "GET /api/feedback_v2/unknown?_rnd=1776411827436_0.3331909345124737 HTTP/1.0" 200 OK
+INFO:     172.24.0.1:43872 - "GET /api/feedback_v2/unknown?_rnd=1776422098379_0.5400178376257025 HTTP/1.0" 200 OK
 [FeedbackCache] üíæ Successfully saved queue to disk persistence.
-INFO:     172.24.0.1:60086 - "GET /api/feedback_v2/unknown?_rnd=1776411827436_0.6304806927103263 HTTP/1.0" 200 OK
+INFO:     172.24.0.1:43888 - "GET /api/feedback_v2/unknown?_rnd=1776422098379_0.8124724681094595 HTTP/1.0" 200 OK
 [FeedbackCache] üíæ Successfully saved queue to disk persistence.
-INFO:     172.24.0.1:60102 - "GET /api/feedback_v2/unknown?_rnd=1776411827437_0.5697911436819734 HTTP/1.0" 200 OK
+INFO:     172.24.0.1:43896 - "GET /api/feedback_v2/unknown?_rnd=1776422098379_0.17248703656213227 HTTP/1.0" 200 OK
 [FeedbackCache] üíæ Successfully saved queue to disk persistence.
-INFO:     172.24.0.1:60114 - "GET /api/feedback_v2/unknown?_rnd=1776411827436_0.5836947107633986 HTTP/1.0" 200 OK
+INFO:     172.24.0.1:43900 - "GET /api/feedback_v2/unknown?_rnd=1776422098379_0.7876780964631508 HTTP/1.0" 200 OK
 [FeedbackCache] üíæ Successfully saved queue to disk persistence.
-INFO:     172.24.0.1:60118 - "GET /api/feedback_v2/unknown?_rnd=1776411827436_0.3508210862190587 HTTP/1.0" 200 OK
+INFO:     172.24.0.1:43908 - "GET /api/feedback_v2/unknown?_rnd=1776422098379_0.31224923521115966 HTTP/1.0" 200 OK
 [FeedbackCache] üíæ Successfully saved queue to disk persistence.
-INFO:     172.24.0.1:60124 - "GET /api/feedback_v2/unknown?_rnd=1776411827436_0.05796540234439429 HTTP/1.0" 200 OK
+INFO:     172.24.0.1:43914 - "GET /api/feedback_v2/unknown?_rnd=1776422098379_0.9897226721004558 HTTP/1.0" 200 OK
 [FeedbackCache] üíæ Successfully saved queue to disk persistence.
-INFO:     172.24.0.1:60134 - "GET /api/feedback_v2/unknown?_rnd=1776411827437_0.36011960728469594 HTTP/1.0" 200 OK
+INFO:     172.24.0.1:43930 - "GET /api/feedback_v2/unknown?_rnd=1776422098379_0.25360101015268977 HTTP/1.0" 200 OK
 [FeedbackCache] üíæ Successfully saved queue to disk persistence.
-INFO:     172.24.0.1:60148 - "GET /api/feedback_v2/unknown?_rnd=1776411827436_0.8592108981196586 HTTP/1.0" 200 OK
-INFO:     172.24.0.1:60152 - "GET /photos/2026/2026-01/2026-01_0182_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:60226 - "GET /photos/2023/2023-10/2023-10_0183_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:60176 - "GET /photos/2023/2023-10/2023-10_0207_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:60224 - "GET /photos/2023/2023-10/2023-10_0205_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:60204 - "GET /photos/2013/2013-01/2013-01_0001_jpg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:60234 - "GET /photos/UnknownDate/UnknownDate_0050_jpg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:60194 - "GET /photos/2013/2013-01/2013-01_0293_jpg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:60168 - "GET /photos/2025/2025-11/2025-11_0141_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:60186 - "GET /photos/2017/2017-03/2017-03_0275_jpg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:60218 - "GET /photos/2021/2021-04/2021-04_0195_jpg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:56166 - "GET /photos/2026/2026-02/2026-02_0232_heic.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:43946 - "GET /api/feedback_v2/unknown?_rnd=1776422098378_0.38224613473706137 HTTP/1.0" 200 OK
+INFO:     172.24.0.1:43956 - "GET /sw.js HTTP/1.0" 200 OK
+INFO:     172.24.0.1:43990 - "GET /photos/2023/2023-10/2023-10_0037_heic.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:44018 - "GET /photos/2026/2026-01/2026-01_0294_heic.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:43994 - "GET /photos/2026/2026-01/2026-01_0097_heic.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:43966 - "GET /photos/2024/2024-04/2024-04_0058_heic.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:43980 - "GET /photos/2025/2025-01/2025-01_0073_heic.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:44002 - "GET /photos/2019/2019-12/2019-12_0288_jpg.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:44028 - "GET /photos/2017/2017-03/2017-03_0177_jpg.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:43992 - "GET /photos/2013/2013-07/2013-07_0386_jpg.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:44040 - "GET / HTTP/1.0" 200 OK
+INFO:     172.24.0.1:44054 - "GET /frontend/main.js?v=12 HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44070 - "GET /frontend/style.css?v=150 HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44072 - "GET /frontend/apple-touch-icon.png HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44080 - "GET /frontend/js_modules/utils.js?v=2 HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44112 - "GET /frontend/js_modules/components/gallery.js?v=2 HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44096 - "GET /frontend/js_modules/state/store.js?v=2 HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44138 - "GET /frontend/js_modules/components/lightbox.js?v=3 HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44124 - "GET /frontend/js_modules/components/feedback.js?v=8 HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44150 - "GET /frontend/js_modules/components/upload.js?v=2 HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44142 - "GET /frontend/js_modules/api/fetcher.js?v=4 HTTP/1.0" 304 Not Modified
 
-[üîç Search API] ÏöîÏ≤≠ ÏàòÏã†: ÏøºÎ¶¨='timeline_dummy', offset=20, limit=20
-üöÄ [Baking Cache Hit] Guma Family ÌÜµÌï© ÏïÑÌÇ§ÌÖçÏ≤ò JSON Î∞òÌôò: recent (20~40Ïû•)
-INFO:     172.24.0.1:56170 - "POST /api/search HTTP/1.0" 200 OK
-INFO:     172.24.0.1:56180 - "GET /photos/2026/2026-02/2026-02_0232_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:39076 - "GET /photos/2026/2026-04/2026-04_10.jpeg HTTP/1.0" 200 OK
-INFO:     172.24.0.1:39090 - "GET /photos/2026/2026-04/2026-04_06.jpeg HTTP/1.0" 200 OK
+[üîç Search API] ÏöîÏ≤≠ ÏàòÏã†: ÏøºÎ¶¨='timeline_dummy', offset=0, limit=20
+üöÄ [Baking Cache Hit] Guma Family ÌÜµÌï© ÏïÑÌÇ§ÌÖçÏ≤ò JSON Î∞òÌôò: recent (0~20Ïû•)
+INFO:     172.24.0.1:44156 - "POST /api/search HTTP/1.0" 200 OK
+[FeedbackCache] üíæ Successfully saved queue to disk persistence.
+INFO:     172.24.0.1:44170 - "GET /api/feedback_v2/unknown?_rnd=1776422102331_0.5461209166083761 HTTP/1.0" 200 OK
+[FeedbackCache] üíæ Successfully saved queue to disk persistence.
+INFO:     172.24.0.1:44162 - "GET /api/feedback_v2/unknown?_rnd=1776422102331_0.2556223211591202 HTTP/1.0" 200 OK
+[FeedbackCache] üíæ Successfully saved queue to disk persistence.
+INFO:     172.24.0.1:44164 - "GET /api/feedback_v2/unknown?_rnd=1776422102331_0.7506491824963929 HTTP/1.0" 200 OK
+[FeedbackCache] üíæ Successfully saved queue to disk persistence.
+INFO:     172.24.0.1:44172 - "GET /api/feedback_v2/unknown?_rnd=1776422102331_0.838110879407763 HTTP/1.0" 200 OK
+[FeedbackCache] üíæ Successfully saved queue to disk persistence.
+INFO:     172.24.0.1:44180 - "GET /api/feedback_v2/unknown?_rnd=1776422102330_0.4358004114572066 HTTP/1.0" 200 OK
+[FeedbackCache] üíæ Successfully saved queue to disk persistence.
+INFO:     172.24.0.1:44192 - "GET /api/feedback_v2/unknown?_rnd=1776422102331_0.22247403723152104 HTTP/1.0" 200 OK
+[FeedbackCache] üíæ Successfully saved queue to disk persistence.
+INFO:     172.24.0.1:44204 - "GET /api/feedback_v2/unknown?_rnd=1776422102332_0.7311865527534621 HTTP/1.0" 200 OK
+[FeedbackCache] üíæ Successfully saved queue to disk persistence.
+INFO:     172.24.0.1:44338 - "GET /api/feedback_v2/unknown?_rnd=1776422102331_0.4178018627263408 HTTP/1.0" 200 OK
+[FeedbackCache] üíæ Successfully saved queue to disk persistence.
+INFO:     172.24.0.1:44340 - "GET /api/feedback_v2/unknown?_rnd=1776422102332_0.12251379827473796 HTTP/1.0" 200 OK
+[FeedbackCache] üíæ Successfully saved queue to disk persistence.
+INFO:     172.24.0.1:44372 - "GET /api/feedback_v2/unknown?_rnd=1776422102332_0.7006000545769608 HTTP/1.0" 200 OK
+INFO:     172.24.0.1:44230 - "GET /photos/UnknownDate/Unknown-Year_01_jpeg.webp HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44214 - "GET /photos/UnknownDate/Unknown-Year_02_jpeg.webp HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44278 - "GET /photos/2026/2026-04/2026-04_07_jpeg.webp HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44264 - "GET /photos/2026/2026-04/2026-04_08_jpeg.webp HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44248 - "GET /photos/2026/2026-04/2026-04_09_jpeg.webp HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44294 - "GET /photos/2026/2026-03/2026-03_01_jpeg.webp HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44310 - "GET /photos/2026/2026-04/2026-04_03_jpeg.webp HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44324 - "GET /photos/2026/2026-04/2026-04_04_jpeg.webp HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44302 - "GET /photos/2026/2026-04/2026-04_10_jpeg.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:44240 - "GET /photos/2026/2026-04/2026-04_06_jpeg.webp HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44346 - "GET /photos/2026/2026-04/2026-04_01_jpeg.webp HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44178 - "GET /photos/2026/2026-02/2026-02_0231_heic.webp HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44376 - "GET /photos/2026/2026-04/2026-04_02_jpeg.webp HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44358 - "GET /photos/2026/2026-03/2026-03_03_jpeg.webp HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44378 - "GET /photos/2026/2026-04/2026-04_05_jpeg.webp HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44382 - "GET /photos/2026/2026-02/2026-02_0220_heic.webp HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44412 - "GET /photos/2026/2026-02/2026-02_0142_heic.webp HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44424 - "GET /photos/2026/2026-02/2026-02_0245_heic.webp HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44396 - "GET /photos/2026/2026-03/2026-03_02_jpeg.webp HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44428 - "GET /photos/2026/2026-02/2026-02_0171_heic.webp HTTP/1.0" 304 Not Modified
+INFO:     172.24.0.1:44436 - "GET /photos/2024/2024-10/2024-10_0005_jpg.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:44484 - "GET /photos/2023/2023-03/2023-03_0044_heic.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:44474 - "GET /photos/2019/2019-12/2019-12_0589_jpg.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:44500 - "GET /photos/2023/2023-03/2023-03_0030_heic.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:44518 - "GET /photos/2019/2019-12/2019-12_0842_jpg.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:44458 - "GET /photos/2022/2022-05/2022-05_0160_heic.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:44444 - "GET /photos/2026/2026-02/2026-02_0091_jpg.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:44526 - "GET /photos/2023/2023-07/2023-07_0247_heic.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:44512 - "GET /photos/2023/2023-02/2023-02_0033_heic.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:44532 - "GET /photos/2024/2024-04/2024-04_0103_heic.webp HTTP/1.0" 200 OK
 ```
 
 ## 8. Redis ‚Äî queue keys / celery queue length
@@ -508,11 +507,11 @@ celery-task-meta-825dff40-33fd-4db1-a39f-bfdc12839b28
 
 ## 9. Qdrant ‚Äî collection stats
 ```
-{"result":{"status":"green","optimizer_status":"ok","indexed_vectors_count":0,"points_count":26344,"segments_count":8,"config":{"params":{"vectors":{"face":{"size":512,"distance":"Cosine"},"scene":{"size":768,"distance":"Cosine"}},"shard_number":1,"replication_factor":1,"write_consistency_factor":1,"on_disk_payload":true},"hnsw_config":{"m":16,"ef_construct":100,"full_scan_threshold":10000,"max_indexing_threads":0,"on_disk":false},"optimizer_config":{"deleted_threshold":0.2,"vacuum_min_vector_number":1000,"default_segment_number":0,"max_segment_size":null,"memmap_threshold":null,"indexing_threshold":10000,"flush_interval_sec":5,"max_optimization_threads":null,"prevent_unoptimized":null},"wal_config":{"wal_capacity_mb":32,"wal_segments_ahead":0,"wal_retain_closed":1},"quantization_config":null},"payload_schema":{"sort_date":{"data_type":"integer","points":26344},"objects":{"data_type":"keyword","points":26221},"people":{"data_type":"keyword","points":26344},"original_context":{"data_type":"text","points":26344},"filepath":{"data_type":"keyword","points":26344},"location":{"data_type":"text","points":26344},"geo_point":{"data_type":"geo","points":25237},"caption":{"data_type":"text","points":26344},"hash":{"data_type":"keyword","points":26344}},"update_queue":{"length":0}},"status":"ok","time":0.000385265}```
+{"result":{"status":"green","optimizer_status":"ok","indexed_vectors_count":0,"points_count":26344,"segments_count":8,"config":{"params":{"vectors":{"face":{"size":512,"distance":"Cosine"},"scene":{"size":768,"distance":"Cosine"}},"shard_number":1,"replication_factor":1,"write_consistency_factor":1,"on_disk_payload":true},"hnsw_config":{"m":16,"ef_construct":100,"full_scan_threshold":10000,"max_indexing_threads":0,"on_disk":false},"optimizer_config":{"deleted_threshold":0.2,"vacuum_min_vector_number":1000,"default_segment_number":0,"max_segment_size":null,"memmap_threshold":null,"indexing_threshold":10000,"flush_interval_sec":5,"max_optimization_threads":null,"prevent_unoptimized":null},"wal_config":{"wal_capacity_mb":32,"wal_segments_ahead":0,"wal_retain_closed":1},"quantization_config":null},"payload_schema":{"hash":{"data_type":"keyword","points":26344},"sort_date":{"data_type":"integer","points":26344},"location":{"data_type":"text","points":26344},"objects":{"data_type":"keyword","points":26221},"filepath":{"data_type":"keyword","points":26344},"caption":{"data_type":"text","points":26344},"original_context":{"data_type":"text","points":26344},"people":{"data_type":"keyword","points":26344},"geo_point":{"data_type":"geo","points":25237}},"update_queue":{"length":0}},"status":"ok","time":0.000830011}```
 
 ## 9b. Qdrant ‚Äî top 5 newest by sort_date (latest photos)
 ```
-{"result":{"points":[{"id":"96078aa0-daf4-5867-9937-fe643d944ac1","version":0,"score":1.0,"payload":{"filepath":"/app/data/organized/UnknownDate/Unknown-Year_02.jpeg","filename":"Unknown-Year_02.jpeg","original_context":"UnknownDate","face_count":1,"people":["Ï§ÄÏö∞"],"date":"2026-04","sort_date":20260414,"location":"ÎåÄÌïúÎØºÍµ≠ Í≤ΩÍ∏∞ÎèÑ ÌïòÎÇ®Ïãú ÌïôÏïîÎèô","season":"Î¥Ñ","time_of_day":"ÎÇÆ","objects":["boy","flower","human face","5ÏÑ∏","5ÏÇ¥"],"caption":"The image shows a young boy standing in front of a bush with white flowers. He is wearing a white t-shirt with the word \"Essential\" written on it and a blue lanyard around his neck. He has a black headband with small white flowers on it. The boy is making a peace sign with his right hand and is smiling at the camera. The background appears to be a garden or park with a stone wall and a fence.","hash":"e172899571d4fdaa6205ac020ad441d71e7851ef180c8c29e83f49debbf09548","age":5,"gender":"ÎÇ®ÏÑ±","face_bbox":[239,332,456,596],"emotion":"neutral","geo_point":{"lat":37.476964,"lon":127.14947}},"order_value":20260414},{"id":"67061911-86de-5e5a-a446-91b1cd55227a","version":0,"score":1.0,"payload":{"filepath":"/app/data/organized/UnknownDate/Unknown-Year_01.jpeg","filename":"Unknown-Year_01.jpeg","original_context":"UnknownDate","face_count":1,"people":["Ï§ÄÏö∞"],"date":"2026-04","sort_date":20260414,"location":"ÎåÄÌïúÎØºÍµ≠ Í≤ΩÍ∏∞ÎèÑ ÌïòÎÇ®Ïãú ÌïôÏïîÎèô","season":"Î¥Ñ","time_of_day":"ÎÇÆ","objects":["boy","hat","human face","26ÏÑ∏","26ÏÇ¥"],"caption":"The image is a close-up portrait of a young boy. He is wearing a black baseball cap and a blue and white plaid shirt. He has a big smile on his face and is holding up his hand with his fingers. The background shows a park with trees and a stone wall. The boy appears to be happy and relaxed.","hash":"31232e3413a8edd7892f451674fa8e1bdd51280a6c6071d15271436256d295d3","age":26,"gender":"ÎÇ®ÏÑ±","face_bbox":[306,245,646,671],"emotion":"neutral","geo_point":{"lat":37.476964,"lon":127.14947}},"order_value":20260414},{"id":"d904c649-cabf-5186-acae-21af961482a5","version":0,"score":1.0,"payload":{"filepath":"/app/data/organized/2026/2026-04/2026-04_04.jpeg","filename":"2026-04_04.jpeg","original_context":"2026-04","face_count":0,"people":["No People"],"date":"2026-04","sort_date":20260401,"location":"ÎåÄÌïúÎØºÍµ≠ Í≤ΩÍ∏∞ÎèÑ ÏÑ±ÎÇ®Ïãú ÏúÑÎ°ÄÎèô","season":"Î¥Ñ","time_of_day":"ÏïÑÏπ®","objects":["flower"],"caption":"The image shows a pathway lined with trees on both sides. The trees are covered in white cherry blossom flowers, creating a beautiful contrast against the green foliage. The pathway is made of concrete and has a small patch of grass on the right side. The sky is overcast and the overall mood of the image is peaceful and serene.<pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad>","hash":"3fe1959af5c39e83ced07b41cae6ab1d633fcdac1ef8c3d6ec8e05cb08d7c02c","geo_point":{"lat":37.47495,"lon":127.155839}},"order_value":20260401},{"id":"a44a9790-d68f-5d0f-a992-ae53ae90a4ce","version":0,"score":1.0,"payload":{"filepath":"/app/data/organized/2026/2026-04/2026-04_09.jpeg","filename":"2026-04_09.jpeg","original_context":"2026-04","face_count":1,"people":["ÏßÄÏö∞"],"date":"2026-04","sort_date":20260401,"location":"Unknown Location","season":"Î¥Ñ","time_of_day":"ÏïÑÏπ®","objects":["boy","flower","footwear","human face","5ÏÑ∏","5ÏÇ¥"],"caption":"The image shows a young boy standing in front of a large bed of red tulips. He is wearing a plaid shirt, green pants, and colorful shoes. He has a backpack slung over his shoulder and is smiling at the camera. The tulips are in full bloom and are arranged in a neat and orderly manner. The background shows a park with trees and a bench. The sky is blue and the weather appears to be sunny and pleasant.","hash":"847e98248635068b8ec312115bfb320d91d10b0459ce152b97d07bbc142752ba","age":5,"gender":"ÎÇ®ÏÑ±","face_bbox":[1959,817,2288,1085],"emotion":"neutral"},"order_value":20260401},{"id":"8511e86f-d6a9-5e07-a714-b0df161ebec2","version":0,"score":1.0,"payload":{"filepath":"/app/data/organized/2026/2026-04/2026-04_07.jpeg","filename":"2026-04_07.jpeg","original_context":"2026-04","face_count":1,"people":["ÏßÄÏö∞"],"date":"2026-04","sort_date":20260401,"location":"ÎåÄÌïúÎØºÍµ≠ Í≤ΩÍ∏∞ÎèÑ ÌïòÎÇ®Ïãú ÌïôÏïîÎèô","season":"Î¥Ñ","time_of_day":"ÏïÑÏπ®","objects":["footwear","human face","5ÏÑ∏","5ÏÇ¥"],"caption":"The image shows a young boy standing on a tree branch in a park. He is wearing a black jacket, black pants, and colorful shoes. He has a yellow backpack on his back and is holding an umbrella in his hand. The boy is looking up at the camera with a big smile on his face. In the background, there are tall buildings and trees. The ground is covered in grass and there is a dirt path leading up to the tree.<pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad>","hash":"fee1a77a0e7dbe8588c12c4b72a773f0e70ddc486ab0afdf8a3b8f825a37a26b","age":5,"gender":"ÎÇ®ÏÑ±","face_bbox":[1459,1059,1795,1314],"emotion":"neutral","geo_point":{"lat":37.475241,"lon":127.152457}},"order_value":20260401}]},"status":"ok","time":0.000792404}```
+{"result":{"points":[{"id":"96078aa0-daf4-5867-9937-fe643d944ac1","version":0,"score":1.0,"payload":{"filepath":"/app/data/organized/UnknownDate/Unknown-Year_02.jpeg","filename":"Unknown-Year_02.jpeg","original_context":"UnknownDate","face_count":1,"people":["Ï§ÄÏö∞"],"date":"2026-04","sort_date":20260414,"location":"ÎåÄÌïúÎØºÍµ≠ Í≤ΩÍ∏∞ÎèÑ ÌïòÎÇ®Ïãú ÌïôÏïîÎèô","season":"Î¥Ñ","time_of_day":"ÎÇÆ","objects":["boy","flower","human face","5ÏÑ∏","5ÏÇ¥"],"caption":"The image shows a young boy standing in front of a bush with white flowers. He is wearing a white t-shirt with the word \"Essential\" written on it and a blue lanyard around his neck. He has a black headband with small white flowers on it. The boy is making a peace sign with his right hand and is smiling at the camera. The background appears to be a garden or park with a stone wall and a fence.","hash":"e172899571d4fdaa6205ac020ad441d71e7851ef180c8c29e83f49debbf09548","age":5,"gender":"ÎÇ®ÏÑ±","face_bbox":[239,332,456,596],"emotion":"neutral","geo_point":{"lat":37.476964,"lon":127.14947}},"order_value":20260414},{"id":"67061911-86de-5e5a-a446-91b1cd55227a","version":0,"score":1.0,"payload":{"filepath":"/app/data/organized/UnknownDate/Unknown-Year_01.jpeg","filename":"Unknown-Year_01.jpeg","original_context":"UnknownDate","face_count":1,"people":["Ï§ÄÏö∞"],"date":"2026-04","sort_date":20260414,"location":"ÎåÄÌïúÎØºÍµ≠ Í≤ΩÍ∏∞ÎèÑ ÌïòÎÇ®Ïãú ÌïôÏïîÎèô","season":"Î¥Ñ","time_of_day":"ÎÇÆ","objects":["boy","hat","human face","26ÏÑ∏","26ÏÇ¥"],"caption":"The image is a close-up portrait of a young boy. He is wearing a black baseball cap and a blue and white plaid shirt. He has a big smile on his face and is holding up his hand with his fingers. The background shows a park with trees and a stone wall. The boy appears to be happy and relaxed.","hash":"31232e3413a8edd7892f451674fa8e1bdd51280a6c6071d15271436256d295d3","age":26,"gender":"ÎÇ®ÏÑ±","face_bbox":[306,245,646,671],"emotion":"neutral","geo_point":{"lat":37.476964,"lon":127.14947}},"order_value":20260414},{"id":"d904c649-cabf-5186-acae-21af961482a5","version":0,"score":1.0,"payload":{"filepath":"/app/data/organized/2026/2026-04/2026-04_04.jpeg","filename":"2026-04_04.jpeg","original_context":"2026-04","face_count":0,"people":["No People"],"date":"2026-04","sort_date":20260401,"location":"ÎåÄÌïúÎØºÍµ≠ Í≤ΩÍ∏∞ÎèÑ ÏÑ±ÎÇ®Ïãú ÏúÑÎ°ÄÎèô","season":"Î¥Ñ","time_of_day":"ÏïÑÏπ®","objects":["flower"],"caption":"The image shows a pathway lined with trees on both sides. The trees are covered in white cherry blossom flowers, creating a beautiful contrast against the green foliage. The pathway is made of concrete and has a small patch of grass on the right side. The sky is overcast and the overall mood of the image is peaceful and serene.<pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad>","hash":"3fe1959af5c39e83ced07b41cae6ab1d633fcdac1ef8c3d6ec8e05cb08d7c02c","geo_point":{"lat":37.47495,"lon":127.155839}},"order_value":20260401},{"id":"a44a9790-d68f-5d0f-a992-ae53ae90a4ce","version":0,"score":1.0,"payload":{"filepath":"/app/data/organized/2026/2026-04/2026-04_09.jpeg","filename":"2026-04_09.jpeg","original_context":"2026-04","face_count":1,"people":["ÏßÄÏö∞"],"date":"2026-04","sort_date":20260401,"location":"Unknown Location","season":"Î¥Ñ","time_of_day":"ÏïÑÏπ®","objects":["boy","flower","footwear","human face","5ÏÑ∏","5ÏÇ¥"],"caption":"The image shows a young boy standing in front of a large bed of red tulips. He is wearing a plaid shirt, green pants, and colorful shoes. He has a backpack slung over his shoulder and is smiling at the camera. The tulips are in full bloom and are arranged in a neat and orderly manner. The background shows a park with trees and a bench. The sky is blue and the weather appears to be sunny and pleasant.","hash":"847e98248635068b8ec312115bfb320d91d10b0459ce152b97d07bbc142752ba","age":5,"gender":"ÎÇ®ÏÑ±","face_bbox":[1959,817,2288,1085],"emotion":"neutral"},"order_value":20260401},{"id":"8511e86f-d6a9-5e07-a714-b0df161ebec2","version":0,"score":1.0,"payload":{"filepath":"/app/data/organized/2026/2026-04/2026-04_07.jpeg","filename":"2026-04_07.jpeg","original_context":"2026-04","face_count":1,"people":["ÏßÄÏö∞"],"date":"2026-04","sort_date":20260401,"location":"ÎåÄÌïúÎØºÍµ≠ Í≤ΩÍ∏∞ÎèÑ ÌïòÎÇ®Ïãú ÌïôÏïîÎèô","season":"Î¥Ñ","time_of_day":"ÏïÑÏπ®","objects":["footwear","human face","5ÏÑ∏","5ÏÇ¥"],"caption":"The image shows a young boy standing on a tree branch in a park. He is wearing a black jacket, black pants, and colorful shoes. He has a yellow backpack on his back and is holding an umbrella in his hand. The boy is looking up at the camera with a big smile on his face. In the background, there are tall buildings and trees. The ground is covered in grass and there is a dirt path leading up to the tree.<pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad>","hash":"fee1a77a0e7dbe8588c12c4b72a773f0e70ddc486ab0afdf8a3b8f825a37a26b","age":5,"gender":"ÎÇ®ÏÑ±","face_bbox":[1459,1059,1795,1314],"emotion":"neutral","geo_point":{"lat":37.475241,"lon":127.152457}},"order_value":20260401}]},"status":"ok","time":0.000834739}```
 
 ## 9c. Today's 2026/2026-04/ folder contents
 ```
@@ -544,7 +543,7 @@ celery-task-meta-825dff40-33fd-4db1-a39f-bfdc12839b28
 2026-04-04  ø¿»ƒ 07:32         3,995,426 2026-04_01.jpeg
 2026-04-04  ø¿»ƒ 07:31         3,894,227 2026-04_02.jpeg
               20∞≥ ∆ƒ¿œ          72,342,955 πŸ¿Ã∆Æ
-               2∞≥ µ∑∫≈Õ∏Æ  427,846,246,400 πŸ¿Ã∆Æ ≥≤¿Ω
+               2∞≥ µ∑∫≈Õ∏Æ  427,846,254,592 πŸ¿Ã∆Æ ≥≤¿Ω
 ```
 
 ## 9d. UnknownDate/ folder contents (recent)
