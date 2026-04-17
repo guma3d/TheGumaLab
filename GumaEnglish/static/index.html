@@ -6,7 +6,7 @@
   <title>GumaEnglish</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=7" />
+  <link rel="stylesheet" href="/css/style.css?v=8" />
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#050505">
@@ -40,8 +40,33 @@
         <i class="fa-solid fa-comments"></i>
         <span>Guma</span>English
       </div>
-      <div class="stage-badge">Stage <span id="stage-num">1</span></div>
+      <div class="header-actions">
+        <div class="stage-badge">Stage <span id="stage-num">1</span></div>
+        <button id="calendar-btn" type="button" class="nav-btn"><i class="fa-regular fa-calendar"></i></button>
+      </div>
     </header>
+
+    <!-- Calendar Modal -->
+    <div class="modal-overlay" id="calendar-modal" hidden>
+      <div class="modal-content card">
+        <div class="modal-header">
+          <button id="cal-prev" type="button" class="nav-btn"><i class="fa-solid fa-chevron-left"></i></button>
+          <span id="cal-title" class="modal-title">2026년 4월</span>
+          <button id="cal-next" type="button" class="nav-btn"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+        <div class="calendar-weekdays">
+          <span class="weekday sun">일</span>
+          <span class="weekday">월</span>
+          <span class="weekday">화</span>
+          <span class="weekday">수</span>
+          <span class="weekday">목</span>
+          <span class="weekday">금</span>
+          <span class="weekday sat">토</span>
+        </div>
+        <div class="calendar-grid" id="cal-grid"></div>
+        <div class="cal-stats" id="cal-stats"></div>
+      </div>
+    </div>
 
     <section class="card pattern-card" id="pattern-card">
       <div class="card-label">TODAY'S PATTERN</div>
@@ -81,6 +106,6 @@
     </footer>
   </div>
 
-  <script type="module" src="/js/main.js?v=7"></script>
+  <script type="module" src="/js/main.js?v=8"></script>
 </body>
 </html>
