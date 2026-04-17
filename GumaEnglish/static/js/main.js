@@ -20,6 +20,7 @@ const state = {
   idx: 0,
   busy: false,
   cancelled: false,
+  wrongCount: 0,
   // Review mode
   reviewMode: false,
   reviewQueue: [],
@@ -266,17 +267,28 @@ async function evaluateAnswer(heard, sent) {
   $("transcript").textContent = `"${heard}"`;
 
   if (isMatch(heard, sent.en)) {
+    state.wrongCount = 0;
     showStatus(`정답: "${sent.en}"`, "ok", "");
     await speak(pick(CORRECT_KO), { lang: "ko-KR" });
     if (state.cancelled) return;
     await sleep(500);
     advanceToNext();
   } else {
-    showStatus(`정답은 "${sent.en}" 이에요`, "miss", "");
-    await speak(pick(WRONG_KO), { lang: "ko-KR" });
-    if (state.cancelled) return;
-    await sleep(400);
-    await runCurrentRound();
+    state.wrongCount += 1;
+    if (state.wrongCount >= 3) {
+      state.wrongCount = 0;
+      showStatus(`정답은 "${sent.en}" 이에요. 넘어갈게요.`, "miss", "");
+      await speak(`정답은 "${sent.en}" 이에요. 다음으로 넘어갈게요.`, { lang: "ko-KR" });
+      if (state.cancelled) return;
+      await sleep(500);
+      advanceToNext();
+    } else {
+      showStatus(`정답은 "${sent.en}" 이에요`, "miss", "");
+      await speak(pick(WRONG_KO), { lang: "ko-KR" });
+      if (state.cancelled) return;
+      await sleep(400);
+      await runCurrentRound();
+    }
   }
 }
 
