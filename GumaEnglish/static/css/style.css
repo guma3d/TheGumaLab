@@ -241,14 +241,15 @@ body {
   border-color: rgba(16, 185, 129, 0.2);
 }
 
-/* Status icon container */
+/* Status icon container — collapses when empty */
 .status-icon {
-  width: 28px;
-  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+.status-icon:empty {
+  display: none;
 }
 
 /* Sound wave bars animation (TTS playing / listening) */
