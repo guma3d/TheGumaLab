@@ -21,8 +21,12 @@ on:
 jobs:
   diagnose:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
+      - uses: actions/checkout@v4
+
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
@@ -30,50 +34,97 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H 219.254.245.175 >> ~/.ssh/known_hosts
 
-      - name: "1. Container status"
+      - name: Run diagnostics and capture output
+        id: diag
         run: |
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175 \
-            "docker ps --filter name=gumaphoto --format \"table {{.Names}}\t{{.Status}}\t{{.RunningFor}}\""
+          set +e
+          SSH="ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175"
+          mkdir -p .github/diagnostics
+          OUT=".github/diagnostics/last-run.md"
 
-      - name: "2. Timeline cache file (mtime and size)"
-        run: |
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175 \
-            "dir D:\\TheGumaLab\\GumaPhoto\\data\\caches\\timeline_cache.json"
+          {
+            echo "# GumaPhoto Diagnostic Run"
+            echo ""
+            echo "- Run: \`${{ github.run_id }}\`"
+            echo "- Commit: \`${{ github.sha }}\`"
+            echo "- Timestamp (UTC): $(date -u +"%Y-%m-%d %H:%M:%S")"
+            echo ""
 
-      - name: "3. Recent uploads_raw (files stuck = Organizer didn't pick up)"
-        run: |
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175 \
-            "dir /O-D D:\\Pictures\\uploads_raw 2>nul | findstr /V \"<DIR>\" | head -20" || true
+            echo "## 1. Container status"
+            echo '```'
+            $SSH "docker ps --filter name=gumaphoto --format \"table {{.Names}}\t{{.Status}}\t{{.RunningFor}}\"" 2>&1
+            echo '```'
+            echo ""
 
-      - name: "4. Celery worker recent logs (last 150 lines)"
-        run: |
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175 \
-            "docker logs gumaphoto_celery --tail 150 2>&1"
+            echo "## 2. Timeline cache file (mtime / size)"
+            echo '```'
+            $SSH "dir D:\\TheGumaLab\\GumaPhoto\\data\\caches\\timeline_cache.json" 2>&1
+            echo '```'
+            echo ""
 
-      - name: "5. Celery errors/tracebacks (last 24h)"
-        run: |
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175 \
-            "docker logs gumaphoto_celery --since 24h 2>&1 | findstr /I \"error exception traceback failed\""  || echo "(no matches — clean)"
+            echo "## 3. uploads_raw/ recent files (stuck = Organizer didn't pick up)"
+            echo '```'
+            $SSH "dir /O-D D:\\Pictures\\uploads_raw" 2>&1 | head -40
+            echo '```'
+            echo ""
 
-      - name: "6. App recent logs (last 80 lines)"
-        run: |
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175 \
-            "docker logs gumaphoto_app --tail 80 2>&1"
+            echo "## 4. Pictures/ recently modified folders (Organizer output)"
+            echo '```'
+            $SSH "dir /O-D D:\\Pictures" 2>&1 | head -30
+            echo '```'
+            echo ""
 
-      - name: "7. Redis queue depth (celery / celery:1)"
-        run: |
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175 \
-            "docker exec gumaphoto_redis redis-cli llen celery"
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175 \
-            "docker exec gumaphoto_redis redis-cli keys \"*\""
+            echo "## 5. Celery worker — last 200 log lines"
+            echo '```'
+            $SSH "docker logs gumaphoto_celery --tail 200" 2>&1
+            echo '```'
+            echo ""
 
-      - name: "8. Qdrant collection stats"
-        run: |
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175 \
-            "curl -s http://localhost:6337/collections/gumaphoto_hybrid_kr"
+            echo "## 6. Celery — errors / tracebacks in last 24h"
+            echo '```'
+            $SSH "docker logs gumaphoto_celery --since 24h 2>&1 | findstr /I \"error exception traceback failed warning\"" 2>&1 | head -100
+            echo '```'
+            echo ""
 
-      - name: "9. (Optional) Rebuild timeline cache"
-        if: ${{ inputs.rebuild_cache == 'true' }}
+            echo "## 7. FastAPI app — last 100 log lines"
+            echo '```'
+            $SSH "docker logs gumaphoto_app --tail 100" 2>&1
+            echo '```'
+            echo ""
+
+            echo "## 8. Redis — queue keys / celery queue length"
+            echo '```'
+            $SSH "docker exec gumaphoto_redis redis-cli llen celery" 2>&1
+            $SSH "docker exec gumaphoto_redis redis-cli keys *" 2>&1
+            echo '```'
+            echo ""
+
+            echo "## 9. Qdrant — collection stats"
+            echo '```'
+            $SSH "curl -s http://localhost:6337/collections/gumaphoto_hybrid_kr" 2>&1
+            echo '```'
+            echo ""
+
+            if [ "${{ inputs.rebuild_cache }}" = "true" ]; then
+              echo "## 10. Manual rebuild_cache (requested)"
+              echo '```'
+              $SSH "curl -s -X POST http://localhost:8085/api/rebuild_cache" 2>&1
+              echo '```'
+              echo ""
+            fi
+          } > "$OUT" 2>&1
+
+          echo "--- Captured output ($OUT) ---"
+          cat "$OUT"
+
+      - name: Commit diagnostic output back to branch
         run: |
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175 \
-            "curl -s -X POST http://localhost:8085/api/rebuild_cache"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/diagnostics/last-run.md
+          if git diff --cached --quiet; then
+            echo "No diagnostic changes to commit."
+          else
+            git commit -m "chore(diagnostics): capture GumaPhoto diagnostic run ${{ github.run_id }}"
+            git push origin HEAD:${{ github.ref_name }}
+          fi
