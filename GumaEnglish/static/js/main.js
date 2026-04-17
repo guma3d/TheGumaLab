@@ -1,5 +1,5 @@
-import { fetchStage } from "/js/api.js?v=9";
-import { speak, listenOnce, speechSupported } from "/js/voice.js?v=9";
+import { fetchStage } from "/js/api.js?v=10";
+import { speak, listenOnce, speechSupported } from "/js/voice.js?v=10";
 
 const $ = (id) => document.getElementById(id);
 
@@ -119,13 +119,24 @@ function isMatch(a, b) {
   return normalize(a) === normalize(b);
 }
 
-function maskKeyword(sentence, keyword) {
-  if (!keyword) return sentence;
-  const re = new RegExp(
-    keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
-    "i",
-  );
-  return sentence.replace(re, (m) => m.replace(/\S/g, "▁"));
+/** Wrap each word in a span; if hidden, add .word-box class */
+function wordsToBoxes(sentence, mode, keyword) {
+  if (mode === "full") return null; // use textContent
+  const words = sentence.split(/(\s+)/); // preserve spaces
+  if (mode === "hidden") {
+    return words.map(w => /\S/.test(w) ? `<span class="word-box">${esc(w)}</span>` : w).join("");
+  }
+  // partial — only mask keyword words
+  if (!keyword) return null;
+  const re = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "i");
+  const parts = sentence.split(re);
+  return parts.map(p =>
+    re.test(p) ? p.split(/(\s+)/).map(w => /\S/.test(w) ? `<span class="word-box">${esc(w)}</span>` : w).join("") : esc(p)
+  ).join("");
+}
+
+function esc(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 
 function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
@@ -183,17 +194,13 @@ function renderRoundUI() {
   $("sentence-ko").textContent = sent.ko;
 
   const enEl = $("sentence-en");
-  if (phase.showEn === "full") {
+  const boxHTML = wordsToBoxes(sent.en, phase.showEn, sent.keyword);
+  if (boxHTML === null) {
     enEl.textContent = sent.en;
-    enEl.classList.remove("hidden-sentence", "masked-sentence");
-  } else if (phase.showEn === "partial") {
-    enEl.textContent = maskKeyword(sent.en, sent.keyword);
-    enEl.classList.remove("hidden-sentence");
-    enEl.classList.add("masked-sentence");
+    enEl.classList.remove("has-boxes");
   } else {
-    enEl.textContent = "▁ ▁ ▁ ▁ ▁";
-    enEl.classList.add("hidden-sentence");
-    enEl.classList.remove("masked-sentence");
+    enEl.innerHTML = boxHTML;
+    enEl.classList.add("has-boxes");
   }
 
   $("replay-btn").hidden = !phase.playAudio;
@@ -209,9 +216,8 @@ function renderReviewUI() {
   $("sentence-ko").textContent = sent.ko;
 
   const enEl = $("sentence-en");
-  enEl.textContent = "▁ ▁ ▁ ▁ ▁";
-  enEl.classList.add("hidden-sentence");
-  enEl.classList.remove("masked-sentence");
+  enEl.innerHTML = wordsToBoxes(sent.en, "hidden");
+  enEl.classList.add("has-boxes");
 
   $("replay-btn").hidden = true;
   $("transcript").textContent = "\u00a0";

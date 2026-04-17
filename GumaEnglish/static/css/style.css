@@ -203,12 +203,14 @@ body {
   line-height: 1.35;
   color: var(--text-main);
 }
-.sentence-en.masked-sentence {
-  color: var(--accent-color);
-}
-.sentence-en.hidden-sentence {
-  color: var(--text-dim);
-  letter-spacing: 6px;
+/* Word box: real text stays for sizing, made invisible, box overlaid */
+.word-box {
+  color: transparent;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 0 2px;
+  display: inline-block;
 }
 .sentence-ko {
   font-size: 0.9rem;
