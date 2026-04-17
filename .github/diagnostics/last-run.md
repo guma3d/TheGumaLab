@@ -1,8 +1,8 @@
 # GumaPhoto Diagnostic Run
 
-- Run: `24553773216`
-- Commit: `da65e27601199738c3d1fa1e2d321dff19f9d85a`
-- Timestamp (UTC): 2026-04-17 07:39:47
+- Run: `24553853287`
+- Commit: `2986dac805356b7cd5f43565f0ab7c75fcea5894`
+- Timestamp (UTC): 2026-04-17 07:41:55
 
 ## 1. Container status
 ```
@@ -22,7 +22,7 @@ gumaphoto_qdrant   Up 33 hours   4 weeks ago
 
 2026-04-17  ø¿»ƒ 04:38         4,827,717 timeline_cache.json
                1∞≥ ∆ƒ¿œ           4,827,717 πŸ¿Ã∆Æ
-               0∞≥ µ∑∫≈Õ∏Æ  427,833,847,808 πŸ¿Ã∆Æ ≥≤¿Ω
+               0∞≥ µ∑∫≈Õ∏Æ  427,833,737,216 πŸ¿Ã∆Æ ≥≤¿Ω
 ```
 
 ## 3. uploads_raw/ recent files (stuck = Organizer didn't pick up)
@@ -35,7 +35,7 @@ gumaphoto_qdrant   Up 33 hours   4 weeks ago
 2026-04-17  ø¿»ƒ 04:38    <DIR>          .
 2026-04-12  ø¿»ƒ 05:15    <DIR>          ..
                0∞≥ ∆ƒ¿œ                   0 πŸ¿Ã∆Æ
-               2∞≥ µ∑∫≈Õ∏Æ  427,833,847,808 πŸ¿Ã∆Æ ≥≤¿Ω
+               2∞≥ µ∑∫≈Õ∏Æ  427,833,737,216 πŸ¿Ã∆Æ ≥≤¿Ω
 ```
 
 ## 4. Pictures/ recently modified folders (Organizer output)
@@ -69,7 +69,7 @@ gumaphoto_qdrant   Up 33 hours   4 weeks ago
 2026-03-29  ø¿»ƒ 06:37    <DIR>          2024
 2026-03-29  ø¿»ƒ 06:37    <DIR>          2025
                0∞≥ ∆ƒ¿œ                   0 πŸ¿Ã∆Æ
-              23∞≥ µ∑∫≈Õ∏Æ  427,833,847,808 πŸ¿Ã∆Æ ≥≤¿Ω
+              23∞≥ µ∑∫≈Õ∏Æ  427,833,741,312 πŸ¿Ã∆Æ ≥≤¿Ω
 ```
 
 ## 5. Celery worker ‚Äî last 200 log lines
@@ -382,58 +382,6 @@ gumaphoto_qdrant   Up 33 hours   4 weeks ago
 
 ## 7. FastAPI app ‚Äî last 100 log lines
 ```
-INFO:     172.24.0.1:48426 - "GET /api/feedback_v2/unknown?_rnd=1776411493985_0.21342505804470113 HTTP/1.0" 200 OK
-INFO:     172.24.0.1:48450 - "GET /photos/2026/2026-04/2026-04_01_jpeg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:48494 - "GET /photos/2026/2026-04/2026-04_05_jpeg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:48440 - "GET /photos/UnknownDate/Unknown-Year_02_jpeg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:48442 - "GET /photos/2026/2026-04/2026-04_07_jpeg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:48506 - "GET /photos/2026/2026-04/2026-04_03_jpeg.webp HTTP/1.0" 304 Not Modified
-INFO:     172.24.0.1:48480 - "GET /photos/2026/2026-04/2026-04_02_jpeg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:48468 - "GET /photos/2026/2026-03/2026-03_02_jpeg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:48462 - "GET /photos/2026/2026-04/2026-04_06_jpeg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:48542 - "GET /photos/2026/2026-04/2026-04_08_jpeg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:48472 - "GET /photos/2026/2026-03/2026-03_01_jpeg.webp HTTP/1.0" 304 Not Modified
-INFO:     172.24.0.1:48528 - "GET /photos/2026/2026-04/2026-04_04_jpeg.webp HTTP/1.0" 304 Not Modified
-INFO:     172.24.0.1:48546 - "GET /photos/2026/2026-02/2026-02_0142_heic.webp HTTP/1.0" 304 Not Modified
-INFO:     172.24.0.1:48590 - "GET /photos/2026/2026-02/2026-02_0182_heic.webp HTTP/1.0" 304 Not Modified
-INFO:     172.24.0.1:48576 - "GET /photos/2026/2026-02/2026-02_0220_heic.webp HTTP/1.0" 304 Not Modified
-INFO:     172.24.0.1:48514 - "GET /photos/2026/2026-02/2026-02_0245_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:48584 - "GET /photos/2026/2026-02/2026-02_0171_heic.webp HTTP/1.0" 304 Not Modified
-INFO:     172.24.0.1:48570 - "GET /photos/2026/2026-04/2026-04_09_jpeg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:48598 - "GET /photos/2026/2026-03/2026-03_03_jpeg.webp HTTP/1.0" 304 Not Modified
-INFO:     172.24.0.1:48560 - "GET /photos/UnknownDate/Unknown-Year_01_jpeg.webp HTTP/1.0" 304 Not Modified
-INFO:     172.24.0.1:48614 - "GET /photos/2013/2013-08/2013-08_0450_jpg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:48662 - "GET /photos/2023/2023-03/2023-03_0095_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:48668 - "GET /photos/2020/2020-07/2020-07_0261_jpg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:48652 - "GET /photos/2023/2023-08/2023-08_0147_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:48672 - "GET /photos/2023/2023-01/2023-01_0045_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:48626 - "GET /photos/2026/2026-02/2026-02_0141_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:48632 - "GET /photos/2025/2025-03/2025-03_0158_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:48654 - "GET /photos/2017/2017-03/2017-03_0475_jpg.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:48636 - "GET /photos/2025/2025-01/2025-01_0075_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:48628 - "GET /photos/2026/2026-02/2026-02_0188_heic.webp HTTP/1.0" 200 OK
-INFO:     172.24.0.1:60806 - "GET / HTTP/1.0" 200 OK
-
-[üîç Search API] ÏöîÏ≤≠ ÏàòÏã†: ÏøºÎ¶¨='timeline_dummy', offset=0, limit=20
-üöÄ [Baking Cache Hit] Guma Family ÌÜµÌï© ÏïÑÌÇ§ÌÖçÏ≤ò JSON Î∞òÌôò: recent (0~20Ïû•)
-INFO:     172.24.0.1:60816 - "POST /api/search HTTP/1.0" 200 OK
-[FeedbackCache] üíæ Successfully saved queue to disk persistence.
-INFO:     172.24.0.1:60826 - "GET /api/feedback_v2/unknown?_rnd=1776411526284_0.8653800567363844 HTTP/1.0" 200 OK
-[FeedbackCache] üíæ Successfully saved queue to disk persistence.
-INFO:     172.24.0.1:60842 - "GET /api/feedback_v2/unknown?_rnd=1776411526284_0.4229947718168229 HTTP/1.0" 200 OK
-[FeedbackCache] üíæ Successfully saved queue to disk persistence.
-INFO:     172.24.0.1:60856 - "GET /api/feedback_v2/unknown?_rnd=1776411526284_0.5624488622035185 HTTP/1.0" 200 OK
-[FeedbackCache] üíæ Successfully saved queue to disk persistence.
-INFO:     172.24.0.1:60870 - "GET /api/feedback_v2/unknown?_rnd=1776411526285_0.8822717755815919 HTTP/1.0" 200 OK
-[FeedbackCache] üíæ Successfully saved queue to disk persistence.
-INFO:     172.24.0.1:60888 - "GET /api/feedback_v2/unknown?_rnd=1776411526284_0.447521790328653 HTTP/1.0" 200 OK
-[FeedbackCache] üíæ Successfully saved queue to disk persistence.
-INFO:     172.24.0.1:60892 - "GET /api/feedback_v2/unknown?_rnd=1776411526285_0.4851119305519358 HTTP/1.0" 200 OK
-[FeedbackCache] üíæ Successfully saved queue to disk persistence.
-INFO:     172.24.0.1:60894 - "GET /api/feedback_v2/unknown?_rnd=1776411526285_0.6277517870897923 HTTP/1.0" 200 OK
-[FeedbackCache] üíæ Successfully saved queue to disk persistence.
-INFO:     172.24.0.1:60910 - "GET /api/feedback_v2/unknown?_rnd=1776411526285_0.953543024833546 HTTP/1.0" 200 OK
-[FeedbackCache] üíæ Successfully saved queue to disk persistence.
 INFO:     172.24.0.1:60926 - "GET /api/feedback_v2/unknown?_rnd=1776411526285_0.6753803146916897 HTTP/1.0" 200 OK
 [FeedbackCache] üíæ Successfully saved queue to disk persistence.
 INFO:     172.24.0.1:60934 - "GET /api/feedback_v2/unknown?_rnd=1776411526284_0.1455688489728102 HTTP/1.0" 200 OK
@@ -482,6 +430,58 @@ INFO:     172.24.0.1:39288 - "GET /api/feedback_v2/unknown?_rnd=1776411568678_0.
 INFO:     172.24.0.1:39300 - "GET /api/feedback_v2/unknown?_rnd=1776411568678_0.1527277194070482 HTTP/1.0" 200 OK
 INFO:     172.24.0.1:39316 - "GET /api/feedback_v2/unknown?_rnd=1776411568678_0.6527699585644211 HTTP/1.0" 200 OK
 INFO:     172.24.0.1:39318 - "GET /api/feedback_v2/unknown?_rnd=1776411568679_0.19252074286321474 HTTP/1.0" 200 OK
+INFO:     172.24.0.1:37768 - "GET / HTTP/1.0" 200 OK
+
+[üîç Search API] ÏöîÏ≤≠ ÏàòÏã†: ÏøºÎ¶¨='timeline_dummy', offset=0, limit=20
+üöÄ [Baking Cache Hit] Guma Family ÌÜµÌï© ÏïÑÌÇ§ÌÖçÏ≤ò JSON Î∞òÌôò: recent (0~20Ïû•)
+INFO:     172.24.0.1:37778 - "POST /api/search HTTP/1.0" 200 OK
+INFO:     172.24.0.1:42246 - "GET /api/feedback_v2/unknown?_rnd=1776411667590_0.6348197483393035 HTTP/1.0" 200 OK
+INFO:     172.24.0.1:42260 - "GET /api/feedback_v2/unknown?_rnd=1776411667590_0.5348319389933884 HTTP/1.0" 200 OK
+INFO:     172.24.0.1:42264 - "GET /api/feedback_v2/unknown?_rnd=1776411667591_0.07142877261412417 HTTP/1.0" 200 OK
+INFO:     172.24.0.1:42272 - "GET /api/feedback_v2/unknown?_rnd=1776411667591_0.03188462236279499 HTTP/1.0" 200 OK
+INFO:     172.24.0.1:42286 - "GET /api/feedback_v2/unknown?_rnd=1776411667591_0.8154757067071793 HTTP/1.0" 200 OK
+INFO:     172.24.0.1:42276 - "GET /api/feedback_v2/unknown?_rnd=1776411667591_0.7954016500170591 HTTP/1.0" 200 OK
+INFO:     172.24.0.1:42302 - "GET /api/feedback_v2/unknown?_rnd=1776411667591_0.29177272293075873 HTTP/1.0" 200 OK
+INFO:     172.24.0.1:42314 - "GET /api/feedback_v2/unknown?_rnd=1776411667591_0.7807108818547156 HTTP/1.0" 200 OK
+INFO:     172.24.0.1:42316 - "GET /api/feedback_v2/unknown?_rnd=1776411667591_0.79365164790459 HTTP/1.0" 200 OK
+INFO:     172.24.0.1:42322 - "GET /api/feedback_v2/unknown?_rnd=1776411667592_0.6669942966097896 HTTP/1.0" 200 OK
+[FeedbackCache] üíæ Successfully saved queue to disk persistence.
+üéâ [FeedbackCache] Generated Top 300 clusters in 214.61s! (Top 1 has 10 photos)
+INFO:     172.24.0.1:48136 - "GET / HTTP/1.0" 200 OK
+
+[üîç Search API] ÏöîÏ≤≠ ÏàòÏã†: ÏøºÎ¶¨='timeline_dummy', offset=0, limit=20
+üöÄ [Baking Cache Hit] Guma Family ÌÜµÌï© ÏïÑÌÇ§ÌÖçÏ≤ò JSON Î∞òÌôò: recent (0~20Ïû•)
+INFO:     172.24.0.1:48150 - "POST /api/search HTTP/1.0" 200 OK
+[FeedbackCache] üíæ Successfully saved queue to disk persistence.
+INFO:     172.24.0.1:48154 - "GET /api/feedback_v2/unknown?_rnd=1776411723219_0.5059147835754654 HTTP/1.0" 200 OK
+[FeedbackCache] üíæ Successfully saved queue to disk persistence.
+INFO:     172.24.0.1:48170 - "GET /api/feedback_v2/unknown?_rnd=1776411723219_0.9344104540548259 HTTP/1.0" 200 OK
+[FeedbackCache] üíæ Successfully saved queue to disk persistence.
+INFO:     172.24.0.1:48180 - "GET /api/feedback_v2/unknown?_rnd=1776411723219_0.759566826820633 HTTP/1.0" 200 OK
+[FeedbackCache] üíæ Successfully saved queue to disk persistence.
+INFO:     172.24.0.1:48184 - "GET /api/feedback_v2/unknown?_rnd=1776411723219_0.9548839975317399 HTTP/1.0" 200 OK
+[FeedbackCache] üíæ Successfully saved queue to disk persistence.
+INFO:     172.24.0.1:48186 - "GET /api/feedback_v2/unknown?_rnd=1776411723218_0.5966424790797529 HTTP/1.0" 200 OK
+[FeedbackCache] üíæ Successfully saved queue to disk persistence.
+INFO:     172.24.0.1:48200 - "GET /api/feedback_v2/unknown?_rnd=1776411723220_0.33881802886020385 HTTP/1.0" 200 OK
+[FeedbackCache] üíæ Successfully saved queue to disk persistence.
+INFO:     172.24.0.1:48202 - "GET /api/feedback_v2/unknown?_rnd=1776411723219_0.4324596790241083 HTTP/1.0" 200 OK
+[FeedbackCache] üíæ Successfully saved queue to disk persistence.
+INFO:     172.24.0.1:48206 - "GET /api/feedback_v2/unknown?_rnd=1776411723220_0.4717172992593831 HTTP/1.0" 200 OK
+[FeedbackCache] üíæ Successfully saved queue to disk persistence.
+INFO:     172.24.0.1:48208 - "GET /api/feedback_v2/unknown?_rnd=1776411723219_0.1378329517887774 HTTP/1.0" 200 OK
+[FeedbackCache] üíæ Successfully saved queue to disk persistence.
+INFO:     172.24.0.1:48220 - "GET /api/feedback_v2/unknown?_rnd=1776411723218_0.6552971622776296 HTTP/1.0" 200 OK
+INFO:     172.24.0.1:48224 - "GET /photos/2026/2026-01/2026-01_0161_heic.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:48234 - "GET /photos/2019/2019-12/2019-12_0153_jpg.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:48244 - "GET /photos/2017/2017-03/2017-03_0284_jpg.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:48238 - "GET /photos/2024/2024-12/2024-12_0039_heic.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:48280 - "GET /photos/2017/2017-03/2017-03_0193_jpg.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:48252 - "GET /photos/2024/2024-01/2024-01_0049_heic.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:48254 - "GET /photos/2017/2017-03/2017-03_0207_jpg.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:48286 - "GET /photos/UnknownDate/UnknownDate_0102_jpg.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:48266 - "GET /photos/2026/2026-02/2026-02_0096_heic.webp HTTP/1.0" 200 OK
+INFO:     172.24.0.1:48282 - "GET /photos/2025/2025-10/2025-10_0268_heic.webp HTTP/1.0" 200 OK
 ```
 
 ## 8. Redis ‚Äî queue keys / celery queue length
@@ -500,5 +500,5 @@ celery-task-meta-825dff40-33fd-4db1-a39f-bfdc12839b28
 
 ## 9. Qdrant ‚Äî collection stats
 ```
-{"result":{"status":"green","optimizer_status":"ok","indexed_vectors_count":0,"points_count":26344,"segments_count":8,"config":{"params":{"vectors":{"face":{"size":512,"distance":"Cosine"},"scene":{"size":768,"distance":"Cosine"}},"shard_number":1,"replication_factor":1,"write_consistency_factor":1,"on_disk_payload":true},"hnsw_config":{"m":16,"ef_construct":100,"full_scan_threshold":10000,"max_indexing_threads":0,"on_disk":false},"optimizer_config":{"deleted_threshold":0.2,"vacuum_min_vector_number":1000,"default_segment_number":0,"max_segment_size":null,"memmap_threshold":null,"indexing_threshold":10000,"flush_interval_sec":5,"max_optimization_threads":null,"prevent_unoptimized":null},"wal_config":{"wal_capacity_mb":32,"wal_segments_ahead":0,"wal_retain_closed":1},"quantization_config":null},"payload_schema":{"caption":{"data_type":"text","points":26344},"filepath":{"data_type":"keyword","points":26344},"hash":{"data_type":"keyword","points":26344},"people":{"data_type":"keyword","points":26344},"location":{"data_type":"text","points":26344},"original_context":{"data_type":"text","points":26344},"objects":{"data_type":"keyword","points":26221},"geo_point":{"data_type":"geo","points":25237},"sort_date":{"data_type":"integer","points":26344}},"update_queue":{"length":0}},"status":"ok","time":0.000551274}```
+{"result":{"status":"green","optimizer_status":"ok","indexed_vectors_count":0,"points_count":26344,"segments_count":8,"config":{"params":{"vectors":{"face":{"size":512,"distance":"Cosine"},"scene":{"size":768,"distance":"Cosine"}},"shard_number":1,"replication_factor":1,"write_consistency_factor":1,"on_disk_payload":true},"hnsw_config":{"m":16,"ef_construct":100,"full_scan_threshold":10000,"max_indexing_threads":0,"on_disk":false},"optimizer_config":{"deleted_threshold":0.2,"vacuum_min_vector_number":1000,"default_segment_number":0,"max_segment_size":null,"memmap_threshold":null,"indexing_threshold":10000,"flush_interval_sec":5,"max_optimization_threads":null,"prevent_unoptimized":null},"wal_config":{"wal_capacity_mb":32,"wal_segments_ahead":0,"wal_retain_closed":1},"quantization_config":null},"payload_schema":{"sort_date":{"data_type":"integer","points":26344},"objects":{"data_type":"keyword","points":26221},"people":{"data_type":"keyword","points":26344},"original_context":{"data_type":"text","points":26344},"filepath":{"data_type":"keyword","points":26344},"hash":{"data_type":"keyword","points":26344},"geo_point":{"data_type":"geo","points":25237},"location":{"data_type":"text","points":26344},"caption":{"data_type":"text","points":26344}},"update_queue":{"length":0}},"status":"ok","time":0.000854214}```
 
