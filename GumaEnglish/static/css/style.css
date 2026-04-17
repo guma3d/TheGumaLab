@@ -435,10 +435,13 @@ button {
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(6px);
   z-index: 200;
-  display: flex;
+  display: none;
   align-items: flex-start;
   justify-content: center;
   padding: 72px 1rem 2rem;
+}
+.modal-overlay.open {
+  display: flex;
 }
 .modal-content {
   width: 100%;

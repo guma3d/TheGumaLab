@@ -1,5 +1,5 @@
-import { fetchStage } from "/js/api.js?v=8";
-import { speak, listenOnce, speechSupported } from "/js/voice.js?v=8";
+import { fetchStage } from "/js/api.js?v=9";
+import { speak, listenOnce, speechSupported } from "/js/voice.js?v=9";
 
 const $ = (id) => document.getElementById(id);
 
@@ -50,11 +50,11 @@ function openCalendar() {
   calYear = now.getFullYear();
   calMonth = now.getMonth();
   renderCalendar();
-  $("calendar-modal").hidden = false;
+  $("calendar-modal").classList.add("open");
 }
 
 function closeCalendar() {
-  $("calendar-modal").hidden = true;
+  $("calendar-modal").classList.remove("open");
 }
 
 function renderCalendar() {
