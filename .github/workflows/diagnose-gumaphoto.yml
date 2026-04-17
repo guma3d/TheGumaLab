@@ -105,6 +105,30 @@ jobs:
             echo '```'
             echo ""
 
+            echo "## 9b. Qdrant — top 5 newest by sort_date (latest photos)"
+            echo '```'
+            $SSH "curl -s -X POST http://localhost:6337/collections/gumaphoto_hybrid_kr/points/query -H \"Content-Type: application/json\" -d \"{\\\"query\\\":{\\\"order_by\\\":{\\\"key\\\":\\\"sort_date\\\",\\\"direction\\\":\\\"desc\\\"}},\\\"limit\\\":5,\\\"with_payload\\\":true}\"" 2>&1
+            echo '```'
+            echo ""
+
+            echo "## 9c. Today's 2026/2026-04/ folder contents"
+            echo '```'
+            $SSH "dir /O-D D:\\Pictures\\2026\\2026-04" 2>&1 | head -30
+            echo '```'
+            echo ""
+
+            echo "## 9d. UnknownDate/ folder contents (recent)"
+            echo '```'
+            $SSH "dir /O-D D:\\Pictures\\UnknownDate" 2>&1 | head -15
+            echo '```'
+            echo ""
+
+            echo "## 9e. Timeline cache — first photo entry (what the home page actually shows at top)"
+            echo '```'
+            $SSH "docker exec gumaphoto_app python -c \"import json; d=json.load(open('/app/data/caches/timeline_cache.json')); first=d['recent'][0] if d.get('recent') else d; import json as j; print(j.dumps(first, ensure_ascii=False, indent=2)[:2000])\"" 2>&1
+            echo '```'
+            echo ""
+
             if [ "${{ inputs.rebuild_cache }}" = "true" ]; then
               echo "## 10. Manual rebuild_cache (requested)"
               echo '```'
