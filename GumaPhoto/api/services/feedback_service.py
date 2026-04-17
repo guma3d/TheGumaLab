@@ -163,6 +163,13 @@ def process_time_location_feedback(qdrant_id: str, target_date: str, target_loca
             payload_update["date"] = target_date
             if time_of_day != "Unknown": payload_update["time_of_day"] = time_of_day
             if season != "Unknown": payload_update["season"] = season
+            # sort_date는 EXIF에 실제 찍힌 합성 날짜(YYYY-MM-DD)와 동일한 기준으로 계산
+            try:
+                ymd = date_for_parse.split(' ')[0].replace(':', '-').split('-')
+                if len(ymd) >= 3:
+                    payload_update["sort_date"] = int(ymd[0]) * 10000 + int(ymd[1]) * 100 + int(ymd[2])
+            except Exception as e:
+                print(f"  [!] sort_date 재계산 실패 (무시): {e}")
             
         if payload_update:
             try:

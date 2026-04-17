@@ -1,0 +1,104 @@
+name: Migrate GumaPhoto sort_date
+
+on:
+  push:
+    branches:
+      - "claude/fix-photo-visibility-**"
+    paths:
+      - ".github/triggers/migrate.trigger"
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read mode from trigger file
+        id: mode
+        run: |
+          MODE=$(head -n1 .github/triggers/migrate.trigger | tr -d '[:space:]')
+          if [ -z "$MODE" ]; then
+            echo "Empty trigger — nothing to run."
+            echo "mode=" >> $GITHUB_OUTPUT
+          else
+            echo "Mode: $MODE"
+            echo "mode=$MODE" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup SSH
+        if: ${{ steps.mode.outputs.mode != '' }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.HOMESERVER_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 219.254.245.175 >> ~/.ssh/known_hosts
+
+      - name: Upload migration script to HomeServer
+        if: ${{ steps.mode.outputs.mode != '' }}
+        run: |
+          scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no \
+            GumaPhoto/Scripts/migrate_sort_date_from_exif.py \
+            guma3@219.254.245.175:D:/TheGumaLab/GumaPhoto/Scripts/migrate_sort_date_from_exif.py
+
+      - name: Run migration and capture output
+        if: ${{ steps.mode.outputs.mode != '' }}
+        run: |
+          set +e
+          SSH="ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175"
+          mkdir -p .github/diagnostics
+          OUT=".github/diagnostics/migrate-run.md"
+          MODE="${{ steps.mode.outputs.mode }}"
+
+          FLAG=""
+          if [ "$MODE" = "dry-run" ]; then
+            FLAG="--dry-run"
+          fi
+
+          {
+            echo "# GumaPhoto Migration Run"
+            echo ""
+            echo "- Run: \`${{ github.run_id }}\`"
+            echo "- Commit: \`${{ github.sha }}\`"
+            echo "- Timestamp (UTC): $(date -u +"%Y-%m-%d %H:%M:%S")"
+            echo "- Mode: \`$MODE\` (flag: \`$FLAG\`)"
+            echo ""
+
+            echo "## Migration output"
+            echo '```'
+            $SSH "docker exec gumaphoto_celery python /app/Scripts/migrate_sort_date_from_exif.py $FLAG" 2>&1
+            echo '```'
+            echo ""
+
+            if [ "$MODE" = "live" ]; then
+              echo "## Rebuild timeline cache (post-migration)"
+              echo '```'
+              $SSH "curl -s -X POST http://localhost:8085/api/rebuild_cache" 2>&1
+              echo '```'
+              echo ""
+
+              echo "## Qdrant top 10 by sort_date (post-migration)"
+              echo '```'
+              $SSH "curl -s -X POST http://localhost:6337/collections/gumaphoto_hybrid_kr/points/query -H \"Content-Type: application/json\" -d \"{\\\"query\\\":{\\\"order_by\\\":{\\\"key\\\":\\\"sort_date\\\",\\\"direction\\\":\\\"desc\\\"}},\\\"limit\\\":10,\\\"with_payload\\\":[\\\"filepath\\\",\\\"sort_date\\\",\\\"date\\\"]}\"" 2>&1
+              echo '```'
+              echo ""
+            fi
+          } > "$OUT" 2>&1
+
+          echo "--- Captured ($OUT) ---"
+          cat "$OUT"
+
+      - name: Commit migration output back to branch
+        if: ${{ steps.mode.outputs.mode != '' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/diagnostics/migrate-run.md
+          if git diff --cached --quiet; then
+            echo "No migration output changes."
+          else
+            git commit -m "chore(migrate): GumaPhoto sort_date migration ${{ github.run_id }} (${{ steps.mode.outputs.mode }})"
+            git push origin HEAD:${{ github.ref_name }}
+          fi

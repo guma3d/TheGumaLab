@@ -310,8 +310,14 @@ async def submit_feedback_v2(req: FeedbackV2Request, background_tasks: Backgroun
                     time_of_day, season = MetadataParser.parse_time_and_season(date_val=date_for_parse)
                     if season != "Unknown": date_payload["season"] = season
                     if time_of_day != "Unknown": date_payload["time_of_day"] = time_of_day
+
+                    # sort_date도 stamp_metadata가 찍을 합성 날짜(YYYY-MM-DD)와 동일하게 반영해
+                    # 타임라인 정렬이 피드백 직후 바로 올바르게 보이도록 한다.
+                    ymd = date_for_parse.split(' ')[0].replace(':', '-').split('-')
+                    if len(ymd) >= 3:
+                        date_payload["sort_date"] = int(ymd[0]) * 10000 + int(ymd[1]) * 100 + int(ymd[2])
                 except Exception as e:
-                    print(f"[Instant Feedback] season/time_of_day 산출 실패: {e}")
+                    print(f"[Instant Feedback] season/time_of_day/sort_date 산출 실패: {e}")
                 state.qdrant_client.set_payload(collection_name="gumaphoto_hybrid_kr", payload=date_payload, points=all_pts)
             else:
                 target_loc = db_correct_value.split("|", 1)[1] if db_correct_value.startswith("LOC|") else db_correct_value
