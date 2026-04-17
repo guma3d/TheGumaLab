@@ -111,7 +111,7 @@ _OWNER_NAMES: set[str] = {
 # 예) "NH체크", "NH신용", "KB체크" — 은행 쪽 기록은 skip.
 _CARD_CATEGORY_RE = re.compile(r"(체크|신용)$")
 
-UI_VERSION = "2"
+UI_VERSION = "3"
 
 app = Flask(__name__)
 app.config["JSON_AS_ASCII"] = False
