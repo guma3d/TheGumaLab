@@ -103,10 +103,6 @@ function renderRoundUI() {
   $("transcript").hidden = true;
   $("transcript").textContent = "";
   hideFeedback();
-  $("speak-btn").hidden = true;
-  $("retry-btn").hidden = true;
-  $("next-btn").hidden = true;
-  $("skip-btn").hidden = false;
 }
 
 async function runCurrentRound() {
@@ -139,9 +135,10 @@ async function autoListen() {
     await evaluateAnswer(heard);
   } catch (err) {
     if (state.cancelled) return;
-    // STT 실패 — 재시도 버튼 노출. 자동 재시도는 iOS 제약 때문에 사용자 한 번의 탭 필요.
-    showFeedback("음성이 잘 들리지 않아요. '다시 시도'를 눌러주세요.", "miss");
-    $("retry-btn").hidden = false;
+    // STT 실패 — 자동 재시도
+    showFeedback("음성이 잘 들리지 않았어요. 다시 들어볼게요.", "miss");
+    await sleep(1000);
+    if (!state.cancelled) await runCurrentRound();
   } finally {
     state.busy = false;
   }
@@ -180,21 +177,14 @@ function advanceToNext() {
 
 function finishStage() {
   state.cancelled = true;
-  $("speak-btn").hidden = true;
-  $("next-btn").hidden = true;
-  $("retry-btn").hidden = true;
-  $("skip-btn").hidden = true;
-  $("restart-btn").hidden = false;
-
-  $("sentence-en").textContent = "";
-  $("sentence-ko").textContent = "";
+  $("practice").hidden = true;
+  $("start-btn").hidden = false;
   showFeedback("이 스테이지 학습을 모두 마쳤어요! 🏆", "ok");
   speak("잘 했어요! 오늘 학습 끝!", { lang: "ko-KR" });
 }
 
 async function startPractice() {
   $("start-btn").hidden = true;
-  $("restart-btn").hidden = true;
   $("practice").hidden = false;
   state.idx = 0;
   state.cancelled = false;
@@ -203,24 +193,6 @@ async function startPractice() {
   await speak(INTRO_KO, { lang: "ko-KR" });
   if (state.cancelled) return;
   await runCurrentRound();
-}
-
-function handleSkip() {
-  state.busy = false;
-  advanceToNext();
-}
-
-async function handleRetry() {
-  $("retry-btn").hidden = true;
-  await runCurrentRound();
-}
-
-function restart() {
-  state.cancelled = true;
-  try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch {}
-  state.idx = 0;
-  hideFeedback();
-  startPractice();
 }
 
 async function main() {
@@ -238,9 +210,6 @@ async function main() {
   }
 
   $("start-btn").addEventListener("click", startPractice);
-  $("retry-btn").addEventListener("click", handleRetry);
-  $("skip-btn").addEventListener("click", handleSkip);
-  $("restart-btn").addEventListener("click", restart);
   $("replay-btn").addEventListener("click", () => speak(currentSentence().en));
 }
 
