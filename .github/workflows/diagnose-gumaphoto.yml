@@ -1,0 +1,73 @@
+name: Diagnose GumaPhoto
+
+on:
+  workflow_dispatch:
+    inputs:
+      rebuild_cache:
+        description: "Call POST /api/rebuild_cache after diagnostics"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.HOMESERVER_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 219.254.245.175 >> ~/.ssh/known_hosts
+
+      - name: "1. Container status"
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175 \
+            "docker ps --filter name=gumaphoto --format \"table {{.Names}}\t{{.Status}}\t{{.RunningFor}}\""
+
+      - name: "2. Timeline cache file (mtime and size)"
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175 \
+            "dir D:\\TheGumaLab\\GumaPhoto\\data\\caches\\timeline_cache.json"
+
+      - name: "3. Recent uploads_raw (files stuck = Organizer didn't pick up)"
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175 \
+            "dir /O-D D:\\Pictures\\uploads_raw 2>nul | findstr /V \"<DIR>\" | head -20" || true
+
+      - name: "4. Celery worker recent logs (last 150 lines)"
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175 \
+            "docker logs gumaphoto_celery --tail 150 2>&1"
+
+      - name: "5. Celery errors/tracebacks (last 24h)"
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175 \
+            "docker logs gumaphoto_celery --since 24h 2>&1 | findstr /I \"error exception traceback failed\""  || echo "(no matches — clean)"
+
+      - name: "6. App recent logs (last 80 lines)"
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175 \
+            "docker logs gumaphoto_app --tail 80 2>&1"
+
+      - name: "7. Redis queue depth (celery / celery:1)"
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175 \
+            "docker exec gumaphoto_redis redis-cli llen celery"
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175 \
+            "docker exec gumaphoto_redis redis-cli keys \"*\""
+
+      - name: "8. Qdrant collection stats"
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175 \
+            "curl -s http://localhost:6337/collections/gumaphoto_hybrid_kr"
+
+      - name: "9. (Optional) Rebuild timeline cache"
+        if: ${{ inputs.rebuild_cache == 'true' }}
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175 \
+            "curl -s -X POST http://localhost:8085/api/rebuild_cache"
