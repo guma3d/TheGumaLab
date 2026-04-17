@@ -1,5 +1,5 @@
-import { fetchStage } from "/js/api.js?v=5";
-import { speak, listenOnce, speechSupported } from "/js/voice.js?v=5";
+import { fetchStage } from "/js/api.js?v=6";
+import { speak, listenOnce, speechSupported } from "/js/voice.js?v=6";
 
 const $ = (id) => document.getElementById(id);
 
@@ -188,8 +188,8 @@ function finishStage() {
 
   $("sentence-en").textContent = "";
   $("sentence-ko").textContent = "";
-  showFeedback("이 스테이지 연습을 모두 마쳤어요! 🏆", "ok");
-  speak("잘 했어요! 오늘 연습 끝!", { lang: "ko-KR" });
+  showFeedback("이 스테이지 학습을 모두 마쳤어요! 🏆", "ok");
+  speak("잘 했어요! 오늘 학습 끝!", { lang: "ko-KR" });
 }
 
 async function startPractice() {

@@ -4,12 +4,20 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <title>GumaEnglish</title>
-  <link rel="stylesheet" href="/css/style.css?v=4" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css?v=6" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#050505">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 </head>
 <body>
-  <div id="fatal-error" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff6b9d;color:#0d1020;padding:12px 16px;font:14px system-ui;white-space:pre-wrap;word-break:break-all;"></div>
+  <div class="ambient-glow"></div>
+  <div class="ambient-glow-2"></div>
+  <div id="fatal-error" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#ef4444;color:#fff;padding:12px 16px;font:14px system-ui;white-space:pre-wrap;word-break:break-all;"></div>
   <script>
-    // 예외 시에만 표시되는 최후 수단 에러 배너. 평소엔 숨김.
     (function() {
       function showErr(msg) {
         var el = document.getElementById('fatal-error');
@@ -25,28 +33,33 @@
       });
     })();
   </script>
-  <main id="app">
-    <header>
+
+  <div class="container">
+    <header class="top-header">
+      <div class="logo">
+        <i class="fa-solid fa-comments"></i>
+        <span>Guma</span>English
+      </div>
       <div class="stage-badge">Stage <span id="stage-num">1</span></div>
-      <div class="robot-name" id="robot-name">Scout</div>
     </header>
 
-    <section id="pattern-card">
-      <div class="label">오늘의 패턴</div>
-      <div class="pattern-en" id="pattern-en">…</div>
-      <div class="pattern-ko" id="pattern-ko">…</div>
+    <section class="card pattern-card" id="pattern-card">
+      <div class="card-label">TODAY'S PATTERN</div>
+      <div class="robot-name" id="robot-name">Scout</div>
+      <div class="pattern-en" id="pattern-en">...</div>
+      <div class="pattern-ko" id="pattern-ko">...</div>
     </section>
 
-    <section id="practice" hidden>
+    <section class="card practice-card" id="practice" hidden>
       <div class="round-info">
-        <span id="round-label">라운드 1 / 12</span>
-        <span id="phase-label" class="phase-pill">1단계 · 보고 듣고 따라 말하기</span>
+        <span id="round-label">1 / 12</span>
+        <span id="phase-label" class="phase-pill">1</span>
       </div>
 
       <div class="sentence-card">
-        <div class="sentence-en" id="sentence-en">…</div>
-        <div class="sentence-ko" id="sentence-ko">…</div>
-        <button id="replay-btn" type="button" class="ghost-btn" hidden>🔊 다시 듣기</button>
+        <div class="sentence-en" id="sentence-en">...</div>
+        <div class="sentence-ko" id="sentence-ko">...</div>
+        <button id="replay-btn" type="button" class="ghost-btn" hidden><i class="fa-solid fa-volume-high"></i> Listen Again</button>
       </div>
 
       <div class="transcript" id="transcript" hidden></div>
@@ -56,19 +69,19 @@
     <div id="banner" class="banner" hidden></div>
 
     <section id="controls">
-      <button id="start-btn" type="button">연습 시작</button>
-      <button id="speak-btn" type="button" hidden>🎤 말하기</button>
-      <button id="retry-btn" type="button" class="ghost-btn" hidden>다시 시도</button>
-      <button id="skip-btn" type="button" class="ghost-btn" hidden>넘어가기</button>
-      <button id="next-btn" type="button" hidden>다음 →</button>
-      <button id="restart-btn" type="button" hidden>처음부터 다시</button>
+      <button id="start-btn" type="button" class="btn-primary"><i class="fa-solid fa-play"></i> Learning Start</button>
+      <button id="speak-btn" type="button" class="btn-primary" hidden><i class="fa-solid fa-microphone"></i> Speak</button>
+      <button id="retry-btn" type="button" class="btn-ghost" hidden><i class="fa-solid fa-rotate-right"></i> Retry</button>
+      <button id="skip-btn" type="button" class="btn-ghost" hidden><i class="fa-solid fa-forward"></i> Skip</button>
+      <button id="next-btn" type="button" class="btn-primary" hidden><i class="fa-solid fa-arrow-right"></i> Next</button>
+      <button id="restart-btn" type="button" class="btn-primary" hidden><i class="fa-solid fa-rotate"></i> Start Over</button>
     </section>
 
     <footer>
-      <small>GumaEnglish · TheGumaLab</small>
+      <small>GumaEnglish &middot; TheGumaLab</small>
     </footer>
-  </main>
+  </div>
 
-  <script type="module" src="/js/main.js?v=4"></script>
+  <script type="module" src="/js/main.js?v=6"></script>
 </body>
 </html>
