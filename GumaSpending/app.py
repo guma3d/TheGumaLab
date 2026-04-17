@@ -111,6 +111,8 @@ _OWNER_NAMES: set[str] = {
 # 예) "NH체크", "NH신용", "KB체크" — 은행 쪽 기록은 skip.
 _CARD_CATEGORY_RE = re.compile(r"(체크|신용)$")
 
+UI_VERSION = "2"
+
 app = Flask(__name__)
 app.config["JSON_AS_ASCII"] = False
 
@@ -593,7 +595,8 @@ def api_analyze_post(ym: str):
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    resp = render_template("index.html", v=UI_VERSION)
+    return resp, 200, {"Cache-Control": "no-cache, must-revalidate"}
 
 
 @app.route("/sw.js")
