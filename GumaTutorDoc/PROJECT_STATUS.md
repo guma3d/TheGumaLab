@@ -11,6 +11,7 @@
 - 생성 결과 저장 위치: `outputs/html/`
 - 작업 상태 저장 위치: `data/task_status.json`
 - `GEMINI_API_KEY`가 있으면 실제 학습자료 생성, 없으면 기본 템플릿 생성
+- 홈서버 Docker 서비스명: `gumatutordoc_app`, 외부 경로: `https://gumatutordoc.guma3d.com/`
 
 기존 파충류 PDF 생성 스크립트와 최종 PDF 산출물은 그대로 보존합니다.
 

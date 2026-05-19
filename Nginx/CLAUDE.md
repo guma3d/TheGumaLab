@@ -17,6 +17,7 @@
 |---|---|
 | `HomeServer_Nginx` | 리버스 프록시 (포트 80) |
 | `HomeServer_Cloudflared` | Cloudflare Tunnel 클라이언트 |
+| `gumatutordoc_app` | GumaTutorDoc 학습자료 생성기 (포트 8084) |
 
 ## 새 서비스 추가 시
 `nginx.conf`에 서브도메인 → 내부 포트 라우팅 추가 후 재시작:

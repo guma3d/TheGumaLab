@@ -34,6 +34,21 @@ jobs:
           echo "Changed files:"
           echo "$CHANGED"
 
+          SHOULD_DEPLOY=0
+          for project in $PROJECTS; do
+            if echo "$CHANGED" | grep -q "^${project}/"; then
+              SHOULD_DEPLOY=1
+              break
+            fi
+          done
+
+          if [ "$SHOULD_DEPLOY" -eq 1 ]; then
+            echo ">>> Syncing HomeServer repository root first ..."
+            ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no \
+              guma3@219.254.245.175 \
+              "cd /d D:\\TheGumaLab && git fetch origin main && git reset --hard origin/main"
+          fi
+
           DEPLOYED=0
           for project in $PROJECTS; do
             if echo "$CHANGED" | grep -q "^${project}/"; then

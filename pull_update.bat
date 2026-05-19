@@ -24,7 +24,14 @@ set CONTAINER=%~2
 set PROJECT_DIR=D:\TheGumaLab\%PROJECT%
 
 if not exist "%PROJECT_DIR%" (
-    echo [ERROR] Project directory not found: %PROJECT_DIR%
+    echo [INFO] Project directory not found. Syncing repository root first...
+    cd /d D:\TheGumaLab || exit /b 1
+    git fetch origin main || exit /b 1
+    git reset --hard origin/main || exit /b 1
+)
+
+if not exist "%PROJECT_DIR%" (
+    echo [ERROR] Project directory still not found after sync: %PROJECT_DIR%
     exit /b 1
 )
 
