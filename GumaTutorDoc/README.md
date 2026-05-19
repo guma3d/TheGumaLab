@@ -43,6 +43,8 @@ docker compose up -d --build
 ```
 
 기본 포트는 `8084:5000`입니다.
+홈서버 컨테이너 이름은 `gumatutordoc_app`이며 `restart: unless-stopped`로 등록됩니다.
+Nginx 라우팅 대상은 `https://gumatutordoc.guma3d.com/`입니다.
 
 ## 주요 파일
 
