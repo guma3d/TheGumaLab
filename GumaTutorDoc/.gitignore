@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+reptile_reports/images/
+reptile_reports/pages/
+reptile_reports_detailed/pages/
