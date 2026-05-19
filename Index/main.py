@@ -131,6 +131,10 @@ async def fallback_stock():
 async def fallback_youtube():
     return RedirectResponse(url="https://gumatube.guma3d.com/", status_code=301)
 
+@app.get("/GumaTutorDoc/")
+async def fallback_tutordoc():
+    return RedirectResponse(url="https://gumatutordoc.guma3d.com/", status_code=301)
+
 @app.get("/ImageAnalyzer/")
 async def fallback_image():
     return RedirectResponse(url="https://gumaimageanalyzer.guma3d.com/", status_code=301)

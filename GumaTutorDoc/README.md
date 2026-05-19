@@ -1,39 +1,62 @@
-# Reptile Quiz Reports
+# GumaTutorDoc
 
-초등학교 3학년 발표용 파충류 탐구 보고서 작업 패키지입니다.
+주제를 입력하면 학습자료와 간단한 퀴즈를 HTML로 생성해 저장하는 로컬 웹서비스입니다.
 
-## 폴더 구조
+기존 파충류 PDF 생성 스크립트는 `tools/`에 보존되어 있고, 새 기본 흐름은 `Server.py`가 담당합니다.
 
-- `tools/`
-  - `generate_reptile_pdfs.py`: 4페이지 버전과 공통 레이아웃/폰트/이미지 도구
-  - `generate_reptile_pdfs_detailed.py`: 최종 7페이지 상세 보고서 생성 도구
-- `assets/curated_overrides/`
-  - 자동 검색 대신 직접 고정한 핵심 특징 이미지
-- `outputs/pdfs/`
-  - 최종 PDF 14개
-- `outputs/qa/`
-  - 전체 QA 차트와 수정 집중 확인 차트
-- `reptile_reports/`
-  - 지도 데이터 캐시. 실행 시 이미지 캐시도 이곳에 생성됩니다.
-
-## 다시 생성하기
+## 웹서비스 실행
 
 ```powershell
-cd E:\Codex\reptile_quiz
+cd C:\Users\guma3d\Documents\TheGumaLab\GumaTutorDoc
 python -m pip install -r requirements.txt
+python .\Server.py
+```
+
+브라우저에서 `http://localhost:5000`을 엽니다.
+
+## 사용 흐름
+
+1. 주제를 입력합니다. 예: `화산`, `세종대왕`, `분수의 나눗셈`
+2. 대상 수준과 퀴즈 수를 선택합니다.
+3. 생성 버튼을 누르면 작업이 큐에 등록됩니다.
+4. 완료된 문서는 `outputs/html/` 아래에 HTML과 JSON으로 저장됩니다.
+5. 메인 화면의 저장 문서 목록에서 언제든지 다시 열 수 있습니다.
+
+## AI 생성 설정
+
+상위 폴더 또는 이 폴더의 `.env`에 `GEMINI_API_KEY`가 있으면 Gemini로 학습자료를 생성합니다.
+
+선택 설정:
+
+```env
+GUMATUTORDOC_MODEL=gemini-3.1-flash-lite-preview
+PORT=5000
+```
+
+`GEMINI_API_KEY`가 없으면 사실 설명을 만들지 않고, 저장/보기 흐름을 확인하는 기본 템플릿 HTML만 생성합니다.
+
+## Docker 실행
+
+```powershell
+cd C:\Users\guma3d\Documents\TheGumaLab\GumaTutorDoc
+docker compose up -d --build
+```
+
+기본 포트는 `8084:5000`입니다.
+
+## 주요 파일
+
+- `Server.py`: Flask 서버, 작업 큐, AI 생성, HTML 저장
+- `index.html`: 입력/목록 UI
+- `script.js`: 작업 요청, 상태 폴링, 문서 목록 갱신
+- `style.css`: 웹 UI 스타일
+- `outputs/html/`: 생성된 HTML 저장 위치
+- `data/task_status.json`: 저장 문서와 작업 상태 인덱스
+
+## 기존 파충류 PDF 생성
+
+```powershell
 python .\tools\generate_reptile_pdfs_detailed.py
 ```
 
-생성 결과는 `reptile_reports_detailed/`에 만들어집니다. 기존 최종본은 `outputs/pdfs/`에 따로 보관했습니다.
-
-## 최종 구성
-
-- 14종 각각 7페이지
-- TV 표시용 가로형 PDF
-- 페이지당 이미지는 1장만 사용
-- 지도, 사는 지역, 먹이, 특징, 퀴즈, 정답 설명 구조
-- 특징이 잘못 보였던 7종은 `assets/curated_overrides/`의 고정 이미지 사용
-
-## 메모
-
-이 스크립트는 Wikimedia Commons 검색 API와 일부 외부 이미지 URL을 사용합니다. 이미 받은 핵심 수정 이미지는 로컬에 포함해 두었지만, 전체 보고서를 처음부터 다시 만들 때는 네트워크 연결이 필요할 수 있습니다.
+최종 검수 PDF는 `outputs/pdfs/`에 보관되어 있습니다.

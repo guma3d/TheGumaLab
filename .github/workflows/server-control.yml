@@ -40,6 +40,7 @@ on:
           - GumaImageAnalyzer
           - GumaServerStatus
           - GumaTube
+          - GumaTutorDoc
           - GumaSpending
           - GumaEnglish
           - Index

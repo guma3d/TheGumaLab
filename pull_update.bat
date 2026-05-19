@@ -14,7 +14,7 @@ if "%~1"=="" (
     echo.
     echo Available projects:
     echo   GumaPhoto  GumaStockReport  GumaImageAnalyzer
-    echo   GumaServerStatus  GumaTube  Index  Nginx
+    echo   GumaServerStatus  GumaTube  GumaTutorDoc  Index  Nginx
     echo.
     exit /b 1
 )

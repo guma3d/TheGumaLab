@@ -2,8 +2,7 @@ __pycache__/
 *.pyc
 *.log
 data/
-outputs/html/*
-!outputs/html/.gitkeep
+outputs/html/
 reptile_reports/images/
 reptile_reports/pages/
 reptile_reports_detailed/pages/
