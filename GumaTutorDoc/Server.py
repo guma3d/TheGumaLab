@@ -6,12 +6,14 @@ import os
 import queue
 import re
 import threading
+import time
 import uuid
 import zipfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import tenacity
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request, send_file, send_from_directory
 
@@ -43,19 +45,107 @@ task_lock = threading.RLock()
 task_status: dict[str, dict[str, Any]] = {}
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-PRIMARY_MODEL = os.getenv("GUMATUTORDOC_MODEL", os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite-preview"))
-MODEL_CHAIN = list(
-    dict.fromkeys(
-        [
-            PRIMARY_MODEL,
-            "gemini-2.5-flash-lite",
-            "gemini-2.5-flash",
-            "gemini-2.0-flash-lite",
-            "gemini-2.0-flash",
-        ]
-    )
-)
+GUMATUBE_GEMINI_MODEL = "gemini-3.1-flash-lite-preview"
+
+
+def normalize_gemini_model(model_name: str | None) -> str:
+    model_name = (model_name or "").strip()
+    if not model_name or model_name.startswith("gpt-") or "2.5-flash" in model_name:
+        return GUMATUBE_GEMINI_MODEL
+    return model_name
+
+
+PRIMARY_MODEL = normalize_gemini_model(os.getenv("GUMATUTORDOC_MODEL", os.getenv("GEMINI_MODEL", GUMATUBE_GEMINI_MODEL)))
+MODEL_CHAIN = [PRIMARY_MODEL]
 gemini_client = genai.Client(api_key=GEMINI_API_KEY) if genai and GEMINI_API_KEY else None
+
+if gemini_client and types:
+    original_generate_content = gemini_client.models.generate_content
+    _gemini_last_req_time = 0.0
+    _gemini_req_lock = threading.Lock()
+
+    def _is_retryable_gemini_exception(exc: Exception) -> bool:
+        error_msg = str(exc)
+        return (
+            "429" in error_msg
+            or "RESOURCE_EXHAUSTED" in error_msg
+            or "503" in error_msg
+            or "UNAVAILABLE" in error_msg
+        )
+
+    def _gemini_before_sleep(retry_state: tenacity.RetryCallState) -> None:
+        exc = retry_state.outcome.exception() if retry_state.outcome else None
+        error_msg = str(exc)
+        error_type = (
+            "Quota/Rate Limit (429)"
+            if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg
+            else "Server Overloaded (503)"
+        )
+        wait_time = retry_state.next_action.sleep if retry_state.next_action else 0
+        print(f"[Gemini API] {error_type}. retry in {wait_time:.1f}s ({retry_state.attempt_number}/5)")
+
+    class GeminiWait(tenacity.wait.wait_base):
+        def __init__(self, minimum: float = 30, maximum: float = 120):
+            self.minimum = minimum
+            self.maximum = maximum
+
+        def __call__(self, retry_state: tenacity.RetryCallState) -> float:
+            wait_time = min(self.minimum * (2 ** (retry_state.attempt_number - 1)), self.maximum)
+            exc = retry_state.outcome.exception() if retry_state.outcome else None
+            match = re.search(r"retry in ([\d.]+)s", str(exc), re.IGNORECASE)
+            if match:
+                try:
+                    wait_time = max(wait_time, float(match.group(1)) + 2.0)
+                except ValueError:
+                    pass
+            return wait_time
+
+    def _with_gumatube_safety_settings(config: Any | None) -> Any:
+        safety_settings = [
+            types.SafetySetting(
+                category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                threshold=types.HarmBlockThreshold.BLOCK_NONE,
+            ),
+            types.SafetySetting(
+                category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                threshold=types.HarmBlockThreshold.BLOCK_NONE,
+            ),
+            types.SafetySetting(
+                category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                threshold=types.HarmBlockThreshold.BLOCK_NONE,
+            ),
+            types.SafetySetting(
+                category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                threshold=types.HarmBlockThreshold.BLOCK_NONE,
+            ),
+        ]
+        if config is None:
+            return types.GenerateContentConfig(safety_settings=safety_settings)
+        if hasattr(config, "safety_settings") and not getattr(config, "safety_settings", None):
+            config.safety_settings = safety_settings
+        elif isinstance(config, dict) and "safety_settings" not in config:
+            config["safety_settings"] = safety_settings
+        return config
+
+    @tenacity.retry(
+        retry=tenacity.retry_if_exception(_is_retryable_gemini_exception),
+        wait=GeminiWait(minimum=30, maximum=120),
+        stop=tenacity.stop_after_attempt(5),
+        before_sleep=_gemini_before_sleep,
+        reraise=True,
+    )
+    def generate_content_with_retry(*args: Any, **kwargs: Any) -> Any:
+        global _gemini_last_req_time
+        with _gemini_req_lock:
+            elapsed = time.time() - _gemini_last_req_time
+            if elapsed < 4.1:
+                time.sleep(4.1 - elapsed)
+            _gemini_last_req_time = time.time()
+
+        kwargs["config"] = _with_gumatube_safety_settings(kwargs.get("config"))
+        return original_generate_content(*args, **kwargs)
+
+    gemini_client.models.generate_content = generate_content_with_retry
 
 
 def now_iso() -> str:
