@@ -12,7 +12,9 @@ import zipfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote
+from urllib.parse import quote, urlencode
+import urllib.error
+import urllib.request
 
 import tenacity
 from dotenv import load_dotenv
@@ -246,13 +248,13 @@ def generate_with_gemini(topic: str, grade: str, quiz_count: int) -> dict[str, A
                 "title": "자세히 배울 내용",
                 "paragraphs": ["아이 눈높이에 맞춘 자세한 설명 문단 1", "자세한 설명 문단 2"],
                 "examples": ["생활 속 예시", "관찰하거나 떠올려볼 장면"],
-            }
-        ],
-        "visuals": [
-            {
-                "title": "이미지 자료 제목",
-                "caption": "이미지를 보며 확인할 핵심 내용",
-                "prompt": "child friendly educational illustration prompt in English",
+                "images": [
+                    {
+                        "title": "내용을 이해하는 데 필요한 사진 제목",
+                        "caption": "사진을 보며 확인할 핵심 내용",
+                        "query": "specific English Wikimedia Commons photo search query",
+                    }
+                ],
             }
         ],
         "key_points": [
@@ -284,7 +286,9 @@ def generate_with_gemini(topic: str, grade: str, quiz_count: int) -> dict[str, A
         "key_points는 4~6개, vocabulary는 4~8개, quiz는 요청한 수만큼 작성하세요. "
         "summary는 전체 내용을 대표하는 중요한 한국어 문장 정확히 5개로 작성하세요. "
         "content_sections는 4~6개로 만들고, 각 항목의 paragraphs에는 디테일한 설명을 2~4문단 넣으세요. "
-        "visuals는 아이가 흥미를 느낄 수 있는 사진/그림 자료 아이디어 6~8개로 만들고, prompt는 영어 이미지 생성 프롬프트로 작성하세요. "
+        "각 content_sections 항목의 images에는 그 소주제를 이해하는 데 직접 필요한 실제 사진/그림 검색어를 1~2개 넣으세요. "
+        "images.query는 Wikimedia Commons에서 실제 자료 사진을 찾기 좋은 구체적인 영어 검색어로 작성하세요. "
+        "예를 들어 서식지 설명에는 지역명 사진과 환경 사진 검색어를 함께 넣고, 구조/과정 설명에는 관련 부위·과정·비교 사진 검색어를 넣으세요. "
         "모든 설명은 한국어로, 문장은 짧고 읽기 쉽게 작성하세요.\n\n"
         f"{json.dumps(schema, ensure_ascii=False, indent=2)}"
     )
@@ -344,6 +348,13 @@ def generate_fallback_pack(topic: str, grade: str, quiz_count: int) -> dict[str,
                     "관련 자료를 다시 생성하면 이 부분에 실제 사실을 바탕으로 한 자세한 설명이 들어갑니다.",
                 ],
                 "examples": ["백과사전이나 교과서에서 같은 주제를 찾아 비교해보기"],
+                "images": [
+                    {
+                        "title": f"{topic} 관련 사진",
+                        "caption": "주제를 실제 자료 사진으로 확인합니다.",
+                        "query": f"{topic} photo",
+                    }
+                ],
             },
             {
                 "title": "더 깊게 생각해보기",
@@ -352,23 +363,13 @@ def generate_fallback_pack(topic: str, grade: str, quiz_count: int) -> dict[str,
                     "궁금한 점을 질문으로 바꾸면 다음에 찾아볼 내용이 더 분명해집니다.",
                 ],
                 "examples": ["왜 그럴까?", "언제 생길까?", "어디에서 볼 수 있을까?"],
-            },
-        ],
-        "visuals": [
-            {
-                "title": f"{topic} 전체 그림",
-                "caption": "주제를 한 장면으로 떠올려보는 이미지입니다.",
-                "prompt": f"child friendly colorful educational illustration about {topic}, clear main subject, bright classroom style",
-            },
-            {
-                "title": "핵심 개념 장면",
-                "caption": "가장 중요한 개념을 그림으로 확인합니다.",
-                "prompt": f"simple educational diagram for children explaining {topic}, colorful, clear, no text",
-            },
-            {
-                "title": "생활 속 예시",
-                "caption": "우리 주변에서 비슷한 모습을 찾아봅니다.",
-                "prompt": f"child friendly real life example of {topic}, bright educational illustration",
+                "images": [
+                    {
+                        "title": f"{topic} 주변 환경",
+                        "caption": "주제와 연결된 장소나 환경을 사진으로 살펴봅니다.",
+                        "query": f"{topic} habitat environment photo",
+                    }
+                ],
             },
         ],
         "key_points": [
@@ -396,6 +397,43 @@ def generate_fallback_pack(topic: str, grade: str, quiz_count: int) -> dict[str,
         "quiz": quiz,
         "sources": ["AI 생성 비활성 상태: 직접 검증 자료를 추가하세요."],
     }
+
+
+def normalize_image_items(value: Any, topic: str, section_title: str) -> list[dict[str, str]]:
+    if isinstance(value, dict):
+        value = [value]
+    if not isinstance(value, list):
+        value = []
+
+    normalized: list[dict[str, str]] = []
+    for item in value:
+        if not isinstance(item, dict):
+            continue
+        title = str(item.get("title") or item.get("name") or "").strip()
+        caption = str(item.get("caption") or item.get("description") or "").strip()
+        query = str(item.get("query") or item.get("search_query") or item.get("prompt") or "").strip()
+        image_url = str(item.get("image_url") or item.get("url") or "").strip()
+        if query or image_url:
+            normalized.append(
+                {
+                    "title": title or section_title or "이미지 자료",
+                    "caption": caption,
+                    "query": query or f"{topic} {section_title} photo",
+                    "image_url": image_url,
+                }
+            )
+
+    if not normalized:
+        normalized.append(
+            {
+                "title": f"{section_title or topic} 사진",
+                "caption": f"{section_title or topic}을 실제 이미지로 살펴봅니다.",
+                "query": f"{topic} {section_title} photo",
+                "image_url": "",
+            }
+        )
+
+    return normalized[:2]
 
 
 def normalize_pack(pack: dict[str, Any], topic: str, grade: str, quiz_count: int) -> dict[str, Any]:
@@ -433,11 +471,13 @@ def normalize_pack(pack: dict[str, Any], topic: str, grade: str, quiz_count: int
             examples = [examples]
         if not isinstance(examples, list):
             examples = []
+        section_title = str(item.get("title") or "자세한 설명").strip()
         normalized_sections.append(
             {
-                "title": str(item.get("title") or "자세한 설명").strip(),
+                "title": section_title,
                 "paragraphs": [str(paragraph).strip() for paragraph in paragraphs if str(paragraph).strip()],
                 "examples": [str(example).strip() for example in examples if str(example).strip()],
+                "images": normalize_image_items(item.get("images") or item.get("visuals"), topic, section_title),
             }
         )
 
@@ -452,6 +492,7 @@ def normalize_pack(pack: dict[str, Any], topic: str, grade: str, quiz_count: int
                     "title": str(point.get("title") or "자세한 설명").strip(),
                     "paragraphs": [paragraph for paragraph in paragraphs if paragraph],
                     "examples": [example for example in examples if example],
+                    "images": normalize_image_items([], topic, str(point.get("title") or "자세한 설명").strip()),
                 }
             )
     if not normalized_sections:
@@ -460,42 +501,23 @@ def normalize_pack(pack: dict[str, Any], topic: str, grade: str, quiz_count: int
                 "title": f"{topic} 자세히 알아보기",
                 "paragraphs": [pack["summary"][0]],
                 "examples": [],
+                "images": normalize_image_items([], topic, f"{topic} 자세히 알아보기"),
             }
         ]
-    pack["content_sections"] = normalized_sections
 
-    visuals = pack.get("visuals")
-    if not isinstance(visuals, list):
-        visuals = []
-    normalized_visuals = []
-    for item in visuals:
-        if not isinstance(item, dict):
-            continue
-        title = str(item.get("title") or "").strip()
-        caption = str(item.get("caption") or "").strip()
-        prompt = str(item.get("prompt") or title or caption or topic).strip()
-        if prompt:
-            normalized_visuals.append({"title": title or "이미지 자료", "caption": caption, "prompt": prompt})
-    for section in normalized_sections:
-        if len(normalized_visuals) >= 6:
-            break
-        title = section.get("title") or topic
-        normalized_visuals.append(
-            {
-                "title": f"{title} 그림",
-                "caption": f"{title}을 이미지로 떠올려봅니다.",
-                "prompt": f"child friendly colorful educational illustration about {topic}: {title}, clear, bright, no text",
-            }
-        )
-    while len(normalized_visuals) < 6:
-        normalized_visuals.append(
-            {
-                "title": f"{topic} 이미지 자료",
-                "caption": "주제를 더 쉽게 이해하기 위한 그림 자료입니다.",
-                "prompt": f"child friendly educational illustration about {topic}, colorful, clear, no text",
-            }
-        )
-    pack["visuals"] = normalized_visuals[:8]
+    legacy_visuals = pack.get("visuals")
+    if isinstance(legacy_visuals, list):
+        target_index = 0
+        for visual in legacy_visuals:
+            if not normalized_sections:
+                break
+            image_items = normalize_image_items([visual], topic, normalized_sections[target_index]["title"])
+            normalized_sections[target_index].setdefault("images", []).extend(image_items)
+            normalized_sections[target_index]["images"] = normalized_sections[target_index]["images"][:2]
+            target_index = (target_index + 1) % len(normalized_sections)
+
+    pack["content_sections"] = normalized_sections
+    pack["visuals"] = []
 
     pack["overview"] = str(pack.get("overview") or "").strip()
 
@@ -841,13 +863,95 @@ def svg_placeholder_url(title: str, seed: int) -> str:
     return "data:image/svg+xml;charset=utf-8," + quote(svg, safe="")
 
 
-def visual_image_url(prompt: str, seed: int) -> str:
-    image_prompt = (
-        "child friendly educational image, colorful, clear, curious elementary student style, "
-        "safe classroom learning material, no text, "
-        + str(prompt or "")
+commons_cache: dict[str, dict[str, str] | None] = {}
+
+
+def clean_metadata_text(value: Any) -> str:
+    text = re.sub(r"<[^>]+>", "", str(value or ""))
+    text = html.unescape(text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def resolve_commons_image(query: str) -> dict[str, str] | None:
+    query = re.sub(r"\s+", " ", str(query or "").strip())
+    if not query:
+        return None
+    cache_key = query.lower()
+    if cache_key in commons_cache:
+        return commons_cache[cache_key]
+
+    params = {
+        "action": "query",
+        "generator": "search",
+        "gsrsearch": query,
+        "gsrnamespace": "6",
+        "gsrlimit": "8",
+        "prop": "imageinfo",
+        "iiprop": "url|mime|extmetadata",
+        "iiurlwidth": "1000",
+        "format": "json",
+        "origin": "*",
+    }
+    url = "https://commons.wikimedia.org/w/api.php?" + urlencode(params)
+    request_obj = urllib.request.Request(
+        url,
+        headers={"User-Agent": "GumaTutorDoc/1.0 (https://gumatutordoc.guma3d.com)"},
     )
-    return f"https://image.pollinations.ai/prompt/{quote(image_prompt, safe='')}?width=900&height=520&nologo=true&seed={seed}"
+    try:
+        with urllib.request.urlopen(request_obj, timeout=8) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as exc:
+        print(f"[commons] search failed for {query}: {exc}")
+        commons_cache[cache_key] = None
+        return None
+
+    pages = list((payload.get("query", {}).get("pages", {}) or {}).values())
+    for page in pages:
+        info_items = page.get("imageinfo") or []
+        if not info_items:
+            continue
+        info = info_items[0]
+        mime = str(info.get("mime") or "")
+        image_url = str(info.get("thumburl") or info.get("url") or "")
+        if not image_url or not mime.startswith("image/") or mime == "image/svg+xml":
+            continue
+        metadata = info.get("extmetadata") or {}
+        artist = clean_metadata_text((metadata.get("Artist") or {}).get("value"))
+        license_short = clean_metadata_text((metadata.get("LicenseShortName") or {}).get("value"))
+        result = {
+            "image_url": image_url,
+            "source_url": str(info.get("descriptionurl") or ""),
+            "source_title": str(page.get("title") or "").replace("File:", ""),
+            "credit": ", ".join(part for part in [artist, license_short] if part),
+        }
+        commons_cache[cache_key] = result
+        return result
+
+    commons_cache[cache_key] = None
+    return None
+
+
+def image_data_for_item(item: dict[str, str], seed: int) -> dict[str, str]:
+    title = str(item.get("title") or "이미지 자료").strip()
+    caption = str(item.get("caption") or "").strip()
+    query = str(item.get("query") or title).strip()
+    data = {
+        "title": title,
+        "caption": caption,
+        "query": query,
+        "image_url": str(item.get("image_url") or "").strip(),
+        "source_url": str(item.get("source_url") or "").strip(),
+        "source_title": str(item.get("source_title") or "").strip(),
+        "credit": str(item.get("credit") or "").strip(),
+    }
+    if not data["image_url"]:
+        resolved = resolve_commons_image(query)
+        if resolved:
+            data.update(resolved)
+            item.update(resolved)
+    if not data["image_url"]:
+        data["image_url"] = svg_placeholder_url(title, seed)
+    return data
 
 
 def render_material_html(pack: dict[str, Any], task_id: str) -> str:
@@ -855,18 +959,39 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
     summary = list_html(pack.get("summary", []), "summary-list")
     sources = list_html(pack.get("sources", []), "sources")
 
-    visuals = "\n".join(
-        f"""
-        <figure class="visual-card">
-          <img src="{e(visual_image_url(item.get("prompt", ""), seed_base + idx))}" alt="{e(item.get("title"))}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='{e(svg_placeholder_url(item.get("title", ""), seed_base + idx))}';">
-          <figcaption>
-            <strong>{e(item.get("title"))}</strong>
-            <span>{e(item.get("caption"))}</span>
-          </figcaption>
-        </figure>
-        """
-        for idx, item in enumerate(pack.get("visuals", []), start=1)
-    )
+    def section_images_html(section: dict[str, Any], section_idx: int) -> str:
+        image_items = section.get("images")
+        if not isinstance(image_items, list):
+            image_items = []
+        figures = []
+        for image_idx, item in enumerate(image_items, start=1):
+            if not isinstance(item, dict):
+                continue
+            data = image_data_for_item(item, seed_base + section_idx * 10 + image_idx)
+            source_bits = []
+            if data.get("source_url"):
+                source_label = data.get("source_title") or "자료 출처"
+                source_bits.append(
+                    f'<a href="{e(data.get("source_url"))}" target="_blank" rel="noopener noreferrer">{e(source_label)}</a>'
+                )
+            if data.get("credit"):
+                source_bits.append(e(data.get("credit")))
+            source_html = f'<small>{" · ".join(source_bits)}</small>' if source_bits else ""
+            figures.append(
+                f"""
+                <figure class="section-image">
+                  <img src="{e(data.get("image_url"))}" alt="{e(data.get("title"))}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='{e(svg_placeholder_url(data.get("title", ""), seed_base + section_idx * 10 + image_idx))}';">
+                  <figcaption>
+                    <strong>{e(data.get("title"))}</strong>
+                    <span>{e(data.get("caption"))}</span>
+                    {source_html}
+                  </figcaption>
+                </figure>
+                """
+            )
+        if not figures:
+            return ""
+        return f'<div class="section-images">{"".join(figures)}</div>'
 
     content_sections = "\n".join(
         f"""
@@ -874,9 +999,10 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
           <h3>{e(section.get("title"))}</h3>
           {"".join(f"<p>{e(paragraph)}</p>" for paragraph in section.get("paragraphs", []))}
           {list_html(section.get("examples", []), "examples") if section.get("examples") else ""}
+          {section_images_html(section, idx)}
         </section>
         """
-        for section in pack.get("content_sections", [])
+        for idx, section in enumerate(pack.get("content_sections", []), start=1)
     )
 
     vocabulary = "\n".join(
@@ -1035,19 +1161,20 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       font-size: 13px;
       font-weight: 700;
     }}
-    .visual-grid {{
+    .section-images {{
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 14px;
+      margin-top: 14px;
     }}
-    .visual-card {{
+    .section-image {{
       margin: 0;
       border: 1px solid var(--line);
       border-radius: 8px;
       overflow: hidden;
       background: #fff;
     }}
-    .visual-card img {{
+    .section-image img {{
       display: block;
       width: 100%;
       aspect-ratio: 16 / 10;
@@ -1064,6 +1191,14 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
     figcaption strong {{
       color: var(--ink);
       font-size: 15px;
+    }}
+    figcaption small {{
+      font-size: 12px;
+      color: var(--muted);
+    }}
+    figcaption a {{
+      color: var(--blue);
+      text-decoration: none;
     }}
     .content-section {{
       border-top: 1px solid var(--line);
@@ -1153,12 +1288,6 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       <section class="block">
         <h2>요약</h2>
         {summary}
-      </section>
-      <section class="block">
-        <h2>이미지로 이해하기</h2>
-        <div class="visual-grid">
-          {visuals}
-        </div>
       </section>
       <section class="block">
         <h2>내용</h2>
