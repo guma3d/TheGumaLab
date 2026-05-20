@@ -46,6 +46,12 @@ git reset --hard origin/main || exit /b 1
 echo [3/3] Rebuilding docker compose...
 docker compose up -d || exit /b 1
 
+if /I "%PROJECT%"=="Nginx" (
+    echo Validating and reloading Nginx...
+    docker exec HomeServer_Nginx nginx -t || exit /b 1
+    docker exec HomeServer_Nginx nginx -s reload || exit /b 1
+)
+
 if not "%CONTAINER%"=="" (
     echo Restarting container: %CONTAINER%
     docker restart %CONTAINER% || exit /b 1
