@@ -12,6 +12,7 @@ import zipfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 import tenacity
 from dotenv import load_dotenv
@@ -159,7 +160,7 @@ def load_task_status() -> None:
         return
 
     try:
-        data = json.loads(TASK_STATUS_FILE.read_text(encoding="utf-8"))
+        data = json.loads(TASK_STATUS_FILE.read_text(encoding="utf-8-sig"))
         if isinstance(data, dict):
             task_status = data
     except Exception as exc:
@@ -224,8 +225,27 @@ def generate_with_gemini(topic: str, grade: str, quiz_count: int) -> dict[str, A
         "grade": grade,
         "title": "학습자료 제목",
         "subtitle": "짧은 소개 문장",
-        "overview": "5문장 이내의 쉬운 개요",
-        "learning_goals": ["학습 목표 1", "학습 목표 2", "학습 목표 3"],
+        "summary": [
+            "전체 내용을 이해하는 데 중요한 문장 1",
+            "전체 내용을 이해하는 데 중요한 문장 2",
+            "전체 내용을 이해하는 데 중요한 문장 3",
+            "전체 내용을 이해하는 데 중요한 문장 4",
+            "전체 내용을 이해하는 데 중요한 문장 5",
+        ],
+        "content_sections": [
+            {
+                "title": "자세히 배울 내용",
+                "paragraphs": ["아이 눈높이에 맞춘 자세한 설명 문단 1", "자세한 설명 문단 2"],
+                "examples": ["생활 속 예시", "관찰하거나 떠올려볼 장면"],
+            }
+        ],
+        "visuals": [
+            {
+                "title": "이미지 자료 제목",
+                "caption": "이미지를 보며 확인할 핵심 내용",
+                "prompt": "child friendly educational illustration prompt in English",
+            }
+        ],
         "key_points": [
             {"title": "핵심 개념", "body": "쉬운 설명", "example": "생활 속 예시나 비유"}
         ],
@@ -238,14 +258,12 @@ def generate_with_gemini(topic: str, grade: str, quiz_count: int) -> dict[str, A
                 "explanation": "왜 정답인지 쉬운 해설",
             }
         ],
-        "activities": ["짧은 활동 아이디어"],
         "sources": ["검증에 참고할 만한 공개 자료명 또는 기관명"],
-        "verification_note": "확실하지 않은 내용이 있으면 여기에 적기",
     }
     system_prompt = (
         "당신은 어린이와 청소년을 위한 한국어 학습자료 편집자입니다. "
         "사용자가 준 주제에 대해 나이에 맞는 학습자료와 간단한 퀴즈를 만듭니다. "
-        "사실로 단정하기 어려운 내용은 verification_note에 검증 필요라고 적고, "
+        "사실로 단정하기 어려운 내용은 참고자료에 검증 가능한 자료명을 적고, "
         "위험한 실험이나 따라 하면 안 되는 행동은 안전한 관찰 활동으로 바꿉니다. "
         "반드시 JSON 객체만 반환합니다."
     )
@@ -255,6 +273,9 @@ def generate_with_gemini(topic: str, grade: str, quiz_count: int) -> dict[str, A
         f"퀴즈 수: {quiz_count}\n\n"
         "아래 스키마와 같은 키를 가진 JSON만 반환하세요. "
         "key_points는 4~6개, vocabulary는 4~8개, quiz는 요청한 수만큼 작성하세요. "
+        "summary는 전체 내용을 대표하는 중요한 한국어 문장 정확히 5개로 작성하세요. "
+        "content_sections는 4~6개로 만들고, 각 항목의 paragraphs에는 디테일한 설명을 2~4문단 넣으세요. "
+        "visuals는 아이가 흥미를 느낄 수 있는 사진/그림 자료 아이디어 6~8개로 만들고, prompt는 영어 이미지 생성 프롬프트로 작성하세요. "
         "모든 설명은 한국어로, 문장은 짧고 읽기 쉽게 작성하세요.\n\n"
         f"{json.dumps(schema, ensure_ascii=False, indent=2)}"
     )
@@ -299,11 +320,48 @@ def generate_fallback_pack(topic: str, grade: str, quiz_count: int) -> dict[str,
         "grade": grade,
         "title": f"{topic} 학습자료",
         "subtitle": "AI 연결 전에도 저장 흐름을 확인할 수 있는 기본 템플릿입니다.",
-        "overview": (
-            f"이 문서는 {topic} 주제로 학습자료를 만들기 위한 기본 틀입니다. "
-            "실제 사실 설명은 GEMINI_API_KEY를 설정한 뒤 다시 생성하세요."
-        ),
-        "learning_goals": ["주제의 뜻을 확인하기", "핵심 질문 만들기", "배운 내용을 퀴즈로 점검하기"],
+        "summary": [
+            f"{topic}을 이해하려면 먼저 무엇을 뜻하는지 살펴보는 것이 중요합니다.",
+            f"{topic}은 여러 작은 개념과 예시가 서로 연결되어 있습니다.",
+            "그림이나 사진을 함께 보면 글로만 볼 때보다 더 쉽게 이해할 수 있습니다.",
+            "중요한 단어를 정리하면 뒤의 자세한 설명을 따라가기 쉬워집니다.",
+            "마지막에는 간단한 퀴즈로 배운 내용을 스스로 확인할 수 있습니다.",
+        ],
+        "content_sections": [
+            {
+                "title": f"{topic}의 기본 뜻",
+                "paragraphs": [
+                    f"{topic}이 무엇을 말하는지 먼저 쉬운 말로 정리합니다.",
+                    "관련 자료를 다시 생성하면 이 부분에 실제 사실을 바탕으로 한 자세한 설명이 들어갑니다.",
+                ],
+                "examples": ["백과사전이나 교과서에서 같은 주제를 찾아 비교해보기"],
+            },
+            {
+                "title": "더 깊게 생각해보기",
+                "paragraphs": [
+                    "이 주제가 우리 생활, 자연, 역사, 기술 중 어디와 연결되는지 생각해봅니다.",
+                    "궁금한 점을 질문으로 바꾸면 다음에 찾아볼 내용이 더 분명해집니다.",
+                ],
+                "examples": ["왜 그럴까?", "언제 생길까?", "어디에서 볼 수 있을까?"],
+            },
+        ],
+        "visuals": [
+            {
+                "title": f"{topic} 전체 그림",
+                "caption": "주제를 한 장면으로 떠올려보는 이미지입니다.",
+                "prompt": f"child friendly colorful educational illustration about {topic}, clear main subject, bright classroom style",
+            },
+            {
+                "title": "핵심 개념 장면",
+                "caption": "가장 중요한 개념을 그림으로 확인합니다.",
+                "prompt": f"simple educational diagram for children explaining {topic}, colorful, clear, no text",
+            },
+            {
+                "title": "생활 속 예시",
+                "caption": "우리 주변에서 비슷한 모습을 찾아봅니다.",
+                "prompt": f"child friendly real life example of {topic}, bright educational illustration",
+            },
+        ],
         "key_points": [
             {
                 "title": "무엇인지 알아보기",
@@ -327,9 +385,7 @@ def generate_fallback_pack(topic: str, grade: str, quiz_count: int) -> dict[str,
             {"term": "근거", "meaning": "설명이 맞는지 확인할 수 있는 자료"},
         ],
         "quiz": quiz,
-        "activities": ["주제에 대해 궁금한 질문 3개를 적고 자료에서 답을 찾아보기"],
         "sources": ["AI 생성 비활성 상태: 직접 검증 자료를 추가하세요."],
-        "verification_note": "GEMINI_API_KEY가 없어 사실 기반 본문을 생성하지 않았습니다.",
     }
 
 
@@ -338,6 +394,100 @@ def normalize_pack(pack: dict[str, Any], topic: str, grade: str, quiz_count: int
     pack["grade"] = str(pack.get("grade") or grade).strip()
     pack["title"] = str(pack.get("title") or f"{topic} 학습자료").strip()
     pack["subtitle"] = str(pack.get("subtitle") or "").strip()
+
+    summary = pack.get("summary")
+    if isinstance(summary, str):
+        summary = [line.strip() for line in re.split(r"[\n\r]+", summary) if line.strip()]
+    if not isinstance(summary, list):
+        summary = []
+    normalized_summary = [str(item).strip() for item in summary if str(item).strip()]
+    if not normalized_summary and pack.get("overview"):
+        normalized_summary = [str(pack.get("overview")).strip()]
+    while len(normalized_summary) < 5:
+        normalized_summary.append(f"{topic}을 이해하는 데 필요한 중요한 내용을 차근차근 살펴봅니다.")
+    pack["summary"] = normalized_summary[:5]
+
+    content_sections = pack.get("content_sections")
+    if not isinstance(content_sections, list):
+        content_sections = []
+    normalized_sections = []
+    for item in content_sections:
+        if not isinstance(item, dict):
+            continue
+        paragraphs = item.get("paragraphs")
+        if isinstance(paragraphs, str):
+            paragraphs = [paragraphs]
+        if not isinstance(paragraphs, list):
+            paragraphs = []
+        examples = item.get("examples")
+        if isinstance(examples, str):
+            examples = [examples]
+        if not isinstance(examples, list):
+            examples = []
+        normalized_sections.append(
+            {
+                "title": str(item.get("title") or "자세한 설명").strip(),
+                "paragraphs": [str(paragraph).strip() for paragraph in paragraphs if str(paragraph).strip()],
+                "examples": [str(example).strip() for example in examples if str(example).strip()],
+            }
+        )
+
+    if not normalized_sections:
+        for point in pack.get("key_points", []):
+            if not isinstance(point, dict):
+                continue
+            paragraphs = [str(point.get("body") or "").strip()]
+            examples = [str(point.get("example") or "").strip()]
+            normalized_sections.append(
+                {
+                    "title": str(point.get("title") or "자세한 설명").strip(),
+                    "paragraphs": [paragraph for paragraph in paragraphs if paragraph],
+                    "examples": [example for example in examples if example],
+                }
+            )
+    if not normalized_sections:
+        normalized_sections = [
+            {
+                "title": f"{topic} 자세히 알아보기",
+                "paragraphs": [pack["summary"][0]],
+                "examples": [],
+            }
+        ]
+    pack["content_sections"] = normalized_sections
+
+    visuals = pack.get("visuals")
+    if not isinstance(visuals, list):
+        visuals = []
+    normalized_visuals = []
+    for item in visuals:
+        if not isinstance(item, dict):
+            continue
+        title = str(item.get("title") or "").strip()
+        caption = str(item.get("caption") or "").strip()
+        prompt = str(item.get("prompt") or title or caption or topic).strip()
+        if prompt:
+            normalized_visuals.append({"title": title or "이미지 자료", "caption": caption, "prompt": prompt})
+    for section in normalized_sections:
+        if len(normalized_visuals) >= 6:
+            break
+        title = section.get("title") or topic
+        normalized_visuals.append(
+            {
+                "title": f"{title} 그림",
+                "caption": f"{title}을 이미지로 떠올려봅니다.",
+                "prompt": f"child friendly colorful educational illustration about {topic}: {title}, clear, bright, no text",
+            }
+        )
+    while len(normalized_visuals) < 6:
+        normalized_visuals.append(
+            {
+                "title": f"{topic} 이미지 자료",
+                "caption": "주제를 더 쉽게 이해하기 위한 그림 자료입니다.",
+                "prompt": f"child friendly educational illustration about {topic}, colorful, clear, no text",
+            }
+        )
+    pack["visuals"] = normalized_visuals[:8]
+
     pack["overview"] = str(pack.get("overview") or "").strip()
 
     for key in ("learning_goals", "activities", "sources"):
@@ -405,7 +555,7 @@ def list_html(items: list[Any], class_name: str = "") -> str:
     )
 
 
-def render_material_html(pack: dict[str, Any], task_id: str) -> str:
+def render_material_html_legacy(pack: dict[str, Any], task_id: str) -> str:
     goals = list_html(pack.get("learning_goals", []), "goals")
     activities = list_html(pack.get("activities", []))
     sources = list_html(pack.get("sources", []))
@@ -621,11 +771,11 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
     </header>
     <main>
       <section class="block">
-        <h2>한눈에 보기</h2>
+        <h2>요약</h2>
         <p>{e(pack.get("overview"))}</p>
       </section>
       <section class="block">
-        <h2>학습 목표</h2>
+        <h2>요약</h2>
         {goals}
       </section>
       <section class="block">
@@ -643,16 +793,381 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
         {quiz}
       </section>
       <section class="block">
-        <h2>활동 아이디어</h2>
+        <h2>내용</h2>
         {activities}
       </section>
       <section class="block">
-        <h2>검증 메모</h2>
+        <h2>참고자료</h2>
         <p>{e(pack.get("verification_note") or "생성된 내용을 수업이나 발표에 쓰기 전 한 번 더 확인하세요.")}</p>
         {sources}
       </section>
     </main>
     <footer>생성일: {e(now_iso())}</footer>
+  </div>
+</body>
+</html>
+"""
+
+
+def svg_placeholder_url(title: str, seed: int) -> str:
+    palettes = [
+        ("#e0f2fe", "#0284c7", "#fef3c7"),
+        ("#dcfce7", "#15803d", "#fee2e2"),
+        ("#fef3c7", "#b45309", "#dbeafe"),
+        ("#fce7f3", "#be185d", "#e0f2fe"),
+    ]
+    bg, ink, accent = palettes[seed % len(palettes)]
+    safe_title = str(title or "이미지 자료")[:28]
+    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520">
+<rect width="900" height="520" fill="{bg}"/>
+<circle cx="730" cy="130" r="92" fill="{accent}"/>
+<circle cx="185" cy="405" r="118" fill="{accent}" opacity="0.72"/>
+<rect x="92" y="92" width="716" height="336" rx="34" fill="#ffffff" opacity="0.9"/>
+<path d="M170 330 C260 210 330 250 410 170 C500 82 620 140 720 235" fill="none" stroke="{ink}" stroke-width="18" stroke-linecap="round"/>
+<circle cx="258" cy="225" r="34" fill="{ink}" opacity="0.88"/>
+<circle cx="505" cy="160" r="46" fill="{ink}" opacity="0.78"/>
+<circle cx="680" cy="260" r="38" fill="{ink}" opacity="0.84"/>
+<text x="450" y="410" text-anchor="middle" font-family="Malgun Gothic, Arial, sans-serif" font-size="44" font-weight="700" fill="#172033">{html.escape(safe_title)}</text>
+</svg>"""
+    return "data:image/svg+xml;charset=utf-8," + quote(svg, safe="")
+
+
+def visual_image_url(prompt: str, seed: int) -> str:
+    image_prompt = (
+        "child friendly educational image, colorful, clear, curious elementary student style, "
+        "safe classroom learning material, no text, "
+        + str(prompt or "")
+    )
+    return f"https://image.pollinations.ai/prompt/{quote(image_prompt, safe='')}?width=900&height=520&nologo=true&seed={seed}"
+
+
+def render_material_html(pack: dict[str, Any], task_id: str) -> str:
+    seed_base = int(task_id[:8], 16)
+    summary = list_html(pack.get("summary", []), "summary-list")
+    sources = list_html(pack.get("sources", []), "sources")
+
+    visuals = "\n".join(
+        f"""
+        <figure class="visual-card">
+          <img src="{e(visual_image_url(item.get("prompt", ""), seed_base + idx))}" alt="{e(item.get("title"))}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='{e(svg_placeholder_url(item.get("title", ""), seed_base + idx))}';">
+          <figcaption>
+            <strong>{e(item.get("title"))}</strong>
+            <span>{e(item.get("caption"))}</span>
+          </figcaption>
+        </figure>
+        """
+        for idx, item in enumerate(pack.get("visuals", []), start=1)
+    )
+
+    content_sections = "\n".join(
+        f"""
+        <section class="content-section">
+          <h3>{e(section.get("title"))}</h3>
+          {"".join(f"<p>{e(paragraph)}</p>" for paragraph in section.get("paragraphs", []))}
+          {list_html(section.get("examples", []), "examples") if section.get("examples") else ""}
+        </section>
+        """
+        for section in pack.get("content_sections", [])
+    )
+
+    vocabulary = "\n".join(
+        f"""
+        <tr>
+          <th>{e(item.get("term"))}</th>
+          <td>{e(item.get("meaning"))}</td>
+        </tr>
+        """
+        for item in pack.get("vocabulary", [])
+    )
+
+    quiz = "\n".join(
+        f"""
+        <section class="quiz-item">
+          <h3>문제 {idx}</h3>
+          <p>{e(item.get("question"))}</p>
+          {list_html(item.get("choices", []), "choices")}
+          <details>
+            <summary>정답 보기</summary>
+            <p><strong>{e(item.get("answer"))}</strong></p>
+            <p>{e(item.get("explanation"))}</p>
+          </details>
+        </section>
+        """
+        for idx, item in enumerate(pack.get("quiz", []), start=1)
+    )
+
+    source_section = (
+        f"""
+      <section class="block">
+        <h2>참고자료</h2>
+        {sources}
+      </section>
+        """
+        if sources
+        else ""
+    )
+
+    return f"""<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{e(pack.get("title"))}</title>
+  <style>
+    :root {{
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #5b6472;
+      --line: #dbe3ee;
+      --paper: #ffffff;
+      --bg: #f6f8fb;
+      --teal: #0f766e;
+      --blue: #2563eb;
+      --rose: #e11d48;
+      --amber: #f59e0b;
+      --mint: #dff5f1;
+      --sky: #e0f2fe;
+      --peach: #fff0dc;
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{
+      margin: 0;
+      font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.68;
+    }}
+    .page {{
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 36px 18px 72px;
+    }}
+    header {{
+      padding: 30px 0 26px;
+      border-bottom: 4px solid var(--teal);
+    }}
+    .meta {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }}
+    .pill {{
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 11px;
+      background: var(--paper);
+    }}
+    h1 {{
+      margin: 0;
+      font-size: 40px;
+      line-height: 1.18;
+      letter-spacing: 0;
+    }}
+    .subtitle {{
+      margin: 14px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+    }}
+    main {{
+      display: grid;
+      gap: 18px;
+      margin-top: 22px;
+    }}
+    section.block {{
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 22px;
+    }}
+    h2 {{
+      margin: 0 0 14px;
+      font-size: 23px;
+      line-height: 1.3;
+      letter-spacing: 0;
+    }}
+    h3 {{
+      margin: 0 0 8px;
+      font-size: 19px;
+      line-height: 1.35;
+      letter-spacing: 0;
+    }}
+    p {{ margin: 0 0 10px; }}
+    ul {{ margin: 0; padding-left: 22px; }}
+    .summary-list {{
+      display: grid;
+      gap: 10px;
+      padding: 0;
+      list-style: none;
+      counter-reset: summary;
+    }}
+    .summary-list li {{
+      counter-increment: summary;
+      position: relative;
+      padding: 12px 14px 12px 48px;
+      border-radius: 8px;
+      background: var(--mint);
+      border: 1px solid #bfe7df;
+    }}
+    .summary-list li::before {{
+      content: counter(summary);
+      position: absolute;
+      left: 14px;
+      top: 12px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--teal);
+      color: white;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 700;
+    }}
+    .visual-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+    }}
+    .visual-card {{
+      margin: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }}
+    .visual-card img {{
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      object-fit: cover;
+      background: var(--sky);
+    }}
+    figcaption {{
+      display: grid;
+      gap: 4px;
+      padding: 12px;
+      font-size: 14px;
+      color: var(--muted);
+    }}
+    figcaption strong {{
+      color: var(--ink);
+      font-size: 15px;
+    }}
+    .content-section {{
+      border-top: 1px solid var(--line);
+      padding-top: 18px;
+      margin-top: 18px;
+    }}
+    .content-section:first-child {{
+      border-top: 0;
+      padding-top: 0;
+      margin-top: 0;
+    }}
+    .examples {{
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 0;
+      list-style: none;
+    }}
+    .examples li {{
+      background: var(--peach);
+      border-left: 4px solid var(--amber);
+      border-radius: 6px;
+      padding: 9px 11px;
+      color: #573b06;
+    }}
+    table {{
+      width: 100%;
+      border-collapse: collapse;
+    }}
+    th, td {{
+      border-bottom: 1px solid var(--line);
+      padding: 11px 10px;
+      text-align: left;
+      vertical-align: top;
+    }}
+    th {{
+      width: 160px;
+      color: var(--blue);
+    }}
+    .quiz-item {{
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 12px;
+      background: #fff;
+    }}
+    .choices {{
+      margin: 8px 0 12px;
+    }}
+    details {{
+      border-top: 1px solid var(--line);
+      padding-top: 10px;
+    }}
+    summary {{
+      cursor: pointer;
+      color: var(--rose);
+      font-weight: 700;
+    }}
+    .sources li {{
+      margin-bottom: 6px;
+    }}
+    footer {{
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: 13px;
+    }}
+    @media (max-width: 640px) {{
+      .page {{ padding: 24px 14px 48px; }}
+      h1 {{ font-size: 30px; }}
+      section.block {{ padding: 18px; }}
+      th {{ width: 110px; }}
+    }}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="meta">
+        <span class="pill">{e(APP_TITLE)}</span>
+        <span class="pill">{e(pack.get("grade"))}</span>
+        <span class="pill">문서 ID {e(task_id[:8])}</span>
+      </div>
+      <h1>{e(pack.get("title"))}</h1>
+      <p class="subtitle">{e(pack.get("subtitle"))}</p>
+    </header>
+    <main>
+      <section class="block">
+        <h2>요약</h2>
+        {summary}
+      </section>
+      <section class="block">
+        <h2>이미지로 이해하기</h2>
+        <div class="visual-grid">
+          {visuals}
+        </div>
+      </section>
+      <section class="block">
+        <h2>내용</h2>
+        {content_sections}
+      </section>
+      <section class="block">
+        <h2>단어 정리</h2>
+        <table>
+          <tbody>{vocabulary}</tbody>
+        </table>
+      </section>
+      <section class="block">
+        <h2>간단한 퀴즈</h2>
+        {quiz}
+      </section>
+      {source_section}
+    </main>
+    <footer>생성일 {e(now_iso())}</footer>
   </div>
 </body>
 </html>
