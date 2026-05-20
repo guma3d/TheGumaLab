@@ -201,19 +201,28 @@ def safe_slug(text: str) -> str:
 
 
 def extract_json(text: str) -> dict[str, Any]:
-    candidate = text.strip()
-    fenced = re.search(r"```(?:json)?\s*(.*?)```", candidate, re.DOTALL | re.IGNORECASE)
+    raw_text = text.strip()
+    candidates = [raw_text]
+    fenced = re.search(r"```(?:json)?\s*(.*?)```", raw_text, re.DOTALL | re.IGNORECASE)
     if fenced:
-        candidate = fenced.group(1).strip()
-    if not candidate.startswith("{"):
+        candidates.insert(0, fenced.group(1).strip())
+
+    decoder = json.JSONDecoder()
+    last_error: Exception | None = None
+    for candidate in candidates:
         start = candidate.find("{")
-        end = candidate.rfind("}")
-        if start >= 0 and end > start:
-            candidate = candidate[start : end + 1]
-    parsed = json.loads(candidate)
-    if not isinstance(parsed, dict):
-        raise ValueError("Gemini response was not a JSON object")
-    return parsed
+        while start >= 0:
+            try:
+                parsed, _ = decoder.raw_decode(candidate[start:])
+                if isinstance(parsed, dict):
+                    return parsed
+                last_error = ValueError("Gemini response JSON was not an object")
+            except json.JSONDecodeError as exc:
+                last_error = exc
+            start = candidate.find("{", start + 1)
+
+    preview = raw_text[:500].replace("\n", " ")
+    raise ValueError(f"Gemini response did not contain a valid JSON object: {last_error}; preview={preview}")
 
 
 def generate_with_gemini(topic: str, grade: str, quiz_count: int) -> dict[str, Any]:
