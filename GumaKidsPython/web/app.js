@@ -243,10 +243,10 @@ function seasonOneReset() {
     hp: toNumber(s.hp, 100),
     message: s.start_message || "모험 시작!",
     items: [
-      { kind: "treasure", x: 260, y: 110, icon: "💎", taken: false },
-      { kind: "treasure", x: 520, y: 250, icon: "🪙", taken: false },
-      { kind: "bonus", x: 650, y: 90, icon: "⭐", taken: false },
-      { kind: "trap", x: 390, y: 300, icon: "⚠", taken: false },
+      { kind: "treasure", x: 260, y: 110, label: "보물", taken: false },
+      { kind: "treasure", x: 520, y: 250, label: "동전", taken: false },
+      { kind: "bonus", x: 650, y: 90, label: "보너스", taken: false },
+      { kind: "trap", x: 390, y: 300, label: "함정", taken: false },
     ],
   };
 }
@@ -262,7 +262,7 @@ function renderSeasonOne() {
 
   const hero = document.createElement("div");
   hero.className = "sprite hero";
-  hero.textContent = "🧒";
+  hero.innerHTML = `<span class="avatar-head"></span><span class="avatar-name">${s.hero_name || "용사"}</span>`;
   hero.style.left = `${g.x}px`;
   hero.style.top = `${g.y}px`;
   board.appendChild(hero);
@@ -270,7 +270,7 @@ function renderSeasonOne() {
   for (const item of g.items.filter((entry) => !entry.taken)) {
     const sprite = document.createElement("div");
     sprite.className = `sprite ${item.kind === "trap" ? "trap" : "treasure"}`;
-    sprite.textContent = item.icon;
+    sprite.textContent = item.label;
     sprite.style.left = `${item.x}px`;
     sprite.style.top = `${item.y}px`;
     board.appendChild(sprite);
@@ -330,6 +330,14 @@ function renderSeasonTwo() {
   els.action.textContent = "비밀번호 확인";
   els.gameMount.innerHTML = `
     <div class="message-log">
+      <div class="dungeon-scene">
+        <div class="character-card">
+          <div class="character-avatar">${s.player_name.slice(0, 2)}</div>
+          <strong>${s.player_name}</strong>
+          <span>${s.weapon} 장착</span>
+        </div>
+        <div class="door-card">던전 문</div>
+      </div>
       <div class="message-line">${s.player_name} 님이 ${s.weapon}을 들고 던전에 들어왔어.</div>
       <div class="choice-grid">
         <button data-choice="key" type="button">열쇠 문</button>
@@ -381,11 +389,13 @@ function renderSeasonThree() {
     <div class="battle-grid">
       <div class="fighter">
         <h3>플레이어</h3>
+        <div class="fighter-avatar player-avatar">용사</div>
         <p>체력 ${g.playerHp}</p>
         <div class="bar"><span style="width:${Math.max(0, g.playerHp)}%"></span></div>
       </div>
       <div class="fighter">
         <h3>${s.monster_name}</h3>
+        <div class="fighter-avatar monster-avatar">${s.monster_name.slice(0, 3)}</div>
         <p>체력 ${Math.max(0, g.monsterHp)}</p>
         <div class="bar"><span style="width:${Math.max(0, (g.monsterHp / monsterMax) * 100)}%"></span></div>
       </div>
@@ -453,9 +463,9 @@ function renderSeasonFour() {
       <button data-adventure="save" type="button">점수 저장</button>
     </div>
     <div class="board">
-      <div class="sprite hero" style="left:80px;top:160px">🧒</div>
-      <div class="sprite treasure" style="left:55%;top:120px">🎁</div>
-      <div class="sprite trap" style="left:72%;top:250px">👑</div>
+      <div class="sprite hero" style="left:80px;top:160px"><span class="avatar-head"></span><span class="avatar-name">${s.hero_name}</span></div>
+      <div class="sprite treasure wide-sprite" style="left:55%;top:120px">보물상자</div>
+      <div class="sprite trap wide-sprite" style="left:72%;top:250px">보스</div>
       <div class="message-line" style="position:absolute;left:14px;right:14px;bottom:14px">${g.message}</div>
     </div>
   `;

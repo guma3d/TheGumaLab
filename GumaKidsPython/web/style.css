@@ -264,23 +264,125 @@ input {
   width: 48px;
   height: 48px;
   border-radius: 8px;
-  font-size: 25px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
   transition: left 120ms ease, top 120ms ease, transform 120ms ease;
 }
 
 .hero {
+  width: 74px;
+  height: 74px;
+  grid-template-rows: 40px 1fr;
+  gap: 3px;
+  padding: 6px;
   background: #dbeafe;
-  border: 2px solid var(--blue);
+  border: 3px solid var(--blue);
+  color: #12346f;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.24);
+}
+
+.avatar-head {
+  position: relative;
+  display: block;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #f8cda7;
+  border: 2px solid #7c4a23;
+}
+
+.avatar-head::before,
+.avatar-head::after {
+  content: "";
+  position: absolute;
+  top: 14px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #1f2937;
+}
+
+.avatar-head::before {
+  left: 9px;
+}
+
+.avatar-head::after {
+  right: 9px;
+}
+
+.avatar-name {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  color: #12346f;
+  font-size: 11px;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .treasure {
   background: #fff7d6;
   border: 2px solid var(--gold);
+  color: #7a4c00;
 }
 
 .trap {
   background: #fee2e2;
   border: 2px solid var(--red);
+  color: #8b1d16;
+}
+
+.wide-sprite {
+  width: 82px;
+}
+
+.dungeon-scene {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.character-card,
+.door-card {
+  display: grid;
+  place-items: center;
+  min-height: 150px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+  text-align: center;
+}
+
+.character-card {
+  gap: 8px;
+}
+
+.character-card span {
+  color: var(--muted);
+}
+
+.character-avatar {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: #dbeafe;
+  border: 3px solid var(--blue);
+  color: #12346f;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.door-card {
+  background: #ede3d3;
+  border: 3px solid #8b5e34;
+  color: #5a3718;
+  font-size: 24px;
+  font-weight: 800;
 }
 
 .message-log {
@@ -317,6 +419,29 @@ input {
   background: #f8fafc;
 }
 
+.fighter-avatar {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  margin: 10px auto;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.player-avatar {
+  background: #dbeafe;
+  border: 3px solid var(--blue);
+  color: #12346f;
+}
+
+.monster-avatar {
+  background: #fee2e2;
+  border: 3px solid var(--red);
+  color: #8b1d16;
+}
+
 .bar {
   height: 16px;
   margin-top: 10px;
@@ -351,6 +476,7 @@ input {
   .save-panel,
   .season-tabs,
   .choice-grid,
+  .dungeon-scene,
   .battle-grid,
   .adventure-actions,
   .lesson-body {
