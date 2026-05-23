@@ -253,6 +253,7 @@ def generate_with_gemini(topic: str, grade: str, quiz_count: int) -> dict[str, A
                         "title": "내용을 이해하는 데 필요한 사진 제목",
                         "caption": "사진을 보며 확인할 핵심 내용",
                         "query": "specific English Wikimedia Commons photo search query",
+                        "notes": ["사진에서 바로 확인할 짧은 문장 1", "사진을 보며 떠올릴 짧은 문장 2"],
                     }
                 ],
             }
@@ -289,6 +290,7 @@ def generate_with_gemini(topic: str, grade: str, quiz_count: int) -> dict[str, A
         "각 content_sections 항목의 images에는 그 소주제를 이해하는 데 직접 필요한 실제 사진 검색어를 1~2개 넣으세요. "
         "그림, 일러스트, 도해, 지도, 아이콘, 로고, 차트 검색어는 넣지 마세요. "
         "images.query는 Wikimedia Commons에서 실제 자료 사진을 찾기 좋은 구체적인 영어 검색어로 작성하고, photo 또는 photograph 같은 단어를 포함하세요. "
+        "images.notes에는 사진 옆에 보여줄 짧은 한국어 관찰 문장 2~3개를 넣으세요. "
         "예를 들어 서식지 설명에는 지역명 사진과 환경 사진 검색어를 함께 넣고, 구조/과정 설명에는 관련 부위·과정·비교 사진 검색어를 넣으세요. "
         "모든 설명은 한국어로, 문장은 짧고 읽기 쉽게 작성하세요.\n\n"
         f"{json.dumps(schema, ensure_ascii=False, indent=2)}"
@@ -413,6 +415,11 @@ def normalize_image_items(value: Any, topic: str, section_title: str) -> list[di
         title = str(item.get("title") or item.get("name") or "").strip()
         caption = str(item.get("caption") or item.get("description") or "").strip()
         query = str(item.get("query") or item.get("search_query") or item.get("prompt") or "").strip()
+        notes = item.get("notes") or item.get("observations") or item.get("photo_notes")
+        if isinstance(notes, str):
+            notes = [notes]
+        if not isinstance(notes, list):
+            notes = []
         if query:
             normalized.append(
                 {
@@ -420,6 +427,7 @@ def normalize_image_items(value: Any, topic: str, section_title: str) -> list[di
                     "caption": caption,
                     "query": query,
                     "image_url": "",
+                    "notes": [str(note).strip() for note in notes if str(note).strip()][:3],
                 }
             )
 
@@ -430,6 +438,7 @@ def normalize_image_items(value: Any, topic: str, section_title: str) -> list[di
                 "caption": f"{section_title or topic}을 실제 이미지로 살펴봅니다.",
                 "query": f"{topic} {section_title} photo",
                 "image_url": "",
+                "notes": [],
             }
         )
 
@@ -1139,52 +1148,120 @@ def image_data_for_item(item: dict[str, str]) -> dict[str, str] | None:
 def render_material_html(pack: dict[str, Any], task_id: str) -> str:
     summary = list_html(pack.get("summary", []), "summary-list")
     sources = list_html(pack.get("sources", []), "sources")
+    topic = str(pack.get("topic") or "").strip()
 
-    def section_images_html(section: dict[str, Any]) -> str:
+    def first_section_image(section: dict[str, Any]) -> dict[str, str] | None:
         image_items = section.get("images")
         if not isinstance(image_items, list):
             image_items = []
-        figures = []
         for item in image_items:
             if not isinstance(item, dict):
                 continue
             data = image_data_for_item(item)
-            if not data:
-                continue
-            source_bits = []
-            if data.get("source_url"):
-                source_label = data.get("source_title") or "자료 출처"
-                source_bits.append(
-                    f'<a href="{e(data.get("source_url"))}" target="_blank" rel="noopener noreferrer">{e(source_label)}</a>'
-                )
-            if data.get("credit"):
-                source_bits.append(e(data.get("credit")))
-            source_html = f'<small>{" · ".join(source_bits)}</small>' if source_bits else ""
-            figures.append(
-                f"""
-                <figure class="section-image">
-                  <img src="{e(data.get("image_url"))}" alt="{e(data.get("title"))}" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('figure').remove();">
-                  <figcaption>
-                    <strong>{e(data.get("title"))}</strong>
-                    <span>{e(data.get("caption"))}</span>
-                    {source_html}
-                  </figcaption>
-                </figure>
-                """
-            )
-        if not figures:
-            return ""
-        return f'<div class="section-images">{"".join(figures)}</div>'
+            if data:
+                return data
 
-    content_sections = "\n".join(
-        f"""
-        <section class="content-section">
-          <h3>{e(section.get("title"))}</h3>
-          {"".join(f"<p>{e(paragraph)}</p>" for paragraph in section.get("paragraphs", []))}
-          {list_html(section.get("examples", []), "examples") if section.get("examples") else ""}
-          {section_images_html(section)}
+        section_title = str(section.get("title") or "").strip()
+        fallback_queries = [
+            f"{topic} {section_title} photo",
+            f"{topic} {section_title} photograph",
+            f"{topic} close up photo",
+            f"{topic} photo",
+        ]
+        for query in fallback_queries:
+            if not query.strip():
+                continue
+            data = image_data_for_item(
+                {
+                    "title": f"{section_title or topic} 사진",
+                    "caption": f"{section_title or topic}을 실제 사진으로 살펴봅니다.",
+                    "query": query,
+                }
+            )
+            if data:
+                return data
+        return None
+
+    def photo_notes(section: dict[str, Any], image: dict[str, str] | None) -> list[str]:
+        notes: list[str] = []
+        for item in section.get("images") or []:
+            if isinstance(item, dict):
+                raw_notes = item.get("notes") or item.get("observations") or item.get("photo_notes")
+                if isinstance(raw_notes, str):
+                    raw_notes = [raw_notes]
+                if isinstance(raw_notes, list):
+                    notes.extend(str(note).strip() for note in raw_notes if str(note).strip())
+        if image and image.get("caption"):
+            notes.insert(0, str(image.get("caption")).strip())
+        examples = section.get("examples")
+        if isinstance(examples, list):
+            notes.extend(str(example).strip() for example in examples if str(example).strip())
+        if len(notes) < 2:
+            title = str(section.get("title") or topic or "사진").strip()
+            notes.extend(
+                [
+                    f"{title}의 모습을 사진에서 직접 확인해 보세요.",
+                    "사진 속 모양과 설명을 서로 비교하며 살펴보세요.",
+                ]
+            )
+        deduped: list[str] = []
+        for note in notes:
+            if note and note not in deduped:
+                deduped.append(note)
+        return deduped[:3]
+
+    def section_page_html(section: dict[str, Any], idx: int) -> str:
+        image = first_section_image(section)
+        notes = photo_notes(section, image)
+        image_source_html = ""
+        if image:
+            source_bits = []
+            if image.get("source_url"):
+                source_label = image.get("source_title") or "자료 출처"
+                source_bits.append(
+                    f'<a href="{e(image.get("source_url"))}" target="_blank" rel="noopener noreferrer">{e(source_label)}</a>'
+                )
+            if image.get("credit"):
+                source_bits.append(e(image.get("credit")))
+            image_source_html = f'<small>{" · ".join(source_bits)}</small>' if source_bits else ""
+        image_html = (
+            f"""
+            <figure class="topic-photo">
+              <img src="{e(image.get("image_url"))}" alt="{e(image.get("title"))}" loading="lazy" referrerpolicy="no-referrer">
+              {image_source_html}
+            </figure>
+            """
+            if image
+            else """
+            <figure class="topic-photo photo-missing">
+              <div>사진을 찾는 중입니다</div>
+            </figure>
+            """
+        )
+        paragraphs = section.get("paragraphs")
+        if not isinstance(paragraphs, list):
+            paragraphs = []
+        return f"""
+        <section class="block topic-page">
+          <div class="topic-copy">
+            <div class="page-kicker">내용 {idx}</div>
+            <h2>{e(section.get("title"))}</h2>
+            {"".join(f"<p>{e(paragraph)}</p>" for paragraph in paragraphs)}
+          </div>
+          <div class="topic-visual">
+            {image_html}
+            <aside class="photo-notes">
+              <h3>사진으로 보기</h3>
+              <ul>
+                {"".join(f"<li>{e(note)}</li>" for note in notes)}
+              </ul>
+            </aside>
+          </div>
         </section>
         """
+
+    content_sections = "\n".join(
+        section_page_html(section, idx)
         for idx, section in enumerate(pack.get("content_sections", []), start=1)
     )
 
@@ -1368,54 +1445,103 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       font-size: 14px;
       font-weight: 700;
     }}
-    .section-images {{
+    .topic-page {{
+      aspect-ratio: 16 / 9;
+      min-height: auto;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 16px;
-      margin-top: 18px;
+      grid-template-rows: minmax(128px, 20%) minmax(0, 80%);
+      gap: 18px;
+      justify-content: stretch;
     }}
-    .section-image {{
+    .page-kicker {{
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }}
+    .topic-copy {{
+      min-height: 0;
+      overflow: hidden;
+    }}
+    .topic-copy h2 {{
+      margin-bottom: 8px;
+      font-size: clamp(22px, 2.8vw, 34px);
+    }}
+    .topic-copy p {{
+      margin-bottom: 6px;
+      font-size: clamp(14px, 1.25vw, 18px);
+      line-height: 1.5;
+    }}
+    .topic-visual {{
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 18px;
+      align-items: stretch;
+    }}
+    .topic-photo {{
+      position: relative;
+      min-width: 0;
+      min-height: 0;
       margin: 0;
       border: 1px solid var(--line);
-      border-radius: 14px;
+      border-radius: 16px;
       overflow: hidden;
-      background: rgba(0, 0, 0, 0.24);
-    }}
-    .section-image img {{
-      display: block;
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      object-fit: contain;
       background: #000;
     }}
-    figcaption {{
-      display: grid;
-      gap: 4px;
-      padding: 12px;
-      font-size: 14px;
-      color: var(--muted);
+    .topic-photo img {{
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: #000;
     }}
-    figcaption strong {{
-      color: var(--ink);
-      font-size: 15px;
+    .topic-photo small {{
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      color: rgba(255, 255, 255, 0.78);
+      background: rgba(0, 0, 0, 0.54);
+      font-size: 11px;
+      line-height: 1.35;
     }}
-    figcaption small {{
-      font-size: 12px;
-      color: var(--muted);
-    }}
-    figcaption a {{
-      color: var(--blue);
+    .topic-photo a {{
+      color: #a7f3d0;
       text-decoration: none;
     }}
-    .content-section {{
-      border-top: 1px solid var(--line);
-      padding-top: 22px;
-      margin-top: 22px;
+    .photo-missing {{
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.045);
     }}
-    .content-section:first-child {{
-      border-top: 0;
-      padding-top: 0;
-      margin-top: 0;
+    .photo-notes {{
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+      padding: clamp(18px, 2.4vw, 30px);
+      border: 1px solid var(--primary-line);
+      border-radius: 16px;
+      background: var(--primary-soft);
+    }}
+    .photo-notes h3 {{
+      color: var(--primary);
+      margin-bottom: 14px;
+    }}
+    .photo-notes ul {{
+      display: grid;
+      gap: 14px;
+      padding-left: 22px;
+    }}
+    .photo-notes li {{
+      font-size: clamp(17px, 1.7vw, 24px);
+      line-height: 1.55;
     }}
     .examples {{
       display: grid;
@@ -1473,20 +1599,6 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       color: var(--muted);
       font-size: 13px;
     }}
-    @media (orientation: landscape) and (min-width: 900px) {{
-      .content-section {{
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-      }}
-      .content-section:has(.section-images) {{
-        grid-template-columns: minmax(0, 1fr) minmax(340px, 0.85fr);
-        column-gap: 24px;
-        align-items: center;
-      }}
-      .content-section:has(.section-images) .section-images {{
-        margin-top: 0;
-      }}
-    }}
     @media (max-width: 640px) {{
       html {{ scroll-snap-type: none; }}
       .page {{
@@ -1502,8 +1614,24 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
         border-radius: 14px;
         padding: 20px;
       }}
-      .section-images {{
+      .topic-page {{
+        aspect-ratio: auto;
+        grid-template-rows: auto auto;
+      }}
+      .topic-copy {{
+        overflow: visible;
+      }}
+      .topic-copy p {{
+        font-size: 16px;
+      }}
+      .topic-visual {{
         grid-template-columns: 1fr;
+      }}
+      .topic-photo {{
+        aspect-ratio: 16 / 9;
+      }}
+      .photo-notes li {{
+        font-size: 16px;
       }}
       th {{
         width: 104px;
@@ -1530,10 +1658,7 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
         <h2>요약</h2>
         {summary}
       </section>
-      <section class="block">
-        <h2>내용</h2>
-        {content_sections}
-      </section>
+      {content_sections}
       <section class="block">
         <h2>단어 정리</h2>
         <table>
