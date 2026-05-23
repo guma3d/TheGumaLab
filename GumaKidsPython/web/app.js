@@ -2,6 +2,11 @@ const seasons = {
   season_01: {
     title: "보물 점수 게임",
     chapters: "챕터 1~12",
+    lesson: [
+      ["오늘의 장면", "주인공이 보물과 함정을 찾아다니며 점수와 체력이 바뀝니다."],
+      ["오늘의 코드", "이름, 대사, 점수 같은 값을 바꾸면 게임 화면도 바로 바뀝니다."],
+      ["미션", "코드 내용을 바꾼 뒤 업그레이드 적용을 누르고 게임을 시작합니다."],
+    ],
     fields: [
       ["start_message", "게임 시작 문장", "모험 시작!"],
       ["hero_message", "주인공 대사", "보물을 찾자!"],
@@ -17,6 +22,11 @@ const seasons = {
   season_02: {
     title: "던전 선택 게임",
     chapters: "챕터 13~24",
+    lesson: [
+      ["오늘의 장면", "던전 문, 비밀번호, 보스방 규칙을 골라 결과를 확인합니다."],
+      ["오늘의 코드", "조건이 참인지 거짓인지에 따라 다른 문장이 나옵니다."],
+      ["미션", "열쇠와 보석 값을 바꾸고 어떤 문이 열리는지 비교합니다."],
+    ],
     fields: [
       ["player_name", "플레이어 이름", "용감한 모험가"],
       ["weapon", "무기", "검"],
@@ -31,6 +41,11 @@ const seasons = {
   season_03: {
     title: "몬스터 배틀 게임",
     chapters: "챕터 25~36",
+    lesson: [
+      ["오늘의 장면", "플레이어가 몬스터와 턴제로 싸우고 전투 로그를 확인합니다."],
+      ["오늘의 코드", "반복 공격, 아이템 가방, 몬스터 능력치를 코드로 정합니다."],
+      ["미션", "몬스터 체력과 공격력을 바꿔 전투 난이도를 조절합니다."],
+    ],
     fields: [
       ["monster_name", "몬스터 이름", "슬라임"],
       ["monster_hp", "몬스터 체력", 30],
@@ -44,6 +59,11 @@ const seasons = {
   season_04: {
     title: "미니 어드벤처 게임",
     chapters: "챕터 37~48",
+    lesson: [
+      ["오늘의 장면", "점프, 인사, 공격, 보물상자 기능을 하나씩 실행합니다."],
+      ["오늘의 코드", "함수, 랜덤, 저장 규칙이 작은 어드벤처 게임으로 연결됩니다."],
+      ["미션", "승리 점수와 보물 목록을 바꿔 나만의 목표를 만듭니다."],
+    ],
     fields: [
       ["hero_name", "주인공 이름", "보물 사냥꾼"],
       ["final_goal", "최종 목표", "전설의 황금열쇠를 찾아라!"],
@@ -70,8 +90,11 @@ const els = {
   tabs: document.querySelectorAll(".season-tabs button"),
   chapterLabel: document.querySelector("#chapterLabel"),
   seasonTitle: document.querySelector("#seasonTitle"),
+  lessonBody: document.querySelector("#lessonBody"),
   upgradeFields: document.querySelector("#upgradeFields"),
+  codePreview: document.querySelector("#codePreview"),
   applyUpgrade: document.querySelector("#applyUpgradeBtn"),
+  start: document.querySelector("#startGameBtn"),
   hudTitle: document.querySelector("#hudTitle"),
   hudStats: document.querySelector("#hudStats"),
   gameMount: document.querySelector("#gameMount"),
@@ -145,6 +168,70 @@ function updateSaveSeason(seasonKey, patch) {
 function setHud(title, stats) {
   els.hudTitle.textContent = title;
   els.hudStats.textContent = stats;
+}
+
+function renderLesson() {
+  const lesson = seasons[state.activeSeason].lesson;
+  els.lessonBody.innerHTML = lesson
+    .map(([title, body]) => `
+      <article class="lesson-note">
+        <strong>${title}</strong>
+        <p>${body}</p>
+      </article>
+    `)
+    .join("");
+}
+
+function renderCodePreview() {
+  const s = state.settings[state.activeSeason] || defaultSettings(state.activeSeason);
+  if (state.activeSeason === "season_01") {
+    els.codePreview.textContent = [
+      "# 시즌 1: 보물 점수 게임 업그레이드 존",
+      `start_message = "${s.start_message}"`,
+      `hero_message = "${s.hero_message}"`,
+      `hero_name = "${s.hero_name}"`,
+      `start_score = ${toNumber(s.start_score, 10)}`,
+      `hp = ${toNumber(s.hp, 100)}`,
+      `speed = ${toNumber(s.speed, 5)}`,
+      `treasure_point = ${toNumber(s.treasure_point, 10)}`,
+      `trap_damage = ${toNumber(s.trap_damage, 20)}`,
+      `bonus_multiplier = ${toNumber(s.bonus_multiplier, 2)}`,
+    ].join("\n");
+  }
+  if (state.activeSeason === "season_02") {
+    els.codePreview.textContent = [
+      "# 시즌 2: 던전 선택 게임 업그레이드 존",
+      `player_name = "${s.player_name}"`,
+      `weapon = "${s.weapon}"`,
+      `power = ${toNumber(s.power, 10)}`,
+      `secret_password = "${s.secret_password}"`,
+      `hp = ${toNumber(s.hp, 100)}`,
+      `level = ${toNumber(s.level, 5)}`,
+      `has_key = ${toBool(s.has_key) ? "True" : "False"}`,
+      `has_gem = ${toBool(s.has_gem) ? "True" : "False"}`,
+    ].join("\n");
+  }
+  if (state.activeSeason === "season_03") {
+    els.codePreview.textContent = [
+      "# 시즌 3: 몬스터 배틀 게임 업그레이드 존",
+      `monster = {"name": "${s.monster_name}", "hp": ${toNumber(s.monster_hp, 30)}, "power": ${toNumber(s.monster_power, 5)}}`,
+      `player_power = ${toNumber(s.player_power, 5)}`,
+      `combo_count = ${toNumber(s.combo_count, 5)}`,
+      `bag = [${listFromText(s.bag).map((item) => `"${item}"`).join(", ")}]`,
+      `reward_item = "${s.reward_item}"`,
+    ].join("\n");
+  }
+  if (state.activeSeason === "season_04") {
+    els.codePreview.textContent = [
+      "# 시즌 4: 미니 어드벤처 게임 업그레이드 존",
+      `hero_name = "${s.hero_name}"`,
+      `final_goal = "${s.final_goal}"`,
+      `dice_min = ${toNumber(s.dice_min, 1)}`,
+      `dice_max = ${toNumber(s.dice_max, 6)}`,
+      `treasure_items = [${listFromText(s.treasure_items).map((item) => `"${item}"`).join(", ")}]`,
+      `win_score = ${toNumber(s.win_score, 100)}`,
+    ].join("\n");
+  }
 }
 
 function seasonOneReset() {
@@ -418,6 +505,8 @@ function randomTreasure() {
 
 function renderActiveSeason(reset = false) {
   renderFields();
+  renderLesson();
+  renderCodePreview();
   if (reset) state.game[state.activeSeason] = null;
   if (state.activeSeason === "season_01") {
     if (!state.game.season_01) seasonOneReset();
@@ -480,8 +569,20 @@ els.tabs.forEach((button) => {
 
 els.applyUpgrade.addEventListener("click", () => {
   readFields();
+  renderCodePreview();
   renderActiveSeason(true);
   setStatus("업그레이드를 적용했습니다.");
+});
+
+els.upgradeFields.addEventListener("input", () => {
+  readFields();
+  renderCodePreview();
+});
+
+els.start.addEventListener("click", () => {
+  readFields();
+  renderActiveSeason(true);
+  setStatus("게임을 시작했습니다.");
 });
 
 els.reset.addEventListener("click", () => {
