@@ -97,7 +97,7 @@ input {
 
 .game-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 380px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 18px;
   align-items: stretch;
 }
@@ -162,7 +162,7 @@ input {
 
 .code-panel {
   display: grid;
-  grid-template-rows: auto minmax(360px, 1fr) auto;
+  grid-template-rows: auto minmax(520px, 1fr) auto;
   min-height: calc(100vh - 170px);
   overflow: hidden;
 }
@@ -258,9 +258,9 @@ input {
 
 .parsed-params {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  max-height: 240px;
+  max-height: 260px;
   overflow: auto;
 }
 
