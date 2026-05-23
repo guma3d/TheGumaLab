@@ -22,3 +22,8 @@ GumaSpending/transactions_*.json
 GumaSpending/bank_transactions_*.json
 GumaSpending/spending.db
 GumaSpending/__pycache__/
+
+# GumaKidsPython — server-side learner saves
+GumaKidsPython/data/saves/
+GumaKidsPython/*.local.log
+GumaKidsPython/*.local.*.log

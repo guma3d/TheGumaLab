@@ -7,6 +7,8 @@
 - 48챕터 전체 커리큘럼 설계 완료
 - 4개 시즌 게임 기획 완료
 - 시즌 1~4 게임 구현 완료
+- 시즌 1~4 웹앱 1차 구현 완료
+- 서버 저장 API 1차 구현 완료
 - 모든 게임은 외부 패키지 없이 기본 파이썬 `tkinter`로 실행
 - 다음 큰 작업은 챕터 1~3 PDF 샘플 제작
 
@@ -42,6 +44,20 @@ python .\main.py
 python .\main.py --check
 ```
 
+## 웹앱 실행 방법
+
+로컬에서 웹 버전을 확인하려면:
+
+```powershell
+cd C:\Users\guma3\OneDrive\Documents\TheGumaLab\GumaKidsPython
+python .\server.py
+```
+
+브라우저에서 `http://127.0.0.1:5000`을 연다.
+
+서버 배포 주소는 `https://gumakidspython.guma3d.com`이다.
+저장 데이터는 서버의 `data/saves/` 아래 JSON 파일로 보관한다.
+
 ## 각 게임의 공통 파일
 
 | 파일 | 역할 |
@@ -51,6 +67,16 @@ python .\main.py --check
 | `engine.py` | 숨겨진 게임 엔진 |
 | `upgrade_zone_original.py` | 원본 복구용 |
 | `README.md` | 시즌별 실행 설명 |
+
+## 웹앱 파일
+
+| 파일 | 역할 |
+|---|---|
+| `server.py` | Flask 웹 서버와 저장 API |
+| `web/index.html` | 웹앱 화면 |
+| `web/style.css` | 웹앱 스타일 |
+| `web/app.js` | 시즌 1~4 웹 게임 로직 |
+| `docker-compose.yml` | 홈서버 Docker 실행 설정 |
 
 ## 이어서 할 일
 

@@ -1,0 +1,299 @@
+:root {
+  --bg: #f4f7fb;
+  --panel: #ffffff;
+  --line: #d7deea;
+  --text: #1d2633;
+  --muted: #5f6b7a;
+  --blue: #2563eb;
+  --green: #12805c;
+  --red: #c24135;
+  --gold: #d99712;
+  --shadow: 0 10px 26px rgba(31, 41, 55, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Malgun Gothic", "Apple SD Gothic Neo", Arial, sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--text);
+  border-radius: 7px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--blue);
+}
+
+button.primary,
+.season-tabs button.active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+}
+
+input {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 10px 12px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px clamp(18px, 4vw, 42px);
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar h1 {
+  margin: 0 0 4px;
+  font-size: clamp(24px, 3vw, 36px);
+}
+
+.topbar p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.save-panel {
+  display: grid;
+  grid-template-columns: auto minmax(120px, 180px) auto auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-shell {
+  width: min(1180px, calc(100vw - 32px));
+  margin: 24px auto;
+}
+
+.season-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.game-layout {
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1fr);
+  gap: 18px;
+}
+
+.upgrade-card,
+.play-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.upgrade-card {
+  padding: 18px;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: var(--blue);
+  font-weight: 700;
+}
+
+.upgrade-card h2 {
+  margin: 0 0 16px;
+  font-size: 22px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.field label {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.status {
+  min-height: 22px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.play-panel {
+  overflow: hidden;
+}
+
+.hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 64px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.hud strong {
+  font-size: 20px;
+}
+
+.hud span {
+  color: var(--muted);
+  text-align: right;
+}
+
+.game-mount {
+  min-height: 440px;
+  padding: 18px;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+  padding: 14px 18px 18px;
+  border-top: 1px solid var(--line);
+}
+
+.board {
+  position: relative;
+  width: 100%;
+  min-height: 400px;
+  border: 1px solid #b8c7db;
+  border-radius: 8px;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(37, 99, 235, 0.08) 1px, transparent 1px),
+    linear-gradient(rgba(37, 99, 235, 0.08) 1px, transparent 1px),
+    #eef7f1;
+  background-size: 48px 48px;
+}
+
+.sprite {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  font-size: 25px;
+  transition: left 120ms ease, top 120ms ease, transform 120ms ease;
+}
+
+.hero {
+  background: #dbeafe;
+  border: 2px solid var(--blue);
+}
+
+.treasure {
+  background: #fff7d6;
+  border: 2px solid var(--gold);
+}
+
+.trap {
+  background: #fee2e2;
+  border: 2px solid var(--red);
+}
+
+.message-log {
+  display: grid;
+  gap: 8px;
+}
+
+.message-line,
+.choice-card {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.battle-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.fighter {
+  min-height: 140px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.bar {
+  height: 16px;
+  margin-top: 10px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.bar > span {
+  display: block;
+  height: 100%;
+  background: var(--green);
+}
+
+.adventure-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 860px) {
+  .topbar,
+  .game-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar {
+    display: grid;
+  }
+
+  .save-panel,
+  .season-tabs,
+  .choice-grid,
+  .battle-grid,
+  .adventure-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .hud {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hud span {
+    text-align: left;
+  }
+}

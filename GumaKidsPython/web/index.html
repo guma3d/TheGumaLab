@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GumaKidsPython</title>
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <h1>GumaKidsPython</h1>
+        <p>파이썬 게임 업그레이드 모험</p>
+      </div>
+      <div class="save-panel">
+        <label for="profileInput">프로필</label>
+        <input id="profileInput" value="default" maxlength="40" autocomplete="off">
+        <button id="loadSaveBtn" type="button">불러오기</button>
+        <button id="saveBtn" type="button">서버 저장</button>
+      </div>
+    </header>
+
+    <main class="app-shell">
+      <nav class="season-tabs" aria-label="시즌 선택">
+        <button class="active" data-season="season_01" type="button">시즌 1</button>
+        <button data-season="season_02" type="button">시즌 2</button>
+        <button data-season="season_03" type="button">시즌 3</button>
+        <button data-season="season_04" type="button">시즌 4</button>
+      </nav>
+
+      <section class="game-layout">
+        <aside class="upgrade-card">
+          <p class="eyebrow" id="chapterLabel">챕터 1~12</p>
+          <h2 id="seasonTitle">보물 점수 게임</h2>
+          <div id="upgradeFields"></div>
+          <button id="applyUpgradeBtn" class="primary" type="button">업그레이드 적용</button>
+          <p id="saveStatus" class="status">서버 저장을 사용할 수 있습니다.</p>
+        </aside>
+
+        <section class="play-panel">
+          <div class="hud">
+            <strong id="hudTitle">번개용사 등장!</strong>
+            <span id="hudStats">점수 10 · 체력 100</span>
+          </div>
+
+          <div id="gameMount" class="game-mount"></div>
+
+          <div class="controls">
+            <button id="actionBtn" type="button">액션</button>
+            <button id="resetBtn" type="button">다시 시작</button>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

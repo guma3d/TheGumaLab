@@ -1,0 +1,12 @@
+services:
+  gumakidspython:
+    build: .
+    container_name: gumakidspython_app
+    restart: unless-stopped
+    ports:
+      - "5057:5000"
+    volumes:
+      - .:/app
+      - ./data:/app/data
+    env_file:
+      - ../.env

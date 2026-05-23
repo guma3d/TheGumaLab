@@ -28,6 +28,16 @@
 | 시즌 3 | 25~36 | 몬스터 배틀 게임 | 구현 완료 |
 | 시즌 4 | 37~48 | 미니 어드벤처 게임 | 구현 완료 |
 
+## 웹앱 상태
+
+- `server.py` Flask 서버 구현 완료
+- `web/` 아래 시즌 1~4 웹앱 1차 구현 완료
+- `POST /api/save`, `GET /api/save` 서버 저장 API 구현 완료
+- 저장 데이터 위치: `data/saves/<profile>.json`
+- 공개 주소 예정: `https://gumakidspython.guma3d.com`
+- Docker 포트 매핑: `5057:5000`
+- Nginx 라우팅: `gumakidspython.guma3d.com` -> `host.docker.internal:5057`
+
 ## 실행 환경
 
 - Python 3.14.2에서 검증
@@ -47,6 +57,18 @@ python .\main.py --check
 
 ```powershell
 python -m py_compile .\main.py .\engine.py .\upgrade_zone.py .\upgrade_zone_original.py
+```
+
+웹 서버 문법 검사:
+
+```powershell
+python -m py_compile .\server.py
+```
+
+웹 서버 실행:
+
+```powershell
+python .\server.py
 ```
 
 ## 마지막 검증 상태
