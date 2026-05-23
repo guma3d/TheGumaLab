@@ -1,90 +1,111 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
+
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>GumaTutorDoc</title>
-  <meta name="description" content="주제를 입력하면 학습자료와 퀴즈 HTML을 생성하고 저장합니다.">
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GumaTutorDoc - AI Learning Materials</title>
+    <meta name="description" content="주제를 입력하면 학습자료와 퀴즈 HTML을 생성하고 저장합니다.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <div class="app-shell">
-    <header class="topbar">
-      <div>
-        <h1>GumaTutorDoc</h1>
-        <p>주제형 학습자료 생성기</p>
-      </div>
-      <a class="nav-link" href="#history-section">저장 문서</a>
-    </header>
+    <div class="glass-container">
+        <header>
+            <div class="logo">
+                <h1>GumaTutorDoc</h1>
+            </div>
+            <p>Create study notes and quizzes from a topic.</p>
+        </header>
 
-    <main>
-      <section class="workspace" aria-labelledby="create-title">
-        <div class="create-pane">
-          <h2 id="create-title">새 학습자료</h2>
-          <form id="topic-form">
-            <label for="topic-input">주제</label>
-            <div class="input-row">
-              <input id="topic-input" name="topic" type="text" placeholder="예: 화산, 세종대왕, 분수의 나눗셈" autocomplete="off" required>
-              <button id="submit-btn" type="submit">
-                <span class="btn-icon" aria-hidden="true">+</span>
-                <span class="btn-text">생성</span>
-              </button>
+        <main>
+            <form id="topic-form">
+                <div class="input-group">
+                    <input type="text" id="topic-input" placeholder="Enter a topic here" required autocomplete="off">
+                    <button type="submit" id="submit-btn">
+                        <span class="btn-text">Convert</span>
+                        <div class="loader" style="display: none;"></div>
+                    </button>
+                </div>
+
+                <div class="option-strip">
+                    <label>
+                        <span>Level</span>
+                        <select id="grade-select" name="grade">
+                            <option value="초3">초3</option>
+                            <option value="초1-2">초1-2</option>
+                            <option value="초3-4">초3-4</option>
+                            <option value="초5-6">초5-6</option>
+                            <option value="중등">중등</option>
+                            <option value="일반">일반</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Quiz</span>
+                        <select id="quiz-count-select" name="quiz_count">
+                            <option value="3">3 questions</option>
+                            <option value="5" selected>5 questions</option>
+                            <option value="7">7 questions</option>
+                        </select>
+                    </label>
+                </div>
+            </form>
+
+            <div id="status-panel" class="status-container hidden" aria-live="polite">
+                <div class="progress-wrapper">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                </div>
+                <div class="status-detail">
+                    <span id="status-text">Ready...</span>
+                    <span id="progress-percent" class="percent">0%</span>
+                </div>
             </div>
 
-            <div class="options-row">
-              <label>
-                대상
-                <select id="grade-select" name="grade">
-                  <option value="초3">초3</option>
-                  <option value="초1-2">초1-2</option>
-                  <option value="초3-4">초3-4</option>
-                  <option value="초5-6">초5-6</option>
-                  <option value="중등">중등</option>
-                  <option value="일반">일반</option>
-                </select>
-              </label>
-              <label>
-                퀴즈
-                <select id="quiz-count-select" name="quiz_count">
-                  <option value="3">3문제</option>
-                  <option value="5" selected>5문제</option>
-                  <option value="7">7문제</option>
-                </select>
-              </label>
+            <div id="result-container" class="result-container hidden">
+                <h3 class="result-title">Document Created!</h3>
+                <p class="result-msg">Your learning material is ready.</p>
+                <div id="result-actions" class="result-actions"></div>
             </div>
-          </form>
-        </div>
 
-        <div id="status-panel" class="status-pane hidden" aria-live="polite">
-          <div class="status-head">
-            <span id="status-topic">처리 중</span>
-            <span id="progress-percent">0%</span>
-          </div>
-          <div class="progress-track">
-            <div id="progress-fill" class="progress-fill"></div>
-          </div>
-          <p id="status-text">대기 중...</p>
-          <div id="result-actions" class="result-actions hidden"></div>
-        </div>
-      </section>
+            <div id="active-section" class="documents-section hidden">
+                <h3 class="metric-title">
+                    <i class="fa-solid fa-spinner fa-spin"></i>In Progress / Queued
+                </h3>
+                <div id="active-list" class="active-tasks-list"></div>
+            </div>
 
-      <section id="active-section" class="list-section hidden">
-        <div class="section-head">
-          <h2>진행 중</h2>
-        </div>
-        <div id="active-list" class="task-list"></div>
-      </section>
+            <div id="history-section" class="documents-section">
+                <h3 class="metric-title with-action">
+                    <span><i class="fa-solid fa-clock-rotate-left"></i>Completed Documents</span>
+                    <i class="fa-solid fa-magnifying-glass" id="open-search-modal-btn" title="Search Documents"></i>
+                </h3>
+                <div id="tasks-list" class="tasks-grid"></div>
+            </div>
+        </main>
+    </div>
 
-      <section id="history-section" class="list-section">
-        <div class="section-head">
-          <h2>저장 문서</h2>
-          <input id="search-input" type="search" placeholder="문서 검색">
+    <div id="search-modal" class="search-modal">
+        <div class="search-dialog">
+            <div class="search-head">
+                <h3><i class="fa-solid fa-magnifying-glass"></i>Search Documents</h3>
+                <i class="fa-solid fa-xmark" id="close-search-modal-btn"></i>
+            </div>
+            <div class="search-body">
+                <input type="text" id="search-input" placeholder="Enter title or keywords...">
+                <button id="document-search-btn" type="button">Search</button>
+            </div>
         </div>
-        <div id="tasks-list" class="task-list"></div>
-      </section>
-    </main>
-  </div>
+    </div>
 
-  <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
+
 </html>

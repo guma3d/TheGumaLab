@@ -286,8 +286,9 @@ def generate_with_gemini(topic: str, grade: str, quiz_count: int) -> dict[str, A
         "key_points는 4~6개, vocabulary는 4~8개, quiz는 요청한 수만큼 작성하세요. "
         "summary는 전체 내용을 대표하는 중요한 한국어 문장 정확히 5개로 작성하세요. "
         "content_sections는 4~6개로 만들고, 각 항목의 paragraphs에는 디테일한 설명을 2~4문단 넣으세요. "
-        "각 content_sections 항목의 images에는 그 소주제를 이해하는 데 직접 필요한 실제 사진/그림 검색어를 1~2개 넣으세요. "
-        "images.query는 Wikimedia Commons에서 실제 자료 사진을 찾기 좋은 구체적인 영어 검색어로 작성하세요. "
+        "각 content_sections 항목의 images에는 그 소주제를 이해하는 데 직접 필요한 실제 사진 검색어를 1~2개 넣으세요. "
+        "그림, 일러스트, 도해, 지도, 아이콘, 로고, 차트 검색어는 넣지 마세요. "
+        "images.query는 Wikimedia Commons에서 실제 자료 사진을 찾기 좋은 구체적인 영어 검색어로 작성하고, photo 또는 photograph 같은 단어를 포함하세요. "
         "예를 들어 서식지 설명에는 지역명 사진과 환경 사진 검색어를 함께 넣고, 구조/과정 설명에는 관련 부위·과정·비교 사진 검색어를 넣으세요. "
         "모든 설명은 한국어로, 문장은 짧고 읽기 쉽게 작성하세요.\n\n"
         f"{json.dumps(schema, ensure_ascii=False, indent=2)}"
@@ -412,14 +413,13 @@ def normalize_image_items(value: Any, topic: str, section_title: str) -> list[di
         title = str(item.get("title") or item.get("name") or "").strip()
         caption = str(item.get("caption") or item.get("description") or "").strip()
         query = str(item.get("query") or item.get("search_query") or item.get("prompt") or "").strip()
-        image_url = str(item.get("image_url") or item.get("url") or "").strip()
-        if query or image_url:
+        if query:
             normalized.append(
                 {
                     "title": title or section_title or "이미지 자료",
                     "caption": caption,
-                    "query": query or f"{topic} {section_title} photo",
-                    "image_url": image_url,
+                    "query": query,
+                    "image_url": "",
                 }
             )
 
@@ -865,6 +865,63 @@ def svg_placeholder_url(title: str, seed: int) -> str:
 
 commons_cache: dict[str, dict[str, str] | None] = {}
 
+NON_PHOTO_TERMS = (
+    "illustration",
+    "drawing",
+    "diagram",
+    "chart",
+    "graph",
+    "map",
+    "icon",
+    "logo",
+    "symbol",
+    "clipart",
+    "cartoon",
+    "painting",
+    "watercolor",
+    "engraving",
+    "lithograph",
+    "plate",
+    "poster",
+    "schema",
+    "schematic",
+    "silhouette",
+    "render",
+    "animation",
+    "vector",
+    "svg",
+)
+
+PHOTO_TERMS = (
+    "photo",
+    "photograph",
+    "photographs",
+    "jpg",
+    "jpeg",
+    "camera",
+    "macro",
+    "close-up",
+    "closeup",
+    "microscope",
+    "micrograph",
+)
+
+IMAGE_QUERY_STOPWORDS = {
+    "and",
+    "commons",
+    "close",
+    "closeup",
+    "image",
+    "macro",
+    "photo",
+    "photograph",
+    "photographs",
+    "picture",
+    "pictures",
+    "up",
+    "wikimedia",
+}
+
 
 def clean_metadata_text(value: Any) -> str:
     text = re.sub(r"<[^>]+>", "", str(value or ""))
@@ -872,23 +929,111 @@ def clean_metadata_text(value: Any) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def resolve_commons_image(query: str) -> dict[str, str] | None:
-    query = re.sub(r"\s+", " ", str(query or "").strip())
-    if not query:
-        return None
-    cache_key = query.lower()
-    if cache_key in commons_cache:
-        return commons_cache[cache_key]
+def metadata_blob(page: dict[str, Any], info: dict[str, Any]) -> str:
+    metadata = info.get("extmetadata") or {}
+    parts = [
+        str(page.get("title") or ""),
+        clean_metadata_text((metadata.get("ObjectName") or {}).get("value")),
+        clean_metadata_text((metadata.get("ImageDescription") or {}).get("value")),
+        clean_metadata_text((metadata.get("Categories") or {}).get("value")),
+    ]
+    parts.extend(str(category.get("title") or "") for category in page.get("categories") or [])
+    return " ".join(parts).lower()
 
+
+def subject_blob(page: dict[str, Any], info: dict[str, Any]) -> str:
+    metadata = info.get("extmetadata") or {}
+    parts = [
+        str(page.get("title") or ""),
+        clean_metadata_text((metadata.get("ObjectName") or {}).get("value")),
+    ]
+    parts.extend(str(category.get("title") or "") for category in page.get("categories") or [])
+    return " ".join(parts).lower()
+
+
+def subject_search_query(query: str) -> str:
+    tokens = []
+    seen = set()
+    for token in re.findall(r"[a-z0-9]+", query.lower()):
+        if len(token) < 4 or token in IMAGE_QUERY_STOPWORDS:
+            continue
+        if token not in seen:
+            tokens.append(token)
+            seen.add(token)
+    return " ".join(tokens)
+
+
+def query_keywords(query: str) -> set[str]:
+    keywords = set()
+    for token in re.findall(r"[a-z0-9]+", query.lower()):
+        if len(token) < 4 or token in IMAGE_QUERY_STOPWORDS:
+            continue
+        keywords.add(token)
+        if token.endswith("ies") and len(token) > 4:
+            keywords.add(token[:-3] + "y")
+        elif token.endswith("es") and len(token) > 4:
+            keywords.add(token[:-2])
+        elif token.endswith("s") and len(token) > 4:
+            keywords.add(token[:-1])
+    return keywords
+
+
+def commons_photo_score(page: dict[str, Any], info: dict[str, Any], query: str) -> int | None:
+    mime = str(info.get("mime") or "")
+    image_url = str(info.get("thumburl") or info.get("url") or "")
+    if not image_url or not mime.startswith("image/") or mime == "image/svg+xml":
+        return None
+
+    width = int(info.get("thumbwidth") or info.get("width") or 0)
+    height = int(info.get("thumbheight") or info.get("height") or 0)
+    if width < 500 or height < 300:
+        return None
+
+    aspect_ratio = width / max(height, 1)
+    if aspect_ratio < 0.42 or aspect_ratio > 2.9:
+        return None
+
+    blob = metadata_blob(page, info)
+    if any(term in blob for term in NON_PHOTO_TERMS):
+        return None
+
+    keywords = query_keywords(query)
+    if keywords:
+        keyword_matches = sum(1 for keyword in keywords if keyword in blob)
+        if keyword_matches < min(2, len(keywords)):
+            return None
+        subject_matches = sum(1 for keyword in keywords if keyword in subject_blob(page, info))
+        if len(keywords) >= 2 and subject_matches == 0 and keyword_matches < 3:
+            return None
+
+    score = 0
+    if mime in {"image/jpeg", "image/jpg"}:
+        score += 5
+    elif mime == "image/webp":
+        score += 3
+    elif mime == "image/png":
+        score += 1
+
+    score += sum(1 for term in PHOTO_TERMS if term in blob)
+    score += 4 * sum(1 for keyword in keywords if keyword in subject_blob(page, info))
+    if "category:photographs" in blob or "photographs of" in blob:
+        score += 3
+
+    return score if score >= 4 else None
+
+
+def fetch_commons_pages(search_query: str) -> list[dict[str, Any]]:
     params = {
         "action": "query",
         "generator": "search",
-        "gsrsearch": query,
+        "gsrsearch": search_query,
         "gsrnamespace": "6",
-        "gsrlimit": "8",
-        "prop": "imageinfo",
-        "iiprop": "url|mime|extmetadata",
-        "iiurlwidth": "1000",
+        "gsrlimit": "20",
+        "prop": "imageinfo|categories",
+        "iiprop": "url|mime|size|extmetadata",
+        "iiurlwidth": "1200",
+        "clshow": "!hidden",
+        "cllimit": "20",
         "format": "json",
         "origin": "*",
     }
@@ -901,29 +1046,66 @@ def resolve_commons_image(query: str) -> dict[str, str] | None:
         with urllib.request.urlopen(request_obj, timeout=8) as response:
             payload = json.loads(response.read().decode("utf-8"))
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as exc:
-        print(f"[commons] search failed for {query}: {exc}")
-        commons_cache[cache_key] = None
-        return None
+        print(f"[commons] search failed for {search_query}: {exc}")
+        return []
 
-    pages = list((payload.get("query", {}).get("pages", {}) or {}).values())
-    for page in pages:
-        info_items = page.get("imageinfo") or []
-        if not info_items:
-            continue
-        info = info_items[0]
-        mime = str(info.get("mime") or "")
-        image_url = str(info.get("thumburl") or info.get("url") or "")
-        if not image_url or not mime.startswith("image/") or mime == "image/svg+xml":
-            continue
-        metadata = info.get("extmetadata") or {}
-        artist = clean_metadata_text((metadata.get("Artist") or {}).get("value"))
-        license_short = clean_metadata_text((metadata.get("LicenseShortName") or {}).get("value"))
-        result = {
-            "image_url": image_url,
-            "source_url": str(info.get("descriptionurl") or ""),
-            "source_title": str(page.get("title") or "").replace("File:", ""),
-            "credit": ", ".join(part for part in [artist, license_short] if part),
-        }
+    return list((payload.get("query", {}).get("pages", {}) or {}).values())
+
+
+def resolve_commons_image(query: str) -> dict[str, str] | None:
+    query = re.sub(r"\s+", " ", str(query or "").strip())
+    if not query:
+        return None
+    cache_key = query.lower()
+    if cache_key in commons_cache:
+        return commons_cache[cache_key]
+
+    subject_query = subject_search_query(query)
+    search_queries = [
+        f"{subject_query} photograph -diagram -illustration -drawing -map -icon -logo -chart",
+        f"{subject_query} photo",
+        f"{query} photograph -diagram -illustration -drawing -map -icon -logo -chart",
+        f"{query} photo",
+        query,
+    ] if subject_query else [
+        f"{query} photograph -diagram -illustration -drawing -map -icon -logo -chart",
+        f"{query} photo",
+        query,
+    ]
+    candidates: list[tuple[int, dict[str, str]]] = []
+    seen_urls: set[str] = set()
+
+    for search_query in search_queries:
+        for page in fetch_commons_pages(search_query):
+            info_items = page.get("imageinfo") or []
+            if not info_items:
+                continue
+            info = info_items[0]
+            score = commons_photo_score(page, info, query)
+            if score is None:
+                continue
+            image_url = str(info.get("thumburl") or info.get("url") or "")
+            if image_url in seen_urls:
+                continue
+            seen_urls.add(image_url)
+            metadata = info.get("extmetadata") or {}
+            artist = clean_metadata_text((metadata.get("Artist") or {}).get("value"))
+            license_short = clean_metadata_text((metadata.get("LicenseShortName") or {}).get("value"))
+            candidates.append(
+                (
+                    score,
+                    {
+                        "image_url": image_url,
+                        "source_url": str(info.get("descriptionurl") or ""),
+                        "source_title": str(page.get("title") or "").replace("File:", ""),
+                        "credit": ", ".join(part for part in [artist, license_short] if part),
+                    },
+                )
+            )
+
+    if candidates:
+        candidates.sort(key=lambda item: item[0], reverse=True)
+        result = candidates[0][1]
         commons_cache[cache_key] = result
         return result
 
@@ -931,7 +1113,7 @@ def resolve_commons_image(query: str) -> dict[str, str] | None:
     return None
 
 
-def image_data_for_item(item: dict[str, str], seed: int) -> dict[str, str]:
+def image_data_for_item(item: dict[str, str]) -> dict[str, str] | None:
     title = str(item.get("title") or "이미지 자료").strip()
     caption = str(item.get("caption") or "").strip()
     query = str(item.get("query") or title).strip()
@@ -950,24 +1132,25 @@ def image_data_for_item(item: dict[str, str], seed: int) -> dict[str, str]:
             data.update(resolved)
             item.update(resolved)
     if not data["image_url"]:
-        data["image_url"] = svg_placeholder_url(title, seed)
+        return None
     return data
 
 
 def render_material_html(pack: dict[str, Any], task_id: str) -> str:
-    seed_base = int(task_id[:8], 16)
     summary = list_html(pack.get("summary", []), "summary-list")
     sources = list_html(pack.get("sources", []), "sources")
 
-    def section_images_html(section: dict[str, Any], section_idx: int) -> str:
+    def section_images_html(section: dict[str, Any]) -> str:
         image_items = section.get("images")
         if not isinstance(image_items, list):
             image_items = []
         figures = []
-        for image_idx, item in enumerate(image_items, start=1):
+        for item in image_items:
             if not isinstance(item, dict):
                 continue
-            data = image_data_for_item(item, seed_base + section_idx * 10 + image_idx)
+            data = image_data_for_item(item)
+            if not data:
+                continue
             source_bits = []
             if data.get("source_url"):
                 source_label = data.get("source_title") or "자료 출처"
@@ -980,7 +1163,7 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
             figures.append(
                 f"""
                 <figure class="section-image">
-                  <img src="{e(data.get("image_url"))}" alt="{e(data.get("title"))}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='{e(svg_placeholder_url(data.get("title", ""), seed_base + section_idx * 10 + image_idx))}';">
+                  <img src="{e(data.get("image_url"))}" alt="{e(data.get("title"))}" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('figure').remove();">
                   <figcaption>
                     <strong>{e(data.get("title"))}</strong>
                     <span>{e(data.get("caption"))}</span>
@@ -999,7 +1182,7 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
           <h3>{e(section.get("title"))}</h3>
           {"".join(f"<p>{e(paragraph)}</p>" for paragraph in section.get("paragraphs", []))}
           {list_html(section.get("examples", []), "examples") if section.get("examples") else ""}
-          {section_images_html(section, idx)}
+          {section_images_html(section)}
         </section>
         """
         for idx, section in enumerate(pack.get("content_sections", []), start=1)
@@ -1050,36 +1233,49 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
   <title>{e(pack.get("title"))}</title>
   <style>
     :root {{
-      color-scheme: light;
-      --ink: #172033;
-      --muted: #5b6472;
-      --line: #dbe3ee;
-      --paper: #ffffff;
-      --bg: #f6f8fb;
-      --teal: #0f766e;
-      --blue: #2563eb;
-      --rose: #e11d48;
-      --amber: #f59e0b;
-      --mint: #dff5f1;
-      --sky: #e0f2fe;
-      --peach: #fff0dc;
+      color-scheme: dark;
+      --ink: #f8fafc;
+      --muted: #a1a1aa;
+      --line: rgba(255, 255, 255, 0.12);
+      --paper: rgba(255, 255, 255, 0.055);
+      --paper-strong: rgba(255, 255, 255, 0.08);
+      --bg: #050505;
+      --primary: #10b981;
+      --primary-soft: rgba(16, 185, 129, 0.12);
+      --primary-line: rgba(16, 185, 129, 0.34);
+      --blue: #60a5fa;
+      --rose: #fb7185;
+      --amber: #fbbf24;
+      --peach: rgba(251, 191, 36, 0.11);
     }}
     * {{ box-sizing: border-box; }}
+    html {{
+      scroll-snap-type: y proximity;
+      background: var(--bg);
+    }}
     body {{
       margin: 0;
       font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
       color: var(--ink);
-      background: var(--bg);
+      background:
+        radial-gradient(circle at 18% 12%, rgba(16, 185, 129, 0.14), transparent 30vw),
+        radial-gradient(circle at 84% 8%, rgba(96, 165, 250, 0.12), transparent 28vw),
+        var(--bg);
       line-height: 1.68;
     }}
     .page {{
-      max-width: 1080px;
+      width: min(1180px, calc(100% - 32px));
       margin: 0 auto;
-      padding: 36px 18px 72px;
+      padding: 32px 0 72px;
     }}
     header {{
-      padding: 30px 0 26px;
-      border-bottom: 4px solid var(--teal);
+      min-height: min(58vw, 620px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 40px 0;
+      border-bottom: 1px solid var(--primary-line);
+      scroll-snap-align: start;
     }}
     .meta {{
       display: flex;
@@ -1093,47 +1289,57 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       border: 1px solid var(--line);
       border-radius: 999px;
       padding: 4px 11px;
-      background: var(--paper);
+      background: rgba(255, 255, 255, 0.06);
     }}
     h1 {{
       margin: 0;
-      font-size: 40px;
-      line-height: 1.18;
+      font-size: clamp(34px, 6.5vw, 72px);
+      line-height: 1.12;
       letter-spacing: 0;
     }}
     .subtitle {{
-      margin: 14px 0 0;
+      max-width: 780px;
+      margin: 18px 0 0;
       color: var(--muted);
-      font-size: 18px;
+      font-size: clamp(18px, 2.2vw, 26px);
     }}
     main {{
       display: grid;
-      gap: 18px;
-      margin-top: 22px;
+      gap: 22px;
+      margin-top: 24px;
     }}
     section.block {{
       background: var(--paper);
       border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 22px;
+      border-radius: 18px;
+      padding: clamp(20px, 3vw, 42px);
+      min-height: min(720px, calc((100vw - 48px) * 0.5625));
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+      scroll-snap-align: start;
     }}
     h2 {{
-      margin: 0 0 14px;
-      font-size: 23px;
+      margin: 0 0 18px;
+      font-size: clamp(24px, 3.2vw, 38px);
       line-height: 1.3;
       letter-spacing: 0;
     }}
     h3 {{
-      margin: 0 0 8px;
-      font-size: 19px;
+      margin: 0 0 10px;
+      font-size: clamp(19px, 2.2vw, 28px);
       line-height: 1.35;
       letter-spacing: 0;
     }}
-    p {{ margin: 0 0 10px; }}
+    p {{
+      margin: 0 0 12px;
+      font-size: clamp(16px, 1.55vw, 22px);
+    }}
     ul {{ margin: 0; padding-left: 22px; }}
     .summary-list {{
       display: grid;
-      gap: 10px;
+      gap: 12px;
       padding: 0;
       list-style: none;
       counter-reset: summary;
@@ -1141,45 +1347,46 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
     .summary-list li {{
       counter-increment: summary;
       position: relative;
-      padding: 12px 14px 12px 48px;
-      border-radius: 8px;
-      background: var(--mint);
-      border: 1px solid #bfe7df;
+      padding: 14px 16px 14px 54px;
+      border-radius: 12px;
+      background: var(--primary-soft);
+      border: 1px solid var(--primary-line);
+      font-size: clamp(16px, 1.55vw, 22px);
     }}
     .summary-list li::before {{
       content: counter(summary);
       position: absolute;
-      left: 14px;
-      top: 12px;
-      width: 24px;
-      height: 24px;
+      left: 16px;
+      top: 16px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
-      background: var(--teal);
+      background: var(--primary);
       color: white;
       display: grid;
       place-items: center;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 700;
     }}
     .section-images {{
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 14px;
-      margin-top: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 18px;
     }}
     .section-image {{
       margin: 0;
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: 14px;
       overflow: hidden;
-      background: #fff;
+      background: rgba(0, 0, 0, 0.24);
     }}
     .section-image img {{
       display: block;
       width: 100%;
-      aspect-ratio: 16 / 10;
-      object-fit: cover;
-      background: var(--sky);
+      aspect-ratio: 16 / 9;
+      object-fit: contain;
+      background: #000;
     }}
     figcaption {{
       display: grid;
@@ -1202,8 +1409,8 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
     }}
     .content-section {{
       border-top: 1px solid var(--line);
-      padding-top: 18px;
-      margin-top: 18px;
+      padding-top: 22px;
+      margin-top: 22px;
     }}
     .content-section:first-child {{
       border-top: 0;
@@ -1220,13 +1427,14 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
     .examples li {{
       background: var(--peach);
       border-left: 4px solid var(--amber);
-      border-radius: 6px;
-      padding: 9px 11px;
-      color: #573b06;
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #fde68a;
     }}
     table {{
       width: 100%;
       border-collapse: collapse;
+      font-size: clamp(16px, 1.5vw, 21px);
     }}
     th, td {{
       border-bottom: 1px solid var(--line);
@@ -1240,10 +1448,10 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
     }}
     .quiz-item {{
       border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 16px;
-      margin-top: 12px;
-      background: #fff;
+      border-radius: 14px;
+      padding: 18px;
+      margin-top: 14px;
+      background: var(--paper-strong);
     }}
     .choices {{
       margin: 8px 0 12px;
@@ -1265,11 +1473,44 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       color: var(--muted);
       font-size: 13px;
     }}
+    @media (orientation: landscape) and (min-width: 900px) {{
+      .content-section {{
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+      }}
+      .content-section:has(.section-images) {{
+        grid-template-columns: minmax(0, 1fr) minmax(340px, 0.85fr);
+        column-gap: 24px;
+        align-items: center;
+      }}
+      .content-section:has(.section-images) .section-images {{
+        margin-top: 0;
+      }}
+    }}
     @media (max-width: 640px) {{
-      .page {{ padding: 24px 14px 48px; }}
-      h1 {{ font-size: 30px; }}
-      section.block {{ padding: 18px; }}
-      th {{ width: 110px; }}
+      html {{ scroll-snap-type: none; }}
+      .page {{
+        width: min(100% - 20px, 1180px);
+        padding: 18px 0 44px;
+      }}
+      header {{
+        min-height: 70vh;
+        padding: 24px 0;
+      }}
+      section.block {{
+        min-height: auto;
+        border-radius: 14px;
+        padding: 20px;
+      }}
+      .section-images {{
+        grid-template-columns: 1fr;
+      }}
+      th {{
+        width: 104px;
+      }}
+      th, td {{
+        padding: 10px 6px;
+      }}
     }}
   </style>
 </head>
