@@ -91,8 +91,8 @@ const els = {
   chapterLabel: document.querySelector("#chapterLabel"),
   seasonTitle: document.querySelector("#seasonTitle"),
   lessonBody: document.querySelector("#lessonBody"),
-  upgradeFields: document.querySelector("#upgradeFields"),
-  codePreview: document.querySelector("#codePreview"),
+  codeEditor: document.querySelector("#codeEditor"),
+  parsedParams: document.querySelector("#parsedParams"),
   applyUpgrade: document.querySelector("#applyUpgradeBtn"),
   start: document.querySelector("#startGameBtn"),
   hudTitle: document.querySelector("#hudTitle"),
@@ -131,11 +131,7 @@ function setStatus(message) {
 }
 
 function readFields() {
-  const next = {};
-  for (const input of els.upgradeFields.querySelectorAll("input")) {
-    next[input.name] = input.value;
-  }
-  state.settings[state.activeSeason] = next;
+  state.settings[state.activeSeason] = parseCode(state.activeSeason, els.codeEditor.value);
 }
 
 function renderFields() {
@@ -143,16 +139,16 @@ function renderFields() {
   const settings = state.settings[state.activeSeason] || defaultSettings(state.activeSeason);
   els.chapterLabel.textContent = season.chapters;
   els.seasonTitle.textContent = season.title;
-  els.upgradeFields.innerHTML = "";
+  els.parsedParams.innerHTML = "";
 
   for (const [key, label, value] of season.fields) {
     const wrap = document.createElement("div");
-    wrap.className = "field";
+    wrap.className = "param-row";
     wrap.innerHTML = `
-      <label for="${key}">${label}</label>
-      <input id="${key}" name="${key}" value="${settings[key] ?? value}">
+      <strong>${label}</strong>
+      <span>${settings[key] ?? value}</span>
     `;
-    els.upgradeFields.appendChild(wrap);
+    els.parsedParams.appendChild(wrap);
   }
 }
 
@@ -182,11 +178,16 @@ function renderLesson() {
     .join("");
 }
 
-function renderCodePreview() {
-  const s = state.settings[state.activeSeason] || defaultSettings(state.activeSeason);
-  if (state.activeSeason === "season_01") {
-    els.codePreview.textContent = [
+function quoteList(text) {
+  return listFromText(text).map((item) => `"${item}"`).join(", ");
+}
+
+function generateCode(seasonKey) {
+  const s = state.settings[seasonKey] || defaultSettings(seasonKey);
+  if (seasonKey === "season_01") {
+    return [
       "# 시즌 1: 보물 점수 게임 업그레이드 존",
+      "# 오른쪽 코드를 직접 바꾸고 업그레이드 적용을 누르세요.",
       `start_message = "${s.start_message}"`,
       `hero_message = "${s.hero_message}"`,
       `hero_name = "${s.hero_name}"`,
@@ -198,8 +199,8 @@ function renderCodePreview() {
       `bonus_multiplier = ${toNumber(s.bonus_multiplier, 2)}`,
     ].join("\n");
   }
-  if (state.activeSeason === "season_02") {
-    els.codePreview.textContent = [
+  if (seasonKey === "season_02") {
+    return [
       "# 시즌 2: 던전 선택 게임 업그레이드 존",
       `player_name = "${s.player_name}"`,
       `weapon = "${s.weapon}"`,
@@ -211,27 +212,98 @@ function renderCodePreview() {
       `has_gem = ${toBool(s.has_gem) ? "True" : "False"}`,
     ].join("\n");
   }
-  if (state.activeSeason === "season_03") {
-    els.codePreview.textContent = [
+  if (seasonKey === "season_03") {
+    return [
       "# 시즌 3: 몬스터 배틀 게임 업그레이드 존",
-      `monster = {"name": "${s.monster_name}", "hp": ${toNumber(s.monster_hp, 30)}, "power": ${toNumber(s.monster_power, 5)}}`,
+      `monster_name = "${s.monster_name}"`,
+      `monster_hp = ${toNumber(s.monster_hp, 30)}`,
+      `monster_power = ${toNumber(s.monster_power, 5)}`,
       `player_power = ${toNumber(s.player_power, 5)}`,
       `combo_count = ${toNumber(s.combo_count, 5)}`,
-      `bag = [${listFromText(s.bag).map((item) => `"${item}"`).join(", ")}]`,
+      `bag = [${quoteList(s.bag)}]`,
       `reward_item = "${s.reward_item}"`,
     ].join("\n");
   }
-  if (state.activeSeason === "season_04") {
-    els.codePreview.textContent = [
-      "# 시즌 4: 미니 어드벤처 게임 업그레이드 존",
-      `hero_name = "${s.hero_name}"`,
-      `final_goal = "${s.final_goal}"`,
-      `dice_min = ${toNumber(s.dice_min, 1)}`,
-      `dice_max = ${toNumber(s.dice_max, 6)}`,
-      `treasure_items = [${listFromText(s.treasure_items).map((item) => `"${item}"`).join(", ")}]`,
-      `win_score = ${toNumber(s.win_score, 100)}`,
-    ].join("\n");
+  return [
+    "# 시즌 4: 미니 어드벤처 게임 업그레이드 존",
+    `hero_name = "${s.hero_name}"`,
+    `final_goal = "${s.final_goal}"`,
+    `dice_min = ${toNumber(s.dice_min, 1)}`,
+    `dice_max = ${toNumber(s.dice_max, 6)}`,
+    `treasure_items = [${quoteList(s.treasure_items)}]`,
+    `win_score = ${toNumber(s.win_score, 100)}`,
+  ].join("\n");
+}
+
+function renderCodeEditor() {
+  els.codeEditor.value = generateCode(state.activeSeason);
+}
+
+function parseCode(seasonKey, source) {
+  const base = { ...(state.settings[seasonKey] || defaultSettings(seasonKey)) };
+  const stringValue = (name) => {
+    const match = source.match(new RegExp(`^\\s*${name}\\s*=\\s*["']([^"']*)["']`, "m"));
+    return match ? match[1] : base[name];
+  };
+  const numberValue = (name) => {
+    const match = source.match(new RegExp(`^\\s*${name}\\s*=\\s*(-?\\d+(?:\\.\\d+)?)`, "m"));
+    return match ? Number(match[1]) : base[name];
+  };
+  const boolValue = (name) => {
+    const match = source.match(new RegExp(`^\\s*${name}\\s*=\\s*(True|False|true|false)`, "m"));
+    return match ? String(match[1]).toLowerCase() : base[name];
+  };
+  const listValue = (name) => {
+    const match = source.match(new RegExp(`^\\s*${name}\\s*=\\s*\\[([^\\]]*)\\]`, "m"));
+    if (!match) return base[name];
+    const items = [...match[1].matchAll(/["']([^"']+)["']/g)].map((entry) => entry[1]);
+    return items.length ? items.join(", ") : base[name];
+  };
+
+  if (seasonKey === "season_01") {
+    return {
+      start_message: stringValue("start_message"),
+      hero_message: stringValue("hero_message"),
+      hero_name: stringValue("hero_name"),
+      start_score: numberValue("start_score"),
+      hp: numberValue("hp"),
+      speed: numberValue("speed"),
+      treasure_point: numberValue("treasure_point"),
+      trap_damage: numberValue("trap_damage"),
+      bonus_multiplier: numberValue("bonus_multiplier"),
+    };
   }
+  if (seasonKey === "season_02") {
+    return {
+      player_name: stringValue("player_name"),
+      weapon: stringValue("weapon"),
+      power: numberValue("power"),
+      secret_password: stringValue("secret_password"),
+      hp: numberValue("hp"),
+      level: numberValue("level"),
+      has_key: boolValue("has_key"),
+      has_gem: boolValue("has_gem"),
+    };
+  }
+  if (seasonKey === "season_03") {
+    return {
+      monster_name: stringValue("monster_name"),
+      monster_hp: numberValue("monster_hp"),
+      monster_power: numberValue("monster_power"),
+      player_power: numberValue("player_power"),
+      combo_count: numberValue("combo_count"),
+      bag: listValue("bag"),
+      reward_item: stringValue("reward_item"),
+    };
+  }
+  return {
+    hero_name: stringValue("hero_name"),
+    final_goal: stringValue("final_goal"),
+    dice_min: numberValue("dice_min"),
+    dice_max: numberValue("dice_max"),
+    treasure_items: listValue("treasure_items"),
+    win_score: numberValue("win_score"),
+  };
 }
 
 function seasonOneReset() {
@@ -513,10 +585,10 @@ function randomTreasure() {
   renderSeasonFour();
 }
 
-function renderActiveSeason(reset = false) {
+function renderActiveSeason(reset = false, refreshCode = false) {
   renderFields();
   renderLesson();
-  renderCodePreview();
+  if (refreshCode) renderCodeEditor();
   if (reset) state.game[state.activeSeason] = null;
   if (state.activeSeason === "season_01") {
     if (!state.game.season_01) seasonOneReset();
@@ -546,7 +618,7 @@ async function loadSave() {
   const seasonFour = getSeasonSave("season_04");
   if (seasonFour.last_goal) state.settings.season_04.final_goal = seasonFour.last_goal;
   setStatus(`${profile} 저장 정보를 불러왔습니다.`);
-  renderActiveSeason(true);
+  renderActiveSeason(true, true);
 }
 
 async function saveToServer() {
@@ -573,30 +645,25 @@ els.tabs.forEach((button) => {
     readFields();
     state.activeSeason = button.dataset.season;
     els.tabs.forEach((tab) => tab.classList.toggle("active", tab === button));
-    renderActiveSeason();
+    renderActiveSeason(false, true);
   });
 });
 
 els.applyUpgrade.addEventListener("click", () => {
   readFields();
-  renderCodePreview();
-  renderActiveSeason(true);
+  renderActiveSeason(true, false);
   setStatus("업그레이드를 적용했습니다.");
-});
-
-els.upgradeFields.addEventListener("input", () => {
-  readFields();
-  renderCodePreview();
 });
 
 els.start.addEventListener("click", () => {
   readFields();
-  renderActiveSeason(true);
+  renderActiveSeason(true, false);
   setStatus("게임을 시작했습니다.");
 });
 
 els.reset.addEventListener("click", () => {
-  renderActiveSeason(true);
+  readFields();
+  renderActiveSeason(true, false);
 });
 
 els.action.addEventListener("click", () => {
@@ -608,6 +675,10 @@ els.action.addEventListener("click", () => {
 
 document.addEventListener("keydown", (event) => {
   if (state.activeSeason !== "season_01") return;
+  if (event.target.closest("textarea, input")) return;
+  if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) {
+    event.preventDefault();
+  }
   if (event.key === "ArrowUp") moveHero(0, -1);
   if (event.key === "ArrowDown") moveHero(0, 1);
   if (event.key === "ArrowLeft") moveHero(-1, 0);
@@ -626,5 +697,5 @@ els.save.addEventListener("click", () => {
 loadSave().catch(() => {
   state.save = { profile: "default", seasons: {} };
   for (const key of Object.keys(seasons)) state.settings[key] = defaultSettings(key);
-  renderActiveSeason(true);
+  renderActiveSeason(true, true);
 });
