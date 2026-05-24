@@ -235,11 +235,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const title = task.result?.title || task.topic || "Untitled Topic";
         const createdAt = formatDate(task.created_at);
         const meta = [task.grade, createdAt].filter(Boolean).join(" · ");
+        const thumbnailUrl = task.result?.thumbnail_url || "";
+        const thumbnailHtml = thumbnailUrl
+            ? `<img src="${escapeAttribute(thumbnailUrl)}" alt="${escapeAttribute(title)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<i class=&quot;fa-solid fa-file-lines&quot;></i>';">`
+            : `<i class="fa-solid fa-file-lines"></i>`;
 
         return `
             <article class="grid-card">
                 <a href="${BASE_URL}view/${task.task_id}" target="_blank" class="card-main">
-                    <div class="card-thumb"><i class="fa-solid fa-file-lines"></i></div>
+                    <div class="card-thumb">${thumbnailHtml}</div>
                     <div class="card-content">
                         <div class="card-title">${escapeHtml(title)}</div>
                         <div class="card-meta">${escapeHtml(meta)}</div>
@@ -279,6 +283,10 @@ document.addEventListener("DOMContentLoaded", () => {
             .replaceAll(">", "&gt;")
             .replaceAll('"', "&quot;")
             .replaceAll("'", "&#039;");
+    }
+
+    function escapeAttribute(value) {
+        return escapeHtml(value).replaceAll("`", "&#096;");
     }
 
     window.deleteTask = async (taskId) => {

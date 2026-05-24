@@ -1031,6 +1031,33 @@ def commons_photo_score(page: dict[str, Any], info: dict[str, Any], query: str) 
     return score if score >= 4 else None
 
 
+def commons_relaxed_photo_score(page: dict[str, Any], info: dict[str, Any]) -> int | None:
+    mime = str(info.get("mime") or "")
+    image_url = str(info.get("thumburl") or info.get("url") or "")
+    if not image_url or mime not in {"image/jpeg", "image/jpg", "image/webp"}:
+        return None
+
+    width = int(info.get("thumbwidth") or info.get("width") or 0)
+    height = int(info.get("thumbheight") or info.get("height") or 0)
+    if width < 420 or height < 260:
+        return None
+
+    aspect_ratio = width / max(height, 1)
+    if aspect_ratio < 0.34 or aspect_ratio > 3.4:
+        return None
+
+    blob = metadata_blob(page, info)
+    if any(term in blob for term in NON_PHOTO_TERMS):
+        return None
+
+    score = 2
+    if mime in {"image/jpeg", "image/jpg"}:
+        score += 4
+    if any(term in blob for term in PHOTO_TERMS):
+        score += 2
+    return score
+
+
 def fetch_commons_pages(search_query: str) -> list[dict[str, Any]]:
     params = {
         "action": "query",
@@ -1061,18 +1088,25 @@ def fetch_commons_pages(search_query: str) -> list[dict[str, Any]]:
     return list((payload.get("query", {}).get("pages", {}) or {}).values())
 
 
-def resolve_commons_image(query: str) -> dict[str, str] | None:
+def resolve_commons_image(query: str, *, relaxed: bool = False) -> dict[str, str] | None:
     query = re.sub(r"\s+", " ", str(query or "").strip())
     if not query:
         return None
-    cache_key = query.lower()
+    cache_key = f"{'relaxed' if relaxed else 'strict'}:{query.lower()}"
     if cache_key in commons_cache:
         return commons_cache[cache_key]
 
     subject_query = subject_search_query(query)
+    reduced_subject_queries = []
+    subject_terms = subject_query.split()
+    if len(subject_terms) > 2:
+        reduced_subject_queries.append(" ".join(subject_terms[:2]))
+        reduced_subject_queries.append(" ".join(subject_terms[:3]))
     search_queries = [
         f"{subject_query} photograph -diagram -illustration -drawing -map -icon -logo -chart",
         f"{subject_query} photo",
+        *[f"{reduced_query} photograph -diagram -illustration -drawing -map -icon -logo -chart" for reduced_query in reduced_subject_queries],
+        *[f"{reduced_query} photo" for reduced_query in reduced_subject_queries],
         f"{query} photograph -diagram -illustration -drawing -map -icon -logo -chart",
         f"{query} photo",
         query,
@@ -1091,6 +1125,8 @@ def resolve_commons_image(query: str) -> dict[str, str] | None:
                 continue
             info = info_items[0]
             score = commons_photo_score(page, info, query)
+            if score is None and relaxed:
+                score = commons_relaxed_photo_score(page, info)
             if score is None:
                 continue
             image_url = str(info.get("thumburl") or info.get("url") or "")
@@ -1137,6 +1173,8 @@ def image_data_for_item(item: dict[str, str]) -> dict[str, str] | None:
     }
     if not data["image_url"]:
         resolved = resolve_commons_image(query)
+        if not resolved:
+            resolved = resolve_commons_image(query, relaxed=True)
         if resolved:
             data.update(resolved)
             item.update(resolved)
@@ -1168,6 +1206,12 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
             f"{topic} close up photo",
             f"{topic} photo",
         ]
+        for other_section in pack.get("content_sections", []):
+            if not isinstance(other_section, dict):
+                continue
+            for item in other_section.get("images") or []:
+                if isinstance(item, dict) and item.get("query"):
+                    fallback_queries.append(str(item.get("query")))
         for query in fallback_queries:
             if not query.strip():
                 continue
@@ -1599,7 +1643,7 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       color: var(--muted);
       font-size: 13px;
     }}
-    @media (max-width: 640px) {{
+    @media (max-width: 820px), (max-height: 560px) {{
       html {{ scroll-snap-type: none; }}
       .page {{
         width: min(100% - 20px, 1180px);
@@ -1617,12 +1661,17 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       .topic-page {{
         aspect-ratio: auto;
         grid-template-rows: auto auto;
+        gap: 14px;
       }}
       .topic-copy {{
         overflow: visible;
       }}
+      .topic-copy h2 {{
+        font-size: clamp(22px, 7vw, 32px);
+      }}
       .topic-copy p {{
-        font-size: 16px;
+        font-size: clamp(15px, 4.1vw, 18px);
+        line-height: 1.55;
       }}
       .topic-visual {{
         grid-template-columns: 1fr;
@@ -1631,7 +1680,7 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
         aspect-ratio: 16 / 9;
       }}
       .photo-notes li {{
-        font-size: 16px;
+        font-size: clamp(15px, 4vw, 18px);
       }}
       th {{
         width: 104px;
@@ -1678,6 +1727,49 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
 """
 
 
+def pack_thumbnail_url(pack: dict[str, Any]) -> str:
+    for section in pack.get("content_sections") or []:
+        if not isinstance(section, dict):
+            continue
+        for item in section.get("images") or []:
+            if isinstance(item, dict):
+                image_url = str(item.get("image_url") or "").strip()
+                if image_url and not image_url.startswith("data:"):
+                    return image_url
+    return ""
+
+
+def task_with_thumbnail(task: dict[str, Any]) -> dict[str, Any]:
+    cloned = dict(task)
+    result = dict(cloned.get("result") or {})
+    if result.get("thumbnail_url"):
+        cloned["result"] = result
+        return cloned
+
+    json_path = Path(result.get("json_path") or "")
+    if json_path.exists():
+        try:
+            pack = json.loads(json_path.read_text(encoding="utf-8-sig"))
+            if isinstance(pack, dict):
+                thumbnail_url = pack_thumbnail_url(pack)
+                if thumbnail_url:
+                    result["thumbnail_url"] = thumbnail_url
+        except Exception as exc:
+            print(f"[tasks] thumbnail load failed: {exc}")
+    if not result.get("thumbnail_url"):
+        html_path = Path(result.get("html_path") or "")
+        if html_path.exists():
+            try:
+                html_text = html_path.read_text(encoding="utf-8", errors="ignore")
+                match = re.search(r'<img[^>]+src="([^"]+)"', html_text, re.IGNORECASE)
+                if match and not match.group(1).startswith("data:"):
+                    result["thumbnail_url"] = html.unescape(match.group(1))
+            except Exception as exc:
+                print(f"[tasks] thumbnail html scan failed: {exc}")
+    cloned["result"] = result
+    return cloned
+
+
 def save_pack(task_id: str, pack: dict[str, Any]) -> dict[str, str]:
     slug = safe_slug(pack.get("topic") or pack.get("title") or task_id)
     output_dir = OUTPUT_DIR / f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{slug}_{task_id[:8]}"
@@ -1696,6 +1788,7 @@ def save_pack(task_id: str, pack: dict[str, Any]) -> dict[str, str]:
         "title": str(pack.get("title") or pack.get("topic")),
         "topic": str(pack.get("topic") or ""),
         "grade": str(pack.get("grade") or ""),
+        "thumbnail_url": pack_thumbnail_url(pack),
     }
 
 
@@ -1790,7 +1883,7 @@ def get_task(task_id: str):
 @app.route("/tasks")
 def get_tasks():
     with task_lock:
-        tasks = list(task_status.values())
+        tasks = [task_with_thumbnail(task) for task in task_status.values()]
     tasks.sort(key=lambda item: item.get("created_at", ""), reverse=True)
     return jsonify({"tasks": tasks})
 
