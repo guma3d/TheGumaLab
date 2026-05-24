@@ -1271,7 +1271,7 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
         image_html = (
             f"""
             <figure class="topic-photo">
-              <img src="{e(image.get("image_url"))}" alt="{e(image.get("title"))}" loading="lazy" referrerpolicy="no-referrer">
+              <img src="{e(image.get("image_url"))}" alt="{e(image.get("title"))}" loading="eager" decoding="async" referrerpolicy="no-referrer">
               {image_source_html}
             </figure>
             """
@@ -1539,7 +1539,7 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       display: block;
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       background: #000;
     }}
     .topic-photo small {{
@@ -1643,7 +1643,7 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       color: var(--muted);
       font-size: 13px;
     }}
-    @media (max-width: 820px), (max-height: 560px) {{
+    @media (max-width: 820px) and (orientation: portrait) {{
       html {{ scroll-snap-type: none; }}
       .page {{
         width: min(100% - 20px, 1180px);
@@ -1687,6 +1687,80 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       }}
       th, td {{
         padding: 10px 6px;
+      }}
+    }}
+    @media (orientation: landscape) and (max-height: 560px) {{
+      html {{
+        scroll-snap-type: y mandatory;
+      }}
+      body {{
+        line-height: 1.35;
+      }}
+      .page {{
+        width: min(calc(100vw - 16px), calc((100vh - 16px) * 16 / 9));
+        padding: 8px 0 28px;
+      }}
+      header {{
+        min-height: calc(100vh - 16px);
+        padding: 14px 0;
+      }}
+      h1 {{
+        font-size: clamp(26px, 9vh, 44px);
+      }}
+      .subtitle {{
+        font-size: clamp(13px, 3.4vh, 18px);
+      }}
+      section.block {{
+        min-height: auto;
+        padding: clamp(8px, 2.2vh, 14px);
+        border-radius: 12px;
+      }}
+      .topic-page {{
+        aspect-ratio: 16 / 9;
+        grid-template-rows: minmax(50px, 20%) minmax(0, 80%);
+        gap: clamp(5px, 1.4vh, 9px);
+      }}
+      .page-kicker {{
+        font-size: clamp(8px, 2vh, 10px);
+        margin-bottom: 2px;
+      }}
+      .topic-copy {{
+        overflow: hidden;
+      }}
+      .topic-copy h2 {{
+        margin-bottom: 2px;
+        font-size: clamp(14px, 4.2vh, 21px);
+      }}
+      .topic-copy p {{
+        margin-bottom: 2px;
+        font-size: clamp(10px, 2.75vh, 14px);
+        line-height: 1.28;
+      }}
+      .topic-visual {{
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: clamp(6px, 1.6vh, 10px);
+      }}
+      .topic-photo {{
+        border-radius: 10px;
+      }}
+      .topic-photo small {{
+        display: none;
+      }}
+      .photo-notes {{
+        padding: clamp(8px, 2vh, 14px);
+        border-radius: 10px;
+      }}
+      .photo-notes h3 {{
+        margin-bottom: 6px;
+        font-size: clamp(13px, 3.3vh, 17px);
+      }}
+      .photo-notes ul {{
+        gap: 5px;
+        padding-left: 17px;
+      }}
+      .photo-notes li {{
+        font-size: clamp(10px, 2.8vh, 14px);
+        line-height: 1.32;
       }}
     }}
   </style>
@@ -1898,6 +1972,14 @@ def view_result(task_id: str):
         return "아직 완료되지 않은 작업입니다.", 400
 
     html_path = Path(task.get("result", {}).get("html_path", ""))
+    json_path = Path(task.get("result", {}).get("json_path", ""))
+    if json_path.exists():
+        try:
+            pack = json.loads(json_path.read_text(encoding="utf-8-sig"))
+            if isinstance(pack, dict):
+                return render_material_html(pack, task_id)
+        except Exception as exc:
+            print(f"[view] dynamic render failed: {exc}")
     if not html_path.exists():
         return "HTML 파일을 찾을 수 없습니다.", 404
     return html_path.read_text(encoding="utf-8")

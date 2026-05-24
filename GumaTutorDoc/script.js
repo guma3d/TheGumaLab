@@ -28,6 +28,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let pollingTimer = null;
     let searchQuery = "";
+    let activeSignature = "";
+    let historySignature = "";
 
     loadTasks();
     setInterval(loadTasks, 3000);
@@ -198,10 +200,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function renderActive(tasks) {
         activeSection.classList.toggle("hidden", tasks.length === 0);
+        const nextSignature = JSON.stringify(tasks.map((task) => [
+            task.task_id,
+            task.status,
+            task.percent,
+            task.progress,
+            task.updated_at,
+        ]));
+        if (nextSignature === activeSignature) return;
+        activeSignature = nextSignature;
         activeList.innerHTML = tasks.map(createActiveTaskCard).join("");
     }
 
     function renderHistory(tasks) {
+        const nextSignature = JSON.stringify(tasks.map((task) => [
+            task.task_id,
+            task.status,
+            task.result?.title,
+            task.result?.thumbnail_url,
+            task.updated_at,
+        ]));
+        if (nextSignature === historySignature) return;
+        historySignature = nextSignature;
         if (!tasks.length) {
             tasksList.innerHTML = `<p class="empty">No documents found.</p>`;
             return;
