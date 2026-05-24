@@ -48,7 +48,7 @@ task_lock = threading.RLock()
 task_status: dict[str, dict[str, Any]] = {}
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GUMATUBE_GEMINI_MODEL = "gemini-3.1-flash-lite-preview"
+GUMATUBE_GEMINI_MODEL = "gemini-3.5-flash"
 
 
 def normalize_gemini_model(model_name: str | None) -> str:

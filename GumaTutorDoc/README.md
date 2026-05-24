@@ -29,7 +29,7 @@ python .\Server.py
 선택 설정:
 
 ```env
-GUMATUTORDOC_MODEL=gemini-3.1-flash-lite-preview
+GUMATUTORDOC_MODEL=gemini-3.5-flash
 PORT=5000
 ```
 
