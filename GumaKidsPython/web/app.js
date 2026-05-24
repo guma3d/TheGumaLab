@@ -3,9 +3,11 @@ const seasons = {
     title: "보물 점수 게임",
     chapters: "챕터 1~12",
     lesson: [
-      ["오늘의 장면", "주인공이 보물과 함정을 찾아다니며 점수와 체력이 바뀝니다."],
-      ["오늘의 코드", "이름, 대사, 점수 같은 값을 바꾸면 게임 화면도 바로 바뀝니다."],
-      ["미션", "코드 내용을 바꾼 뒤 업그레이드 적용을 누르고 게임을 시작합니다."],
+      ["1. 오늘의 장면", "주인공이 보물과 함정을 찾아다니며 점수와 체력이 바뀝니다."],
+      ["2. 오늘의 코드", "이름, 대사, 점수 같은 값을 바꾸면 게임 화면도 바로 바뀝니다."],
+      ["3. 코드가 하는 일", "문자열은 화면의 말이 되고 숫자는 점수, 체력, 속도가 됩니다."],
+      ["4. 바꿔보기", "hero_name, hp, speed 값을 바꾸고 업그레이드 적용을 누릅니다."],
+      ["5. 미션", "속도를 바꿔 보물을 더 빨리 줍거나 체력을 크게 만들어 봅니다."],
     ],
     fields: [
       ["start_message", "게임 시작 문장", "모험 시작!"],
@@ -23,9 +25,11 @@ const seasons = {
     title: "던전 선택 게임",
     chapters: "챕터 13~24",
     lesson: [
-      ["오늘의 장면", "던전 문, 비밀번호, 보스방 규칙을 골라 결과를 확인합니다."],
-      ["오늘의 코드", "조건이 참인지 거짓인지에 따라 다른 문장이 나옵니다."],
-      ["미션", "열쇠와 보석 값을 바꾸고 어떤 문이 열리는지 비교합니다."],
+      ["1. 오늘의 장면", "던전 문, 비밀번호, 보스방 규칙을 골라 결과를 확인합니다."],
+      ["2. 오늘의 코드", "조건이 참인지 거짓인지에 따라 다른 문장이 나옵니다."],
+      ["3. 코드가 하는 일", "True와 False는 게임 문이 열릴지 닫힐지 정합니다."],
+      ["4. 바꿔보기", "has_key, has_gem, level 값을 바꾸고 결과를 비교합니다."],
+      ["5. 미션", "열쇠와 보석이 모두 있을 때만 큰 보물상자를 열어 봅니다."],
     ],
     fields: [
       ["player_name", "플레이어 이름", "용감한 모험가"],
@@ -42,9 +46,11 @@ const seasons = {
     title: "몬스터 배틀 게임",
     chapters: "챕터 25~36",
     lesson: [
-      ["오늘의 장면", "플레이어가 몬스터와 턴제로 싸우고 전투 로그를 확인합니다."],
-      ["오늘의 코드", "반복 공격, 아이템 가방, 몬스터 능력치를 코드로 정합니다."],
-      ["미션", "몬스터 체력과 공격력을 바꿔 전투 난이도를 조절합니다."],
+      ["1. 오늘의 장면", "플레이어가 몬스터와 턴제로 싸우고 전투 로그를 확인합니다."],
+      ["2. 오늘의 코드", "반복 공격, 아이템 가방, 몬스터 능력치를 코드로 정합니다."],
+      ["3. 코드가 하는 일", "반복문은 공격을 여러 번 실행하고 리스트는 아이템을 담습니다."],
+      ["4. 바꿔보기", "monster_hp, player_power, combo_count 값을 바꿔 봅니다."],
+      ["5. 미션", "몬스터를 몇 턴 만에 이길 수 있는지 실험합니다."],
     ],
     fields: [
       ["monster_name", "몬스터 이름", "슬라임"],
@@ -60,9 +66,11 @@ const seasons = {
     title: "미니 어드벤처 게임",
     chapters: "챕터 37~48",
     lesson: [
-      ["오늘의 장면", "점프, 인사, 공격, 보물상자 기능을 하나씩 실행합니다."],
-      ["오늘의 코드", "함수, 랜덤, 저장 규칙이 작은 어드벤처 게임으로 연결됩니다."],
-      ["미션", "승리 점수와 보물 목록을 바꿔 나만의 목표를 만듭니다."],
+      ["1. 오늘의 장면", "점프, 인사, 공격, 보물상자 기능을 하나씩 실행합니다."],
+      ["2. 오늘의 코드", "함수, 랜덤, 저장 규칙이 작은 어드벤처 게임으로 연결됩니다."],
+      ["3. 코드가 하는 일", "함수는 버튼처럼 실행되고 랜덤은 매번 다른 결과를 만듭니다."],
+      ["4. 바꿔보기", "dice_min, dice_max, treasure_items, win_score를 바꿔 봅니다."],
+      ["5. 미션", "나만의 최종 목표와 보물 목록을 만들어 봅니다."],
     ],
     fields: [
       ["hero_name", "주인공 이름", "보물 사냥꾼"],
@@ -80,6 +88,8 @@ const state = {
   settings: {},
   save: null,
   game: {},
+  lessonPage: 0,
+  gameStarted: false,
 };
 
 const els = {
@@ -91,6 +101,9 @@ const els = {
   chapterLabel: document.querySelector("#chapterLabel"),
   seasonTitle: document.querySelector("#seasonTitle"),
   lessonBody: document.querySelector("#lessonBody"),
+  prevLesson: document.querySelector("#prevLessonBtn"),
+  nextLesson: document.querySelector("#nextLessonBtn"),
+  lessonPageLabel: document.querySelector("#lessonPageLabel"),
   codeEditor: document.querySelector("#codeEditor"),
   parsedParams: document.querySelector("#parsedParams"),
   applyUpgrade: document.querySelector("#applyUpgradeBtn"),
@@ -168,14 +181,17 @@ function setHud(title, stats) {
 
 function renderLesson() {
   const lesson = seasons[state.activeSeason].lesson;
-  els.lessonBody.innerHTML = lesson
-    .map(([title, body]) => `
-      <article class="lesson-note">
-        <strong>${title}</strong>
-        <p>${body}</p>
-      </article>
-    `)
-    .join("");
+  state.lessonPage = Math.max(0, Math.min(state.lessonPage, lesson.length - 1));
+  const [title, body] = lesson[state.lessonPage];
+  els.lessonBody.innerHTML = `
+    <article class="lesson-note active-lesson">
+      <strong>${title}</strong>
+      <p>${body}</p>
+    </article>
+  `;
+  els.lessonPageLabel.textContent = `${state.lessonPage + 1} / ${lesson.length}`;
+  els.prevLesson.disabled = state.lessonPage === 0;
+  els.nextLesson.disabled = state.lessonPage === lesson.length - 1;
 }
 
 function quoteList(text) {
@@ -548,10 +564,17 @@ function renderSeasonOne() {
   msg.style.bottom = "14px";
   msg.textContent = g.message || s.hero_message;
   board.appendChild(msg);
+  if (!state.gameStarted) {
+    const overlay = document.createElement("div");
+    overlay.className = "game-lock";
+    overlay.textContent = "게임 시작을 누르면 조작할 수 있어요";
+    board.appendChild(overlay);
+  }
   board.focus();
 }
 
 function moveHero(dx, dy) {
+  if (!state.gameStarted) return;
   const s = state.settings.season_01;
   const g = state.game.season_01;
   const speed = Math.max(1, toNumber(s.speed, 5)) * 8;
@@ -561,6 +584,7 @@ function moveHero(dx, dy) {
 }
 
 function collectSeasonOne() {
+  if (!state.gameStarted) return;
   const s = state.settings.season_01;
   const g = state.game.season_01;
   const near = g.items.find((item) => !item.taken && Math.abs(item.x - g.x) < 56 && Math.abs(item.y - g.y) < 56);
@@ -619,6 +643,7 @@ function renderSeasonTwo() {
 }
 
 function runDungeonChoice(choice) {
+  if (!state.gameStarted) return;
   const s = state.settings.season_02;
   const password = els.gameMount.querySelector("#passwordInput")?.value || "";
   let result = "";
@@ -675,6 +700,7 @@ function renderSeasonThree() {
 }
 
 function attackMonster(times = 1) {
+  if (!state.gameStarted) return;
   const s = state.settings.season_03;
   const g = state.game.season_03;
   for (let i = 0; i < times; i += 1) {
@@ -698,10 +724,12 @@ function attackMonster(times = 1) {
 }
 
 function comboAttack() {
+  if (!state.gameStarted) return;
   attackMonster(Math.max(1, toNumber(state.settings.season_03.combo_count, 5)));
 }
 
 function showBag() {
+  if (!state.gameStarted) return;
   const g = state.game.season_03;
   g.log.push(`가방: ${listFromText(state.settings.season_03.bag).join(", ")}`);
   renderSeasonThree();
@@ -743,6 +771,7 @@ function randomInt(min, max) {
 }
 
 function runAdventure(action) {
+  if (!state.gameStarted) return;
   const s = state.settings.season_04;
   const g = state.game.season_04;
   if (action === "jump") g.message = "점프!";
@@ -764,6 +793,7 @@ function runAdventure(action) {
 }
 
 function randomTreasure() {
+  if (!state.gameStarted) return;
   const s = state.settings.season_04;
   const g = state.game.season_04;
   const items = listFromText(s.treasure_items);
@@ -836,6 +866,8 @@ els.tabs.forEach((button) => {
   button.addEventListener("click", () => {
     readFields();
     state.activeSeason = button.dataset.season;
+    state.lessonPage = 0;
+    state.gameStarted = false;
     els.tabs.forEach((tab) => tab.classList.toggle("active", tab === button));
     renderActiveSeason(false, true);
   });
@@ -843,26 +875,44 @@ els.tabs.forEach((button) => {
 
 els.applyUpgrade.addEventListener("click", () => {
   readFields();
+  state.gameStarted = false;
   renderActiveSeason(true, false);
   setStatus("업그레이드를 적용했습니다.");
 });
 
 els.start.addEventListener("click", () => {
   readFields();
+  state.gameStarted = true;
   renderActiveSeason(true, false);
   setStatus("게임을 시작했습니다.");
 });
 
 els.reset.addEventListener("click", () => {
   readFields();
+  state.gameStarted = false;
   renderActiveSeason(true, false);
 });
 
 els.action.addEventListener("click", () => {
+  if (!state.gameStarted) {
+    setStatus("게임 시작을 먼저 눌러 주세요.");
+    return;
+  }
   if (state.activeSeason === "season_01") collectSeasonOne();
   if (state.activeSeason === "season_02") runDungeonChoice("password");
   if (state.activeSeason === "season_03") attackMonster();
   if (state.activeSeason === "season_04") randomTreasure();
+});
+
+els.prevLesson.addEventListener("click", () => {
+  state.lessonPage = Math.max(0, state.lessonPage - 1);
+  renderLesson();
+});
+
+els.nextLesson.addEventListener("click", () => {
+  const maxPage = seasons[state.activeSeason].lesson.length - 1;
+  state.lessonPage = Math.min(maxPage, state.lessonPage + 1);
+  renderLesson();
 });
 
 document.addEventListener("keydown", (event) => {
@@ -871,6 +921,7 @@ document.addEventListener("keydown", (event) => {
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) {
     event.preventDefault();
   }
+  if (!state.gameStarted) return;
   if (event.key === "ArrowUp") moveHero(0, -1);
   if (event.key === "ArrowDown") moveHero(0, 1);
   if (event.key === "ArrowLeft") moveHero(-1, 0);
