@@ -60,6 +60,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 throw new Error(data.error || "Failed to process request.");
             }
             updateProgress(10, "Request received! Task queued.");
+            setBusy(false);
+            topicInput.value = "";
+            topicInput.focus();
             startPolling(data.task_id);
             loadTasks();
         } catch (error) {
@@ -141,7 +144,6 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
         resultContainer.classList.remove("hidden");
         setBusy(false);
-        topicInput.value = "";
     }
 
     function startPolling(taskId) {

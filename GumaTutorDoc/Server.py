@@ -1500,9 +1500,13 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       aspect-ratio: 16 / 9;
       min-height: auto;
       display: grid;
+      grid-template:
+        "photo copy" minmax(0, 1fr)
+        / minmax(0, 1fr) minmax(0, 1fr);
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 18px;
       justify-content: stretch;
+      align-items: stretch;
       overflow: hidden;
     }}
     .page-kicker {{
@@ -1514,6 +1518,7 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       text-transform: uppercase;
     }}
     .topic-copy {{
+      grid-area: copy;
       min-height: 0;
       overflow: hidden;
       display: flex;
@@ -1553,6 +1558,7 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       background: var(--primary);
     }}
     .topic-photo {{
+      grid-area: photo;
       position: relative;
       min-width: 0;
       min-height: 0;
@@ -1664,6 +1670,9 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       }}
       .topic-page {{
         aspect-ratio: 16 / 9;
+        grid-template:
+          "photo copy" minmax(0, 1fr)
+          / minmax(0, 1fr) minmax(0, 1fr);
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
         gap: 10px;
       }}
@@ -1724,6 +1733,9 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       }}
       .topic-page {{
         aspect-ratio: 16 / 9;
+        grid-template:
+          "photo copy" minmax(0, 1fr)
+          / minmax(0, 1fr) minmax(0, 1fr);
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
         gap: clamp(5px, 1.4vh, 9px);
       }}
