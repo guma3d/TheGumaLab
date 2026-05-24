@@ -1496,7 +1496,7 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       font-size: 14px;
       font-weight: 700;
     }}
-    .topic-page {{
+    .block.topic-page {{
       aspect-ratio: 16 / 9;
       min-height: auto;
       display: grid;
@@ -1668,7 +1668,7 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
         border-radius: 14px;
         padding: 20px;
       }}
-      .topic-page {{
+      .block.topic-page {{
         aspect-ratio: 16 / 9;
         grid-template:
           "photo copy" minmax(0, 1fr)
@@ -1731,7 +1731,7 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
         padding: clamp(8px, 2.2vh, 14px);
         border-radius: 12px;
       }}
-      .topic-page {{
+      .block.topic-page {{
         aspect-ratio: 16 / 9;
         grid-template:
           "photo copy" minmax(0, 1fr)
