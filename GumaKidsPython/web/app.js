@@ -83,8 +83,144 @@ const seasons = {
   },
 };
 
+const seasonOneChapters = {
+  1: {
+    title: "게임 화면아 안녕",
+    focus: "start_message",
+    pages: [
+      ["1. 오늘의 장면", "게임이 시작될 때 화면에 첫 문장이 나타납니다."],
+      ["2. 오늘의 코드", "start_message = \"모험 시작!\" 처럼 이름에 글자를 담습니다."],
+      ["3. 기술 설명", "str은 문자열 자료형입니다. 따옴표 안에 들어간 글자는 파이썬에서 str 값으로 다룹니다."],
+      ["4. 바꿔보기", "따옴표 안의 문장만 바꾸고 업그레이드 적용을 누릅니다."],
+      ["5. 미션", "내가 만든 게임 시작 문장을 2개 이상 만들어 봅니다."],
+    ],
+  },
+  2: {
+    title: "캐릭터가 말해요",
+    focus: "hero_message",
+    pages: [
+      ["1. 오늘의 장면", "주인공이 보물을 찾을 때 보여줄 대사를 정합니다."],
+      ["2. 오늘의 코드", "hero_message 변수에 주인공의 말을 저장합니다."],
+      ["3. 기술 설명", "문자열은 글자의 묶음입니다. 한글, 영어, 기호도 따옴표 안에 있으면 str입니다."],
+      ["4. 바꿔보기", "hero_message 값을 바꾸고 액션 버튼으로 문장을 확인합니다."],
+      ["5. 미션", "주인공 성격이 드러나는 짧은 대사를 만들어 봅니다."],
+    ],
+  },
+  3: {
+    title: "이름을 바꿔요",
+    focus: "hero_name",
+    pages: [
+      ["1. 오늘의 장면", "상태창과 캐릭터 이름표에 주인공 이름이 보입니다."],
+      ["2. 오늘의 코드", "hero_name 변수에 이름 문자열을 저장합니다."],
+      ["3. 기술 설명", "변수는 값에 붙이는 이름입니다. 같은 값을 여러 곳에서 다시 쓸 수 있게 해줍니다."],
+      ["4. 바꿔보기", "hero_name을 바꾸면 제목과 캐릭터 이름표가 함께 바뀝니다."],
+      ["5. 미션", "게임에 어울리는 주인공 이름 3개를 실험합니다."],
+    ],
+  },
+  4: {
+    title: "숫자가 보여요",
+    focus: "start_score",
+    pages: [
+      ["1. 오늘의 장면", "게임을 시작할 때 점수가 몇 점에서 출발할지 정합니다."],
+      ["2. 오늘의 코드", "start_score = 10 처럼 숫자는 따옴표 없이 씁니다."],
+      ["3. 기술 설명", "int는 정수 자료형입니다. 10, 0, 100처럼 소수점 없는 숫자를 뜻합니다."],
+      ["4. 바꿔보기", "start_score를 0, 10, 100으로 바꿔 시작 점수를 비교합니다."],
+      ["5. 미션", "너무 쉽거나 어렵지 않은 시작 점수를 정합니다."],
+    ],
+  },
+  5: {
+    title: "점수판 만들기",
+    focus: "score",
+    pages: [
+      ["1. 오늘의 장면", "점수판은 현재 점수를 계속 보여줍니다."],
+      ["2. 오늘의 코드", "score = start_score는 시작 점수를 현재 점수에 복사합니다."],
+      ["3. 기술 설명", "= 는 오른쪽 값을 왼쪽 변수에 넣는 대입 연산자입니다."],
+      ["4. 바꿔보기", "start_score를 바꾼 뒤 score가 어떻게 시작하는지 봅니다."],
+      ["5. 미션", "점수판이 어떤 변수 값을 보여주는지 말로 설명해 봅니다."],
+    ],
+  },
+  6: {
+    title: "체력 만들기",
+    focus: "hp",
+    pages: [
+      ["1. 오늘의 장면", "함정에 닿으면 체력이 줄어듭니다."],
+      ["2. 오늘의 코드", "hp = 100은 주인공 체력을 숫자로 저장합니다."],
+      ["3. 기술 설명", "숫자 변수는 계산할 수 있습니다. 체력, 점수, 속도는 int로 다루기 좋습니다."],
+      ["4. 바꿔보기", "hp를 50, 100, 999로 바꾸고 게임 난이도를 비교합니다."],
+      ["5. 미션", "한 번 실수해도 괜찮은 체력을 정합니다."],
+    ],
+  },
+  7: {
+    title: "속도 만들기",
+    focus: "speed",
+    pages: [
+      ["1. 오늘의 장면", "방향키를 누르면 주인공이 움직입니다."],
+      ["2. 오늘의 코드", "speed 값이 클수록 한 번에 더 멀리 움직입니다."],
+      ["3. 기술 설명", "변수 값을 바꾸면 그 변수를 사용하는 계산 결과도 바뀝니다."],
+      ["4. 바꿔보기", "speed를 1, 5, 10으로 바꾸고 조작감을 비교합니다."],
+      ["5. 미션", "너무 빠르지 않고 보물을 줍기 좋은 속도를 찾습니다."],
+    ],
+  },
+  8: {
+    title: "글자 합체",
+    focus: "title",
+    pages: [
+      ["1. 오늘의 장면", "주인공 이름이 들어간 등장 문장을 만듭니다."],
+      ["2. 오늘의 코드", "title = hero_name + \" 등장!\" 는 문자열을 이어 붙입니다."],
+      ["3. 기술 설명", "str + str은 두 문자열을 합칩니다. 숫자 더하기와는 결과가 다릅니다."],
+      ["4. 바꿔보기", "\" 등장!\" 부분을 \" 출발!\" 같은 말로 바꿉니다."],
+      ["5. 미션", "내 이름이 들어간 등장 문장을 만들어 봅니다."],
+    ],
+  },
+  9: {
+    title: "멋진 상태창",
+    focus: "status_text",
+    pages: [
+      ["1. 오늘의 장면", "상태창에 이름과 점수를 함께 보여줍니다."],
+      ["2. 오늘의 코드", "f\"{hero_name} 점수: {score}\" 는 변수 값을 문장 안에 넣습니다."],
+      ["3. 기술 설명", "f-string은 문자열 앞에 f를 붙이고 중괄호 안의 변수 값을 글자로 바꿔 넣습니다."],
+      ["4. 바꿔보기", "상태창 문장의 순서를 바꿔 봅니다."],
+      ["5. 미션", "이름, 점수, 체력이 함께 보이는 문장을 상상해 봅니다."],
+    ],
+  },
+  10: {
+    title: "더하기 마법",
+    focus: "treasure_point",
+    pages: [
+      ["1. 오늘의 장면", "보물을 주우면 점수가 올라갑니다."],
+      ["2. 오늘의 코드", "current_score + treasure_point가 새 점수를 만듭니다."],
+      ["3. 기술 설명", "+ 는 숫자에서는 덧셈 연산자입니다. int + int 결과도 int입니다."],
+      ["4. 바꿔보기", "treasure_point를 10, 30, 50으로 바꿔 점수 증가량을 비교합니다."],
+      ["5. 미션", "보물 하나가 몇 점이면 게임이 재미있는지 정합니다."],
+    ],
+  },
+  11: {
+    title: "빼기 마법",
+    focus: "trap_damage",
+    pages: [
+      ["1. 오늘의 장면", "함정에 닿으면 체력이 줄어듭니다."],
+      ["2. 오늘의 코드", "current_hp - trap_damage가 새 체력을 만듭니다."],
+      ["3. 기술 설명", "- 는 숫자에서 뺄셈 연산자입니다. 피해량을 계산할 때 자주 씁니다."],
+      ["4. 바꿔보기", "trap_damage를 5, 20, 50으로 바꿔 함정 위험도를 비교합니다."],
+      ["5. 미션", "실수 한 번에 게임이 끝나지 않는 피해량을 정합니다."],
+    ],
+  },
+  12: {
+    title: "보너스 점수",
+    focus: "bonus_multiplier",
+    pages: [
+      ["1. 오늘의 장면", "보너스를 먹으면 현재 점수가 몇 배로 커집니다."],
+      ["2. 오늘의 코드", "current_score * bonus_multiplier가 보너스 점수를 만듭니다."],
+      ["3. 기술 설명", "* 는 곱셈 연산자입니다. 점수 배율, 공격력 배율 같은 규칙에 씁니다."],
+      ["4. 바꿔보기", "bonus_multiplier를 2, 3, 5로 바꿔 보너스 효과를 비교합니다."],
+      ["5. 미션", "너무 강하지 않은 보너스 배율을 정합니다."],
+    ],
+  },
+};
+
 const state = {
   activeSeason: "season_01",
+  activeChapter: 1,
   settings: {},
   save: null,
   game: {},
@@ -98,6 +234,7 @@ const els = {
   save: document.querySelector("#saveBtn"),
   saveStatus: document.querySelector("#saveStatus"),
   tabs: document.querySelectorAll(".season-tabs button"),
+  chapterTabs: document.querySelector("#chapterTabs"),
   chapterLabel: document.querySelector("#chapterLabel"),
   seasonTitle: document.querySelector("#seasonTitle"),
   lessonBody: document.querySelector("#lessonBody"),
@@ -150,8 +287,9 @@ function readFields() {
 function renderFields() {
   const season = seasons[state.activeSeason];
   const settings = state.settings[state.activeSeason] || defaultSettings(state.activeSeason);
-  els.chapterLabel.textContent = season.chapters;
-  els.seasonTitle.textContent = season.title;
+  const chapterInfo = state.activeSeason === "season_01" ? seasonOneChapters[state.activeChapter] : null;
+  els.chapterLabel.textContent = chapterInfo ? `챕터 ${state.activeChapter} / 12` : season.chapters;
+  els.seasonTitle.textContent = chapterInfo ? chapterInfo.title : season.title;
   els.parsedParams.innerHTML = "";
 
   for (const [key, label, value] of season.fields) {
@@ -179,8 +317,54 @@ function setHud(title, stats) {
   els.hudStats.textContent = stats;
 }
 
+function currentLessonPages() {
+  if (state.activeSeason === "season_01") {
+    return seasonOneChapters[state.activeChapter].pages;
+  }
+  return seasons[state.activeSeason].lesson;
+}
+
+function renderChapterTabs() {
+  if (state.activeSeason !== "season_01") {
+    els.chapterTabs.innerHTML = "";
+    els.chapterTabs.hidden = true;
+    return;
+  }
+
+  els.chapterTabs.hidden = false;
+  els.chapterTabs.innerHTML = Object.entries(seasonOneChapters)
+    .map(([chapter, info]) => `
+      <button
+        type="button"
+        data-chapter="${chapter}"
+        class="${Number(chapter) === state.activeChapter ? "active" : ""}"
+        ${state.gameStarted ? "disabled" : ""}
+        title="${info.title}"
+      >${chapter}</button>
+    `)
+    .join("");
+}
+
+function setLockedControls() {
+  els.start.textContent = state.gameStarted ? "게임 중지" : "게임 시작";
+  els.start.classList.toggle("stop", state.gameStarted);
+  els.codeEditor.disabled = state.gameStarted;
+  els.applyUpgrade.disabled = state.gameStarted;
+  els.prevLesson.disabled = state.gameStarted || state.lessonPage === 0;
+  els.nextLesson.disabled = state.gameStarted || state.lessonPage === currentLessonPages().length - 1;
+  els.profile.disabled = state.gameStarted;
+  els.loadSave.disabled = state.gameStarted;
+  els.save.disabled = state.gameStarted;
+  els.tabs.forEach((tab) => {
+    tab.disabled = state.gameStarted;
+  });
+  els.chapterTabs.querySelectorAll("button").forEach((button) => {
+    button.disabled = state.gameStarted;
+  });
+}
+
 function renderLesson() {
-  const lesson = seasons[state.activeSeason].lesson;
+  const lesson = currentLessonPages();
   state.lessonPage = Math.max(0, Math.min(state.lessonPage, lesson.length - 1));
   const [title, body] = lesson[state.lessonPage];
   els.lessonBody.innerHTML = `
@@ -190,8 +374,7 @@ function renderLesson() {
     </article>
   `;
   els.lessonPageLabel.textContent = `${state.lessonPage + 1} / ${lesson.length}`;
-  els.prevLesson.disabled = state.lessonPage === 0;
-  els.nextLesson.disabled = state.lessonPage === lesson.length - 1;
+  setLockedControls();
 }
 
 function quoteList(text) {
@@ -200,6 +383,7 @@ function quoteList(text) {
 
 function generateCode(seasonKey) {
   const s = state.settings[seasonKey] || defaultSettings(seasonKey);
+  const today = (chapter) => (seasonKey === "season_01" && state.activeChapter === chapter ? "# [오늘의 업그레이드]" : "");
   if (seasonKey === "season_01") {
     return [
       "# 시즌 1: 보물 점수 게임 업그레이드 존",
@@ -207,52 +391,61 @@ function generateCode(seasonKey) {
       "",
       "# =========================",
       "# [챕터 1] 게임 시작 문장",
-      "# [오늘의 업그레이드]",
+      today(1),
       "# =========================",
       `start_message = "${s.start_message}"`,
       "",
       "# =========================",
       "# [챕터 2] 주인공 대사",
+      today(2),
       "# =========================",
       `hero_message = "${s.hero_message}"`,
       "",
       "# =========================",
       "# [챕터 3] 주인공 이름",
+      today(3),
       "# =========================",
       `hero_name = "${s.hero_name}"`,
       "",
       "# =========================",
       "# [챕터 4] 시작 점수",
+      today(4),
       "# =========================",
       `start_score = ${toNumber(s.start_score, 10)}`,
       "",
       "# =========================",
       "# [챕터 5] 점수 변수",
+      today(5),
       "# =========================",
       "score = start_score",
       "",
       "# =========================",
       "# [챕터 6] 체력",
+      today(6),
       "# =========================",
       `hp = ${toNumber(s.hp, 100)}`,
       "",
       "# =========================",
       "# [챕터 7] 이동 속도",
+      today(7),
       "# =========================",
       `speed = ${toNumber(s.speed, 5)}`,
       "",
       "# =========================",
       "# [챕터 8] 글자 합체",
+      today(8),
       "# =========================",
       "title = hero_name + \" 등장!\"",
       "",
       "# =========================",
       "# [챕터 9] 멋진 상태창",
+      today(9),
       "# =========================",
       "status_text = f\"{hero_name} 점수: {score}\"",
       "",
       "# =========================",
       "# [챕터 10] 더하기 마법",
+      today(10),
       "# =========================",
       `treasure_point = ${toNumber(s.treasure_point, 10)}`,
       "",
@@ -262,6 +455,7 @@ function generateCode(seasonKey) {
       "",
       "# =========================",
       "# [챕터 11] 빼기 마법",
+      today(11),
       "# =========================",
       `trap_damage = ${toNumber(s.trap_damage, 20)}`,
       "",
@@ -271,6 +465,7 @@ function generateCode(seasonKey) {
       "",
       "# =========================",
       "# [챕터 12] 보너스 점수",
+      today(12),
       "# =========================",
       `bonus_multiplier = ${toNumber(s.bonus_multiplier, 2)}`,
       "",
@@ -808,6 +1003,7 @@ function randomTreasure() {
 }
 
 function renderActiveSeason(reset = false, refreshCode = false) {
+  renderChapterTabs();
   renderFields();
   renderLesson();
   if (refreshCode) renderCodeEditor();
@@ -825,6 +1021,7 @@ function renderActiveSeason(reset = false, refreshCode = false) {
     if (!state.game.season_04) seasonFourReset();
     renderSeasonFour();
   }
+  setLockedControls();
 }
 
 async function loadSave() {
@@ -864,8 +1061,10 @@ async function saveToServer() {
 
 els.tabs.forEach((button) => {
   button.addEventListener("click", () => {
+    if (state.gameStarted) return;
     readFields();
     state.activeSeason = button.dataset.season;
+    state.activeChapter = 1;
     state.lessonPage = 0;
     state.gameStarted = false;
     els.tabs.forEach((tab) => tab.classList.toggle("active", tab === button));
@@ -873,7 +1072,17 @@ els.tabs.forEach((button) => {
   });
 });
 
+els.chapterTabs.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-chapter]");
+  if (!button || state.gameStarted) return;
+  readFields();
+  state.activeChapter = Number(button.dataset.chapter);
+  state.lessonPage = 0;
+  renderActiveSeason(false, true);
+});
+
 els.applyUpgrade.addEventListener("click", () => {
+  if (state.gameStarted) return;
   readFields();
   state.gameStarted = false;
   renderActiveSeason(true, false);
@@ -881,6 +1090,12 @@ els.applyUpgrade.addEventListener("click", () => {
 });
 
 els.start.addEventListener("click", () => {
+  if (state.gameStarted) {
+    state.gameStarted = false;
+    renderActiveSeason(false, false);
+    setStatus("게임을 중지했습니다. 이제 코드와 강의자료를 조작할 수 있습니다.");
+    return;
+  }
   readFields();
   state.gameStarted = true;
   renderActiveSeason(true, false);
@@ -905,12 +1120,14 @@ els.action.addEventListener("click", () => {
 });
 
 els.prevLesson.addEventListener("click", () => {
+  if (state.gameStarted) return;
   state.lessonPage = Math.max(0, state.lessonPage - 1);
   renderLesson();
 });
 
 els.nextLesson.addEventListener("click", () => {
-  const maxPage = seasons[state.activeSeason].lesson.length - 1;
+  if (state.gameStarted) return;
+  const maxPage = currentLessonPages().length - 1;
   state.lessonPage = Math.min(maxPage, state.lessonPage + 1);
   renderLesson();
 });
@@ -930,10 +1147,12 @@ document.addEventListener("keydown", (event) => {
 });
 
 els.loadSave.addEventListener("click", () => {
+  if (state.gameStarted) return;
   loadSave().catch((error) => setStatus(error.message));
 });
 
 els.save.addEventListener("click", () => {
+  if (state.gameStarted) return;
   saveToServer().catch((error) => setStatus(error.message));
 });
 

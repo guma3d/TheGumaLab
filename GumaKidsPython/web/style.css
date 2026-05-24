@@ -65,6 +65,12 @@ button.primary,
   box-shadow: 0 0 28px var(--primary-glow);
 }
 
+button.stop {
+  background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+  color: #1a0505;
+  box-shadow: 0 0 28px rgba(239, 68, 68, 0.34);
+}
+
 input {
   min-width: 0;
   border: 1px solid var(--glass-border);
@@ -112,7 +118,29 @@ input {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
+  margin-bottom: 10px;
+}
+
+.chapter-tabs {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 6px;
   margin-bottom: 16px;
+}
+
+.chapter-tabs[hidden] {
+  display: none;
+}
+
+.chapter-tabs button {
+  padding: 8px 6px;
+  font-size: 13px;
+}
+
+.chapter-tabs button.active {
+  border-color: var(--primary);
+  background: rgba(16, 185, 129, 0.16);
+  color: var(--text-main);
 }
 
 .game-layout {
@@ -556,6 +584,7 @@ input {
 
   .save-panel,
   .season-tabs,
+  .chapter-tabs,
   .choice-grid,
   .dungeon-scene,
   .battle-grid,
