@@ -290,6 +290,9 @@ def generate_with_gemini(topic: str, grade: str, quiz_count: int) -> dict[str, A
         "각 content_sections 항목의 images에는 그 소주제를 이해하는 데 직접 필요한 실제 사진 검색어를 1~2개 넣으세요. "
         "그림, 일러스트, 도해, 지도, 아이콘, 로고, 차트 검색어는 넣지 마세요. "
         "images.query는 Wikimedia Commons에서 실제 자료 사진을 찾기 좋은 구체적인 영어 검색어로 작성하고, photo 또는 photograph 같은 단어를 포함하세요. "
+        "사진 검색어는 반드시 주제 자체가 주 피사체가 되도록 작성하세요. 예를 들어 주제가 개미라면 개미 종, 개미 몸, 개미집, 여왕개미, 일개미 사진처럼 개미 자체가 중심인 검색어만 사용하세요. "
+        "아이, 사람, 손으로 잡는 장면, 돋보기, 관찰 도구, 교실 활동, 장난감, 모형처럼 주제 외 대상이 중심인 사진 검색어는 절대 사용하지 마세요. "
+        "각 소주제의 이미지 검색어는 서로 다르게 작성해서 같은 사진이 반복되지 않게 하세요. 가능하면 Wikipedia, Wikimedia Commons, 박물관, 대학, 정부기관, 학술 참고자료의 사진으로 이어질 만한 정확한 영어 명칭을 사용하세요. "
         "images.notes에는 사진 옆에 보여줄 짧은 한국어 관찰 문장 2~3개를 넣으세요. "
         "예를 들어 서식지 설명에는 지역명 사진과 환경 사진 검색어를 함께 넣고, 구조/과정 설명에는 관련 부위·과정·비교 사진 검색어를 넣으세요. "
         "모든 설명은 한국어로, 문장은 짧고 읽기 쉽게 작성하세요.\n\n"
@@ -872,7 +875,7 @@ def svg_placeholder_url(title: str, seed: int) -> str:
     return "data:image/svg+xml;charset=utf-8," + quote(svg, safe="")
 
 
-commons_cache: dict[str, dict[str, str] | None] = {}
+commons_cache: dict[str, Any] = {}
 
 NON_PHOTO_TERMS = (
     "illustration",
@@ -913,6 +916,63 @@ PHOTO_TERMS = (
     "closeup",
     "microscope",
     "micrograph",
+)
+
+AUTHORITATIVE_SOURCE_TERMS = (
+    "wikipedia",
+    "wikimedia commons",
+    "commons",
+    "museum",
+    "university",
+    "institute",
+    "academy",
+    "government",
+    "national",
+    "official",
+    "usda",
+    "nasa",
+    "noaa",
+    "usgs",
+    "nih",
+    "cdc",
+    "nhm",
+    "smithsonian",
+    "encyclopedia",
+    "encyclopaedia",
+    "biodiversity heritage library",
+    "library",
+    "archive",
+)
+
+OFF_SUBJECT_PHOTO_TERMS = (
+    "boy",
+    "girl",
+    "child",
+    "children",
+    "kid",
+    "kids",
+    "student",
+    "students",
+    "person",
+    "people",
+    "man",
+    "woman",
+    "hand",
+    "hands",
+    "holding",
+    "catching",
+    "classroom",
+    "teacher",
+    "magnifier",
+    "magnifying glass",
+    "lens",
+    "observation",
+    "observing",
+    "experiment",
+    "activity",
+    "lesson",
+    "toy",
+    "model",
 )
 
 IMAGE_QUERY_STOPWORDS = {
@@ -960,11 +1020,26 @@ def subject_blob(page: dict[str, Any], info: dict[str, Any]) -> str:
     return " ".join(parts).lower()
 
 
+def source_blob(page: dict[str, Any], info: dict[str, Any]) -> str:
+    metadata = info.get("extmetadata") or {}
+    parts = [
+        str(page.get("title") or ""),
+        str(info.get("descriptionurl") or ""),
+        clean_metadata_text((metadata.get("Artist") or {}).get("value")),
+        clean_metadata_text((metadata.get("Credit") or {}).get("value")),
+        clean_metadata_text((metadata.get("Attribution") or {}).get("value")),
+        clean_metadata_text((metadata.get("ImageDescription") or {}).get("value")),
+        clean_metadata_text((metadata.get("Categories") or {}).get("value")),
+    ]
+    parts.extend(str(category.get("title") or "") for category in page.get("categories") or [])
+    return " ".join(parts).lower()
+
+
 def subject_search_query(query: str) -> str:
     tokens = []
     seen = set()
     for token in re.findall(r"[a-z0-9]+", query.lower()):
-        if len(token) < 4 or token in IMAGE_QUERY_STOPWORDS:
+        if len(token) < 3 or token in IMAGE_QUERY_STOPWORDS:
             continue
         if token not in seen:
             tokens.append(token)
@@ -975,7 +1050,7 @@ def subject_search_query(query: str) -> str:
 def query_keywords(query: str) -> set[str]:
     keywords = set()
     for token in re.findall(r"[a-z0-9]+", query.lower()):
-        if len(token) < 4 or token in IMAGE_QUERY_STOPWORDS:
+        if len(token) < 3 or token in IMAGE_QUERY_STOPWORDS:
             continue
         keywords.add(token)
         if token.endswith("ies") and len(token) > 4:
@@ -985,6 +1060,20 @@ def query_keywords(query: str) -> set[str]:
         elif token.endswith("s") and len(token) > 4:
             keywords.add(token[:-1])
     return keywords
+
+
+def is_subject_first_photo(page: dict[str, Any], info: dict[str, Any], query: str) -> bool:
+    blob = metadata_blob(page, info)
+    keywords = query_keywords(query)
+    if keywords:
+        subject = subject_blob(page, info)
+        if not any(keyword in subject for keyword in keywords):
+            return False
+    if any(term in blob for term in OFF_SUBJECT_PHOTO_TERMS):
+        authority_blob = source_blob(page, info)
+        if not any(keyword in authority_blob for keyword in keywords):
+            return False
+    return True
 
 
 def commons_photo_score(page: dict[str, Any], info: dict[str, Any], query: str) -> int | None:
@@ -1004,6 +1093,8 @@ def commons_photo_score(page: dict[str, Any], info: dict[str, Any], query: str) 
 
     blob = metadata_blob(page, info)
     if any(term in blob for term in NON_PHOTO_TERMS):
+        return None
+    if not is_subject_first_photo(page, info, query):
         return None
 
     keywords = query_keywords(query)
@@ -1027,6 +1118,11 @@ def commons_photo_score(page: dict[str, Any], info: dict[str, Any], query: str) 
     score += 4 * sum(1 for keyword in keywords if keyword in subject_blob(page, info))
     if "category:photographs" in blob or "photographs of" in blob:
         score += 3
+    authority_blob = source_blob(page, info)
+    authority_matches = sum(1 for term in AUTHORITATIVE_SOURCE_TERMS if term in authority_blob)
+    score += min(authority_matches, 4) * 3
+    if "own work" in authority_blob and authority_matches == 0:
+        score -= 2
 
     return score if score >= 4 else None
 
@@ -1049,22 +1145,29 @@ def commons_relaxed_photo_score(page: dict[str, Any], info: dict[str, Any]) -> i
     blob = metadata_blob(page, info)
     if any(term in blob for term in NON_PHOTO_TERMS):
         return None
+    if not is_subject_first_photo(page, info, ""):
+        return None
 
     score = 2
     if mime in {"image/jpeg", "image/jpg"}:
         score += 4
     if any(term in blob for term in PHOTO_TERMS):
         score += 2
+    authority_blob = source_blob(page, info)
+    authority_matches = sum(1 for term in AUTHORITATIVE_SOURCE_TERMS if term in authority_blob)
+    score += min(authority_matches, 3) * 2
+    if "own work" in authority_blob and authority_matches == 0:
+        score -= 1
     return score
 
 
-def fetch_commons_pages(search_query: str) -> list[dict[str, Any]]:
+def fetch_commons_pages(search_query: str, limit: int = 20) -> list[dict[str, Any]]:
     params = {
         "action": "query",
         "generator": "search",
         "gsrsearch": search_query,
         "gsrnamespace": "6",
-        "gsrlimit": "20",
+        "gsrlimit": str(limit),
         "prop": "imageinfo|categories",
         "iiprop": "url|mime|size|extmetadata",
         "iiurlwidth": "1200",
@@ -1088,13 +1191,14 @@ def fetch_commons_pages(search_query: str) -> list[dict[str, Any]]:
     return list((payload.get("query", {}).get("pages", {}) or {}).values())
 
 
-def resolve_commons_image(query: str, *, relaxed: bool = False) -> dict[str, str] | None:
+def resolve_commons_candidates(query: str, *, relaxed: bool = False, limit: int = 8) -> list[dict[str, str]]:
     query = re.sub(r"\s+", " ", str(query or "").strip())
     if not query:
-        return None
-    cache_key = f"{'relaxed' if relaxed else 'strict'}:{query.lower()}"
+        return []
+    cache_key = f"{'relaxed' if relaxed else 'strict'}:candidates:{query.lower()}"
     if cache_key in commons_cache:
-        return commons_cache[cache_key]
+        cached = commons_cache[cache_key]
+        return list(cached) if isinstance(cached, list) else []
 
     subject_query = subject_search_query(query)
     reduced_subject_queries = []
@@ -1119,7 +1223,7 @@ def resolve_commons_image(query: str, *, relaxed: bool = False) -> dict[str, str
     seen_urls: set[str] = set()
 
     for search_query in search_queries:
-        for page in fetch_commons_pages(search_query):
+        for page in fetch_commons_pages(search_query, limit=30):
             info_items = page.get("imageinfo") or []
             if not info_items:
                 continue
@@ -1150,15 +1254,25 @@ def resolve_commons_image(query: str, *, relaxed: bool = False) -> dict[str, str
 
     if candidates:
         candidates.sort(key=lambda item: item[0], reverse=True)
-        result = candidates[0][1]
-        commons_cache[cache_key] = result
-        return result
+        results = [candidate for _, candidate in candidates[:limit]]
+        commons_cache[cache_key] = results
+        return results
 
-    commons_cache[cache_key] = None
+    commons_cache[cache_key] = []
+    return []
+
+
+def resolve_commons_image(query: str, *, relaxed: bool = False, excluded_urls: set[str] | None = None) -> dict[str, str] | None:
+    excluded_urls = excluded_urls or set()
+    for candidate in resolve_commons_candidates(query, relaxed=relaxed):
+        image_url = candidate.get("image_url", "")
+        if image_url and image_url not in excluded_urls:
+            return candidate
     return None
 
 
-def image_data_for_item(item: dict[str, str]) -> dict[str, str] | None:
+def image_data_for_item(item: dict[str, str], excluded_urls: set[str] | None = None) -> dict[str, str] | None:
+    excluded_urls = excluded_urls or set()
     title = str(item.get("title") or "이미지 자료").strip()
     caption = str(item.get("caption") or "").strip()
     query = str(item.get("query") or title).strip()
@@ -1171,10 +1285,12 @@ def image_data_for_item(item: dict[str, str]) -> dict[str, str] | None:
         "source_title": str(item.get("source_title") or "").strip(),
         "credit": str(item.get("credit") or "").strip(),
     }
+    if data["image_url"] and data["image_url"] in excluded_urls:
+        data["image_url"] = ""
     if not data["image_url"]:
-        resolved = resolve_commons_image(query)
+        resolved = resolve_commons_image(query, excluded_urls=excluded_urls)
         if not resolved:
-            resolved = resolve_commons_image(query, relaxed=True)
+            resolved = resolve_commons_image(query, relaxed=True, excluded_urls=excluded_urls)
         if resolved:
             data.update(resolved)
             item.update(resolved)
@@ -1187,6 +1303,7 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
     summary = list_html(pack.get("summary", []), "summary-list")
     sources = list_html(pack.get("sources", []), "sources")
     topic = str(pack.get("topic") or "").strip()
+    used_image_urls: set[str] = set()
 
     def first_section_image(section: dict[str, Any]) -> dict[str, str] | None:
         image_items = section.get("images")
@@ -1195,8 +1312,9 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
         for item in image_items:
             if not isinstance(item, dict):
                 continue
-            data = image_data_for_item(item)
+            data = image_data_for_item(item, excluded_urls=used_image_urls)
             if data:
+                used_image_urls.add(data["image_url"])
                 return data
 
         section_title = str(section.get("title") or "").strip()
@@ -1220,9 +1338,11 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
                     "title": f"{section_title or topic} 사진",
                     "caption": f"{section_title or topic}을 실제 사진으로 살펴봅니다.",
                     "query": query,
-                }
+                },
+                excluded_urls=used_image_urls,
             )
             if data:
+                used_image_urls.add(data["image_url"])
                 return data
         return None
 
@@ -1300,10 +1420,12 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
         points = section_points(section)
         return f"""
         <section class="block topic-page">
-          {image_html}
-          <div class="topic-copy">
+          <div class="topic-title">
             <div class="page-kicker">내용 {idx}</div>
             <h2>{e(section.get("title"))}</h2>
+          </div>
+          {image_html}
+          <div class="topic-copy">
             <ul class="topic-points">
               {"".join(f"<li>{e(point)}</li>" for point in points)}
             </ul>
@@ -1501,10 +1623,11 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       min-height: auto;
       display: grid;
       grid-template:
+        "title title" auto
         "photo copy" minmax(0, 1fr)
         / minmax(0, 7fr) minmax(0, 3fr);
       grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
-      gap: 18px;
+      gap: 14px 18px;
       justify-content: stretch;
       align-items: stretch;
       overflow: hidden;
@@ -1517,6 +1640,18 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       margin-bottom: 6px;
       text-transform: uppercase;
     }}
+    .topic-title {{
+      grid-area: title;
+      padding: clamp(12px, 1.5vw, 20px) clamp(16px, 2vw, 28px);
+      border: 1px solid var(--primary-line);
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.16), rgba(59, 130, 246, 0.08));
+    }}
+    .topic-title h2 {{
+      margin: 0;
+      font-size: clamp(26px, 3.4vw, 42px);
+      line-height: 1.2;
+    }}
     .topic-copy {{
       grid-area: copy;
       min-height: 0;
@@ -1528,10 +1663,6 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       border: 1px solid var(--primary-line);
       border-radius: 16px;
       background: var(--primary-soft);
-    }}
-    .topic-copy h2 {{
-      margin-bottom: 8px;
-      font-size: clamp(22px, 2.8vw, 34px);
     }}
     .topic-points {{
       display: grid;
@@ -1671,19 +1802,23 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       .block.topic-page {{
         aspect-ratio: 16 / 9;
         grid-template:
+          "title title" auto
           "photo copy" minmax(0, 1fr)
           / minmax(0, 7fr) minmax(0, 3fr);
         grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
-        gap: 10px;
+        gap: 8px 10px;
+      }}
+      .topic-title {{
+        padding: 8px 10px;
+        border-radius: 12px;
+      }}
+      .topic-title h2 {{
+        font-size: clamp(14px, 4.3vw, 22px);
       }}
       .topic-copy {{
         overflow: hidden;
         padding: 10px;
         border-radius: 12px;
-      }}
-      .topic-copy h2 {{
-        margin-bottom: 5px;
-        font-size: clamp(13px, 4vw, 20px);
       }}
       .topic-points {{
         gap: 3px;
@@ -1734,23 +1869,27 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       .block.topic-page {{
         aspect-ratio: 16 / 9;
         grid-template:
+          "title title" auto
           "photo copy" minmax(0, 1fr)
           / minmax(0, 7fr) minmax(0, 3fr);
         grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
-        gap: clamp(5px, 1.4vh, 9px);
+        gap: clamp(4px, 1.1vh, 7px);
       }}
       .page-kicker {{
         font-size: clamp(8px, 2vh, 10px);
         margin-bottom: 2px;
       }}
+      .topic-title {{
+        padding: clamp(5px, 1.2vh, 8px) clamp(7px, 1.8vh, 12px);
+        border-radius: 10px;
+      }}
+      .topic-title h2 {{
+        font-size: clamp(13px, 4vh, 21px);
+      }}
       .topic-copy {{
         overflow: hidden;
         padding: clamp(6px, 1.5vh, 10px);
         border-radius: 10px;
-      }}
-      .topic-copy h2 {{
-        margin-bottom: 2px;
-        font-size: clamp(14px, 4.2vh, 21px);
       }}
       .topic-points {{
         gap: 2px;
