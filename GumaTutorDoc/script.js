@@ -216,9 +216,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const nextSignature = JSON.stringify(tasks.map((task) => [
             task.task_id,
             task.status,
+            task.grade,
+            task.created_at,
             task.result?.title,
             task.result?.thumbnail_url,
-            task.updated_at,
         ]));
         if (nextSignature === historySignature) return;
         historySignature = nextSignature;
@@ -257,7 +258,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const meta = [task.grade, createdAt].filter(Boolean).join(" · ");
         const thumbnailUrl = task.result?.thumbnail_url || "";
         const thumbnailHtml = thumbnailUrl
-            ? `<img src="${escapeAttribute(thumbnailUrl)}" alt="${escapeAttribute(title)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<i class=&quot;fa-solid fa-file-lines&quot;></i>';">`
+            ? `<img src="${escapeAttribute(thumbnailUrl)}" alt="${escapeAttribute(title)}" loading="eager" decoding="async" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<i class=&quot;fa-solid fa-file-lines&quot;></i>';">`
             : `<i class="fa-solid fa-file-lines"></i>`;
 
         return `
