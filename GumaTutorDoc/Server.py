@@ -1272,7 +1272,6 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
 
     def section_page_html(section: dict[str, Any], idx: int) -> str:
         image = first_section_image(section)
-        notes = photo_notes(section, image)
         image_source_html = ""
         if image:
             source_bits = []
@@ -1301,21 +1300,13 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
         points = section_points(section)
         return f"""
         <section class="block topic-page">
+          {image_html}
           <div class="topic-copy">
             <div class="page-kicker">내용 {idx}</div>
             <h2>{e(section.get("title"))}</h2>
             <ul class="topic-points">
               {"".join(f"<li>{e(point)}</li>" for point in points)}
             </ul>
-          </div>
-          <div class="topic-visual">
-            {image_html}
-            <aside class="photo-notes">
-              <h3>사진으로 보기</h3>
-              <ul>
-                {"".join(f"<li>{e(note)}</li>" for note in notes)}
-              </ul>
-            </aside>
           </div>
         </section>
         """
@@ -1509,9 +1500,10 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       aspect-ratio: 16 / 9;
       min-height: auto;
       display: grid;
-      grid-template-rows: minmax(128px, 20%) minmax(0, 80%);
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 18px;
       justify-content: stretch;
+      overflow: hidden;
     }}
     .page-kicker {{
       color: var(--primary);
@@ -1524,6 +1516,13 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
     .topic-copy {{
       min-height: 0;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: clamp(14px, 1.8vw, 26px);
+      border: 1px solid var(--primary-line);
+      border-radius: 16px;
+      background: var(--primary-soft);
     }}
     .topic-copy h2 {{
       margin-bottom: 8px;
@@ -1552,13 +1551,6 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       height: 6px;
       border-radius: 999px;
       background: var(--primary);
-    }}
-    .topic-visual {{
-      min-height: 0;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 18px;
-      align-items: stretch;
     }}
     .topic-photo {{
       position: relative;
@@ -1598,29 +1590,6 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       place-items: center;
       color: var(--muted);
       background: rgba(255, 255, 255, 0.045);
-    }}
-    .photo-notes {{
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      min-width: 0;
-      padding: clamp(14px, 1.6vw, 22px);
-      border: 1px solid var(--primary-line);
-      border-radius: 16px;
-      background: var(--primary-soft);
-    }}
-    .photo-notes h3 {{
-      color: var(--primary);
-      margin-bottom: 14px;
-    }}
-    .photo-notes ul {{
-      display: grid;
-      gap: 14px;
-      padding-left: 22px;
-    }}
-    .photo-notes li {{
-      font-size: clamp(18px, 2.05vw, 28px);
-      line-height: 1.45;
     }}
     .examples {{
       display: grid;
@@ -1694,42 +1663,31 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
         padding: 20px;
       }}
       .topic-page {{
-        aspect-ratio: auto;
-        grid-template-rows: auto auto;
-        gap: 14px;
+        aspect-ratio: 16 / 9;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 10px;
       }}
       .topic-copy {{
-        overflow: visible;
+        overflow: hidden;
+        padding: 10px;
+        border-radius: 12px;
       }}
       .topic-copy h2 {{
-        font-size: clamp(22px, 7vw, 32px);
+        margin-bottom: 5px;
+        font-size: clamp(13px, 4vw, 20px);
       }}
       .topic-points {{
-        gap: 7px;
+        gap: 3px;
       }}
       .topic-points li {{
-        padding-left: 16px;
-        font-size: clamp(14px, 3.7vw, 17px);
-        line-height: 1.42;
-      }}
-      .topic-visual {{
-        grid-template-columns: 1fr;
-        min-height: 0;
+        padding-left: 12px;
+        font-size: clamp(9px, 2.6vw, 13px);
+        line-height: 1.25;
       }}
       .topic-photo {{
-        aspect-ratio: 16 / 9;
         width: 100%;
-        max-height: min(48vh, 54vw);
-      }}
-      .topic-photo img {{
-        max-height: min(48vh, 54vw);
-      }}
-      .photo-notes {{
-        padding: 14px;
-      }}
-      .photo-notes li {{
-        font-size: clamp(16px, 4.3vw, 20px);
-        line-height: 1.42;
+        height: 100%;
+        border-radius: 12px;
       }}
       th {{
         width: 104px;
@@ -1766,7 +1724,7 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       }}
       .topic-page {{
         aspect-ratio: 16 / 9;
-        grid-template-rows: minmax(50px, 20%) minmax(0, 80%);
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
         gap: clamp(5px, 1.4vh, 9px);
       }}
       .page-kicker {{
@@ -1775,6 +1733,8 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       }}
       .topic-copy {{
         overflow: hidden;
+        padding: clamp(6px, 1.5vh, 10px);
+        border-radius: 10px;
       }}
       .topic-copy h2 {{
         margin-bottom: 2px;
@@ -1792,31 +1752,11 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
         width: 4px;
         height: 4px;
       }}
-      .topic-visual {{
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        gap: clamp(6px, 1.6vh, 10px);
-      }}
       .topic-photo {{
         border-radius: 10px;
       }}
       .topic-photo small {{
         display: none;
-      }}
-      .photo-notes {{
-        padding: clamp(6px, 1.5vh, 10px);
-        border-radius: 10px;
-      }}
-      .photo-notes h3 {{
-        margin-bottom: 6px;
-        font-size: clamp(13px, 3.3vh, 17px);
-      }}
-      .photo-notes ul {{
-        gap: 5px;
-        padding-left: 17px;
-      }}
-      .photo-notes li {{
-        font-size: clamp(12px, 3.35vh, 17px);
-        line-height: 1.3;
       }}
     }}
   </style>
