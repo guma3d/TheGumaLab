@@ -292,6 +292,10 @@ def generate_with_gemini(topic: str, grade: str, quiz_count: int) -> dict[str, A
         "그림, 일러스트, 도해, 지도, 아이콘, 로고, 차트 검색어는 넣지 마세요. "
         "images.query는 Wikimedia Commons에서 실제 자료 사진을 찾기 좋은 구체적인 영어 검색어로 작성하고, photo 또는 photograph 같은 단어를 포함하세요. "
         "사진 검색어는 반드시 주제 자체가 주 피사체가 되도록 작성하세요. 예를 들어 주제가 개미라면 개미 종, 개미 몸, 개미집, 여왕개미, 일개미 사진처럼 개미 자체가 중심인 검색어만 사용하세요. "
+        "소주제가 주둥이, 알, 산란, 서식지, 몸 구조처럼 특정 부분을 설명하더라도 검색어에는 반드시 전체 주제 생물/사물의 정확한 영어 이름을 먼저 포함하세요. 예: elephant weevil rostrum photograph, elephant weevil eggs photograph, honeypot ant replete worker photograph. "
+        "정확한 소주제 사진을 찾기 어렵다면 다른 동물이나 도구 사진을 쓰지 말고, 같은 주제 생물/사물의 선명한 실제 사진 검색어를 사용하세요. "
+        "단, 공룡, 멸종생물, 신화 속 괴물처럼 현실에서 실제 사진이 존재할 수 없는 주제는 예외입니다. 이런 경우에만 realistic reconstruction, paleoart, scientific illustration, lifelike illustration 같은 실사에 가까운 복원도/일러스트 검색어를 사용할 수 있습니다. "
+        "모든 content_sections에는 반드시 이미지가 있어야 합니다. 실제 주제 사진을 찾기 어려운 경우에도 빈 이미지로 두지 말고, 주제와 직접 맞는 실사풍 복원도나 디테일한 과학 일러스트 검색어를 넣으세요. "
         "아이, 사람, 손으로 잡는 장면, 돋보기, 관찰 도구, 교실 활동, 장난감, 모형처럼 주제 외 대상이 중심인 사진 검색어는 절대 사용하지 마세요. "
         "각 소주제의 이미지 검색어는 서로 다르게 작성해서 같은 사진이 반복되지 않게 하세요. 가능하면 Wikipedia, Wikimedia Commons, 박물관, 대학, 정부기관, 학술 참고자료의 사진으로 이어질 만한 정확한 영어 명칭을 사용하세요. "
         "images.notes에는 사진 옆에 보여줄 짧은 한국어 관찰 문장 2~3개를 넣으세요. "
@@ -907,6 +911,41 @@ NON_PHOTO_TERMS = (
     "svg",
 )
 
+REALISTIC_ILLUSTRATION_TERMS = (
+    "realistic",
+    "lifelike",
+    "scientific illustration",
+    "paleoart",
+    "reconstruction",
+    "restoration",
+    "life restoration",
+    "artist's impression",
+    "artists impression",
+)
+
+NO_PHOTO_SUBJECT_TERMS = (
+    "dinosaur",
+    "dinosaurs",
+    "fossil",
+    "fossils",
+    "extinct",
+    "prehistoric",
+    "pterosaur",
+    "triceratops",
+    "tyrannosaurus",
+    "velociraptor",
+    "monster",
+    "dragon",
+    "kraken",
+    "unicorn",
+    "griffin",
+    "goblin",
+    "ghost",
+    "myth",
+    "mythical",
+    "cryptid",
+)
+
 PHOTO_TERMS = (
     "photo",
     "photograph",
@@ -978,6 +1017,42 @@ OFF_SUBJECT_PHOTO_TERMS = (
     "model",
 )
 
+SECTION_DETAIL_TERMS = {
+    "abdomen",
+    "adult",
+    "body",
+    "colony",
+    "egg",
+    "eggs",
+    "environment",
+    "female",
+    "habitat",
+    "head",
+    "larva",
+    "larvae",
+    "leg",
+    "legs",
+    "male",
+    "mandible",
+    "mandibles",
+    "mouthpart",
+    "nest",
+    "nymph",
+    "oviposition",
+    "pupa",
+    "pupae",
+    "queen",
+    "replete",
+    "rostrum",
+    "snout",
+    "thorax",
+    "trunk",
+    "wing",
+    "wings",
+    "worker",
+    "workers",
+}
+
 IMAGE_QUERY_STOPWORDS = {
     "and",
     "commons",
@@ -1038,6 +1113,28 @@ def source_blob(page: dict[str, Any], info: dict[str, Any]) -> str:
     return " ".join(parts).lower()
 
 
+def text_has_term(text: str, term: str) -> bool:
+    term = term.lower().strip()
+    if not term:
+        return False
+    if " " in term:
+        return term in text
+    return re.search(rf"(?<![a-z0-9]){re.escape(term)}(?![a-z0-9])", text) is not None
+
+
+def text_has_any_term(text: str, terms: Any) -> bool:
+    return any(text_has_term(text, str(term)) for term in terms)
+
+
+def text_term_count(text: str, terms: Any) -> int:
+    return sum(1 for term in terms if text_has_term(text, str(term)))
+
+
+def allows_realistic_illustration(query: str) -> bool:
+    lowered = query.lower()
+    return text_has_any_term(lowered, NO_PHOTO_SUBJECT_TERMS) or text_has_any_term(lowered, REALISTIC_ILLUSTRATION_TERMS)
+
+
 def subject_search_query(query: str) -> str:
     tokens = []
     seen = set()
@@ -1050,31 +1147,59 @@ def subject_search_query(query: str) -> str:
     return " ".join(tokens)
 
 
-def query_keywords(query: str) -> set[str]:
-    keywords = set()
+def ordered_query_tokens(query: str) -> list[str]:
+    tokens: list[str] = []
+    seen: set[str] = set()
     for token in re.findall(r"[a-z0-9]+", query.lower()):
         if len(token) < 3 or token in IMAGE_QUERY_STOPWORDS:
             continue
-        keywords.add(token)
+        variants = [token]
         if token.endswith("ies") and len(token) > 4:
-            keywords.add(token[:-3] + "y")
+            variants.append(token[:-3] + "y")
         elif token.endswith("es") and len(token) > 4:
-            keywords.add(token[:-2])
+            variants.append(token[:-2])
         elif token.endswith("s") and len(token) > 4:
-            keywords.add(token[:-1])
-    return keywords
+            variants.append(token[:-1])
+        for variant in variants:
+            if variant not in seen:
+                tokens.append(variant)
+                seen.add(variant)
+    return tokens
+
+
+def query_keywords(query: str) -> set[str]:
+    return set(ordered_query_tokens(query))
+
+
+def query_core_keywords(query: str) -> list[str]:
+    return [token for token in ordered_query_tokens(query) if token not in SECTION_DETAIL_TERMS]
+
+
+def required_core_match_count(core_keywords: list[str]) -> int:
+    if not core_keywords:
+        return 0
+    return min(2, len(core_keywords))
 
 
 def is_subject_first_photo(page: dict[str, Any], info: dict[str, Any], query: str) -> bool:
     blob = metadata_blob(page, info)
+    core_keywords = query_core_keywords(query)
     keywords = query_keywords(query)
-    if keywords:
+    if core_keywords:
+        subject = subject_blob(page, info)
+        required_matches = required_core_match_count(core_keywords)
+        subject_matches = sum(1 for keyword in core_keywords if keyword in subject)
+        blob_matches = sum(1 for keyword in core_keywords if keyword in blob)
+        if subject_matches < required_matches and blob_matches < required_matches:
+            return False
+    elif keywords:
         subject = subject_blob(page, info)
         if not any(keyword in subject for keyword in keywords):
             return False
-    if any(term in blob for term in OFF_SUBJECT_PHOTO_TERMS):
+    if text_has_any_term(blob, OFF_SUBJECT_PHOTO_TERMS):
         authority_blob = source_blob(page, info)
-        if not any(keyword in authority_blob for keyword in keywords):
+        allowed_terms = core_keywords or list(keywords)
+        if not any(keyword in authority_blob for keyword in allowed_terms):
             return False
     return True
 
@@ -1095,18 +1220,25 @@ def commons_photo_score(page: dict[str, Any], info: dict[str, Any], query: str) 
         return None
 
     blob = metadata_blob(page, info)
-    if any(term in blob for term in NON_PHOTO_TERMS):
+    allow_illustration = allows_realistic_illustration(query)
+    if text_has_any_term(blob, NON_PHOTO_TERMS) and not (
+        allow_illustration and text_has_any_term(blob, REALISTIC_ILLUSTRATION_TERMS)
+    ):
         return None
     if not is_subject_first_photo(page, info, query):
         return None
 
     keywords = query_keywords(query)
-    if keywords:
+    core_keywords = query_core_keywords(query)
+    detail_keywords = keywords.difference(core_keywords)
+    if core_keywords:
+        required_matches = required_core_match_count(core_keywords)
+        core_blob_matches = sum(1 for keyword in core_keywords if keyword in blob)
+        if core_blob_matches < required_matches:
+            return None
+    elif keywords:
         keyword_matches = sum(1 for keyword in keywords if keyword in blob)
         if keyword_matches < min(2, len(keywords)):
-            return None
-        subject_matches = sum(1 for keyword in keywords if keyword in subject_blob(page, info))
-        if len(keywords) >= 2 and subject_matches == 0 and keyword_matches < 3:
             return None
 
     score = 0
@@ -1117,12 +1249,19 @@ def commons_photo_score(page: dict[str, Any], info: dict[str, Any], query: str) 
     elif mime == "image/png":
         score += 1
 
-    score += sum(1 for term in PHOTO_TERMS if term in blob)
-    score += 4 * sum(1 for keyword in keywords if keyword in subject_blob(page, info))
+    subject = subject_blob(page, info)
+    score += text_term_count(blob, PHOTO_TERMS)
+    if allow_illustration and text_has_any_term(blob, REALISTIC_ILLUSTRATION_TERMS):
+        score += 4
+    score += 8 * sum(1 for keyword in core_keywords if keyword in subject)
+    score += 2 * sum(1 for keyword in core_keywords if keyword in blob)
+    score += 3 * sum(1 for keyword in detail_keywords if keyword in blob)
+    if detail_keywords and not any(keyword in blob for keyword in detail_keywords):
+        score -= 2
     if "category:photographs" in blob or "photographs of" in blob:
         score += 3
     authority_blob = source_blob(page, info)
-    authority_matches = sum(1 for term in AUTHORITATIVE_SOURCE_TERMS if term in authority_blob)
+    authority_matches = text_term_count(authority_blob, AUTHORITATIVE_SOURCE_TERMS)
     score += min(authority_matches, 4) * 3
     if "own work" in authority_blob and authority_matches == 0:
         score -= 2
@@ -1130,7 +1269,7 @@ def commons_photo_score(page: dict[str, Any], info: dict[str, Any], query: str) 
     return score if score >= 4 else None
 
 
-def commons_relaxed_photo_score(page: dict[str, Any], info: dict[str, Any]) -> int | None:
+def commons_relaxed_photo_score(page: dict[str, Any], info: dict[str, Any], query: str = "") -> int | None:
     mime = str(info.get("mime") or "")
     image_url = str(info.get("thumburl") or info.get("url") or "")
     if not image_url or mime not in {"image/jpeg", "image/jpg", "image/webp"}:
@@ -1146,18 +1285,25 @@ def commons_relaxed_photo_score(page: dict[str, Any], info: dict[str, Any]) -> i
         return None
 
     blob = metadata_blob(page, info)
-    if any(term in blob for term in NON_PHOTO_TERMS):
+    allow_illustration = allows_realistic_illustration(query)
+    if text_has_any_term(blob, NON_PHOTO_TERMS) and not (
+        allow_illustration and text_has_any_term(blob, REALISTIC_ILLUSTRATION_TERMS)
+    ):
         return None
-    if not is_subject_first_photo(page, info, ""):
+    if not is_subject_first_photo(page, info, query):
         return None
 
     score = 2
     if mime in {"image/jpeg", "image/jpg"}:
         score += 4
-    if any(term in blob for term in PHOTO_TERMS):
+    if text_has_any_term(blob, PHOTO_TERMS):
         score += 2
+    core_keywords = query_core_keywords(query)
+    subject = subject_blob(page, info)
+    score += 6 * sum(1 for keyword in core_keywords if keyword in subject)
+    score += 2 * sum(1 for keyword in core_keywords if keyword in blob)
     authority_blob = source_blob(page, info)
-    authority_matches = sum(1 for term in AUTHORITATIVE_SOURCE_TERMS if term in authority_blob)
+    authority_matches = text_term_count(authority_blob, AUTHORITATIVE_SOURCE_TERMS)
     score += min(authority_matches, 3) * 2
     if "own work" in authority_blob and authority_matches == 0:
         score -= 1
@@ -1209,19 +1355,29 @@ def resolve_commons_candidates(query: str, *, relaxed: bool = False, limit: int 
     if len(subject_terms) > 2:
         reduced_subject_queries.append(" ".join(subject_terms[:2]))
         reduced_subject_queries.append(" ".join(subject_terms[:3]))
+    core_subject_query = " ".join(query_core_keywords(query)[:3])
+    illustration_queries = []
+    if core_subject_query:
+        illustration_queries = [
+            f"{core_subject_query} realistic reconstruction",
+            f"{core_subject_query} lifelike scientific illustration",
+        ]
     search_queries = [
+        f"{core_subject_query} photograph -diagram -illustration -drawing -map -icon -logo -chart" if core_subject_query else "",
         f"{subject_query} photograph -diagram -illustration -drawing -map -icon -logo -chart",
         f"{subject_query} photo",
         *[f"{reduced_query} photograph -diagram -illustration -drawing -map -icon -logo -chart" for reduced_query in reduced_subject_queries],
         *[f"{reduced_query} photo" for reduced_query in reduced_subject_queries],
         f"{query} photograph -diagram -illustration -drawing -map -icon -logo -chart",
         f"{query} photo",
+        *illustration_queries,
         query,
     ] if subject_query else [
         f"{query} photograph -diagram -illustration -drawing -map -icon -logo -chart",
         f"{query} photo",
         query,
     ]
+    search_queries = [search_query for search_query in search_queries if search_query.strip()]
     candidates: list[tuple[int, dict[str, str]]] = []
     seen_urls: set[str] = set()
 
@@ -1231,9 +1387,10 @@ def resolve_commons_candidates(query: str, *, relaxed: bool = False, limit: int 
             if not info_items:
                 continue
             info = info_items[0]
-            score = commons_photo_score(page, info, query)
+            score_query = f"{query} {search_query}"
+            score = commons_photo_score(page, info, score_query)
             if score is None and relaxed:
-                score = commons_relaxed_photo_score(page, info)
+                score = commons_relaxed_photo_score(page, info, score_query)
             if score is None:
                 continue
             image_url = str(info.get("thumburl") or info.get("url") or "")
@@ -1302,11 +1459,49 @@ def image_data_for_item(item: dict[str, str], excluded_urls: set[str] | None = N
     return data
 
 
+def fallback_visual_url(title: str, seed: int) -> str:
+    svg = f"""
+    <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+      <defs>
+        <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0" stop-color="#06120f"/>
+          <stop offset="0.52" stop-color="#0f2a22"/>
+          <stop offset="1" stop-color="#1f2937"/>
+        </linearGradient>
+        <radialGradient id="glow" cx="50%" cy="45%" r="60%">
+          <stop offset="0" stop-color="#34d399" stop-opacity="0.38"/>
+          <stop offset="1" stop-color="#34d399" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect width="1200" height="675" fill="url(#bg)"/>
+      <rect width="1200" height="675" fill="url(#glow)"/>
+      <ellipse cx="600" cy="385" rx="330" ry="120" fill="#020617" opacity="0.28"/>
+      <path d="M310 400 C420 250, 780 250, 890 400 C790 505, 410 505, 310 400 Z" fill="#14532d" stroke="#86efac" stroke-width="10" opacity="0.86"/>
+      <circle cx="485" cy="375" r="36" fill="#bbf7d0" opacity="0.92"/>
+      <circle cx="715" cy="375" r="36" fill="#bbf7d0" opacity="0.92"/>
+      <path d="M405 445 C475 515, 725 515, 795 445" fill="none" stroke="#bbf7d0" stroke-width="18" stroke-linecap="round" opacity="0.72"/>
+      <text x="600" y="106" text-anchor="middle" fill="#f8fafc" font-family="Malgun Gothic, Arial, sans-serif" font-size="44" font-weight="800">{html.escape(title[:32])}</text>
+      <text x="600" y="594" text-anchor="middle" fill="#a7f3d0" font-family="Malgun Gothic, Arial, sans-serif" font-size="24">실사풍 참고 이미지가 없을 때 사용하는 임시 시각자료</text>
+    </svg>
+    """
+    return "data:image/svg+xml;charset=utf-8," + quote(svg, safe="")
+
+
 def render_material_html(pack: dict[str, Any], task_id: str) -> str:
     summary = list_html(pack.get("summary", []), "summary-list")
     sources = list_html(pack.get("sources", []), "sources")
     topic = str(pack.get("topic") or "").strip()
     used_image_urls: set[str] = set()
+    subject_core_queries: list[str] = []
+    for section in pack.get("content_sections", []):
+        if not isinstance(section, dict):
+            continue
+        for item in section.get("images") or []:
+            if not isinstance(item, dict):
+                continue
+            core_query = " ".join(query_core_keywords(str(item.get("query") or ""))[:3]).strip()
+            if core_query and core_query not in subject_core_queries:
+                subject_core_queries.append(core_query)
     highlight_terms = sorted(
         {
             str(item.get("term") or "").strip()
@@ -1359,12 +1554,16 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
             f"{topic} close up photo",
             f"{topic} photo",
         ]
-        for other_section in pack.get("content_sections", []):
-            if not isinstance(other_section, dict):
-                continue
-            for item in other_section.get("images") or []:
-                if isinstance(item, dict) and item.get("query"):
-                    fallback_queries.append(str(item.get("query")))
+        for core_query in subject_core_queries[:3]:
+            fallback_queries.extend(
+                [
+                    f"{core_query} {section_title} photograph",
+                    f"{core_query} close up photograph",
+                    f"{core_query} photograph",
+                    f"{core_query} {section_title} realistic scientific illustration",
+                    f"{core_query} lifelike reconstruction",
+                ]
+            )
         for query in fallback_queries:
             if not query.strip():
                 continue
@@ -1379,7 +1578,18 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
             if data:
                 used_image_urls.add(data["image_url"])
                 return data
-        return None
+        fallback_title = section_title or topic or "시각자료"
+        fallback_url = fallback_visual_url(fallback_title, len(used_image_urls))
+        used_image_urls.add(fallback_url)
+        return {
+            "title": fallback_title,
+            "caption": f"{fallback_title}을 이해하기 위한 실사풍 참고 시각자료입니다.",
+            "query": f"{topic} {section_title} realistic scientific illustration",
+            "image_url": fallback_url,
+            "source_url": "",
+            "source_title": "GumaTutorDoc generated fallback visual",
+            "credit": "",
+        }
 
     def photo_notes(section: dict[str, Any], image: dict[str, str] | None) -> list[str]:
         notes: list[str] = []
