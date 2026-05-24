@@ -1502,8 +1502,8 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       display: grid;
       grid-template:
         "photo copy" minmax(0, 1fr)
-        / minmax(0, 1fr) minmax(0, 1fr);
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        / minmax(0, 7fr) minmax(0, 3fr);
+      grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
       gap: 18px;
       justify-content: stretch;
       align-items: stretch;
@@ -1672,8 +1672,8 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
         aspect-ratio: 16 / 9;
         grid-template:
           "photo copy" minmax(0, 1fr)
-          / minmax(0, 1fr) minmax(0, 1fr);
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+          / minmax(0, 7fr) minmax(0, 3fr);
+        grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
         gap: 10px;
       }}
       .topic-copy {{
@@ -1735,8 +1735,8 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
         aspect-ratio: 16 / 9;
         grid-template:
           "photo copy" minmax(0, 1fr)
-          / minmax(0, 1fr) minmax(0, 1fr);
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+          / minmax(0, 7fr) minmax(0, 3fr);
+        grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
         gap: clamp(5px, 1.4vh, 9px);
       }}
       .page-kicker {{
