@@ -226,6 +226,7 @@ const state = {
   game: {},
   lessonPage: 0,
   gameStarted: false,
+  startNotice: false,
 };
 
 const els = {
@@ -712,17 +713,24 @@ function parseCode(seasonKey, source) {
 function seasonOneReset() {
   const s = state.settings.season_01;
   state.game.season_01 = {
-    x: 70,
-    y: 70,
+    x: 10,
+    y: 18,
     score: toNumber(s.start_score, 10),
     hp: toNumber(s.hp, 100),
     message: s.start_message || "모험 시작!",
     items: [
-      { kind: "treasure", x: 260, y: 110, label: "보물", taken: false },
-      { kind: "treasure", x: 520, y: 250, label: "동전", taken: false },
-      { kind: "bonus", x: 650, y: 90, label: "보너스", taken: false },
-      { kind: "trap", x: 390, y: 300, label: "함정", taken: false },
+      { kind: "treasure", x: 32, y: 24, label: "보물", taken: false },
+      { kind: "treasure", x: 72, y: 62, label: "동전", taken: false },
+      { kind: "bonus", x: 84, y: 20, label: "보너스", taken: false },
+      { kind: "trap", x: 52, y: 72, label: "함정", taken: false },
     ],
+  };
+}
+
+function percentStyle(x, y) {
+  return {
+    left: `clamp(8px, ${x}%, calc(100% - 86px))`,
+    top: `clamp(8px, ${y}%, calc(100% - 86px))`,
   };
 }
 
@@ -738,16 +746,14 @@ function renderSeasonOne() {
   const hero = document.createElement("div");
   hero.className = "sprite hero";
   hero.innerHTML = `<span class="avatar-head"></span><span class="avatar-name">${s.hero_name || "용사"}</span>`;
-  hero.style.left = `${g.x}px`;
-  hero.style.top = `${g.y}px`;
+  Object.assign(hero.style, percentStyle(g.x, g.y));
   board.appendChild(hero);
 
   for (const item of g.items.filter((entry) => !entry.taken)) {
     const sprite = document.createElement("div");
     sprite.className = `sprite ${item.kind === "trap" ? "trap" : "treasure"}`;
     sprite.textContent = item.label;
-    sprite.style.left = `${item.x}px`;
-    sprite.style.top = `${item.y}px`;
+    Object.assign(sprite.style, percentStyle(item.x, item.y));
     board.appendChild(sprite);
   }
 
@@ -759,6 +765,12 @@ function renderSeasonOne() {
   msg.style.bottom = "14px";
   msg.textContent = g.message || s.hero_message;
   board.appendChild(msg);
+  if (state.startNotice) {
+    const notice = document.createElement("div");
+    notice.className = "start-notice";
+    notice.textContent = s.start_message || "모험 시작!";
+    board.appendChild(notice);
+  }
   if (!state.gameStarted) {
     const overlay = document.createElement("div");
     overlay.className = "game-lock";
@@ -772,9 +784,9 @@ function moveHero(dx, dy) {
   if (!state.gameStarted) return;
   const s = state.settings.season_01;
   const g = state.game.season_01;
-  const speed = Math.max(1, toNumber(s.speed, 5)) * 8;
-  g.x = Math.max(0, Math.min(720, g.x + dx * speed));
-  g.y = Math.max(0, Math.min(320, g.y + dy * speed));
+  const speed = Math.max(1, toNumber(s.speed, 5)) * 1.45;
+  g.x = Math.max(0, Math.min(90, g.x + dx * speed));
+  g.y = Math.max(0, Math.min(82, g.y + dy * speed));
   renderSeasonOne();
 }
 
@@ -782,7 +794,7 @@ function collectSeasonOne() {
   if (!state.gameStarted) return;
   const s = state.settings.season_01;
   const g = state.game.season_01;
-  const near = g.items.find((item) => !item.taken && Math.abs(item.x - g.x) < 56 && Math.abs(item.y - g.y) < 56);
+  const near = g.items.find((item) => !item.taken && Math.abs(item.x - g.x) < 8 && Math.abs(item.y - g.y) < 10);
   if (!near) {
     g.message = s.hero_message || "보물을 찾자!";
     renderSeasonOne();
@@ -1092,19 +1104,28 @@ els.applyUpgrade.addEventListener("click", () => {
 els.start.addEventListener("click", () => {
   if (state.gameStarted) {
     state.gameStarted = false;
+    state.startNotice = false;
     renderActiveSeason(false, false);
     setStatus("게임을 중지했습니다. 이제 코드와 강의자료를 조작할 수 있습니다.");
     return;
   }
   readFields();
   state.gameStarted = true;
+  state.startNotice = state.activeSeason === "season_01";
   renderActiveSeason(true, false);
   setStatus("게임을 시작했습니다.");
+  if (state.startNotice) {
+    window.setTimeout(() => {
+      state.startNotice = false;
+      if (state.activeSeason === "season_01") renderSeasonOne();
+    }, 1400);
+  }
 });
 
 els.reset.addEventListener("click", () => {
   readFields();
   state.gameStarted = false;
+  state.startNotice = false;
   renderActiveSeason(true, false);
 });
 

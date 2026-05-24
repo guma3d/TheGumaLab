@@ -271,7 +271,7 @@ input {
 .game-mount {
   min-height: 0;
   padding: 18px;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .controls {
@@ -285,7 +285,10 @@ input {
 .board {
   position: relative;
   width: 100%;
-  min-height: min(430px, 58vh);
+  height: 100%;
+  min-height: 300px;
+  max-height: 100%;
+  aspect-ratio: 16 / 9;
   border: 1px solid rgba(16, 185, 129, 0.25);
   border-radius: 10px;
   overflow: hidden;
@@ -294,6 +297,44 @@ input {
     linear-gradient(rgba(16, 185, 129, 0.08) 1px, transparent 1px),
     rgba(0, 0, 0, 0.28);
   background-size: 48px 48px;
+}
+
+.start-notice {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 12;
+  max-width: min(420px, calc(100% - 36px));
+  padding: 22px 28px;
+  border: 1px solid rgba(16, 185, 129, 0.65);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.78);
+  box-shadow: 0 0 36px rgba(16, 185, 129, 0.38);
+  color: var(--text-main);
+  font-size: clamp(22px, 3vw, 36px);
+  font-weight: 900;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  animation: notice-pop 1.4s ease forwards;
+}
+
+@keyframes notice-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.94);
+  }
+  16% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  72% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.98);
+  }
 }
 
 .game-lock {
@@ -609,5 +650,9 @@ input {
 
   .hud span {
     text-align: left;
+  }
+
+  .board {
+    min-height: 260px;
   }
 }
