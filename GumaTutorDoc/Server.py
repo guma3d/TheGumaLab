@@ -286,7 +286,8 @@ def generate_with_gemini(topic: str, grade: str, quiz_count: int) -> dict[str, A
         "아래 스키마와 같은 키를 가진 JSON만 반환하세요. "
         "key_points는 4~6개, vocabulary는 4~8개, quiz는 요청한 수만큼 작성하세요. "
         "summary는 전체 내용을 대표하는 중요한 한국어 문장 정확히 5개로 작성하세요. "
-        "content_sections는 4~6개로 만들고, 각 항목의 paragraphs에는 디테일한 설명을 2~4문단 넣으세요. "
+        "content_sections는 4~10개로 만들고, 내용이 많은 주제는 한 페이지에 문장을 많이 넣지 말고 소주제를 더 잘게 나누어 페이지와 사진을 늘리세요. 각 항목의 paragraphs에는 디테일한 설명을 2~4문단 넣으세요. "
+        "paragraphs에서 핵심 용어, 관찰 포인트, 꼭 기억할 단어는 **이런 형식**으로 표시하세요. "
         "각 content_sections 항목의 images에는 그 소주제를 이해하는 데 직접 필요한 실제 사진 검색어를 1~2개 넣으세요. "
         "그림, 일러스트, 도해, 지도, 아이콘, 로고, 차트 검색어는 넣지 마세요. "
         "images.query는 Wikimedia Commons에서 실제 자료 사진을 찾기 좋은 구체적인 영어 검색어로 작성하고, photo 또는 photograph 같은 단어를 포함하세요. "
@@ -528,7 +529,7 @@ def normalize_pack(pack: dict[str, Any], topic: str, grade: str, quiz_count: int
             normalized_sections[target_index]["images"] = normalized_sections[target_index]["images"][:2]
             target_index = (target_index + 1) % len(normalized_sections)
 
-    pack["content_sections"] = normalized_sections
+    pack["content_sections"] = normalized_sections[:10]
     pack["visuals"] = []
 
     pack["overview"] = str(pack.get("overview") or "").strip()
@@ -645,6 +646,8 @@ def render_material_html_legacy(pack: dict[str, Any], task_id: str) -> str:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>{e(pack.get("title"))}</title>
   <style>
     :root {{
@@ -801,7 +804,7 @@ def render_material_html_legacy(pack: dict[str, Any], task_id: str) -> str:
     }}
   </style>
 </head>
-<body>
+<body class="doc-view">
   <div class="page">
     <header>
       <div class="meta">
@@ -1304,6 +1307,38 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
     sources = list_html(pack.get("sources", []), "sources")
     topic = str(pack.get("topic") or "").strip()
     used_image_urls: set[str] = set()
+    highlight_terms = sorted(
+        {
+            str(item.get("term") or "").strip()
+            for item in pack.get("vocabulary", [])
+            if isinstance(item, dict) and len(str(item.get("term") or "").strip()) >= 2
+        },
+        key=len,
+        reverse=True,
+    )[:12]
+
+    def highlight_plain_text(value: str) -> str:
+        rendered = e(value)
+        for term in highlight_terms:
+            escaped_term = e(term)
+            rendered = re.sub(
+                re.escape(escaped_term),
+                f'<strong class="keyword-highlight">{escaped_term}</strong>',
+                rendered,
+                count=1,
+            )
+        return rendered
+
+    def rich_text_html(value: Any) -> str:
+        text = str(value or "")
+        parts = re.split(r"(\*\*[^*]{1,48}\*\*)", text)
+        rendered_parts: list[str] = []
+        for part in parts:
+            if part.startswith("**") and part.endswith("**"):
+                rendered_parts.append(f'<strong class="keyword-highlight">{e(part[2:-2])}</strong>')
+            else:
+                rendered_parts.append(highlight_plain_text(part))
+        return "".join(rendered_parts)
 
     def first_section_image(section: dict[str, Any]) -> dict[str, str] | None:
         image_items = section.get("images")
@@ -1427,7 +1462,7 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
           {image_html}
           <div class="topic-copy">
             <ul class="topic-points">
-              {"".join(f"<li>{e(point)}</li>" for point in points)}
+              {"".join(f"<li>{rich_text_html(point)}</li>" for point in points)}
             </ul>
           </div>
         </section>
@@ -1678,6 +1713,12 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
       font-size: clamp(13px, 1.12vw, 16px);
       line-height: 1.38;
     }}
+    .keyword-highlight {{
+      color: #fbbf24;
+      font-weight: 800;
+      padding: 0 0.08em;
+      text-shadow: 0 0 14px rgba(251, 191, 36, 0.22);
+    }}
     .topic-points li::before {{
       content: "";
       position: absolute;
@@ -1912,7 +1953,7 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
     }}
   </style>
 </head>
-<body>
+<body class="doc-view">
   <div class="page">
     <header>
       <div class="meta">
@@ -1943,6 +1984,21 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
     </main>
     <footer>생성일 {e(now_iso())}</footer>
   </div>
+  <script>
+    (() => {{
+      async function lockLandscape() {{
+        try {{
+          if (screen.orientation && screen.orientation.lock) {{
+            await screen.orientation.lock("landscape");
+          }}
+        }} catch (error) {{
+        }}
+      }}
+      lockLandscape();
+      document.addEventListener("click", lockLandscape, {{ once: true }});
+      document.addEventListener("touchend", lockLandscape, {{ once: true }});
+    }})();
+  </script>
 </body>
 </html>
 """
