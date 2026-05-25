@@ -2981,6 +2981,8 @@ def view_result(task_id: str):
 
     html_path = Path(task.get("result", {}).get("html_path", ""))
     json_path = Path(task.get("result", {}).get("json_path", ""))
+    if html_path.exists():
+        return html_path.read_text(encoding="utf-8")
     if json_path.exists():
         try:
             pack = json.loads(json_path.read_text(encoding="utf-8-sig"))
