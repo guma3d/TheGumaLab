@@ -227,7 +227,353 @@ def extract_json(text: str) -> dict[str, Any]:
     raise ValueError(f"Gemini response did not contain a valid JSON object: {last_error}; preview={preview}")
 
 
-def generate_with_gemini(topic: str, grade: str, quiz_count: int) -> dict[str, Any]:
+def fetch_json_url(url: str, *, timeout: int = 8) -> dict[str, Any] | None:
+    request_obj = urllib.request.Request(
+        url,
+        headers={"User-Agent": "GumaTutorDoc/1.0 (https://gumatutordoc.guma3d.com)"},
+    )
+    try:
+        with urllib.request.urlopen(request_obj, timeout=timeout) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as exc:
+        print(f"[wiki] fetch failed: {exc}")
+        return None
+
+
+def wiki_api_url(lang: str, params: dict[str, Any]) -> str:
+    base_params = {"format": "json", "origin": "*"}
+    base_params.update(params)
+    return f"https://{lang}.wikipedia.org/w/api.php?" + urlencode(base_params)
+
+
+def commons_file_url(filename: str) -> dict[str, str] | None:
+    filename = str(filename or "").replace("File:", "").strip()
+    if not filename:
+        return None
+    params = {
+        "action": "query",
+        "titles": f"File:{filename}",
+        "prop": "imageinfo",
+        "iiprop": "url|mime|size|extmetadata",
+        "iiurlwidth": "1200",
+        "format": "json",
+        "origin": "*",
+    }
+    payload = fetch_json_url("https://commons.wikimedia.org/w/api.php?" + urlencode(params))
+    pages = ((payload or {}).get("query", {}).get("pages", {}) or {}).values()
+    for page in pages:
+        info_items = page.get("imageinfo") or []
+        if not info_items:
+            continue
+        info = info_items[0]
+        image_url = str(info.get("thumburl") or info.get("url") or "")
+        if image_url:
+            metadata = info.get("extmetadata") or {}
+            artist = clean_metadata_text((metadata.get("Artist") or {}).get("value"))
+            license_short = clean_metadata_text((metadata.get("LicenseShortName") or {}).get("value"))
+            return {
+                "image_url": image_url,
+                "source_url": str(info.get("descriptionurl") or ""),
+                "source_title": str(page.get("title") or f"File:{filename}").replace("File:", ""),
+                "credit": ", ".join(part for part in [artist, license_short] if part),
+            }
+    return None
+
+
+def fetch_wikipedia_page(topic: str, lang: str) -> dict[str, Any] | None:
+    search_payload = fetch_json_url(
+        wiki_api_url(
+            lang,
+            {
+                "action": "query",
+                "list": "search",
+                "srsearch": topic,
+                "srlimit": "1",
+            },
+        )
+    )
+    matches = (search_payload or {}).get("query", {}).get("search") or []
+    if not matches:
+        return None
+
+    title = str(matches[0].get("title") or "").strip()
+    if not title:
+        return None
+    payload = fetch_json_url(
+        wiki_api_url(
+            lang,
+            {
+                "action": "query",
+                "titles": title,
+                "prop": "extracts|pageimages|pageprops|langlinks",
+                "explaintext": "1",
+                "exsectionformat": "plain",
+                "piprop": "original|thumbnail",
+                "pithumbsize": "1200",
+                "lllang": "en",
+                "redirects": "1",
+            },
+        )
+    )
+    pages = list(((payload or {}).get("query", {}).get("pages", {}) or {}).values())
+    if not pages:
+        return None
+    page = pages[0]
+    if str(page.get("missing") or ""):
+        return None
+    page_id = str(page.get("pageid") or "")
+    return {
+        "lang": lang,
+        "title": str(page.get("title") or title).strip(),
+        "page_id": page_id,
+        "source_url": f"https://{lang}.wikipedia.org/wiki/{quote(str(page.get('title') or title).replace(' ', '_'))}",
+        "extract": str(page.get("extract") or "").strip(),
+        "wikidata_id": str((page.get("pageprops") or {}).get("wikibase_item") or "").strip(),
+        "en_title": str(((page.get("langlinks") or [{}])[0] or {}).get("*") or "").strip(),
+        "page_image": (page.get("original") or page.get("thumbnail") or {}).get("source"),
+    }
+
+
+def fetch_wikidata_reference(qid: str) -> dict[str, Any]:
+    if not qid:
+        return {}
+    payload = fetch_json_url(
+        "https://www.wikidata.org/w/api.php?"
+        + urlencode(
+            {
+                "action": "wbgetentities",
+                "ids": qid,
+                "props": "labels|aliases|claims",
+                "languages": "ko|en",
+                "format": "json",
+                "origin": "*",
+            }
+        )
+    )
+    entity = ((payload or {}).get("entities") or {}).get(qid) or {}
+    labels = entity.get("labels") or {}
+    aliases = entity.get("aliases") or {}
+    claims = entity.get("claims") or {}
+
+    image_files: list[str] = []
+    for claim in claims.get("P18") or []:
+        value = (((claim.get("mainsnak") or {}).get("datavalue") or {}).get("value") or "")
+        if value:
+            image_files.append(str(value))
+    commons_category = ""
+    for claim in claims.get("P373") or []:
+        value = (((claim.get("mainsnak") or {}).get("datavalue") or {}).get("value") or "")
+        if value:
+            commons_category = str(value)
+            break
+
+    alias_values: list[str] = []
+    for lang_aliases in aliases.values():
+        for item in lang_aliases or []:
+            value = str(item.get("value") or "").strip()
+            if value and value not in alias_values:
+                alias_values.append(value)
+
+    return {
+        "labels": {
+            "ko": str((labels.get("ko") or {}).get("value") or "").strip(),
+            "en": str((labels.get("en") or {}).get("value") or "").strip(),
+        },
+        "aliases": alias_values[:10],
+        "image_files": image_files[:4],
+        "commons_category": commons_category,
+    }
+
+
+def fetch_wikidata_search_reference(topic: str) -> dict[str, Any] | None:
+    for language in ("ko", "en"):
+        payload = fetch_json_url(
+            "https://www.wikidata.org/w/api.php?"
+            + urlencode(
+                {
+                    "action": "wbsearchentities",
+                    "search": topic,
+                    "language": language,
+                    "uselang": language,
+                    "limit": "1",
+                    "format": "json",
+                    "origin": "*",
+                }
+            )
+        )
+        results = (payload or {}).get("search") or []
+        if not results:
+            continue
+        qid = str(results[0].get("id") or "").strip()
+        if not qid:
+            continue
+        wikidata = fetch_wikidata_reference(qid)
+        labels = wikidata.get("labels") or {}
+        image_candidates: list[dict[str, str]] = []
+        for filename in wikidata.get("image_files") or []:
+            image_data = commons_file_url(str(filename))
+            if image_data:
+                image_candidates.append(image_data)
+        title = str(labels.get("ko") or labels.get("en") or results[0].get("label") or topic).strip()
+        description = str(results[0].get("description") or "").strip()
+        return {
+            "title": title,
+            "lang": "wikidata",
+            "source_url": f"https://www.wikidata.org/wiki/{qid}",
+            "extract": description,
+            "wikidata_id": qid,
+            "english_title": str(labels.get("en") or "").strip(),
+            "korean_title": str(labels.get("ko") or title).strip(),
+            "aliases": wikidata.get("aliases") or [],
+            "commons_category": wikidata.get("commons_category") or "",
+            "image_candidates": image_candidates[:5],
+        }
+    return None
+
+
+def fetch_wiki_reference(topic: str) -> dict[str, Any] | None:
+    cache_key = f"wiki:{topic.lower().strip()}"
+    if cache_key in wiki_cache:
+        cached = wiki_cache[cache_key]
+        return dict(cached) if isinstance(cached, dict) else None
+
+    langs = ("ko", "en") if re.search(r"[가-힣]", topic) else ("en", "ko")
+    page = None
+    for lang in langs:
+        page = fetch_wikipedia_page(topic, lang)
+        if page:
+            break
+    if not page:
+        reference = fetch_wikidata_search_reference(topic)
+        wiki_cache[cache_key] = reference
+        return dict(reference) if isinstance(reference, dict) else None
+
+    wikidata = fetch_wikidata_reference(page.get("wikidata_id", ""))
+    image_candidates: list[dict[str, str]] = []
+    if page.get("page_image"):
+        image_candidates.append(
+            {
+                "image_url": str(page.get("page_image")),
+                "source_url": str(page.get("source_url") or ""),
+                "source_title": str(page.get("title") or topic),
+                "credit": "Wikipedia",
+            }
+        )
+    for filename in wikidata.get("image_files") or []:
+        image_data = commons_file_url(str(filename))
+        if image_data and image_data.get("image_url") not in {item.get("image_url") for item in image_candidates}:
+            image_candidates.append(image_data)
+
+    reference = {
+        "title": page.get("title") or topic,
+        "lang": page.get("lang") or "",
+        "source_url": page.get("source_url") or "",
+        "extract": str(page.get("extract") or "")[:7000],
+        "wikidata_id": page.get("wikidata_id") or "",
+        "english_title": page.get("en_title") or (wikidata.get("labels") or {}).get("en") or "",
+        "korean_title": (wikidata.get("labels") or {}).get("ko") or page.get("title") or topic,
+        "aliases": wikidata.get("aliases") or [],
+        "commons_category": wikidata.get("commons_category") or "",
+        "image_candidates": image_candidates[:5],
+    }
+    wiki_cache[cache_key] = reference
+    return dict(reference)
+
+
+def wiki_context_for_prompt(reference: dict[str, Any] | None) -> str:
+    if not reference:
+        return ""
+    facts = str(reference.get("extract") or "").strip()
+    facts = re.sub(r"\n{3,}", "\n\n", facts)[:5500]
+    names = [
+        str(reference.get("korean_title") or "").strip(),
+        str(reference.get("english_title") or "").strip(),
+        *[str(alias).strip() for alias in reference.get("aliases") or []],
+    ]
+    names = [name for name in dict.fromkeys(names) if name][:12]
+    lines = [
+        "REFERENCE_CONTEXT_FROM_WIKIPEDIA_WIKIDATA",
+        f"title: {reference.get('title') or ''}",
+        f"source_url: {reference.get('source_url') or ''}",
+        f"wikidata_id: {reference.get('wikidata_id') or ''}",
+        f"canonical_names: {', '.join(names)}",
+        f"commons_category: {reference.get('commons_category') or ''}",
+        "facts:",
+        facts,
+    ]
+    return "\n".join(lines)
+
+
+def apply_wiki_reference(pack: dict[str, Any], reference: dict[str, Any] | None) -> dict[str, Any]:
+    if not reference:
+        return pack
+
+    sources = pack.get("sources")
+    if not isinstance(sources, list):
+        sources = []
+    wikidata_id = str(reference.get("wikidata_id") or "").strip()
+    source_candidates = [reference.get("source_url")]
+    if wikidata_id:
+        source_candidates.append(f"https://www.wikidata.org/wiki/{wikidata_id}")
+    for source in source_candidates:
+        source_text = str(source or "").strip()
+        if source_text and source_text not in sources:
+            sources.insert(0, source_text)
+    pack["sources"] = sources
+
+    sections = pack.get("content_sections")
+    if not isinstance(sections, list) or not sections:
+        return pack
+
+    image_candidates = [
+        candidate
+        for candidate in reference.get("image_candidates") or []
+        if isinstance(candidate, dict) and str(candidate.get("image_url") or "").strip()
+    ]
+    if image_candidates:
+        first_section = sections[0]
+        if isinstance(first_section, dict):
+            images = first_section.get("images")
+            if not isinstance(images, list):
+                images = []
+            topic_title = str(reference.get("title") or pack.get("topic") or "").strip()
+            primary = dict(image_candidates[0])
+            primary.update(
+                {
+                    "title": primary.get("source_title") or f"{topic_title} Wikipedia image",
+                    "caption": f"{topic_title}를 실제 자료 이미지로 먼저 확인합니다.",
+                    "query": f"{reference.get('english_title') or topic_title} photograph",
+                    "notes": ["실제 자료 사진을 먼저 보며 전체 모습을 확인합니다."],
+                }
+            )
+            first_section["images"] = [primary, *images][:2]
+
+    english_title = str(reference.get("english_title") or "").strip()
+    commons_category = str(reference.get("commons_category") or "").strip()
+    if english_title:
+        for section in sections:
+            if not isinstance(section, dict):
+                continue
+            images = section.get("images")
+            if not isinstance(images, list):
+                images = []
+            section_title = str(section.get("title") or "").strip()
+            wiki_query = f"{english_title} {section_title} photograph"
+            if commons_category:
+                wiki_query = f"{english_title} {commons_category} {section_title} photograph"
+            images.append(
+                {
+                    "title": f"{section_title or english_title} reference photo",
+                    "caption": "위키/위키미디어 자료와 맞는 사진을 우선 찾습니다.",
+                    "query": wiki_query,
+                    "notes": [],
+                }
+            )
+            section["images"] = images[:3]
+    return pack
+
+
+def generate_with_gemini(topic: str, grade: str, quiz_count: int, reference: dict[str, Any] | None = None) -> dict[str, Any]:
     if not gemini_client or not types:
         raise RuntimeError("GEMINI_API_KEY가 없어 AI 생성기를 사용할 수 없습니다.")
 
@@ -279,10 +625,22 @@ def generate_with_gemini(topic: str, grade: str, quiz_count: int) -> dict[str, A
         "위험한 실험이나 따라 하면 안 되는 행동은 안전한 관찰 활동으로 바꿉니다. "
         "반드시 JSON 객체만 반환합니다."
     )
+    reference_context = wiki_context_for_prompt(reference)
+    reference_instruction = ""
+    if reference_context:
+        reference_instruction = (
+            "Use the REFERENCE_CONTEXT_FROM_WIKIPEDIA_WIKIDATA block as the primary factual source. "
+            "Rewrite it for the requested Korean grade level instead of copying encyclopedia text. "
+            "Do not invent facts that conflict with the reference. "
+            "For image queries, prefer the canonical English/Wikidata name, Wikimedia Commons category, and exact subject terms from the reference.\n\n"
+            f"{reference_context}\n\n"
+        )
+
     user_prompt = (
         f"주제: {topic}\n"
         f"대상 수준: {grade}\n"
         f"퀴즈 수: {quiz_count}\n\n"
+        f"{reference_instruction}"
         "아래 스키마와 같은 키를 가진 JSON만 반환하세요. "
         "key_points는 4~6개, vocabulary는 4~8개, quiz는 요청한 수만큼 작성하세요. "
         "summary는 전체 내용을 대표하는 중요한 한국어 문장 정확히 5개로 작성하세요. "
@@ -423,18 +781,25 @@ def normalize_image_items(value: Any, topic: str, section_title: str) -> list[di
         title = str(item.get("title") or item.get("name") or "").strip()
         caption = str(item.get("caption") or item.get("description") or "").strip()
         query = str(item.get("query") or item.get("search_query") or item.get("prompt") or "").strip()
+        image_url = str(item.get("image_url") or item.get("url") or "").strip()
+        source_url = str(item.get("source_url") or "").strip()
+        source_title = str(item.get("source_title") or "").strip()
+        credit = str(item.get("credit") or "").strip()
         notes = item.get("notes") or item.get("observations") or item.get("photo_notes")
         if isinstance(notes, str):
             notes = [notes]
         if not isinstance(notes, list):
             notes = []
-        if query:
+        if query or image_url:
             normalized.append(
                 {
                     "title": title or section_title or "이미지 자료",
                     "caption": caption,
-                    "query": query,
-                    "image_url": "",
+                    "query": query or title or section_title or topic,
+                    "image_url": image_url,
+                    "source_url": source_url,
+                    "source_title": source_title,
+                    "credit": credit,
                     "notes": [str(note).strip() for note in notes if str(note).strip()][:3],
                 }
             )
@@ -883,6 +1248,7 @@ def svg_placeholder_url(title: str, seed: int) -> str:
 
 
 commons_cache: dict[str, Any] = {}
+wiki_cache: dict[str, Any] = {}
 
 NON_PHOTO_TERMS = (
     "illustration",
@@ -2287,12 +2653,15 @@ def process_task(task_id: str, payload: dict[str, Any]) -> None:
 
     try:
         update_task(task_id, status="processing", percent=15, progress="주제와 대상 수준을 정리하는 중...")
+        reference = fetch_wiki_reference(topic)
         if gemini_client:
-            update_task(task_id, percent=35, progress="AI로 학습자료 초안을 생성하는 중...")
-            pack = generate_with_gemini(topic, grade, quiz_count)
+            progress = "위키 자료를 바탕으로 학습자료 초안을 생성하는 중..." if reference else "AI로 학습자료 초안을 생성하는 중..."
+            update_task(task_id, percent=35, progress=progress)
+            pack = generate_with_gemini(topic, grade, quiz_count, reference=reference)
         else:
             update_task(task_id, percent=35, progress="AI 키가 없어 기본 템플릿을 생성하는 중...")
             pack = generate_fallback_pack(topic, grade, quiz_count)
+        pack = apply_wiki_reference(pack, reference)
 
         update_task(task_id, percent=75, progress="HTML 문서로 저장하는 중...")
         result = save_pack(task_id, pack)
