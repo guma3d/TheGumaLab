@@ -1,0 +1,4 @@
+user_saves/
+__pycache__/
+*.py[cod]
+.pytest_cache/
