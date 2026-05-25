@@ -249,11 +249,7 @@ const seasonOneChapters = {
 };
 
 const projectFiles = [
-  { name: "main.py", role: "실행 시작점", editable: false },
-  { name: "upgrade_zone.py", role: "오늘 바꾸는 코드", editable: true },
-  { name: "engine.py", role: "숨겨진 게임 엔진", editable: false },
-  { name: "upgrade_zone_original.py", role: "복구용 원본", editable: false },
-  { name: "README.md", role: "실행 설명", editable: false },
+  { name: "upgrade_zone.py", role: "오늘 바꾸는 웹 업그레이드 코드", editable: true },
 ];
 
 const state = {
@@ -469,53 +465,10 @@ function renderFileTree() {
 
 function fileContent(fileName) {
   if (fileName === "upgrade_zone.py") return generateCode(state.activeSeason);
-  if (fileName === "main.py") {
-    return [
-      "from __future__ import annotations",
-      "",
-      "import sys",
-      "",
-      "from engine import check_game_files, run_game",
-      "",
-      "",
-      "if __name__ == \"__main__\":",
-      "    if \"--check\" in sys.argv:",
-      "        check_game_files()",
-      "    else:",
-      "        run_game()",
-    ].join("\n");
-  }
-  if (fileName === "engine.py") {
-    return [
-      "# engine.py",
-      "# 게임 화면, 캐릭터 이동, 점수 계산을 맡는 숨겨진 엔진입니다.",
-      "# 수업에서는 이 파일을 직접 고치지 않습니다.",
-      "",
-      "def run_game():",
-      "    load_upgrade_zone()",
-      "    draw_game_screen()",
-      "    handle_keyboard()",
-      "",
-      "def check_game_files():",
-      "    print(\"게임 확인 완료\")",
-    ].join("\n");
-  }
-  if (fileName === "upgrade_zone_original.py") {
-    return [
-      "# upgrade_zone_original.py",
-      "# upgrade_zone.py를 망쳤을 때 되돌리기 위한 원본입니다.",
-      "",
-      generateCode(state.activeSeason),
-    ].join("\n");
-  }
   return [
     "# GumaKidsPython",
     "",
-    "각 시즌 폴더의 main.py를 실행합니다.",
-    "",
-    "python .\\main.py",
-    "",
-    "아이가 주로 고치는 파일은 upgrade_zone.py입니다.",
+    "웹버전에서 upgrade_zone.py를 바꾸고 바로 게임 화면에서 확인합니다.",
   ].join("\n");
 }
 
