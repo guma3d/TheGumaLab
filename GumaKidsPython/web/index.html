@@ -29,8 +29,31 @@
       </nav>
       <nav id="chapterTabs" class="chapter-tabs" aria-label="챕터 선택"></nav>
 
-      <section class="game-layout">
-        <section class="left-stack">
+      <section class="ide-layout">
+        <aside class="file-panel">
+          <div class="file-panel-head">
+            <p class="eyebrow">파일트리</p>
+            <h2>project</h2>
+          </div>
+          <div id="fileTree" class="file-tree"></div>
+        </aside>
+
+        <aside class="code-panel">
+          <div class="code-panel-head">
+            <div>
+              <p class="eyebrow">코드 내용</p>
+              <h2 id="activeFileLabel">upgrade_zone.py</h2>
+            </div>
+            <button id="applyUpgradeBtn" class="primary" type="button">업그레이드 적용</button>
+          </div>
+          <textarea id="codeEditor" class="code-editor" spellcheck="false" aria-label="업그레이드 코드 편집"></textarea>
+          <section class="parsed-panel">
+            <p class="eyebrow">적용된 파라미터</p>
+            <div id="parsedParams" class="parsed-params"></div>
+          </section>
+        </aside>
+
+        <section class="right-stack">
           <section class="lesson-panel">
             <p class="eyebrow" id="chapterLabel">챕터 1~12</p>
             <h2 id="seasonTitle">보물 점수 게임</h2>
@@ -58,21 +81,6 @@
             </div>
           </section>
         </section>
-
-        <aside class="code-panel">
-          <div class="code-panel-head">
-            <div>
-              <p class="eyebrow">코드 내용</p>
-              <h2>upgrade_zone</h2>
-            </div>
-            <button id="applyUpgradeBtn" class="primary" type="button">업그레이드 적용</button>
-          </div>
-          <textarea id="codeEditor" class="code-editor" spellcheck="false" aria-label="업그레이드 코드 편집"></textarea>
-          <section class="parsed-panel">
-            <p class="eyebrow">적용된 파라미터</p>
-            <div id="parsedParams" class="parsed-params"></div>
-          </section>
-        </aside>
       </section>
     </main>
 

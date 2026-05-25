@@ -218,9 +218,18 @@ const seasonOneChapters = {
   },
 };
 
+const projectFiles = [
+  { name: "main.py", role: "실행 시작점", editable: false },
+  { name: "upgrade_zone.py", role: "오늘 바꾸는 코드", editable: true },
+  { name: "engine.py", role: "숨겨진 게임 엔진", editable: false },
+  { name: "upgrade_zone_original.py", role: "복구용 원본", editable: false },
+  { name: "README.md", role: "실행 설명", editable: false },
+];
+
 const state = {
   activeSeason: "season_01",
   activeChapter: 1,
+  activeFile: "upgrade_zone.py",
   settings: {},
   save: null,
   game: {},
@@ -236,6 +245,8 @@ const els = {
   saveStatus: document.querySelector("#saveStatus"),
   tabs: document.querySelectorAll(".season-tabs button"),
   chapterTabs: document.querySelector("#chapterTabs"),
+  fileTree: document.querySelector("#fileTree"),
+  activeFileLabel: document.querySelector("#activeFileLabel"),
   chapterLabel: document.querySelector("#chapterLabel"),
   seasonTitle: document.querySelector("#seasonTitle"),
   lessonBody: document.querySelector("#lessonBody"),
@@ -318,6 +329,75 @@ function setHud(title, stats) {
   els.hudStats.textContent = stats;
 }
 
+function renderFileTree() {
+  els.activeFileLabel.textContent = state.activeFile;
+  els.fileTree.innerHTML = projectFiles
+    .map((file) => `
+      <button
+        type="button"
+        data-file="${file.name}"
+        class="file-item ${state.activeFile === file.name ? "active" : ""}"
+        ${state.gameStarted ? "disabled" : ""}
+      >
+        <span>${file.name}</span>
+        <small>${file.role}</small>
+      </button>
+    `)
+    .join("");
+}
+
+function fileContent(fileName) {
+  if (fileName === "upgrade_zone.py") return generateCode(state.activeSeason);
+  if (fileName === "main.py") {
+    return [
+      "from __future__ import annotations",
+      "",
+      "import sys",
+      "",
+      "from engine import check_game_files, run_game",
+      "",
+      "",
+      "if __name__ == \"__main__\":",
+      "    if \"--check\" in sys.argv:",
+      "        check_game_files()",
+      "    else:",
+      "        run_game()",
+    ].join("\n");
+  }
+  if (fileName === "engine.py") {
+    return [
+      "# engine.py",
+      "# 게임 화면, 캐릭터 이동, 점수 계산을 맡는 숨겨진 엔진입니다.",
+      "# 수업에서는 이 파일을 직접 고치지 않습니다.",
+      "",
+      "def run_game():",
+      "    load_upgrade_zone()",
+      "    draw_game_screen()",
+      "    handle_keyboard()",
+      "",
+      "def check_game_files():",
+      "    print(\"게임 확인 완료\")",
+    ].join("\n");
+  }
+  if (fileName === "upgrade_zone_original.py") {
+    return [
+      "# upgrade_zone_original.py",
+      "# upgrade_zone.py를 망쳤을 때 되돌리기 위한 원본입니다.",
+      "",
+      generateCode(state.activeSeason),
+    ].join("\n");
+  }
+  return [
+    "# GumaKidsPython",
+    "",
+    "각 시즌 폴더의 main.py를 실행합니다.",
+    "",
+    "python .\\main.py",
+    "",
+    "아이가 주로 고치는 파일은 upgrade_zone.py입니다.",
+  ].join("\n");
+}
+
 function currentLessonPages() {
   if (state.activeSeason === "season_01") {
     return seasonOneChapters[state.activeChapter].pages;
@@ -349,7 +429,7 @@ function renderChapterTabs() {
 function setLockedControls() {
   els.start.textContent = state.gameStarted ? "게임 중지" : "게임 시작";
   els.start.classList.toggle("stop", state.gameStarted);
-  els.codeEditor.disabled = state.gameStarted;
+  els.codeEditor.disabled = state.gameStarted || state.activeFile !== "upgrade_zone.py";
   els.applyUpgrade.disabled = state.gameStarted;
   els.prevLesson.disabled = state.gameStarted || state.lessonPage === 0;
   els.nextLesson.disabled = state.gameStarted || state.lessonPage === currentLessonPages().length - 1;
@@ -360,6 +440,9 @@ function setLockedControls() {
     tab.disabled = state.gameStarted;
   });
   els.chapterTabs.querySelectorAll("button").forEach((button) => {
+    button.disabled = state.gameStarted;
+  });
+  els.fileTree.querySelectorAll("button").forEach((button) => {
     button.disabled = state.gameStarted;
   });
 }
@@ -630,8 +713,12 @@ function generateCode(seasonKey) {
 }
 
 function renderCodeEditor() {
-  els.codeEditor.value = generateCode(state.activeSeason);
+  els.codeEditor.value = fileContent(state.activeFile);
   requestAnimationFrame(() => {
+    if (state.activeFile !== "upgrade_zone.py") {
+      els.codeEditor.scrollTop = 0;
+      return;
+    }
     const marker = els.codeEditor.value.indexOf("[오늘의 업그레이드]");
     if (marker <= 0) {
       els.codeEditor.scrollTop = 0;
@@ -1016,6 +1103,7 @@ function randomTreasure() {
 
 function renderActiveSeason(reset = false, refreshCode = false) {
   renderChapterTabs();
+  renderFileTree();
   renderFields();
   renderLesson();
   if (refreshCode) renderCodeEditor();
@@ -1077,6 +1165,7 @@ els.tabs.forEach((button) => {
     readFields();
     state.activeSeason = button.dataset.season;
     state.activeChapter = 1;
+    state.activeFile = "upgrade_zone.py";
     state.lessonPage = 0;
     state.gameStarted = false;
     els.tabs.forEach((tab) => tab.classList.toggle("active", tab === button));
@@ -1090,11 +1179,24 @@ els.chapterTabs.addEventListener("click", (event) => {
   readFields();
   state.activeChapter = Number(button.dataset.chapter);
   state.lessonPage = 0;
+  state.activeFile = "upgrade_zone.py";
+  renderActiveSeason(false, true);
+});
+
+els.fileTree.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-file]");
+  if (!button || state.gameStarted) return;
+  if (state.activeFile === "upgrade_zone.py") readFields();
+  state.activeFile = button.dataset.file;
   renderActiveSeason(false, true);
 });
 
 els.applyUpgrade.addEventListener("click", () => {
   if (state.gameStarted) return;
+  if (state.activeFile !== "upgrade_zone.py") {
+    setStatus("업그레이드는 upgrade_zone.py에서만 적용할 수 있습니다.");
+    return;
+  }
   readFields();
   state.gameStarted = false;
   renderActiveSeason(true, false);
