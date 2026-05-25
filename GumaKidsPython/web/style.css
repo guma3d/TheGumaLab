@@ -31,6 +31,7 @@ body {
 
 button,
 input,
+select,
 textarea {
   font: inherit;
 }
@@ -56,8 +57,7 @@ button:disabled {
   opacity: 0.45;
 }
 
-button.primary,
-.season-tabs button.active {
+button.primary {
   border-color: transparent;
   background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
   color: #03130d;
@@ -71,12 +71,23 @@ button.stop {
   box-shadow: 0 0 28px rgba(239, 68, 68, 0.34);
 }
 
-input {
+input,
+select {
   min-width: 0;
   border: 1px solid var(--glass-border);
   border-radius: 8px;
   padding: 10px 12px;
   background: rgba(0, 0, 0, 0.28);
+  color: var(--text-main);
+}
+
+select {
+  min-height: 42px;
+  cursor: pointer;
+}
+
+select option {
+  background: #111111;
   color: var(--text-main);
 }
 
@@ -102,9 +113,9 @@ input {
   color: var(--text-muted);
 }
 
-.save-panel {
+.course-panel {
   display: grid;
-  grid-template-columns: auto minmax(120px, 180px) auto auto;
+  grid-template-columns: auto minmax(108px, 150px) auto minmax(170px, 260px);
   align-items: center;
   gap: 8px;
 }
@@ -113,35 +124,6 @@ input {
   width: calc(100vw - 24px);
   max-width: none;
   margin: 12px auto;
-}
-
-.season-tabs {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.chapter-tabs {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 6px;
-  margin-bottom: 16px;
-}
-
-.chapter-tabs[hidden] {
-  display: none;
-}
-
-.chapter-tabs button {
-  padding: 8px 6px;
-  font-size: 13px;
-}
-
-.chapter-tabs button.active {
-  border-color: var(--primary);
-  background: rgba(16, 185, 129, 0.16);
-  color: var(--text-main);
 }
 
 .ide-layout {
@@ -676,9 +658,7 @@ input {
     display: grid;
   }
 
-  .save-panel,
-  .season-tabs,
-  .chapter-tabs,
+  .course-panel,
   .choice-grid,
   .dungeon-scene,
   .battle-grid,

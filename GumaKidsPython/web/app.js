@@ -239,12 +239,9 @@ const state = {
 };
 
 const els = {
-  profile: document.querySelector("#profileInput"),
-  loadSave: document.querySelector("#loadSaveBtn"),
-  save: document.querySelector("#saveBtn"),
+  seasonSelect: document.querySelector("#seasonSelect"),
+  chapterSelect: document.querySelector("#chapterSelect"),
   saveStatus: document.querySelector("#saveStatus"),
-  tabs: document.querySelectorAll(".season-tabs button"),
-  chapterTabs: document.querySelector("#chapterTabs"),
   fileTree: document.querySelector("#fileTree"),
   activeFileLabel: document.querySelector("#activeFileLabel"),
   chapterLabel: document.querySelector("#chapterLabel"),
@@ -406,24 +403,27 @@ function currentLessonPages() {
 }
 
 function renderChapterTabs() {
-  if (state.activeSeason !== "season_01") {
-    els.chapterTabs.innerHTML = "";
-    els.chapterTabs.hidden = true;
-    return;
-  }
+  const ranges = {
+    season_01: [1, 12],
+    season_02: [13, 24],
+    season_03: [25, 36],
+    season_04: [37, 48],
+  };
+  const [start, end] = ranges[state.activeSeason] || ranges.season_01;
+  els.seasonSelect.value = state.activeSeason;
+  els.chapterSelect.innerHTML = "";
 
-  els.chapterTabs.hidden = false;
-  els.chapterTabs.innerHTML = Object.entries(seasonOneChapters)
-    .map(([chapter, info]) => `
-      <button
-        type="button"
-        data-chapter="${chapter}"
-        class="${Number(chapter) === state.activeChapter ? "active" : ""}"
-        ${state.gameStarted ? "disabled" : ""}
-        title="${info.title}"
-      >${chapter}</button>
-    `)
-    .join("");
+  for (let chapter = start; chapter <= end; chapter += 1) {
+    const localChapter = ((chapter - 1) % 12) + 1;
+    const option = document.createElement("option");
+    const title = state.activeSeason === "season_01"
+      ? seasonOneChapters[localChapter].title
+      : `챕터 ${chapter}`;
+    option.value = String(localChapter);
+    option.textContent = `${chapter}. ${title}`;
+    option.selected = localChapter === state.activeChapter;
+    els.chapterSelect.appendChild(option);
+  }
 }
 
 function setLockedControls() {
@@ -433,15 +433,8 @@ function setLockedControls() {
   els.applyUpgrade.disabled = state.gameStarted;
   els.prevLesson.disabled = state.gameStarted || state.lessonPage === 0;
   els.nextLesson.disabled = state.gameStarted || state.lessonPage === currentLessonPages().length - 1;
-  els.profile.disabled = state.gameStarted;
-  els.loadSave.disabled = state.gameStarted;
-  els.save.disabled = state.gameStarted;
-  els.tabs.forEach((tab) => {
-    tab.disabled = state.gameStarted;
-  });
-  els.chapterTabs.querySelectorAll("button").forEach((button) => {
-    button.disabled = state.gameStarted;
-  });
+  els.seasonSelect.disabled = state.gameStarted;
+  els.chapterSelect.disabled = state.gameStarted;
   els.fileTree.querySelectorAll("button").forEach((button) => {
     button.disabled = state.gameStarted;
   });
@@ -1125,7 +1118,7 @@ function renderActiveSeason(reset = false, refreshCode = false) {
 }
 
 async function loadSave() {
-  const profile = els.profile.value.trim() || "default";
+  const profile = "default";
   const response = await fetch(`/api/save?profile=${encodeURIComponent(profile)}`);
   if (!response.ok) throw new Error("저장 정보를 불러오지 못했습니다.");
   state.save = await response.json();
@@ -1142,7 +1135,7 @@ async function loadSave() {
 
 async function saveToServer() {
   readFields();
-  const profile = els.profile.value.trim() || "default";
+  const profile = "default";
   const payload = {
     profile,
     save: {
@@ -1159,25 +1152,21 @@ async function saveToServer() {
   setStatus(`${profile} 저장 완료: ${new Date().toLocaleTimeString("ko-KR")}`);
 }
 
-els.tabs.forEach((button) => {
-  button.addEventListener("click", () => {
-    if (state.gameStarted) return;
-    readFields();
-    state.activeSeason = button.dataset.season;
-    state.activeChapter = 1;
-    state.activeFile = "upgrade_zone.py";
-    state.lessonPage = 0;
-    state.gameStarted = false;
-    els.tabs.forEach((tab) => tab.classList.toggle("active", tab === button));
-    renderActiveSeason(false, true);
-  });
+els.seasonSelect.addEventListener("change", () => {
+  if (state.gameStarted) return;
+  readFields();
+  state.activeSeason = els.seasonSelect.value;
+  state.activeChapter = 1;
+  state.activeFile = "upgrade_zone.py";
+  state.lessonPage = 0;
+  state.gameStarted = false;
+  renderActiveSeason(false, true);
 });
 
-els.chapterTabs.addEventListener("click", (event) => {
-  const button = event.target.closest("button[data-chapter]");
-  if (!button || state.gameStarted) return;
+els.chapterSelect.addEventListener("change", () => {
+  if (state.gameStarted) return;
   readFields();
-  state.activeChapter = Number(button.dataset.chapter);
+  state.activeChapter = Number(els.chapterSelect.value);
   state.lessonPage = 0;
   state.activeFile = "upgrade_zone.py";
   renderActiveSeason(false, true);
@@ -1267,16 +1256,6 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "ArrowLeft") moveHero(-1, 0);
   if (event.key === "ArrowRight") moveHero(1, 0);
   if (event.key === " ") collectSeasonOne();
-});
-
-els.loadSave.addEventListener("click", () => {
-  if (state.gameStarted) return;
-  loadSave().catch((error) => setStatus(error.message));
-});
-
-els.save.addEventListener("click", () => {
-  if (state.gameStarted) return;
-  saveToServer().catch((error) => setStatus(error.message));
 });
 
 loadSave().catch(() => {

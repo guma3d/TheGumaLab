@@ -12,23 +12,20 @@
         <h1>GumaKidsPython</h1>
         <p>파이썬 게임 업그레이드 모험</p>
       </div>
-      <div class="save-panel">
-        <label for="profileInput">프로필</label>
-        <input id="profileInput" value="default" maxlength="40" autocomplete="off">
-        <button id="loadSaveBtn" type="button">불러오기</button>
-        <button id="saveBtn" type="button">서버 저장</button>
+      <div class="course-panel">
+        <label for="seasonSelect">시즌</label>
+        <select id="seasonSelect" aria-label="시즌 선택">
+          <option value="season_01">시즌 1</option>
+          <option value="season_02">시즌 2</option>
+          <option value="season_03">시즌 3</option>
+          <option value="season_04">시즌 4</option>
+        </select>
+        <label for="chapterSelect">강의</label>
+        <select id="chapterSelect" aria-label="강의 챕터 선택"></select>
       </div>
     </header>
 
     <main class="app-shell">
-      <nav class="season-tabs" aria-label="시즌 선택">
-        <button class="active" data-season="season_01" type="button">시즌 1</button>
-        <button data-season="season_02" type="button">시즌 2</button>
-        <button data-season="season_03" type="button">시즌 3</button>
-        <button data-season="season_04" type="button">시즌 4</button>
-      </nav>
-      <nav id="chapterTabs" class="chapter-tabs" aria-label="챕터 선택"></nav>
-
       <section class="ide-layout">
         <aside class="file-panel">
           <div class="file-panel-head">
