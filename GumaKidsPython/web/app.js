@@ -312,7 +312,7 @@ function startMusic() {
   const context = getAudioContext();
   if (!context || audio.music) return;
   const gain = context.createGain();
-  gain.gain.value = 0.018;
+  gain.gain.setValueAtTime(0.018, context.currentTime);
   gain.connect(context.destination);
   audio.musicGain = gain;
 
@@ -341,6 +341,16 @@ function stopMusic() {
   if (audio.music) {
     window.clearInterval(audio.music);
     audio.music = null;
+  }
+  if (audio.musicGain && audio.context) {
+    const now = audio.context.currentTime;
+    audio.musicGain.gain.cancelScheduledValues(now);
+    audio.musicGain.gain.setValueAtTime(audio.musicGain.gain.value, now);
+    audio.musicGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
+    window.setTimeout(() => {
+      audio.musicGain?.disconnect();
+      audio.musicGain = null;
+    }, 80);
   }
 }
 
@@ -883,6 +893,12 @@ function seasonOneReset() {
     score: toNumber(s.start_score, 10),
     hp: toNumber(s.hp, 100),
     message: s.start_message || "모험 시작!",
+    collected: {
+      treasure: 0,
+      coin: 0,
+      bonus: 0,
+      trap: 0,
+    },
     items: [
       { kind: "treasure", x: 32, y: 24, label: "보물", taken: false },
       { kind: "treasure", x: 72, y: 62, label: "동전", taken: false },
@@ -903,7 +919,11 @@ function renderSeasonOne() {
   const s = state.settings.season_01;
   const g = state.game.season_01 || (seasonOneReset(), state.game.season_01);
   const title = `${s.hero_name || "번개용사"} 등장!`;
-  setHud(title, `점수 ${g.score} · 체력 ${g.hp} · 속도 ${s.speed}`);
+  const collected = g.collected || {};
+  setHud(
+    title,
+    `점수 ${g.score} · 체력 ${g.hp} · 속도 ${s.speed} · 보물 ${collected.treasure || 0} · 동전 ${collected.coin || 0} · 보너스 ${collected.bonus || 0}`,
+  );
   els.action.textContent = "보물 줍기";
   els.gameMount.innerHTML = `<div class="board voxel-board" tabindex="0" aria-label="보물 점수 게임판"></div>`;
   const board = els.gameMount.querySelector(".board");
@@ -973,27 +993,45 @@ function moveHero(dx, dy) {
   renderSeasonOne();
 }
 
+function findCollectableItem(game) {
+  const hitbox = { x: 13, y: 16 };
+  return game.items
+    .filter((item) => !item.taken)
+    .map((item) => ({
+      item,
+      dx: Math.abs(item.x - game.x),
+      dy: Math.abs(item.y - game.y),
+    }))
+    .filter(({ dx, dy }) => dx <= hitbox.x && dy <= hitbox.y)
+    .sort((a, b) => (a.dx + a.dy) - (b.dx + b.dy))[0]?.item;
+}
+
 function collectSeasonOne() {
   if (!state.gameStarted) return;
   const s = state.settings.season_01;
   const g = state.game.season_01;
-  const near = g.items.find((item) => !item.taken && Math.abs(item.x - g.x) < 8 && Math.abs(item.y - g.y) < 10);
+  const near = findCollectableItem(g);
   if (!near) {
     g.message = s.hero_message || "보물을 찾자!";
     renderSeasonOne();
     return;
   }
   near.taken = true;
+  g.collected ||= { treasure: 0, coin: 0, bonus: 0, trap: 0 };
   playPickupSound(near.kind);
   if (near.kind === "trap") {
+    g.collected.trap += 1;
     g.hp = Math.max(0, g.hp - toNumber(s.trap_damage, 20));
     g.message = `함정! 체력이 ${toNumber(s.trap_damage, 20)} 줄었어.`;
   } else if (near.kind === "bonus") {
+    g.collected.bonus += 1;
     g.score = g.score * toNumber(s.bonus_multiplier, 2);
     g.message = "보너스 보물! 점수가 크게 올랐어.";
   } else {
+    if (near.label === "동전") g.collected.coin += 1;
+    else g.collected.treasure += 1;
     g.score += toNumber(s.treasure_point, 10);
-    g.message = "보물을 주웠어!";
+    g.message = `${near.label}을 주웠어!`;
   }
   updateSaveSeason("season_01", {
     high_score: Math.max(getSeasonSave("season_01").high_score || 0, g.score),
