@@ -238,6 +238,12 @@ const state = {
   startNotice: false,
 };
 
+const audio = {
+  context: null,
+  music: null,
+  musicGain: null,
+};
+
 const els = {
   seasonSelect: document.querySelector("#seasonSelect"),
   chapterSelect: document.querySelector("#chapterSelect"),
@@ -260,6 +266,83 @@ const els = {
   action: document.querySelector("#actionBtn"),
   reset: document.querySelector("#resetBtn"),
 };
+
+function getAudioContext() {
+  if (!audio.context) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return null;
+    audio.context = new AudioContextClass();
+  }
+  if (audio.context.state === "suspended") audio.context.resume();
+  return audio.context;
+}
+
+function playTone({ frequency = 440, duration = 0.08, type = "square", volume = 0.04, slide = 0 }) {
+  const context = getAudioContext();
+  if (!context) return;
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  const now = context.currentTime;
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, now);
+  if (slide) oscillator.frequency.exponentialRampToValueAtTime(Math.max(40, frequency + slide), now + duration);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(volume, now + 0.012);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+  oscillator.connect(gain);
+  gain.connect(context.destination);
+  oscillator.start(now);
+  oscillator.stop(now + duration + 0.02);
+}
+
+function playFootstep() {
+  playTone({ frequency: 120 + Math.random() * 34, duration: 0.055, type: "triangle", volume: 0.035, slide: -42 });
+}
+
+function playPickupSound(kind) {
+  if (kind === "trap") {
+    playTone({ frequency: 120, duration: 0.16, type: "sawtooth", volume: 0.055, slide: -72 });
+    return;
+  }
+  playTone({ frequency: 520, duration: 0.08, type: "square", volume: 0.045, slide: 180 });
+  window.setTimeout(() => playTone({ frequency: 780, duration: 0.08, type: "square", volume: 0.036, slide: 120 }), 70);
+}
+
+function startMusic() {
+  const context = getAudioContext();
+  if (!context || audio.music) return;
+  const gain = context.createGain();
+  gain.gain.value = 0.018;
+  gain.connect(context.destination);
+  audio.musicGain = gain;
+
+  const notes = [196, 247, 294, 247, 220, 262, 330, 262];
+  let index = 0;
+  audio.music = window.setInterval(() => {
+    if (!state.gameStarted) return;
+    const frequency = notes[index % notes.length];
+    index += 1;
+    const oscillator = context.createOscillator();
+    const noteGain = context.createGain();
+    const now = context.currentTime;
+    oscillator.type = "triangle";
+    oscillator.frequency.setValueAtTime(frequency, now);
+    noteGain.gain.setValueAtTime(0.0001, now);
+    noteGain.gain.exponentialRampToValueAtTime(0.75, now + 0.03);
+    noteGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+    oscillator.connect(noteGain);
+    noteGain.connect(gain);
+    oscillator.start(now);
+    oscillator.stop(now + 0.32);
+  }, 360);
+}
+
+function stopMusic() {
+  if (audio.music) {
+    window.clearInterval(audio.music);
+    audio.music = null;
+  }
+}
 
 function toNumber(value, fallback) {
   const number = Number(value);
@@ -795,6 +878,8 @@ function seasonOneReset() {
   state.game.season_01 = {
     x: 10,
     y: 18,
+    direction: "down",
+    step: 0,
     score: toNumber(s.start_score, 10),
     hp: toNumber(s.hp, 100),
     message: s.start_message || "모험 시작!",
@@ -820,19 +905,31 @@ function renderSeasonOne() {
   const title = `${s.hero_name || "번개용사"} 등장!`;
   setHud(title, `점수 ${g.score} · 체력 ${g.hp} · 속도 ${s.speed}`);
   els.action.textContent = "보물 줍기";
-  els.gameMount.innerHTML = `<div class="board" tabindex="0" aria-label="보물 점수 게임판"></div>`;
+  els.gameMount.innerHTML = `<div class="board voxel-board" tabindex="0" aria-label="보물 점수 게임판"></div>`;
   const board = els.gameMount.querySelector(".board");
 
   const hero = document.createElement("div");
-  hero.className = "sprite hero";
-  hero.innerHTML = `<span class="avatar-head"></span><span class="avatar-name">${s.hero_name || "용사"}</span>`;
+  hero.className = `sprite hero voxel-hero facing-${g.direction || "down"} step-${g.step % 2}`;
+  hero.innerHTML = `
+    <span class="hero-shadow"></span>
+    <span class="voxel-sword"></span>
+    <span class="voxel-body">
+      <span class="voxel-head"><span class="voxel-face"></span></span>
+      <span class="voxel-chest"></span>
+      <span class="voxel-arm arm-left"></span>
+      <span class="voxel-arm arm-right"></span>
+      <span class="voxel-leg leg-left"></span>
+      <span class="voxel-leg leg-right"></span>
+    </span>
+    <span class="avatar-name">${s.hero_name || "용사"}</span>
+  `;
   Object.assign(hero.style, percentStyle(g.x, g.y));
   board.appendChild(hero);
 
   for (const item of g.items.filter((entry) => !entry.taken)) {
     const sprite = document.createElement("div");
-    sprite.className = `sprite ${item.kind === "trap" ? "trap" : "treasure"}`;
-    sprite.textContent = item.label;
+    sprite.className = `sprite voxel-item ${item.kind === "trap" ? "trap" : "treasure"} ${item.kind === "bonus" ? "bonus" : ""}`;
+    sprite.innerHTML = `<span class="item-icon"></span><span>${item.label}</span>`;
     Object.assign(sprite.style, percentStyle(item.x, item.y));
     board.appendChild(sprite);
   }
@@ -865,8 +962,14 @@ function moveHero(dx, dy) {
   const s = state.settings.season_01;
   const g = state.game.season_01;
   const speed = Math.max(1, toNumber(s.speed, 5)) * 1.45;
+  if (dx < 0) g.direction = "left";
+  if (dx > 0) g.direction = "right";
+  if (dy < 0) g.direction = "up";
+  if (dy > 0) g.direction = "down";
+  g.step += 1;
   g.x = Math.max(0, Math.min(90, g.x + dx * speed));
   g.y = Math.max(0, Math.min(82, g.y + dy * speed));
+  playFootstep();
   renderSeasonOne();
 }
 
@@ -881,6 +984,7 @@ function collectSeasonOne() {
     return;
   }
   near.taken = true;
+  playPickupSound(near.kind);
   if (near.kind === "trap") {
     g.hp = Math.max(0, g.hp - toNumber(s.trap_damage, 20));
     g.message = `함정! 체력이 ${toNumber(s.trap_damage, 20)} 줄었어.`;
@@ -1196,6 +1300,7 @@ els.start.addEventListener("click", () => {
   if (state.gameStarted) {
     state.gameStarted = false;
     state.startNotice = false;
+    stopMusic();
     renderActiveSeason(false, false);
     setStatus("게임을 중지했습니다. 이제 코드와 강의자료를 조작할 수 있습니다.");
     return;
@@ -1203,6 +1308,7 @@ els.start.addEventListener("click", () => {
   readFields();
   state.gameStarted = true;
   state.startNotice = state.activeSeason === "season_01";
+  startMusic();
   renderActiveSeason(true, false);
   setStatus("게임을 시작했습니다.");
   if (state.startNotice) {
@@ -1217,6 +1323,7 @@ els.reset.addEventListener("click", () => {
   readFields();
   state.gameStarted = false;
   state.startNotice = false;
+  stopMusic();
   renderActiveSeason(true, false);
 });
 
