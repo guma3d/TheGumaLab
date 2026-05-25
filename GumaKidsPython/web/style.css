@@ -340,6 +340,57 @@ select option {
   perspective: 780px;
 }
 
+.board.chapter-1 {
+  background:
+    linear-gradient(90deg, rgba(16, 185, 129, 0.12) 1px, transparent 1px),
+    linear-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 1px),
+    linear-gradient(180deg, #15331f 0%, #0d2217 62%, #07150f 100%);
+  background-size: 32px 32px, 32px 32px, auto;
+}
+
+.board.chapter-4,
+.board.chapter-5,
+.board.chapter-6,
+.board.chapter-7 {
+  background:
+    radial-gradient(circle at 32% 44%, rgba(250, 204, 21, 0.28), transparent 12%),
+    radial-gradient(circle at 72% 32%, rgba(56, 189, 248, 0.16), transparent 14%),
+    linear-gradient(90deg, rgba(16, 185, 129, 0.16) 1px, transparent 1px),
+    linear-gradient(rgba(16, 185, 129, 0.12) 1px, transparent 1px),
+    linear-gradient(180deg, #17462a 0%, #0f2f1d 58%, #081b13 100%);
+  background-size: auto, auto, 32px 32px, 32px 32px, auto;
+}
+
+.board.chapter-8,
+.board.chapter-9,
+.board.chapter-10 {
+  background:
+    radial-gradient(circle at 20% 74%, rgba(244, 114, 182, 0.18), transparent 12%),
+    radial-gradient(circle at 76% 24%, rgba(250, 204, 21, 0.28), transparent 14%),
+    linear-gradient(135deg, rgba(14, 165, 233, 0.16) 25%, transparent 25%) 0 0 / 64px 64px,
+    linear-gradient(315deg, rgba(20, 184, 166, 0.14) 25%, transparent 25%) 0 0 / 64px 64px,
+    linear-gradient(180deg, #12375a 0%, #0e2f2a 48%, #0a1f16 100%);
+  background-size: auto, auto, 64px 64px, 64px 64px, auto;
+}
+
+.board.chapter-11,
+.board.chapter-12 {
+  background:
+    radial-gradient(circle at 84% 75%, rgba(167, 139, 250, 0.36), transparent 17%),
+    radial-gradient(circle at 22% 24%, rgba(250, 204, 21, 0.3), transparent 13%),
+    radial-gradient(circle at 56% 58%, rgba(239, 68, 68, 0.18), transparent 18%),
+    linear-gradient(135deg, rgba(56, 189, 248, 0.18) 25%, transparent 25%) 0 0 / 58px 58px,
+    linear-gradient(315deg, rgba(244, 114, 182, 0.16) 25%, transparent 25%) 0 0 / 58px 58px,
+    linear-gradient(180deg, #172554 0%, #164e63 42%, #18230f 100%);
+  background-size: auto, auto, auto, 58px 58px, 58px 58px, auto;
+  animation: board-magic 3.2s ease-in-out infinite alternate;
+}
+
+@keyframes board-magic {
+  from { filter: saturate(1); }
+  to { filter: saturate(1.35) brightness(1.08); }
+}
+
 .voxel-board::before,
 .voxel-board::after {
   content: "";
@@ -515,6 +566,87 @@ select option {
   to { opacity: 0.95; }
 }
 
+.scene-prop {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.coin-road {
+  left: 28%;
+  top: 37%;
+  width: 52%;
+  height: 28%;
+  border-radius: 50%;
+  border: 2px dashed rgba(250, 204, 21, 0.45);
+  transform: rotate(-18deg);
+}
+
+.wind-ring {
+  left: 31%;
+  top: 68%;
+  width: 92px;
+  height: 42px;
+  border: 3px solid rgba(125, 211, 252, 0.45);
+  border-left-color: transparent;
+  border-radius: 50%;
+  animation: wind-spin 0.9s linear infinite;
+}
+
+.treasure-gate {
+  right: 9%;
+  top: 30%;
+  width: 108px;
+  height: 78px;
+  border: 5px solid rgba(250, 204, 21, 0.56);
+  border-bottom: 0;
+  border-radius: 52px 52px 0 0;
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.34);
+}
+
+.portal-aura {
+  right: 3%;
+  bottom: 6%;
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.36) 0 6%, transparent 7% 31%, rgba(167, 139, 250, 0.38) 32% 48%, transparent 49%);
+  filter: blur(0.2px);
+  animation: portal-aura 1.4s linear infinite;
+}
+
+.crystal-left,
+.crystal-right {
+  width: 42px;
+  height: 74px;
+  clip-path: polygon(50% 0, 100% 35%, 78% 100%, 22% 100%, 0 35%);
+  background: linear-gradient(135deg, #bae6fd, #38bdf8 48%, #7c3aed);
+  box-shadow: 0 0 26px rgba(56, 189, 248, 0.5);
+}
+
+.crystal-left {
+  left: 12%;
+  bottom: 15%;
+  transform: rotate(-10deg);
+}
+
+.crystal-right {
+  right: 21%;
+  bottom: 19%;
+  transform: rotate(12deg) scale(0.82);
+}
+
+@keyframes wind-spin {
+  from { transform: rotate(-18deg); }
+  to { transform: rotate(342deg); }
+}
+
+@keyframes portal-aura {
+  from { transform: rotate(0deg) scale(0.92); opacity: 0.7; }
+  to { transform: rotate(360deg) scale(1.08); opacity: 1; }
+}
+
 .start-notice {
   position: absolute;
   left: 50%;
@@ -555,16 +687,21 @@ select option {
 
 .game-lock {
   position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.55);
-  color: var(--text-main);
-  font-size: 18px;
-  font-weight: 800;
-  text-align: center;
+  left: 14px;
+  right: auto;
+  bottom: 14px;
   z-index: 10;
+  display: block;
+  max-width: min(320px, calc(100% - 28px));
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.58);
+  color: var(--text-main);
+  font-size: 14px;
+  font-weight: 800;
+  text-align: left;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
 }
 
 .code-editor {
