@@ -533,6 +533,7 @@ select option {
   text-align: left;
   text-shadow: none;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
+  pointer-events: none;
 }
 
 .hero-speech::after {

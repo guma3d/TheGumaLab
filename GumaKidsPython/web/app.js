@@ -86,10 +86,26 @@ const seasons = {
   },
 };
 
+const seasonOneEditPlans = {
+  1: { lines: 1, keys: ["start_message"], labels: ["start_message"] },
+  2: { lines: 1, keys: ["hero_message"], labels: ["hero_message"] },
+  3: { lines: 1, keys: ["hero_name"], labels: ["hero_name"] },
+  4: { lines: 1, keys: ["start_score"], labels: ["start_score"] },
+  5: { lines: 2, keys: ["start_score", "score"], labels: ["start_score", "score"] },
+  6: { lines: 2, keys: ["score", "hp"], labels: ["score", "hp"] },
+  7: { lines: 2, keys: ["hp", "speed"], labels: ["hp", "speed"] },
+  8: { lines: 3, keys: ["hero_name", "hero_message", "title"], labels: ["hero_name", "hero_message", "title"] },
+  9: { lines: 3, keys: ["hero_name", "score", "status_text"], labels: ["hero_name", "score", "status_text"] },
+  10: { lines: 4, keys: ["score", "hp", "speed", "treasure_point"], labels: ["score", "hp", "speed", "treasure_point"] },
+  11: { lines: 4, keys: ["score", "hp", "speed", "trap_damage"], labels: ["score", "hp", "speed", "trap_damage"] },
+  12: { lines: 5, keys: ["score", "hp", "treasure_point", "trap_damage", "bonus_multiplier"], labels: ["score", "hp", "treasure_point", "trap_damage", "bonus_multiplier"] },
+};
+
 const seasonOneChapters = {
   1: {
     title: "게임 화면아 안녕",
     focus: "start_message",
+    syntax: "str은 글자를 담는 자료형입니다. 따옴표 안에 있는 말은 파이썬이 계산하지 않고 그대로 기억합니다. start_message는 게임이 시작될 때 보여줄 첫 문장을 담는 변수입니다.",
     pages: [
       ["1. 오늘의 장면", "게임이 시작될 때 화면에 첫 문장이 나타납니다."],
       ["2. 오늘의 코드", "start_message = \"모험 시작!\" 처럼 이름에 글자를 담습니다."],
@@ -101,6 +117,7 @@ const seasonOneChapters = {
   2: {
     title: "캐릭터가 말해요",
     focus: "hero_message",
+    syntax: "문자열 str은 한 글자도, 긴 문장도 담을 수 있습니다. hero_message에 넣은 글자는 주인공 옆 말풍선에 붙어서 계속 따라다닙니다.",
     pages: [
       ["1. 오늘의 장면", "주인공 옆 말풍선에 보여줄 대사를 정합니다."],
       ["2. 오늘의 코드", "hero_message 변수에 주인공의 말을 저장합니다."],
@@ -112,6 +129,7 @@ const seasonOneChapters = {
   3: {
     title: "이름을 바꿔요",
     focus: "hero_name",
+    syntax: "변수는 값에 붙이는 이름표입니다. hero_name을 바꾸면 캐릭터 이름표, 제목, 상태창처럼 hero_name을 쓰는 곳이 함께 바뀝니다.",
     pages: [
       ["1. 오늘의 장면", "상태창과 캐릭터 이름표에 주인공 이름이 보입니다."],
       ["2. 오늘의 코드", "hero_name 변수에 이름 문자열을 저장합니다."],
@@ -123,6 +141,7 @@ const seasonOneChapters = {
   4: {
     title: "숫자가 보여요",
     focus: "start_score",
+    syntax: "int는 정수 자료형입니다. 10, 0, 100처럼 소수점이 없는 숫자를 뜻하고, 점수 계산에 쓰려면 따옴표 없이 적습니다.",
     pages: [
       ["1. 오늘의 장면", "게임을 시작할 때 점수가 몇 점에서 출발할지 정합니다."],
       ["2. 오늘의 코드", "start_score = 10 처럼 숫자는 따옴표 없이 씁니다."],
@@ -134,6 +153,7 @@ const seasonOneChapters = {
   5: {
     title: "점수판 만들기",
     focus: "score",
+    syntax: "= 는 오른쪽 값을 왼쪽 변수에 넣는 대입 연산자입니다. score = start_score는 시작 점수를 현재 점수에 복사한다는 뜻입니다.",
     pages: [
       ["1. 오늘의 장면", "점수판은 현재 점수를 계속 보여줍니다."],
       ["2. 오늘의 코드", "score = start_score는 시작 점수를 현재 점수에 복사합니다."],
@@ -145,6 +165,7 @@ const seasonOneChapters = {
   6: {
     title: "체력 만들기",
     focus: "hp",
+    syntax: "숫자 변수는 게임 규칙을 조절합니다. hp는 주인공 체력이고, 값이 클수록 함정을 밟아도 더 오래 버틸 수 있습니다.",
     pages: [
       ["1. 오늘의 장면", "함정에 닿으면 체력이 줄어듭니다."],
       ["2. 오늘의 코드", "hp = 100은 주인공 체력을 숫자로 저장합니다."],
@@ -156,6 +177,7 @@ const seasonOneChapters = {
   7: {
     title: "속도 만들기",
     focus: "speed",
+    syntax: "변수 값이 바뀌면 그 변수를 쓰는 계산 결과도 바뀝니다. speed가 커지면 방향키 한 번에 움직이는 거리가 커집니다.",
     pages: [
       ["1. 오늘의 장면", "방향키를 누르면 주인공이 움직입니다."],
       ["2. 오늘의 코드", "speed 값이 클수록 한 번에 더 멀리 움직입니다."],
@@ -167,6 +189,7 @@ const seasonOneChapters = {
   8: {
     title: "글자 합체",
     focus: "title",
+    syntax: "str + str은 두 문자열을 이어 붙입니다. hero_name + \" 등장!\" 은 이름 뒤에 등장 문장을 붙여 새 문자열을 만듭니다.",
     pages: [
       ["1. 오늘의 장면", "주인공 이름이 들어간 등장 문장을 만듭니다."],
       ["2. 오늘의 코드", "title = hero_name + \" 등장!\" 는 문자열을 이어 붙입니다."],
@@ -178,6 +201,7 @@ const seasonOneChapters = {
   9: {
     title: "멋진 상태창",
     focus: "status_text",
+    syntax: "f-string은 문자열 안에 변수 값을 넣는 방법입니다. 문자열 앞에 f를 붙이고, 중괄호 안에 hero_name이나 score 같은 변수 이름을 씁니다.",
     pages: [
       ["1. 오늘의 장면", "상태창에 이름과 점수를 함께 보여줍니다."],
       ["2. 오늘의 코드", "f\"{hero_name} 점수: {score}\" 는 변수 값을 문장 안에 넣습니다."],
@@ -189,6 +213,7 @@ const seasonOneChapters = {
   10: {
     title: "더하기 마법",
     focus: "treasure_point",
+    syntax: "+ 는 숫자를 더하는 연산자입니다. treasure_point가 커질수록 보물을 주울 때 현재 점수에 더해지는 값도 커집니다.",
     pages: [
       ["1. 오늘의 장면", "보물을 주우면 점수가 올라갑니다."],
       ["2. 오늘의 코드", "current_score + treasure_point가 새 점수를 만듭니다."],
@@ -200,6 +225,7 @@ const seasonOneChapters = {
   11: {
     title: "빼기 마법",
     focus: "trap_damage",
+    syntax: "- 는 숫자를 빼는 연산자입니다. trap_damage가 커지면 함정에 닿았을 때 hp에서 빠지는 숫자가 커집니다.",
     pages: [
       ["1. 오늘의 장면", "함정에 닿으면 체력이 줄어듭니다."],
       ["2. 오늘의 코드", "current_hp - trap_damage가 새 체력을 만듭니다."],
@@ -211,6 +237,7 @@ const seasonOneChapters = {
   12: {
     title: "보너스 점수",
     focus: "bonus_multiplier",
+    syntax: "* 는 곱셈 연산자입니다. bonus_multiplier가 2면 현재 점수가 2배, 3이면 3배로 바뀌는 식입니다.",
     pages: [
       ["1. 오늘의 장면", "보너스를 먹으면 현재 점수가 몇 배로 커집니다."],
       ["2. 오늘의 코드", "current_score * bonus_multiplier가 보너스 점수를 만듭니다."],
@@ -393,7 +420,8 @@ function renderFields() {
   const season = seasons[state.activeSeason];
   const settings = state.settings[state.activeSeason] || defaultSettings(state.activeSeason);
   const chapterInfo = state.activeSeason === "season_01" ? seasonOneChapters[state.activeChapter] : null;
-  els.chapterLabel.textContent = chapterInfo ? `챕터 ${state.activeChapter} / 12` : season.chapters;
+  const editPlan = state.activeSeason === "season_01" ? seasonOneEditPlans[state.activeChapter] : null;
+  els.chapterLabel.textContent = chapterInfo ? `챕터 ${state.activeChapter} / 12 · ${editPlan.lines}줄 수정` : season.chapters;
   els.seasonTitle.textContent = chapterInfo ? chapterInfo.title : season.title;
   els.parsedParams.innerHTML = "";
 
@@ -493,7 +521,17 @@ function fileContent(fileName) {
 
 function currentLessonPages() {
   if (state.activeSeason === "season_01") {
-    return seasonOneChapters[state.activeChapter].pages;
+    const chapter = seasonOneChapters[state.activeChapter];
+    const plan = seasonOneEditPlans[state.activeChapter];
+    const editTargets = plan.labels.join(", ");
+    return [
+      chapter.pages[0],
+      chapter.pages[1],
+      ["3. 쉬운 문법", chapter.syntax],
+      ["4. 오늘 수정할 코드", `오늘은 ${plan.lines}줄을 수정합니다. 코드 화면에서 ${editTargets} 줄을 찾아 값을 바꾸고, 게임 화면에서 바로 확인합니다.`],
+      chapter.pages[3],
+      chapter.pages[4],
+    ];
   }
   return seasons[state.activeSeason].lesson;
 }
@@ -556,8 +594,18 @@ function quoteList(text) {
 
 function generateCode(seasonKey) {
   const s = state.settings[seasonKey] || defaultSettings(seasonKey);
-  const today = (chapter) => (seasonKey === "season_01" && state.activeChapter === chapter ? "# [오늘의 업그레이드]" : "");
+  const today = (chapter) => {
+    if (seasonKey !== "season_01" || state.activeChapter !== chapter) return null;
+    const plan = seasonOneEditPlans[chapter];
+    return `# [오늘의 업그레이드: ${plan.lines}줄]\n# ${plan.labels.join(", ")} 값을 바꿔 게임 화면에서 확인합니다.`;
+  };
   if (seasonKey === "season_01") {
+    const activePlan = seasonOneEditPlans[state.activeChapter] || { lines: 1, keys: [], labels: [] };
+    const targetHint = (key) => {
+      const index = activePlan.keys.indexOf(key);
+      if (index < 0) return null;
+      return `# 오늘 줄 ${index + 1}/${activePlan.lines}: ${activePlan.labels[index]}`;
+    };
     const startScore = toNumber(s.start_score, 10);
     const score = toNumber(s.score, startScore);
     const heroName = s.hero_name || "번개용사";
@@ -574,60 +622,70 @@ function generateCode(seasonKey) {
       "# [챕터 1] 게임 시작 문장",
       today(1),
       "# =========================",
+      targetHint("start_message"),
       `start_message = "${s.start_message}"`,
       "",
       "# =========================",
       "# [챕터 2] 주인공 대사",
       today(2),
       "# =========================",
+      targetHint("hero_message"),
       `hero_message = "${s.hero_message}"`,
       "",
       "# =========================",
       "# [챕터 3] 주인공 이름",
       today(3),
       "# =========================",
+      targetHint("hero_name"),
       `hero_name = "${s.hero_name}"`,
       "",
       "# =========================",
       "# [챕터 4] 시작 점수",
       today(4),
       "# =========================",
+      targetHint("start_score"),
       `start_score = ${toNumber(s.start_score, 10)}`,
       "",
       "# =========================",
       "# [챕터 5] 점수 변수",
       today(5),
       "# =========================",
+      targetHint("score"),
       scoreLine,
       "",
       "# =========================",
       "# [챕터 6] 체력",
       today(6),
       "# =========================",
+      targetHint("hp"),
       `hp = ${toNumber(s.hp, 100)}`,
       "",
       "# =========================",
       "# [챕터 7] 이동 속도",
       today(7),
       "# =========================",
+      targetHint("speed"),
       `speed = ${toNumber(s.speed, 5)}`,
       "",
       "# =========================",
       "# [챕터 8] 글자 합체",
       today(8),
       "# =========================",
+      targetHint("title"),
       titleLine,
       "",
       "# =========================",
       "# [챕터 9] 멋진 상태창",
       today(9),
       "# =========================",
+      targetHint("status_text"),
       statusLine,
       "",
       "# =========================",
       "# [챕터 10] 더하기 마법",
       today(10),
       "# =========================",
+      targetHint("treasure_point"),
       `treasure_point = ${toNumber(s.treasure_point, 10)}`,
       "",
       "def upgrade_score_when_get_treasure(current_score):",
@@ -638,6 +696,7 @@ function generateCode(seasonKey) {
       "# [챕터 11] 빼기 마법",
       today(11),
       "# =========================",
+      targetHint("trap_damage"),
       `trap_damage = ${toNumber(s.trap_damage, 20)}`,
       "",
       "def upgrade_hp_when_hit_trap(current_hp):",
@@ -648,12 +707,13 @@ function generateCode(seasonKey) {
       "# [챕터 12] 보너스 점수",
       today(12),
       "# =========================",
+      targetHint("bonus_multiplier"),
       `bonus_multiplier = ${toNumber(s.bonus_multiplier, 2)}`,
       "",
       "def upgrade_score_when_get_bonus(current_score):",
       "    new_score = current_score * bonus_multiplier",
       "    return new_score",
-    ].join("\n");
+    ].filter((line) => line !== null).join("\n");
   }
   if (seasonKey === "season_02") {
     return [

@@ -88,6 +88,41 @@ CHAPTERS = [
     Chapter(12, "보너스 점수", "곱셈 *", "보너스 배율 만들기", "보너스 점수를 2배, 3배로 바꿔 보자.", "곱하기는 점수를 어떻게 바꿀까?"),
 ]
 
+CHAPTER_GRAMMAR = {
+    1: "문자열 str은 글자를 담는 자료형입니다. 따옴표 안에 있는 말은 파이썬이 계산하지 않고 글자로 기억합니다.",
+    2: "str은 한 글자도, 긴 문장도 담을 수 있습니다. hero_message는 주인공 말풍선에 넣을 글자 상자입니다.",
+    3: "변수는 값에 붙이는 이름표입니다. hero_name을 한 번 바꾸면 이름표를 사용하는 화면도 함께 바뀝니다.",
+    4: "int는 정수 자료형입니다. 10처럼 소수점이 없는 숫자이고, 따옴표 없이 써야 점수 계산에 쓸 수 있습니다.",
+    5: "= 는 오른쪽 값을 왼쪽 변수에 넣습니다. score = start_score는 시작 점수를 현재 점수 변수에 복사한다는 뜻입니다.",
+    6: "숫자 변수는 게임 규칙을 조절합니다. hp가 크면 오래 버티고, 작으면 함정을 조심해야 합니다.",
+    7: "변수 값을 바꾸면 그 변수를 쓰는 계산 결과도 바뀝니다. speed는 한 번 움직일 때 이동하는 거리를 정합니다.",
+    8: "문자열끼리 + 를 쓰면 글자를 이어 붙입니다. hero_name + \" 등장!\" 은 이름 뒤에 등장 문장을 붙입니다.",
+    9: "f-string은 문장 안에 변수 값을 넣는 방법입니다. f로 시작하고, 중괄호 안에 보여줄 변수 이름을 씁니다.",
+    10: "+ 는 숫자를 더하는 연산자입니다. treasure_point가 커지면 보물을 주울 때 점수가 더 많이 오릅니다.",
+    11: "- 는 숫자를 빼는 연산자입니다. trap_damage가 커질수록 함정에 닿았을 때 체력이 더 많이 줄어듭니다.",
+    12: "* 는 곱셈 연산자입니다. bonus_multiplier가 2면 2배, 3이면 3배처럼 현재 점수를 크게 바꿉니다.",
+}
+
+CHAPTER_EDIT_PLAN = {
+    1: (1, "start_message"),
+    2: (1, "hero_message"),
+    3: (1, "hero_name"),
+    4: (1, "start_score"),
+    5: (2, "start_score, score"),
+    6: (2, "score, hp"),
+    7: (2, "hp, speed"),
+    8: (3, "hero_name, hero_message, title"),
+    9: (3, "hero_name, score, status_text"),
+    10: (4, "score, hp, speed, treasure_point"),
+    11: (4, "score, hp, speed, trap_damage"),
+    12: (5, "score, hp, treasure_point, trap_damage, bonus_multiplier"),
+}
+
+CHAPTER_EDIT_KEYS = {
+    number: [key.strip() for key in targets.split(",")]
+    for number, (_lines, targets) in CHAPTER_EDIT_PLAN.items()
+}
+
 
 def chapter_save_path(chapter: Chapter) -> Path:
     return SAVE_ROOT / f"chapter_{chapter.number:02d}" / "upgrade_zone.py"
@@ -121,12 +156,18 @@ def lecture_preview_paths(chapter: Chapter) -> list[Path]:
 
 
 def default_lesson(chapter: Chapter) -> str:
+    edit_lines, edit_targets = CHAPTER_EDIT_PLAN.get(chapter.number, (1, "오늘 코드"))
     return (
         f"# 챕터 {chapter.number}. {chapter.title}\n\n"
         f"## 오늘 배울 것\n"
         f"- {chapter.concept}\n\n"
+        f"## 쉬운 문법 설명\n"
+        f"{CHAPTER_GRAMMAR.get(chapter.number, chapter.concept)}\n\n"
         f"## 오늘의 업그레이드\n"
         f"- {chapter.upgrade}\n\n"
+        f"## 오늘 수정할 코드\n"
+        f"- 수정 줄 수: {edit_lines}줄\n"
+        f"- 확인할 줄: {edit_targets}\n\n"
         f"## 미션\n"
         f"{chapter.mission}\n\n"
         f"## 해보기\n"
@@ -459,11 +500,13 @@ class CodeView:
             undo=True,
         )
         self.editor.pack(fill="both", expand=True)
+        self.current_chapter_number = 1
         self._configure_tags()
-        self.editor.bind("<KeyRelease>", lambda _event: self.highlight_python())
+        self.editor.bind("<KeyRelease>", lambda _event: self.refresh_highlighting())
 
     def _configure_tags(self) -> None:
         self.editor.tag_configure("focus", background="#172033")
+        self.editor.tag_configure("target_line", background="#25314a")
         self.editor.tag_configure("comment", foreground="#86efac")
         self.editor.tag_configure("string", foreground="#fbbf24")
         self.editor.tag_configure("number", foreground="#c4b5fd")
@@ -474,10 +517,10 @@ class CodeView:
         return self.editor.get("1.0", "end-1c")
 
     def set_code(self, code: str, chapter: Chapter) -> None:
+        self.current_chapter_number = chapter.number
         self.editor.delete("1.0", "end")
         self.editor.insert("1.0", code)
-        self.highlight_python()
-        self.highlight_chapter(chapter.number)
+        self.refresh_highlighting()
 
     def set_status(self, text: str, ok: bool = True) -> None:
         color = "#10251d" if ok else "#2a1016"
@@ -486,13 +529,24 @@ class CodeView:
 
     def highlight_chapter(self, chapter_number: int) -> None:
         self.editor.tag_remove("focus", "1.0", "end")
+        self.editor.tag_remove("target_line", "1.0", "end")
         start = self.editor.search(f"[챕터 {chapter_number}]", "1.0", stopindex="end")
-        if not start:
-            return
-        next_match = self.editor.search("[챕터 ", f"{start}+1c", stopindex="end")
-        end = next_match if next_match else "end"
-        self.editor.tag_add("focus", f"{start} linestart", end)
-        self.editor.see(start)
+        if start:
+            next_match = self.editor.search("[챕터 ", f"{start}+1c", stopindex="end")
+            end = next_match if next_match else "end"
+            self.editor.tag_add("focus", f"{start} linestart", end)
+            self.editor.see(start)
+
+        code = self.get_code()
+        target_names = "|".join(re.escape(name) for name in CHAPTER_EDIT_KEYS.get(chapter_number, []))
+        if target_names:
+            for match in re.finditer(rf"^\s*(?:{target_names})\s*=", code, re.MULTILINE):
+                self.editor.tag_add("target_line", f"1.0+{match.start()}c linestart", f"1.0+{match.end()}c lineend")
+            self.editor.tag_raise("target_line")
+
+    def refresh_highlighting(self) -> None:
+        self.highlight_python()
+        self.highlight_chapter(self.current_chapter_number)
 
     def highlight_python(self) -> None:
         code = self.get_code()
@@ -803,7 +857,8 @@ class GumaPythonLab:
         self.lesson.set_selected_chapter(chapter)
         self.lesson.show(chapter)
         self.code.set_code(load_student_code(chapter), chapter)
-        self.code.set_status(f"챕터 {chapter.number} 준비 완료. 코드를 바꾸고 Play를 눌러요.")
+        edit_lines, edit_targets = CHAPTER_EDIT_PLAN.get(chapter.number, (1, "오늘 코드"))
+        self.code.set_status(f"챕터 {chapter.number} 준비 완료 · {edit_lines}줄 수정: {edit_targets}")
         self.play_game(silent=True)
 
     def save_code(self) -> Path:
