@@ -2849,12 +2849,100 @@ def task_with_thumbnail(task: dict[str, Any]) -> dict[str, Any]:
     return cloned
 
 
+DOC_VIEW_HOTFIX_CSS = """
+
+    /* GumaTutorDoc presentation invariant: phone landscape mirrored to TV. */
+    .doc-view .block.topic-page {
+      width: 100%;
+      max-width: 100%;
+      aspect-ratio: 16 / 9;
+      contain: layout paint;
+    }
+    .doc-view .topic-photo {
+      display: block;
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
+      overflow: hidden;
+      flex: 0 1 auto;
+    }
+    .doc-view .topic-photo img {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      object-position: center center;
+    }
+    @media (orientation: landscape) and (max-height: 620px) {
+      .doc-view {
+        overflow-x: hidden;
+      }
+      .doc-view .page {
+        width: min(calc(100vw - 12px), calc((100vh - 12px) * 16 / 9));
+        max-width: calc(100vw - 12px);
+        padding: 6px 0 24px;
+      }
+      .doc-view .block.topic-page {
+        height: min(calc(100vh - 12px), calc((100vw - 12px) * 9 / 16));
+        max-height: calc(100vh - 12px);
+        min-height: 0;
+        grid-template:
+          "title title" auto
+          "photo copy" minmax(0, 1fr)
+          / minmax(0, 7fr) minmax(0, 3fr);
+        gap: clamp(4px, 1vh, 7px);
+        padding: clamp(5px, 1.3vh, 9px);
+      }
+      .doc-view .topic-title {
+        min-height: 0;
+        padding: clamp(4px, 1vh, 8px) clamp(7px, 1.6vh, 12px);
+      }
+      .doc-view .topic-title h2 {
+        font-size: clamp(12px, 3.4vh, 19px);
+        line-height: 1.14;
+      }
+      .doc-view .topic-copy {
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+        padding: clamp(5px, 1.3vh, 9px);
+      }
+      .doc-view .topic-points {
+        gap: 2px;
+      }
+      .doc-view .topic-points li {
+        font-size: clamp(8px, 2.12vh, 12px);
+        line-height: 1.18;
+      }
+      .doc-view .topic-photo small {
+        display: none;
+      }
+    }
+"""
+
+
+def apply_document_view_hotfixes(html_text: str) -> str:
+    if "GumaTutorDoc presentation invariant" in html_text:
+        return html_text
+    if "</style>" in html_text:
+        return html_text.replace("</style>", DOC_VIEW_HOTFIX_CSS + "\n  </style>", 1)
+    return html_text.replace("</head>", f"<style>{DOC_VIEW_HOTFIX_CSS}</style>\n</head>", 1)
+
+
 def save_pack(task_id: str, pack: dict[str, Any]) -> dict[str, str]:
     slug = safe_slug(pack.get("topic") or pack.get("title") or task_id)
     output_dir = OUTPUT_DIR / f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{slug}_{task_id[:8]}"
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    html_text = render_material_html(pack, task_id)
+    html_text = apply_document_view_hotfixes(render_material_html(pack, task_id))
     html_path = output_dir / "index.html"
     json_path = output_dir / "content.json"
     html_path.write_text(html_text, encoding="utf-8")
@@ -2982,12 +3070,12 @@ def view_result(task_id: str):
     html_path = Path(task.get("result", {}).get("html_path", ""))
     json_path = Path(task.get("result", {}).get("json_path", ""))
     if html_path.exists():
-        return html_path.read_text(encoding="utf-8")
+        return apply_document_view_hotfixes(html_path.read_text(encoding="utf-8"))
     if json_path.exists():
         try:
             pack = json.loads(json_path.read_text(encoding="utf-8-sig"))
             if isinstance(pack, dict):
-                return render_material_html(pack, task_id)
+                return apply_document_view_hotfixes(render_material_html(pack, task_id))
         except Exception as exc:
             print(f"[view] dynamic render failed: {exc}")
     if not html_path.exists():
