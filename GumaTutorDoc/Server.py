@@ -550,7 +550,11 @@ def apply_wiki_reference(pack: dict[str, Any], reference: dict[str, Any] | None)
 
     english_title = str(reference.get("english_title") or "").strip()
     commons_category = str(reference.get("commons_category") or "").strip()
+    category_images: list[dict[str, str]] = []
+    if commons_category and english_title:
+        category_images = fetch_commons_category_candidates(commons_category, english_title, limit=12)
     if english_title:
+        category_index = 0
         for section in sections:
             if not isinstance(section, dict):
                 continue
@@ -569,6 +573,18 @@ def apply_wiki_reference(pack: dict[str, Any], reference: dict[str, Any] | None)
                     "notes": [],
                 }
             )
+            if category_index < len(category_images):
+                category_image = dict(category_images[category_index])
+                category_index += 1
+                category_image.update(
+                    {
+                        "title": category_image.get("source_title") or f"{section_title or english_title} Wikimedia image",
+                        "caption": f"{section_title or english_title}와 직접 관련된 위키미디어 카테고리 이미지입니다.",
+                        "query": wiki_query,
+                        "notes": [],
+                    }
+                )
+                images.insert(0, category_image)
             section["images"] = images[:3]
     return pack
 
@@ -1381,6 +1397,12 @@ OFF_SUBJECT_PHOTO_TERMS = (
     "lesson",
     "toy",
     "model",
+    "animatronic",
+    "bench",
+    "carving",
+    "sculpture",
+    "sign",
+    "statue",
 )
 
 SECTION_DETAIL_TERMS = {
@@ -1676,6 +1698,51 @@ def commons_relaxed_photo_score(page: dict[str, Any], info: dict[str, Any], quer
     return score
 
 
+def commons_illustration_score(page: dict[str, Any], info: dict[str, Any], query: str) -> int | None:
+    mime = str(info.get("mime") or "")
+    image_url = str(info.get("thumburl") or info.get("url") or "")
+    if not image_url or not mime.startswith("image/") or mime == "image/svg+xml":
+        return None
+
+    width = int(info.get("thumbwidth") or info.get("width") or 0)
+    height = int(info.get("thumbheight") or info.get("height") or 0)
+    if width < 500 or height < 300:
+        return None
+
+    aspect_ratio = width / max(height, 1)
+    if aspect_ratio < 0.42 or aspect_ratio > 2.9:
+        return None
+
+    blob = metadata_blob(page, info)
+    if text_has_any_term(blob, OFF_SUBJECT_PHOTO_TERMS):
+        return None
+    if not is_subject_first_photo(page, info, query):
+        return None
+    if not text_has_any_term(blob, REALISTIC_ILLUSTRATION_TERMS + ("illustration", "restoration", "reconstruction")):
+        return None
+
+    core_keywords = query_core_keywords(query)
+    if core_keywords:
+        required_matches = required_core_match_count(core_keywords)
+        if sum(1 for keyword in core_keywords if keyword in blob) < required_matches:
+            return None
+
+    subject = subject_blob(page, info)
+    authority_blob = source_blob(page, info)
+    score = 4
+    if mime in {"image/jpeg", "image/jpg"}:
+        score += 4
+    elif mime == "image/webp":
+        score += 3
+    elif mime == "image/png":
+        score += 2
+    score += 7 * sum(1 for keyword in core_keywords if keyword in subject)
+    score += 2 * sum(1 for keyword in core_keywords if keyword in blob)
+    score += min(text_term_count(authority_blob, AUTHORITATIVE_SOURCE_TERMS), 4) * 3
+    score += text_term_count(blob, REALISTIC_ILLUSTRATION_TERMS) * 3
+    return score if score >= 6 else None
+
+
 def fetch_commons_pages(search_query: str, limit: int = 20) -> list[dict[str, Any]]:
     params = {
         "action": "query",
@@ -1795,6 +1862,139 @@ def resolve_commons_image(query: str, *, relaxed: bool = False, excluded_urls: s
         if image_url and image_url not in excluded_urls:
             return candidate
     return None
+
+
+def resolve_commons_illustration(query: str, *, excluded_urls: set[str] | None = None) -> dict[str, str] | None:
+    query = re.sub(r"\s+", " ", str(query or "").strip())
+    excluded_urls = excluded_urls or set()
+    if not query:
+        return None
+    cache_key = f"illustration:{query.lower()}"
+    if cache_key in commons_cache:
+        cached = commons_cache[cache_key]
+        candidates = list(cached) if isinstance(cached, list) else []
+    else:
+        subject_query = subject_search_query(query)
+        core_subject_query = " ".join(query_core_keywords(query)[:3])
+        base_query = core_subject_query or subject_query or query
+        search_queries = [
+            f"{query} realistic scientific illustration",
+            f"{query} life restoration",
+            f"{query} reconstruction",
+            f"{base_query} realistic reconstruction",
+            f"{base_query} lifelike scientific illustration",
+            f"{base_query} artist impression",
+            f"{base_query} paleoart",
+        ]
+        scored: list[tuple[int, dict[str, str]]] = []
+        seen_urls: set[str] = set()
+        for search_query in search_queries:
+            for page in fetch_commons_pages(search_query, limit=40):
+                info_items = page.get("imageinfo") or []
+                if not info_items:
+                    continue
+                info = info_items[0]
+                score_query = f"{query} {search_query} realistic scientific illustration"
+                score = commons_illustration_score(page, info, score_query)
+                if score is None:
+                    continue
+                image_url = str(info.get("thumburl") or info.get("url") or "")
+                if not image_url or image_url in seen_urls:
+                    continue
+                seen_urls.add(image_url)
+                metadata = info.get("extmetadata") or {}
+                artist = clean_metadata_text((metadata.get("Artist") or {}).get("value"))
+                license_short = clean_metadata_text((metadata.get("LicenseShortName") or {}).get("value"))
+                scored.append(
+                    (
+                        score,
+                        {
+                            "image_url": image_url,
+                            "source_url": str(info.get("descriptionurl") or ""),
+                            "source_title": str(page.get("title") or "").replace("File:", ""),
+                            "credit": ", ".join(part for part in [artist, license_short] if part),
+                        },
+                    )
+                )
+        scored.sort(key=lambda item: item[0], reverse=True)
+        candidates = [candidate for _, candidate in scored[:8]]
+        commons_cache[cache_key] = candidates
+
+    for candidate in candidates:
+        image_url = candidate.get("image_url", "")
+        if image_url and image_url not in excluded_urls:
+            return candidate
+    return None
+
+
+def fetch_commons_category_candidates(category: str, query: str, *, limit: int = 12) -> list[dict[str, str]]:
+    category = str(category or "").replace("Category:", "").strip()
+    query = re.sub(r"\s+", " ", str(query or "").strip())
+    if not category or not query:
+        return []
+    cache_key = f"category-images:{category.lower()}:{query.lower()}:{limit}"
+    if cache_key in commons_cache:
+        cached = commons_cache[cache_key]
+        return list(cached) if isinstance(cached, list) else []
+
+    params = {
+        "action": "query",
+        "generator": "categorymembers",
+        "gcmtitle": f"Category:{category}",
+        "gcmtype": "file",
+        "gcmlimit": "50",
+        "prop": "imageinfo|categories",
+        "iiprop": "url|mime|size|extmetadata",
+        "iiurlwidth": "1200",
+        "clshow": "!hidden",
+        "cllimit": "20",
+        "format": "json",
+        "origin": "*",
+    }
+    payload = fetch_json_url("https://commons.wikimedia.org/w/api.php?" + urlencode(params))
+    pages = list(((payload or {}).get("query", {}).get("pages", {}) or {}).values())
+    scored: list[tuple[int, dict[str, str]]] = []
+    seen_urls: set[str] = set()
+    score_query = f"{query} {category} realistic scientific illustration photograph"
+    for page in pages:
+        info_items = page.get("imageinfo") or []
+        if not info_items:
+            continue
+        info = info_items[0]
+        blob = metadata_blob(page, info)
+        if text_has_any_term(blob, OFF_SUBJECT_PHOTO_TERMS):
+            continue
+        if text_has_any_term(blob, NON_PHOTO_TERMS) and not text_has_any_term(blob, REALISTIC_ILLUSTRATION_TERMS):
+            continue
+        score = commons_photo_score(page, info, score_query)
+        if score is None:
+            score = commons_illustration_score(page, info, score_query)
+        if score is None:
+            score = commons_relaxed_photo_score(page, info, score_query)
+        if score is None:
+            continue
+        image_url = str(info.get("thumburl") or info.get("url") or "")
+        if not image_url or image_url in seen_urls:
+            continue
+        seen_urls.add(image_url)
+        metadata = info.get("extmetadata") or {}
+        artist = clean_metadata_text((metadata.get("Artist") or {}).get("value"))
+        license_short = clean_metadata_text((metadata.get("LicenseShortName") or {}).get("value"))
+        scored.append(
+            (
+                score,
+                {
+                    "image_url": image_url,
+                    "source_url": str(info.get("descriptionurl") or ""),
+                    "source_title": str(page.get("title") or "").replace("File:", ""),
+                    "credit": ", ".join(part for part in [artist, license_short] if part),
+                },
+            )
+        )
+    scored.sort(key=lambda item: item[0], reverse=True)
+    results = [candidate for _, candidate in scored[:limit]]
+    commons_cache[cache_key] = results
+    return results
 
 
 def image_data_for_item(item: dict[str, str], excluded_urls: set[str] | None = None) -> dict[str, str] | None:
@@ -1945,6 +2145,32 @@ def render_material_html(pack: dict[str, Any], task_id: str) -> str:
                 used_image_urls.add(data["image_url"])
                 return data
         fallback_title = section_title or topic or "시각자료"
+        illustration_queries = [
+            f"{topic} {section_title} realistic scientific illustration",
+            f"{topic} {section_title} life restoration",
+            f"{topic} {section_title} reconstruction",
+        ]
+        for core_query in subject_core_queries[:3]:
+            illustration_queries.extend(
+                [
+                    f"{core_query} {section_title} realistic scientific illustration",
+                    f"{core_query} {section_title} life restoration",
+                    f"{core_query} scientific illustration",
+                    f"{core_query} reconstruction",
+                ]
+            )
+        for query in illustration_queries:
+            if not query.strip():
+                continue
+            resolved = resolve_commons_illustration(query, excluded_urls=used_image_urls)
+            if resolved:
+                used_image_urls.add(resolved["image_url"])
+                return {
+                    "title": f"{section_title or topic} illustration",
+                    "caption": f"{section_title or topic}을 이해하기 위한 위키미디어 기반 복원도/과학 일러스트입니다.",
+                    "query": query,
+                    **resolved,
+                }
         fallback_url = fallback_visual_url(fallback_title, len(used_image_urls))
         used_image_urls.add(fallback_url)
         return {
