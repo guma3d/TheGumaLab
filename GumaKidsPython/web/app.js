@@ -101,6 +101,21 @@ const seasonOneEditPlans = {
   12: { lines: 5, keys: ["score", "hp", "treasure_point", "trap_damage", "bonus_multiplier"], labels: ["score", "hp", "treasure_point", "trap_damage", "bonus_multiplier"] },
 };
 
+const seasonOneUnlocks = {
+  1: "시작 깃발과 첫 장면이 생깁니다.",
+  2: "주인공 말풍선이 캐릭터를 따라다닙니다.",
+  3: "주인공 이름표와 이름 깃발이 생깁니다.",
+  4: "점수 오브가 켜지고 시작 점수가 보입니다.",
+  5: "보물과 동전을 주워 점수를 올릴 수 있습니다.",
+  6: "체력 하트와 체력 표시가 추가됩니다.",
+  7: "바람 신발로 이동 속도와 질주 효과가 생깁니다.",
+  8: "이름과 문장이 합쳐진 등장 아치가 열립니다.",
+  9: "멋진 상태창이 게임 안에 붙습니다.",
+  10: "큰 보물 상자와 연속 수집 콤보가 생깁니다.",
+  11: "함정과 체력 피해가 들어와 긴장감이 생깁니다.",
+  12: "보너스 별, 마법 포털, 승리 연출로 완성됩니다.",
+};
+
 const seasonOneChapters = {
   1: {
     title: "게임 화면아 안녕",
@@ -481,7 +496,8 @@ function currentLessonPages() {
       chapter.pages[0],
       chapter.pages[1],
       ["3. 쉬운 문법", chapter.syntax],
-      ["4. 오늘 수정할 코드", `오늘은 ${plan.lines}줄을 수정합니다. 코드 화면에서 ${editTargets} 줄을 찾아 값을 바꾸고, 게임 화면에서 바로 확인합니다.`],
+      ["4. 오늘 게임에 생기는 것", seasonOneUnlocks[state.activeChapter]],
+      ["5. 오늘 수정할 코드", `오늘은 ${plan.lines}줄을 수정합니다. 코드 화면에서 ${editTargets} 줄을 찾아 값을 바꾸고, 게임 화면에서 바로 확인합니다.`],
       chapter.pages[3],
       chapter.pages[4],
     ];
@@ -829,7 +845,7 @@ function renderCodeEditor() {
       els.codeEditor.scrollTop = 0;
       return;
     }
-    const marker = els.codeEditor.value.indexOf("[오늘의 업그레이드]");
+    const marker = els.codeEditor.value.indexOf("# [오늘의 업그레이드");
     if (marker <= 0) {
       els.codeEditor.scrollTop = 0;
       return;
@@ -940,8 +956,58 @@ function parseCode(seasonKey, source) {
   };
 }
 
+function seasonOneChapter() {
+  return Math.max(1, Math.min(12, Number(state.activeChapter) || 1));
+}
+
+function seasonOneHas(chapter) {
+  return seasonOneChapter() >= chapter;
+}
+
+function seasonOneItemsForChapter(chapter) {
+  const items = [];
+  if (chapter >= 4) items.push({ kind: "score", x: 30, y: 26, label: "점수 오브", taken: false });
+  if (chapter >= 5) {
+    items.push({ kind: "treasure", x: 58, y: 27, label: "보물", taken: false });
+    items.push({ kind: "coin", x: 76, y: 62, label: "동전", taken: false });
+  }
+  if (chapter >= 6) items.push({ kind: "heart", x: 20, y: 64, label: "하트", taken: false });
+  if (chapter >= 7) items.push({ kind: "boost", x: 44, y: 74, label: "바람신발", taken: false });
+  if (chapter >= 10) {
+    items.push({ kind: "gem", x: 42, y: 42, label: "루비", taken: false });
+    items.push({ kind: "chest", x: 84, y: 34, label: "상자", taken: false });
+  }
+  if (chapter >= 11) {
+    items.push({ kind: "trap", x: 52, y: 70, label: "가시함정", taken: false });
+    items.push({ kind: "trap", x: 68, y: 46, label: "불꽃함정", taken: false });
+  }
+  if (chapter >= 12) {
+    items.push({ kind: "bonus", x: 86, y: 18, label: "보너스별", taken: false });
+    items.push({ kind: "portal", x: 88, y: 70, label: "포털", taken: false });
+  }
+  return items;
+}
+
+function seasonOneItemPoint(kind, settings) {
+  const treasurePoint = toNumber(settings.treasure_point, 10);
+  if (kind === "coin") return Math.max(1, Math.round(treasurePoint / 2));
+  if (kind === "gem") return treasurePoint * 2;
+  if (kind === "chest") return treasurePoint * 3;
+  if (kind === "treasure") return treasurePoint;
+  return 0;
+}
+
+function seasonOneRequiredItems(game) {
+  return game.items.filter((item) => ["score", "treasure", "coin", "gem", "chest", "bonus"].includes(item.kind));
+}
+
+function seasonOneReadyForPortal(game) {
+  return seasonOneRequiredItems(game).every((item) => item.taken);
+}
+
 function seasonOneReset() {
   const s = state.settings.season_01;
+  const chapter = seasonOneChapter();
   state.game.season_01 = {
     x: 10,
     y: 18,
@@ -949,19 +1015,25 @@ function seasonOneReset() {
     step: 0,
     score: toNumber(s.score, toNumber(s.start_score, 10)),
     hp: toNumber(s.hp, 100),
+    maxHp: Math.max(1, toNumber(s.hp, 100)),
+    boostMoves: 0,
+    combo: 0,
+    win: false,
+    gameOver: false,
+    chapter,
     message: s.start_message || "모험 시작!",
     collected: {
+      score: 0,
       treasure: 0,
       coin: 0,
+      gem: 0,
+      chest: 0,
+      heart: 0,
+      boost: 0,
       bonus: 0,
       trap: 0,
     },
-    items: [
-      { kind: "treasure", x: 32, y: 24, label: "보물", taken: false },
-      { kind: "treasure", x: 72, y: 62, label: "동전", taken: false },
-      { kind: "bonus", x: 84, y: 20, label: "보너스", taken: false },
-      { kind: "trap", x: 52, y: 72, label: "함정", taken: false },
-    ],
+    items: seasonOneItemsForChapter(chapter),
   };
 }
 
@@ -972,24 +1044,69 @@ function percentStyle(x, y) {
   };
 }
 
+function addSeasonOneScenery(board, className, text) {
+  const node = document.createElement("div");
+  node.className = className;
+  node.textContent = text;
+  board.appendChild(node);
+}
+
+function seasonOneHudStats(settings, game, chapter) {
+  const pieces = [];
+  if (chapter >= 9) pieces.push(settings.status_text || `${settings.hero_name || "번개용사"} 점수: ${game.score}`);
+  if (chapter >= 4) pieces.push(`점수 ${game.score}`);
+  if (chapter >= 6) pieces.push(`체력 ${game.hp}/${game.maxHp}`);
+  if (chapter >= 7) pieces.push(`속도 ${settings.speed}${game.boostMoves ? " · 질주" : ""}`);
+  if (chapter >= 10) pieces.push(`콤보 ${game.combo}`);
+  if (chapter >= 12 && game.win) pieces.push("포털 개방!");
+  if (!pieces.length) pieces.push("시작 장면 제작 중");
+  return pieces.join(" · ");
+}
+
+function renderSeasonOneScenery(board, settings, game, chapter) {
+  addSeasonOneScenery(board, "build-ribbon", `챕터 ${chapter} 빌드`);
+  addSeasonOneScenery(board, "world-sign start-flag", settings.start_message || "모험 시작!");
+  if (chapter >= 3) addSeasonOneScenery(board, "world-sign name-flag", `${settings.hero_name || "번개용사"}의 모험`);
+  if (chapter >= 4) addSeasonOneScenery(board, "score-totem", `START ${toNumber(settings.start_score, 10)}`);
+  if (chapter >= 6) {
+    const hearts = Math.max(1, Math.min(5, Math.ceil(game.hp / Math.max(1, game.maxHp) * 5)));
+    addSeasonOneScenery(board, "heart-meter", `${"♥".repeat(hearts)}${"♡".repeat(5 - hearts)}`);
+  }
+  if (chapter >= 8) addSeasonOneScenery(board, "title-arch", settings.title || `${settings.hero_name || "번개용사"} 등장!`);
+  if (chapter >= 9) addSeasonOneScenery(board, "status-plaque", settings.status_text || `${settings.hero_name || "번개용사"} 점수: ${game.score}`);
+  if (chapter >= 10) addSeasonOneScenery(board, "combo-plaque", `콤보 ${game.combo} · 보물 ${game.collected.treasure + game.collected.gem + game.collected.chest}`);
+  if (chapter >= 11) addSeasonOneScenery(board, "danger-lane", "함정 구역");
+  if (chapter >= 12) addSeasonOneScenery(board, "portal-hint", game.win ? "클리어!" : "보물을 모아 포털을 열자");
+}
+
 function renderSeasonOne() {
   const s = state.settings.season_01;
   const g = state.game.season_01 || (seasonOneReset(), state.game.season_01);
-  const title = s.title || `${s.hero_name || "번개용사"} 등장!`;
-  const statusText = s.status_text || `${s.hero_name || "번개용사"} 점수: ${g.score}`;
-  const collected = g.collected || {};
+  const chapter = seasonOneChapter();
+  if (g.chapter !== chapter) {
+    seasonOneReset();
+    renderSeasonOne();
+    return;
+  }
+  const title = chapter >= 8
+    ? (s.title || `${s.hero_name || "번개용사"} 등장!`)
+    : chapter >= 3
+      ? `${s.hero_name || "번개용사"}의 보물 모험`
+      : "보물 점수 게임 만들기";
   setHud(
     title,
-    `${statusText} · 현재 점수 ${g.score} · 체력 ${g.hp} · 속도 ${s.speed} · 보물 ${collected.treasure || 0} · 동전 ${collected.coin || 0} · 보너스 ${collected.bonus || 0}`,
+    seasonOneHudStats(s, g, chapter),
   );
-  els.action.textContent = "보물 줍기";
-  els.gameMount.innerHTML = `<div class="board voxel-board" tabindex="0" aria-label="보물 점수 게임판"></div>`;
+  els.action.textContent = chapter >= 12 ? "수집/포털" : chapter >= 5 ? "보물 줍기" : "확인하기";
+  els.gameMount.innerHTML = `<div class="board voxel-board chapter-${chapter} ${g.win ? "game-won" : ""} ${g.gameOver ? "game-over" : ""}" tabindex="0" aria-label="보물 점수 게임판"></div>`;
   const board = els.gameMount.querySelector(".board");
+  renderSeasonOneScenery(board, s, g, chapter);
 
   const hero = document.createElement("div");
   hero.className = `sprite hero voxel-hero facing-${g.direction || "down"} step-${g.step % 2}`;
   hero.innerHTML = `
-    <span class="hero-speech">${s.hero_message || "보물을 찾자!"}</span>
+    ${chapter >= 2 ? `<span class="hero-speech">${s.hero_message || "보물을 찾자!"}</span>` : ""}
+    ${chapter >= 7 ? "<span class=\"speed-trail\"></span>" : ""}
     <span class="hero-shadow"></span>
     <span class="voxel-sword"></span>
     <span class="voxel-body">
@@ -1000,14 +1117,15 @@ function renderSeasonOne() {
       <span class="voxel-leg leg-left"></span>
       <span class="voxel-leg leg-right"></span>
     </span>
-    <span class="avatar-name">${s.hero_name || "용사"}</span>
+    ${chapter >= 3 ? `<span class="avatar-name">${s.hero_name || "용사"}</span>` : ""}
   `;
   Object.assign(hero.style, percentStyle(g.x, g.y));
   board.appendChild(hero);
 
   for (const item of g.items.filter((entry) => !entry.taken)) {
     const sprite = document.createElement("div");
-    sprite.className = `sprite voxel-item ${item.kind === "trap" ? "trap" : "treasure"} ${item.kind === "bonus" ? "bonus" : ""}`;
+    const category = item.kind === "trap" ? "trap" : "treasure";
+    sprite.className = `sprite voxel-item ${category} item-${item.kind}`;
     sprite.innerHTML = `<span class="item-icon"></span><span>${item.label}</span>`;
     Object.assign(sprite.style, percentStyle(item.x, item.y));
     board.appendChild(sprite);
@@ -1021,6 +1139,16 @@ function renderSeasonOne() {
   msg.style.bottom = "14px";
   msg.textContent = g.message || s.hero_message;
   board.appendChild(msg);
+  if (g.win) {
+    for (let index = 0; index < 8; index += 1) {
+      const spark = document.createElement("div");
+      spark.className = "firework";
+      spark.style.left = `${16 + index * 10}%`;
+      spark.style.top = `${16 + (index % 3) * 12}%`;
+      spark.style.animationDelay = `${index * 0.08}s`;
+      board.appendChild(spark);
+    }
+  }
   if (state.startNotice) {
     const notice = document.createElement("div");
     notice.className = "start-notice";
@@ -1040,22 +1168,30 @@ function moveHero(dx, dy) {
   if (!state.gameStarted) return;
   const s = state.settings.season_01;
   const g = state.game.season_01;
-  const speed = Math.max(1, toNumber(s.speed, 5)) * 1.45;
+  if (g.win || g.gameOver) return;
+  const boost = g.boostMoves > 0 ? 1.85 : 1;
+  const speed = Math.max(1, toNumber(s.speed, 5)) * 1.25 * boost;
   if (dx < 0) g.direction = "left";
   if (dx > 0) g.direction = "right";
   if (dy < 0) g.direction = "up";
   if (dy > 0) g.direction = "down";
   g.step += 1;
+  if (g.boostMoves > 0) g.boostMoves -= 1;
   g.x = Math.max(0, Math.min(90, g.x + dx * speed));
   g.y = Math.max(0, Math.min(82, g.y + dy * speed));
   playFootstep();
+  if (seasonOneHas(11)) {
+    const trap = findCollectableItem(g, ["trap"]);
+    if (trap) triggerSeasonOneTrap(trap, s, g);
+  }
   renderSeasonOne();
 }
 
-function findCollectableItem(game) {
+function findCollectableItem(game, kinds = null) {
   const hitbox = { x: 13, y: 16 };
   return game.items
     .filter((item) => !item.taken)
+    .filter((item) => !kinds || kinds.includes(item.kind))
     .map((item) => ({
       item,
       dx: Math.abs(item.x - game.x),
@@ -1065,32 +1201,79 @@ function findCollectableItem(game) {
     .sort((a, b) => (a.dx + a.dy) - (b.dx + b.dy))[0]?.item;
 }
 
+function triggerSeasonOneTrap(item, settings, game) {
+  item.taken = true;
+  game.combo = 0;
+  game.collected.trap += 1;
+  const damage = toNumber(settings.trap_damage, 20);
+  game.hp = Math.max(0, game.hp - damage);
+  game.message = `${item.label}! 체력이 ${damage} 줄었어.`;
+  playPickupSound("trap");
+  if (game.hp <= 0) {
+    game.gameOver = true;
+    game.message = "체력이 0이 되었어. 다시 시작해서 도전!";
+  }
+}
+
 function collectSeasonOne() {
   if (!state.gameStarted) return;
   const s = state.settings.season_01;
   const g = state.game.season_01;
+  if (g.win || g.gameOver) return;
   const near = findCollectableItem(g);
   if (!near) {
     g.message = s.hero_message || "보물을 찾자!";
     renderSeasonOne();
     return;
   }
-  near.taken = true;
-  g.collected ||= { treasure: 0, coin: 0, bonus: 0, trap: 0 };
-  playPickupSound(near.kind);
+  g.collected ||= { score: 0, treasure: 0, coin: 0, gem: 0, chest: 0, heart: 0, boost: 0, bonus: 0, trap: 0 };
   if (near.kind === "trap") {
-    g.collected.trap += 1;
-    g.hp = Math.max(0, g.hp - toNumber(s.trap_damage, 20));
-    g.message = `함정! 체력이 ${toNumber(s.trap_damage, 20)} 줄었어.`;
+    triggerSeasonOneTrap(near, s, g);
+    renderSeasonOne();
+    return;
+  }
+  if (near.kind === "portal") {
+    if (seasonOneReadyForPortal(g)) {
+      near.taken = true;
+      g.win = true;
+      g.message = `완성! ${s.hero_name || "용사"}가 보물 포털을 열었어!`;
+      playTone({ frequency: 880, duration: 0.16, type: "triangle", volume: 0.06, slide: 240 });
+      updateSaveSeason("season_01", {
+        high_score: Math.max(getSeasonSave("season_01").high_score || 0, g.score),
+        best_hp: Math.max(getSeasonSave("season_01").best_hp || 0, g.hp),
+        hero_name: s.hero_name,
+      });
+    } else {
+      g.message = "포털이 아직 잠겨 있어. 보물과 보너스를 먼저 모으자!";
+    }
+    renderSeasonOne();
+    return;
+  }
+  near.taken = true;
+  playPickupSound(near.kind);
+  if (near.kind === "score") {
+    g.collected.score += 1;
+    g.message = `점수 오브가 켜졌어. 시작 점수는 ${g.score}점!`;
+  } else if (near.kind === "heart") {
+    g.collected.heart += 1;
+    const heal = 25;
+    g.hp = Math.min(g.maxHp, g.hp + heal);
+    g.message = `하트를 얻었어. 체력 +${heal}!`;
+  } else if (near.kind === "boost") {
+    g.collected.boost += 1;
+    g.boostMoves = 8;
+    g.message = "바람신발 장착! 잠깐 동안 더 빠르게 움직여.";
   } else if (near.kind === "bonus") {
     g.collected.bonus += 1;
+    g.combo += 1;
     g.score = g.score * toNumber(s.bonus_multiplier, 2);
-    g.message = "보너스 보물! 점수가 크게 올랐어.";
+    g.message = `보너스별! 점수가 ${toNumber(s.bonus_multiplier, 2)}배가 되었어.`;
   } else {
-    if (near.label === "동전") g.collected.coin += 1;
-    else g.collected.treasure += 1;
-    g.score += toNumber(s.treasure_point, 10);
-    g.message = `${near.label}을 주웠어!`;
+    const point = seasonOneItemPoint(near.kind, s);
+    g.collected[near.kind] = (g.collected[near.kind] || 0) + 1;
+    g.combo += 1;
+    g.score += point;
+    g.message = `${near.label}을 주웠어! +${point}점`;
   }
   updateSaveSeason("season_01", {
     high_score: Math.max(getSeasonSave("season_01").high_score || 0, g.score),
@@ -1370,7 +1553,7 @@ els.chapterSelect.addEventListener("change", () => {
   state.activeChapter = Number(els.chapterSelect.value);
   state.lessonPage = 0;
   state.activeFile = "upgrade_zone.py";
-  renderActiveSeason(false, true);
+  renderActiveSeason(true, true);
 });
 
 els.fileTree.addEventListener("click", (event) => {
