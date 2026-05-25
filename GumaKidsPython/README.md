@@ -9,22 +9,32 @@
 - 시즌 1~4 게임 구현 완료
 - 시즌 1~4 웹앱 1차 구현 완료
 - 서버 저장 API 1차 구현 완료
+- `Guma Python Lab` 3분할 학습 앱 프로토타입 구현 완료
+- 챕터 1 강의자료 PDF/PNG 8페이지 샘플 제작 완료
 - 모든 게임은 외부 패키지 없이 기본 파이썬 `tkinter`로 실행
-- 다음 큰 작업은 챕터 1~3 PDF 샘플 제작
+- 다음 큰 작업은 챕터 1 앱 수업 흐름 검증과 챕터 2~3 강의자료 제작
 
 ## 폴더 구조
 
 ```text
-python_kids_course/
+GumaKidsPython/
   README.md
   HANDOFF.md
   COURSE_PLAN.md
   GAME_DESIGN.md
+  app/
+    guma_python_lab.py
+  Docs/
+    season_01/
+      chapter_01.pdf
   games/
     season_01_treasure_score/
     season_02_dungeon_choice/
     season_03_monster_battle/
     season_04_mini_adventure/
+  tools/
+    generate_chapter_01_pdf.py
+  web/
 ```
 
 ## 게임 실행 방법
@@ -34,7 +44,7 @@ VS Code에서 원하는 시즌 폴더를 열고 `main.py`를 실행합니다.
 예시:
 
 ```powershell
-cd E:\Codex\python_kids_course\games\season_01_treasure_score
+cd C:\Users\guma3d\Documents\TheGumaLab\GumaKidsPython\games\season_01_treasure_score
 python .\main.py
 ```
 
@@ -44,12 +54,35 @@ python .\main.py
 python .\main.py --check
 ```
 
+## Guma Python Lab 실행 방법
+
+3분할 학습 앱 프로토타입을 실행하려면:
+
+앱은 `tkinter`와 `Pillow`를 사용합니다.
+
+```powershell
+cd C:\Users\guma3d\Documents\TheGumaLab\GumaKidsPython
+python .\app\guma_python_lab.py
+```
+
+현재 앱 구성:
+
+- 왼쪽 위: 가로형 강의자료 PNG/PDF 미리보기
+- 왼쪽 아래: 시즌 1 보물 점수 게임 화면
+- 오른쪽: 파이썬 코드 편집 화면
+- 화면 비율: 좌우 50:50, 왼쪽 상하 50:50 고정
+- UI 테마: 앱 크롬과 코드 편집기는 Dark 테마, 강의자료와 게임 화면은 밝은 색감 유지
+- 챕터 선택: 작은 드롭다운
+- 저장 위치: `user_saves/season_01/chapter_XX/upgrade_zone.py`
+
+챕터 1 강의자료는 `Docs/season_01/chapter_01.pdf`와 `chapter_01_p01.png`~`chapter_01_p08.png`로 생성되어 있다.
+
 ## 웹앱 실행 방법
 
 로컬에서 웹 버전을 확인하려면:
 
 ```powershell
-cd C:\Users\guma3\OneDrive\Documents\TheGumaLab\GumaKidsPython
+cd C:\Users\guma3d\Documents\TheGumaLab\GumaKidsPython
 python .\server.py
 ```
 
@@ -80,9 +113,10 @@ python .\server.py
 
 ## 이어서 할 일
 
-1. 챕터 1~3 PDF 샘플 제작
-2. 아이 눈높이에 맞는 페이지 톤 검증
-3. 시즌 1 전체 12챕터 PDF 제작
-4. 시즌 2~4 PDF로 확장
+1. 챕터 1 앱 수업 흐름을 실제 사용 기준으로 검증
+2. 챕터 2~3 강의자료 PDF/PNG 샘플 제작
+3. 챕터 드롭다운과 저장 흐름을 아이 눈높이로 다듬기
+4. 시즌 1 전체 12챕터 PDF 제작
+5. 시즌 2~4 PDF로 확장
 
 상세 인수인계는 `HANDOFF.md`를 먼저 확인하세요.

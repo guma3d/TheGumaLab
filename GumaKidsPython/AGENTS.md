@@ -16,8 +16,11 @@
 - 시즌 1~4 게임 구현 완료.
 - 시즌 1~4 웹앱 1차 구현 완료.
 - Flask 서버 저장 API 1차 구현 완료.
+- `Guma Python Lab` 3분할 학습 앱 프로토타입 구현 완료.
+- 챕터 1 강의자료 PDF/PNG 8페이지 샘플 제작 완료.
 - 모든 게임은 외부 패키지 없이 기본 파이썬 `tkinter`로 실행한다.
-- 다음 큰 작업은 시즌 1 스크린샷 확보와 챕터 1~3 PDF 샘플 제작이다.
+- `Guma Python Lab` 앱과 강의자료 생성 스크립트는 `Pillow`를 사용한다.
+- 다음 큰 작업은 챕터 1 앱 수업 흐름 검증과 챕터 2~3 강의자료 제작이다.
 
 ## 참고 문서 우선순위
 
@@ -37,6 +40,11 @@ GumaKidsPython/
   COURSE_PLAN.md
   GAME_DESIGN.md
   AGENTS.md
+  app/
+    guma_python_lab.py
+  Docs/
+    season_01/
+      chapter_01.pdf
   games/
     season_01_treasure_score/
     season_02_dungeon_choice/
@@ -47,6 +55,8 @@ GumaKidsPython/
     style.css
     app.js
   server.py
+  tools/
+    generate_chapter_01_pdf.py
   docker-compose.yml
 ```
 
@@ -90,18 +100,18 @@ README.md                # 시즌별 실행 설명
 - `engine.py` 설명을 길게 넣지 않는다.
 - 실제 게임 화면과 오늘 바꿀 코드가 명확히 연결되어야 한다.
 - 퀴즈는 초등 3학년이 말로 답할 수 있는 수준으로 만든다.
+- 한 챕터 강의자료는 5페이지 안팎을 기본으로 하며 최대 10페이지를 넘기지 않는다.
+- 정답은 퀴즈 페이지에 바로 노출하지 않고 마지막 정답/해설 페이지에 둔다.
+- 앱용 강의자료는 가로형 PDF/PNG 페이지를 기준으로 제작한다.
 
 기본 챕터 구성은 다음 흐름을 따른다.
 
 1. 표지: 오늘의 게임, 오늘의 업그레이드
-2. 지난 업그레이드 복습
-3. 오늘의 장면
-4. 오늘의 마법 코드
-5. 코드가 한 일
-6. 바꿔보기
-7. 업그레이드 미션
-8. 퀴즈
-9. 정답과 짧은 예고
+2. 오늘의 코드
+3. 코드가 한 일 또는 파이썬 개념
+4. 바꿔보기 또는 Play 해보기
+5. 업그레이드 미션과 퀴즈
+6. 정답과 짧은 해설
 
 ## 실행 및 검증
 
@@ -132,6 +142,24 @@ python .\main.py --check
 
 4개 시즌 전체를 확인할 때는 각 시즌 폴더에서 `--check`와 `py_compile`을 실행한다.
 
+Guma Python Lab 실행:
+
+```powershell
+python .\app\guma_python_lab.py
+```
+
+챕터 1 강의자료 재생성:
+
+```powershell
+python .\tools\generate_chapter_01_pdf.py
+```
+
+앱과 강의자료 생성 스크립트 문법 검사:
+
+```powershell
+python -m py_compile .\app\guma_python_lab.py .\tools\generate_chapter_01_pdf.py
+```
+
 웹앱 로컬 실행:
 
 ```powershell
@@ -148,13 +176,11 @@ python .\server.py
 
 ## 다음 작업 추천 순서
 
-1. 시즌 1 게임을 직접 실행해 화면과 난이도를 확인한다.
-2. 시즌 1 게임 스크린샷을 확보한다.
-3. 챕터 1 PDF 샘플을 제작한다.
-4. 챕터 2~3 PDF 샘플을 제작한다.
-5. PDF 스타일과 난이도를 확정한다.
-6. 시즌 1 전체 12챕터 PDF로 확장한다.
-7. 시즌 2~4 PDF 제작으로 확장한다.
+1. 챕터 1을 앱에서 실제 수업처럼 실행해 화면과 난이도를 확인한다.
+2. 챕터 2~3 PDF/PNG 샘플을 제작한다.
+3. PDF 스타일과 난이도를 확정한다.
+4. 시즌 1 전체 12챕터 PDF로 확장한다.
+5. 시즌 2~4 PDF 제작으로 확장한다.
 
 ## 주의 사항
 

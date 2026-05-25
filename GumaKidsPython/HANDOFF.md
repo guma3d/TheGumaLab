@@ -1,7 +1,7 @@
 # 인수인계 메모
 
-작성일: 2026-05-19  
-프로젝트 위치: `E:\Codex\python_kids_course`
+작성일: 2026-05-26
+프로젝트 위치: `C:\Users\guma3d\Documents\TheGumaLab\GumaKidsPython`
 
 ## 프로젝트 목적
 
@@ -38,12 +38,27 @@
 - Docker 포트 매핑: `5057:5000`
 - Nginx 라우팅: `gumakidspython.guma3d.com` -> `host.docker.internal:5057`
 
+## Guma Python Lab 프로토타입 상태
+
+- `app/guma_python_lab.py`로 실행하는 3분할 학습 앱 프로토타입 구현 완료
+- 기본 화면 비율은 좌우 50:50, 왼쪽 상하 50:50 고정
+- 왼쪽 위는 강의자료, 왼쪽 아래는 게임화면, 오른쪽은 파이썬 코드 편집 화면
+- 앱 크롬과 코드 편집기는 Dark 테마 적용
+- 강의자료와 게임 화면은 현재의 밝고 아기자기한 색상 유지
+- 챕터 선택은 작은 드롭다운으로 제공
+- `Play`를 누르면 현재 챕터 코드가 저장되고 게임화면에 즉시 반영
+- 학생 코드 저장 위치: `user_saves/season_01/chapter_XX/upgrade_zone.py`
+- 챕터 1 강의자료는 `Docs/season_01/chapter_01.pdf`와 8개의 PNG 페이지로 생성 완료
+- 챕터 1 PDF 생성 스크립트: `tools/generate_chapter_01_pdf.py`
+
 ## 실행 환경
 
-- Python 3.14.2에서 검증
-- 외부 패키지 없음
+- Python 3.12.10에서 검증
+- 시즌별 단독 게임은 외부 패키지 없음
 - `tkinter` 사용
 - Windows PowerShell 기준 명령 작성
+
+`Guma Python Lab` 앱과 PDF 생성 스크립트는 `Pillow`를 사용한다.
 
 ## 전체 검증 명령
 
@@ -71,31 +86,45 @@ python -m py_compile .\server.py
 python .\server.py
 ```
 
+Guma Python Lab 실행:
+
+```powershell
+python .\app\guma_python_lab.py
+```
+
+챕터 1 강의자료 재생성:
+
+```powershell
+python .\tools\generate_chapter_01_pdf.py
+```
+
 ## 마지막 검증 상태
 
-2026-05-19 기준으로 다음 검증을 완료했다.
+2026-05-26 기준으로 다음 검증을 완료했다.
 
 - 시즌 1~4 주요 파이썬 파일 `py_compile` 통과
 - 시즌 1 `python .\main.py --check` 통과
 - 시즌 2 `python .\main.py --check` 통과
 - 시즌 3 `python .\main.py --check` 통과
 - 시즌 4 `python .\main.py --check` 통과
+- `app/guma_python_lab.py`와 `tools/generate_chapter_01_pdf.py` `py_compile` 통과
+- 챕터 1 PDF/PNG 8페이지 재생성 확인
 
 압축본에는 실행에 불필요한 `__pycache__` 폴더를 포함하지 않는다.
 
 ## 게임별 실행 경로
 
 ```powershell
-cd E:\Codex\python_kids_course\games\season_01_treasure_score
+cd C:\Users\guma3d\Documents\TheGumaLab\GumaKidsPython\games\season_01_treasure_score
 python .\main.py
 
-cd E:\Codex\python_kids_course\games\season_02_dungeon_choice
+cd C:\Users\guma3d\Documents\TheGumaLab\GumaKidsPython\games\season_02_dungeon_choice
 python .\main.py
 
-cd E:\Codex\python_kids_course\games\season_03_monster_battle
+cd C:\Users\guma3d\Documents\TheGumaLab\GumaKidsPython\games\season_03_monster_battle
 python .\main.py
 
-cd E:\Codex\python_kids_course\games\season_04_mini_adventure
+cd C:\Users\guma3d\Documents\TheGumaLab\GumaKidsPython\games\season_04_mini_adventure
 python .\main.py
 ```
 
@@ -113,7 +142,7 @@ python .\main.py
 
 ## 다음 작업
 
-가장 먼저 할 일은 챕터 1~3 PDF 샘플 제작이다.
+가장 먼저 할 일은 챕터 1 앱 수업 흐름 검증과 챕터 2~3 강의자료 제작이다.
 
 샘플 PDF에서 확인할 것:
 
@@ -125,12 +154,11 @@ python .\main.py
 
 ## 추천 제작 순서
 
-1. 시즌 1 게임 스크린샷 확보
-2. 챕터 1 PDF 샘플 제작
-3. 챕터 2~3 PDF 샘플 제작
-4. PDF 스타일 확정
-5. 시즌 1 전체 12챕터 제작
-6. 시즌 2~4 순서로 확장
+1. 챕터 1을 앱에서 실제 수업처럼 실행하며 문장 길이와 버튼 흐름 확인
+2. 챕터 2~3 PDF/PNG 샘플 제작
+3. PDF 스타일과 난이도 확정
+4. 시즌 1 전체 12챕터 제작
+5. 시즌 2~4 순서로 확장
 
 ## 주의할 점
 

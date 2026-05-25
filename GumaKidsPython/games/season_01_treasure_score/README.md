@@ -5,7 +5,7 @@
 ## 실행 방법
 
 ```powershell
-cd E:\Codex\python_kids_course\games\season_01_treasure_score
+cd C:\Users\guma3d\Documents\TheGumaLab\GumaKidsPython\games\season_01_treasure_score
 python .\main.py
 ```
 

@@ -15,7 +15,7 @@
 ## 공통 실행 구조
 
 ```text
-python_kids_course/
+GumaKidsPython/
   games/
     season_01_treasure_score/
       main.py
@@ -409,13 +409,24 @@ upgrade_zone_original.py
 - 시즌 2 던전 선택 게임 구현 완료
 - 시즌 3 몬스터 배틀 게임 구현 완료
 - 시즌 4 미니 어드벤처 게임 구현 완료
+- `Guma Python Lab` 3분할 학습 앱 프로토타입 구현 완료
+- 챕터 1 가로형 강의자료 PDF/PNG 8페이지 제작 완료
 - 구현 위치:
   - `games/season_01_treasure_score/`
   - `games/season_02_dungeon_choice/`
   - `games/season_03_monster_battle/`
   - `games/season_04_mini_adventure/`
+- 앱 위치:
+  - `app/guma_python_lab.py`
+  - `app/README.md`
+- 강의자료 위치:
+  - `Docs/season_01/chapter_01.pdf`
+  - `Docs/season_01/chapter_01_p01.png`~`chapter_01_p08.png`
+- 강의자료 생성 스크립트:
+  - `tools/generate_chapter_01_pdf.py`
 - 구현 방식: `tkinter` 기반 2D 화면 게임
-- 외부 패키지: 없음
+- 시즌별 단독 게임 외부 패키지: 없음
+- 앱과 강의자료 생성 스크립트: `Pillow` 사용
 - 실행 파일: `main.py`
 - 아이 수정 파일: `upgrade_zone.py`
 - 원본 백업 파일: `upgrade_zone_original.py`
@@ -423,8 +434,8 @@ upgrade_zone_original.py
 
 # 제작 순서
 
-1. 시즌 1 게임을 아이와 직접 실행해 난이도 확인
-2. 챕터 1~3 PDF 샘플 제작
+1. 챕터 1을 `Guma Python Lab` 앱에서 실제 수업처럼 실행해 흐름 확인
+2. 챕터 2~3 PDF/PNG 샘플 제작
 3. PDF 스타일과 난이도 조정
 4. 시즌 1 전체 12챕터 PDF 제작
 5. 시즌 2 PDF 제작
