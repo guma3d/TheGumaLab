@@ -14,8 +14,11 @@ const seasons = {
       ["hero_message", "주인공 대사", "보물을 찾자!"],
       ["hero_name", "주인공 이름", "번개용사"],
       ["start_score", "시작 점수", 10],
+      ["score", "현재 점수", 10],
       ["hp", "체력", 100],
       ["speed", "이동 속도", 5],
+      ["title", "등장 문장", "번개용사 등장!"],
+      ["status_text", "상태창 문장", "번개용사 점수: 10"],
       ["treasure_point", "보물 점수", 10],
       ["trap_damage", "함정 데미지", 20],
       ["bonus_multiplier", "보너스 배율", 2],
@@ -99,10 +102,10 @@ const seasonOneChapters = {
     title: "캐릭터가 말해요",
     focus: "hero_message",
     pages: [
-      ["1. 오늘의 장면", "주인공이 보물을 찾을 때 보여줄 대사를 정합니다."],
+      ["1. 오늘의 장면", "주인공 옆 말풍선에 보여줄 대사를 정합니다."],
       ["2. 오늘의 코드", "hero_message 변수에 주인공의 말을 저장합니다."],
       ["3. 기술 설명", "문자열은 글자의 묶음입니다. 한글, 영어, 기호도 따옴표 안에 있으면 str입니다."],
-      ["4. 바꿔보기", "hero_message 값을 바꾸고 액션 버튼으로 문장을 확인합니다."],
+      ["4. 바꿔보기", "hero_message 값을 바꾸면 게임 화면 말풍선이 바로 바뀝니다."],
       ["5. 미션", "주인공 성격이 드러나는 짧은 대사를 만들어 봅니다."],
     ],
   },
@@ -135,7 +138,7 @@ const seasonOneChapters = {
       ["1. 오늘의 장면", "점수판은 현재 점수를 계속 보여줍니다."],
       ["2. 오늘의 코드", "score = start_score는 시작 점수를 현재 점수에 복사합니다."],
       ["3. 기술 설명", "= 는 오른쪽 값을 왼쪽 변수에 넣는 대입 연산자입니다."],
-      ["4. 바꿔보기", "start_score를 바꾼 뒤 score가 어떻게 시작하는지 봅니다."],
+      ["4. 바꿔보기", "score 값을 바꾸고 점수판이 어떤 점수로 시작하는지 봅니다."],
       ["5. 미션", "점수판이 어떤 변수 값을 보여주는지 말로 설명해 봅니다."],
     ],
   },
@@ -555,6 +558,14 @@ function generateCode(seasonKey) {
   const s = state.settings[seasonKey] || defaultSettings(seasonKey);
   const today = (chapter) => (seasonKey === "season_01" && state.activeChapter === chapter ? "# [오늘의 업그레이드]" : "");
   if (seasonKey === "season_01") {
+    const startScore = toNumber(s.start_score, 10);
+    const score = toNumber(s.score, startScore);
+    const heroName = s.hero_name || "번개용사";
+    const title = s.title || `${heroName} 등장!`;
+    const statusText = s.status_text || `${heroName} 점수: ${score}`;
+    const scoreLine = score === startScore ? "score = start_score" : `score = ${score}`;
+    const titleLine = title === `${heroName} 등장!` ? 'title = hero_name + " 등장!"' : `title = "${title}"`;
+    const statusLine = statusText === `${heroName} 점수: ${score}` ? 'status_text = f"{hero_name} 점수: {score}"' : `status_text = "${statusText}"`;
     return [
       "# 시즌 1: 보물 점수 게임 업그레이드 존",
       "# 전체 코드를 볼 수 있습니다. 오늘 배울 곳은 [오늘의 업그레이드] 아래입니다.",
@@ -587,7 +598,7 @@ function generateCode(seasonKey) {
       "# [챕터 5] 점수 변수",
       today(5),
       "# =========================",
-      "score = start_score",
+      scoreLine,
       "",
       "# =========================",
       "# [챕터 6] 체력",
@@ -605,13 +616,13 @@ function generateCode(seasonKey) {
       "# [챕터 8] 글자 합체",
       today(8),
       "# =========================",
-      "title = hero_name + \" 등장!\"",
+      titleLine,
       "",
       "# =========================",
       "# [챕터 9] 멋진 상태창",
       today(9),
       "# =========================",
-      "status_text = f\"{hero_name} 점수: {score}\"",
+      statusLine,
       "",
       "# =========================",
       "# [챕터 10] 더하기 마법",
@@ -826,6 +837,32 @@ function parseCode(seasonKey, source) {
     const match = source.match(new RegExp(`^\\s*${name}\\s*=\\s*(-?\\d+(?:\\.\\d+)?)`, "m"));
     return match ? Number(match[1]) : base[name];
   };
+  const seasonOneScoreValue = (startScore) => {
+    const numberMatch = source.match(/^\s*score\s*=\s*(-?\d+(?:\.\d+)?)/m);
+    if (numberMatch) return Number(numberMatch[1]);
+    const startScoreMatch = source.match(/^\s*score\s*=\s*start_score\s*$/m);
+    if (startScoreMatch) return startScore;
+    return base.score ?? startScore;
+  };
+  const seasonOneTitleValue = (heroName) => {
+    const literalMatch = source.match(/^\s*title\s*=\s*["']([^"']*)["']/m);
+    if (literalMatch) return literalMatch[1];
+    const concatMatch = source.match(/^\s*title\s*=\s*hero_name\s*\+\s*["']([^"']*)["']/m);
+    if (concatMatch) return `${heroName}${concatMatch[1]}`;
+    return base.title ?? `${heroName} 등장!`;
+  };
+  const seasonOneStatusValue = (heroName, score, hp) => {
+    const literalMatch = source.match(/^\s*status_text\s*=\s*["']([^"']*)["']/m);
+    if (literalMatch) return literalMatch[1];
+    const fStringMatch = source.match(/^\s*status_text\s*=\s*f["']([^"']*)["']/m);
+    if (fStringMatch) {
+      return fStringMatch[1]
+        .replaceAll("{hero_name}", heroName)
+        .replaceAll("{score}", String(score))
+        .replaceAll("{hp}", String(hp));
+    }
+    return base.status_text ?? `${heroName} 점수: ${score}`;
+  };
   const boolValue = (name) => {
     const match = source.match(new RegExp(`^\\s*${name}\\s*=\\s*(True|False|true|false)`, "m"));
     return match ? String(match[1]).toLowerCase() : base[name];
@@ -838,13 +875,20 @@ function parseCode(seasonKey, source) {
   };
 
   if (seasonKey === "season_01") {
+    const heroName = stringValue("hero_name");
+    const startScore = numberValue("start_score");
+    const score = seasonOneScoreValue(startScore);
+    const hp = numberValue("hp");
     return {
       start_message: stringValue("start_message"),
       hero_message: stringValue("hero_message"),
-      hero_name: stringValue("hero_name"),
-      start_score: numberValue("start_score"),
-      hp: numberValue("hp"),
+      hero_name: heroName,
+      start_score: startScore,
+      score,
+      hp,
       speed: numberValue("speed"),
+      title: seasonOneTitleValue(heroName),
+      status_text: seasonOneStatusValue(heroName, score, hp),
       treasure_point: numberValue("treasure_point"),
       trap_damage: numberValue("trap_damage"),
       bonus_multiplier: numberValue("bonus_multiplier"),
@@ -890,7 +934,7 @@ function seasonOneReset() {
     y: 18,
     direction: "down",
     step: 0,
-    score: toNumber(s.start_score, 10),
+    score: toNumber(s.score, toNumber(s.start_score, 10)),
     hp: toNumber(s.hp, 100),
     message: s.start_message || "모험 시작!",
     collected: {
@@ -918,11 +962,12 @@ function percentStyle(x, y) {
 function renderSeasonOne() {
   const s = state.settings.season_01;
   const g = state.game.season_01 || (seasonOneReset(), state.game.season_01);
-  const title = `${s.hero_name || "번개용사"} 등장!`;
+  const title = s.title || `${s.hero_name || "번개용사"} 등장!`;
+  const statusText = s.status_text || `${s.hero_name || "번개용사"} 점수: ${g.score}`;
   const collected = g.collected || {};
   setHud(
     title,
-    `점수 ${g.score} · 체력 ${g.hp} · 속도 ${s.speed} · 보물 ${collected.treasure || 0} · 동전 ${collected.coin || 0} · 보너스 ${collected.bonus || 0}`,
+    `${statusText} · 현재 점수 ${g.score} · 체력 ${g.hp} · 속도 ${s.speed} · 보물 ${collected.treasure || 0} · 동전 ${collected.coin || 0} · 보너스 ${collected.bonus || 0}`,
   );
   els.action.textContent = "보물 줍기";
   els.gameMount.innerHTML = `<div class="board voxel-board" tabindex="0" aria-label="보물 점수 게임판"></div>`;
@@ -931,6 +976,7 @@ function renderSeasonOne() {
   const hero = document.createElement("div");
   hero.className = `sprite hero voxel-hero facing-${g.direction || "down"} step-${g.step % 2}`;
   hero.innerHTML = `
+    <span class="hero-speech">${s.hero_message || "보물을 찾자!"}</span>
     <span class="hero-shadow"></span>
     <span class="voxel-sword"></span>
     <span class="voxel-body">

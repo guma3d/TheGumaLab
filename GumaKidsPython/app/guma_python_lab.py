@@ -74,18 +74,18 @@ class GameItem:
 
 
 CHAPTERS = [
-    Chapter(1, "게임 화면아 안녕", "print()", "게임 시작 문장 바꾸기", "시작 문장을 내 말로 바꿔 보자.", "print()는 어디에 글자를 보여줄까?"),
-    Chapter(2, "캐릭터가 말해요", "문자열", "주인공 대사 바꾸기", "주인공에게 멋진 대사를 만들어 주자.", "따옴표 안에 들어 있는 것은 무엇일까?"),
+    Chapter(1, "게임 화면아 안녕", "문자열 str", "게임 시작 문장 바꾸기", "시작 문장을 내 말로 바꿔 보자.", "str은 어떤 자료형일까?"),
+    Chapter(2, "캐릭터가 말해요", "문자열 str", "주인공 대사 바꾸기", "주인공에게 멋진 대사를 만들어 주자.", "문자열은 어떤 값을 담는 자료형일까?"),
     Chapter(3, "이름을 바꿔요", "문자열 값", "주인공 이름 바꾸기", "주인공 이름을 3개 만들어 보고 하나를 골라 보자.", "글자와 숫자는 어떻게 다를까?"),
-    Chapter(4, "숫자가 보여요", "숫자", "시작 점수 바꾸기", "시작 점수를 0, 10, 100으로 바꿔 보자.", "숫자에는 따옴표가 필요할까?"),
-    Chapter(5, "점수판 만들기", "변수", "점수 변수 만들기", "보물 게임의 시작 점수를 정해 보자.", "변수는 무엇을 담는 이름일까?"),
+    Chapter(4, "숫자가 보여요", "정수 int", "시작 점수 바꾸기", "시작 점수를 0, 10, 100으로 바꿔 보자.", "int는 어떤 숫자를 담는 자료형일까?"),
+    Chapter(5, "점수판 만들기", "변수와 대입", "점수 변수 만들기", "보물 게임의 시작 점수를 정해 보자.", "= 오른쪽 값은 어디에 저장될까?"),
     Chapter(6, "체력 만들기", "숫자 변수", "주인공 체력 바꾸기", "체력을 50, 100, 999로 바꿔 보자.", "hp에 들어 있는 값은 무엇일까?"),
     Chapter(7, "속도 만들기", "변수 값 변경", "캐릭터 속도 바꾸기", "느린 캐릭터와 빠른 캐릭터를 만들어 보자.", "값이 바뀌면 게임은 어떻게 바뀔까?"),
-    Chapter(8, "글자 합체", "문자열 연결", "이름과 문장 합치기", "내 이름이 들어간 등장 문장을 만들어 보자.", "+는 글자에서 어떤 일을 할까?"),
+    Chapter(8, "글자 합체", "문자열 연결 +", "이름과 문장 합치기", "내 이름이 들어간 등장 문장을 만들어 보자.", "+는 글자에서 어떤 일을 할까?"),
     Chapter(9, "멋진 상태창", "f-string", "이름과 점수를 문장에 넣기", "게임 상태창 문장을 바꿔 보자.", "{} 안에는 무엇을 넣을까?"),
-    Chapter(10, "더하기 마법", "+", "보물 점수 더하기", "보물을 먹으면 50점 오르게 만들어 보자.", "점수는 어떻게 계산될까?"),
-    Chapter(11, "빼기 마법", "-", "함정 데미지 만들기", "함정 데미지를 약하게 또는 강하게 만들어 보자.", "체력은 어떻게 줄어들까?"),
-    Chapter(12, "보너스 점수", "*", "보너스 배율 만들기", "보너스 점수를 2배, 3배로 바꿔 보자.", "곱하기는 점수를 어떻게 바꿀까?"),
+    Chapter(10, "더하기 마법", "덧셈 +", "보물 점수 더하기", "보물을 먹으면 50점 오르게 만들어 보자.", "점수는 어떻게 계산될까?"),
+    Chapter(11, "빼기 마법", "뺄셈 -", "함정 데미지 만들기", "함정 데미지를 약하게 또는 강하게 만들어 보자.", "체력은 어떻게 줄어들까?"),
+    Chapter(12, "보너스 점수", "곱셈 *", "보너스 배율 만들기", "보너스 점수를 2배, 3배로 바꿔 보자.", "곱하기는 점수를 어떻게 바꿀까?"),
 ]
 
 
@@ -628,9 +628,9 @@ class GameView:
                     self.game_over = True
                     self.message = "체력이 0이 되었어. R 키로 다시 도전!"
 
-        if all(item.done for item in self.items):
+        if all(item.done or item.kind == "trap" for item in self.items):
             self.win = True
-            self.message = f"성공! 최종 점수 {self.score}점"
+            self.message = f"성공! {self.config.hero_name}의 최종 점수 {self.score}점"
 
     def try_collect(self) -> None:
         if self.win or self.game_over:
@@ -721,12 +721,37 @@ class GameView:
                 c.create_polygon(x(item.x - 20), y(item.y + 18), x(item.x), y(item.y - 20), x(item.x + 20), y(item.y + 18), fill="#ff7b54", outline="#74321d", width=max(1, int(2 * min(sx, sy))))
                 c.create_text(x(item.x), y(item.y + 7), text="!", fill="white", font=font(13, "bold"))
 
+        bubble_x1 = max(8, min(GAME_BASE_WIDTH - 190, self.hero_x + 30))
+        bubble_y1 = max(72, min(GAME_BASE_HEIGHT - 116, self.hero_y - 74))
+        bubble_x2 = bubble_x1 + 182
+        bubble_y2 = bubble_y1 + 42
+        c.create_rectangle(x(bubble_x1), y(bubble_y1), x(bubble_x2), y(bubble_y2), fill="#ffffff", outline="#7fb5df", width=max(1, int(2 * min(sx, sy))))
+        c.create_polygon(
+            x(self.hero_x + 16),
+            y(self.hero_y - 18),
+            x(bubble_x1 + 18),
+            y(bubble_y2 - 7),
+            x(bubble_x1 + 40),
+            y(bubble_y2 - 7),
+            fill="#ffffff",
+            outline="#7fb5df",
+        )
+        c.create_text(
+            x(bubble_x1 + 12),
+            y(bubble_y1 + 21),
+            text=self.config.hero_message,
+            anchor="w",
+            width=max(80, int((bubble_x2 - bubble_x1 - 24) * sx)),
+            fill="#14324a",
+            font=font(9, "bold"),
+        )
+
         c.create_oval(x(self.hero_x - 18), y(self.hero_y - 24), x(self.hero_x + 18), y(self.hero_y + 12), fill="#4f9cff", outline="#1d4d91", width=max(1, int(2 * min(sx, sy))))
         c.create_rectangle(x(self.hero_x - 15), y(self.hero_y + 12), x(self.hero_x + 15), y(self.hero_y + 33), fill="#2dd4bf", outline="#0f766e", width=max(1, int(2 * min(sx, sy))))
         c.create_text(x(self.hero_x), y(self.hero_y + 50), text=self.config.hero_name, fill="#14324a", font=font(9, "bold"))
 
         c.create_text(x(18), y(GAME_BASE_HEIGHT - 36), text=self.message, anchor="w", fill="#3a2a08", font=font(11, "bold"))
-        c.create_text(x(18), y(GAME_BASE_HEIGHT - 14), text="방향키 이동 / 스페이스 줍기 / R 다시", anchor="w", fill="#6b5a1f", font=font(9))
+        c.create_text(x(18), y(GAME_BASE_HEIGHT - 14), text=f"방향키 이동 / 스페이스 줍기 / R 다시 / 속도 {self.config.speed}", anchor="w", fill="#6b5a1f", font=font(9))
 
         if self.win or self.game_over:
             fill = "#ecfdf5" if self.win else "#fff1f2"

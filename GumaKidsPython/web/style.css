@@ -515,6 +515,39 @@ select option {
   z-index: -1;
 }
 
+.hero-speech {
+  position: absolute;
+  left: 58px;
+  bottom: 70px;
+  z-index: 8;
+  width: min(220px, 36vw);
+  max-height: 54px;
+  overflow: hidden;
+  padding: 8px 10px;
+  border: 1px solid rgba(125, 211, 252, 0.72);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #14324a;
+  font-size: 12px;
+  line-height: 1.25;
+  text-align: left;
+  text-shadow: none;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
+}
+
+.hero-speech::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  bottom: -7px;
+  width: 14px;
+  height: 14px;
+  border-right: 1px solid rgba(125, 211, 252, 0.72);
+  border-bottom: 1px solid rgba(125, 211, 252, 0.72);
+  background: rgba(255, 255, 255, 0.94);
+  transform: rotate(45deg);
+}
+
 .voxel-body {
   position: relative;
   display: block;

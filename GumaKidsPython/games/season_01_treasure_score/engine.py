@@ -272,6 +272,7 @@ class TreasureScoreGame:
         c.create_rectangle(690, 45, 690 + hp_width, 64, fill="#5d7185", outline="")
         c.create_rectangle(690, 45, 690 + int(hp_width * hp_ratio), 64, fill="#ff6b6b", outline="")
         c.create_rectangle(690, 45, 690 + hp_width, 64, outline="#d7e7f5", width=2)
+        c.create_text(690, 78, text=f"속도: {self.config.speed}", anchor="w", fill="#cdefff", font=(FONT_FAMILY, 11, "bold"))
 
     def _draw_items(self, c: tk.Canvas) -> None:
         for item in self.items:
@@ -312,6 +313,7 @@ class TreasureScoreGame:
         x = self.hero_x
         y = self.hero_y
         bounce = 3 if (self.tick // 10) % 2 == 0 else 0
+        self._draw_hero_message(c, x, y)
         c.create_oval(x - 20, y + 23, x + 20, y + 31, fill="#8fb3c7", outline="")
         c.create_oval(x - 19, y - 24 - bounce, x + 19, y + 14 - bounce, fill="#4f9cff", outline="#1d4d91", width=3)
         c.create_oval(x - 8, y - 12 - bounce, x - 3, y - 7 - bounce, fill="white", outline="")
@@ -320,12 +322,31 @@ class TreasureScoreGame:
         c.create_rectangle(x - 16, y + 14 - bounce, x + 16, y + 38 - bounce, fill="#2dd4bf", outline="#0f766e", width=3)
         c.create_text(x, y + 56, text=self.config.hero_name, fill="#14324a", font=(FONT_FAMILY, 11, "bold"))
 
+    def _draw_hero_message(self, c: tk.Canvas, hero_x: int, hero_y: int) -> None:
+        bubble_width = 230
+        bubble_height = 48
+        x1 = max(12, min(WIDTH - bubble_width - 12, hero_x + 34))
+        y1 = max(PLAY_TOP + 8, min(PLAY_BOTTOM - bubble_height - 8, hero_y - 82))
+        x2 = x1 + bubble_width
+        y2 = y1 + bubble_height
+        c.create_rectangle(x1, y1, x2, y2, fill="#ffffff", outline="#7fb5df", width=2)
+        c.create_polygon(hero_x + 18, hero_y - 18, x1 + 18, y2 - 8, x1 + 42, y2 - 8, fill="#ffffff", outline="#7fb5df")
+        c.create_text(
+            x1 + 14,
+            y1 + bubble_height // 2,
+            text=self.config.hero_message,
+            anchor="w",
+            width=bubble_width - 28,
+            fill="#14324a",
+            font=(FONT_FAMILY, 11, "bold"),
+        )
+
     def _draw_footer(self, c: tk.Canvas) -> None:
         c.create_text(28, PLAY_BOTTOM + 24, text=self.message, anchor="w", fill="#3a2a08", font=(FONT_FAMILY, 15, "bold"))
         c.create_text(
             28,
             PLAY_BOTTOM + 58,
-            text="방향키: 이동   스페이스: 보물 줍기/대사 보기   R: 다시 시작",
+            text=f"방향키: 이동   스페이스: 보물 줍기/대사 보기   R: 다시 시작   현재 속도: {self.config.speed}",
             anchor="w",
             fill="#6b5a1f",
             font=(FONT_FAMILY, 11),
@@ -361,7 +382,11 @@ def check_game_files() -> None:
     game_dir = Path(__file__).resolve().parent
     print("시즌 1 보물 점수 게임 확인 완료")
     print(f"폴더: {game_dir}")
+    print(f"시작 문장: {config.start_message}")
+    print(f"주인공 대사: {config.hero_message}")
     print(f"주인공: {config.hero_name}")
+    print(f"제목: {config.title}")
+    print(f"상태창: {config.status_text}")
     print(f"시작 점수: {config.score}")
     print(f"체력: {config.hp}")
     print(f"속도: {config.speed}")
