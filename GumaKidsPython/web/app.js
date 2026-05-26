@@ -276,7 +276,6 @@ const state = {
   game: {},
   lessonPage: 0,
   gameStarted: false,
-  startNotice: false,
   gameTimer: null,
 };
 
@@ -1075,7 +1074,6 @@ function seasonOneHudStats(settings, game, chapter) {
 
 function renderSeasonOneScenery(board, settings, game, chapter) {
   addSeasonOneScenery(board, "build-ribbon", `챕터 ${chapter} 빌드`);
-  addSeasonOneScenery(board, "world-sign start-flag", settings.start_message || "모험 시작!");
   if (chapter >= 3) addSeasonOneScenery(board, "world-sign name-flag", `${settings.hero_name || "번개용사"}의 모험`);
   if (chapter >= 4) addSeasonOneScenery(board, "score-totem", `START ${toNumber(settings.start_score, 10)}`);
   if (chapter >= 5) seasonOneProp(board, "coin-road");
@@ -1194,12 +1192,6 @@ function renderSeasonOne() {
       spark.style.animationDelay = `${index * 0.08}s`;
       board.appendChild(spark);
     }
-  }
-  if (state.startNotice) {
-    const notice = document.createElement("div");
-    notice.className = "start-notice";
-    notice.textContent = s.start_message || "모험 시작!";
-    board.appendChild(notice);
   }
   if (!state.gameStarted) {
     const overlay = document.createElement("div");
@@ -1627,7 +1619,6 @@ els.applyUpgrade.addEventListener("click", () => {
 els.start.addEventListener("click", () => {
   if (state.gameStarted) {
     state.gameStarted = false;
-    state.startNotice = false;
     stopGameTimer();
     stopMusic();
     renderActiveSeason(false, false);
@@ -1636,23 +1627,15 @@ els.start.addEventListener("click", () => {
   }
   readFields();
   state.gameStarted = true;
-  state.startNotice = state.activeSeason === "season_01";
   startMusic();
   renderActiveSeason(true, false);
   startGameTimer();
   setStatus("게임을 시작했습니다.");
-  if (state.startNotice) {
-    window.setTimeout(() => {
-      state.startNotice = false;
-      if (state.activeSeason === "season_01") renderSeasonOne();
-    }, 1400);
-  }
 });
 
 els.reset.addEventListener("click", () => {
   readFields();
   state.gameStarted = false;
-  state.startNotice = false;
   stopGameTimer();
   stopMusic();
   renderActiveSeason(true, false);
