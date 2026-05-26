@@ -89,16 +89,16 @@ const seasons = {
 const seasonOneEditPlans = {
   1: { lines: 1, keys: ["start_message"], labels: ["start_message"] },
   2: { lines: 1, keys: ["hero_message"], labels: ["hero_message"] },
-  3: { lines: 1, keys: ["hero_name"], labels: ["hero_name"] },
-  4: { lines: 1, keys: ["start_score"], labels: ["start_score"] },
-  5: { lines: 2, keys: ["start_score", "score"], labels: ["start_score", "score"] },
-  6: { lines: 2, keys: ["score", "hp"], labels: ["score", "hp"] },
-  7: { lines: 2, keys: ["hp", "speed"], labels: ["hp", "speed"] },
-  8: { lines: 3, keys: ["hero_name", "hero_message", "title"], labels: ["hero_name", "hero_message", "title"] },
-  9: { lines: 3, keys: ["hero_name", "score", "status_text"], labels: ["hero_name", "score", "status_text"] },
-  10: { lines: 4, keys: ["score", "hp", "speed", "treasure_point"], labels: ["score", "hp", "speed", "treasure_point"] },
-  11: { lines: 4, keys: ["score", "hp", "speed", "trap_damage"], labels: ["score", "hp", "speed", "trap_damage"] },
-  12: { lines: 5, keys: ["score", "hp", "treasure_point", "trap_damage", "bonus_multiplier"], labels: ["score", "hp", "treasure_point", "trap_damage", "bonus_multiplier"] },
+  3: { lines: 2, keys: ["hero_name", "start_score"], labels: ["hero_name", "start_score"] },
+  4: { lines: 2, keys: ["start_score", "hp"], labels: ["start_score", "hp"] },
+  5: { lines: 3, keys: ["start_score", "score", "treasure_point"], labels: ["start_score", "score", "treasure_point"] },
+  6: { lines: 4, keys: ["start_score", "score", "hp", "trap_damage"], labels: ["start_score", "score", "hp", "trap_damage"] },
+  7: { lines: 5, keys: ["start_score", "score", "hp", "speed", "trap_damage"], labels: ["start_score", "score", "hp", "speed", "trap_damage"] },
+  8: { lines: 6, keys: ["hero_name", "hero_message", "start_score", "score", "speed", "title"], labels: ["hero_name", "hero_message", "start_score", "score", "speed", "title"] },
+  9: { lines: 7, keys: ["hero_name", "hero_message", "start_score", "score", "hp", "speed", "status_text"], labels: ["hero_name", "hero_message", "start_score", "score", "hp", "speed", "status_text"] },
+  10: { lines: 8, keys: ["hero_name", "start_score", "score", "hp", "speed", "title", "status_text", "treasure_point"], labels: ["hero_name", "start_score", "score", "hp", "speed", "title", "status_text", "treasure_point"] },
+  11: { lines: 9, keys: ["hero_name", "start_score", "score", "hp", "speed", "title", "status_text", "treasure_point", "trap_damage"], labels: ["hero_name", "start_score", "score", "hp", "speed", "title", "status_text", "treasure_point", "trap_damage"] },
+  12: { lines: 10, keys: ["hero_name", "start_score", "score", "hp", "speed", "title", "status_text", "treasure_point", "trap_damage", "bonus_multiplier"], labels: ["hero_name", "start_score", "score", "hp", "speed", "title", "status_text", "treasure_point", "trap_damage", "bonus_multiplier"] },
 };
 
 const seasonOneUnlocks = {
@@ -144,13 +144,13 @@ const seasonOneChapters = {
   3: {
     title: "이름을 바꿔요",
     focus: "hero_name",
-    syntax: "변수는 값에 붙이는 이름표입니다. hero_name을 바꾸면 캐릭터 이름표, 제목, 상태창처럼 hero_name을 쓰는 곳이 함께 바뀝니다.",
+    syntax: "변수는 값에 붙이는 이름표입니다. hero_name은 글자 변수이고 start_score는 숫자 변수입니다. 두 줄을 함께 바꾸면 이름표와 시작 점수가 동시에 달라집니다.",
     pages: [
-      ["1. 오늘의 장면", "상태창과 캐릭터 이름표에 주인공 이름이 보입니다."],
-      ["2. 오늘의 코드", "hero_name 변수에 이름 문자열을 저장합니다."],
-      ["3. 기술 설명", "변수는 값에 붙이는 이름입니다. 같은 값을 여러 곳에서 다시 쓸 수 있게 해줍니다."],
-      ["4. 바꿔보기", "hero_name을 바꾸면 제목과 캐릭터 이름표가 함께 바뀝니다."],
-      ["5. 미션", "게임에 어울리는 주인공 이름 3개를 실험합니다."],
+      ["1. 오늘의 장면", "캐릭터 이름표와 시작 점수를 함께 정합니다."],
+      ["2. 오늘의 코드", "hero_name에는 이름 문자열을, start_score에는 시작 점수 숫자를 저장합니다."],
+      ["3. 기술 설명", "변수는 값에 붙이는 이름입니다. 문자열은 따옴표 안에, 숫자는 따옴표 없이 씁니다."],
+      ["4. 바꿔보기", "hero_name과 start_score 두 줄을 함께 바꾸고 이름표와 점수를 비교합니다."],
+      ["5. 미션", "게임에 어울리는 주인공 이름과 시작 점수 조합 3개를 실험합니다."],
     ],
   },
   4: {
@@ -276,6 +276,7 @@ const state = {
   game: {},
   lessonPage: 0,
   gameStarted: false,
+  startNotice: false,
   gameTimer: null,
 };
 
@@ -1148,8 +1149,9 @@ function renderSeasonOne() {
 
   const hero = document.createElement("div");
   hero.className = `sprite hero voxel-hero facing-${g.direction || "down"} step-${g.step % 2}`;
+  const showHeroSpeech = chapter >= 2 && state.gameStarted && !state.startNotice;
   hero.innerHTML = `
-    ${chapter >= 2 ? `<span class="hero-speech">${s.hero_message || "보물을 찾자!"}</span>` : ""}
+    ${showHeroSpeech ? `<span class="hero-speech">${s.hero_message || "보물을 찾자!"}</span>` : ""}
     ${chapter >= 7 ? "<span class=\"speed-trail\"></span>" : ""}
     <span class="hero-shadow"></span>
     <span class="voxel-sword"></span>
@@ -1192,6 +1194,12 @@ function renderSeasonOne() {
       spark.style.animationDelay = `${index * 0.08}s`;
       board.appendChild(spark);
     }
+  }
+  if (state.startNotice) {
+    const notice = document.createElement("div");
+    notice.className = "start-notice";
+    notice.textContent = s.start_message || "모험 시작!";
+    board.appendChild(notice);
   }
   if (!state.gameStarted) {
     const overlay = document.createElement("div");
@@ -1619,6 +1627,7 @@ els.applyUpgrade.addEventListener("click", () => {
 els.start.addEventListener("click", () => {
   if (state.gameStarted) {
     state.gameStarted = false;
+    state.startNotice = false;
     stopGameTimer();
     stopMusic();
     renderActiveSeason(false, false);
@@ -1627,15 +1636,23 @@ els.start.addEventListener("click", () => {
   }
   readFields();
   state.gameStarted = true;
+  state.startNotice = state.activeSeason === "season_01";
   startMusic();
   renderActiveSeason(true, false);
   startGameTimer();
   setStatus("게임을 시작했습니다.");
+  if (state.startNotice) {
+    window.setTimeout(() => {
+      state.startNotice = false;
+      if (state.activeSeason === "season_01") renderSeasonOne();
+    }, 1200);
+  }
 });
 
 els.reset.addEventListener("click", () => {
   readFields();
   state.gameStarted = false;
+  state.startNotice = false;
   stopGameTimer();
   stopMusic();
   renderActiveSeason(true, false);
