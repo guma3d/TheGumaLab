@@ -548,10 +548,19 @@ function renderLesson() {
   const lesson = currentLessonPages();
   state.lessonPage = Math.max(0, Math.min(state.lessonPage, lesson.length - 1));
   const [title, body] = lesson[state.lessonPage];
+  const dots = lesson
+    .map((_, index) => `<span class="lesson-dot ${index === state.lessonPage ? "active" : ""}" aria-hidden="true"></span>`)
+    .join("");
   els.lessonBody.innerHTML = `
     <article class="lesson-note active-lesson">
+      <div class="lesson-page-art" aria-hidden="true">
+        <span class="lesson-sun"></span>
+        <span class="lesson-star star-a"></span>
+        <span class="lesson-star star-b"></span>
+      </div>
       <strong>${title}</strong>
       <p>${body}</p>
+      <div class="lesson-progress" aria-hidden="true">${dots}</div>
     </article>
   `;
   els.lessonPageLabel.textContent = `${state.lessonPage + 1} / ${lesson.length}`;
