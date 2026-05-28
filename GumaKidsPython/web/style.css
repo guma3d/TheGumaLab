@@ -664,9 +664,12 @@ select option {
 
 .report-badge {
   top: 76px;
+  max-width: 220px;
   border-color: rgba(125, 211, 252, 0.32);
   background: rgba(8, 47, 73, 0.68);
   color: #bae6fd;
+  line-height: 1.35;
+  white-space: normal;
 }
 
 .combo-plaque {
@@ -933,24 +936,6 @@ select option {
   border-bottom: 1px solid rgba(125, 211, 252, 0.72);
   background: rgba(255, 255, 255, 0.94);
   transform: rotate(45deg);
-}
-
-.speed-trail {
-  position: absolute;
-  left: -18px;
-  top: 30px;
-  z-index: -1;
-  width: 42px;
-  height: 18px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent, rgba(125, 211, 252, 0.72));
-  filter: blur(1px);
-  animation: trail-blink 0.32s ease-in-out infinite alternate;
-}
-
-@keyframes trail-blink {
-  from { opacity: 0.22; transform: translateX(0); }
-  to { opacity: 0.74; transform: translateX(-8px); }
 }
 
 .voxel-body {
