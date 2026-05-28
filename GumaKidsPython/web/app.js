@@ -1092,7 +1092,6 @@ function seasonOneHudStats(settings, game, chapter) {
 
 function renderSeasonOneScenery(board, settings, game, chapter) {
   if (chapter >= 5) seasonOneProp(board, "coin-road");
-  if (chapter >= 7) seasonOneProp(board, "wind-ring");
   if (chapter >= 8) addSeasonOneScenery(board, "title-arch", settings.title || `${settings.hero_name || "번개용사"} 등장!`);
   if (chapter >= 9) addSeasonOneScenery(board, "status-plaque", settings.status_text || `${settings.hero_name || "번개용사"} 점수: ${game.score}`);
   if (chapter >= 10) addSeasonOneScenery(board, "combo-plaque", `콤보 ${game.combo} · 보물 ${game.collected.treasure + game.collected.gem + game.collected.chest}`);

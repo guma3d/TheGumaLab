@@ -713,17 +713,6 @@ select option {
   transform: rotate(-18deg);
 }
 
-.wind-ring {
-  left: 32%;
-  top: 71%;
-  width: 76px;
-  height: 34px;
-  border: 3px solid rgba(125, 211, 252, 0.45);
-  border-left-color: transparent;
-  border-radius: 50%;
-  animation: wind-spin 0.9s linear infinite;
-}
-
 .treasure-gate {
   right: 4%;
   top: 26%;
@@ -766,11 +755,6 @@ select option {
   right: 18%;
   bottom: 19%;
   transform: rotate(12deg) scale(0.82);
-}
-
-@keyframes wind-spin {
-  from { transform: rotate(-18deg); }
-  to { transform: rotate(342deg); }
 }
 
 @keyframes portal-aura {
@@ -1260,11 +1244,14 @@ select option {
 }
 
 .item-boost .item-icon {
+  border-color: rgba(125, 211, 252, 0.82);
   border-radius: 8px 18px 18px 8px;
   background:
     linear-gradient(90deg, #e0f2fe 0 32%, #38bdf8 33% 100%);
-  box-shadow: -12px 0 0 rgba(186, 230, 253, 0.36), 0 0 18px rgba(56, 189, 248, 0.48);
-  animation: float-bob 0.64s ease-in-out infinite alternate;
+  box-shadow:
+    -9px 0 0 rgba(186, 230, 253, 0.24),
+    0 0 12px rgba(56, 189, 248, 0.42);
+  animation: boost-glow-pulse 1.15s ease-in-out infinite;
 }
 
 .item-portal .item-icon {
@@ -1277,9 +1264,21 @@ select option {
   animation: portal-spin 1.3s linear infinite;
 }
 
-@keyframes float-bob {
-  from { transform: translateY(0); }
-  to { transform: translateY(-5px); }
+@keyframes boost-glow-pulse {
+  0%,
+  100% {
+    box-shadow:
+      -8px 0 0 rgba(186, 230, 253, 0.18),
+      0 0 10px rgba(56, 189, 248, 0.36);
+    filter: brightness(1);
+  }
+  48% {
+    box-shadow:
+      -11px 0 0 rgba(186, 230, 253, 0.34),
+      0 0 24px rgba(56, 189, 248, 0.78),
+      0 0 42px rgba(125, 211, 252, 0.32);
+    filter: brightness(1.16);
+  }
 }
 
 @keyframes portal-spin {
