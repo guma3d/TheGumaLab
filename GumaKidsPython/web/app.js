@@ -18,7 +18,7 @@ const seasons = {
       ["hp", "체력", 100],
       ["speed", "이동 속도", 5],
       ["title", "등장 문장", "번개용사 등장!"],
-      ["status_text", "상태창 문장", "번개용사 점수: 10"],
+      ["status_text", "리포트 문장", "번개용사 점수: 10"],
       ["treasure_point", "보물 점수", 10],
       ["trap_damage", "함정 데미지", 20],
       ["bonus_multiplier", "보너스 배율", 2],
@@ -110,7 +110,7 @@ const seasonOneUnlocks = {
   6: "체력 숫자와 체력 물약이 추가됩니다.",
   7: "바람 신발로 이동 속도와 질주 효과가 생깁니다.",
   8: "이름과 문장이 합쳐진 등장 아치가 열립니다.",
-  9: "멋진 상태창이 게임 안에 붙습니다.",
+  9: "이름과 점수가 들어간 모험 리포트가 붙습니다.",
   10: "큰 보물 상자와 연속 수집 콤보가 생깁니다.",
   11: "함정과 체력 피해가 들어와 긴장감이 생깁니다.",
   12: "보너스 별, 마법 포털, 승리 연출로 완성됩니다.",
@@ -214,15 +214,15 @@ const seasonOneChapters = {
     ],
   },
   9: {
-    title: "멋진 상태창",
+    title: "모험 리포트",
     focus: "status_text",
     syntax: "f-string은 문자열 안에 변수 값을 넣는 방법입니다. 문자열 앞에 f를 붙이고, 중괄호 안에 hero_name이나 score 같은 변수 이름을 씁니다.",
     pages: [
-      ["1. 오늘의 장면", "상태창에 이름과 점수를 함께 보여줍니다."],
+      ["1. 오늘의 장면", "게임 안에 짧은 모험 리포트 문장을 붙입니다."],
       ["2. 오늘의 코드", "f\"{hero_name} 점수: {score}\" 는 변수 값을 문장 안에 넣습니다."],
       ["3. 기술 설명", "f-string은 문자열 앞에 f를 붙이고 중괄호 안의 변수 값을 글자로 바꿔 넣습니다."],
-      ["4. 바꿔보기", "상태창 문장의 순서를 바꿔 봅니다."],
-      ["5. 미션", "이름, 점수, 체력이 함께 보이는 문장을 상상해 봅니다."],
+      ["4. 바꿔보기", "리포트 문장의 순서를 바꿔 봅니다."],
+      ["5. 미션", "이름, 점수, 체력이 들어간 짧은 리포트를 만들어 봅니다."],
     ],
   },
   10: {
@@ -663,7 +663,7 @@ function generateCode(seasonKey) {
       titleLine,
       "",
       "# =========================",
-      "# [챕터 9] 멋진 상태창",
+      "# [챕터 9] 모험 리포트",
       today(9),
       "# =========================",
       targetHint("status_text"),
@@ -1080,7 +1080,6 @@ function seasonOneProp(board, className) {
 
 function seasonOneHudStats(settings, game, chapter) {
   const pieces = [];
-  if (chapter >= 9) pieces.push(settings.status_text || `${settings.hero_name || "번개용사"} 점수: ${game.score}`);
   if (chapter >= 4) pieces.push(`점수 ${game.score}`);
   if (chapter >= 6) pieces.push(`체력 ${game.hp}/${game.maxHp}`);
   if (chapter >= 7) pieces.push(`속도 ${settings.speed}${game.boostMoves ? " · 질주" : ""}`);
@@ -1093,7 +1092,7 @@ function seasonOneHudStats(settings, game, chapter) {
 function renderSeasonOneScenery(board, settings, game, chapter) {
   if (chapter >= 5) seasonOneProp(board, "coin-road");
   if (chapter >= 8) addSeasonOneScenery(board, "title-arch", settings.title || `${settings.hero_name || "번개용사"} 등장!`);
-  if (chapter >= 9) addSeasonOneScenery(board, "status-plaque", settings.status_text || `${settings.hero_name || "번개용사"} 점수: ${game.score}`);
+  if (chapter >= 9) addSeasonOneScenery(board, "report-badge", settings.status_text || `${settings.hero_name || "번개용사"} 점수: ${game.score}`);
   if (chapter >= 10) addSeasonOneScenery(board, "combo-plaque", `콤보 ${game.combo} · 보물 ${game.collected.treasure + game.collected.gem + game.collected.chest}`);
   if (chapter >= 10) seasonOneProp(board, "treasure-gate");
   if (chapter >= 11) addSeasonOneScenery(board, "danger-lane", "");
