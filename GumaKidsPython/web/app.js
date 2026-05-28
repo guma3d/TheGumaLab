@@ -19,7 +19,11 @@ const seasons = {
       ["speed", "이동 속도", 5],
       ["title", "등장 문장", "번개용사 등장!"],
       ["status_text", "리포트 문장", "번개용사 리포트: 점수 10, 체력 100"],
+      ["starter_chest_point", "보물상자 점수", 10],
       ["treasure_point", "보물 점수", 10],
+      ["coin_point", "동전 점수", 5],
+      ["gem_point", "루비 점수", 20],
+      ["chest_point", "상자 점수", 30],
       ["trap_damage", "함정 데미지", 20],
       ["bonus_multiplier", "보너스 배율", 2],
     ],
@@ -90,15 +94,15 @@ const seasonOneEditPlans = {
   1: { lines: 1, keys: ["start_message"], labels: ["start_message"] },
   2: { lines: 1, keys: ["hero_message"], labels: ["hero_message"] },
   3: { lines: 2, keys: ["hero_name", "hero_message"], labels: ["hero_name", "hero_message"] },
-  4: { lines: 2, keys: ["start_score", "treasure_point"], labels: ["start_score", "treasure_point"] },
-  5: { lines: 3, keys: ["start_score", "score", "treasure_point"], labels: ["start_score", "score", "treasure_point"] },
+  4: { lines: 2, keys: ["start_score", "starter_chest_point"], labels: ["start_score", "starter_chest_point"] },
+  5: { lines: 3, keys: ["score", "treasure_point", "coin_point"], labels: ["score", "treasure_point", "coin_point"] },
   6: { lines: 4, keys: ["start_score", "score", "hp", "treasure_point"], labels: ["start_score", "score", "hp", "treasure_point"] },
-  7: { lines: 5, keys: ["start_score", "score", "hp", "speed", "treasure_point"], labels: ["start_score", "score", "hp", "speed", "treasure_point"] },
+  7: { lines: 5, keys: ["start_score", "score", "hp", "speed", "coin_point"], labels: ["start_score", "score", "hp", "speed", "coin_point"] },
   8: { lines: 6, keys: ["hero_name", "hero_message", "start_score", "score", "speed", "title"], labels: ["hero_name", "hero_message", "start_score", "score", "speed", "title"] },
   9: { lines: 7, keys: ["hero_name", "hero_message", "start_score", "score", "hp", "speed", "status_text"], labels: ["hero_name", "hero_message", "start_score", "score", "hp", "speed", "status_text"] },
-  10: { lines: 8, keys: ["hero_name", "start_score", "score", "hp", "speed", "title", "status_text", "treasure_point"], labels: ["hero_name", "start_score", "score", "hp", "speed", "title", "status_text", "treasure_point"] },
-  11: { lines: 9, keys: ["hero_name", "start_score", "score", "hp", "speed", "title", "status_text", "treasure_point", "trap_damage"], labels: ["hero_name", "start_score", "score", "hp", "speed", "title", "status_text", "treasure_point", "trap_damage"] },
-  12: { lines: 10, keys: ["hero_name", "start_score", "score", "hp", "speed", "title", "status_text", "treasure_point", "trap_damage", "bonus_multiplier"], labels: ["hero_name", "start_score", "score", "hp", "speed", "title", "status_text", "treasure_point", "trap_damage", "bonus_multiplier"] },
+  10: { lines: 8, keys: ["hero_name", "start_score", "score", "hp", "treasure_point", "coin_point", "gem_point", "chest_point"], labels: ["hero_name", "start_score", "score", "hp", "treasure_point", "coin_point", "gem_point", "chest_point"] },
+  11: { lines: 9, keys: ["hero_name", "start_score", "score", "hp", "treasure_point", "coin_point", "gem_point", "chest_point", "trap_damage"], labels: ["hero_name", "start_score", "score", "hp", "treasure_point", "coin_point", "gem_point", "chest_point", "trap_damage"] },
+  12: { lines: 10, keys: ["hero_name", "start_score", "score", "hp", "treasure_point", "coin_point", "gem_point", "chest_point", "trap_damage", "bonus_multiplier"], labels: ["hero_name", "start_score", "score", "hp", "treasure_point", "coin_point", "gem_point", "chest_point", "trap_damage", "bonus_multiplier"] },
 };
 
 const seasonOneUnlocks = {
@@ -156,24 +160,24 @@ const seasonOneChapters = {
   4: {
     title: "보상 숫자가 보여요",
     focus: "start_score",
-    syntax: "int는 정수 자료형입니다. start_score는 처음 점수이고 treasure_point는 보물상자를 얻을 때 더해지는 보상 점수입니다. 계산에 쓰는 숫자는 따옴표 없이 적습니다.",
+    syntax: "int는 정수 자료형입니다. start_score는 처음 점수이고 starter_chest_point는 보물상자를 얻을 때 더해지는 보상 점수입니다. 계산에 쓰는 숫자는 따옴표 없이 적습니다.",
     pages: [
       ["1. 오늘의 장면", "보물상자를 주우면 상태창의 점수가 올라갑니다."],
-      ["2. 오늘의 코드", "start_score는 처음 점수, treasure_point는 보상 점수입니다."],
+      ["2. 오늘의 코드", "start_score는 처음 점수, starter_chest_point는 보물상자 점수입니다."],
       ["3. 기술 설명", "int는 정수 자료형입니다. 10, 0, 100처럼 소수점 없는 숫자를 뜻합니다."],
-      ["4. 바꿔보기", "start_score와 treasure_point를 바꾸고 보물상자를 주워 점수 변화를 비교합니다."],
+      ["4. 바꿔보기", "start_score와 starter_chest_point를 바꾸고 보물상자를 주워 점수 변화를 비교합니다."],
       ["5. 미션", "처음 점수와 첫 보상 점수가 잘 어울리는 조합을 정합니다."],
     ],
   },
   5: {
     title: "보상 점수 정하기",
     focus: "treasure_point",
-    syntax: "= 는 오른쪽 값을 왼쪽 변수에 넣는 대입 연산자입니다. score는 현재 점수이고 treasure_point는 보물 보상입니다. 보물은 treasure_point만큼, 동전은 그 절반만큼 점수를 올립니다.",
+    syntax: "= 는 오른쪽 값을 왼쪽 변수에 넣는 대입 연산자입니다. score는 현재 점수이고 treasure_point와 coin_point는 각각 보물과 동전 보상입니다.",
     pages: [
       ["1. 오늘의 장면", "보물과 동전이 추가되어 서로 다른 점수를 줍니다."],
-      ["2. 오늘의 코드", "score는 현재 점수, treasure_point는 보물을 주울 때 더할 점수입니다."],
+      ["2. 오늘의 코드", "score는 현재 점수, treasure_point는 보물 점수, coin_point는 동전 점수입니다."],
       ["3. 기술 설명", "= 는 오른쪽 값을 왼쪽 변수에 넣는 대입 연산자입니다. 변수에 저장한 숫자가 게임 규칙이 됩니다."],
-      ["4. 바꿔보기", "score와 treasure_point를 바꾸고 보물/동전을 주워 점수 차이를 봅니다."],
+      ["4. 바꿔보기", "score, treasure_point, coin_point를 바꾸고 보물/동전을 주워 점수 차이를 봅니다."],
       ["5. 미션", "보물은 크게, 동전은 작게 느껴지는 보상 점수를 정합니다."],
     ],
   },
@@ -228,13 +232,13 @@ const seasonOneChapters = {
   10: {
     title: "더하기 마법",
     focus: "treasure_point",
-    syntax: "+ 는 숫자를 더하는 연산자입니다. treasure_point가 커질수록 보물을 주울 때 현재 점수에 더해지는 값도 커집니다.",
+    syntax: "+ 는 숫자를 더하는 연산자입니다. treasure_point, coin_point, gem_point, chest_point가 각각의 아이템 보상으로 현재 점수에 더해집니다.",
     pages: [
       ["1. 오늘의 장면", "보물을 주우면 점수가 올라갑니다."],
       ["2. 오늘의 코드", "current_score + treasure_point가 새 점수를 만듭니다."],
       ["3. 기술 설명", "+ 는 숫자에서는 덧셈 연산자입니다. int + int 결과도 int입니다."],
-      ["4. 바꿔보기", "treasure_point를 10, 30, 50으로 바꿔 점수 증가량을 비교합니다."],
-      ["5. 미션", "보물 하나가 몇 점이면 게임이 재미있는지 정합니다."],
+      ["4. 바꿔보기", "treasure_point, gem_point, chest_point를 바꿔 아이템별 점수 증가량을 비교합니다."],
+      ["5. 미션", "작은 보상과 큰 보상이 확실히 구분되도록 점수를 정합니다."],
     ],
   },
   11: {
@@ -633,8 +637,8 @@ function generateCode(seasonKey) {
       "# =========================",
       targetHint("start_score"),
       `start_score = ${toNumber(s.start_score, 10)}`,
-      targetHint("treasure_point"),
-      `treasure_point = ${toNumber(s.treasure_point, 10)}`,
+      targetHint("starter_chest_point"),
+      `starter_chest_point = ${toNumber(s.starter_chest_point, 10)}`,
       "",
       "# =========================",
       "# [챕터 5] 보상 점수",
@@ -642,6 +646,10 @@ function generateCode(seasonKey) {
       "# =========================",
       targetHint("score"),
       scoreLine,
+      targetHint("treasure_point"),
+      `treasure_point = ${toNumber(s.treasure_point, 10)}`,
+      targetHint("coin_point"),
+      `coin_point = ${toNumber(s.coin_point, 5)}`,
       "",
       "# =========================",
       "# [챕터 6] 체력",
@@ -675,6 +683,11 @@ function generateCode(seasonKey) {
       "# [챕터 10] 더하기 마법",
       today(10),
       "# =========================",
+      targetHint("gem_point"),
+      `gem_point = ${toNumber(s.gem_point, 20)}`,
+      targetHint("chest_point"),
+      `chest_point = ${toNumber(s.chest_point, 30)}`,
+      "",
       "def upgrade_score_when_get_treasure(current_score):",
       "    new_score = current_score + treasure_point",
       "    return new_score",
@@ -952,7 +965,11 @@ function parseCode(seasonKey, source) {
       speed: numberValue("speed"),
       title: seasonOneTitleValue(heroName),
       status_text: seasonOneStatusValue(heroName, score, hp),
+      starter_chest_point: numberValue("starter_chest_point"),
       treasure_point: numberValue("treasure_point"),
+      coin_point: numberValue("coin_point"),
+      gem_point: numberValue("gem_point"),
+      chest_point: numberValue("chest_point"),
       trap_damage: numberValue("trap_damage"),
       bonus_multiplier: numberValue("bonus_multiplier"),
     };
@@ -1023,12 +1040,11 @@ function seasonOneItemsForChapter(chapter) {
 }
 
 function seasonOneItemPoint(kind, settings) {
-  const treasurePoint = toNumber(settings.treasure_point, 10);
-  if (kind === "starter_chest") return treasurePoint;
-  if (kind === "coin") return Math.max(1, Math.round(treasurePoint / 2));
-  if (kind === "gem") return treasurePoint * 2;
-  if (kind === "chest") return treasurePoint * 3;
-  if (kind === "treasure") return treasurePoint;
+  if (kind === "starter_chest") return toNumber(settings.starter_chest_point, 10);
+  if (kind === "coin") return toNumber(settings.coin_point, 5);
+  if (kind === "gem") return toNumber(settings.gem_point, 20);
+  if (kind === "chest") return toNumber(settings.chest_point, 30);
+  if (kind === "treasure") return toNumber(settings.treasure_point, 10);
   return 0;
 }
 

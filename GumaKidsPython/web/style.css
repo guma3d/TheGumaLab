@@ -663,13 +663,14 @@ select option {
 }
 
 .report-badge {
-  top: 76px;
-  max-width: 220px;
+  left: 14px;
+  right: auto;
+  bottom: 14px;
+  max-width: calc(100% - 28px);
   border-color: rgba(125, 211, 252, 0.32);
   background: rgba(8, 47, 73, 0.68);
   color: #bae6fd;
-  line-height: 1.35;
-  white-space: normal;
+  white-space: nowrap;
 }
 
 .combo-plaque {
