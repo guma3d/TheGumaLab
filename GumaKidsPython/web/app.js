@@ -107,7 +107,7 @@ const seasonOneUnlocks = {
   3: "주인공 이름표가 생깁니다.",
   4: "보물상자가 생기고 점수가 상태창에 보입니다.",
   5: "보물과 동전을 주워 보상 점수 차이를 비교합니다.",
-  6: "체력 하트와 체력 표시가 추가됩니다.",
+  6: "체력 숫자와 체력 물약이 추가됩니다.",
   7: "바람 신발로 이동 속도와 질주 효과가 생깁니다.",
   8: "이름과 문장이 합쳐진 등장 아치가 열립니다.",
   9: "멋진 상태창이 게임 안에 붙습니다.",
@@ -180,12 +180,12 @@ const seasonOneChapters = {
   6: {
     title: "체력 만들기",
     focus: "hp",
-    syntax: "숫자 변수는 게임 규칙을 조절합니다. hp는 주인공 체력이고, 화면의 하트와 HUD 체력 숫자로 확인할 수 있습니다.",
+    syntax: "숫자 변수는 게임 규칙을 조절합니다. hp는 주인공 체력이고, HUD의 체력 숫자로 확인할 수 있습니다. 체력 물약을 얻으면 체력이 20 올라갑니다.",
     pages: [
-      ["1. 오늘의 장면", "체력 하트와 체력 숫자가 추가됩니다."],
+      ["1. 오늘의 장면", "체력 숫자와 체력 물약이 추가됩니다."],
       ["2. 오늘의 코드", "hp = 100은 주인공 체력을 숫자로 저장합니다."],
       ["3. 기술 설명", "숫자 변수는 계산할 수 있습니다. 체력, 점수, 속도는 int로 다루기 좋습니다."],
-      ["4. 바꿔보기", "hp를 50, 100, 999로 바꾸고 하트 표시와 체력 숫자를 비교합니다."],
+      ["4. 바꿔보기", "hp를 50, 100, 999로 바꾸고 체력 숫자를 비교합니다."],
       ["5. 미션", "주인공에게 어울리는 기본 체력을 정합니다."],
     ],
   },
@@ -987,7 +987,7 @@ function seasonOneItemsForChapter(chapter) {
     items.push({ kind: "treasure", x: 60, y: 28, label: "보물", taken: false });
     items.push({ kind: "coin", x: 72, y: 60, label: "동전", taken: false });
   }
-  if (chapter >= 6) items.push({ kind: "heart", x: 18, y: 70, label: "하트", taken: false });
+  if (chapter >= 6) items.push({ kind: "potion", x: 18, y: 70, label: "체력 물약", taken: false });
   if (chapter >= 7) items.push({ kind: "boost", x: 40, y: 78, label: "바람신발", taken: false });
   if (chapter >= 10) {
     items.push({ kind: "gem", x: 44, y: 52, label: "루비", taken: false });
@@ -1047,7 +1047,7 @@ function seasonOneReset() {
       coin: 0,
       gem: 0,
       chest: 0,
-      heart: 0,
+      potion: 0,
       boost: 0,
       bonus: 0,
       trap: 0,
@@ -1092,10 +1092,6 @@ function seasonOneHudStats(settings, game, chapter) {
 
 function renderSeasonOneScenery(board, settings, game, chapter) {
   if (chapter >= 5) seasonOneProp(board, "coin-road");
-  if (chapter >= 6) {
-    const hearts = Math.max(1, Math.min(5, Math.ceil(game.hp / Math.max(1, game.maxHp) * 5)));
-    addSeasonOneScenery(board, "heart-meter", `${"♥".repeat(hearts)}${"♡".repeat(5 - hearts)}`);
-  }
   if (chapter >= 7) seasonOneProp(board, "wind-ring");
   if (chapter >= 8) addSeasonOneScenery(board, "title-arch", settings.title || `${settings.hero_name || "번개용사"} 등장!`);
   if (chapter >= 9) addSeasonOneScenery(board, "status-plaque", settings.status_text || `${settings.hero_name || "번개용사"} 점수: ${game.score}`);
@@ -1272,7 +1268,7 @@ function collectSeasonOne() {
     renderSeasonOne();
     return;
   }
-  g.collected ||= { score: 0, starter_chest: 0, treasure: 0, coin: 0, gem: 0, chest: 0, heart: 0, boost: 0, bonus: 0, trap: 0 };
+  g.collected ||= { score: 0, starter_chest: 0, treasure: 0, coin: 0, gem: 0, chest: 0, potion: 0, boost: 0, bonus: 0, trap: 0 };
   if (near.kind === "trap") {
     triggerSeasonOneTrap(near, s, g);
     renderSeasonOne();
@@ -1297,11 +1293,12 @@ function collectSeasonOne() {
   }
   near.taken = true;
   playPickupSound(near.kind);
-  if (near.kind === "heart") {
-    g.collected.heart += 1;
-    const heal = 25;
-    g.hp = Math.min(g.maxHp, g.hp + heal);
-    g.message = `하트를 얻었어. 체력 +${heal}!`;
+  if (near.kind === "potion") {
+    g.collected.potion += 1;
+    const heal = 20;
+    g.hp += heal;
+    g.maxHp = Math.max(g.maxHp, g.hp);
+    g.message = `체력 물약을 마셨어. 체력 +${heal}!`;
   } else if (near.kind === "boost") {
     g.collected.boost += 1;
     g.boostMoves = 8;
