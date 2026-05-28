@@ -89,11 +89,11 @@ const seasons = {
 const seasonOneEditPlans = {
   1: { lines: 1, keys: ["start_message"], labels: ["start_message"] },
   2: { lines: 1, keys: ["hero_message"], labels: ["hero_message"] },
-  3: { lines: 2, keys: ["hero_name", "start_score"], labels: ["hero_name", "start_score"] },
-  4: { lines: 2, keys: ["start_score", "hp"], labels: ["start_score", "hp"] },
+  3: { lines: 2, keys: ["hero_name", "hero_message"], labels: ["hero_name", "hero_message"] },
+  4: { lines: 2, keys: ["start_score", "treasure_point"], labels: ["start_score", "treasure_point"] },
   5: { lines: 3, keys: ["start_score", "score", "treasure_point"], labels: ["start_score", "score", "treasure_point"] },
-  6: { lines: 4, keys: ["start_score", "score", "hp", "trap_damage"], labels: ["start_score", "score", "hp", "trap_damage"] },
-  7: { lines: 5, keys: ["start_score", "score", "hp", "speed", "trap_damage"], labels: ["start_score", "score", "hp", "speed", "trap_damage"] },
+  6: { lines: 4, keys: ["start_score", "score", "hp", "treasure_point"], labels: ["start_score", "score", "hp", "treasure_point"] },
+  7: { lines: 5, keys: ["start_score", "score", "hp", "speed", "treasure_point"], labels: ["start_score", "score", "hp", "speed", "treasure_point"] },
   8: { lines: 6, keys: ["hero_name", "hero_message", "start_score", "score", "speed", "title"], labels: ["hero_name", "hero_message", "start_score", "score", "speed", "title"] },
   9: { lines: 7, keys: ["hero_name", "hero_message", "start_score", "score", "hp", "speed", "status_text"], labels: ["hero_name", "hero_message", "start_score", "score", "hp", "speed", "status_text"] },
   10: { lines: 8, keys: ["hero_name", "start_score", "score", "hp", "speed", "title", "status_text", "treasure_point"], labels: ["hero_name", "start_score", "score", "hp", "speed", "title", "status_text", "treasure_point"] },
@@ -106,7 +106,7 @@ const seasonOneUnlocks = {
   2: "주인공 말풍선이 캐릭터를 따라다닙니다.",
   3: "주인공 이름표가 생깁니다.",
   4: "보물상자가 생기고 점수가 상태창에 보입니다.",
-  5: "보물과 동전을 주워 점수를 올릴 수 있습니다.",
+  5: "보물과 동전을 주워 보상 점수 차이를 비교합니다.",
   6: "체력 하트와 체력 표시가 추가됩니다.",
   7: "바람 신발로 이동 속도와 질주 효과가 생깁니다.",
   8: "이름과 문장이 합쳐진 등장 아치가 열립니다.",
@@ -144,49 +144,49 @@ const seasonOneChapters = {
   3: {
     title: "이름을 바꿔요",
     focus: "hero_name",
-    syntax: "변수는 값에 붙이는 이름표입니다. hero_name은 글자 변수이고 start_score는 숫자 변수입니다. 두 줄을 함께 바꾸면 이름표와 시작 점수가 동시에 달라집니다.",
+    syntax: "변수는 값에 붙이는 이름표입니다. hero_name은 이름표에 보이는 글자이고 hero_message는 말풍선에 보이는 글자입니다. 두 변수 모두 문자열 str을 담습니다.",
     pages: [
-      ["1. 오늘의 장면", "캐릭터 이름표와 시작 점수를 함께 정합니다."],
-      ["2. 오늘의 코드", "hero_name에는 이름 문자열을, start_score에는 시작 점수 숫자를 저장합니다."],
-      ["3. 기술 설명", "변수는 값에 붙이는 이름입니다. 문자열은 따옴표 안에, 숫자는 따옴표 없이 씁니다."],
-      ["4. 바꿔보기", "hero_name과 start_score 두 줄을 함께 바꾸고 이름표와 점수를 비교합니다."],
-      ["5. 미션", "게임에 어울리는 주인공 이름과 시작 점수 조합 3개를 실험합니다."],
+      ["1. 오늘의 장면", "캐릭터 이름표와 말풍선을 함께 정합니다."],
+      ["2. 오늘의 코드", "hero_name에는 이름을, hero_message에는 주인공 대사를 저장합니다."],
+      ["3. 기술 설명", "변수는 값에 붙이는 이름입니다. 문자열 변수는 따옴표 안의 글자를 기억합니다."],
+      ["4. 바꿔보기", "hero_name과 hero_message 두 줄을 함께 바꾸고 게임 속 캐릭터를 확인합니다."],
+      ["5. 미션", "이름과 대사가 어울리는 주인공 조합 3개를 실험합니다."],
     ],
   },
   4: {
-    title: "숫자가 보여요",
+    title: "보상 숫자가 보여요",
     focus: "start_score",
-    syntax: "int는 정수 자료형입니다. 10, 0, 100처럼 소수점이 없는 숫자를 뜻하고, 점수 계산에 쓰려면 따옴표 없이 적습니다.",
+    syntax: "int는 정수 자료형입니다. start_score는 처음 점수이고 treasure_point는 보물상자를 얻을 때 더해지는 보상 점수입니다. 계산에 쓰는 숫자는 따옴표 없이 적습니다.",
     pages: [
-      ["1. 오늘의 장면", "게임을 시작할 때 점수가 몇 점에서 출발할지 정합니다."],
-      ["2. 오늘의 코드", "start_score = 10 처럼 숫자는 따옴표 없이 씁니다."],
+      ["1. 오늘의 장면", "보물상자를 주우면 상태창의 점수가 올라갑니다."],
+      ["2. 오늘의 코드", "start_score는 처음 점수, treasure_point는 보상 점수입니다."],
       ["3. 기술 설명", "int는 정수 자료형입니다. 10, 0, 100처럼 소수점 없는 숫자를 뜻합니다."],
-      ["4. 바꿔보기", "start_score를 0, 10, 100으로 바꿔 시작 점수를 비교합니다."],
-      ["5. 미션", "너무 쉽거나 어렵지 않은 시작 점수를 정합니다."],
+      ["4. 바꿔보기", "start_score와 treasure_point를 바꾸고 보물상자를 주워 점수 변화를 비교합니다."],
+      ["5. 미션", "처음 점수와 첫 보상 점수가 잘 어울리는 조합을 정합니다."],
     ],
   },
   5: {
-    title: "점수판 만들기",
-    focus: "score",
-    syntax: "= 는 오른쪽 값을 왼쪽 변수에 넣는 대입 연산자입니다. score = start_score는 시작 점수를 현재 점수에 복사한다는 뜻입니다.",
+    title: "보상 점수 정하기",
+    focus: "treasure_point",
+    syntax: "= 는 오른쪽 값을 왼쪽 변수에 넣는 대입 연산자입니다. score는 현재 점수이고 treasure_point는 보물 보상입니다. 보물은 treasure_point만큼, 동전은 그 절반만큼 점수를 올립니다.",
     pages: [
-      ["1. 오늘의 장면", "점수판은 현재 점수를 계속 보여줍니다."],
-      ["2. 오늘의 코드", "score = start_score는 시작 점수를 현재 점수에 복사합니다."],
-      ["3. 기술 설명", "= 는 오른쪽 값을 왼쪽 변수에 넣는 대입 연산자입니다."],
-      ["4. 바꿔보기", "score 값을 바꾸고 점수판이 어떤 점수로 시작하는지 봅니다."],
-      ["5. 미션", "점수판이 어떤 변수 값을 보여주는지 말로 설명해 봅니다."],
+      ["1. 오늘의 장면", "보물과 동전이 추가되어 서로 다른 점수를 줍니다."],
+      ["2. 오늘의 코드", "score는 현재 점수, treasure_point는 보물을 주울 때 더할 점수입니다."],
+      ["3. 기술 설명", "= 는 오른쪽 값을 왼쪽 변수에 넣는 대입 연산자입니다. 변수에 저장한 숫자가 게임 규칙이 됩니다."],
+      ["4. 바꿔보기", "score와 treasure_point를 바꾸고 보물/동전을 주워 점수 차이를 봅니다."],
+      ["5. 미션", "보물은 크게, 동전은 작게 느껴지는 보상 점수를 정합니다."],
     ],
   },
   6: {
     title: "체력 만들기",
     focus: "hp",
-    syntax: "숫자 변수는 게임 규칙을 조절합니다. hp는 주인공 체력이고, 값이 클수록 함정을 밟아도 더 오래 버틸 수 있습니다.",
+    syntax: "숫자 변수는 게임 규칙을 조절합니다. hp는 주인공 체력이고, 화면의 하트와 HUD 체력 숫자로 확인할 수 있습니다.",
     pages: [
-      ["1. 오늘의 장면", "함정에 닿으면 체력이 줄어듭니다."],
+      ["1. 오늘의 장면", "체력 하트와 체력 숫자가 추가됩니다."],
       ["2. 오늘의 코드", "hp = 100은 주인공 체력을 숫자로 저장합니다."],
       ["3. 기술 설명", "숫자 변수는 계산할 수 있습니다. 체력, 점수, 속도는 int로 다루기 좋습니다."],
-      ["4. 바꿔보기", "hp를 50, 100, 999로 바꾸고 게임 난이도를 비교합니다."],
-      ["5. 미션", "한 번 실수해도 괜찮은 체력을 정합니다."],
+      ["4. 바꿔보기", "hp를 50, 100, 999로 바꾸고 하트 표시와 체력 숫자를 비교합니다."],
+      ["5. 미션", "주인공에게 어울리는 기본 체력을 정합니다."],
     ],
   },
   7: {
@@ -631,9 +631,11 @@ function generateCode(seasonKey) {
       "# =========================",
       targetHint("start_score"),
       `start_score = ${toNumber(s.start_score, 10)}`,
+      targetHint("treasure_point"),
+      `treasure_point = ${toNumber(s.treasure_point, 10)}`,
       "",
       "# =========================",
-      "# [챕터 5] 점수 변수",
+      "# [챕터 5] 보상 점수",
       today(5),
       "# =========================",
       targetHint("score"),
@@ -671,9 +673,6 @@ function generateCode(seasonKey) {
       "# [챕터 10] 더하기 마법",
       today(10),
       "# =========================",
-      targetHint("treasure_point"),
-      `treasure_point = ${toNumber(s.treasure_point, 10)}`,
-      "",
       "def upgrade_score_when_get_treasure(current_score):",
       "    new_score = current_score + treasure_point",
       "    return new_score",
@@ -983,24 +982,24 @@ function seasonOneHas(chapter) {
 
 function seasonOneItemsForChapter(chapter) {
   const items = [];
-  if (chapter >= 4) items.push({ kind: "starter_chest", x: 24, y: 42, label: "보물상자", taken: false });
+  if (chapter >= 4) items.push({ kind: "starter_chest", x: 24, y: 40, label: "보물상자", taken: false });
   if (chapter >= 5) {
-    items.push({ kind: "treasure", x: 56, y: 32, label: "보물", taken: false });
-    items.push({ kind: "coin", x: 74, y: 58, label: "동전", taken: false });
+    items.push({ kind: "treasure", x: 60, y: 28, label: "보물", taken: false });
+    items.push({ kind: "coin", x: 72, y: 60, label: "동전", taken: false });
   }
-  if (chapter >= 6) items.push({ kind: "heart", x: 18, y: 68, label: "하트", taken: false });
-  if (chapter >= 7) items.push({ kind: "boost", x: 38, y: 76, label: "바람신발", taken: false });
+  if (chapter >= 6) items.push({ kind: "heart", x: 18, y: 70, label: "하트", taken: false });
+  if (chapter >= 7) items.push({ kind: "boost", x: 40, y: 78, label: "바람신발", taken: false });
   if (chapter >= 10) {
-    items.push({ kind: "gem", x: 42, y: 48, label: "루비", taken: false });
-    items.push({ kind: "chest", x: 82, y: 42, label: "상자", taken: false });
+    items.push({ kind: "gem", x: 44, y: 52, label: "루비", taken: false });
+    items.push({ kind: "chest", x: 84, y: 38, label: "상자", taken: false });
   }
   if (chapter >= 11) {
-    items.push({ kind: "trap", baseX: 48, baseY: 64, x: 48, y: 64, label: "가시함정", patrol: "horizontal", taken: false });
-    items.push({ kind: "trap", baseX: 66, baseY: 48, x: 66, y: 48, label: "불꽃함정", patrol: "vertical", taken: false });
+    items.push({ kind: "trap", baseX: 50, baseY: 66, x: 50, y: 66, label: "가시함정", patrol: "horizontal", taken: false });
+    items.push({ kind: "trap", baseX: 68, baseY: 46, x: 68, y: 46, label: "불꽃함정", patrol: "vertical", taken: false });
   }
   if (chapter >= 12) {
-    items.push({ kind: "bonus", x: 84, y: 24, label: "보너스별", taken: false });
-    items.push({ kind: "portal", x: 88, y: 72, label: "포털", taken: false });
+    items.push({ kind: "bonus", x: 84, y: 20, label: "보너스별", taken: false });
+    items.push({ kind: "portal", x: 88, y: 76, label: "포털", taken: false });
   }
   return items;
 }
@@ -1092,7 +1091,6 @@ function seasonOneHudStats(settings, game, chapter) {
 }
 
 function renderSeasonOneScenery(board, settings, game, chapter) {
-  addSeasonOneScenery(board, "build-ribbon", `챕터 ${chapter} 빌드`);
   if (chapter >= 5) seasonOneProp(board, "coin-road");
   if (chapter >= 6) {
     const hearts = Math.max(1, Math.min(5, Math.ceil(game.hp / Math.max(1, game.maxHp) * 5)));
@@ -1103,7 +1101,7 @@ function renderSeasonOneScenery(board, settings, game, chapter) {
   if (chapter >= 9) addSeasonOneScenery(board, "status-plaque", settings.status_text || `${settings.hero_name || "번개용사"} 점수: ${game.score}`);
   if (chapter >= 10) addSeasonOneScenery(board, "combo-plaque", `콤보 ${game.combo} · 보물 ${game.collected.treasure + game.collected.gem + game.collected.chest}`);
   if (chapter >= 10) seasonOneProp(board, "treasure-gate");
-  if (chapter >= 11) addSeasonOneScenery(board, "danger-lane", "함정 구역");
+  if (chapter >= 11) addSeasonOneScenery(board, "danger-lane", "");
   if (chapter >= 12) {
     seasonOneProp(board, "crystal-left");
     seasonOneProp(board, "crystal-right");
