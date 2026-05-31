@@ -29,8 +29,7 @@ const seasons = {
       ["wind_shoes_label", "바람신발 이름", "바람신발"],
       ["gem_label", "루비 이름", "루비"],
       ["chest_label", "상자 이름", "상자"],
-      ["spike_trap_label", "가시함정 이름", "가시함정"],
-      ["fire_trap_label", "불꽃함정 이름", "불꽃함정"],
+      ["trap_label", "함정 이름", "함정"],
       ["bonus_label", "보너스별 이름", "보너스별"],
       ["portal_label", "포털 이름", "포털"],
       ["starter_chest_point", "보물상자 점수", 10],
@@ -39,6 +38,7 @@ const seasons = {
       ["gem_point", "루비 점수", 20],
       ["chest_point", "상자 점수", 30],
       ["trap_damage", "함정 데미지", 20],
+      ["trap_speed", "함정 속도", 2],
       ["bonus_multiplier", "보너스 배율", 2],
     ],
   },
@@ -115,8 +115,8 @@ const seasonOneEditPlans = {
   8: { lines: 6, keys: ["hero_name", "hero_message", "start_score", "score", "speed", "title"], labels: ["hero_name", "hero_message", "start_score", "score", "speed", "title"] },
   9: { lines: 7, keys: ["hero_name", "hero_message", "start_score", "score", "hp", "speed", "status_text"], labels: ["hero_name", "hero_message", "start_score", "score", "hp", "speed", "status_text"] },
   10: { lines: 8, keys: ["hero_name", "start_score", "score", "hp", "treasure_point", "coin_point", "gem_point", "chest_point"], labels: ["hero_name", "start_score", "score", "hp", "treasure_point", "coin_point", "gem_point", "chest_point"] },
-  11: { lines: 9, keys: ["hero_name", "start_score", "score", "hp", "treasure_point", "coin_point", "gem_point", "chest_point", "trap_damage"], labels: ["hero_name", "start_score", "score", "hp", "treasure_point", "coin_point", "gem_point", "chest_point", "trap_damage"] },
-  12: { lines: 10, keys: ["hero_name", "score", "hp", "speed", "wind_multiplier", "treasure_point", "coin_point", "gem_point", "trap_damage", "bonus_multiplier"], labels: ["hero_name", "score", "hp", "speed", "wind_multiplier", "treasure_point", "coin_point", "gem_point", "trap_damage", "bonus_multiplier"] },
+  11: { lines: 9, keys: ["hero_name", "score", "hp", "treasure_point", "gem_point", "chest_point", "trap_label", "trap_damage", "trap_speed"], labels: ["hero_name", "score", "hp", "treasure_point", "gem_point", "chest_point", "trap_label", "trap_damage", "trap_speed"] },
+  12: { lines: 10, keys: ["hero_name", "score", "hp", "speed", "wind_multiplier", "trap_speed", "treasure_point", "gem_point", "trap_damage", "bonus_multiplier"], labels: ["hero_name", "score", "hp", "speed", "wind_multiplier", "trap_speed", "treasure_point", "gem_point", "trap_damage", "bonus_multiplier"] },
 };
 
 const seasonOneUnlocks = {
@@ -130,7 +130,7 @@ const seasonOneUnlocks = {
   8: "이름과 문장이 합쳐진 등장 아치가 열립니다.",
   9: "이름과 점수가 들어간 모험 리포트가 붙습니다.",
   10: "큰 보물 상자와 연속 수집 콤보가 생깁니다.",
-  11: "함정과 체력 피해가 들어와 긴장감이 생깁니다.",
+  11: "랜덤으로 움직이는 함정과 체력 피해가 들어와 긴장감이 생깁니다.",
   12: "보너스 별, 마법 포털, 승리 연출로 완성됩니다.",
 };
 
@@ -256,15 +256,15 @@ const seasonOneChapters = {
     ],
   },
   11: {
-    title: "빼기 마법",
-    focus: "trap_damage",
-    syntax: "- 는 숫자를 빼는 연산자입니다. trap_damage가 커지면 함정에 닿았을 때 hp에서 빠지는 숫자가 커집니다.",
+    title: "랜덤 함정",
+    focus: "trap_speed",
+    syntax: "random은 매번 다른 값을 뽑는 함수입니다. 함정은 random으로 x축, y축 움직임을 골라 돌아다니고, trap_speed가 클수록 한 번에 더 멀리 움직입니다. 함정에 닿으면 trap_damage만큼 hp가 줄어듭니다.",
     pages: [
-      ["1. 오늘의 장면", "함정에 닿으면 체력이 줄어듭니다."],
-      ["2. 오늘의 코드", "current_hp - trap_damage가 새 체력을 만듭니다."],
-      ["3. 기술 설명", "- 는 숫자에서 뺄셈 연산자입니다. 피해량을 계산할 때 자주 씁니다."],
-      ["4. 바꿔보기", "trap_damage를 5, 20, 50으로 바꿔 함정 위험도를 비교합니다."],
-      ["5. 미션", "실수 한 번에 게임이 끝나지 않는 피해량을 정합니다."],
+      ["1. 오늘의 장면", "함정 하나가 랜덤하게 움직이고, 닿으면 체력이 줄어듭니다."],
+      ["2. 오늘의 코드", "trap_speed는 함정 속도, trap_damage는 함정에 닿았을 때 빠지는 체력입니다."],
+      ["3. 기술 설명", "파이썬에서는 import random 뒤에 random.choice([-1, 0, 1])처럼 쓰면 여러 값 중 하나를 뽑을 수 있습니다."],
+      ["4. 바꿔보기", "trap_speed를 1, 3, 6으로 바꾸고 함정 움직임을 비교합니다."],
+      ["5. 미션", "피할 수는 있지만 긴장되는 함정 속도와 데미지를 정합니다."],
     ],
   },
   12: {
@@ -535,6 +535,7 @@ function readOnlyFileContent(fileName) {
       `gem_point = ${toNumber(s.gem_point, 20)}`,
       `chest_point = ${toNumber(s.chest_point, 30)}`,
       `trap_damage = ${toNumber(s.trap_damage, 20)}`,
+      `trap_speed = ${toNumber(s.trap_speed, 2)}`,
       `bonus_multiplier = ${toNumber(s.bonus_multiplier, 2)}`,
       "",
       "items = [",
@@ -545,8 +546,7 @@ function readOnlyFileContent(fileName) {
       `    "${s.wind_shoes_label || "바람신발"}",`,
       `    "${s.gem_label || "루비"}",`,
       `    "${s.chest_label || "상자"}",`,
-      `    "${s.spike_trap_label || "가시함정"}",`,
-      `    "${s.fire_trap_label || "불꽃함정"}",`,
+      `    "${s.trap_label || "함정"}",`,
       `    "${s.bonus_label || "보너스별"}",`,
       `    "${s.portal_label || "포털"}",`,
       "]",
@@ -556,6 +556,7 @@ function readOnlyFileContent(fileName) {
     return [
       "# game_rules.py",
       "# 읽기 전용: 업그레이드 값이 게임 규칙으로 바뀌는 곳입니다.",
+      "import random",
       "",
       "def move_speed(base_speed, has_wind_shoes):",
       "    if has_wind_shoes:",
@@ -570,6 +571,11 @@ function readOnlyFileContent(fileName) {
       "",
       "def potion_hp(current_hp):",
       "    return current_hp + potion_heal",
+      "",
+      "def random_trap_step():",
+      "    x_step = random.choice([-1, 0, 1]) * trap_speed",
+      "    y_step = random.choice([-1, 0, 1]) * trap_speed",
+      "    return x_step, y_step",
       "",
       "def trap_hp(current_hp):",
       "    return current_hp - trap_damage",
@@ -710,6 +716,7 @@ function generateCode(seasonKey) {
     return [
       "# 시즌 1: 보물 점수 게임 업그레이드 존",
       "# 전체 코드를 볼 수 있습니다. 오늘 배울 곳은 [오늘의 업그레이드] 아래입니다.",
+      "import random",
       "",
       "# =========================",
       "# [챕터 1] 게임 시작 문장",
@@ -794,8 +801,8 @@ function generateCode(seasonKey) {
       `wind_shoes_label = "${s.wind_shoes_label || "바람신발"}"`,
       `gem_label = "${s.gem_label || "루비"}"`,
       `chest_label = "${s.chest_label || "상자"}"`,
-      `spike_trap_label = "${s.spike_trap_label || "가시함정"}"`,
-      `fire_trap_label = "${s.fire_trap_label || "불꽃함정"}"`,
+      targetHint("trap_label"),
+      `trap_label = "${s.trap_label || "함정"}"`,
       `bonus_label = "${s.bonus_label || "보너스별"}"`,
       `portal_label = "${s.portal_label || "포털"}"`,
       `portal_hint = "${s.portal_hint || "보물을 모아 포털을 열자"}"`,
@@ -819,6 +826,13 @@ function generateCode(seasonKey) {
       "# =========================",
       targetHint("trap_damage"),
       `trap_damage = ${toNumber(s.trap_damage, 20)}`,
+      targetHint("trap_speed"),
+      `trap_speed = ${toNumber(s.trap_speed, 2)}`,
+      "",
+      "def random_trap_step():",
+      "    x_step = random.choice([-1, 0, 1]) * trap_speed",
+      "    y_step = random.choice([-1, 0, 1]) * trap_speed",
+      "    return x_step, y_step",
       "",
       "def upgrade_hp_when_hit_trap(current_hp):",
       "    new_hp = current_hp - trap_damage",
@@ -1110,8 +1124,7 @@ function parseCode(seasonKey, source) {
       wind_shoes_label: stringValue("wind_shoes_label"),
       gem_label: stringValue("gem_label"),
       chest_label: stringValue("chest_label"),
-      spike_trap_label: stringValue("spike_trap_label"),
-      fire_trap_label: stringValue("fire_trap_label"),
+      trap_label: stringValue("trap_label"),
       bonus_label: stringValue("bonus_label"),
       portal_label: stringValue("portal_label"),
       starter_chest_point: numberValue("starter_chest_point"),
@@ -1120,6 +1133,7 @@ function parseCode(seasonKey, source) {
       gem_point: numberValue("gem_point"),
       chest_point: numberValue("chest_point"),
       trap_damage: numberValue("trap_damage"),
+      trap_speed: numberValue("trap_speed"),
       bonus_multiplier: numberValue("bonus_multiplier"),
     };
   }
@@ -1177,10 +1191,7 @@ function seasonOneItemsForChapter(chapter, settings = {}) {
     items.push({ kind: "gem", x: 44, y: 52, label: settings.gem_label || "루비", taken: false });
     items.push({ kind: "chest", x: 84, y: 38, label: settings.chest_label || "상자", taken: false });
   }
-  if (chapter >= 11) {
-    items.push({ kind: "trap", baseX: 50, baseY: 66, x: 50, y: 66, label: settings.spike_trap_label || "가시함정", patrol: "horizontal", taken: false });
-    items.push({ kind: "trap", baseX: 68, baseY: 46, x: 68, y: 46, label: settings.fire_trap_label || "불꽃함정", patrol: "vertical", taken: false });
-  }
+  if (chapter >= 11) items.push({ kind: "trap", x: 58, y: 64, label: settings.trap_label || "함정", taken: false });
   if (chapter >= 12) {
     items.push({ kind: "bonus", x: 44, y: 20, label: settings.bonus_label || "보너스별", taken: false });
     items.push({ kind: "portal", x: 88, y: 76, label: settings.portal_label || "포털", taken: false });
@@ -1203,6 +1214,18 @@ function seasonOneRequiredItems(game) {
 
 function seasonOneReadyForPortal(game) {
   return seasonOneRequiredItems(game).every((item) => item.taken);
+}
+
+function clampPercent(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function randomTrapStep(speed) {
+  const axisStep = () => Math.floor(Math.random() * 3) - 1;
+  const xStep = axisStep();
+  const yStep = axisStep();
+  if (xStep || yStep) return { x: xStep * speed, y: yStep * speed };
+  return { x: speed, y: 0 };
 }
 
 function seasonOneReset() {
@@ -1281,7 +1304,6 @@ function renderSeasonOneScenery(board, settings, game, chapter) {
   if (chapter >= 9) addSeasonOneScenery(board, "report-badge", settings.status_text || `${settings.hero_name || "번개용사"} 리포트: 점수 ${game.score}, 체력 ${game.hp}`);
   if (chapter >= 10) addSeasonOneScenery(board, "combo-plaque", `콤보 ${game.combo} · 보물 ${game.collected.treasure + game.collected.gem + game.collected.chest}`);
   if (chapter >= 10) seasonOneProp(board, "treasure-gate");
-  if (chapter >= 11) addSeasonOneScenery(board, "danger-lane", "");
   if (chapter >= 12) {
     seasonOneProp(board, "crystal-left");
     seasonOneProp(board, "crystal-right");
@@ -1294,11 +1316,12 @@ function updateSeasonOneMovingTraps() {
   if (!state.gameStarted || state.activeSeason !== "season_01") return;
   const g = state.game.season_01;
   if (!g || g.win || g.gameOver || !seasonOneHas(11)) return;
-  g.phase = (g.phase || 0) + 0.22;
+  const trapSpeed = clampPercent(toNumber(state.settings.season_01.trap_speed, 2), 0, 8);
   for (const item of g.items) {
     if (item.kind !== "trap" || item.taken) continue;
-    if (item.patrol === "horizontal") item.x = (item.baseX ?? item.x) + Math.sin(g.phase) * 11;
-    if (item.patrol === "vertical") item.y = (item.baseY ?? item.y) + Math.cos(g.phase * 1.25) * 10;
+    const step = randomTrapStep(trapSpeed);
+    item.x = clampPercent(item.x + step.x, 8, 88);
+    item.y = clampPercent(item.y + step.y, 12, 80);
   }
   const trap = findCollectableItem(g, ["trap"]);
   if (trap) triggerSeasonOneTrap(trap, state.settings.season_01, g);

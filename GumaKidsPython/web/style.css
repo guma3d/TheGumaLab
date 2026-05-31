@@ -623,8 +623,7 @@ select option {
 .title-arch,
 .report-badge,
 .combo-plaque,
-.portal-hint,
-.danger-lane {
+.portal-hint {
   position: absolute;
   z-index: 2;
   pointer-events: none;
@@ -682,26 +681,6 @@ select option {
   right: 16px;
   bottom: 14px;
   color: #ddd6fe;
-}
-
-.danger-lane {
-  left: 47%;
-  top: 62%;
-  width: 30%;
-  height: 38px;
-  border: 1px solid rgba(239, 68, 68, 0.5);
-  border-radius: 999px;
-  background:
-    repeating-linear-gradient(45deg, rgba(239, 68, 68, 0.34) 0 12px, rgba(69, 10, 10, 0.44) 12px 24px);
-  color: #fecaca;
-  font-size: 0;
-  transform: rotate(-7deg);
-  animation: danger-pulse 1.1s ease-in-out infinite alternate;
-}
-
-@keyframes danger-pulse {
-  from { opacity: 0.58; }
-  to { opacity: 0.95; }
 }
 
 .scene-prop {
