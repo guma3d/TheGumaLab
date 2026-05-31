@@ -17,6 +17,7 @@ const seasons = {
       ["score", "현재 점수", 10],
       ["hp", "체력", 100],
       ["speed", "이동 속도", 5],
+      ["wind_multiplier", "바람신발 배율", 2],
       ["title", "등장 문장", "번개용사 등장!"],
       ["status_text", "리포트 문장", "번개용사 리포트: 점수 10, 체력 100"],
       ["starter_chest_point", "보물상자 점수", 10],
@@ -97,12 +98,12 @@ const seasonOneEditPlans = {
   4: { lines: 2, keys: ["start_score", "starter_chest_point"], labels: ["start_score", "starter_chest_point"] },
   5: { lines: 3, keys: ["score", "treasure_point", "coin_point"], labels: ["score", "treasure_point", "coin_point"] },
   6: { lines: 4, keys: ["start_score", "score", "hp", "treasure_point"], labels: ["start_score", "score", "hp", "treasure_point"] },
-  7: { lines: 5, keys: ["start_score", "score", "hp", "speed", "coin_point"], labels: ["start_score", "score", "hp", "speed", "coin_point"] },
+  7: { lines: 5, keys: ["score", "hp", "speed", "wind_multiplier", "coin_point"], labels: ["score", "hp", "speed", "wind_multiplier", "coin_point"] },
   8: { lines: 6, keys: ["hero_name", "hero_message", "start_score", "score", "speed", "title"], labels: ["hero_name", "hero_message", "start_score", "score", "speed", "title"] },
   9: { lines: 7, keys: ["hero_name", "hero_message", "start_score", "score", "hp", "speed", "status_text"], labels: ["hero_name", "hero_message", "start_score", "score", "hp", "speed", "status_text"] },
   10: { lines: 8, keys: ["hero_name", "start_score", "score", "hp", "treasure_point", "coin_point", "gem_point", "chest_point"], labels: ["hero_name", "start_score", "score", "hp", "treasure_point", "coin_point", "gem_point", "chest_point"] },
   11: { lines: 9, keys: ["hero_name", "start_score", "score", "hp", "treasure_point", "coin_point", "gem_point", "chest_point", "trap_damage"], labels: ["hero_name", "start_score", "score", "hp", "treasure_point", "coin_point", "gem_point", "chest_point", "trap_damage"] },
-  12: { lines: 10, keys: ["hero_name", "start_score", "score", "hp", "treasure_point", "coin_point", "gem_point", "chest_point", "trap_damage", "bonus_multiplier"], labels: ["hero_name", "start_score", "score", "hp", "treasure_point", "coin_point", "gem_point", "chest_point", "trap_damage", "bonus_multiplier"] },
+  12: { lines: 10, keys: ["hero_name", "score", "hp", "speed", "wind_multiplier", "treasure_point", "coin_point", "gem_point", "trap_damage", "bonus_multiplier"], labels: ["hero_name", "score", "hp", "speed", "wind_multiplier", "treasure_point", "coin_point", "gem_point", "trap_damage", "bonus_multiplier"] },
 };
 
 const seasonOneUnlocks = {
@@ -112,7 +113,7 @@ const seasonOneUnlocks = {
   4: "보물상자가 생기고 점수가 상태창에 보입니다.",
   5: "보물과 동전을 주워 보상 점수 차이를 비교합니다.",
   6: "체력 숫자와 체력 물약이 추가됩니다.",
-  7: "바람 신발로 이동 속도와 질주 효과가 생깁니다.",
+  7: "바람신발을 먹으면 이동 속도가 계속 빨라집니다.",
   8: "이름과 문장이 합쳐진 등장 아치가 열립니다.",
   9: "이름과 점수가 들어간 모험 리포트가 붙습니다.",
   10: "큰 보물 상자와 연속 수집 콤보가 생깁니다.",
@@ -196,13 +197,13 @@ const seasonOneChapters = {
   7: {
     title: "속도 만들기",
     focus: "speed",
-    syntax: "변수 값이 바뀌면 그 변수를 쓰는 계산 결과도 바뀝니다. speed가 커지면 방향키 한 번에 움직이는 거리가 커집니다.",
+    syntax: "변수 값이 바뀌면 그 변수를 쓰는 계산 결과도 바뀝니다. speed는 기본 이동 속도, wind_multiplier는 바람신발 속도 배율, coin_point는 동전 보상 점수입니다.",
     pages: [
       ["1. 오늘의 장면", "방향키를 누르면 주인공이 움직입니다."],
-      ["2. 오늘의 코드", "speed 값이 클수록 한 번에 더 멀리 움직입니다."],
-      ["3. 기술 설명", "변수 값을 바꾸면 그 변수를 사용하는 계산 결과도 바뀝니다."],
-      ["4. 바꿔보기", "speed를 1, 5, 10으로 바꾸고 조작감을 비교합니다."],
-      ["5. 미션", "너무 빠르지 않고 보물을 줍기 좋은 속도를 찾습니다."],
+      ["2. 오늘의 코드", "speed는 기본 속도, wind_multiplier는 바람신발 배율, coin_point는 동전 점수입니다."],
+      ["3. 기술 설명", "wind_multiplier가 2이면 바람신발을 먹은 뒤 계속 2배 빠르게 움직입니다."],
+      ["4. 바꿔보기", "speed를 4, 6으로 바꾸고 wind_multiplier를 2, 3으로 바꿔 비교합니다."],
+      ["5. 미션", "움직이기 좋은 기본 속도, 바람신발 배율, 동전 점수를 함께 정합니다."],
     ],
   },
   8: {
@@ -269,6 +270,10 @@ const seasonOneChapters = {
 
 const projectFiles = [
   { name: "upgrade_zone.py", role: "오늘 바꾸는 웹 업그레이드 코드", editable: true },
+  { name: "player_stats.py", role: "주인공 이름, 체력, 속도 데이터", editable: false },
+  { name: "world_items.py", role: "보물, 함정, 바람신발 데이터", editable: false },
+  { name: "game_rules.py", role: "점수와 이동 규칙", editable: false },
+  { name: "save_data.py", role: "챕터별 저장 데이터", editable: false },
 ];
 
 const state = {
@@ -490,13 +495,90 @@ function renderFileTree() {
     .join("");
 }
 
-function fileContent(fileName) {
-  if (fileName === "upgrade_zone.py") return generateCode(state.activeSeason);
+function readOnlyFileContent(fileName) {
+  const s = state.settings[state.activeSeason] || defaultSettings(state.activeSeason);
+  if (fileName === "player_stats.py") {
+    return [
+      "# player_stats.py",
+      "# 읽기 전용: 주인공 기본 데이터가 모여 있는 파일입니다.",
+      "",
+      `hero_name = "${s.hero_name || "번개용사"}"`,
+      `hp = ${toNumber(s.hp, 100)}`,
+      `speed = ${toNumber(s.speed, 5)}`,
+      `wind_multiplier = ${toNumber(s.wind_multiplier, 2)}`,
+      "",
+      "has_wind_shoes = False",
+    ].join("\n");
+  }
+  if (fileName === "world_items.py") {
+    return [
+      "# world_items.py",
+      "# 읽기 전용: 게임 안 아이템과 함정 데이터입니다.",
+      "",
+      `starter_chest_point = ${toNumber(s.starter_chest_point, 10)}`,
+      `treasure_point = ${toNumber(s.treasure_point, 10)}`,
+      `coin_point = ${toNumber(s.coin_point, 5)}`,
+      `gem_point = ${toNumber(s.gem_point, 20)}`,
+      `chest_point = ${toNumber(s.chest_point, 30)}`,
+      `trap_damage = ${toNumber(s.trap_damage, 20)}`,
+      `bonus_multiplier = ${toNumber(s.bonus_multiplier, 2)}`,
+      "",
+      "items = [",
+      '    "보물상자",',
+      '    "보물",',
+      '    "동전",',
+      '    "체력 물약",',
+      '    "바람신발",',
+      '    "루비",',
+      '    "상자",',
+      '    "함정",',
+      '    "보너스별",',
+      "]",
+    ].join("\n");
+  }
+  if (fileName === "game_rules.py") {
+    return [
+      "# game_rules.py",
+      "# 읽기 전용: 업그레이드 값이 게임 규칙으로 바뀌는 곳입니다.",
+      "",
+      "def move_speed(base_speed, has_wind_shoes):",
+      "    if has_wind_shoes:",
+      "        return base_speed * wind_multiplier",
+      "    return base_speed",
+      "",
+      "def treasure_score(current_score):",
+      "    return current_score + treasure_point",
+      "",
+      "def coin_score(current_score):",
+      "    return current_score + coin_point",
+      "",
+      "def trap_hp(current_hp):",
+      "    return current_hp - trap_damage",
+    ].join("\n");
+  }
+  if (fileName === "save_data.py") {
+    return [
+      "# save_data.py",
+      "# 읽기 전용: 챕터별 저장 데이터 예시입니다.",
+      "",
+      "save_data = {",
+      `    "chapter": ${state.activeChapter},`,
+      `    "hero_name": "${s.hero_name || "번개용사"}",`,
+      '    "high_score": 0,',
+      '    "best_hp": 0,',
+      "}",
+    ].join("\n");
+  }
   return [
     "# GumaKidsPython",
     "",
     "웹버전에서 upgrade_zone.py를 바꾸고 바로 게임 화면에서 확인합니다.",
   ].join("\n");
+}
+
+function fileContent(fileName) {
+  if (fileName === "upgrade_zone.py") return generateCode(state.activeSeason);
+  return readOnlyFileContent(fileName);
 }
 
 function currentLessonPages() {
@@ -659,11 +741,13 @@ function generateCode(seasonKey) {
       `hp = ${toNumber(s.hp, 100)}`,
       "",
       "# =========================",
-      "# [챕터 7] 이동 속도",
+      "# [챕터 7] 이동 속도와 바람신발",
       today(7),
       "# =========================",
       targetHint("speed"),
       `speed = ${toNumber(s.speed, 5)}`,
+      targetHint("wind_multiplier"),
+      `wind_multiplier = ${toNumber(s.wind_multiplier, 2)}`,
       "",
       "# =========================",
       "# [챕터 8] 글자 합체",
@@ -889,9 +973,12 @@ function renderCodeEditor() {
 
 function parseCode(seasonKey, source) {
   const base = { ...(state.settings[seasonKey] || defaultSettings(seasonKey)) };
+  const stringAssignments = new Map();
+  for (const match of source.matchAll(/^\s*([A-Za-z_]\w*)\s*=\s*["']([^"']*)["']\s*(?:#.*)?$/gm)) {
+    stringAssignments.set(match[1], match[2]);
+  }
   const stringValue = (name) => {
-    const match = source.match(new RegExp(`^\\s*${name}\\s*=\\s*["']([^"']*)["']`, "m"));
-    return match ? match[1] : base[name];
+    return stringAssignments.has(name) ? stringAssignments.get(name) : base[name];
   };
   const numberValue = (name) => {
     const match = source.match(new RegExp(`^\\s*${name}\\s*=\\s*(-?\\d+(?:\\.\\d+)?)`, "m"));
@@ -904,27 +991,38 @@ function parseCode(seasonKey, source) {
     if (startScoreMatch) return startScore;
     return base.score ?? startScore;
   };
-  const seasonOneTitleValue = (heroName) => {
-    const lineMatch = source.match(/^\s*title\s*=\s*(.+)$/m);
-    if (!lineMatch) return base.title ?? `${heroName} 등장!`;
-    const expression = lineMatch[1].split("#")[0].trim();
-    if (!expression) return base.title ?? `${heroName} 등장!`;
+  const stringVariables = (extra = {}) => ({
+    ...Object.fromEntries(stringAssignments.entries()),
+    ...base,
+    ...extra,
+  });
+  const evaluateStringExpression = (name, extra = {}) => {
+    const match = source.match(new RegExp(`^\\s*${name}\\s*=\\s*(.+)$`, "m"));
+    if (!match) return null;
+    const expression = match[1].split("#")[0].trim();
+    if (!expression) return null;
+    const variables = stringVariables(extra);
     const parts = expression.split("+").map((part) => part.trim()).filter(Boolean);
-    if (!parts.length) return base.title ?? `${heroName} 등장!`;
-    let parsedTitle = "";
+    if (!parts.length) return null;
+    let value = "";
     for (const part of parts) {
-      if (part === "hero_name") {
-        parsedTitle += heroName;
+      const literal = part.match(/^["']([^"']*)["']$/);
+      if (literal) {
+        value += literal[1];
         continue;
       }
-      const literalMatch = part.match(/^["']([^"']*)["']$/);
-      if (literalMatch) {
-        parsedTitle += literalMatch[1];
+      const variable = part.match(/^[A-Za-z_]\w*$/);
+      if (variable && typeof variables[variable[0]] === "string") {
+        value += variables[variable[0]];
         continue;
       }
-      return base.title ?? `${heroName} 등장!`;
+      return null;
     }
-    if (parsedTitle) return parsedTitle;
+    return value;
+  };
+  const seasonOneTitleValue = (heroName) => {
+    const evaluated = evaluateStringExpression("title", { hero_name: heroName });
+    if (evaluated !== null) return evaluated;
     return base.title ?? `${heroName} 등장!`;
   };
   const seasonOneStatusValue = (heroName, score, hp) => {
@@ -963,6 +1061,7 @@ function parseCode(seasonKey, source) {
       score,
       hp,
       speed: numberValue("speed"),
+      wind_multiplier: numberValue("wind_multiplier"),
       title: seasonOneTitleValue(heroName),
       status_text: seasonOneStatusValue(heroName, score, hp),
       starter_chest_point: numberValue("starter_chest_point"),
@@ -1067,7 +1166,7 @@ function seasonOneReset() {
     score: toNumber(s.score, toNumber(s.start_score, 10)),
     hp: toNumber(s.hp, 100),
     maxHp: Math.max(1, toNumber(s.hp, 100)),
-    boostMoves: 0,
+    windBoostActive: false,
     combo: 0,
     win: false,
     gameOver: false,
@@ -1116,7 +1215,10 @@ function seasonOneHudStats(settings, game, chapter) {
   const pieces = [];
   if (chapter >= 4) pieces.push(`점수 ${game.score}`);
   if (chapter >= 6) pieces.push(`체력 ${game.hp}/${game.maxHp}`);
-  if (chapter >= 7) pieces.push(`속도 ${settings.speed}${game.boostMoves ? " · 질주" : ""}`);
+  if (chapter >= 7) {
+    const windText = game.windBoostActive ? ` · 바람신발 x${toNumber(settings.wind_multiplier, 2)}` : "";
+    pieces.push(`속도 ${settings.speed}${windText}`);
+  }
   if (chapter >= 10) pieces.push(`콤보 ${game.combo}`);
   if (chapter >= 12 && game.win) pieces.push("포털 개방!");
   if (!pieces.length) pieces.push("시작 장면 제작 중");
@@ -1242,14 +1344,13 @@ function moveHero(dx, dy) {
   const s = state.settings.season_01;
   const g = state.game.season_01;
   if (g.win || g.gameOver) return;
-  const boost = g.boostMoves > 0 ? 1.85 : 1;
-  const speed = Math.max(1, toNumber(s.speed, 5)) * 1.25 * boost;
+  const windMultiplier = g.windBoostActive ? Math.max(1, toNumber(s.wind_multiplier, 2)) : 1;
+  const speed = Math.max(1, toNumber(s.speed, 5)) * 1.25 * windMultiplier;
   if (dx < 0) g.direction = "left";
   if (dx > 0) g.direction = "right";
   if (dy < 0) g.direction = "up";
   if (dy > 0) g.direction = "down";
   g.step += 1;
-  if (g.boostMoves > 0) g.boostMoves -= 1;
   g.x = Math.max(0, Math.min(90, g.x + dx * speed));
   g.y = Math.max(0, Math.min(82, g.y + dy * speed));
   playFootstep();
@@ -1332,8 +1433,9 @@ function collectSeasonOne() {
     g.message = `체력 물약을 마셨어. 체력 +${heal}!`;
   } else if (near.kind === "boost") {
     g.collected.boost += 1;
-    g.boostMoves = 8;
-    g.message = "바람신발 장착! 잠깐 동안 더 빠르게 움직여.";
+    g.windBoostActive = true;
+    const windMultiplier = Math.max(1, toNumber(s.wind_multiplier, 2));
+    g.message = `바람신발 장착! 이동 속도가 계속 ${windMultiplier}배가 돼.`;
   } else if (near.kind === "bonus") {
     g.collected.bonus += 1;
     g.combo += 1;
