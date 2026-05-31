@@ -16,10 +16,23 @@ const seasons = {
       ["start_score", "시작 점수", 10],
       ["score", "현재 점수", 10],
       ["hp", "체력", 100],
+      ["potion_heal", "물약 회복량", 20],
       ["speed", "이동 속도", 5],
       ["wind_multiplier", "바람신발 배율", 2],
       ["title", "등장 문장", "번개용사 등장!"],
       ["status_text", "리포트 문장", "번개용사 리포트: 점수 10, 체력 100"],
+      ["portal_hint", "포털 안내 문장", "보물을 모아 포털을 열자"],
+      ["starter_chest_label", "보물상자 이름", "보물상자"],
+      ["treasure_label", "보물 이름", "보물"],
+      ["coin_label", "동전 이름", "동전"],
+      ["potion_label", "물약 이름", "체력 물약"],
+      ["wind_shoes_label", "바람신발 이름", "바람신발"],
+      ["gem_label", "루비 이름", "루비"],
+      ["chest_label", "상자 이름", "상자"],
+      ["spike_trap_label", "가시함정 이름", "가시함정"],
+      ["fire_trap_label", "불꽃함정 이름", "불꽃함정"],
+      ["bonus_label", "보너스별 이름", "보너스별"],
+      ["portal_label", "포털 이름", "포털"],
       ["starter_chest_point", "보물상자 점수", 10],
       ["treasure_point", "보물 점수", 10],
       ["coin_point", "동전 점수", 5],
@@ -97,7 +110,7 @@ const seasonOneEditPlans = {
   3: { lines: 2, keys: ["hero_name", "hero_message"], labels: ["hero_name", "hero_message"] },
   4: { lines: 2, keys: ["start_score", "starter_chest_point"], labels: ["start_score", "starter_chest_point"] },
   5: { lines: 3, keys: ["score", "treasure_point", "coin_point"], labels: ["score", "treasure_point", "coin_point"] },
-  6: { lines: 4, keys: ["start_score", "score", "hp", "treasure_point"], labels: ["start_score", "score", "hp", "treasure_point"] },
+  6: { lines: 4, keys: ["score", "hp", "potion_heal", "treasure_point"], labels: ["score", "hp", "potion_heal", "treasure_point"] },
   7: { lines: 5, keys: ["score", "hp", "speed", "wind_multiplier", "coin_point"], labels: ["score", "hp", "speed", "wind_multiplier", "coin_point"] },
   8: { lines: 6, keys: ["hero_name", "hero_message", "start_score", "score", "speed", "title"], labels: ["hero_name", "hero_message", "start_score", "score", "speed", "title"] },
   9: { lines: 7, keys: ["hero_name", "hero_message", "start_score", "score", "hp", "speed", "status_text"], labels: ["hero_name", "hero_message", "start_score", "score", "hp", "speed", "status_text"] },
@@ -185,13 +198,13 @@ const seasonOneChapters = {
   6: {
     title: "체력 만들기",
     focus: "hp",
-    syntax: "숫자 변수는 게임 규칙을 조절합니다. hp는 주인공 체력이고, HUD의 체력 숫자로 확인할 수 있습니다. 체력 물약을 얻으면 체력이 20 올라갑니다.",
+    syntax: "숫자 변수는 게임 규칙을 조절합니다. hp는 주인공 체력이고, potion_heal은 체력 물약을 얻었을 때 회복되는 숫자입니다.",
     pages: [
       ["1. 오늘의 장면", "체력 숫자와 체력 물약이 추가됩니다."],
-      ["2. 오늘의 코드", "hp = 100은 주인공 체력을 숫자로 저장합니다."],
+      ["2. 오늘의 코드", "hp는 기본 체력, potion_heal은 물약 회복량입니다."],
       ["3. 기술 설명", "숫자 변수는 계산할 수 있습니다. 체력, 점수, 속도는 int로 다루기 좋습니다."],
-      ["4. 바꿔보기", "hp를 50, 100, 999로 바꾸고 체력 숫자를 비교합니다."],
-      ["5. 미션", "주인공에게 어울리는 기본 체력을 정합니다."],
+      ["4. 바꿔보기", "hp와 potion_heal을 바꾸고 체력 숫자 변화를 비교합니다."],
+      ["5. 미션", "주인공에게 어울리는 기본 체력과 물약 회복량을 정합니다."],
     ],
   },
   7: {
@@ -504,6 +517,7 @@ function readOnlyFileContent(fileName) {
       "",
       `hero_name = "${s.hero_name || "번개용사"}"`,
       `hp = ${toNumber(s.hp, 100)}`,
+      `potion_heal = ${toNumber(s.potion_heal, 20)}`,
       `speed = ${toNumber(s.speed, 5)}`,
       `wind_multiplier = ${toNumber(s.wind_multiplier, 2)}`,
       "",
@@ -524,15 +538,17 @@ function readOnlyFileContent(fileName) {
       `bonus_multiplier = ${toNumber(s.bonus_multiplier, 2)}`,
       "",
       "items = [",
-      '    "보물상자",',
-      '    "보물",',
-      '    "동전",',
-      '    "체력 물약",',
-      '    "바람신발",',
-      '    "루비",',
-      '    "상자",',
-      '    "함정",',
-      '    "보너스별",',
+      `    "${s.starter_chest_label || "보물상자"}",`,
+      `    "${s.treasure_label || "보물"}",`,
+      `    "${s.coin_label || "동전"}",`,
+      `    "${s.potion_label || "체력 물약"}",`,
+      `    "${s.wind_shoes_label || "바람신발"}",`,
+      `    "${s.gem_label || "루비"}",`,
+      `    "${s.chest_label || "상자"}",`,
+      `    "${s.spike_trap_label || "가시함정"}",`,
+      `    "${s.fire_trap_label || "불꽃함정"}",`,
+      `    "${s.bonus_label || "보너스별"}",`,
+      `    "${s.portal_label || "포털"}",`,
       "]",
     ].join("\n");
   }
@@ -551,6 +567,9 @@ function readOnlyFileContent(fileName) {
       "",
       "def coin_score(current_score):",
       "    return current_score + coin_point",
+      "",
+      "def potion_hp(current_hp):",
+      "    return current_hp + potion_heal",
       "",
       "def trap_hp(current_hp):",
       "    return current_hp - trap_damage",
@@ -739,6 +758,8 @@ function generateCode(seasonKey) {
       "# =========================",
       targetHint("hp"),
       `hp = ${toNumber(s.hp, 100)}`,
+      targetHint("potion_heal"),
+      `potion_heal = ${toNumber(s.potion_heal, 20)}`,
       "",
       "# =========================",
       "# [챕터 7] 이동 속도와 바람신발",
@@ -762,6 +783,22 @@ function generateCode(seasonKey) {
       "# =========================",
       targetHint("status_text"),
       statusLine,
+      "",
+      "# =========================",
+      "# [화면 이름표] 게임에 보이는 이름",
+      "# =========================",
+      `starter_chest_label = "${s.starter_chest_label || "보물상자"}"`,
+      `treasure_label = "${s.treasure_label || "보물"}"`,
+      `coin_label = "${s.coin_label || "동전"}"`,
+      `potion_label = "${s.potion_label || "체력 물약"}"`,
+      `wind_shoes_label = "${s.wind_shoes_label || "바람신발"}"`,
+      `gem_label = "${s.gem_label || "루비"}"`,
+      `chest_label = "${s.chest_label || "상자"}"`,
+      `spike_trap_label = "${s.spike_trap_label || "가시함정"}"`,
+      `fire_trap_label = "${s.fire_trap_label || "불꽃함정"}"`,
+      `bonus_label = "${s.bonus_label || "보너스별"}"`,
+      `portal_label = "${s.portal_label || "포털"}"`,
+      `portal_hint = "${s.portal_hint || "보물을 모아 포털을 열자"}"`,
       "",
       "# =========================",
       "# [챕터 10] 더하기 마법",
@@ -1060,10 +1097,23 @@ function parseCode(seasonKey, source) {
       start_score: startScore,
       score,
       hp,
+      potion_heal: numberValue("potion_heal"),
       speed: numberValue("speed"),
       wind_multiplier: numberValue("wind_multiplier"),
       title: seasonOneTitleValue(heroName),
       status_text: seasonOneStatusValue(heroName, score, hp),
+      portal_hint: stringValue("portal_hint"),
+      starter_chest_label: stringValue("starter_chest_label"),
+      treasure_label: stringValue("treasure_label"),
+      coin_label: stringValue("coin_label"),
+      potion_label: stringValue("potion_label"),
+      wind_shoes_label: stringValue("wind_shoes_label"),
+      gem_label: stringValue("gem_label"),
+      chest_label: stringValue("chest_label"),
+      spike_trap_label: stringValue("spike_trap_label"),
+      fire_trap_label: stringValue("fire_trap_label"),
+      bonus_label: stringValue("bonus_label"),
+      portal_label: stringValue("portal_label"),
       starter_chest_point: numberValue("starter_chest_point"),
       treasure_point: numberValue("treasure_point"),
       coin_point: numberValue("coin_point"),
@@ -1114,26 +1164,26 @@ function seasonOneHas(chapter) {
   return seasonOneChapter() >= chapter;
 }
 
-function seasonOneItemsForChapter(chapter) {
+function seasonOneItemsForChapter(chapter, settings = {}) {
   const items = [];
-  if (chapter >= 4) items.push({ kind: "starter_chest", x: 24, y: 40, label: "보물상자", taken: false });
+  if (chapter >= 4) items.push({ kind: "starter_chest", x: 24, y: 40, label: settings.starter_chest_label || "보물상자", taken: false });
   if (chapter >= 5) {
-    items.push({ kind: "treasure", x: 60, y: 28, label: "보물", taken: false });
-    items.push({ kind: "coin", x: 72, y: 60, label: "동전", taken: false });
+    items.push({ kind: "treasure", x: 60, y: 28, label: settings.treasure_label || "보물", taken: false });
+    items.push({ kind: "coin", x: 72, y: 60, label: settings.coin_label || "동전", taken: false });
   }
-  if (chapter >= 6) items.push({ kind: "potion", x: 18, y: 70, label: "체력 물약", taken: false });
-  if (chapter >= 7) items.push({ kind: "boost", x: 40, y: 78, label: "바람신발", taken: false });
+  if (chapter >= 6) items.push({ kind: "potion", x: 18, y: 70, label: settings.potion_label || "체력 물약", taken: false });
+  if (chapter >= 7) items.push({ kind: "boost", x: 40, y: 78, label: settings.wind_shoes_label || "바람신발", taken: false });
   if (chapter >= 10) {
-    items.push({ kind: "gem", x: 44, y: 52, label: "루비", taken: false });
-    items.push({ kind: "chest", x: 84, y: 38, label: "상자", taken: false });
+    items.push({ kind: "gem", x: 44, y: 52, label: settings.gem_label || "루비", taken: false });
+    items.push({ kind: "chest", x: 84, y: 38, label: settings.chest_label || "상자", taken: false });
   }
   if (chapter >= 11) {
-    items.push({ kind: "trap", baseX: 50, baseY: 66, x: 50, y: 66, label: "가시함정", patrol: "horizontal", taken: false });
-    items.push({ kind: "trap", baseX: 68, baseY: 46, x: 68, y: 46, label: "불꽃함정", patrol: "vertical", taken: false });
+    items.push({ kind: "trap", baseX: 50, baseY: 66, x: 50, y: 66, label: settings.spike_trap_label || "가시함정", patrol: "horizontal", taken: false });
+    items.push({ kind: "trap", baseX: 68, baseY: 46, x: 68, y: 46, label: settings.fire_trap_label || "불꽃함정", patrol: "vertical", taken: false });
   }
   if (chapter >= 12) {
-    items.push({ kind: "bonus", x: 84, y: 20, label: "보너스별", taken: false });
-    items.push({ kind: "portal", x: 88, y: 76, label: "포털", taken: false });
+    items.push({ kind: "bonus", x: 44, y: 20, label: settings.bonus_label || "보너스별", taken: false });
+    items.push({ kind: "portal", x: 88, y: 76, label: settings.portal_label || "포털", taken: false });
   }
   return items;
 }
@@ -1185,7 +1235,7 @@ function seasonOneReset() {
       bonus: 0,
       trap: 0,
     },
-    items: seasonOneItemsForChapter(chapter),
+    items: seasonOneItemsForChapter(chapter, s),
   };
 }
 
@@ -1216,7 +1266,7 @@ function seasonOneHudStats(settings, game, chapter) {
   if (chapter >= 4) pieces.push(`점수 ${game.score}`);
   if (chapter >= 6) pieces.push(`체력 ${game.hp}/${game.maxHp}`);
   if (chapter >= 7) {
-    const windText = game.windBoostActive ? ` · 바람신발 x${toNumber(settings.wind_multiplier, 2)}` : "";
+    const windText = game.windBoostActive ? ` · ${settings.wind_shoes_label || "바람신발"} x${toNumber(settings.wind_multiplier, 2)}` : "";
     pieces.push(`속도 ${settings.speed}${windText}`);
   }
   if (chapter >= 10) pieces.push(`콤보 ${game.combo}`);
@@ -1237,7 +1287,7 @@ function renderSeasonOneScenery(board, settings, game, chapter) {
     seasonOneProp(board, "crystal-right");
     seasonOneProp(board, "portal-aura");
   }
-  if (chapter >= 12) addSeasonOneScenery(board, "portal-hint", game.win ? "클리어!" : "보물을 모아 포털을 열자");
+  if (chapter >= 12) addSeasonOneScenery(board, "portal-hint", game.win ? "클리어!" : (settings.portal_hint || "보물을 모아 포털을 열자"));
 }
 
 function updateSeasonOneMovingTraps() {
@@ -1410,7 +1460,7 @@ function collectSeasonOne() {
     if (seasonOneReadyForPortal(g)) {
       near.taken = true;
       g.win = true;
-      g.message = `완성! ${s.hero_name || "용사"}가 보물 포털을 열었어!`;
+      g.message = `완성! ${s.hero_name || "용사"}가 ${s.portal_label || "포털"}을 열었어!`;
       playTone({ frequency: 880, duration: 0.16, type: "triangle", volume: 0.06, slide: 240 });
       updateSaveSeason("season_01", {
         high_score: Math.max(getSeasonSave("season_01").high_score || 0, g.score),
@@ -1418,7 +1468,7 @@ function collectSeasonOne() {
         hero_name: s.hero_name,
       });
     } else {
-      g.message = "포털이 아직 잠겨 있어. 보물과 보너스를 먼저 모으자!";
+      g.message = `${s.portal_label || "포털"}이 아직 잠겨 있어. 보물과 보너스를 먼저 모으자!`;
     }
     renderSeasonOne();
     return;
@@ -1427,20 +1477,20 @@ function collectSeasonOne() {
   playPickupSound(near.kind);
   if (near.kind === "potion") {
     g.collected.potion += 1;
-    const heal = 20;
+    const heal = Math.max(0, toNumber(s.potion_heal, 20));
     g.hp += heal;
     g.maxHp = Math.max(g.maxHp, g.hp);
-    g.message = `체력 물약을 마셨어. 체력 +${heal}!`;
+    g.message = `${near.label}을 마셨어. 체력 +${heal}!`;
   } else if (near.kind === "boost") {
     g.collected.boost += 1;
     g.windBoostActive = true;
     const windMultiplier = Math.max(1, toNumber(s.wind_multiplier, 2));
-    g.message = `바람신발 장착! 이동 속도가 계속 ${windMultiplier}배가 돼.`;
+    g.message = `${near.label} 장착! 이동 속도가 계속 ${windMultiplier}배가 돼.`;
   } else if (near.kind === "bonus") {
     g.collected.bonus += 1;
     g.combo += 1;
     g.score = g.score * toNumber(s.bonus_multiplier, 2);
-    g.message = `보너스별! 점수가 ${toNumber(s.bonus_multiplier, 2)}배가 되었어.`;
+    g.message = `${near.label}! 점수가 ${toNumber(s.bonus_multiplier, 2)}배가 되었어.`;
   } else {
     const point = seasonOneItemPoint(near.kind, s);
     g.collected[near.kind] = (g.collected[near.kind] || 0) + 1;
