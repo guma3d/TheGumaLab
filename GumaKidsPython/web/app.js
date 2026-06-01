@@ -505,6 +505,13 @@ const audio = {
   musicGain: null,
 };
 
+const seasonTwoThree = {
+  modulePromise: null,
+  renderer: null,
+  renderToken: 0,
+  panToken: 0,
+};
+
 const els = {
   seasonSelect: document.querySelector("#seasonSelect"),
   chapterSelect: document.querySelector("#chapterSelect"),
@@ -2227,6 +2234,255 @@ function koreanSubject(text) {
   return `${value}${hasBatchim ? "이" : "가"}`;
 }
 
+function loadSeasonTwoThree() {
+  if (!seasonTwoThree.modulePromise) {
+    seasonTwoThree.modulePromise = import("/vendor/three.module.min.js");
+  }
+  return seasonTwoThree.modulePromise;
+}
+
+function disposeThreeScene(scene) {
+  scene.traverse((object) => {
+    if (object.geometry) object.geometry.dispose();
+    if (object.material) {
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      materials.forEach((material) => material.dispose());
+    }
+  });
+}
+
+function seasonTwoThreeLaneX(lane) {
+  return [-2.25, 0, 2.25][Math.max(0, Math.min(2, lane))] || 0;
+}
+
+function seasonTwoThreeItemZ(itemY) {
+  return 9 - itemY * 0.22;
+}
+
+function makeSeasonTwoThreeMaterial(THREE, color, roughness = 0.72, metalness = 0.05) {
+  return new THREE.MeshStandardMaterial({ color, roughness, metalness });
+}
+
+function addSeasonTwoBox(THREE, scene, size, position, color, rotation = [0, 0, 0], materialOptions = {}) {
+  const geometry = new THREE.BoxGeometry(size[0], size[1], size[2]);
+  const material = makeSeasonTwoThreeMaterial(THREE, color, materialOptions.roughness, materialOptions.metalness);
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.set(position[0], position[1], position[2]);
+  mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+  return mesh;
+}
+
+function addSeasonTwoSphere(THREE, group, radius, position, color, scale = [1, 1, 1]) {
+  const geometry = new THREE.SphereGeometry(radius, 24, 18);
+  const material = makeSeasonTwoThreeMaterial(THREE, color, 0.64, 0.02);
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.set(position[0], position[1], position[2]);
+  mesh.scale.set(scale[0], scale[1], scale[2]);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  group.add(mesh);
+  return mesh;
+}
+
+function createSeasonTwoKaiju3D(THREE, evolution, scale = 1) {
+  const colors = {
+    baby: { body: 0x22c55e, belly: 0xfef3c7, horn: 0xfde68a },
+    grown: { body: 0xfacc15, belly: 0xecfccb, horn: 0x22c55e },
+    mutant: { body: 0xef4444, belly: 0xffedd5, horn: 0xf97316 },
+    legend: { body: 0x38bdf8, belly: 0xf5d0fe, horn: 0xa78bfa },
+  };
+  const palette = colors[evolution.className] || colors.baby;
+  const group = new THREE.Group();
+  group.scale.setScalar(scale * Math.max(0.95, evolution.scale * 0.72));
+  addSeasonTwoSphere(THREE, group, 0.64, [0, 1.08, 0], palette.body, [0.86, 1.12, 0.72]);
+  addSeasonTwoSphere(THREE, group, 0.32, [0, 1.1, 0.5], palette.belly, [0.9, 1.15, 0.34]);
+  addSeasonTwoSphere(THREE, group, 0.42, [0, 1.8, 0.08], palette.body, [1.04, 0.86, 0.82]);
+  addSeasonTwoSphere(THREE, group, 0.06, [-0.16, 1.86, 0.44], 0x0f172a);
+  addSeasonTwoSphere(THREE, group, 0.06, [0.16, 1.86, 0.44], 0x0f172a);
+  addSeasonTwoBox(THREE, group, [0.18, 0.5, 0.18], [-0.38, 0.45, 0.02], palette.body, [0.1, 0, 0.18]);
+  addSeasonTwoBox(THREE, group, [0.18, 0.5, 0.18], [0.38, 0.45, 0.02], palette.body, [-0.1, 0, -0.18]);
+  addSeasonTwoBox(THREE, group, [0.18, 0.38, 0.18], [-0.54, 1.08, 0.06], palette.body, [0, 0, 0.58]);
+  addSeasonTwoBox(THREE, group, [0.18, 0.38, 0.18], [0.54, 1.08, 0.06], palette.body, [0, 0, -0.58]);
+  addSeasonTwoBox(THREE, group, [0.18, 0.34, 0.2], [-0.18, 2.22, 0.03], palette.horn, [0.4, 0, -0.18]);
+  addSeasonTwoBox(THREE, group, [0.18, 0.34, 0.2], [0.18, 2.22, 0.03], palette.horn, [0.4, 0, 0.18]);
+  addSeasonTwoBox(THREE, group, [0.62, 0.16, 0.18], [-0.58, 0.92, -0.34], palette.body, [0.16, 0.1, -0.22]);
+  group.rotation.y = -0.18;
+  return group;
+}
+
+function createSeasonTwoBoss3D(THREE, boss) {
+  const palettes = {
+    burger: { body: 0xfb923c, accent: 0xfef3c7, glow: 0xef4444 },
+    golem: { body: 0xa16207, accent: 0xfbbf24, glow: 0x22c55e },
+    drone: { body: 0x2563eb, accent: 0xa5f3fc, glow: 0x38bdf8 },
+    titan: { body: 0x334155, accent: 0x7c3aed, glow: 0xef4444 },
+  };
+  const palette = palettes[boss.className] || palettes.titan;
+  const group = new THREE.Group();
+  group.scale.setScalar(1.18);
+  addSeasonTwoSphere(THREE, group, 0.86, [0, 1.24, 0], palette.body, [1.0, 1.25, 0.72]);
+  addSeasonTwoSphere(THREE, group, 0.5, [0, 2.15, 0.08], palette.body, [1.12, 0.85, 0.78]);
+  addSeasonTwoSphere(THREE, group, 0.18, [0, 1.38, 0.52], palette.glow, [1, 1, 0.35]);
+  addSeasonTwoBox(THREE, group, [0.34, 0.95, 0.3], [-0.82, 1.12, 0.04], palette.accent, [0, 0, 0.2]);
+  addSeasonTwoBox(THREE, group, [0.34, 0.95, 0.3], [0.82, 1.12, 0.04], palette.accent, [0, 0, -0.2]);
+  addSeasonTwoBox(THREE, group, [0.32, 0.62, 0.34], [-0.34, 0.36, 0.02], palette.body);
+  addSeasonTwoBox(THREE, group, [0.32, 0.62, 0.34], [0.34, 0.36, 0.02], palette.body);
+  addSeasonTwoSphere(THREE, group, 0.07, [-0.18, 2.2, 0.52], 0xf8fafc);
+  addSeasonTwoSphere(THREE, group, 0.07, [0.18, 2.2, 0.52], 0xf8fafc);
+  group.rotation.y = 0.28;
+  return group;
+}
+
+function createSeasonTwoItem3D(THREE, item) {
+  const group = new THREE.Group();
+  const kind = item.kind;
+  if (kind === "crystal" || kind === "core") {
+    const geometry = new THREE.OctahedronGeometry(kind === "core" ? 0.42 : 0.32);
+    const material = makeSeasonTwoThreeMaterial(THREE, kind === "core" ? 0xef4444 : 0x38bdf8, 0.48, 0.24);
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.rotation.y = Math.PI * 0.25;
+    group.add(mesh);
+  } else if (kind === "shield") {
+    addSeasonTwoSphere(THREE, group, 0.36, [0, 0, 0], 0x22d3ee, [1, 1.15, 0.24]);
+  } else if (kind === "obstacle") {
+    addSeasonTwoBox(THREE, group, [0.72, 0.48, 0.42], [0, 0, 0], 0xef4444, [0.16, 0.42, 0.08]);
+  } else if (kind === "meat") {
+    addSeasonTwoSphere(THREE, group, 0.32, [0, 0, 0], 0xf97316, [1.18, 0.82, 0.82]);
+  } else {
+    addSeasonTwoSphere(THREE, group, 0.3, [0, 0, 0], 0xec4899, [1, 0.9, 1]);
+  }
+  group.position.set(seasonTwoThreeLaneX(item.lane), 0.72, seasonTwoThreeItemZ(item.y));
+  group.rotation.y = (item.y + item.lane * 40) * 0.025;
+  return group;
+}
+
+function addSeasonTwoThreeWorld(THREE, scene, data) {
+  scene.background = new THREE.Color(0x8bdcfb);
+  scene.fog = new THREE.Fog(0x8bdcfb, 18, 42);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x7dd3fc, 1.8));
+  const sun = new THREE.DirectionalLight(0xffffff, 2.4);
+  sun.position.set(6, 10, 8);
+  sun.castShadow = true;
+  scene.add(sun);
+  addSeasonTwoBox(THREE, scene, [18, 0.16, 34], [0, -0.12, -4], 0x7ddf9b, [0, 0, 0], { roughness: 0.9 });
+  addSeasonTwoBox(THREE, scene, [7.6, 0.28, 34], [0, 0, -4], 0x475569, [0, 0, 0], { roughness: 0.82 });
+  addSeasonTwoBox(THREE, scene, [0.22, 0.08, 34], [-3.95, 0.18, -4], 0x22c55e);
+  addSeasonTwoBox(THREE, scene, [0.22, 0.08, 34], [3.95, 0.18, -4], 0x22c55e);
+  for (let z = -18; z <= 11; z += 2.6) {
+    addSeasonTwoBox(THREE, scene, [0.08, 0.07, 1.1], [-1.27, 0.23, z], 0xfde047);
+    addSeasonTwoBox(THREE, scene, [0.08, 0.07, 1.1], [1.27, 0.23, z], 0xfde047);
+  }
+  for (let i = 0; i < 9; i += 1) {
+    const x = -7.4 + i * 1.85;
+    const height = 1.2 + ((i * 37) % 5) * 0.42;
+    addSeasonTwoBox(THREE, scene, [1.1, height, 0.9], [x, height * 0.5 - 0.04, -20.5], i % 2 ? 0x93c5fd : 0xbfdbfe, [0, 0, 0], { roughness: 0.88 });
+  }
+  const sunGeometry = new THREE.SphereGeometry(1.1, 28, 18);
+  const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xfde047 });
+  const sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
+  sunMesh.position.set(6.6, 7.8, -18);
+  scene.add(sunMesh);
+  for (const cloud of [[-5.6, 5.3, -12], [-2.7, 6.1, -16], [4.1, 5.6, -13]]) {
+    const group = new THREE.Group();
+    addSeasonTwoSphere(THREE, group, 0.54, [0, 0, 0], 0xffffff, [1.5, 0.58, 0.5]);
+    addSeasonTwoSphere(THREE, group, 0.42, [0.54, 0.08, 0.04], 0xffffff, [1.18, 0.5, 0.44]);
+    group.position.set(cloud[0], cloud[1], cloud[2]);
+    scene.add(group);
+  }
+  if (!data.isBossScene) {
+    data.items.forEach((item) => scene.add(createSeasonTwoItem3D(THREE, item)));
+  }
+}
+
+function renderSeasonTwoThreeFrame(THREE, renderer, data, panProgress = 1) {
+  const { width, height } = data;
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 80);
+  addSeasonTwoThreeWorld(THREE, scene, data);
+
+  const runnerCamera = {
+    position: new THREE.Vector3(0, 7.4, 13.5),
+    target: new THREE.Vector3(0, 0.8, -7.5),
+  };
+  const bossCamera = {
+    position: new THREE.Vector3(-8.2, 3.6, 6.6),
+    target: new THREE.Vector3(0, 1.15, -0.8),
+  };
+  const eased = panProgress * panProgress * (3 - 2 * panProgress);
+  const cameraPosition = data.isBossScene
+    ? runnerCamera.position.clone().lerp(bossCamera.position, eased)
+    : runnerCamera.position;
+  const cameraTarget = data.isBossScene
+    ? runnerCamera.target.clone().lerp(bossCamera.target, eased)
+    : runnerCamera.target;
+  camera.position.copy(cameraPosition);
+  camera.lookAt(cameraTarget);
+
+  const player = createSeasonTwoKaiju3D(THREE, data.evolution, data.isBossScene ? 1.08 : 0.92);
+  if (data.isBossScene) {
+    player.position.set(-2.35, 0.22, -0.6);
+    player.rotation.y = -0.78;
+    const boss = createSeasonTwoBoss3D(THREE, data.boss);
+    boss.position.set(2.55, 0.18, -0.85);
+    boss.rotation.y = 0.66;
+    scene.add(boss);
+  } else {
+    player.position.set(seasonTwoThreeLaneX(data.lane), 0.2, 7.2);
+  }
+  scene.add(player);
+
+  renderer.setSize(width, height, false);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.render(scene, camera);
+  disposeThreeScene(scene);
+}
+
+function renderSeasonTwoThreeScene(data) {
+  const mount = els.gameMount.querySelector(".runner-three-layer");
+  if (!mount) return;
+  const renderToken = ++seasonTwoThree.renderToken;
+  const rect = mount.getBoundingClientRect();
+  const width = Math.max(2, Math.floor(rect.width));
+  const height = Math.max(2, Math.floor(rect.height));
+  const frameData = { ...data, width, height };
+
+  loadSeasonTwoThree()
+    .then((THREE) => {
+      if (!mount.isConnected || renderToken !== seasonTwoThree.renderToken) return;
+      if (!seasonTwoThree.renderer) {
+        seasonTwoThree.renderer = new THREE.WebGLRenderer({ antialias: true });
+        seasonTwoThree.renderer.shadowMap.enabled = true;
+        seasonTwoThree.renderer.domElement.className = "runner-three-canvas";
+      }
+      const renderer = seasonTwoThree.renderer;
+      if (renderer.domElement.parentElement !== mount) mount.appendChild(renderer.domElement);
+      mount.classList.add("three-ready");
+      mount.classList.remove("three-failed");
+
+      if (frameData.isBossScene && !frameData.bossCameraReady) {
+        const panToken = ++seasonTwoThree.panToken;
+        const startedAt = performance.now();
+        const animate = (now) => {
+          if (!mount.isConnected || panToken !== seasonTwoThree.panToken) return;
+          const progress = Math.min(1, (now - startedAt) / 1250);
+          renderSeasonTwoThreeFrame(THREE, renderer, frameData, progress);
+          if (progress < 1) window.requestAnimationFrame(animate);
+        };
+        window.requestAnimationFrame(animate);
+        return;
+      }
+      renderSeasonTwoThreeFrame(THREE, renderer, frameData, 1);
+    })
+    .catch((error) => {
+      mount.dataset.error = String(error?.message || error);
+      console.error("Season 2 WebGL 3D render failed", error);
+      mount.classList.add("three-failed");
+    });
+}
+
 function renderSeasonTwo() {
   const s = state.settings.season_02;
   const g = state.game.season_02 || (seasonTwoReset(), state.game.season_02);
@@ -2280,6 +2536,9 @@ function renderSeasonTwo() {
 
   els.gameMount.innerHTML = `
     <div class="${boardClass}">
+      <div class="runner-three-layer" aria-label="시즌2 3D 게임 장면">
+        <span class="runner-three-badge">WebGL 3D</span>
+      </div>
       <div class="runner-sky">
         <span class="runner-cloud cloud-a"></span>
         <span class="runner-cloud cloud-b"></span>
@@ -2315,6 +2574,14 @@ function renderSeasonTwo() {
       </div>
     </div>
   `;
+  renderSeasonTwoThreeScene({
+    boss: g.boss,
+    bossCameraReady: g.bossCameraReady,
+    evolution,
+    isBossScene,
+    items: g.items.map((item) => ({ ...item })),
+    lane: g.lane,
+  });
   if (isBossScene && !g.bossCameraReady) {
     window.setTimeout(() => {
       const board = els.gameMount.querySelector(".kaiju-runner-game.camera-panning");
