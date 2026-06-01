@@ -264,17 +264,21 @@ class VectorIndexer:
                     
                     date_val = f_data.get('DateTimeOriginal') or f_data.get('CreateDate')
                     dt_str = "Unknown Date"
+                    full_dt = None
                     if date_val:
                         raw_dt = str(date_val).split(' ')[0]
                         parts = raw_dt.split(':')
-                        if len(parts) >= 2:
+                        if len(parts) >= 3:
+                            full_dt = f"{parts[0]}-{parts[1]}-{parts[2]}"
+                            dt_str = f"{parts[0]}-{parts[1]}"
+                        elif len(parts) >= 2:
                             dt_str = f"{parts[0]}-{parts[1]}"
                         else:
                             dt_str = raw_dt.replace(':', '-')
-                            
+
                     loc_str = "Unknown Location" # XMP Location 완전 폐기, 항상 GPS 우선 역추적
 
-                    
+
                     lat_f = None
                     lon_f = None
                     try:
@@ -284,8 +288,8 @@ class VectorIndexer:
                             lat_f = float(str(lat_raw).replace('+', ''))
                             lon_f = float(str(lon_raw).replace('+', ''))
                     except: pass
-                    
-                    exif_dict[fname] = {"date": dt_str, "loc": loc_str, "lat": lat_f, "lon": lon_f}
+
+                    exif_dict[fname] = {"date": dt_str, "full_date": full_dt, "loc": loc_str, "lat": lat_f, "lon": lon_f}
                     if date_val:
                         exif_dict[fname]["time_of_day"], exif_dict[fname]["season"] = MetadataParser.parse_time_and_season(filepath=fpath, date_val=date_val)
                         
@@ -389,7 +393,14 @@ class VectorIndexer:
                         print(f"      [-] WebP 썸네일 생성 실패: {t_e}")
                     
                 sort_date = 0
-                if date_str != "Unknown Date":
+                full_date = exif_dict[fname].get("full_date") if fname in exif_dict else None
+                if full_date:
+                    try:
+                        fd = full_date.split('-')
+                        sort_date = int(fd[0]) * 10000 + int(fd[1]) * 100 + int(fd[2])
+                    except (ValueError, IndexError):
+                        sort_date = 0
+                if sort_date == 0 and date_str != "Unknown Date":
                     import re
                     match_sd = re.search(r'(19|20)\d{2}(-\d{2})?(-\d{2})?', date_str)
                     if match_sd:
@@ -404,7 +415,7 @@ class VectorIndexer:
                         sort_date = dt.year * 10000 + dt.month * 100 + dt.day
                     except Exception:
                         sort_date = 0
-                print(f"DEBUG: {filepath} => date_str: {date_str}, sort_date: {sort_date}")
+                print(f"DEBUG: {filepath} => date_str: {date_str}, full_date: {full_date}, sort_date: {sort_date}")
                         
                 if self.run_vision_ai or self.run_semantic_ai or not self.skip_face:
                     payload = {

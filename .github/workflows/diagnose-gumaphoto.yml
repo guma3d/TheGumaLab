@@ -1,0 +1,162 @@
+name: Diagnose GumaPhoto
+
+on:
+  workflow_dispatch:
+    inputs:
+      rebuild_cache:
+        description: "Call POST /api/rebuild_cache after diagnostics"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+  push:
+    branches:
+      - "claude/fix-photo-visibility-**"
+    paths:
+      - ".github/workflows/diagnose-gumaphoto.yml"
+      - ".github/triggers/diagnose.trigger"
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.HOMESERVER_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 219.254.245.175 >> ~/.ssh/known_hosts
+
+      - name: Run diagnostics and capture output
+        id: diag
+        run: |
+          set +e
+          SSH="ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no guma3@219.254.245.175"
+          mkdir -p .github/diagnostics
+          OUT=".github/diagnostics/last-run.md"
+
+          {
+            echo "# GumaPhoto Diagnostic Run"
+            echo ""
+            echo "- Run: \`${{ github.run_id }}\`"
+            echo "- Commit: \`${{ github.sha }}\`"
+            echo "- Timestamp (UTC): $(date -u +"%Y-%m-%d %H:%M:%S")"
+            echo ""
+
+            echo "## 1. Container status"
+            echo '```'
+            $SSH "docker ps --filter name=gumaphoto --format \"table {{.Names}}\t{{.Status}}\t{{.RunningFor}}\"" 2>&1
+            echo '```'
+            echo ""
+
+            echo "## 1b. Migration process probe (celery container)"
+            echo '```'
+            $SSH "docker exec gumaphoto_celery ps -ef" 2>&1 | grep -E "migrate_sort_date|PID" | head -10
+            echo "--- celery container top (5s sample) ---"
+            $SSH "docker stats gumaphoto_celery --no-stream --format \"cpu={{.CPUPerc}} mem={{.MemUsage}}\"" 2>&1
+            echo '```'
+            echo ""
+
+            echo "## 2. Timeline cache file (mtime / size)"
+            echo '```'
+            $SSH "dir D:\\TheGumaLab\\GumaPhoto\\data\\caches\\timeline_cache.json" 2>&1
+            echo '```'
+            echo ""
+
+            echo "## 3. uploads_raw/ recent files (stuck = Organizer didn't pick up)"
+            echo '```'
+            $SSH "dir /O-D D:\\Pictures\\uploads_raw" 2>&1 | head -40
+            echo '```'
+            echo ""
+
+            echo "## 4. Pictures/ recently modified folders (Organizer output)"
+            echo '```'
+            $SSH "dir /O-D D:\\Pictures" 2>&1 | head -30
+            echo '```'
+            echo ""
+
+            echo "## 5. Celery worker — last 200 log lines"
+            echo '```'
+            $SSH "docker logs gumaphoto_celery --tail 200" 2>&1
+            echo '```'
+            echo ""
+
+            echo "## 6. Celery — errors / tracebacks in last 24h"
+            echo '```'
+            $SSH "docker logs gumaphoto_celery --since 24h 2>&1 | findstr /I \"error exception traceback failed warning\"" 2>&1 | head -100
+            echo '```'
+            echo ""
+
+            echo "## 7. FastAPI app — last 100 log lines"
+            echo '```'
+            $SSH "docker logs gumaphoto_app --tail 100" 2>&1
+            echo '```'
+            echo ""
+
+            echo "## 8. Redis — queue keys / celery queue length"
+            echo '```'
+            $SSH "docker exec gumaphoto_redis redis-cli llen celery" 2>&1
+            $SSH "docker exec gumaphoto_redis redis-cli keys *" 2>&1
+            echo '```'
+            echo ""
+
+            echo "## 9. Qdrant — collection stats"
+            echo '```'
+            $SSH "curl -s http://localhost:6337/collections/gumaphoto_hybrid_kr" 2>&1
+            echo '```'
+            echo ""
+
+            echo "## 9b. Qdrant — top 5 newest by sort_date (latest photos)"
+            echo '```'
+            $SSH "curl -s -X POST http://localhost:6337/collections/gumaphoto_hybrid_kr/points/query -H \"Content-Type: application/json\" -d \"{\\\"query\\\":{\\\"order_by\\\":{\\\"key\\\":\\\"sort_date\\\",\\\"direction\\\":\\\"desc\\\"}},\\\"limit\\\":5,\\\"with_payload\\\":true}\"" 2>&1
+            echo '```'
+            echo ""
+
+            echo "## 9c. Today's 2026/2026-04/ folder contents"
+            echo '```'
+            $SSH "dir /O-D D:\\Pictures\\2026\\2026-04" 2>&1 | head -30
+            echo '```'
+            echo ""
+
+            echo "## 9d. UnknownDate/ folder contents (recent)"
+            echo '```'
+            $SSH "dir /O-D D:\\Pictures\\UnknownDate" 2>&1 | head -15
+            echo '```'
+            echo ""
+
+            echo "## 9e. Timeline cache — first photo entry (what the home page actually shows at top)"
+            echo '```'
+            $SSH "docker exec gumaphoto_app python -c \"import json; d=json.load(open('/app/data/caches/timeline_cache.json')); first=d['recent'][0] if d.get('recent') else d; import json as j; print(j.dumps(first, ensure_ascii=False, indent=2)[:2000])\"" 2>&1
+            echo '```'
+            echo ""
+
+            if [ "${{ inputs.rebuild_cache }}" = "true" ]; then
+              echo "## 10. Manual rebuild_cache (requested)"
+              echo '```'
+              $SSH "curl -s -X POST http://localhost:8085/api/rebuild_cache" 2>&1
+              echo '```'
+              echo ""
+            fi
+          } > "$OUT" 2>&1
+
+          echo "--- Captured output ($OUT) ---"
+          cat "$OUT"
+
+      - name: Commit diagnostic output back to branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/diagnostics/last-run.md
+          if git diff --cached --quiet; then
+            echo "No diagnostic changes to commit."
+          else
+            git commit -m "chore(diagnostics): capture GumaPhoto diagnostic run ${{ github.run_id }}"
+            git push origin HEAD:${{ github.ref_name }}
+          fi
