@@ -1,9 +1,0 @@
-services:
-  gumaimageanalyzer:
-    build: .
-    container_name: gumaimageanalyzer_app
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./uploads:/app/uploads
-    restart: always

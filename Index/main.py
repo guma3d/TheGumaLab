@@ -134,7 +134,3 @@ async def fallback_tutordoc():
 @app.get("/GumaKidsPython/")
 async def fallback_kidspython():
     return RedirectResponse(url="https://gumakidspython.guma3d.com/", status_code=301)
-
-@app.get("/ImageAnalyzer/")
-async def fallback_image():
-    return RedirectResponse(url="https://gumaimageanalyzer.guma3d.com/", status_code=301)

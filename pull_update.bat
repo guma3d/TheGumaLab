@@ -12,8 +12,8 @@ if "%~1"=="" (
     echo Usage: pull_update.bat ^<ProjectName^> [container_to_restart]
     echo.
     echo Available projects:
-    echo   GumaStockReport  GumaImageAnalyzer
-    echo   GumaServerStatus  GumaTube  GumaTutorDoc  Index  Nginx
+    echo   GumaStockReport  GumaServerStatus  GumaTube
+    echo   GumaTutorDoc  Index  Nginx
     echo.
     exit /b 1
 )
