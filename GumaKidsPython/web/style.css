@@ -1384,6 +1384,657 @@ select option {
   100% { opacity: 0; transform: scale(1.7); }
 }
 
+.kaiju-runner-game {
+  position: relative;
+  min-height: 430px;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid rgba(125, 211, 252, 0.28);
+  background: linear-gradient(180deg, #7dd3fc 0%, #a7f3d0 34%, #fef3c7 100%);
+  color: #0f172a;
+  isolation: isolate;
+}
+
+.runner-sky,
+.runner-world,
+.runner-road,
+.boss-stage-pan,
+.boss-stage-bg {
+  position: absolute;
+  inset: 0;
+}
+
+.runner-sky {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.55), transparent 54%),
+    linear-gradient(90deg, rgba(59, 130, 246, 0.22), rgba(34, 197, 94, 0.18));
+}
+
+.runner-sun {
+  position: absolute;
+  right: 8%;
+  top: 10%;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: #fde047;
+  box-shadow: 0 0 0 12px rgba(253, 224, 71, 0.22), 0 0 34px rgba(250, 204, 21, 0.44);
+}
+
+.runner-cloud {
+  position: absolute;
+  width: 108px;
+  height: 30px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 32px 4px 0 rgba(255, 255, 255, 0.72), -26px 8px 0 rgba(255, 255, 255, 0.72);
+  animation: runner-cloud-slide 8s linear infinite;
+}
+
+.runner-cloud.cloud-a {
+  left: 18%;
+  top: 12%;
+}
+
+.runner-cloud.cloud-b {
+  left: 55%;
+  top: 22%;
+  animation-duration: 11s;
+}
+
+@keyframes runner-cloud-slide {
+  from { transform: translateX(20px); }
+  to { transform: translateX(-80px); }
+}
+
+.runner-world {
+  top: 18%;
+  perspective: 760px;
+}
+
+.runner-road {
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  top: 12%;
+  bottom: 16%;
+  overflow: hidden;
+  border-radius: 16px;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.32) 0 18px, transparent 18px 54px),
+    linear-gradient(180deg, #34d399 0 20%, #22c55e 20% 26%, #64748b 26% 100%);
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.5), 0 16px 34px rgba(15, 23, 42, 0.28);
+  transform: rotateX(8deg);
+  transform-origin: bottom;
+}
+
+.runner-road::before {
+  content: "";
+  position: absolute;
+  inset: 25% 0 0;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.22) 0 28px, transparent 28px 72px);
+  animation: runner-road-scroll 0.56s linear infinite;
+}
+
+@keyframes runner-road-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-72px); }
+}
+
+.lane-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-top: 3px dashed rgba(254, 240, 138, 0.78);
+  z-index: 1;
+}
+
+.lane-line.lane-one { top: 42%; }
+.lane-line.lane-two { top: 65%; }
+
+.boss-gate {
+  position: absolute;
+  top: 18%;
+  z-index: 3;
+  width: 92px;
+  padding: 6px 8px;
+  border: 3px solid #fde047;
+  border-radius: 8px 8px 22px 22px;
+  background: linear-gradient(180deg, #7c2d12, #dc2626);
+  color: #fef9c3;
+  font-size: 12px;
+  font-weight: 900;
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 0 24px rgba(239, 68, 68, 0.42);
+}
+
+.runner-kaiju {
+  position: absolute;
+  left: 9%;
+  z-index: 7;
+  width: 110px;
+  height: 110px;
+  transform: translateY(-50%);
+  transition: top 0.16s ease;
+}
+
+.kaiju-speech {
+  position: absolute;
+  left: 44px;
+  bottom: 98px;
+  z-index: 8;
+  max-width: 190px;
+  padding: 7px 10px;
+  border: 2px solid rgba(15, 23, 42, 0.16);
+  border-radius: 14px 14px 14px 4px;
+  background: rgba(255, 255, 255, 0.88);
+  color: #17324a;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.28;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+}
+
+.kaiju-model {
+  --monster-scale: 1;
+  position: absolute;
+  left: 18px;
+  bottom: 4px;
+  width: 74px;
+  height: 86px;
+  transform-style: preserve-3d;
+  transform: perspective(520px) rotateX(7deg) rotateY(-20deg) scale(var(--monster-scale));
+  transform-origin: bottom center;
+  animation: kaiju-run-bob 0.42s ease-in-out infinite alternate;
+}
+
+.kaiju-model.grown,
+.kaiju-model.mutant,
+.kaiju-model.legend {
+  animation-duration: 0.34s;
+}
+
+.kaiju-model > span {
+  position: absolute;
+  display: block;
+}
+
+.kaiju-shadow {
+  left: 3px;
+  right: 0;
+  bottom: -8px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.24);
+  filter: blur(2px);
+  transform: rotateX(60deg);
+}
+
+.kaiju-body {
+  left: 14px;
+  bottom: 18px;
+  width: 48px;
+  height: 52px;
+  border-radius: 18px 18px 16px 16px;
+  background: linear-gradient(135deg, #34d399, #059669 62%, #065f46);
+  box-shadow: inset -10px -8px 0 rgba(15, 23, 42, 0.24), 7px 4px 0 rgba(20, 184, 166, 0.32);
+}
+
+.kaiju-model.grown .kaiju-body {
+  background: linear-gradient(135deg, #facc15, #22c55e 54%, #15803d);
+}
+
+.kaiju-model.mutant .kaiju-body {
+  background: linear-gradient(135deg, #f97316, #ef4444 54%, #7f1d1d);
+}
+
+.kaiju-model.legend .kaiju-body {
+  background: linear-gradient(135deg, #a78bfa, #38bdf8 44%, #22c55e);
+}
+
+.kaiju-belly {
+  position: absolute;
+  left: 12px;
+  bottom: 8px;
+  width: 22px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(254, 249, 195, 0.72);
+}
+
+.kaiju-spikes {
+  position: absolute;
+  right: -8px;
+  top: 8px;
+  width: 14px;
+  height: 38px;
+  background: linear-gradient(180deg, #fef3c7 0 18%, transparent 18% 26%, #fef3c7 26% 44%, transparent 44% 52%, #fef3c7 52% 70%, transparent 70%);
+  clip-path: polygon(0 0, 100% 10%, 16% 22%, 100% 36%, 16% 50%, 100% 66%, 0 100%);
+}
+
+.kaiju-head {
+  left: 22px;
+  top: 4px;
+  width: 42px;
+  height: 38px;
+  border-radius: 16px 16px 12px 12px;
+  background: linear-gradient(135deg, #4ade80, #16a34a 62%, #166534);
+  box-shadow: inset -8px -7px 0 rgba(15, 23, 42, 0.22);
+}
+
+.kaiju-model.mutant .kaiju-head {
+  background: linear-gradient(135deg, #fb923c, #dc2626 64%, #7f1d1d);
+}
+
+.kaiju-model.legend .kaiju-head {
+  background: linear-gradient(135deg, #f0abfc, #38bdf8 58%, #0f766e);
+}
+
+.kaiju-horn {
+  position: absolute;
+  display: block;
+  width: 12px;
+  height: 18px;
+  top: -11px;
+  background: #fef3c7;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.kaiju-horn.horn-a { left: 5px; transform: rotate(-18deg); }
+.kaiju-horn.horn-b { right: 5px; transform: rotate(18deg); }
+
+.kaiju-eye {
+  position: absolute;
+  display: block;
+  width: 7px;
+  height: 7px;
+  top: 15px;
+  border-radius: 50%;
+  background: #0f172a;
+  box-shadow: 0 0 0 2px #fef2f2;
+}
+
+.kaiju-eye.eye-a { left: 10px; }
+.kaiju-eye.eye-b { right: 10px; }
+
+.kaiju-mouth {
+  position: absolute;
+  display: block;
+  left: 13px;
+  bottom: 8px;
+  width: 16px;
+  height: 5px;
+  border-radius: 0 0 8px 8px;
+  background: #7f1d1d;
+}
+
+.kaiju-arm {
+  width: 18px;
+  height: 28px;
+  bottom: 34px;
+  border-radius: 12px;
+  background: #16a34a;
+  box-shadow: inset -4px -4px 0 rgba(15, 23, 42, 0.18);
+}
+
+.kaiju-model.mutant .kaiju-arm { background: #dc2626; }
+.kaiju-model.legend .kaiju-arm { background: #0ea5e9; }
+
+.kaiju-arm.arm-a { left: 2px; transform: rotate(18deg); }
+.kaiju-arm.arm-b { right: 0; transform: rotate(-18deg); }
+
+.kaiju-leg {
+  width: 18px;
+  height: 24px;
+  bottom: 0;
+  border-radius: 8px;
+  background: #15803d;
+}
+
+.kaiju-leg.leg-a { left: 20px; }
+.kaiju-leg.leg-b { left: 43px; animation: kaiju-leg-kick 0.36s ease-in-out infinite alternate; }
+
+.kaiju-tail {
+  left: -8px;
+  bottom: 26px;
+  width: 30px;
+  height: 14px;
+  border-radius: 999px 0 0 999px;
+  background: #15803d;
+  transform: rotate(-22deg);
+}
+
+.kaiju-name {
+  left: -18px;
+  right: -18px;
+  bottom: -24px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #f8fafc;
+  font-size: 11px;
+  font-weight: 900;
+  text-align: center;
+}
+
+@keyframes kaiju-run-bob {
+  from { transform: perspective(520px) rotateX(7deg) rotateY(-20deg) scale(var(--monster-scale)) translateY(0); }
+  to { transform: perspective(520px) rotateX(7deg) rotateY(-20deg) scale(var(--monster-scale)) translateY(-5px); }
+}
+
+@keyframes kaiju-leg-kick {
+  from { transform: translateX(-2px); }
+  to { transform: translateX(3px); }
+}
+
+.runner-item {
+  position: absolute;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 66px;
+  height: 54px;
+  transform: translateY(-50%);
+}
+
+.runner-item span {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  box-shadow: 0 8px 0 rgba(15, 23, 42, 0.18), inset -6px -5px 0 rgba(15, 23, 42, 0.18);
+}
+
+.runner-item strong {
+  margin-top: 4px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #1e293b;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.runner-item.item-snack span {
+  background: linear-gradient(135deg, #f9a8d4, #ec4899);
+  border-radius: 50% 44% 52% 48%;
+}
+
+.runner-item.item-meat span {
+  background: linear-gradient(135deg, #fed7aa, #f97316 60%, #b45309);
+  border-radius: 58% 42% 48% 52%;
+}
+
+.runner-item.item-crystal span,
+.runner-item.item-core span {
+  background: linear-gradient(135deg, #bfdbfe, #38bdf8 48%, #8b5cf6);
+  clip-path: polygon(50% 0, 90% 28%, 74% 100%, 26% 100%, 10% 28%);
+}
+
+.runner-item.item-core span {
+  background: linear-gradient(135deg, #fecdd3, #ef4444 46%, #38bdf8);
+  box-shadow: 0 0 24px rgba(56, 189, 248, 0.68), inset -6px -5px 0 rgba(15, 23, 42, 0.18);
+}
+
+.runner-item.item-shield span {
+  background: linear-gradient(135deg, #e0f2fe, #22d3ee 52%, #2563eb);
+  border-radius: 50% 50% 42% 42%;
+}
+
+.runner-item.item-obstacle span {
+  border-radius: 6px;
+  background:
+    repeating-linear-gradient(45deg, rgba(254, 226, 226, 0.92) 0 5px, transparent 5px 10px),
+    linear-gradient(135deg, #991b1b, #ef4444);
+}
+
+.runner-dashboard {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 12px;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(140px, 0.56fr);
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.54);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.74);
+  color: #f8fafc;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.26);
+}
+
+.runner-dashboard strong,
+.runner-dashboard span {
+  display: block;
+}
+
+.runner-dashboard strong {
+  font-size: 13px;
+}
+
+.runner-dashboard span {
+  color: rgba(248, 250, 252, 0.78);
+  font-size: 11px;
+}
+
+.runner-bars {
+  display: grid;
+  gap: 6px;
+}
+
+.runner-bar,
+.fighter-bar {
+  display: block;
+  height: 11px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.runner-bar i,
+.fighter-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #22c55e, #facc15);
+}
+
+.runner-bar.hp i {
+  background: linear-gradient(90deg, #ef4444, #f97316, #facc15);
+}
+
+.boss-stage-pan {
+  overflow: hidden;
+  background: linear-gradient(180deg, #0f172a, #312e81 52%, #111827);
+}
+
+.boss-stage-bg {
+  transform: translateX(-7%);
+  animation: boss-camera-pan 1.1s ease-out both;
+}
+
+@keyframes boss-camera-pan {
+  from { transform: translateX(16%) scale(1.04); }
+  to { transform: translateX(-7%) scale(1); }
+}
+
+.boss-city {
+  position: absolute;
+  left: -6%;
+  right: -6%;
+  bottom: 29%;
+  height: 34%;
+  background:
+    linear-gradient(180deg, transparent 0 24%, rgba(15, 23, 42, 0.88) 24%),
+    repeating-linear-gradient(90deg, #334155 0 46px, #1e293b 46px 88px);
+  clip-path: polygon(0 28%, 8% 28%, 8% 10%, 16% 10%, 16% 34%, 24% 34%, 24% 16%, 34% 16%, 34% 38%, 43% 38%, 43% 8%, 53% 8%, 53% 30%, 64% 30%, 64% 15%, 76% 15%, 76% 35%, 86% 35%, 86% 18%, 100% 18%, 100% 100%, 0 100%);
+}
+
+.boss-floor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34%;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0 3px, transparent 3px 68px),
+    linear-gradient(180deg, #475569, #111827);
+  box-shadow: inset 0 9px 0 rgba(255, 255, 255, 0.08);
+}
+
+.boss-fighter {
+  position: absolute;
+  bottom: 26%;
+  width: 180px;
+  height: 160px;
+}
+
+.player-fighter {
+  left: 17%;
+}
+
+.enemy-fighter {
+  right: 12%;
+}
+
+.fighter-model {
+  left: 40px;
+  bottom: 28px;
+}
+
+.fighter-bar {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 0;
+  height: 13px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+}
+
+.fighter-bar.boss-hp span {
+  background: linear-gradient(90deg, #ef4444, #f97316);
+}
+
+.boss-monster {
+  position: absolute;
+  left: 20px;
+  bottom: 28px;
+  width: 132px;
+  height: 124px;
+  transform-style: preserve-3d;
+  transform: perspective(600px) rotateX(8deg) rotateY(18deg);
+  animation: boss-breathe 0.9s ease-in-out infinite alternate;
+}
+
+.boss-core,
+.boss-head,
+.boss-arm,
+.boss-monster strong {
+  position: absolute;
+}
+
+.boss-core {
+  left: 24px;
+  bottom: 16px;
+  width: 82px;
+  height: 86px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #64748b, #1e293b);
+  box-shadow: inset -12px -10px 0 rgba(0, 0, 0, 0.28), 0 0 24px rgba(248, 113, 113, 0.42);
+}
+
+.boss-head {
+  left: 40px;
+  top: 0;
+  width: 58px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #cbd5e1, #475569);
+  box-shadow: inset -8px -6px 0 rgba(0, 0, 0, 0.28);
+}
+
+.boss-arm {
+  top: 50px;
+  width: 26px;
+  height: 58px;
+  border-radius: 10px;
+  background: #334155;
+}
+
+.boss-arm.arm-left { left: 0; transform: rotate(16deg); }
+.boss-arm.arm-right { right: 0; transform: rotate(-16deg); }
+
+.boss-monster strong {
+  left: -12px;
+  right: -12px;
+  bottom: -18px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.82);
+  color: #f8fafc;
+  font-size: 12px;
+  text-align: center;
+}
+
+.boss-golem .boss-core {
+  background: linear-gradient(135deg, #a16207, #78350f);
+}
+
+.boss-drone .boss-core {
+  border-radius: 50%;
+  background: linear-gradient(135deg, #38bdf8, #4f46e5);
+}
+
+.boss-titan .boss-core {
+  background: linear-gradient(135deg, #dc2626, #1f2937 52%, #7c3aed);
+}
+
+@keyframes boss-breathe {
+  from { transform: perspective(600px) rotateX(8deg) rotateY(18deg) translateY(0); }
+  to { transform: perspective(600px) rotateX(8deg) rotateY(18deg) translateY(-8px); }
+}
+
+.versus-flash {
+  position: absolute;
+  left: 48%;
+  top: 34%;
+  z-index: 8;
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 20px;
+  font-weight: 1000;
+  box-shadow: 0 0 28px rgba(248, 113, 113, 0.64);
+}
+
+.boss-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: flex-end;
+}
+
+.boss-badge {
+  padding: 4px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  color: rgba(248, 250, 252, 0.72);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.boss-badge.active {
+  border-color: #fde047;
+  background: rgba(253, 224, 71, 0.18);
+  color: #fef9c3;
+}
+
 .wide-sprite {
   width: 82px;
 }
@@ -1549,5 +2200,25 @@ select option {
 
   .board {
     min-height: 260px;
+  }
+
+  .kaiju-runner-game {
+    min-height: 320px;
+  }
+
+  .runner-dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .boss-fighter {
+    transform: scale(0.82);
+  }
+
+  .player-fighter {
+    left: 8%;
+  }
+
+  .enemy-fighter {
+    right: 2%;
   }
 }

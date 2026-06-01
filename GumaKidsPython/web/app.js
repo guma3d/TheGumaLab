@@ -43,24 +43,37 @@ const seasons = {
     ],
   },
   season_02: {
-    title: "던전 선택 게임",
+    title: "괴수 러너 성장 게임",
     chapters: "챕터 13~24",
     lesson: [
-      ["1. 오늘의 장면", "던전 문, 비밀번호, 보스방 규칙을 골라 결과를 확인합니다."],
-      ["2. 오늘의 코드", "조건이 참인지 거짓인지에 따라 다른 문장이 나옵니다."],
-      ["3. 코드가 하는 일", "True와 False는 게임 문이 열릴지 닫힐지 정합니다."],
-      ["4. 바꿔보기", "has_key, has_gem, level 값을 바꾸고 결과를 비교합니다."],
-      ["5. 미션", "열쇠와 보석이 모두 있을 때만 큰 보물상자를 열어 봅니다."],
+      ["1. 오늘의 장면", "아기괴물이 달리며 먹이를 먹고 점수와 몸집을 키운 뒤 보스와 싸웁니다."],
+      ["2. 오늘의 코드", "입력값, 조건문, 비교 연산으로 성장과 변신, 보스전 규칙을 정합니다."],
+      ["3. 코드가 하는 일", "True와 False는 방어막, 대시, 변신 조건처럼 게임 규칙을 켜고 끕니다."],
+      ["4. 바꿔보기", "growth_per_item, mutation_size, shield_ready 값을 바꾸고 결과를 비교합니다."],
+      ["5. 미션", "몸집이 커지다가 일정 기준을 넘으면 전혀 다른 괴수로 변신하게 만듭니다."],
     ],
     fields: [
-      ["player_name", "플레이어 이름", "용감한 모험가"],
-      ["weapon", "무기", "검"],
-      ["power", "공격력", 10],
-      ["secret_password", "비밀번호", "1234"],
+      ["baby_name", "아기괴물 이름", "꼬마구마"],
+      ["runner_title", "출발 문장", "꼬마구마 출동!"],
+      ["roar_text", "괴수 대사", "우와앙! 더 커질 거야!"],
+      ["favorite_food", "좋아하는 먹이", "고기"],
+      ["start_size", "시작 몸집", 1],
+      ["growth", "현재 성장", 0],
+      ["run_speed", "달리기 속도", 5],
+      ["snack_score", "젤리 점수", 10],
+      ["meat_score", "고기 점수", 25],
+      ["crystal_score", "크리스탈 점수", 40],
+      ["growth_per_item", "먹이 성장량", 12],
+      ["mutation_size", "변신 몸집 기준", 60],
       ["hp", "체력", 100],
-      ["level", "레벨", 5],
-      ["has_key", "열쇠", "true"],
-      ["has_gem", "보석", "false"],
+      ["danger_limit", "위험 체력 기준", 35],
+      ["attack_power", "괴수 공격력", 18],
+      ["boss_power", "보스 공격력", 10],
+      ["boss_name", "최종 보스 이름", "메카 타이탄"],
+      ["shield_ready", "방어막 준비", "true"],
+      ["dash_ready", "대시 준비", "false"],
+      ["red_core", "빨간 코어", "true"],
+      ["blue_core", "파란 코어", "false"],
     ],
   },
   season_03: {
@@ -281,11 +294,195 @@ const seasonOneChapters = {
   },
 };
 
+const seasonTwoEditPlans = {
+  1: { lines: 1, keys: ["baby_name"], labels: ["baby_name"] },
+  2: { lines: 2, keys: ["baby_name", "roar_text"], labels: ["baby_name", "roar_text"] },
+  3: { lines: 3, keys: ["baby_name", "snack_score", "start_size"], labels: ["baby_name", "snack_score", "start_size"] },
+  4: { lines: 4, keys: ["baby_name", "growth_per_item", "mutation_size", "run_speed"], labels: ["baby_name", "growth_per_item", "mutation_size", "run_speed"] },
+  5: { lines: 5, keys: ["baby_name", "favorite_food", "snack_score", "meat_score", "crystal_score"], labels: ["baby_name", "favorite_food", "snack_score", "meat_score", "crystal_score"] },
+  6: { lines: 6, keys: ["baby_name", "hp", "danger_limit", "run_speed", "growth_per_item", "mutation_size"], labels: ["baby_name", "hp", "danger_limit", "run_speed", "growth_per_item", "mutation_size"] },
+  7: { lines: 7, keys: ["baby_name", "favorite_food", "snack_score", "meat_score", "crystal_score", "attack_power", "boss_power"], labels: ["baby_name", "favorite_food", "snack_score", "meat_score", "crystal_score", "attack_power", "boss_power"] },
+  8: { lines: 8, keys: ["runner_title", "roar_text", "start_size", "growth", "run_speed", "snack_score", "growth_per_item", "mutation_size"], labels: ["runner_title", "roar_text", "start_size", "growth", "run_speed", "snack_score", "growth_per_item", "mutation_size"] },
+  9: { lines: 9, keys: ["baby_name", "runner_title", "roar_text", "hp", "danger_limit", "run_speed", "attack_power", "boss_power", "boss_name"], labels: ["baby_name", "runner_title", "roar_text", "hp", "danger_limit", "run_speed", "attack_power", "boss_power", "boss_name"] },
+  10: { lines: 10, keys: ["baby_name", "growth_per_item", "mutation_size", "shield_ready", "dash_ready", "hp", "run_speed", "attack_power", "boss_power", "boss_name"], labels: ["baby_name", "growth_per_item", "mutation_size", "shield_ready", "dash_ready", "hp", "run_speed", "attack_power", "boss_power", "boss_name"] },
+  11: { lines: 10, keys: ["baby_name", "favorite_food", "red_core", "blue_core", "snack_score", "meat_score", "crystal_score", "growth_per_item", "mutation_size", "attack_power"], labels: ["baby_name", "favorite_food", "red_core", "blue_core", "snack_score", "meat_score", "crystal_score", "growth_per_item", "mutation_size", "attack_power"] },
+  12: { lines: 10, keys: ["baby_name", "runner_title", "roar_text", "growth_per_item", "mutation_size", "shield_ready", "dash_ready", "red_core", "blue_core", "boss_name"], labels: ["baby_name", "runner_title", "roar_text", "growth_per_item", "mutation_size", "shield_ready", "dash_ready", "red_core", "blue_core", "boss_name"] },
+};
+
+const seasonTwoUnlocks = {
+  1: "아기괴물 이름표와 3D 스타일 러너 캐릭터가 등장합니다.",
+  2: "괴수가 달리며 포효 말풍선을 보여 줍니다.",
+  3: "젤리 아이템을 먹으면 점수와 몸집이 오릅니다.",
+  4: "몸집 기준을 넘으면 더 큰 괴수로 변신합니다.",
+  5: "젤리, 고기, 크리스탈이 서로 다른 점수와 성장량을 줍니다.",
+  6: "장애물과 체력 경고가 생겨 피해야 할 이유가 생깁니다.",
+  7: "첫 보스전이 열리고 공격력과 보스 공격력을 비교합니다.",
+  8: "여러 성장 단계가 화면에 확실히 쌓여 보입니다.",
+  9: "네 가지 보스 중 현재 챕터에 맞는 보스가 등장합니다.",
+  10: "방어막과 대시 조건을 켜고 끄며 러너 구간을 조절합니다.",
+  11: "빨간 코어 또는 파란 코어 조건으로 변신 보너스를 실험합니다.",
+  12: "러너 구간에서 보스전으로 카메라가 부드럽게 넘어가며 시즌2가 완성됩니다.",
+};
+
+const seasonTwoChapters = {
+  1: {
+    title: "아기괴물 출발",
+    focus: "baby_name",
+    syntax: "input()은 사용자가 넣은 글자를 프로그램으로 가져오는 함수입니다. 웹버전에서는 직접 입력창을 띄우지 않고 baby_name 값을 바꿔 입력 결과처럼 사용합니다.",
+    pages: [
+      ["1. 오늘의 장면", "아기괴물이 러너 트랙에 처음 등장합니다."],
+      ["2. 오늘의 코드", "baby_name은 화면 이름표와 게임 저장에 쓰이는 문자열입니다."],
+      ["3. 기술 설명", "input()으로 받은 값은 먼저 str, 즉 글자로 들어옵니다."],
+      ["4. 바꿔보기", "baby_name을 나만의 괴수 이름으로 바꾸고 게임 화면에서 확인합니다."],
+      ["5. 미션", "이름만 바꿔도 내 괴수가 된다는 느낌이 들게 만듭니다."],
+    ],
+  },
+  2: {
+    title: "포효 문장",
+    focus: "roar_text",
+    syntax: "문자열은 따옴표 안에 넣은 글자입니다. roar_text 같은 문자열은 말풍선, 안내문, 보스전 대사처럼 화면에 그대로 보입니다.",
+    pages: [
+      ["1. 오늘의 장면", "달리는 괴수 위에 포효 말풍선이 뜹니다."],
+      ["2. 오늘의 코드", "roar_text에 괴수의 대사를 저장합니다."],
+      ["3. 기술 설명", "str은 글자 자료형입니다. 숫자 계산은 하지 않고 화면에 말로 보여 주기 좋습니다."],
+      ["4. 바꿔보기", "괴수가 성장하고 싶어 하는 문장을 만들어 봅니다."],
+      ["5. 미션", "내 괴수 성격이 보이는 짧은 포효를 정합니다."],
+    ],
+  },
+  3: {
+    title: "젤리 먹고 성장",
+    focus: "snack_score",
+    syntax: "int()는 글자로 들어온 숫자를 계산 가능한 정수로 바꿉니다. 점수와 몸집은 숫자여야 더하고 비교할 수 있습니다.",
+    pages: [
+      ["1. 오늘의 장면", "젤리를 먹으면 점수와 몸집이 올라갑니다."],
+      ["2. 오늘의 코드", "snack_score와 start_size가 첫 점수와 첫 몸집을 정합니다."],
+      ["3. 기술 설명", "10과 1 같은 정수는 더하기와 비교가 가능합니다."],
+      ["4. 바꿔보기", "젤리 점수를 높이거나 시작 몸집을 바꿔 봅니다."],
+      ["5. 미션", "처음에는 작지만 먹을수록 커지는 느낌을 만듭니다."],
+    ],
+  },
+  4: {
+    title: "첫 변신 조건",
+    focus: "mutation_size",
+    syntax: "if는 조건이 참일 때만 아래 코드를 실행합니다. 몸집이 mutation_size 이상이면 큰 괴수로 변신하는 규칙을 만들 수 있습니다.",
+    pages: [
+      ["1. 오늘의 장면", "몸집이 커지다가 기준을 넘으면 모습이 달라집니다."],
+      ["2. 오늘의 코드", "growth_per_item은 먹을 때 커지는 양, mutation_size는 변신 기준입니다."],
+      ["3. 기술 설명", "if size >= mutation_size: 는 몸집이 기준보다 크거나 같은지 묻는 조건입니다."],
+      ["4. 바꿔보기", "변신 기준을 낮추거나 높여 변신 속도를 비교합니다."],
+      ["5. 미션", "너무 빨리도, 너무 늦게도 아닌 변신 기준을 찾습니다."],
+    ],
+  },
+  5: {
+    title: "좋아하는 먹이",
+    focus: "favorite_food",
+    syntax: "== 는 두 값이 같은지 비교하는 연산자입니다. favorite_food와 먹은 아이템 이름이 같으면 보너스를 줄 수 있습니다.",
+    pages: [
+      ["1. 오늘의 장면", "젤리, 고기, 크리스탈이 서로 다른 보상을 줍니다."],
+      ["2. 오늘의 코드", "favorite_food가 먹은 아이템과 같으면 보너스 성장을 줍니다."],
+      ["3. 기술 설명", "= 는 저장, == 는 비교입니다. 두 기호의 뜻이 완전히 다릅니다."],
+      ["4. 바꿔보기", "좋아하는 먹이를 고기나 크리스탈로 바꿔 봅니다."],
+      ["5. 미션", "내 괴수가 가장 좋아하는 먹이를 정합니다."],
+    ],
+  },
+  6: {
+    title: "장애물과 실패",
+    focus: "hp",
+    syntax: "else는 if 조건이 거짓일 때 실행됩니다. 방어막이 없는데 장애물에 닿으면 체력이 줄어드는 실패 규칙을 만들 수 있습니다.",
+    pages: [
+      ["1. 오늘의 장면", "러너 트랙에 장애물이 생기고 체력 경고가 표시됩니다."],
+      ["2. 오늘의 코드", "hp와 danger_limit이 위험 상태를 정합니다."],
+      ["3. 기술 설명", "if가 성공 길이라면 else는 그렇지 않을 때 가는 길입니다."],
+      ["4. 바꿔보기", "체력과 위험 기준을 바꿔 난이도를 조절합니다."],
+      ["5. 미션", "실수해도 다시 도전하고 싶은 난이도를 만듭니다."],
+    ],
+  },
+  7: {
+    title: "먹이별 결과",
+    focus: "attack_power",
+    syntax: "elif는 여러 조건을 차례로 검사합니다. 젤리, 고기, 크리스탈처럼 아이템 종류마다 다른 결과를 만들 때 좋습니다.",
+    pages: [
+      ["1. 오늘의 장면", "먹은 아이템 종류에 따라 점수, 성장, 공격력이 달라집니다."],
+      ["2. 오늘의 코드", "attack_power와 boss_power가 보스전의 힘 차이를 만듭니다."],
+      ["3. 기술 설명", "if, elif, else는 위에서 아래로 하나씩 확인합니다."],
+      ["4. 바꿔보기", "공격력과 보스 공격력을 바꾸고 보스전 결과를 비교합니다."],
+      ["5. 미션", "첫 보스를 이길 만큼만 강한 괴수를 만듭니다."],
+    ],
+  },
+  8: {
+    title: "성장 단계",
+    focus: "growth",
+    syntax: "> 와 < 는 숫자의 크기를 비교합니다. 몸집이 작을 때, 클 때, 아주 클 때를 나눠 화면에 다른 괴수를 보여 줄 수 있습니다.",
+    pages: [
+      ["1. 오늘의 장면", "아기괴물, 큰 괴물, 변신괴수 단계가 뚜렷하게 보입니다."],
+      ["2. 오늘의 코드", "growth와 start_size를 이용해 현재 몸집을 계산합니다."],
+      ["3. 기술 설명", "비교 연산의 결과는 True 또는 False가 됩니다."],
+      ["4. 바꿔보기", "시작 성장값을 높여 바로 큰 괴수로 출발해 봅니다."],
+      ["5. 미션", "세 단계가 모두 보이는 성장 속도를 찾습니다."],
+    ],
+  },
+  9: {
+    title: "보스 게이트",
+    focus: "boss_name",
+    syntax: ">= 와 <= 는 같은 값도 포함해 비교합니다. 몸집이 보스 게이트 기준 이상이면 전투장면으로 넘어갑니다.",
+    pages: [
+      ["1. 오늘의 장면", "달리기 끝에서 보스 게이트가 열리고 사이드뷰 전투로 전환됩니다."],
+      ["2. 오늘의 코드", "boss_name은 마지막 보스 이름을 바꾸는 문자열입니다."],
+      ["3. 기술 설명", "size >= goal은 size가 goal과 같아도 참입니다."],
+      ["4. 바꿔보기", "보스 이름과 보스 공격력을 바꿔 봅니다."],
+      ["5. 미션", "내 괴수에게 어울리는 보스 이름을 만듭니다."],
+    ],
+  },
+  10: {
+    title: "방어막과 대시",
+    focus: "shield_ready",
+    syntax: "and는 두 조건이 모두 참일 때만 참입니다. 방어막이 준비되어 있고 대시도 준비되어 있으면 위험한 장애물을 돌파할 수 있습니다.",
+    pages: [
+      ["1. 오늘의 장면", "방어막과 대시 조건이 러너 구간의 안전장치가 됩니다."],
+      ["2. 오늘의 코드", "shield_ready와 dash_ready는 True 또는 False로 켜고 끕니다."],
+      ["3. 기술 설명", "and는 양쪽 조건이 모두 True일 때만 성공합니다."],
+      ["4. 바꿔보기", "방어막과 대시를 각각 켜고 꺼서 결과를 비교합니다."],
+      ["5. 미션", "아이에게 쉬운 모드와 도전 모드를 만들어 봅니다."],
+    ],
+  },
+  11: {
+    title: "변신 코어",
+    focus: "red_core",
+    syntax: "or는 두 조건 중 하나만 참이어도 참입니다. 빨간 코어 또는 파란 코어 중 하나만 있어도 변신 보너스를 줄 수 있습니다.",
+    pages: [
+      ["1. 오늘의 장면", "변신 코어를 먹으면 성장 보너스와 반짝이는 변신 효과가 생깁니다."],
+      ["2. 오늘의 코드", "red_core와 blue_core 중 하나가 True이면 코어 보너스가 켜집니다."],
+      ["3. 기술 설명", "or는 선택지 중 하나만 성공해도 지나갈 수 있는 문입니다."],
+      ["4. 바꿔보기", "빨간 코어와 파란 코어 값을 바꾸고 변신 보너스를 비교합니다."],
+      ["5. 미션", "내 괴수가 좋아하는 변신 코어를 정합니다."],
+    ],
+  },
+  12: {
+    title: "괴수 왕 결전",
+    focus: "boss_name",
+    syntax: "조건문을 조합하면 러너 구간, 성장, 변신, 보스전이 하나의 게임 흐름으로 이어집니다. if, elif, else, and, or를 함께 읽는 연습을 합니다.",
+    pages: [
+      ["1. 오늘의 장면", "러너 트랙에서 성장한 괴수가 최종 보스와 대전격투처럼 싸웁니다."],
+      ["2. 오늘의 코드", "이번 챕터는 시즌2에서 만든 조건 규칙을 모두 사용합니다."],
+      ["3. 기술 설명", "조건문은 게임 상태를 보고 다음 장면을 고르는 신호등입니다."],
+      ["4. 바꿔보기", "보스 이름, 변신 기준, 방어막, 대시, 코어 조건을 모두 조합합니다."],
+      ["5. 미션", "내 괴수가 멋지게 성장하고 최종 보스를 이기는 밸런스를 완성합니다."],
+    ],
+  },
+};
+
+const seasonTwoBosses = [
+  { name: "훈련 로봇", className: "bot", hp: 70, power: 7 },
+  { name: "빌딩 골렘", className: "golem", hp: 95, power: 10 },
+  { name: "번개 드론", className: "drone", hp: 120, power: 13 },
+  { name: "메카 타이탄", className: "titan", hp: 150, power: 16 },
+];
+
 const projectFiles = [
   { name: "upgrade_zone.py", role: "오늘 바꾸는 웹 업그레이드 코드", editable: true },
-  { name: "player_stats.py", role: "주인공 이름, 체력, 속도 데이터", editable: false },
-  { name: "world_items.py", role: "보물, 함정, 바람신발 데이터", editable: false },
-  { name: "game_rules.py", role: "점수와 이동 규칙", editable: false },
+  { name: "player_stats.py", role: "캐릭터 이름, 체력, 성장 데이터", editable: false },
+  { name: "world_items.py", role: "보물, 먹이, 함정 데이터", editable: false },
+  { name: "game_rules.py", role: "점수, 이동, 조건 규칙", editable: false },
   { name: "save_data.py", role: "챕터별 저장 데이터", editable: false },
 ];
 
@@ -446,6 +643,26 @@ function setStatus(message) {
   els.saveStatus.textContent = message;
 }
 
+function chapterOffset(seasonKey = state.activeSeason) {
+  return { season_01: 0, season_02: 12, season_03: 24, season_04: 36 }[seasonKey] || 0;
+}
+
+function globalChapterNumber(seasonKey = state.activeSeason, localChapter = state.activeChapter) {
+  return chapterOffset(seasonKey) + Number(localChapter);
+}
+
+function activeChapterInfo() {
+  if (state.activeSeason === "season_01") return seasonOneChapters[state.activeChapter];
+  if (state.activeSeason === "season_02") return seasonTwoChapters[state.activeChapter];
+  return null;
+}
+
+function activeEditPlan() {
+  if (state.activeSeason === "season_01") return seasonOneEditPlans[state.activeChapter];
+  if (state.activeSeason === "season_02") return seasonTwoEditPlans[state.activeChapter];
+  return null;
+}
+
 function readFields() {
   state.settings[state.activeSeason] = parseCode(state.activeSeason, els.codeEditor.value);
 }
@@ -453,9 +670,11 @@ function readFields() {
 function renderFields() {
   const season = seasons[state.activeSeason];
   const settings = state.settings[state.activeSeason] || defaultSettings(state.activeSeason);
-  const chapterInfo = state.activeSeason === "season_01" ? seasonOneChapters[state.activeChapter] : null;
-  const editPlan = state.activeSeason === "season_01" ? seasonOneEditPlans[state.activeChapter] : null;
-  els.chapterLabel.textContent = chapterInfo ? `챕터 ${state.activeChapter} / 12 · ${editPlan.lines}줄 수정` : season.chapters;
+  const chapterInfo = activeChapterInfo();
+  const editPlan = activeEditPlan();
+  els.chapterLabel.textContent = chapterInfo && editPlan
+    ? `챕터 ${globalChapterNumber()} / ${chapterOffset() + 12} · ${editPlan.lines}줄 수정`
+    : season.chapters;
   els.seasonTitle.textContent = chapterInfo ? chapterInfo.title : season.title;
   els.parsedParams.innerHTML = "";
 
@@ -510,6 +729,70 @@ function renderFileTree() {
 
 function readOnlyFileContent(fileName) {
   const s = state.settings[state.activeSeason] || defaultSettings(state.activeSeason);
+  if (state.activeSeason === "season_02") {
+    if (fileName === "player_stats.py") {
+      return [
+        "# player_stats.py",
+        "# 읽기 전용: 시즌 2 괴수의 이름, 체력, 성장 데이터입니다.",
+        "",
+        `baby_name = "${s.baby_name || "꼬마구마"}"`,
+        `roar_text = "${s.roar_text || "우와앙! 더 커질 거야!"}"`,
+        `start_size = ${toNumber(s.start_size, 1)}`,
+        `growth = ${toNumber(s.growth, 0)}`,
+        `hp = ${toNumber(s.hp, 100)}`,
+      ].join("\n");
+    }
+    if (fileName === "world_items.py") {
+      return [
+        "# world_items.py",
+        "# 읽기 전용: 러너 트랙의 먹이, 코어, 장애물 데이터입니다.",
+        "",
+        `favorite_food = "${s.favorite_food || "고기"}"`,
+        `snack_score = ${toNumber(s.snack_score, 10)}`,
+        `meat_score = ${toNumber(s.meat_score, 25)}`,
+        `crystal_score = ${toNumber(s.crystal_score, 40)}`,
+        `growth_per_item = ${toNumber(s.growth_per_item, 12)}`,
+        `mutation_size = ${toNumber(s.mutation_size, 60)}`,
+        "",
+        'runner_items = ["젤리", "고기", "크리스탈", "장애물", "변신 코어"]',
+      ].join("\n");
+    }
+    if (fileName === "game_rules.py") {
+      return [
+        "# game_rules.py",
+        "# 읽기 전용: 조건문이 러너 게임 규칙으로 바뀌는 곳입니다.",
+        "",
+        `run_speed = ${toNumber(s.run_speed, 5)}`,
+        `danger_limit = ${toNumber(s.danger_limit, 35)}`,
+        `attack_power = ${toNumber(s.attack_power, 18)}`,
+        `boss_power = ${toNumber(s.boss_power, 10)}`,
+        `shield_ready = ${toBool(s.shield_ready) ? "True" : "False"}`,
+        `dash_ready = ${toBool(s.dash_ready) ? "True" : "False"}`,
+        `red_core = ${toBool(s.red_core) ? "True" : "False"}`,
+        `blue_core = ${toBool(s.blue_core) ? "True" : "False"}`,
+        "",
+        "def can_break_wall():",
+        "    return shield_ready and dash_ready",
+        "",
+        "def has_mutation_core():",
+        "    return red_core or blue_core",
+      ].join("\n");
+    }
+    if (fileName === "save_data.py") {
+      return [
+        "# save_data.py",
+        "# 읽기 전용: 시즌 2 저장 데이터 예시입니다.",
+        "",
+        "save_data = {",
+        `    "chapter": ${globalChapterNumber()},`,
+        `    "baby_name": "${s.baby_name || "꼬마구마"}",`,
+        '    "best_size": 0,',
+        '    "best_score": 0,',
+        '    "boss_clear": False,',
+        "}",
+      ].join("\n");
+    }
+  }
   if (fileName === "player_stats.py") {
     return [
       "# player_stats.py",
@@ -621,6 +904,20 @@ function currentLessonPages() {
       chapter.pages[4],
     ];
   }
+  if (state.activeSeason === "season_02") {
+    const chapter = seasonTwoChapters[state.activeChapter];
+    const plan = seasonTwoEditPlans[state.activeChapter];
+    const editTargets = plan.labels.join(", ");
+    return [
+      chapter.pages[0],
+      chapter.pages[1],
+      ["3. 쉬운 문법", chapter.syntax],
+      ["4. 오늘 게임에 생기는 것", seasonTwoUnlocks[state.activeChapter]],
+      ["5. 오늘 업그레이드 코드", `오늘은 ${plan.lines}줄을 업그레이드합니다. 코드 화면에서 ${editTargets} 값을 찾아 바꾸고, 러너 게임에서 성장과 변신이 어떻게 달라지는지 확인합니다.`],
+      chapter.pages[3],
+      chapter.pages[4],
+    ];
+  }
   return seasons[state.activeSeason].lesson;
 }
 
@@ -640,7 +937,9 @@ function renderChapterTabs() {
     const option = document.createElement("option");
     const title = state.activeSeason === "season_01"
       ? seasonOneChapters[localChapter].title
-      : `챕터 ${chapter}`;
+      : state.activeSeason === "season_02"
+        ? seasonTwoChapters[localChapter].title
+        : `챕터 ${chapter}`;
     option.value = String(localChapter);
     option.textContent = `${chapter}. ${title}`;
     option.selected = localChapter === state.activeChapter;
@@ -851,60 +1150,155 @@ function generateCode(seasonKey) {
     ].filter((line) => line !== null).join("\n");
   }
   if (seasonKey === "season_02") {
+    const activePlan = seasonTwoEditPlans[state.activeChapter] || { lines: 1, keys: [], labels: [] };
+    const targetHint = (key) => {
+      const index = activePlan.keys.indexOf(key);
+      if (index < 0) return null;
+      return `# 오늘 줄 ${index + 1}/${activePlan.lines}: ${activePlan.labels[index]}`;
+    };
     return [
-      "# 시즌 2: 던전 선택 게임 업그레이드 존",
+      "# 시즌 2: 괴수 러너 성장 게임 업그레이드 존",
       "# 전체 코드를 볼 수 있습니다. 오늘 배울 곳은 [오늘의 업그레이드] 아래입니다.",
+      "# 웹버전에서는 input()을 직접 띄우지 않고, 아래 변수 값을 바꿔 입력처럼 사용합니다.",
       "",
       "# =========================",
-      "# [챕터 13] 내 이름으로 시작",
-      "# [오늘의 업그레이드]",
+      "# [챕터 13] 아기괴물 이름 입력",
+      "# baby_name = input(\"괴수 이름은? \") 와 같은 역할입니다.",
+      `# [오늘의 업그레이드: ${activePlan.lines}줄]`,
       "# =========================",
-      `player_name = "${s.player_name}"`,
+      targetHint("baby_name"),
+      `baby_name = "${s.baby_name}"`,
       "",
       "# =========================",
-      "# [챕터 14] 무기 이름 정하기",
+      "# [챕터 14] 포효 문자열",
       "# =========================",
-      `weapon = "${s.weapon}"`,
+      targetHint("runner_title"),
+      `runner_title = "${s.runner_title}"`,
+      targetHint("roar_text"),
+      `roar_text = "${s.roar_text}"`,
       "",
       "# =========================",
-      "# [챕터 15] 공격력 입력",
+      "# [챕터 15] 숫자 점수와 시작 몸집",
+      "# snack_score = int(input(\"젤리 점수는? \")) 와 같은 생각입니다.",
       "# =========================",
-      `power = ${toNumber(s.power, 10)}`,
+      targetHint("start_size"),
+      `start_size = ${toNumber(s.start_size, 1)}`,
+      targetHint("snack_score"),
+      `snack_score = ${toNumber(s.snack_score, 10)}`,
       "",
       "# =========================",
-      "# [챕터 16] 첫 번째 선택",
+      "# [챕터 16] if로 변신 조건 만들기",
       "# =========================",
-      `secret_password = "${s.secret_password}"`,
+      targetHint("run_speed"),
+      `run_speed = ${toNumber(s.run_speed, 5)}`,
+      targetHint("growth_per_item"),
+      `growth_per_item = ${toNumber(s.growth_per_item, 12)}`,
+      targetHint("mutation_size"),
+      `mutation_size = ${toNumber(s.mutation_size, 60)}`,
+      "",
+      "def check_mutation(size):",
+      "    if size >= mutation_size:",
+      "        return \"변신괴수\"",
+      "    return \"아기괴물\"",
       "",
       "# =========================",
-      "# [챕터 20] 크다 작다",
+      "# [챕터 17] == 로 좋아하는 먹이 확인",
       "# =========================",
+      targetHint("favorite_food"),
+      `favorite_food = "${s.favorite_food}"`,
+      targetHint("meat_score"),
+      `meat_score = ${toNumber(s.meat_score, 25)}`,
+      targetHint("crystal_score"),
+      `crystal_score = ${toNumber(s.crystal_score, 40)}`,
+      "",
+      "def food_bonus(food_name):",
+      "    if food_name == favorite_food:",
+      "        return growth_per_item * 2",
+      "    return growth_per_item",
+      "",
+      "# =========================",
+      "# [챕터 18] else로 장애물 실패 처리",
+      "# =========================",
+      targetHint("hp"),
       `hp = ${toNumber(s.hp, 100)}`,
+      targetHint("danger_limit"),
+      `danger_limit = ${toNumber(s.danger_limit, 35)}`,
+      "",
+      "def obstacle_result(has_shield):",
+      "    if has_shield:",
+      "        return \"방어 성공\"",
+      "    else:",
+      "        return \"체력 감소\"",
       "",
       "# =========================",
-      "# [챕터 21] 크거나 같다",
+      "# [챕터 19] elif로 먹이별 결과 만들기",
       "# =========================",
-      `level = ${toNumber(s.level, 5)}`,
+      targetHint("attack_power"),
+      `attack_power = ${toNumber(s.attack_power, 18)}`,
+      targetHint("boss_power"),
+      `boss_power = ${toNumber(s.boss_power, 10)}`,
+      "",
+      "def item_score(item_name):",
+      "    if item_name == \"젤리\":",
+      "        return snack_score",
+      "    elif item_name == \"고기\":",
+      "        return meat_score",
+      "    elif item_name == \"크리스탈\":",
+      "        return crystal_score",
+      "    else:",
+      "        return 0",
       "",
       "# =========================",
-      "# [챕터 22] 조건 두 개",
+      "# [챕터 20] > 와 < 로 위험 상태 비교",
       "# =========================",
-      `has_key = ${toBool(s.has_key) ? "True" : "False"}`,
+      targetHint("growth"),
+      `growth = ${toNumber(s.growth, 0)}`,
       "",
-      `has_gem = ${toBool(s.has_gem) ? "True" : "False"}`,
+      "def is_danger(current_hp):",
+      "    return current_hp < danger_limit",
       "",
-      "def can_open_key_door():",
-      "    return has_key",
+      "# =========================",
+      "# [챕터 21] >= 로 보스 게이트 열기",
+      "# =========================",
+      targetHint("boss_name"),
+      `boss_name = "${s.boss_name}"`,
       "",
-      "def is_password_correct(password):",
-      "    return password == secret_password",
+      "def can_enter_boss_gate(size):",
+      "    return size >= mutation_size",
       "",
-      "def can_enter_boss_room(current_level):",
-      "    return current_level >= level",
+      "# =========================",
+      "# [챕터 22] and 조건: 방어막과 대시",
+      "# =========================",
+      targetHint("shield_ready"),
+      `shield_ready = ${toBool(s.shield_ready) ? "True" : "False"}`,
+      targetHint("dash_ready"),
+      `dash_ready = ${toBool(s.dash_ready) ? "True" : "False"}`,
       "",
-      "def can_open_double_lock():",
-      "    return has_key and has_gem",
-    ].join("\n");
+      "def can_break_wall():",
+      "    return shield_ready and dash_ready",
+      "",
+      "# =========================",
+      "# [챕터 23] or 조건: 변신 코어",
+      "# =========================",
+      targetHint("red_core"),
+      `red_core = ${toBool(s.red_core) ? "True" : "False"}`,
+      targetHint("blue_core"),
+      `blue_core = ${toBool(s.blue_core) ? "True" : "False"}`,
+      "",
+      "def has_mutation_core():",
+      "    return red_core or blue_core",
+      "",
+      "# =========================",
+      "# [챕터 24] 조건문 종합 보스전",
+      "# =========================",
+      "def final_boss_attack(size):",
+      "    if has_mutation_core() and size >= mutation_size:",
+      "        return attack_power * 2",
+      "    elif size >= mutation_size:",
+      "        return attack_power",
+      "    else:",
+      "        return attack_power // 2",
+    ].filter((line) => line !== null).join("\n");
   }
   if (seasonKey === "season_03") {
     return [
@@ -1139,14 +1533,27 @@ function parseCode(seasonKey, source) {
   }
   if (seasonKey === "season_02") {
     return {
-      player_name: stringValue("player_name"),
-      weapon: stringValue("weapon"),
-      power: numberValue("power"),
-      secret_password: stringValue("secret_password"),
+      baby_name: stringValue("baby_name"),
+      runner_title: stringValue("runner_title"),
+      roar_text: stringValue("roar_text"),
+      favorite_food: stringValue("favorite_food"),
+      start_size: numberValue("start_size"),
+      growth: numberValue("growth"),
+      run_speed: numberValue("run_speed"),
+      snack_score: numberValue("snack_score"),
+      meat_score: numberValue("meat_score"),
+      crystal_score: numberValue("crystal_score"),
+      growth_per_item: numberValue("growth_per_item"),
+      mutation_size: numberValue("mutation_size"),
       hp: numberValue("hp"),
-      level: numberValue("level"),
-      has_key: boolValue("has_key"),
-      has_gem: boolValue("has_gem"),
+      danger_limit: numberValue("danger_limit"),
+      attack_power: numberValue("attack_power"),
+      boss_power: numberValue("boss_power"),
+      boss_name: stringValue("boss_name"),
+      shield_ready: boolValue("shield_ready"),
+      dash_ready: boolValue("dash_ready"),
+      red_core: boolValue("red_core"),
+      blue_core: boolValue("blue_core"),
     };
   }
   if (seasonKey === "season_03") {
@@ -1332,8 +1739,13 @@ function updateSeasonOneMovingTraps() {
 function startGameTimer() {
   if (state.gameTimer) window.clearInterval(state.gameTimer);
   state.gameTimer = null;
-  if (state.activeSeason !== "season_01" || !state.gameStarted || !seasonOneHas(11)) return;
-  state.gameTimer = window.setInterval(updateSeasonOneMovingTraps, 140);
+  if (!state.gameStarted) return;
+  if (state.activeSeason === "season_01" && seasonOneHas(11)) {
+    state.gameTimer = window.setInterval(updateSeasonOneMovingTraps, 140);
+  }
+  if (state.activeSeason === "season_02") {
+    state.gameTimer = window.setInterval(updateSeasonTwoRunner, 110);
+  }
 }
 
 function stopGameTimer() {
@@ -1549,50 +1961,378 @@ function collectSeasonOne() {
   renderSeasonOne();
 }
 
-function renderSeasonTwo() {
+function seasonTwoChapter() {
+  return Math.max(1, Math.min(12, Number(state.activeChapter) || 1));
+}
+
+function seasonTwoHas(chapter) {
+  return seasonTwoChapter() >= chapter;
+}
+
+function seasonTwoBossForChapter(chapter = seasonTwoChapter(), settings = state.settings.season_02) {
+  const index = Math.min(3, Math.floor((chapter - 1) / 3));
+  const base = seasonTwoBosses[index];
+  return {
+    ...base,
+    name: chapter >= 12 ? (settings.boss_name || base.name) : base.name,
+    maxHp: base.hp + Math.max(0, chapter - 1) * 8,
+    power: toNumber(settings.boss_power, base.power),
+  };
+}
+
+function seasonTwoEvolution(size, mutationSize) {
+  if (size >= mutationSize * 1.75) return { name: "전설 괴수", className: "legend", scale: 1.72, rank: 4 };
+  if (size >= mutationSize) return { name: "변신괴수", className: "mutant", scale: 1.42, rank: 3 };
+  if (size >= mutationSize * 0.58) return { name: "큰 괴수", className: "grown", scale: 1.2, rank: 2 };
+  return { name: "아기괴물", className: "baby", scale: 1, rank: 1 };
+}
+
+function seasonTwoRunnerGoal(chapter) {
+  return 95 + chapter * 12;
+}
+
+function seasonTwoReset() {
   const s = state.settings.season_02;
-  setHud("던전 선택 게임", `${s.player_name} · ${s.weapon} · 체력 ${s.hp} · 레벨 ${s.level}`);
-  els.action.textContent = "비밀번호 확인";
-  els.gameMount.innerHTML = `
-    <div class="message-log">
-      <div class="dungeon-scene">
-        <div class="character-card">
-          <div class="character-avatar">${s.player_name.slice(0, 2)}</div>
-          <strong>${s.player_name}</strong>
-          <span>${s.weapon} 장착</span>
-        </div>
-        <div class="door-card">던전 문</div>
-      </div>
-      <div class="message-line">${s.player_name} 님이 ${s.weapon}을 들고 던전에 들어왔어.</div>
-      <div class="choice-grid">
-        <button data-choice="key" type="button">열쇠 문</button>
-        <button data-choice="password" type="button">비밀번호 문</button>
-        <button data-choice="level" type="button">보스방</button>
-        <button data-choice="treasure" type="button">보물상자</button>
-      </div>
-      <input id="passwordInput" placeholder="비밀번호를 입력해 봐" value="${s.secret_password}">
-      <div id="dungeonResult" class="choice-card">${getSeasonSave("season_02").last_result || "문을 골라 보자."}</div>
-    </div>
-  `;
-  els.gameMount.querySelectorAll("[data-choice]").forEach((button) => {
-    button.addEventListener("click", () => runDungeonChoice(button.dataset.choice));
+  const chapter = seasonTwoChapter();
+  const boss = seasonTwoBossForChapter(chapter, s);
+  const baseSize = Math.max(1, toNumber(s.start_size, 1) + toNumber(s.growth, 0));
+  state.game.season_02 = {
+    chapter,
+    phase: "runner",
+    lane: 1,
+    tick: 0,
+    score: 0,
+    hp: Math.max(1, toNumber(s.hp, 100)),
+    maxHp: Math.max(1, toNumber(s.hp, 100)),
+    size: baseSize,
+    growth: toNumber(s.growth, 0),
+    distance: 0,
+    goal: seasonTwoRunnerGoal(chapter),
+    combo: 0,
+    items: [],
+    boss,
+    bossHp: boss.maxHp,
+    shieldCharges: toBool(s.shield_ready) ? 2 : 0,
+    dashCharges: toBool(s.dash_ready) ? 2 : 0,
+    message: s.runner_title || "괴수 러너 출발!",
+  };
+}
+
+function seasonTwoItemForChapter(chapter) {
+  const roll = Math.random();
+  if (chapter >= 11 && roll < 0.14) return "core";
+  if (chapter >= 10 && roll < 0.24) return "shield";
+  if (chapter >= 6 && roll < 0.38) return "obstacle";
+  if (chapter >= 5 && roll < 0.6) return "crystal";
+  if (chapter >= 3 && roll < 0.82) return "meat";
+  return "snack";
+}
+
+function seasonTwoItemData(kind, settings) {
+  const data = {
+    snack: { label: "젤리", point: toNumber(settings.snack_score, 10), growth: toNumber(settings.growth_per_item, 12) },
+    meat: { label: "고기", point: toNumber(settings.meat_score, 25), growth: toNumber(settings.growth_per_item, 12) + 6 },
+    crystal: { label: "크리스탈", point: toNumber(settings.crystal_score, 40), growth: toNumber(settings.growth_per_item, 12) + 14 },
+    core: { label: "변신 코어", point: toNumber(settings.crystal_score, 40) + 20, growth: toNumber(settings.growth_per_item, 12) + 24 },
+    shield: { label: "방어막", point: 5, growth: 4 },
+    obstacle: { label: "장애물", point: 0, growth: 0 },
+  };
+  return data[kind] || data.snack;
+}
+
+function spawnSeasonTwoItem(game, settings, chapter) {
+  const kind = seasonTwoItemForChapter(chapter);
+  const item = seasonTwoItemData(kind, settings);
+  game.items.push({
+    kind,
+    label: item.label,
+    point: item.point,
+    growth: item.growth,
+    lane: randomInt(0, 2),
+    x: 108,
+    id: `${kind}-${game.tick}-${Math.random().toString(36).slice(2, 6)}`,
   });
 }
 
-function runDungeonChoice(choice) {
+function collectSeasonTwoItem(item, settings, game) {
+  if (item.kind === "obstacle") {
+    const canBreakWall = toBool(settings.shield_ready) && toBool(settings.dash_ready);
+    if (canBreakWall || game.shieldCharges > 0) {
+      if (game.shieldCharges > 0) game.shieldCharges -= 1;
+      game.combo += 1;
+      game.score += 8;
+      game.message = "방어막으로 장애물을 돌파했어!";
+      playPickupSound("boost");
+      return;
+    }
+    const damage = Math.max(8, toNumber(settings.boss_power, 10) + 6);
+    game.hp = Math.max(0, game.hp - damage);
+    game.combo = 0;
+    game.message = `장애물 충돌! 체력 -${damage}`;
+    playPickupSound("trap");
+    if (game.hp <= 0) finishSeasonTwo("gameOver", "체력이 0이 되었어. 다시 달려 보자!");
+    return;
+  }
+
+  const favoriteBonus = item.label === settings.favorite_food ? 2 : 1;
+  const coreBonus = item.kind === "core" && (toBool(settings.red_core) || toBool(settings.blue_core)) ? 2 : 1;
+  const growthGain = Math.round(item.growth * favoriteBonus * coreBonus);
+  game.score += item.point * favoriteBonus;
+  game.growth += growthGain;
+  game.size += growthGain;
+  game.combo += 1;
+  if (item.kind === "shield") game.shieldCharges += 1;
+  if (item.kind === "core") game.message = `${item.label} 흡수! 변신 에너지가 크게 올랐어.`;
+  else game.message = `${item.label} 획득! 몸집 +${growthGain}`;
+  playPickupSound(item.kind === "core" ? "bonus" : "treasure");
+}
+
+function enterSeasonTwoBossFight(game, settings) {
+  game.phase = "boss";
+  game.items = [];
+  game.boss = seasonTwoBossForChapter(game.chapter, settings);
+  game.bossHp = game.boss.maxHp;
+  game.message = `${game.boss.name} 등장! 카메라가 전투장면으로 이동합니다.`;
+  playTone({ frequency: 170, duration: 0.18, type: "sawtooth", volume: 0.05, slide: 220 });
+}
+
+function finishSeasonTwo(result, message) {
+  const g = state.game.season_02;
+  if (!g) return;
+  g.phase = result;
+  g.message = message;
+  state.gameStarted = false;
+  stopGameTimer();
+  stopMusic();
+  updateSaveSeason("season_02", {
+    best_score: Math.max(getSeasonSave("season_02").best_score || 0, g.score),
+    best_size: Math.max(getSeasonSave("season_02").best_size || 0, Math.round(g.size)),
+    baby_name: state.settings.season_02.baby_name,
+    boss_clear: result === "win" || getSeasonSave("season_02").boss_clear || false,
+  });
+  setStatus(message);
+  setLockedControls();
+}
+
+function updateSeasonTwoRunner() {
+  if (!state.gameStarted || state.activeSeason !== "season_02") return;
+  const s = state.settings.season_02;
+  const g = state.game.season_02;
+  if (!g || ["win", "gameOver"].includes(g.phase)) return;
+  const chapter = seasonTwoChapter();
+  if (g.chapter !== chapter) {
+    seasonTwoReset();
+    renderSeasonTwo();
+    return;
+  }
+
+  if (g.phase === "boss") {
+    g.tick += 1;
+    renderSeasonTwo();
+    return;
+  }
+
+  const speed = Math.max(2, Math.min(10, toNumber(s.run_speed, 5)));
+  g.tick += 1;
+  g.distance += speed * 0.42;
+  const spawnRate = Math.max(7, 18 - Math.round(speed));
+  if (g.tick % spawnRate === 0) spawnSeasonTwoItem(g, s, chapter);
+
+  for (const item of g.items) {
+    item.x -= speed * (item.kind === "obstacle" ? 1.46 : 1.2);
+    if (!item.taken && item.lane === g.lane && item.x <= 18 && item.x >= 4) {
+      item.taken = true;
+      collectSeasonTwoItem(item, s, g);
+    }
+  }
+  g.items = g.items.filter((item) => !item.taken && item.x > -12);
+
+  if (g.phase === "runner" && g.distance >= g.goal) enterSeasonTwoBossFight(g, s);
+  renderSeasonTwo();
+}
+
+function seasonTwoMonsterMarkup(name, evolution, extraClass = "", scale = 1) {
+  const safeName = name || "괴수";
+  return `
+    <div class="kaiju-model ${evolution.className} ${extraClass}" style="--monster-scale:${scale * evolution.scale}">
+      <span class="kaiju-shadow"></span>
+      <span class="kaiju-tail"></span>
+      <span class="kaiju-leg leg-a"></span>
+      <span class="kaiju-leg leg-b"></span>
+      <span class="kaiju-body">
+        <span class="kaiju-belly"></span>
+        <span class="kaiju-spikes"></span>
+      </span>
+      <span class="kaiju-head">
+        <span class="kaiju-horn horn-a"></span>
+        <span class="kaiju-horn horn-b"></span>
+        <span class="kaiju-eye eye-a"></span>
+        <span class="kaiju-eye eye-b"></span>
+        <span class="kaiju-mouth"></span>
+      </span>
+      <span class="kaiju-arm arm-a"></span>
+      <span class="kaiju-arm arm-b"></span>
+      <span class="kaiju-name">${safeName}</span>
+    </div>
+  `;
+}
+
+function renderSeasonTwoItems(game) {
+  return game.items.map((item) => {
+    const top = 30 + item.lane * 23;
+    return `<div class="runner-item item-${item.kind}" style="left:${item.x}%;top:${top}%"><span></span><strong>${item.label}</strong></div>`;
+  }).join("");
+}
+
+function renderSeasonTwoBossBadges(activeBoss) {
+  return seasonTwoBosses.map((boss) => `
+    <span class="boss-badge ${boss.className === activeBoss.className ? "active" : ""}">${boss.name}</span>
+  `).join("");
+}
+
+function renderSeasonTwo() {
+  const s = state.settings.season_02;
+  const g = state.game.season_02 || (seasonTwoReset(), state.game.season_02);
+  const chapter = seasonTwoChapter();
+  if (g.chapter !== chapter) {
+    seasonTwoReset();
+    renderSeasonTwo();
+    return;
+  }
+  const mutationSize = Math.max(10, toNumber(s.mutation_size, 60));
+  const evolution = seasonTwoEvolution(g.size, mutationSize);
+  const progress = Math.min(100, (g.distance / g.goal) * 100);
+  const hpPercent = Math.max(0, (g.hp / Math.max(1, g.maxHp)) * 100);
+  const bossPercent = Math.max(0, (g.bossHp / Math.max(1, g.boss.maxHp)) * 100);
+  const laneTop = 30 + g.lane * 23;
+  const phaseLabel = g.phase === "runner" ? "러너" : g.phase === "boss" ? "보스전" : g.phase === "win" ? "승리" : "도전 종료";
+  setHud(
+    s.runner_title || `${s.baby_name} 출동!`,
+    `점수 ${g.score} · 몸집 ${Math.round(g.size)} · ${evolution.name} · 체력 ${g.hp}/${g.maxHp} · ${phaseLabel}`,
+  );
+  els.action.textContent = g.phase === "boss" ? "괴수 공격" : g.phase === "runner" ? "대시/포효" : "결과 확인";
+  const boardClass = `kaiju-runner-game chapter-${chapter} phase-${g.phase}`;
+
+  if (g.phase === "boss" || g.phase === "win" || g.phase === "gameOver") {
+    els.gameMount.innerHTML = `
+      <div class="${boardClass}">
+        <div class="boss-stage-pan">
+          <div class="boss-stage-bg">
+            <div class="boss-city"></div>
+            <div class="boss-floor"></div>
+            <div class="boss-fighter player-fighter">
+              ${seasonTwoMonsterMarkup(s.baby_name, evolution, "fighter-model", 1.12)}
+              <div class="fighter-bar"><span style="width:${hpPercent}%"></span></div>
+            </div>
+            <div class="boss-fighter enemy-fighter">
+              <div class="boss-monster boss-${g.boss.className}">
+                <span class="boss-core"></span>
+                <span class="boss-head"></span>
+                <span class="boss-arm arm-left"></span>
+                <span class="boss-arm arm-right"></span>
+                <strong>${g.boss.name}</strong>
+              </div>
+              <div class="fighter-bar boss-hp"><span style="width:${bossPercent}%"></span></div>
+            </div>
+            <div class="versus-flash">VS</div>
+          </div>
+        </div>
+        <div class="runner-dashboard">
+          <div><strong>${g.message}</strong><span>공격력 ${toNumber(s.attack_power, 18)} · 보스 공격력 ${g.boss.power}</span></div>
+          <div class="boss-badges">${renderSeasonTwoBossBadges(g.boss)}</div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  els.gameMount.innerHTML = `
+    <div class="${boardClass}">
+      <div class="runner-sky">
+        <span class="runner-cloud cloud-a"></span>
+        <span class="runner-cloud cloud-b"></span>
+        <span class="runner-sun"></span>
+      </div>
+      <div class="runner-world">
+        <div class="runner-road">
+          <span class="lane-line lane-one"></span>
+          <span class="lane-line lane-two"></span>
+          <span class="boss-gate" style="left:${Math.max(78, 104 - progress * 0.28)}%">${g.boss.name}</span>
+          ${renderSeasonTwoItems(g)}
+          <div class="runner-kaiju" style="top:${laneTop}%">
+            <span class="kaiju-speech">${s.roar_text}</span>
+            ${seasonTwoMonsterMarkup(s.baby_name, evolution)}
+          </div>
+        </div>
+      </div>
+      <div class="runner-dashboard">
+        <div>
+          <strong>${g.message}</strong>
+          <span>거리 ${Math.round(progress)}% · 콤보 ${g.combo} · 방어막 ${g.shieldCharges} · 대시 ${g.dashCharges}</span>
+        </div>
+        <div class="runner-bars">
+          <span class="runner-bar"><i style="width:${progress}%"></i></span>
+          <span class="runner-bar hp"><i style="width:${hpPercent}%"></i></span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function moveSeasonTwoLane(delta) {
+  if (!state.gameStarted || state.activeSeason !== "season_02") return;
+  const g = state.game.season_02;
+  if (!g || g.phase !== "runner") return;
+  g.lane = Math.max(0, Math.min(2, g.lane + delta));
+  g.message = `레인 ${g.lane + 1}로 이동!`;
+  playFootstep();
+  renderSeasonTwo();
+}
+
+function seasonTwoAction() {
   if (!state.gameStarted) return;
   const s = state.settings.season_02;
-  const password = els.gameMount.querySelector("#passwordInput")?.value || "";
-  let result = "";
-  if (choice === "key") result = toBool(s.has_key) ? "열쇠가 있어서 문이 열렸어!" : "열쇠가 없어서 문이 잠겼어.";
-  if (choice === "password") result = password === s.secret_password ? "비밀번호 성공!" : "비밀번호가 달라.";
-  if (choice === "level") result = toNumber(s.level, 1) >= 5 ? "보스방에 들어갈 수 있어." : "레벨 5가 필요해.";
-  if (choice === "treasure") result = toBool(s.has_key) && toBool(s.has_gem) ? "큰 보물상자를 열었어!" : "열쇠와 보석이 둘 다 필요해.";
-  els.gameMount.querySelector("#dungeonResult").textContent = result;
-  updateSaveSeason("season_02", {
-    opened_doors: (getSeasonSave("season_02").opened_doors || 0) + (result.includes("열") || result.includes("성공") ? 1 : 0),
-    last_result: result,
-  });
+  const g = state.game.season_02;
+  if (!g) return;
+  if (g.phase === "runner") {
+    if (g.dashCharges > 0) {
+      g.dashCharges -= 1;
+      g.distance = Math.min(g.goal, g.distance + 30);
+      g.items = g.items.filter((item) => !(item.kind === "obstacle" && item.lane === g.lane && item.x < 42));
+      g.message = "대시! 위험 구간을 빠르게 통과했어.";
+      playTone({ frequency: 620, duration: 0.12, type: "square", volume: 0.05, slide: 260 });
+    } else {
+      g.score += 3;
+      g.message = s.roar_text || "우와앙!";
+      playTone({ frequency: 150, duration: 0.12, type: "sawtooth", volume: 0.04, slide: -40 });
+    }
+    renderSeasonTwo();
+    return;
+  }
+  if (g.phase !== "boss") return;
+  const evolution = seasonTwoEvolution(g.size, Math.max(10, toNumber(s.mutation_size, 60)));
+  const coreBonus = toBool(s.red_core) || toBool(s.blue_core) ? 1.35 : 1;
+  const evolutionBonus = 1 + evolution.rank * 0.18;
+  const damage = Math.max(1, Math.round((toNumber(s.attack_power, 18) + g.size * 0.12) * coreBonus * evolutionBonus));
+  g.bossHp = Math.max(0, g.bossHp - damage);
+  g.message = `${evolution.name} 공격! ${g.boss.name}에게 ${damage} 피해`;
+  playTone({ frequency: 240, duration: 0.12, type: "square", volume: 0.05, slide: 320 });
+  if (g.bossHp <= 0) {
+    g.score += Math.round(g.boss.maxHp / 2);
+    finishSeasonTwo("win", `${g.boss.name} 격파! 시즌2 보스전 승리!`);
+    renderSeasonTwo();
+    return;
+  }
+  const guard = toBool(s.shield_ready) && g.shieldCharges > 0;
+  if (guard) {
+    g.shieldCharges -= 1;
+    g.message += " · 방어막으로 반격을 막았어!";
+  } else {
+    g.hp = Math.max(0, g.hp - g.boss.power);
+    g.message += ` · 반격으로 체력 -${g.boss.power}`;
+  }
+  if (g.hp <= 0) finishSeasonTwo("gameOver", `${g.boss.name}에게 졌어. 더 크게 성장해 보자!`);
+  renderSeasonTwo();
 }
 
 function seasonThreeReset() {
@@ -1777,6 +2517,8 @@ async function loadSave() {
   }
   const seasonOne = getSeasonSave("season_01");
   if (seasonOne.hero_name) state.settings.season_01.hero_name = seasonOne.hero_name;
+  const seasonTwo = getSeasonSave("season_02");
+  if (seasonTwo.baby_name) state.settings.season_02.baby_name = seasonTwo.baby_name;
   const seasonFour = getSeasonSave("season_04");
   if (seasonFour.last_goal) state.settings.season_04.final_goal = seasonFour.last_goal;
   setStatus(`${profile} 저장 정보를 불러왔습니다.`);
@@ -1884,7 +2626,7 @@ els.action.addEventListener("click", () => {
     return;
   }
   if (state.activeSeason === "season_01") collectSeasonOne();
-  if (state.activeSeason === "season_02") runDungeonChoice("password");
+  if (state.activeSeason === "season_02") seasonTwoAction();
   if (state.activeSeason === "season_03") attackMonster();
   if (state.activeSeason === "season_04") randomTreasure();
 });
@@ -1903,18 +2645,25 @@ els.nextLesson.addEventListener("click", () => {
 });
 
 document.addEventListener("keydown", (event) => {
-  if (state.activeSeason !== "season_01") return;
+  if (!["season_01", "season_02"].includes(state.activeSeason)) return;
   if (event.target.closest("textarea, input")) return;
   const isSpace = event.key === " " || event.key === "Space" || event.code === "Space";
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key) || isSpace) {
     event.preventDefault();
   }
   if (!state.gameStarted) return;
-  if (event.key === "ArrowUp") moveHero(0, -1);
-  if (event.key === "ArrowDown") moveHero(0, 1);
-  if (event.key === "ArrowLeft") moveHero(-1, 0);
-  if (event.key === "ArrowRight") moveHero(1, 0);
-  if (isSpace) collectSeasonOne();
+  if (state.activeSeason === "season_01") {
+    if (event.key === "ArrowUp") moveHero(0, -1);
+    if (event.key === "ArrowDown") moveHero(0, 1);
+    if (event.key === "ArrowLeft") moveHero(-1, 0);
+    if (event.key === "ArrowRight") moveHero(1, 0);
+    if (isSpace) collectSeasonOne();
+  }
+  if (state.activeSeason === "season_02") {
+    if (event.key === "ArrowUp") moveSeasonTwoLane(-1);
+    if (event.key === "ArrowDown") moveSeasonTwoLane(1);
+    if (isSpace || event.key === "ArrowRight") seasonTwoAction();
+  }
 });
 
 loadSave().catch(() => {
