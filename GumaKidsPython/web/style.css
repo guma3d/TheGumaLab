@@ -1449,56 +1449,60 @@ select option {
 }
 
 .runner-world {
-  top: 18%;
-  perspective: 760px;
+  top: 6%;
+  perspective: 880px;
 }
 
 .runner-road {
   position: absolute;
-  left: 4%;
-  right: 4%;
-  top: 12%;
+  left: 15%;
+  right: 15%;
+  top: 4%;
   bottom: 16%;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: 22px 22px 14px 14px;
   background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.32) 0 18px, transparent 18px 54px),
-    linear-gradient(180deg, #34d399 0 20%, #22c55e 20% 26%, #64748b 26% 100%);
+    linear-gradient(90deg, rgba(34, 197, 94, 0.72) 0 8%, transparent 8% 92%, rgba(34, 197, 94, 0.72) 92% 100%),
+    repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0 22px, transparent 22px 58px),
+    linear-gradient(180deg, #94a3b8 0%, #64748b 36%, #334155 100%);
   box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.5), 0 16px 34px rgba(15, 23, 42, 0.28);
-  transform: rotateX(8deg);
+  transform: rotateX(15deg);
   transform-origin: bottom;
 }
 
 .runner-road::before {
   content: "";
   position: absolute;
-  inset: 25% 0 0;
-  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.22) 0 28px, transparent 28px 72px);
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 0 31%, rgba(254, 240, 138, 0.78) 31% 32%, transparent 32% 65%, rgba(254, 240, 138, 0.78) 65% 66%, transparent 66%),
+    repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0 10px, transparent 10px 42px);
   animation: runner-road-scroll 0.56s linear infinite;
 }
 
 @keyframes runner-road-scroll {
-  from { transform: translateX(0); }
-  to { transform: translateX(-72px); }
+  from { transform: translateY(-58px); }
+  to { transform: translateY(0); }
 }
 
 .lane-line {
   position: absolute;
-  left: 0;
-  right: 0;
-  height: 3px;
-  border-top: 3px dashed rgba(254, 240, 138, 0.78);
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-left: 3px dashed rgba(254, 240, 138, 0.84);
   z-index: 1;
 }
 
-.lane-line.lane-one { top: 42%; }
-.lane-line.lane-two { top: 65%; }
+.lane-line.lane-one { left: 33.33%; }
+.lane-line.lane-two { left: 66.66%; }
 
 .boss-gate {
   position: absolute;
-  top: 18%;
+  left: 50%;
+  top: 7%;
   z-index: 3;
-  width: 92px;
+  width: 126px;
   padding: 6px 8px;
   border: 3px solid #fde047;
   border-radius: 8px 8px 22px 22px;
@@ -1508,17 +1512,18 @@ select option {
   font-weight: 900;
   text-align: center;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
-  box-shadow: 0 0 24px rgba(239, 68, 68, 0.42);
+  box-shadow: 0 0 26px rgba(239, 68, 68, 0.52);
+  transform: translateX(-50%);
 }
 
 .runner-kaiju {
   position: absolute;
-  left: 9%;
+  bottom: 15%;
   z-index: 7;
   width: 110px;
   height: 110px;
-  transform: translateY(-50%);
-  transition: top 0.16s ease;
+  transform: translateX(-50%);
+  transition: left 0.16s ease;
 }
 
 .kaiju-speech {
@@ -1737,7 +1742,7 @@ select option {
   place-items: center;
   width: 66px;
   height: 54px;
-  transform: translateY(-50%);
+  transform: translate(-50%, -50%);
 }
 
 .runner-item span {

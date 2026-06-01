@@ -310,9 +310,9 @@ const seasonTwoEditPlans = {
 };
 
 const seasonTwoUnlocks = {
-  1: "아기괴물 이름표와 3D 스타일 러너 캐릭터가 등장합니다.",
-  2: "괴수가 달리며 포효 말풍선을 보여 줍니다.",
-  3: "젤리 아이템을 먹으면 점수와 몸집이 오릅니다.",
+  1: "아기괴물 이름표와 3D 스타일 세로 러너 캐릭터가 등장합니다.",
+  2: "괴수가 세로 트랙을 달리며 포효 말풍선을 보여 줍니다.",
+  3: "위에서 내려오는 젤리 아이템을 먹으면 점수와 몸집이 오릅니다.",
   4: "몸집 기준을 넘으면 더 큰 괴수로 변신합니다.",
   5: "젤리, 고기, 크리스탈이 서로 다른 점수와 성장량을 줍니다.",
   6: "장애물과 체력 경고가 생겨 피해야 할 이유가 생깁니다.",
@@ -321,7 +321,7 @@ const seasonTwoUnlocks = {
   9: "네 가지 보스 중 현재 챕터에 맞는 보스가 등장합니다.",
   10: "방어막과 대시 조건을 켜고 끄며 러너 구간을 조절합니다.",
   11: "빨간 코어 또는 파란 코어 조건으로 변신 보너스를 실험합니다.",
-  12: "러너 구간에서 보스전으로 카메라가 부드럽게 넘어가며 시즌2가 완성됩니다.",
+  12: "세로 러너 구간에서 보스전으로 카메라가 부드럽게 넘어가며 시즌2가 완성됩니다.",
 };
 
 const seasonTwoChapters = {
@@ -330,7 +330,7 @@ const seasonTwoChapters = {
     focus: "baby_name",
     syntax: "input()은 사용자가 넣은 글자를 프로그램으로 가져오는 함수입니다. 웹버전에서는 직접 입력창을 띄우지 않고 baby_name 값을 바꿔 입력 결과처럼 사용합니다.",
     pages: [
-      ["1. 오늘의 장면", "아기괴물이 러너 트랙에 처음 등장합니다."],
+      ["1. 오늘의 장면", "아기괴물이 세로 러너 트랙에 처음 등장합니다."],
       ["2. 오늘의 코드", "baby_name은 화면 이름표와 게임 저장에 쓰이는 문자열입니다."],
       ["3. 기술 설명", "input()으로 받은 값은 먼저 str, 즉 글자로 들어옵니다."],
       ["4. 바꿔보기", "baby_name을 나만의 괴수 이름으로 바꾸고 게임 화면에서 확인합니다."],
@@ -342,7 +342,7 @@ const seasonTwoChapters = {
     focus: "roar_text",
     syntax: "문자열은 따옴표 안에 넣은 글자입니다. roar_text 같은 문자열은 말풍선, 안내문, 보스전 대사처럼 화면에 그대로 보입니다.",
     pages: [
-      ["1. 오늘의 장면", "달리는 괴수 위에 포효 말풍선이 뜹니다."],
+      ["1. 오늘의 장면", "세로 트랙을 달리는 괴수 위에 포효 말풍선이 뜹니다."],
       ["2. 오늘의 코드", "roar_text에 괴수의 대사를 저장합니다."],
       ["3. 기술 설명", "str은 글자 자료형입니다. 숫자 계산은 하지 않고 화면에 말로 보여 주기 좋습니다."],
       ["4. 바꿔보기", "괴수가 성장하고 싶어 하는 문장을 만들어 봅니다."],
@@ -354,7 +354,7 @@ const seasonTwoChapters = {
     focus: "snack_score",
     syntax: "int()는 글자로 들어온 숫자를 계산 가능한 정수로 바꿉니다. 점수와 몸집은 숫자여야 더하고 비교할 수 있습니다.",
     pages: [
-      ["1. 오늘의 장면", "젤리를 먹으면 점수와 몸집이 올라갑니다."],
+      ["1. 오늘의 장면", "위에서 내려오는 젤리를 먹으면 점수와 몸집이 올라갑니다."],
       ["2. 오늘의 코드", "snack_score와 start_size가 첫 점수와 첫 몸집을 정합니다."],
       ["3. 기술 설명", "10과 1 같은 정수는 더하기와 비교가 가능합니다."],
       ["4. 바꿔보기", "젤리 점수를 높이거나 시작 몸집을 바꿔 봅니다."],
@@ -390,7 +390,7 @@ const seasonTwoChapters = {
     focus: "hp",
     syntax: "else는 if 조건이 거짓일 때 실행됩니다. 방어막이 없는데 장애물에 닿으면 체력이 줄어드는 실패 규칙을 만들 수 있습니다.",
     pages: [
-      ["1. 오늘의 장면", "러너 트랙에 장애물이 생기고 체력 경고가 표시됩니다."],
+      ["1. 오늘의 장면", "세로 트랙에 장애물이 내려오고 체력 경고가 표시됩니다."],
       ["2. 오늘의 코드", "hp와 danger_limit이 위험 상태를 정합니다."],
       ["3. 기술 설명", "if가 성공 길이라면 else는 그렇지 않을 때 가는 길입니다."],
       ["4. 바꿔보기", "체력과 위험 기준을 바꿔 난이도를 조절합니다."],
@@ -462,7 +462,7 @@ const seasonTwoChapters = {
     focus: "boss_name",
     syntax: "조건문을 조합하면 러너 구간, 성장, 변신, 보스전이 하나의 게임 흐름으로 이어집니다. if, elif, else, and, or를 함께 읽는 연습을 합니다.",
     pages: [
-      ["1. 오늘의 장면", "러너 트랙에서 성장한 괴수가 최종 보스와 대전격투처럼 싸웁니다."],
+      ["1. 오늘의 장면", "세로 러너 트랙에서 성장한 괴수가 최종 보스와 대전격투처럼 싸웁니다."],
       ["2. 오늘의 코드", "이번 챕터는 시즌2에서 만든 조건 규칙을 모두 사용합니다."],
       ["3. 기술 설명", "조건문은 게임 상태를 보고 다음 장면을 고르는 신호등입니다."],
       ["4. 바꿔보기", "보스 이름, 변신 기준, 방어막, 대시, 코어 조건을 모두 조합합니다."],
@@ -1991,6 +1991,10 @@ function seasonTwoRunnerGoal(chapter) {
   return 95 + chapter * 12;
 }
 
+function seasonTwoLaneLeft(lane) {
+  return [24, 50, 76][Math.max(0, Math.min(2, lane))] || 50;
+}
+
 function seasonTwoReset() {
   const s = state.settings.season_02;
   const chapter = seasonTwoChapter();
@@ -2049,7 +2053,7 @@ function spawnSeasonTwoItem(game, settings, chapter) {
     point: item.point,
     growth: item.growth,
     lane: randomInt(0, 2),
-    x: 108,
+    y: -10,
     id: `${kind}-${game.tick}-${Math.random().toString(36).slice(2, 6)}`,
   });
 }
@@ -2139,13 +2143,13 @@ function updateSeasonTwoRunner() {
   if (g.tick % spawnRate === 0) spawnSeasonTwoItem(g, s, chapter);
 
   for (const item of g.items) {
-    item.x -= speed * (item.kind === "obstacle" ? 1.46 : 1.2);
-    if (!item.taken && item.lane === g.lane && item.x <= 18 && item.x >= 4) {
+    item.y += speed * (item.kind === "obstacle" ? 1.42 : 1.18);
+    if (!item.taken && item.lane === g.lane && item.y >= 70 && item.y <= 92) {
       item.taken = true;
       collectSeasonTwoItem(item, s, g);
     }
   }
-  g.items = g.items.filter((item) => !item.taken && item.x > -12);
+  g.items = g.items.filter((item) => !item.taken && item.y < 112);
 
   if (g.phase === "runner" && g.distance >= g.goal) enterSeasonTwoBossFight(g, s);
   renderSeasonTwo();
@@ -2179,8 +2183,8 @@ function seasonTwoMonsterMarkup(name, evolution, extraClass = "", scale = 1) {
 
 function renderSeasonTwoItems(game) {
   return game.items.map((item) => {
-    const top = 30 + item.lane * 23;
-    return `<div class="runner-item item-${item.kind}" style="left:${item.x}%;top:${top}%"><span></span><strong>${item.label}</strong></div>`;
+    const left = seasonTwoLaneLeft(item.lane);
+    return `<div class="runner-item item-${item.kind}" style="left:${left}%;top:${item.y}%"><span></span><strong>${item.label}</strong></div>`;
   }).join("");
 }
 
@@ -2204,7 +2208,7 @@ function renderSeasonTwo() {
   const progress = Math.min(100, (g.distance / g.goal) * 100);
   const hpPercent = Math.max(0, (g.hp / Math.max(1, g.maxHp)) * 100);
   const bossPercent = Math.max(0, (g.bossHp / Math.max(1, g.boss.maxHp)) * 100);
-  const laneTop = 30 + g.lane * 23;
+  const laneLeft = seasonTwoLaneLeft(g.lane);
   const phaseLabel = g.phase === "runner" ? "러너" : g.phase === "boss" ? "보스전" : g.phase === "win" ? "승리" : "도전 종료";
   setHud(
     s.runner_title || `${s.baby_name} 출동!`,
@@ -2257,9 +2261,9 @@ function renderSeasonTwo() {
         <div class="runner-road">
           <span class="lane-line lane-one"></span>
           <span class="lane-line lane-two"></span>
-          <span class="boss-gate" style="left:${Math.max(78, 104 - progress * 0.28)}%">${g.boss.name}</span>
+          <span class="boss-gate" style="--gate-glow:${progress}%">${g.boss.name}</span>
           ${renderSeasonTwoItems(g)}
-          <div class="runner-kaiju" style="top:${laneTop}%">
+          <div class="runner-kaiju" style="left:${laneLeft}%">
             <span class="kaiju-speech">${s.roar_text}</span>
             ${seasonTwoMonsterMarkup(s.baby_name, evolution)}
           </div>
@@ -2284,7 +2288,7 @@ function moveSeasonTwoLane(delta) {
   const g = state.game.season_02;
   if (!g || g.phase !== "runner") return;
   g.lane = Math.max(0, Math.min(2, g.lane + delta));
-  g.message = `레인 ${g.lane + 1}로 이동!`;
+  g.message = `${g.lane === 0 ? "왼쪽" : g.lane === 1 ? "가운데" : "오른쪽"} 레인으로 이동!`;
   playFootstep();
   renderSeasonTwo();
 }
@@ -2298,7 +2302,7 @@ function seasonTwoAction() {
     if (g.dashCharges > 0) {
       g.dashCharges -= 1;
       g.distance = Math.min(g.goal, g.distance + 30);
-      g.items = g.items.filter((item) => !(item.kind === "obstacle" && item.lane === g.lane && item.x < 42));
+      g.items = g.items.filter((item) => !(item.kind === "obstacle" && item.lane === g.lane && item.y > 44));
       g.message = "대시! 위험 구간을 빠르게 통과했어.";
       playTone({ frequency: 620, duration: 0.12, type: "square", volume: 0.05, slide: 260 });
     } else {
@@ -2660,9 +2664,9 @@ document.addEventListener("keydown", (event) => {
     if (isSpace) collectSeasonOne();
   }
   if (state.activeSeason === "season_02") {
-    if (event.key === "ArrowUp") moveSeasonTwoLane(-1);
-    if (event.key === "ArrowDown") moveSeasonTwoLane(1);
-    if (isSpace || event.key === "ArrowRight") seasonTwoAction();
+    if (event.key === "ArrowLeft") moveSeasonTwoLane(-1);
+    if (event.key === "ArrowRight") moveSeasonTwoLane(1);
+    if (isSpace || event.key === "ArrowUp") seasonTwoAction();
   }
 });
 
