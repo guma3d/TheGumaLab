@@ -948,8 +948,10 @@ function renderChapterTabs() {
 }
 
 function setLockedControls() {
-  els.start.textContent = state.gameStarted ? "게임 중지" : "게임 시작";
-  els.start.classList.toggle("stop", state.gameStarted);
+  const seasonTwoBossActive = state.activeSeason === "season_02" && state.gameStarted && state.game.season_02?.phase === "boss";
+  els.start.textContent = seasonTwoBossActive ? "보스전 진행중" : state.gameStarted ? "게임 중지" : "게임 시작";
+  els.start.disabled = seasonTwoBossActive;
+  els.start.classList.toggle("stop", state.gameStarted && !seasonTwoBossActive);
   els.codeEditor.disabled = state.gameStarted || state.activeFile !== "upgrade_zone.py";
   els.applyUpgrade.disabled = state.gameStarted;
   els.prevLesson.disabled = state.gameStarted || state.lessonPage === 0;
@@ -2016,6 +2018,9 @@ function seasonTwoReset() {
     items: [],
     boss,
     bossHp: boss.maxHp,
+    bossMeterStartedAt: 0,
+    lastTiming: null,
+    bossCameraReady: false,
     shieldCharges: toBool(s.shield_ready) ? 2 : 0,
     dashCharges: toBool(s.dash_ready) ? 2 : 0,
     message: s.runner_title || "괴수 러너 출발!",
@@ -2096,6 +2101,9 @@ function enterSeasonTwoBossFight(game, settings) {
   game.items = [];
   game.boss = seasonTwoBossForChapter(game.chapter, settings);
   game.bossHp = game.boss.maxHp;
+  game.bossMeterStartedAt = performance.now();
+  game.lastTiming = null;
+  game.bossCameraReady = false;
   game.message = `${game.boss.name} 등장! 카메라가 전투장면으로 이동합니다.`;
   stopGameTimer();
   playTone({ frequency: 170, duration: 0.18, type: "sawtooth", volume: 0.05, slide: 220 });
@@ -2194,6 +2202,31 @@ function renderSeasonTwoBossBadges(activeBoss) {
   `).join("");
 }
 
+function seasonTwoTimingResult(game) {
+  const period = 1500;
+  const startedAt = game.bossMeterStartedAt || performance.now();
+  const fill = els.gameMount.querySelector(".timing-fill");
+  const track = els.gameMount.querySelector(".boss-timing-track");
+  const visualPhase = fill && track
+    ? Number.parseFloat(getComputedStyle(fill).width) / Math.max(1, Number.parseFloat(getComputedStyle(track).width))
+    : null;
+  const elapsed = (performance.now() - startedAt) % (period * 2);
+  const fallbackPhase = elapsed <= period ? elapsed / period : 2 - elapsed / period;
+  const phase = Math.max(0, Math.min(1, Number.isFinite(visualPhase) ? visualPhase : fallbackPhase));
+  if (phase >= 0.9) return { label: "완벽 타이밍", multiplier: 2.65, quality: phase };
+  if (phase >= 0.72) return { label: "강공격", multiplier: 1.85, quality: phase };
+  if (phase >= 0.45) return { label: "보통 공격", multiplier: 1.15, quality: phase };
+  return { label: "약한 공격", multiplier: 0.55, quality: phase };
+}
+
+function koreanSubject(text) {
+  const value = String(text || "");
+  const last = [...value].pop();
+  const code = last ? last.charCodeAt(0) : 0;
+  const hasBatchim = code >= 0xac00 && code <= 0xd7a3 && (code - 0xac00) % 28 !== 0;
+  return `${value}${hasBatchim ? "이" : "가"}`;
+}
+
 function renderSeasonTwo() {
   const s = state.settings.season_02;
   const g = state.game.season_02 || (seasonTwoReset(), state.game.season_02);
@@ -2210,45 +2243,40 @@ function renderSeasonTwo() {
   const bossPercent = Math.max(0, (g.bossHp / Math.max(1, g.boss.maxHp)) * 100);
   const laneLeft = seasonTwoLaneLeft(g.lane);
   const phaseLabel = g.phase === "runner" ? "러너" : g.phase === "boss" ? "보스전" : g.phase === "win" ? "승리" : "도전 종료";
+  const isBossScene = g.phase === "boss" || g.phase === "win" || g.phase === "gameOver";
+  const cameraClass = isBossScene ? (g.bossCameraReady ? "camera-settled" : "camera-panning") : "";
+  const playerLeft = isBossScene ? 27 : laneLeft;
+  const runnerItems = g.phase === "runner" ? renderSeasonTwoItems(g) : "";
+  const timingPanel = g.phase === "boss" ? `
+    <div class="boss-timing-panel">
+      <strong>Space 타이밍 공격</strong>
+      <div class="boss-timing-track">
+        <span class="timing-fill"></span>
+        <span class="timing-perfect-zone"></span>
+      </div>
+      <span>${g.lastTiming ? `${g.lastTiming.label} · ${g.lastTiming.damage} 피해` : "게이지가 오른쪽 끝까지 찰 때 누르면 강공격!"}</span>
+    </div>
+  ` : "";
+  const bossFighter = isBossScene ? `
+    <div class="runner-boss">
+      <div class="boss-monster boss-${g.boss.className}">
+        <span class="boss-core"></span>
+        <span class="boss-head"></span>
+        <span class="boss-arm arm-left"></span>
+        <span class="boss-arm arm-right"></span>
+        <strong>${g.boss.name}</strong>
+      </div>
+      <div class="fighter-bar boss-hp"><span style="width:${bossPercent}%"></span></div>
+    </div>
+    <div class="versus-flash">VS</div>
+  ` : "";
+  const playerBar = isBossScene ? `<div class="fighter-bar player-hp"><span style="width:${hpPercent}%"></span></div>` : "";
   setHud(
     s.runner_title || `${s.baby_name} 출동!`,
     `점수 ${g.score} · 몸집 ${Math.round(g.size)} · ${evolution.name} · 체력 ${g.hp}/${g.maxHp} · ${phaseLabel}`,
   );
-  els.action.textContent = g.phase === "boss" ? "괴수 공격" : g.phase === "runner" ? "대시/포효" : "결과 확인";
-  const boardClass = `kaiju-runner-game chapter-${chapter} phase-${g.phase}`;
-
-  if (g.phase === "boss" || g.phase === "win" || g.phase === "gameOver") {
-    els.gameMount.innerHTML = `
-      <div class="${boardClass}">
-        <div class="boss-stage-pan">
-          <div class="boss-stage-bg">
-            <div class="boss-city"></div>
-            <div class="boss-floor"></div>
-            <div class="boss-fighter player-fighter">
-              ${seasonTwoMonsterMarkup(s.baby_name, evolution, "fighter-model", 1.12)}
-              <div class="fighter-bar"><span style="width:${hpPercent}%"></span></div>
-            </div>
-            <div class="boss-fighter enemy-fighter">
-              <div class="boss-monster boss-${g.boss.className}">
-                <span class="boss-core"></span>
-                <span class="boss-head"></span>
-                <span class="boss-arm arm-left"></span>
-                <span class="boss-arm arm-right"></span>
-                <strong>${g.boss.name}</strong>
-              </div>
-              <div class="fighter-bar boss-hp"><span style="width:${bossPercent}%"></span></div>
-            </div>
-            <div class="versus-flash">VS</div>
-          </div>
-        </div>
-        <div class="runner-dashboard">
-          <div><strong>${g.message}</strong><span>공격력 ${toNumber(s.attack_power, 18)} · 보스 공격력 ${g.boss.power}</span></div>
-          <div class="boss-badges">${renderSeasonTwoBossBadges(g.boss)}</div>
-        </div>
-      </div>
-    `;
-    return;
-  }
+  els.action.textContent = g.phase === "boss" ? "Space 타이밍 공격" : g.phase === "runner" ? "대시/포효" : "결과 확인";
+  const boardClass = `kaiju-runner-game chapter-${chapter} phase-${g.phase} ${cameraClass}`.trim();
 
   els.gameMount.innerHTML = `
     <div class="${boardClass}">
@@ -2256,31 +2284,47 @@ function renderSeasonTwo() {
         <span class="runner-cloud cloud-a"></span>
         <span class="runner-cloud cloud-b"></span>
         <span class="runner-sun"></span>
+        <div class="runner-city"></div>
       </div>
       <div class="runner-world">
         <div class="runner-road">
           <span class="lane-line lane-one"></span>
           <span class="lane-line lane-two"></span>
           <span class="boss-gate" style="--gate-glow:${progress}%">${g.boss.name}</span>
-          ${renderSeasonTwoItems(g)}
-          <div class="runner-kaiju" style="left:${laneLeft}%">
+          ${runnerItems}
+          <div class="runner-kaiju" style="left:${playerLeft}%">
             <span class="kaiju-speech">${s.roar_text}</span>
-            ${seasonTwoMonsterMarkup(s.baby_name, evolution)}
+            ${seasonTwoMonsterMarkup(s.baby_name, evolution, isBossScene ? "fighter-model" : "", isBossScene ? 1.12 : 1)}
+            ${playerBar}
           </div>
+          ${bossFighter}
         </div>
       </div>
+      ${timingPanel}
       <div class="runner-dashboard">
         <div>
           <strong>${g.message}</strong>
-          <span>거리 ${Math.round(progress)}% · 콤보 ${g.combo} · 방어막 ${g.shieldCharges} · 대시 ${g.dashCharges}</span>
+          <span>${isBossScene ? `공격력 ${toNumber(s.attack_power, 18)} · 보스 공격력 ${g.boss.power} · Space로 타이밍 공격` : `거리 ${Math.round(progress)}% · 콤보 ${g.combo} · 방어막 ${g.shieldCharges} · 대시 ${g.dashCharges}`}</span>
         </div>
-        <div class="runner-bars">
+        <div class="${isBossScene ? "boss-badges" : "runner-bars"}">
+          ${isBossScene ? renderSeasonTwoBossBadges(g.boss) : `
           <span class="runner-bar"><i style="width:${progress}%"></i></span>
           <span class="runner-bar hp"><i style="width:${hpPercent}%"></i></span>
+          `}
         </div>
       </div>
     </div>
   `;
+  if (isBossScene && !g.bossCameraReady) {
+    window.setTimeout(() => {
+      const board = els.gameMount.querySelector(".kaiju-runner-game.camera-panning");
+      if (!board) return;
+      board.classList.remove("camera-panning");
+      board.classList.add("camera-settled");
+      g.bossCameraReady = true;
+    }, 1250);
+  }
+  setLockedControls();
 }
 
 function moveSeasonTwoLane(delta) {
@@ -2317,9 +2361,12 @@ function seasonTwoAction() {
   const evolution = seasonTwoEvolution(g.size, Math.max(10, toNumber(s.mutation_size, 60)));
   const coreBonus = toBool(s.red_core) || toBool(s.blue_core) ? 1.35 : 1;
   const evolutionBonus = 1 + evolution.rank * 0.18;
-  const damage = Math.max(1, Math.round((toNumber(s.attack_power, 18) + g.size * 0.12) * coreBonus * evolutionBonus));
+  const timing = seasonTwoTimingResult(g);
+  const damage = Math.max(1, Math.round((toNumber(s.attack_power, 18) + g.size * 0.12) * coreBonus * evolutionBonus * timing.multiplier));
   g.bossHp = Math.max(0, g.bossHp - damage);
-  g.message = `${evolution.name} 공격! ${g.boss.name}에게 ${damage} 피해`;
+  g.lastTiming = { label: timing.label, damage, quality: timing.quality };
+  g.bossMeterStartedAt = performance.now();
+  g.message = `${timing.label}! ${koreanSubject(evolution.name)} ${g.boss.name}에게 ${damage} 피해`;
   playTone({ frequency: 240, duration: 0.12, type: "square", volume: 0.05, slide: 320 });
   if (g.bossHp <= 0) {
     g.score += Math.round(g.boss.maxHp / 2);

@@ -1399,6 +1399,7 @@ select option {
 .runner-sky,
 .runner-world,
 .runner-road,
+.runner-city,
 .boss-stage-pan,
 .boss-stage-bg {
   position: absolute;
@@ -1409,6 +1410,8 @@ select option {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.55), transparent 54%),
     linear-gradient(90deg, rgba(59, 130, 246, 0.22), rgba(34, 197, 94, 0.18));
+  z-index: 0;
+  overflow: hidden;
 }
 
 .runner-sun {
@@ -1448,9 +1451,24 @@ select option {
   to { transform: translateX(-80px); }
 }
 
+.runner-city {
+  left: -6%;
+  right: -6%;
+  top: auto;
+  bottom: 28%;
+  height: 28%;
+  background:
+    linear-gradient(180deg, transparent 0 22%, rgba(255, 255, 255, 0.26) 22%),
+    repeating-linear-gradient(90deg, rgba(147, 197, 253, 0.78) 0 46px, rgba(191, 219, 254, 0.78) 46px 86px);
+  clip-path: polygon(0 46%, 8% 46%, 8% 18%, 16% 18%, 16% 54%, 24% 54%, 24% 28%, 34% 28%, 34% 58%, 43% 58%, 43% 14%, 53% 14%, 53% 50%, 64% 50%, 64% 25%, 76% 25%, 76% 55%, 86% 55%, 86% 32%, 100% 32%, 100% 100%, 0 100%);
+  opacity: 0.78;
+}
+
 .runner-world {
   top: 0;
   perspective: 980px;
+  transform-style: preserve-3d;
+  z-index: 2;
 }
 
 .runner-road {
@@ -1466,8 +1484,16 @@ select option {
     repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0 22px, transparent 22px 58px),
     linear-gradient(180deg, #94a3b8 0%, #64748b 36%, #334155 100%);
   box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.5), 0 16px 34px rgba(15, 23, 42, 0.28);
+  transform-style: preserve-3d;
   transform: rotateX(18deg);
   transform-origin: bottom;
+  transition:
+    left 1.1s ease,
+    right 1.1s ease,
+    top 1.1s ease,
+    bottom 1.1s ease,
+    transform 1.18s cubic-bezier(0.22, 0.86, 0.26, 1),
+    border-radius 1.1s ease;
 }
 
 .runner-road::before {
@@ -1480,9 +1506,56 @@ select option {
   animation: runner-road-scroll 0.56s linear infinite;
 }
 
+.runner-road::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -26px;
+  height: 26px;
+  border-radius: 0 0 18px 18px;
+  background: linear-gradient(180deg, #475569, #1e293b);
+  transform: rotateX(-64deg);
+  transform-origin: top;
+  opacity: 0.82;
+}
+
 @keyframes runner-road-scroll {
   from { transform: translateY(-58px); }
   to { transform: translateY(0); }
+}
+
+.kaiju-runner-game.phase-boss .runner-road,
+.kaiju-runner-game.phase-win .runner-road,
+.kaiju-runner-game.phase-gameOver .runner-road {
+  left: -1%;
+  right: -1%;
+  top: -10%;
+  bottom: -2%;
+  overflow: visible;
+  border-radius: 18px;
+  transform: rotateX(54deg) rotateY(-58deg) translateX(-7%) translateY(8%) scale(1.12);
+  transform-origin: 50% 74%;
+}
+
+.kaiju-runner-game.camera-panning .runner-road {
+  animation: runner-camera-pan 1.25s cubic-bezier(0.18, 0.86, 0.22, 1) both;
+}
+
+.kaiju-runner-game.camera-settled .runner-road {
+  animation: none;
+}
+
+@keyframes runner-camera-pan {
+  0% {
+    transform: rotateX(18deg) rotateY(0deg) translateX(0) translateY(0) scale(1);
+  }
+  48% {
+    transform: rotateX(34deg) rotateY(-28deg) translateX(-3%) translateY(3%) scale(1.05);
+  }
+  100% {
+    transform: rotateX(54deg) rotateY(-58deg) translateX(-7%) translateY(8%) scale(1.12);
+  }
 }
 
 .lane-line {
@@ -1516,6 +1589,19 @@ select option {
   transform: translateX(-50%);
 }
 
+.kaiju-runner-game.phase-boss .boss-gate,
+.kaiju-runner-game.phase-win .boss-gate,
+.kaiju-runner-game.phase-gameOver .boss-gate {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-26px) scale(0.82);
+}
+
+.kaiju-runner-game.phase-boss .lane-line,
+.kaiju-runner-game.phase-win .lane-line,
+.kaiju-runner-game.phase-gameOver .lane-line {
+  opacity: 0.32;
+}
+
 .runner-kaiju {
   position: absolute;
   bottom: 9%;
@@ -1523,7 +1609,29 @@ select option {
   width: 110px;
   height: 110px;
   transform: translateX(-50%);
-  transition: left 0.16s ease;
+  transition:
+    left 0.16s ease,
+    bottom 1.1s cubic-bezier(0.22, 0.86, 0.26, 1),
+    transform 1.1s cubic-bezier(0.22, 0.86, 0.26, 1);
+}
+
+.kaiju-runner-game.phase-boss .runner-kaiju,
+.kaiju-runner-game.phase-win .runner-kaiju,
+.kaiju-runner-game.phase-gameOver .runner-kaiju {
+  bottom: 29%;
+  z-index: 9;
+  transform: translateX(-50%) rotateX(-10deg) rotateY(58deg) scale(1.16);
+}
+
+.runner-kaiju .fighter-model {
+  left: 18px;
+  bottom: 12px;
+}
+
+.runner-kaiju .player-hp {
+  left: 12px;
+  right: 12px;
+  bottom: -4px;
 }
 
 .kaiju-speech {
@@ -1541,6 +1649,13 @@ select option {
   font-weight: 900;
   line-height: 1.28;
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+}
+
+.kaiju-runner-game.phase-boss .kaiju-speech,
+.kaiju-runner-game.phase-win .kaiju-speech,
+.kaiju-runner-game.phase-gameOver .kaiju-speech {
+  opacity: 0;
+  transform: translateY(-12px);
 }
 
 .kaiju-model {
@@ -1586,6 +1701,17 @@ select option {
   border-radius: 18px 18px 16px 16px;
   background: linear-gradient(135deg, #34d399, #059669 62%, #065f46);
   box-shadow: inset -10px -8px 0 rgba(15, 23, 42, 0.24), 7px 4px 0 rgba(20, 184, 166, 0.32);
+}
+
+.kaiju-body::after,
+.kaiju-head::after {
+  content: "";
+  position: absolute;
+  inset: 6px -8px 4px auto;
+  width: 10px;
+  border-radius: inherit;
+  background: rgba(15, 23, 42, 0.24);
+  transform: skewY(-12deg);
 }
 
 .kaiju-model.grown .kaiju-body {
@@ -1795,6 +1921,36 @@ select option {
     linear-gradient(135deg, #991b1b, #ef4444);
 }
 
+.kaiju-runner-game.phase-boss .runner-road::before,
+.kaiju-runner-game.phase-win .runner-road::before,
+.kaiju-runner-game.phase-gameOver .runner-road::before {
+  animation-duration: 1.8s;
+  opacity: 0.78;
+}
+
+.runner-boss {
+  position: absolute;
+  left: 72%;
+  bottom: 17%;
+  z-index: 8;
+  width: 180px;
+  height: 166px;
+  transform: translateX(-50%) rotateX(-8deg) rotateY(58deg) scale(1.08);
+  transform-style: preserve-3d;
+  animation: boss-enter-from-road 1.1s cubic-bezier(0.2, 0.82, 0.24, 1) both;
+}
+
+.kaiju-runner-game.camera-settled .runner-boss,
+.kaiju-runner-game.phase-win .runner-boss,
+.kaiju-runner-game.phase-gameOver .runner-boss {
+  animation: none;
+}
+
+@keyframes boss-enter-from-road {
+  from { opacity: 0; transform: translateX(-50%) translateY(-80px) rotateX(-8deg) rotateY(58deg) scale(0.68); }
+  to { opacity: 1; transform: translateX(-50%) rotateX(-8deg) rotateY(58deg) scale(1.08); }
+}
+
 .runner-dashboard {
   position: absolute;
   left: 14px;
@@ -1855,12 +2011,31 @@ select option {
 
 .boss-stage-pan {
   overflow: hidden;
-  background: linear-gradient(180deg, #0f172a, #312e81 52%, #111827);
+  background: linear-gradient(180deg, #7dd3fc 0%, #a7f3d0 46%, #fef3c7 100%);
 }
 
 .boss-stage-bg {
   transform: translateX(-7%);
   animation: boss-camera-pan 1.1s ease-out both;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.52), transparent 58%),
+    linear-gradient(90deg, rgba(59, 130, 246, 0.18), rgba(34, 197, 94, 0.16));
+}
+
+.boss-cloud-a {
+  left: 12%;
+  top: 12%;
+}
+
+.boss-cloud-b {
+  left: 67%;
+  top: 20%;
+  animation-duration: 10s;
+}
+
+.boss-sun {
+  right: 10%;
+  top: 8%;
 }
 
 @keyframes boss-camera-pan {
@@ -1875,8 +2050,9 @@ select option {
   bottom: 29%;
   height: 34%;
   background:
-    linear-gradient(180deg, transparent 0 24%, rgba(15, 23, 42, 0.88) 24%),
-    repeating-linear-gradient(90deg, #334155 0 46px, #1e293b 46px 88px);
+    linear-gradient(180deg, transparent 0 24%, rgba(255, 255, 255, 0.24) 24%),
+    repeating-linear-gradient(90deg, #93c5fd 0 46px, #bfdbfe 46px 88px);
+  opacity: 0.84;
   clip-path: polygon(0 28%, 8% 28%, 8% 10%, 16% 10%, 16% 34%, 24% 34%, 24% 16%, 34% 16%, 34% 38%, 43% 38%, 43% 8%, 53% 8%, 53% 30%, 64% 30%, 64% 15%, 76% 15%, 76% 35%, 86% 35%, 86% 18%, 100% 18%, 100% 100%, 0 100%);
 }
 
@@ -1887,9 +2063,88 @@ select option {
   bottom: 0;
   height: 34%;
   background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0 3px, transparent 3px 68px),
-    linear-gradient(180deg, #475569, #111827);
-  box-shadow: inset 0 9px 0 rgba(255, 255, 255, 0.08);
+    linear-gradient(90deg, rgba(34, 197, 94, 0.72) 0 10%, transparent 10% 90%, rgba(34, 197, 94, 0.72) 90% 100%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.22) 0 4px, transparent 4px 72px),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.2) 0 18px, transparent 18px 52px),
+    linear-gradient(180deg, #94a3b8, #475569);
+  box-shadow: inset 0 9px 0 rgba(255, 255, 255, 0.24);
+}
+
+.boss-timing-panel {
+  position: absolute;
+  left: 50%;
+  top: 8%;
+  z-index: 11;
+  width: min(270px, 54%);
+  padding: 9px 11px;
+  border: 2px solid rgba(255, 255, 255, 0.72);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #f8fafc;
+  transform: translateX(-50%);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.22);
+}
+
+.boss-timing-panel strong,
+.boss-timing-panel span {
+  display: block;
+}
+
+.boss-timing-panel strong {
+  margin-bottom: 5px;
+  color: #fef9c3;
+  font-size: 12px;
+}
+
+.boss-timing-panel > span {
+  margin-top: 5px;
+  color: rgba(248, 250, 252, 0.82);
+  font-size: 10px;
+}
+
+.boss-timing-track {
+  position: relative;
+  height: 16px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.48);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.boss-timing-track::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.22) 0 2px, transparent 2px 18px);
+}
+
+.timing-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  width: 0%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #22c55e, #facc15 68%, #ef4444);
+  animation: boss-timing-fill 1.5s ease-in-out infinite alternate;
+}
+
+.timing-perfect-zone {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  width: 12%;
+  border-left: 2px solid rgba(255, 255, 255, 0.92);
+  background: rgba(254, 240, 138, 0.34);
+  box-shadow: 0 0 18px rgba(250, 204, 21, 0.46);
+}
+
+@keyframes boss-timing-fill {
+  from { width: 0%; }
+  to { width: 100%; }
 }
 
 .boss-fighter {
@@ -1961,6 +2216,17 @@ select option {
   border-radius: 14px;
   background: linear-gradient(135deg, #cbd5e1, #475569);
   box-shadow: inset -8px -6px 0 rgba(0, 0, 0, 0.28);
+}
+
+.boss-core::after,
+.boss-head::after {
+  content: "";
+  position: absolute;
+  inset: 8px -11px 6px auto;
+  width: 13px;
+  border-radius: inherit;
+  background: rgba(15, 23, 42, 0.32);
+  transform: skewY(-14deg);
 }
 
 .boss-arm {
