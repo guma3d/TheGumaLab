@@ -1,5 +1,5 @@
 """
-Generate GumaSpending PWA icons to match GumaStockReport/GumaPhoto style.
+Generate GumaSpending PWA icons to match GumaStockReport style.
 Dark background (#050505) with emerald (#10b981) wallet/won glyph.
 
 Usage (one-shot, commit resulting PNGs):

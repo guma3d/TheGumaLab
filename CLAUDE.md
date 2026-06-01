@@ -1,4 +1,4 @@
-# TheGumaLab — Claude 작업 가이드라인 (CLAUDE.md)
+﻿# TheGumaLab — Claude 작업 가이드라인 (CLAUDE.md)
 
 `TheGumaLab` (Guma LAB Universe) 내 모든 하위 프로젝트에 공통 적용되는 개발·동기화·배포 원칙 및 Claude Code 작업 지침. 3대 PC(**HomeServer / Gram / SurfacePro**) 간 협업과 무중단 홈서버 운영을 위해 엄격히 준수.
 
@@ -8,7 +8,6 @@
 
 HomeServer 중심의 **개인용 self-hosted 서비스 생태계**. 모든 서비스는 Docker Compose로 통합 관리되며 단일 Monorepo 구조.
 
-**하위 프로젝트**: `GumaPhoto`(gumaphoto.guma3d.com) · `GumaStockReport` · `GumaImageAnalyzer` · `GumaServerStatus` · `GumaTube`(YoutubeToDoc 포함) · `Index`(WebAuthn 인증) · `Nginx`(리버스 프록시)
 
 **도메인 컨벤션**: 모든 서비스는 `*.guma3d.com` 서브도메인 사용. 신규 서비스도 동일 규칙 적용.
 
@@ -74,7 +73,6 @@ HomeServer 중심의 **개인용 self-hosted 서비스 생태계**. 모든 서�
 - `.env`, `*.key`, `*credentials*.json` 등은 **절대 git 커밋 금지**. 각 하위 프로젝트 `.gitignore`에 등재 필수.
 - 변경 시 반드시 **SCP / SFTP / SSH로 직접 덮어쓰기**:
   ```bash
-  scp ./GumaPhoto/.env HomeServer:/d/TheGumaLab/GumaPhoto/.env
   ```
 - GitHub 경유 동기화 **절대 금지**. 실수로 커밋된 민감 정보는 즉시 rotate 후 사용자에게 보고.
 
@@ -83,12 +81,10 @@ HomeServer 중심의 **개인용 self-hosted 서비스 생태계**. 모든 서�
 ## 🐳 4. Docker & 배포
 
 - 모든 서비스는 `docker-compose.yml`로 정의. 통합 compose 또는 하위 프로젝트별 compose 사용.
-- 컨테이너 이름은 `{service}_{role}` 형식 (예: `gumaphoto_celery`, `gumaphoto_web`).
 - 신규 서비스 추가 시 `Nginx/` 하위 리버스 프록시 설정도 함께 갱신.
 - 범용 배포 스크립트 사용:
   ```bat
   pull_update.bat <ProjectName> [container_to_restart]
-  REM 예: pull_update.bat GumaPhoto gumaphoto_celery
   REM     pull_update.bat GumaStockReport
   ```
 - 대부분의 서비스는 소스코드를 bind mount(`.:/app`)로 사용. `pull_update.bat` 후 `docker compose up -d`는 실행 중인 컨테이너를 재시작하지 않음.
@@ -113,7 +109,6 @@ HomeServer 중심의 **개인용 self-hosted 서비스 생태계**. 모든 서�
 
 **선택적 배포 규칙** — 변경된 폴더의 프로젝트만 배포:
 - `GumaStockReport/` 파일 변경 → `gumastockreport_app` 만 재시작
-- `GumaPhoto/` 파일 변경 → `gumaphoto_web` 만 재시작
 - 루트 파일만 변경 (`CLAUDE.md` 등) → 배포 없음
 
 **재시작의 의미**: watchfiles는 **컨테이너 재시작이 아닌 컨테이너 내부 Python 프로세스 재시작**. 컨테이너는 살아있고 Flask만 재기동 → 다운타임 없음.

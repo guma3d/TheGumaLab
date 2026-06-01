@@ -115,10 +115,6 @@ async def logout(request: Request):
     return response
 
 # Fallback redirects for aggressively cached mobile browsers hitting old paths
-@app.get("/GumaPhoto/")
-async def fallback_gumaphoto():
-    return RedirectResponse(url="https://gumaphoto.guma3d.com/", status_code=301)
-
 @app.get("/ServerStatus/")
 async def fallback_status():
     return RedirectResponse(url="https://gumaserverstatus.guma3d.com/", status_code=301)

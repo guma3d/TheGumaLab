@@ -1,4 +1,4 @@
-# GumaImageAnalyzer — CLAUDE.md
+﻿# GumaImageAnalyzer — CLAUDE.md
 
 이미지 분석 유틸리티 서비스.
 
@@ -29,4 +29,3 @@ pull_update.bat GumaImageAnalyzer
 
 ## 주의사항
 - `uploads/` 폴더는 git 제외 대상.
-- GumaPhoto와 역할 중복 여부 주기적으로 검토 필요.

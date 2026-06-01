@@ -2,8 +2,7 @@
 REM ============================================================
 REM  TheGumaLab — Universal deploy script (HomeServer)
 REM  Usage:  pull_update.bat ^<ProjectName^> [container_to_restart]
-REM  Example: pull_update.bat GumaPhoto gumaphoto_celery
-REM           pull_update.bat GumaStockReport
+REM  Example: pull_update.bat GumaStockReport
 REM ============================================================
 
 setlocal
@@ -13,7 +12,7 @@ if "%~1"=="" (
     echo Usage: pull_update.bat ^<ProjectName^> [container_to_restart]
     echo.
     echo Available projects:
-    echo   GumaPhoto  GumaStockReport  GumaImageAnalyzer
+    echo   GumaStockReport  GumaImageAnalyzer
     echo   GumaServerStatus  GumaTube  GumaTutorDoc  Index  Nginx
     echo.
     exit /b 1
