@@ -2053,7 +2053,7 @@ function spawnSeasonTwoItem(game, settings, chapter) {
     point: item.point,
     growth: item.growth,
     lane: randomInt(0, 2),
-    y: -10,
+    y: 12,
     id: `${kind}-${game.tick}-${Math.random().toString(36).slice(2, 6)}`,
   });
 }
@@ -2097,6 +2097,7 @@ function enterSeasonTwoBossFight(game, settings) {
   game.boss = seasonTwoBossForChapter(game.chapter, settings);
   game.bossHp = game.boss.maxHp;
   game.message = `${game.boss.name} 등장! 카메라가 전투장면으로 이동합니다.`;
+  stopGameTimer();
   playTone({ frequency: 170, duration: 0.18, type: "sawtooth", volume: 0.05, slide: 220 });
 }
 
@@ -2131,8 +2132,7 @@ function updateSeasonTwoRunner() {
   }
 
   if (g.phase === "boss") {
-    g.tick += 1;
-    renderSeasonTwo();
+    stopGameTimer();
     return;
   }
 

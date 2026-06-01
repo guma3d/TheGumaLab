@@ -1449,16 +1449,16 @@ select option {
 }
 
 .runner-world {
-  top: 6%;
-  perspective: 880px;
+  top: 0;
+  perspective: 980px;
 }
 
 .runner-road {
   position: absolute;
-  left: 15%;
-  right: 15%;
-  top: 4%;
-  bottom: 16%;
+  left: 8%;
+  right: 8%;
+  top: -22%;
+  bottom: 5%;
   overflow: hidden;
   border-radius: 22px 22px 14px 14px;
   background:
@@ -1466,7 +1466,7 @@ select option {
     repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0 22px, transparent 22px 58px),
     linear-gradient(180deg, #94a3b8 0%, #64748b 36%, #334155 100%);
   box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.5), 0 16px 34px rgba(15, 23, 42, 0.28);
-  transform: rotateX(15deg);
+  transform: rotateX(18deg);
   transform-origin: bottom;
 }
 
@@ -1500,7 +1500,7 @@ select option {
 .boss-gate {
   position: absolute;
   left: 50%;
-  top: 7%;
+  top: 21%;
   z-index: 3;
   width: 126px;
   padding: 6px 8px;
@@ -1518,7 +1518,7 @@ select option {
 
 .runner-kaiju {
   position: absolute;
-  bottom: 15%;
+  bottom: 9%;
   z-index: 7;
   width: 110px;
   height: 110px;
