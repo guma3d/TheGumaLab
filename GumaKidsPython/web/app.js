@@ -258,13 +258,13 @@ const seasonOneChapters = {
   11: {
     title: "랜덤 함정",
     focus: "trap_speed",
-    syntax: "random은 매번 다른 값을 뽑는 함수입니다. 함정은 random으로 x축, y축 움직임을 골라 돌아다니고, trap_speed가 클수록 한 번에 더 멀리 움직입니다. 함정에 닿으면 trap_damage만큼 hp가 줄어듭니다.",
+    syntax: "random은 매번 다른 값을 뽑는 함수입니다. 함정은 random으로 x축, y축 움직임을 골라 돌아다니고, trap_speed가 클수록 한 번에 더 멀리 움직입니다. 함정에 닿으면 폭파 이펙트가 나오고 게임이 끝납니다.",
     pages: [
-      ["1. 오늘의 장면", "함정 하나가 랜덤하게 움직이고, 닿으면 체력이 줄어듭니다."],
-      ["2. 오늘의 코드", "trap_speed는 함정 속도, trap_damage는 함정에 닿았을 때 빠지는 체력입니다."],
+      ["1. 오늘의 장면", "함정 하나가 랜덤하게 움직이고, 닿으면 폭발하며 게임이 종료됩니다."],
+      ["2. 오늘의 코드", "trap_speed는 함정 속도, trap_damage는 폭발 피해량입니다."],
       ["3. 기술 설명", "파이썬에서는 import random 뒤에 random.choice([-1, 0, 1])처럼 쓰면 여러 값 중 하나를 뽑을 수 있습니다."],
       ["4. 바꿔보기", "trap_speed를 1, 3, 6으로 바꾸고 함정 움직임을 비교합니다."],
-      ["5. 미션", "피할 수는 있지만 긴장되는 함정 속도와 데미지를 정합니다."],
+      ["5. 미션", "피할 수는 있지만 긴장되는 함정 속도와 폭발 피해량을 정합니다."],
     ],
   },
   12: {
@@ -1243,6 +1243,7 @@ function seasonOneReset() {
     combo: 0,
     win: false,
     gameOver: false,
+    explosion: null,
     chapter,
     phase: 0,
     message: s.start_message || "모험 시작!",
@@ -1393,6 +1394,21 @@ function renderSeasonOne() {
     board.appendChild(sprite);
   }
 
+  if (g.explosion) {
+    const explosion = document.createElement("div");
+    explosion.className = "trap-explosion";
+    explosion.innerHTML = `
+      <span class="blast-core"></span>
+      <span class="blast-ring"></span>
+      <span class="blast-ray ray-a"></span>
+      <span class="blast-ray ray-b"></span>
+      <span class="blast-ray ray-c"></span>
+      <strong>BOOM!</strong>
+    `;
+    Object.assign(explosion.style, percentStyle(g.explosion.x, g.explosion.y));
+    board.appendChild(explosion);
+  }
+
   if (g.win) {
     for (let index = 0; index < 8; index += 1) {
       const spark = document.createElement("div");
@@ -1452,14 +1468,18 @@ function triggerSeasonOneTrap(item, settings, game) {
   item.taken = true;
   game.combo = 0;
   game.collected.trap += 1;
+  game.explosion = { x: item.x, y: item.y, label: item.label };
   const damage = toNumber(settings.trap_damage, 20);
   game.hp = Math.max(0, game.hp - damage);
-  game.message = `${item.label}! 체력이 ${damage} 줄었어.`;
+  game.gameOver = true;
+  state.gameStarted = false;
+  state.startNotice = false;
+  stopGameTimer();
+  stopMusic();
+  game.message = `${item.label} 폭발! 피해 ${damage}. 게임 종료!`;
+  setStatus("함정에 부딪혀 게임이 종료되었습니다. 다시 시작으로 재도전할 수 있습니다.");
+  setLockedControls();
   playPickupSound("trap");
-  if (game.hp <= 0) {
-    game.gameOver = true;
-    game.message = "체력이 0이 되었어. 다시 시작해서 도전!";
-  }
 }
 
 function collectSeasonOne() {

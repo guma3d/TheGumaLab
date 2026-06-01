@@ -1284,6 +1284,84 @@ select option {
   to { transform: translateX(3px); }
 }
 
+.trap-explosion {
+  position: absolute;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  transform: translate(-18px, -24px);
+  pointer-events: none;
+}
+
+.trap-explosion span,
+.trap-explosion strong {
+  position: absolute;
+}
+
+.blast-core {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 36% 30%, #ffffff 0 10%, transparent 11%),
+    radial-gradient(circle, #fef08a 0 28%, #fb923c 29% 58%, #dc2626 59% 100%);
+  box-shadow: 0 0 34px rgba(248, 113, 113, 0.78), 0 0 70px rgba(251, 191, 36, 0.46);
+  animation: blast-core-pop 0.76s ease-out infinite;
+}
+
+.blast-ring {
+  width: 82px;
+  height: 82px;
+  border: 5px solid rgba(254, 240, 138, 0.86);
+  border-radius: 50%;
+  box-shadow: 0 0 18px rgba(248, 113, 113, 0.68);
+  animation: blast-ring-pop 0.76s ease-out infinite;
+}
+
+.blast-ray {
+  width: 96px;
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, #fef08a 25%, #f97316 50%, #ef4444 76%, transparent);
+  opacity: 0.86;
+  animation: blast-ray-flash 0.76s ease-out infinite;
+}
+
+.blast-ray.ray-a { --ray-angle: 0deg; }
+.blast-ray.ray-b { --ray-angle: 60deg; }
+.blast-ray.ray-c { --ray-angle: 120deg; }
+
+.trap-explosion strong {
+  bottom: -4px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(69, 10, 10, 0.76);
+  color: #fef2f2;
+  font-size: 11px;
+  letter-spacing: 0;
+  text-shadow: 0 2px 4px #000;
+}
+
+@keyframes blast-core-pop {
+  0% { transform: scale(0.55); opacity: 0.4; }
+  34% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.78; }
+}
+
+@keyframes blast-ring-pop {
+  0% { transform: scale(0.3); opacity: 0; }
+  42% { opacity: 1; }
+  100% { transform: scale(1.22); opacity: 0; }
+}
+
+@keyframes blast-ray-flash {
+  0% { transform: scaleX(0.38) rotate(var(--ray-angle, 0deg)); opacity: 0; }
+  34% { opacity: 0.95; }
+  100% { transform: scaleX(1) rotate(var(--ray-angle, 0deg)); opacity: 0; }
+}
+
 .firework {
   position: absolute;
   z-index: 9;
