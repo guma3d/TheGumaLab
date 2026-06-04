@@ -17,8 +17,15 @@
   box-sizing: border-box;
 }
 
+html {
+  height: 100%;
+}
+
 body {
   margin: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100vh;
   min-height: 100vh;
   background:
     radial-gradient(circle at 20% -10%, rgba(16, 185, 129, 0.16), transparent 34%),
@@ -26,7 +33,7 @@ body {
     var(--bg-dark);
   color: var(--text-main);
   font-family: "Outfit", "Malgun Gothic", "Apple SD Gothic Neo", Arial, sans-serif;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 button,
@@ -96,7 +103,7 @@ select option {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 20px clamp(18px, 4vw, 42px);
+  padding: 14px clamp(18px, 3vw, 34px);
   background: rgba(255, 255, 255, 0.03);
   border-bottom: 1px solid var(--glass-border);
   backdrop-filter: blur(14px);
@@ -123,22 +130,30 @@ select option {
 .app-shell {
   width: calc(100vw - 24px);
   max-width: none;
-  margin: 12px auto;
+  min-height: 0;
+  margin: 0 auto;
+  padding: 10px 0;
+  overflow: hidden;
 }
 
 .ide-layout {
   display: grid;
-  grid-template-columns: minmax(168px, 12vw) minmax(430px, 0.9fr) minmax(360px, 38vw);
+  grid-template-columns: minmax(168px, 12vw) minmax(420px, 1fr) minmax(350px, min(38vw, 520px));
   gap: 12px;
   align-items: stretch;
-  min-height: calc(100vh - 156px);
+  height: 100%;
+  min-height: 0;
+}
+
+body.file-tree-collapsed .ide-layout {
+  grid-template-columns: 58px minmax(450px, 1fr) minmax(350px, min(40vw, 540px));
 }
 
 .study-stack {
   display: grid;
-  grid-template-rows: minmax(180px, 3fr) minmax(420px, 7fr);
+  grid-template-rows: minmax(0, 3fr) minmax(0, 7fr);
   gap: 12px;
-  min-height: calc(100vh - 156px);
+  min-height: 0;
 }
 
 .file-panel,
@@ -157,6 +172,10 @@ select option {
 .file-panel,
 .code-panel {
   padding: 18px;
+}
+
+.lesson-panel {
+  padding: 10px 12px;
 }
 
 .study-stack {
@@ -215,9 +234,47 @@ select option {
   overflow: hidden;
 }
 
+.file-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
 .file-panel h2 {
   margin: 0 0 16px;
   font-size: 20px;
+}
+
+.file-panel-toggle {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+}
+
+.file-panel-toggle span {
+  display: block;
+  width: 15px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+body.file-tree-collapsed .file-panel {
+  padding: 12px 10px;
+}
+
+body.file-tree-collapsed .file-panel-head {
+  justify-content: center;
+}
+
+body.file-tree-collapsed .file-panel-head > div,
+body.file-tree-collapsed .file-tree {
+  display: none;
 }
 
 .file-tree {
@@ -273,9 +330,9 @@ select option {
 .lesson-panel .eyebrow {
   display: inline-flex;
   align-items: center;
-  min-height: 30px;
-  margin: 0 0 8px;
-  padding: 5px 10px;
+  min-height: 24px;
+  margin: 0 0 4px;
+  padding: 3px 9px;
   border: 2px solid rgba(255, 255, 255, 0.82);
   border-radius: 999px;
   background: linear-gradient(135deg, #7c3aed, #ec4899);
@@ -286,9 +343,9 @@ select option {
 
 .lesson-panel h2 {
   display: inline;
-  margin: 0 0 14px;
+  margin: 0 0 6px;
   color: #4c1d95;
-  font-size: 24px;
+  font-size: 20px;
   line-height: 1.2;
   text-shadow: 0 2px 0 rgba(255, 255, 255, 0.75);
   box-decoration-break: clone;
@@ -299,7 +356,7 @@ select option {
 .lesson-body {
   display: grid;
   min-height: 0;
-  margin-top: 16px;
+  margin-top: 8px;
   overflow: hidden;
 }
 
@@ -309,7 +366,7 @@ select option {
   align-content: start;
   min-height: 0;
   height: 100%;
-  padding: 22px 22px 18px;
+  padding: 10px 14px 10px;
   border: 3px solid #ffffff;
   border-radius: 8px;
   background:
@@ -346,9 +403,9 @@ select option {
   position: relative;
   z-index: 1;
   display: block;
-  margin-bottom: 10px;
+  margin-bottom: 4px;
   color: #be123c;
-  font-size: 21px;
+  font-size: 15px;
   line-height: 1.28;
 }
 
@@ -358,9 +415,9 @@ select option {
   margin: 0;
   max-width: calc(100% - 34px);
   color: #3b2c66;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 700;
-  line-height: 1.62;
+  line-height: 1.36;
   text-wrap: pretty;
 }
 
@@ -428,10 +485,12 @@ select option {
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 8px;
-  margin-top: 14px;
+  margin-top: 6px;
 }
 
 .lesson-controls button {
+  min-height: 30px;
+  padding: 5px 9px;
   border: 2px solid rgba(255, 255, 255, 0.88);
   background: linear-gradient(135deg, #38bdf8, #22c55e);
   color: #052e16;
@@ -452,8 +511,8 @@ select option {
 }
 
 .lesson-controls span {
-  min-height: 38px;
-  padding: 8px 12px;
+  min-height: 30px;
+  padding: 5px 10px;
   border: 2px solid rgba(255, 255, 255, 0.78);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.64);
@@ -463,7 +522,8 @@ select option {
 }
 
 .lesson-panel .status {
-  margin: 12px 0 0;
+  display: none;
+  margin: 6px 0 0;
   color: #6b21a8;
   font-weight: 800;
 }
@@ -492,7 +552,7 @@ select option {
 .play-panel {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  min-height: calc(100vh - 156px);
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -2522,6 +2582,16 @@ select option {
 }
 
 @media (max-width: 940px) {
+  body {
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
+  }
+
+  .app-shell {
+    overflow: visible;
+  }
+
   .topbar,
   .ide-layout {
     grid-template-columns: 1fr;
@@ -2541,8 +2611,10 @@ select option {
   }
 
   .study-stack,
+  .ide-layout,
   .file-panel,
   .code-panel {
+    height: auto;
     min-height: auto;
   }
 

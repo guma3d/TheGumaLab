@@ -29,8 +29,15 @@
       <section class="ide-layout">
         <aside class="file-panel">
           <div class="file-panel-head">
-            <p class="eyebrow">파일트리</p>
-            <h2>project</h2>
+            <div>
+              <p class="eyebrow">파일트리</p>
+              <h2>project</h2>
+            </div>
+            <button id="filePanelToggle" class="file-panel-toggle" type="button" aria-label="파일트리 펼치기" aria-expanded="false">
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
           </div>
           <div id="fileTree" class="file-tree"></div>
         </aside>

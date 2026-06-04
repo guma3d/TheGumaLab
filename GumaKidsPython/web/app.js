@@ -517,6 +517,7 @@ const els = {
   chapterSelect: document.querySelector("#chapterSelect"),
   saveStatus: document.querySelector("#saveStatus"),
   fileTree: document.querySelector("#fileTree"),
+  filePanelToggle: document.querySelector("#filePanelToggle"),
   activeFileLabel: document.querySelector("#activeFileLabel"),
   chapterLabel: document.querySelector("#chapterLabel"),
   seasonTitle: document.querySelector("#seasonTitle"),
@@ -733,6 +734,21 @@ function renderFileTree() {
       </button>
     `)
     .join("");
+}
+
+function setFilePanelCollapsed(collapsed, persist = true) {
+  document.body.classList.toggle("file-tree-collapsed", collapsed);
+  if (els.filePanelToggle) {
+    els.filePanelToggle.setAttribute("aria-expanded", String(!collapsed));
+    els.filePanelToggle.setAttribute("aria-label", collapsed ? "파일트리 펼치기" : "파일트리 접기");
+    els.filePanelToggle.title = collapsed ? "파일트리 펼치기" : "파일트리 접기";
+  }
+  if (persist) localStorage.setItem("guma-file-tree-collapsed", collapsed ? "1" : "0");
+}
+
+function initFilePanelState() {
+  const saved = localStorage.getItem("guma-file-tree-collapsed");
+  setFilePanelCollapsed(saved === null ? true : saved === "1", false);
 }
 
 function readOnlyFileContent(fileName) {
@@ -3038,6 +3054,10 @@ els.fileTree.addEventListener("click", (event) => {
   renderActiveSeason(false, true);
 });
 
+els.filePanelToggle?.addEventListener("click", () => {
+  setFilePanelCollapsed(!document.body.classList.contains("file-tree-collapsed"));
+});
+
 els.applyUpgrade.addEventListener("click", () => {
   if (state.gameStarted) return;
   if (state.activeFile !== "upgrade_zone.py") {
@@ -3130,6 +3150,8 @@ document.addEventListener("keydown", (event) => {
     if (isSpace && seasonTwoGame?.phase === "boss") seasonTwoAction();
   }
 });
+
+initFilePanelState();
 
 loadSave().catch(() => {
   state.save = { profile: "default", seasons: {} };
