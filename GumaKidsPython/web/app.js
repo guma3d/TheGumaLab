@@ -46,14 +46,14 @@ const seasons = {
     title: "괴수 러너 성장 게임",
     chapters: "챕터 13~24",
     lesson: [
-      ["1. 오늘의 장면", "아기괴물이 달리며 먹이를 먹고 점수와 몸집을 키운 뒤 보스와 싸웁니다."],
+      ["1. 오늘의 장면", "아기공룡이 달리며 먹이를 먹고 점수와 몸집을 키운 뒤 보스와 싸웁니다."],
       ["2. 오늘의 코드", "입력값, 조건문, 비교 연산으로 성장과 변신, 보스전 규칙을 정합니다."],
       ["3. 코드가 하는 일", "True와 False는 방어막, 대시, 변신 조건처럼 게임 규칙을 켜고 끕니다."],
       ["4. 바꿔보기", "growth_per_item, mutation_size, shield_ready 값을 바꾸고 결과를 비교합니다."],
-      ["5. 미션", "몸집이 커지다가 일정 기준을 넘으면 전혀 다른 괴수로 변신하게 만듭니다."],
+      ["5. 미션", "아기공룡이 괴수1, 괴수2로 두 번 변신하게 만듭니다."],
     ],
     fields: [
-      ["baby_name", "아기괴물 이름", "꼬마구마"],
+      ["baby_name", "아기공룡 이름", "꼬마구마"],
       ["runner_title", "출발 문장", "꼬마구마 출동!"],
       ["roar_text", "괴수 대사", "우와앙! 더 커질 거야!"],
       ["favorite_food", "좋아하는 먹이", "고기"],
@@ -310,10 +310,10 @@ const seasonTwoEditPlans = {
 };
 
 const seasonTwoUnlocks = {
-  1: "아기괴물 이름표와 3D 스타일 세로 러너 캐릭터가 등장합니다.",
+  1: "아기공룡 이름표와 3D 스타일 세로 러너 캐릭터가 등장합니다.",
   2: "괴수가 세로 트랙을 달리며 포효 말풍선을 보여 줍니다.",
   3: "위에서 내려오는 젤리 아이템을 먹으면 점수와 몸집이 오릅니다.",
-  4: "몸집 기준을 넘으면 더 큰 괴수로 변신합니다.",
+  4: "몸집 기준을 넘으면 아기공룡이 괴수1로 변신합니다.",
   5: "젤리, 고기, 크리스탈이 서로 다른 점수와 성장량을 줍니다.",
   6: "장애물과 체력 경고가 생겨 피해야 할 이유가 생깁니다.",
   7: "첫 보스전이 열리고 공격력과 보스 공격력을 비교합니다.",
@@ -326,11 +326,11 @@ const seasonTwoUnlocks = {
 
 const seasonTwoChapters = {
   1: {
-    title: "아기괴물 출발",
+    title: "아기공룡 출발",
     focus: "baby_name",
     syntax: "input()은 사용자가 넣은 글자를 프로그램으로 가져오는 함수입니다. 웹버전에서는 직접 입력창을 띄우지 않고 baby_name 값을 바꿔 입력 결과처럼 사용합니다.",
     pages: [
-      ["1. 오늘의 장면", "아기괴물이 세로 러너 트랙에 처음 등장합니다."],
+      ["1. 오늘의 장면", "아기공룡이 세로 러너 트랙에 처음 등장합니다."],
       ["2. 오늘의 코드", "baby_name은 화면 이름표와 게임 저장에 쓰이는 문자열입니다."],
       ["3. 기술 설명", "input()으로 받은 값은 먼저 str, 즉 글자로 들어옵니다."],
       ["4. 바꿔보기", "baby_name을 나만의 괴수 이름으로 바꾸고 게임 화면에서 확인합니다."],
@@ -364,7 +364,7 @@ const seasonTwoChapters = {
   4: {
     title: "첫 변신 조건",
     focus: "mutation_size",
-    syntax: "if는 조건이 참일 때만 아래 코드를 실행합니다. 몸집이 mutation_size 이상이면 큰 괴수로 변신하는 규칙을 만들 수 있습니다.",
+    syntax: "if는 조건이 참일 때만 아래 코드를 실행합니다. 몸집이 mutation_size / 2 이상이면 괴수1, mutation_size 이상이면 괴수2로 변신하는 규칙을 만들 수 있습니다.",
     pages: [
       ["1. 오늘의 장면", "몸집이 커지다가 기준을 넘으면 모습이 달라집니다."],
       ["2. 오늘의 코드", "growth_per_item은 먹을 때 커지는 양, mutation_size는 변신 기준입니다."],
@@ -414,7 +414,7 @@ const seasonTwoChapters = {
     focus: "growth",
     syntax: "> 와 < 는 숫자의 크기를 비교합니다. 몸집이 작을 때, 클 때, 아주 클 때를 나눠 화면에 다른 괴수를 보여 줄 수 있습니다.",
     pages: [
-      ["1. 오늘의 장면", "아기괴물, 큰 괴물, 변신괴수 단계가 뚜렷하게 보입니다."],
+      ["1. 오늘의 장면", "아기공룡, 괴수1, 괴수2 단계가 뚜렷하게 보입니다."],
       ["2. 오늘의 코드", "growth와 start_size를 이용해 현재 몸집을 계산합니다."],
       ["3. 기술 설명", "비교 연산의 결과는 True 또는 False가 됩니다."],
       ["4. 바꿔보기", "시작 성장값을 높여 바로 큰 괴수로 출발해 봅니다."],
@@ -1190,7 +1190,7 @@ function generateCode(seasonKey) {
       "# 웹버전에서는 input()을 직접 띄우지 않고, 아래 변수 값을 바꿔 입력처럼 사용합니다.",
       "",
       "# =========================",
-      "# [챕터 13] 아기괴물 이름 입력",
+      "# [챕터 13] 아기공룡 이름 입력",
       "# baby_name = input(\"괴수 이름은? \") 와 같은 역할입니다.",
       `# [오늘의 업그레이드: ${activePlan.lines}줄]`,
       "# =========================",
@@ -1226,8 +1226,10 @@ function generateCode(seasonKey) {
       "",
       "def check_mutation(size):",
       "    if size >= mutation_size:",
-      "        return \"변신괴수\"",
-      "    return \"아기괴물\"",
+      "        return \"괴수2\"",
+      "    elif size >= mutation_size / 2:",
+      "        return \"괴수1\"",
+      "    return \"아기공룡\"",
       "",
       "# =========================",
       "# [챕터 17] == 로 좋아하는 먹이 확인",
@@ -1993,6 +1995,9 @@ function seasonTwoChapter() {
   return Math.max(1, Math.min(12, Number(state.activeChapter) || 1));
 }
 
+const SEASON_TWO_CHARACTER_SIZE_MULTIPLIER = 0.5;
+const SEASON_TWO_ATTACK_EFFECT_MS = 520;
+
 function seasonTwoHas(chapter) {
   return seasonTwoChapter() >= chapter;
 }
@@ -2009,10 +2014,15 @@ function seasonTwoBossForChapter(chapter = seasonTwoChapter(), settings = state.
 }
 
 function seasonTwoEvolution(size, mutationSize) {
-  if (size >= mutationSize * 1.75) return { name: "전설 괴수", className: "legend", scale: 1.72, rank: 4 };
-  if (size >= mutationSize) return { name: "변신괴수", className: "mutant", scale: 1.42, rank: 3 };
-  if (size >= mutationSize * 0.58) return { name: "큰 괴수", className: "grown", scale: 1.2, rank: 2 };
-  return { name: "아기괴물", className: "baby", scale: 1, rank: 1 };
+  const firstMutationSize = Math.max(10, mutationSize * 0.5);
+  const secondMutationSize = Math.max(firstMutationSize + 1, mutationSize);
+  if (size >= secondMutationSize) return { name: "괴수2", className: "kaiju2", scale: 1.36, rank: 3 };
+  if (size >= firstMutationSize) return { name: "괴수1", className: "kaiju1", scale: 1.18, rank: 2 };
+  return { name: "아기공룡", className: "baby", scale: 1, rank: 1 };
+}
+
+function seasonTwoChapterGrowthMultiplier(chapter) {
+  return 1 + Math.max(0, Math.min(11, chapter - 1)) * 0.15;
 }
 
 function seasonTwoRunnerGoal(chapter) {
@@ -2046,6 +2056,8 @@ function seasonTwoReset() {
     bossHp: boss.maxHp,
     bossMeterStartedAt: 0,
     lastTiming: null,
+    attackEffectUntil: 0,
+    attackEffectQuality: 0,
     bossCameraReady: false,
     shieldCharges: toBool(s.shield_ready) ? 2 : 0,
     dashCharges: toBool(s.dash_ready) ? 2 : 0,
@@ -2118,7 +2130,8 @@ function collectSeasonTwoItem(item, settings, game) {
 
   const favoriteBonus = item.label === settings.favorite_food ? 2 : 1;
   const coreBonus = item.kind === "core" && (toBool(settings.red_core) || toBool(settings.blue_core)) ? 2 : 1;
-  const growthGain = Math.round(item.growth * favoriteBonus * coreBonus);
+  const chapterGrowthBonus = seasonTwoChapterGrowthMultiplier(game.chapter);
+  const growthGain = Math.round(item.growth * favoriteBonus * coreBonus * chapterGrowthBonus);
   const mutationSize = Math.max(10, toNumber(settings.mutation_size, 60));
   const beforeEvolution = seasonTwoEvolution(game.size, mutationSize);
   game.score += item.point * favoriteBonus;
@@ -2140,6 +2153,8 @@ function enterSeasonTwoBossFight(game, settings) {
   game.bossHp = game.boss.maxHp;
   game.bossMeterStartedAt = performance.now();
   game.lastTiming = null;
+  game.attackEffectUntil = 0;
+  game.attackEffectQuality = 0;
   game.bossCameraReady = false;
   game.message = `${game.boss.name} 등장! 카메라가 전투장면으로 이동합니다.`;
   stopGameTimer();
@@ -2203,7 +2218,7 @@ function updateSeasonTwoRunner() {
 function seasonTwoMonsterMarkup(name, evolution, extraClass = "", scale = 1) {
   const safeName = name || "괴수";
   return `
-    <div class="kaiju-model ${evolution.className} ${extraClass}" style="--monster-scale:${scale * evolution.scale}">
+    <div class="kaiju-model ${evolution.className} ${extraClass}" style="--monster-scale:${scale * evolution.scale * SEASON_TWO_CHARACTER_SIZE_MULTIPLIER}">
       <span class="kaiju-shadow"></span>
       <span class="kaiju-tail"></span>
       <span class="kaiju-leg leg-a"></span>
@@ -2366,13 +2381,17 @@ function addSeasonTwoCone(THREE, group, radius, height, position, color, rotatio
 function createSeasonTwoKaiju3D(THREE, evolution, scale = 1) {
   const colors = {
     baby: { body: 0x22c55e, dark: 0x15803d, belly: 0xfef3c7, horn: 0xfde68a, claw: 0xfffbeb, mouth: 0x7f1d1d },
+    kaiju1: { body: 0xfacc15, dark: 0xca8a04, belly: 0xecfccb, horn: 0x22c55e, claw: 0xfffbeb, mouth: 0x7f1d1d },
+    kaiju2: { body: 0xef4444, dark: 0xb91c1c, belly: 0xffedd5, horn: 0xf97316, claw: 0xfffbeb, mouth: 0x450a0a },
     grown: { body: 0xfacc15, dark: 0xca8a04, belly: 0xecfccb, horn: 0x22c55e, claw: 0xfffbeb, mouth: 0x7f1d1d },
     mutant: { body: 0xef4444, dark: 0xb91c1c, belly: 0xffedd5, horn: 0xf97316, claw: 0xfffbeb, mouth: 0x450a0a },
     legend: { body: 0x38bdf8, dark: 0x0284c7, belly: 0xf5d0fe, horn: 0xa78bfa, claw: 0xfef9c3, mouth: 0x312e81 },
   };
   const palette = colors[evolution.className] || colors.baby;
   const group = new THREE.Group();
-  group.scale.setScalar(scale * Math.max(0.98, evolution.scale * 0.7));
+  group.scale.setScalar(SEASON_TWO_CHARACTER_SIZE_MULTIPLIER * scale * Math.max(0.98, evolution.scale * 0.7));
+  const legs = [];
+  const arms = [];
 
   const shadow = addSeasonTwoCylinder(THREE, group, 0.8, 0.8, 0.03, [0, 0.03, 0.08], 0x0f172a, [0, 0, 0], 36);
   shadow.scale.set(1.36, 1, 0.72);
@@ -2407,9 +2426,19 @@ function createSeasonTwoKaiju3D(THREE, evolution, scale = 1) {
   addSeasonTwoCone(THREE, group, 0.16, 0.46, [0, 0.68, -1.48], palette.horn, [-Math.PI / 2, 0, 0], 16);
 
   for (const side of [-1, 1]) {
-    addSeasonTwoBox(THREE, group, [0.24, 0.56, 0.34], [side * 0.36, 0.48, 0.04], palette.dark, [0.02, 0, side * 0.08], { flatShading: true });
-    addSeasonTwoBox(THREE, group, [0.42, 0.18, 0.62], [side * 0.36, 0.18, 0.34], palette.dark, [0, side * 0.08, 0], { flatShading: true });
-    addSeasonTwoBox(THREE, group, [0.22, 0.5, 0.28], [side * 0.66, 1.14, 0.18], palette.body, [0.16, 0, side * 0.54], { flatShading: true });
+    legs.push({
+      mesh: addSeasonTwoBox(THREE, group, [0.24, 0.56, 0.34], [side * 0.36, 0.48, 0.04], palette.dark, [0.02, 0, side * 0.08], { flatShading: true }),
+      side,
+    });
+    legs.push({
+      mesh: addSeasonTwoBox(THREE, group, [0.42, 0.18, 0.62], [side * 0.36, 0.18, 0.34], palette.dark, [0, side * 0.08, 0], { flatShading: true }),
+      side,
+      foot: true,
+    });
+    arms.push({
+      mesh: addSeasonTwoBox(THREE, group, [0.22, 0.5, 0.28], [side * 0.66, 1.14, 0.18], palette.body, [0.16, 0, side * 0.54], { flatShading: true }),
+      side,
+    });
     addSeasonTwoCone(THREE, group, 0.07, 0.22, [side * 0.84, 0.86, 0.38], palette.claw, [0, 0, side > 0 ? -Math.PI / 2 : Math.PI / 2], 12);
   }
 
@@ -2445,9 +2474,40 @@ function createSeasonTwoKaiju3D(THREE, evolution, scale = 1) {
     });
   }
 
-  group.rotation.y = -0.48;
+  group.userData.runParts = { arms, legs };
+  group.rotation.y = Math.PI - 0.18;
   group.rotation.x = -0.03;
   return group;
+}
+
+function poseSeasonTwoKaijuRun(group, tick = 0, isBossScene = false, isAttacking = false) {
+  const phase = tick * 0.72;
+  const stride = Math.sin(phase);
+  const counterStride = Math.sin(phase + Math.PI);
+  const parts = group.userData.runParts || { arms: [], legs: [] };
+
+  if (!isBossScene) {
+    group.position.y += Math.abs(stride) * 0.08;
+    group.rotation.z = stride * 0.035;
+  }
+
+  if (isAttacking) {
+    group.position.x += 0.42;
+    group.position.y += 0.08;
+    group.rotation.z = -0.16;
+  }
+
+  parts.legs.forEach((part) => {
+    const wave = part.side > 0 ? stride : counterStride;
+    part.mesh.rotation.x += wave * (part.foot ? 0.22 : 0.42);
+    part.mesh.position.z += wave * (part.foot ? 0.16 : 0.08);
+  });
+
+  parts.arms.forEach((part) => {
+    const wave = part.side > 0 ? counterStride : stride;
+    part.mesh.rotation.x += wave * 0.46;
+    part.mesh.rotation.z += part.side * Math.abs(wave) * 0.12;
+  });
 }
 
 function seasonTwoMonsterScale(size, mutationSize, isBossScene) {
@@ -2594,13 +2654,30 @@ function renderSeasonTwoThreeFrame(THREE, renderer, data, panProgress = 1) {
   );
   if (data.isBossScene) {
     player.position.set(-2.35, 0.22, -0.6);
-    player.rotation.y = -0.9;
+    player.rotation.y = Math.PI / 2 + 0.08;
+    poseSeasonTwoKaijuRun(player, data.tick, true, data.attackEffectActive);
     const boss = createSeasonTwoBoss3D(THREE, data.boss);
     boss.position.set(2.55, 0.18, -0.85);
     boss.rotation.y = 0.66;
     scene.add(boss);
+    if (data.attackEffectActive) {
+      const quality = Math.max(0.45, data.attackEffectQuality || 0.6);
+      addSeasonTwoSphere(THREE, scene, 0.42 + quality * 0.36, [1.42, 1.48, -0.78], 0xfacc15, [1.18, 0.72, 1.04], {
+        emissive: 0xf97316,
+        emissiveIntensity: 0.38,
+        transparent: true,
+        opacity: 0.58,
+      });
+      addSeasonTwoBox(THREE, scene, [2.8, 0.08, 0.12], [0.02, 1.36, -0.72], 0xfef3c7, [0, 0, -0.08], {
+        emissive: 0xfacc15,
+        emissiveIntensity: 0.35,
+        transparent: true,
+        opacity: 0.76,
+      });
+    }
   } else {
     player.position.set(seasonTwoThreeLaneX(data.lane), 0.14, 5.45);
+    poseSeasonTwoKaijuRun(player, data.tick, false, false);
   }
   scene.add(player);
 
@@ -2670,6 +2747,9 @@ function renderSeasonTwo() {
   const laneLeft = seasonTwoLaneLeft(g.lane);
   const phaseLabel = g.phase === "runner" ? "러너" : g.phase === "boss" ? "보스전" : g.phase === "win" ? "승리" : "도전 종료";
   const isBossScene = g.phase === "boss" || g.phase === "win" || g.phase === "gameOver";
+  const attackEffectActive = isBossScene && (g.attackEffectUntil || 0) > performance.now();
+  const attackQuality = Math.max(0, Math.min(1, g.attackEffectQuality || g.lastTiming?.quality || 0));
+  const attackClass = attackQuality >= 0.9 ? "perfect" : attackQuality >= 0.72 ? "strong" : "normal";
   const cameraClass = isBossScene ? (g.bossCameraReady ? "camera-settled" : "camera-panning") : "";
   const playerLeft = isBossScene ? 27 : laneLeft;
   const runnerItems = g.phase === "runner" ? renderSeasonTwoItems(g) : "";
@@ -2696,13 +2776,19 @@ function renderSeasonTwo() {
     </div>
     <div class="versus-flash">VS</div>
   ` : "";
+  const bossAttackEffect = attackEffectActive ? `
+    <div class="boss-attack-effect ${attackClass}">
+      <span></span>
+      <strong>${g.lastTiming?.damage || ""}</strong>
+    </div>
+  ` : "";
   const playerBar = isBossScene ? `<div class="fighter-bar player-hp"><span style="width:${hpPercent}%"></span></div>` : "";
   setHud(
     s.runner_title || `${s.baby_name} 출동!`,
     `점수 ${g.score} · 몸집 ${Math.round(g.size)} · ${evolution.name} · 체력 ${g.hp}/${g.maxHp} · ${phaseLabel}`,
   );
   els.action.textContent = g.phase === "boss" ? "Space 타이밍 공격" : g.phase === "runner" ? "← → 이동으로 먹기" : "결과 확인";
-  const boardClass = `kaiju-runner-game chapter-${chapter} phase-${g.phase} ${cameraClass}`.trim();
+  const boardClass = `kaiju-runner-game chapter-${chapter} phase-${g.phase} ${cameraClass} ${attackEffectActive ? "attack-strike" : ""}`.trim();
 
   els.gameMount.innerHTML = `
     <div class="${boardClass}">
@@ -2729,6 +2815,7 @@ function renderSeasonTwo() {
           ${bossFighter}
         </div>
       </div>
+      ${bossAttackEffect}
       ${timingPanel}
       <div class="runner-dashboard">
         <div>
@@ -2749,10 +2836,13 @@ function renderSeasonTwo() {
     bossCameraReady: g.bossCameraReady,
     evolution,
     isBossScene,
+    attackEffectActive,
+    attackEffectQuality: attackQuality,
     items: g.items.map((item) => ({ ...item })),
     lane: g.lane,
     mutationSize,
     size: g.size,
+    tick: g.tick,
   });
   if (isBossScene && !g.bossCameraReady) {
     window.setTimeout(() => {
@@ -2794,6 +2884,8 @@ function seasonTwoAction() {
   const damage = Math.max(1, Math.round((toNumber(s.attack_power, 18) + g.size * 0.12) * coreBonus * evolutionBonus * timing.multiplier));
   g.bossHp = Math.max(0, g.bossHp - damage);
   g.lastTiming = { label: timing.label, damage, quality: timing.quality };
+  g.attackEffectUntil = performance.now() + SEASON_TWO_ATTACK_EFFECT_MS;
+  g.attackEffectQuality = timing.quality;
   g.bossMeterStartedAt = performance.now();
   g.message = `${timing.label}! ${koreanSubject(evolution.name)} ${g.boss.name}에게 ${damage} 피해`;
   playTone({ frequency: 240, duration: 0.12, type: "square", volume: 0.05, slide: 320 });
@@ -2813,6 +2905,11 @@ function seasonTwoAction() {
   }
   if (g.hp <= 0) finishSeasonTwo("gameOver", `${g.boss.name}에게 졌어. 더 크게 성장해 보자!`);
   renderSeasonTwo();
+  window.setTimeout(() => {
+    const latest = state.game.season_02;
+    if (state.activeSeason !== "season_02" || !latest || latest.phase !== "boss") return;
+    if ((latest.attackEffectUntil || 0) <= performance.now()) renderSeasonTwo();
+  }, SEASON_TWO_ATTACK_EFFECT_MS + 80);
 }
 
 function seasonThreeReset() {
