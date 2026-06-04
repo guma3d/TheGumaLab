@@ -138,7 +138,7 @@ select option {
 
 .ide-layout {
   display: grid;
-  grid-template-columns: minmax(168px, 12vw) minmax(420px, 1fr) minmax(350px, min(38vw, 520px));
+  grid-template-columns: minmax(168px, 12vw) minmax(390px, 1fr) minmax(430px, min(46vw, 620px));
   gap: 12px;
   align-items: stretch;
   height: 100%;
@@ -146,7 +146,7 @@ select option {
 }
 
 body.file-tree-collapsed .ide-layout {
-  grid-template-columns: 58px minmax(450px, 1fr) minmax(350px, min(40vw, 540px));
+  grid-template-columns: 58px minmax(390px, 1fr) minmax(430px, min(46vw, 620px));
 }
 
 .study-stack {
@@ -601,7 +601,7 @@ body.file-tree-collapsed .file-tree {
   min-height: 0;
   max-width: 100%;
   max-height: 100%;
-  aspect-ratio: 9 / 16;
+  aspect-ratio: 13.5 / 16;
 }
 
 .controls {
