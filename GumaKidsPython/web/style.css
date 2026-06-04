@@ -136,7 +136,7 @@ select option {
 
 .study-stack {
   display: grid;
-  grid-template-rows: minmax(360px, 1fr) minmax(238px, 0.36fr);
+  grid-template-rows: minmax(180px, 3fr) minmax(420px, 7fr);
   gap: 12px;
   min-height: calc(100vh - 156px);
 }
@@ -2540,13 +2540,13 @@ select option {
     grid-template-columns: 1fr;
   }
 
-  .right-stack,
+  .study-stack,
   .file-panel,
   .code-panel {
     min-height: auto;
   }
 
-  .right-stack {
+  .study-stack {
     grid-template-rows: auto auto;
   }
 
