@@ -2272,13 +2272,28 @@ function seasonTwoThreeItemZ(itemY) {
   return -16 + itemY * 0.25;
 }
 
-function makeSeasonTwoThreeMaterial(THREE, color, roughness = 0.72, metalness = 0.05) {
-  return new THREE.MeshStandardMaterial({ color, roughness, metalness });
+function makeSeasonTwoThreeMaterial(THREE, color, roughness = 0.72, metalness = 0.05, options = {}) {
+  return new THREE.MeshStandardMaterial({
+    color,
+    roughness,
+    metalness,
+    flatShading: Boolean(options.flatShading),
+    emissive: options.emissive || 0x000000,
+    emissiveIntensity: options.emissiveIntensity || 0,
+    transparent: Boolean(options.transparent),
+    opacity: options.opacity ?? 1,
+  });
 }
 
 function addSeasonTwoBox(THREE, scene, size, position, color, rotation = [0, 0, 0], materialOptions = {}) {
   const geometry = new THREE.BoxGeometry(size[0], size[1], size[2]);
-  const material = makeSeasonTwoThreeMaterial(THREE, color, materialOptions.roughness, materialOptions.metalness);
+  const material = makeSeasonTwoThreeMaterial(
+    THREE,
+    color,
+    materialOptions.roughness,
+    materialOptions.metalness,
+    materialOptions,
+  );
   const mesh = new THREE.Mesh(geometry, material);
   mesh.position.set(position[0], position[1], position[2]);
   mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
@@ -2288,9 +2303,15 @@ function addSeasonTwoBox(THREE, scene, size, position, color, rotation = [0, 0, 
   return mesh;
 }
 
-function addSeasonTwoSphere(THREE, group, radius, position, color, scale = [1, 1, 1]) {
+function addSeasonTwoSphere(THREE, group, radius, position, color, scale = [1, 1, 1], materialOptions = {}) {
   const geometry = new THREE.SphereGeometry(radius, 24, 18);
-  const material = makeSeasonTwoThreeMaterial(THREE, color, 0.64, 0.02);
+  const material = makeSeasonTwoThreeMaterial(
+    THREE,
+    color,
+    materialOptions.roughness ?? 0.64,
+    materialOptions.metalness ?? 0.02,
+    materialOptions,
+  );
   const mesh = new THREE.Mesh(geometry, material);
   mesh.position.set(position[0], position[1], position[2]);
   mesh.scale.set(scale[0], scale[1], scale[2]);
@@ -2302,7 +2323,7 @@ function addSeasonTwoSphere(THREE, group, radius, position, color, scale = [1, 1
 
 function addSeasonTwoCylinder(THREE, group, radiusTop, radiusBottom, height, position, color, rotation = [0, 0, 0], radialSegments = 24) {
   const geometry = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, radialSegments);
-  const material = makeSeasonTwoThreeMaterial(THREE, color, 0.68, 0.04);
+  const material = makeSeasonTwoThreeMaterial(THREE, color, 0.68, 0.04, { flatShading: true });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.position.set(position[0], position[1], position[2]);
   mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
@@ -2312,29 +2333,103 @@ function addSeasonTwoCylinder(THREE, group, radiusTop, radiusBottom, height, pos
   return mesh;
 }
 
+function addSeasonTwoCone(THREE, group, radius, height, position, color, rotation = [0, 0, 0], radialSegments = 18, scale = [1, 1, 1]) {
+  const geometry = new THREE.ConeGeometry(radius, height, radialSegments);
+  const material = makeSeasonTwoThreeMaterial(THREE, color, 0.62, 0.03, { flatShading: true });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.set(position[0], position[1], position[2]);
+  mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
+  mesh.scale.set(scale[0], scale[1], scale[2]);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  group.add(mesh);
+  return mesh;
+}
+
 function createSeasonTwoKaiju3D(THREE, evolution, scale = 1) {
   const colors = {
-    baby: { body: 0x22c55e, belly: 0xfef3c7, horn: 0xfde68a },
-    grown: { body: 0xfacc15, belly: 0xecfccb, horn: 0x22c55e },
-    mutant: { body: 0xef4444, belly: 0xffedd5, horn: 0xf97316 },
-    legend: { body: 0x38bdf8, belly: 0xf5d0fe, horn: 0xa78bfa },
+    baby: { body: 0x22c55e, dark: 0x15803d, belly: 0xfef3c7, horn: 0xfde68a, claw: 0xfffbeb, mouth: 0x7f1d1d },
+    grown: { body: 0xfacc15, dark: 0xca8a04, belly: 0xecfccb, horn: 0x22c55e, claw: 0xfffbeb, mouth: 0x7f1d1d },
+    mutant: { body: 0xef4444, dark: 0xb91c1c, belly: 0xffedd5, horn: 0xf97316, claw: 0xfffbeb, mouth: 0x450a0a },
+    legend: { body: 0x38bdf8, dark: 0x0284c7, belly: 0xf5d0fe, horn: 0xa78bfa, claw: 0xfef9c3, mouth: 0x312e81 },
   };
   const palette = colors[evolution.className] || colors.baby;
   const group = new THREE.Group();
-  group.scale.setScalar(scale * Math.max(0.95, evolution.scale * 0.72));
-  addSeasonTwoSphere(THREE, group, 0.64, [0, 1.08, 0], palette.body, [0.86, 1.12, 0.72]);
-  addSeasonTwoSphere(THREE, group, 0.32, [0, 1.1, 0.5], palette.belly, [0.9, 1.15, 0.34]);
-  addSeasonTwoSphere(THREE, group, 0.42, [0, 1.8, 0.08], palette.body, [1.04, 0.86, 0.82]);
-  addSeasonTwoSphere(THREE, group, 0.06, [-0.16, 1.86, 0.44], 0x0f172a);
-  addSeasonTwoSphere(THREE, group, 0.06, [0.16, 1.86, 0.44], 0x0f172a);
-  addSeasonTwoBox(THREE, group, [0.18, 0.5, 0.18], [-0.38, 0.45, 0.02], palette.body, [0.1, 0, 0.18]);
-  addSeasonTwoBox(THREE, group, [0.18, 0.5, 0.18], [0.38, 0.45, 0.02], palette.body, [-0.1, 0, -0.18]);
-  addSeasonTwoBox(THREE, group, [0.18, 0.38, 0.18], [-0.54, 1.08, 0.06], palette.body, [0, 0, 0.58]);
-  addSeasonTwoBox(THREE, group, [0.18, 0.38, 0.18], [0.54, 1.08, 0.06], palette.body, [0, 0, -0.58]);
-  addSeasonTwoBox(THREE, group, [0.18, 0.34, 0.2], [-0.18, 2.22, 0.03], palette.horn, [0.4, 0, -0.18]);
-  addSeasonTwoBox(THREE, group, [0.18, 0.34, 0.2], [0.18, 2.22, 0.03], palette.horn, [0.4, 0, 0.18]);
-  addSeasonTwoBox(THREE, group, [0.62, 0.16, 0.18], [-0.58, 0.92, -0.34], palette.body, [0.16, 0.1, -0.22]);
-  group.rotation.y = -0.18;
+  group.scale.setScalar(scale * Math.max(0.98, evolution.scale * 0.7));
+
+  const shadow = addSeasonTwoCylinder(THREE, group, 0.8, 0.8, 0.03, [0, 0.03, 0.08], 0x0f172a, [0, 0, 0], 36);
+  shadow.scale.set(1.36, 1, 0.72);
+  shadow.castShadow = false;
+  shadow.receiveShadow = false;
+  shadow.material.transparent = true;
+  shadow.material.opacity = 0.2;
+
+  addSeasonTwoSphere(THREE, group, 0.72, [0, 1.02, 0], palette.body, [0.8, 1.08, 1.22], { flatShading: true });
+  addSeasonTwoSphere(THREE, group, 0.38, [0, 1.04, 0.68], palette.belly, [0.82, 1.05, 0.36], { roughness: 0.76 });
+  addSeasonTwoSphere(THREE, group, 0.48, [0, 1.82, 0.36], palette.body, [0.92, 0.76, 0.88], { flatShading: true });
+  addSeasonTwoSphere(THREE, group, 0.28, [0, 1.72, 0.92], palette.body, [1.0, 0.52, 0.72], { flatShading: true });
+  addSeasonTwoBox(THREE, group, [0.34, 0.08, 0.08], [0, 1.62, 1.17], palette.mouth, [0.03, 0, 0], { roughness: 0.52 });
+
+  addSeasonTwoSphere(THREE, group, 0.105, [-0.21, 1.95, 1.02], 0xf8fafc, [1, 1, 0.72]);
+  addSeasonTwoSphere(THREE, group, 0.105, [0.21, 1.95, 1.02], 0xf8fafc, [1, 1, 0.72]);
+  addSeasonTwoSphere(THREE, group, 0.048, [-0.21, 1.94, 1.08], 0x0f172a, [1, 1, 0.7]);
+  addSeasonTwoSphere(THREE, group, 0.048, [0.21, 1.94, 1.08], 0x0f172a, [1, 1, 0.7]);
+
+  addSeasonTwoCone(THREE, group, 0.13, 0.44, [-0.28, 2.3, 0.34], palette.horn, [0.08, 0, 0.24], 18, [1, 1.1, 0.9]);
+  addSeasonTwoCone(THREE, group, 0.13, 0.44, [0.28, 2.3, 0.34], palette.horn, [0.08, 0, -0.24], 18, [1, 1.1, 0.9]);
+
+  for (const spike of [
+    [0, 1.82, -0.52, 0.2, 0.46],
+    [0, 1.42, -0.78, 0.18, 0.42],
+    [0, 1.04, -0.88, 0.15, 0.34],
+  ]) {
+    addSeasonTwoCone(THREE, group, spike[3], spike[4], [spike[0], spike[1], spike[2]], palette.horn, [-Math.PI / 2, 0, 0], 16, [0.82, 1, 1]);
+  }
+
+  addSeasonTwoCylinder(THREE, group, 0.16, 0.32, 0.92, [0, 0.68, -0.9], palette.dark, [Math.PI / 2, 0, 0], 18);
+  addSeasonTwoCone(THREE, group, 0.16, 0.46, [0, 0.68, -1.48], palette.horn, [-Math.PI / 2, 0, 0], 16);
+
+  for (const side of [-1, 1]) {
+    addSeasonTwoBox(THREE, group, [0.24, 0.56, 0.34], [side * 0.36, 0.48, 0.04], palette.dark, [0.02, 0, side * 0.08], { flatShading: true });
+    addSeasonTwoBox(THREE, group, [0.42, 0.18, 0.62], [side * 0.36, 0.18, 0.34], palette.dark, [0, side * 0.08, 0], { flatShading: true });
+    addSeasonTwoBox(THREE, group, [0.22, 0.5, 0.28], [side * 0.66, 1.14, 0.18], palette.body, [0.16, 0, side * 0.54], { flatShading: true });
+    addSeasonTwoCone(THREE, group, 0.07, 0.22, [side * 0.84, 0.86, 0.38], palette.claw, [0, 0, side > 0 ? -Math.PI / 2 : Math.PI / 2], 12);
+  }
+
+  if (evolution.rank >= 2) {
+    for (const side of [-1, 1]) {
+      addSeasonTwoCone(
+        THREE,
+        group,
+        0.14,
+        0.42,
+        [side * 0.62, 1.48, -0.06],
+        palette.horn,
+        [0, 0, side > 0 ? -Math.PI / 2 : Math.PI / 2],
+        16,
+        [1, 1, 0.8],
+      );
+    }
+  }
+
+  if (evolution.rank >= 3) {
+    addSeasonTwoBox(THREE, group, [0.42, 0.22, 0.12], [0, 2.2, 0.8], palette.horn, [0.22, 0, 0], { flatShading: true });
+    addSeasonTwoSphere(THREE, group, 0.08, [0, 2.3, 0.82], palette.horn, [1, 1, 1], { emissive: palette.horn, emissiveIntensity: 0.16 });
+  }
+
+  if (evolution.rank >= 4) {
+    addSeasonTwoSphere(THREE, group, 0.92, [0, 1.12, 0.02], 0xa5f3fc, [0.9, 0.92, 1.1], {
+      roughness: 0.38,
+      metalness: 0.02,
+      transparent: true,
+      opacity: 0.18,
+      emissive: 0x38bdf8,
+      emissiveIntensity: 0.12,
+    });
+  }
+
+  group.rotation.y = -0.48;
+  group.rotation.x = -0.03;
   return group;
 }
 
@@ -2418,6 +2513,9 @@ function addSeasonTwoThreeWorld(THREE, scene, data) {
   sun.position.set(6, 10, 8);
   sun.castShadow = true;
   scene.add(sun);
+  const rim = new THREE.DirectionalLight(0xa5f3fc, 1.1);
+  rim.position.set(-5, 4.2, 6);
+  scene.add(rim);
   addSeasonTwoBox(THREE, scene, [18, 0.16, 34], [0, -0.12, -4], 0x7ddf9b, [0, 0, 0], { roughness: 0.9 });
   addSeasonTwoBox(THREE, scene, [7.6, 0.28, 34], [0, 0, -4], 0x475569, [0, 0, 0], { roughness: 0.82 });
   addSeasonTwoBox(THREE, scene, [0.22, 0.08, 34], [-3.95, 0.18, -4], 0x22c55e);
@@ -2451,16 +2549,16 @@ function addSeasonTwoThreeWorld(THREE, scene, data) {
 function renderSeasonTwoThreeFrame(THREE, renderer, data, panProgress = 1) {
   const { width, height } = data;
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 80);
+  const camera = new THREE.PerspectiveCamera(52, width / height, 0.1, 80);
   addSeasonTwoThreeWorld(THREE, scene, data);
 
   const runnerCamera = {
-    position: new THREE.Vector3(0, 7.4, 13.5),
-    target: new THREE.Vector3(0, 0.8, -7.5),
+    position: new THREE.Vector3(0, 5.05, 12.2),
+    target: new THREE.Vector3(0, 1.12, -0.7),
   };
   const bossCamera = {
-    position: new THREE.Vector3(-8.2, 3.6, 6.6),
-    target: new THREE.Vector3(0, 1.15, -0.8),
+    position: new THREE.Vector3(-6.4, 3.05, 5.2),
+    target: new THREE.Vector3(0, 1.24, -0.6),
   };
   const eased = panProgress * panProgress * (3 - 2 * panProgress);
   const cameraPosition = data.isBossScene
@@ -2479,13 +2577,13 @@ function renderSeasonTwoThreeFrame(THREE, renderer, data, panProgress = 1) {
   );
   if (data.isBossScene) {
     player.position.set(-2.35, 0.22, -0.6);
-    player.rotation.y = -0.78;
+    player.rotation.y = -0.9;
     const boss = createSeasonTwoBoss3D(THREE, data.boss);
     boss.position.set(2.55, 0.18, -0.85);
     boss.rotation.y = 0.66;
     scene.add(boss);
   } else {
-    player.position.set(seasonTwoThreeLaneX(data.lane), 0.2, 7.2);
+    player.position.set(seasonTwoThreeLaneX(data.lane), 0.14, 5.45);
   }
   scene.add(player);
 
