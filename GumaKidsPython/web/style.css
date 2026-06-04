@@ -2219,9 +2219,30 @@ body.file-tree-collapsed .file-tree {
   animation: none;
 }
 
+.kaiju-runner-game.boss-counter-strike .runner-boss {
+  animation: boss-counter-lunge 0.86s cubic-bezier(0.16, 0.86, 0.2, 1) both;
+}
+
+.kaiju-runner-game.phase-win .runner-boss {
+  animation: boss-defeat-dissolve 1.2s ease-out both;
+}
+
 @keyframes boss-enter-from-road {
   from { opacity: 0; transform: translateX(-50%) translateY(-80px) rotateX(-8deg) rotateY(-58deg) scale(0.68); }
   to { opacity: 1; transform: translateX(-50%) rotateX(-8deg) rotateY(-58deg) scale(1.08); }
+}
+
+@keyframes boss-counter-lunge {
+  0% { transform: translateX(-50%) rotateX(-8deg) rotateY(-58deg) scale(1.08); }
+  26% { transform: translateX(-62%) translateY(-8px) rotateX(-10deg) rotateY(-64deg) scale(1.18); }
+  54% { transform: translateX(-66%) translateY(2px) rotateX(-8deg) rotateY(-64deg) scale(1.16); }
+  100% { transform: translateX(-50%) rotateX(-8deg) rotateY(-58deg) scale(1.08); }
+}
+
+@keyframes boss-defeat-dissolve {
+  0% { opacity: 1; filter: blur(0); transform: translateX(-50%) rotateX(-8deg) rotateY(-58deg) scale(1.08); }
+  45% { opacity: 0.7; filter: blur(1px) brightness(1.4); transform: translateX(-50%) translateY(-18px) rotateX(-8deg) rotateY(-58deg) scale(0.92); }
+  100% { opacity: 0; filter: blur(8px) brightness(1.8); transform: translateX(-50%) translateY(-70px) rotateX(-8deg) rotateY(-58deg) scale(0.28); }
 }
 
 .runner-dashboard {
@@ -2262,6 +2283,55 @@ body.file-tree-collapsed .file-tree {
 
 .runner-dashboard > div:first-child > span {
   display: none;
+}
+
+.season-two-result-popup {
+  position: absolute;
+  left: 50%;
+  top: 43%;
+  z-index: 16;
+  display: grid;
+  width: min(76%, 330px);
+  min-height: 128px;
+  place-items: center;
+  padding: 18px;
+  border: 3px solid rgba(254, 240, 138, 0.92);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(254, 240, 138, 0.45), transparent 48%),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.94), rgba(127, 29, 29, 0.92));
+  color: #fefce8;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.42), 0 0 40px rgba(250, 204, 21, 0.35);
+  animation: season-two-popup-in 0.56s cubic-bezier(0.16, 0.86, 0.26, 1) both;
+}
+
+.season-two-result-popup strong,
+.season-two-result-popup span {
+  display: block;
+}
+
+.season-two-result-popup strong {
+  color: #fef08a;
+  font-size: 30px;
+  font-weight: 1000;
+  line-height: 1;
+  text-shadow: 0 4px 0 rgba(127, 29, 29, 0.65);
+}
+
+.season-two-result-popup span {
+  max-width: 240px;
+  color: #fff7ed;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+@keyframes season-two-popup-in {
+  from { opacity: 0; transform: translate(-50%, -42%) scale(0.78); }
+  72% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
 .runner-bars {
@@ -2444,32 +2514,35 @@ body.file-tree-collapsed .file-tree {
 }
 
 .boss-attack-effect.flame {
-  left: 28%;
-  top: 39%;
-  width: 48%;
-  height: 24%;
+  left: 25%;
+  top: 35%;
+  width: 54%;
+  height: 30%;
   animation-name: boss-flame-breath;
+  filter: saturate(1.28) drop-shadow(0 0 18px rgba(248, 113, 113, 0.62));
 }
 
 .boss-attack-effect.flame::before {
-  top: 30%;
-  height: 46px;
-  border-radius: 999px 80% 80% 999px;
+  top: 32%;
+  height: 58px;
+  border-radius: 999px 82% 78% 999px;
   background:
-    radial-gradient(circle at 88% 50%, #ffffff 0 8%, #facc15 9% 27%, #f97316 28% 52%, rgba(239, 68, 68, 0.85) 53% 70%, transparent 71%),
-    radial-gradient(circle at 58% 44%, rgba(254, 240, 138, 0.95) 0 12%, rgba(249, 115, 22, 0.82) 13% 42%, transparent 43%),
-    linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(250, 204, 21, 0.82), rgba(239, 68, 68, 0.88));
-  box-shadow: 0 0 34px rgba(249, 115, 22, 0.78), 0 0 58px rgba(239, 68, 68, 0.5);
+    radial-gradient(circle at 92% 48%, #ffffff 0 7%, #fef08a 8% 22%, #f97316 23% 46%, rgba(220, 38, 38, 0.92) 47% 64%, transparent 65%),
+    radial-gradient(circle at 64% 34%, rgba(254, 240, 138, 0.96) 0 10%, rgba(249, 115, 22, 0.9) 11% 38%, transparent 39%),
+    radial-gradient(circle at 40% 62%, rgba(251, 146, 60, 0.78) 0 12%, rgba(239, 68, 68, 0.62) 13% 40%, transparent 41%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(250, 204, 21, 0.9), rgba(239, 68, 68, 0.94));
+  box-shadow: 0 0 38px rgba(249, 115, 22, 0.84), 0 0 70px rgba(239, 68, 68, 0.6);
 }
 
 .boss-attack-effect.flame::after {
-  right: -20px;
-  top: 10%;
-  width: 82px;
-  height: 82px;
+  right: -26px;
+  top: 2%;
+  width: 106px;
+  height: 106px;
   background:
-    radial-gradient(circle, #ffffff 0 10%, #fef08a 11% 28%, #f97316 29% 52%, rgba(220, 38, 38, 0.85) 53% 68%, transparent 69%),
-    conic-gradient(from -20deg, transparent 0 8%, rgba(254, 240, 138, 0.96) 8% 16%, transparent 16% 28%, rgba(249, 115, 22, 0.9) 28% 40%, transparent 40%);
+    radial-gradient(circle at 48% 50%, #ffffff 0 8%, #fef08a 9% 23%, #f97316 24% 48%, rgba(220, 38, 38, 0.9) 49% 64%, transparent 65%),
+    conic-gradient(from -20deg, transparent 0 7%, rgba(254, 240, 138, 0.98) 7% 15%, transparent 15% 25%, rgba(249, 115, 22, 0.92) 25% 39%, transparent 39% 54%, rgba(220, 38, 38, 0.82) 54% 66%, transparent 66%);
+  filter: blur(0.2px);
 }
 
 .boss-attack-effect.flame span {
@@ -2510,16 +2583,18 @@ body.file-tree-collapsed .file-tree {
 
 .boss-counter-effect {
   position: absolute;
-  left: 24%;
-  top: 47%;
+  left: 20%;
+  top: 39%;
   z-index: 12;
-  width: 42%;
-  height: 12%;
+  width: 58%;
+  height: 24%;
   pointer-events: none;
-  animation: boss-counter-shot 0.52s ease-out both;
+  animation: boss-counter-shot 0.86s ease-out both;
+  filter: saturate(1.28) drop-shadow(0 0 20px rgba(248, 113, 113, 0.7));
 }
 
 .boss-counter-effect::before,
+.boss-counter-effect::after,
 .boss-counter-effect span {
   position: absolute;
   content: "";
@@ -2527,20 +2602,50 @@ body.file-tree-collapsed .file-tree {
 }
 
 .boss-counter-effect::before {
-  inset: 44% 0 auto 0;
-  height: 10px;
-  border-radius: 999px;
-  background: linear-gradient(270deg, rgba(255, 255, 255, 0), #c4b5fd, #7c3aed);
-  box-shadow: 0 0 24px rgba(124, 58, 237, 0.62);
+  inset: 42% 0 auto 0;
+  height: 44px;
+  border-radius: 80% 999px 999px 80%;
+  background:
+    radial-gradient(circle at 18% 50%, #ffffff 0 7%, #fef08a 8% 20%, #f97316 21% 42%, rgba(220, 38, 38, 0.88) 43% 58%, transparent 59%),
+    linear-gradient(270deg, rgba(255, 255, 255, 0), rgba(220, 38, 38, 0.9), rgba(249, 115, 22, 0.92), rgba(250, 204, 21, 0.72));
+  box-shadow: 0 0 34px rgba(249, 115, 22, 0.72), 0 0 54px rgba(220, 38, 38, 0.48);
+}
+
+.boss-counter-effect::after {
+  left: -18px;
+  top: 16%;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #ffffff 0 9%, #fef08a 10% 26%, #fb923c 27% 50%, rgba(185, 28, 28, 0.86) 51% 66%, transparent 67%),
+    conic-gradient(from 25deg, transparent 0 9%, rgba(254, 240, 138, 0.95) 9% 18%, transparent 18% 30%, rgba(239, 68, 68, 0.9) 30% 44%, transparent 44%);
 }
 
 .boss-counter-effect span {
-  left: 0;
-  top: 0;
-  width: 54px;
-  height: 54px;
+  right: -4px;
+  top: 22%;
+  width: 78px;
+  height: 78px;
   border-radius: 50%;
-  background: radial-gradient(circle, #ffffff 0 14%, #a78bfa 15% 42%, rgba(124, 58, 237, 0.84) 43% 62%, transparent 63%);
+  background:
+    radial-gradient(circle, rgba(15, 23, 42, 0.3) 0 12%, rgba(127, 29, 29, 0.78) 13% 34%, transparent 35%),
+    radial-gradient(circle, rgba(255, 255, 255, 0.8) 0 8%, rgba(250, 204, 21, 0.62) 9% 24%, transparent 25%);
+}
+
+.boss-counter-effect strong {
+  position: absolute;
+  left: -8px;
+  top: -12px;
+  min-width: 42px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 17px;
+  font-weight: 1000;
+  text-align: center;
+  box-shadow: 0 0 28px rgba(251, 146, 60, 0.72);
 }
 
 @keyframes runner-fighter-lunge {
@@ -2569,9 +2674,10 @@ body.file-tree-collapsed .file-tree {
 }
 
 @keyframes boss-counter-shot {
-  0% { opacity: 0; transform: scaleX(0.2) translateX(30px); }
-  32% { opacity: 1; transform: scaleX(1) translateX(0); }
-  100% { opacity: 0; transform: scaleX(1.08) translateX(-18px); }
+  0% { opacity: 0; transform: scaleX(0.18) translateX(54px) rotate(4deg); }
+  24% { opacity: 1; transform: scaleX(0.86) translateX(18px) rotate(2deg); }
+  70% { opacity: 1; transform: scaleX(1.06) translateX(-8px) rotate(-3deg); }
+  100% { opacity: 0; transform: scaleX(1.12) translateX(-32px) rotate(-5deg); }
 }
 
 .boss-timing-panel strong,

@@ -981,11 +981,12 @@ function renderChapterTabs() {
 
 function setLockedControls() {
   const seasonTwoBossActive = state.activeSeason === "season_02" && state.gameStarted && state.game.season_02?.phase === "boss";
+  const seasonTwoBossTurnActive = seasonTwoBossActive && state.game.season_02?.bossTurn === "boss";
   const seasonTwoRunnerActive = state.activeSeason === "season_02" && state.gameStarted && state.game.season_02?.phase === "runner";
   els.start.textContent = seasonTwoBossActive ? "보스전 진행중" : state.gameStarted ? "게임 중지" : "게임 시작";
   els.start.disabled = seasonTwoBossActive;
   els.start.classList.toggle("stop", state.gameStarted && !seasonTwoBossActive);
-  els.action.disabled = seasonTwoRunnerActive;
+  els.action.disabled = seasonTwoRunnerActive || seasonTwoBossTurnActive;
   els.codeEditor.disabled = state.gameStarted || state.activeFile !== "upgrade_zone.py";
   els.applyUpgrade.disabled = state.gameStarted;
   els.prevLesson.disabled = state.gameStarted || state.lessonPage === 0;
@@ -2021,9 +2022,10 @@ function seasonTwoChapter() {
 
 const SEASON_TWO_CHARACTER_SIZE_MULTIPLIER = 0.5;
 const SEASON_TWO_ATTACK_EFFECT_MS = 520;
-const SEASON_TWO_BOSS_TURN_EFFECT_MS = 520;
+const SEASON_TWO_BOSS_TURN_EFFECT_MS = 860;
 const SEASON_TWO_GORILLA_SCORE = 200;
 const SEASON_TWO_DINO_SCORE = 500;
+const SEASON_TWO_ITEM_VERTICAL_GAP = 28;
 
 function seasonTwoHas(chapter) {
   return seasonTwoChapter() >= chapter;
@@ -2056,6 +2058,13 @@ function seasonTwoEvolution(score, settings = state.settings.season_02 || {}) {
   return { name: "원숭이", className: "monkey", scale: 1, rank: 1 };
 }
 
+function seasonTwoVisualSizeCap(score, settings = state.settings.season_02 || {}) {
+  const evolution = seasonTwoEvolution(score, settings);
+  if (evolution.rank >= 3) return 108;
+  if (evolution.rank >= 2) return 74;
+  return 42;
+}
+
 function seasonTwoPlayerAttackDamage(kind, timing, evolution, settings = state.settings.season_02 || {}) {
   const baseDamage = kind === "flame"
     ? Math.max(1, toNumber(settings.flame_damage, 200))
@@ -2081,6 +2090,13 @@ function seasonTwoItemDifficulty(chapter) {
 
 function seasonTwoRunnerGoal(chapter) {
   return 95 + chapter * 12;
+}
+
+function seasonTwoItemFallSpeed(settings, chapter, progress) {
+  const runSpeed = Math.max(2, Math.min(10, toNumber(settings.run_speed, 5)));
+  const chapterBoost = Math.max(0, chapter - 1) * 0.035;
+  const progressBoost = Math.max(0, Math.min(1, progress)) * 2.15;
+  return Math.min(3.65, 0.72 + runSpeed * 0.1 + chapterBoost + progressBoost);
 }
 
 function seasonTwoLaneLeft(lane) {
@@ -2109,6 +2125,8 @@ function seasonTwoReset() {
     boss,
     bossHp: boss.maxHp,
     bossMeterStartedAt: 0,
+    bossTurn: "player",
+    pendingBossDamage: 0,
     lastTiming: null,
     attackKind: "flame",
     nextAttackKind: "flame",
@@ -2123,10 +2141,10 @@ function seasonTwoReset() {
   const previewCount = Math.min(5, Math.max(2, Math.ceil(chapter / 3)));
   const previewKinds = ["meat", "double_meat", "meat", "double_meat", "bomb"];
   const previewLanes = [1, 1, 1, 1, 0];
-  const previewY = [10, -58, -126, -196, 24];
+  const previewY = [10, -24, -58, -92, 38];
   for (let index = 0; index < previewCount; index += 1) {
-    spawnSeasonTwoItem(state.game.season_02, s, chapter, previewKinds[index] || "meat");
-    const item = state.game.season_02.items[state.game.season_02.items.length - 1];
+    const item = spawnSeasonTwoItem(state.game.season_02, s, chapter, previewKinds[index] || "meat");
+    if (!item) continue;
     item.lane = previewLanes[index] ?? (index % 3);
     item.y = previewY[index] ?? (10 + index * 15);
   }
@@ -2161,16 +2179,38 @@ function seasonTwoItemData(kind, settings) {
 function spawnSeasonTwoItem(game, settings, chapter, forcedKind = null) {
   const kind = forcedKind || seasonTwoItemForChapter(chapter);
   const item = seasonTwoItemData(kind, settings);
-  game.items.push({
+  const spawnSlot = seasonTwoSpawnSlot(game, kind);
+  if (!spawnSlot) return null;
+  const entry = {
     kind,
     label: item.label,
     point: item.point,
     growth: item.growth,
     energy: item.energy,
-    lane: kind === "nuke" ? (Math.random() < 0.5 ? 0 : 2) : randomInt(0, 2),
-    y: 12,
+    lane: spawnSlot.lane,
+    y: spawnSlot.y,
     id: `${kind}-${game.tick}-${Math.random().toString(36).slice(2, 6)}`,
-  });
+  };
+  game.items.push(entry);
+  return entry;
+}
+
+function seasonTwoSpawnSlot(game, kind) {
+  const spawnY = 8;
+  const lanePool = kind === "nuke" ? [0, 2] : [0, 1, 2];
+  const shuffled = lanePool
+    .map((lane) => ({ lane, order: Math.random() }))
+    .sort((a, b) => a.order - b.order)
+    .map((entry) => entry.lane);
+  for (const lane of shuffled) {
+    const blocked = game.items.some((item) => (
+      item.lane === lane
+      && !item.taken
+      && Math.abs(item.y - spawnY) < SEASON_TWO_ITEM_VERTICAL_GAP
+    ));
+    if (!blocked) return { lane, y: spawnY };
+  }
+  return null;
 }
 
 function collectSeasonTwoItem(item, settings, game) {
@@ -2206,18 +2246,22 @@ function collectSeasonTwoItem(item, settings, game) {
   const growthGain = Math.max(1, Math.round(item.growth * favoriteBonus * chapterGrowthBonus));
   const energyGain = Math.max(1, Math.round(item.energy * favoriteBonus));
   const scoreGain = Math.max(0, Math.round(item.point));
+  const previousSize = game.size;
   game.score += scoreGain;
   game.maxHp += energyGain;
   game.hp = Math.min(game.maxHp, game.hp + energyGain);
-  game.growth += growthGain;
-  game.size += growthGain;
+  const sizeCap = seasonTwoVisualSizeCap(game.score, settings);
+  game.size = Math.min(previousSize + growthGain, sizeCap);
+  const actualGrowth = Math.max(0, Math.round(game.size - previousSize));
+  game.growth = Math.max(0, game.growth + actualGrowth);
   game.combo += 1;
 
   const afterEvolution = seasonTwoEvolution(game.score, settings);
   if (afterEvolution.rank > beforeEvolution.rank) {
     game.message = `${item.label} 획득! 점수 ${game.score}점, ${koreanDirection(afterEvolution.name)} 변신했어!`;
   } else {
-    game.message = `${item.label} 획득! 점수 +${scoreGain}, 몸집 +${growthGain}, 에너지 +${energyGain}`;
+    const growthText = actualGrowth > 0 ? `몸집 +${actualGrowth}` : "몸집 최대";
+    game.message = `${item.label} 획득! 점수 +${scoreGain}, ${growthText}, 에너지 +${energyGain}`;
   }
   playPickupSound(item.kind === "double_meat" ? "bonus" : "treasure");
 }
@@ -2228,6 +2272,8 @@ function enterSeasonTwoBossFight(game, settings) {
   game.boss = seasonTwoBossForChapter(game.chapter, settings);
   game.bossHp = game.boss.maxHp;
   game.bossMeterStartedAt = performance.now();
+  game.bossTurn = "player";
+  game.pendingBossDamage = 0;
   game.lastTiming = null;
   game.attackKind = "flame";
   game.nextAttackKind = "flame";
@@ -2245,6 +2291,9 @@ function finishSeasonTwo(result, message) {
   if (!g) return;
   g.phase = result;
   g.message = message;
+  g.bossTurn = "done";
+  g.pendingBossDamage = 0;
+  if (result === "win") g.bossDefeatedAt = performance.now();
   state.gameStarted = false;
   stopGameTimer();
   stopMusic();
@@ -2278,11 +2327,13 @@ function updateSeasonTwoRunner() {
   const speed = Math.max(2, Math.min(10, toNumber(s.run_speed, 5)));
   g.tick += 1;
   g.distance += speed * 0.42;
-  const spawnRate = Math.max(7, 18 - Math.round(speed));
+  const progress = Math.max(0, Math.min(1, g.distance / Math.max(1, g.goal)));
+  const spawnRate = Math.max(10, 24 - Math.round(speed) - Math.floor(progress * 5));
   if (g.tick % spawnRate === 0) spawnSeasonTwoItem(g, s, chapter);
 
+  const itemFallSpeed = seasonTwoItemFallSpeed(s, chapter, progress);
   for (const item of g.items) {
-    item.y += speed * (["bomb", "nuke"].includes(item.kind) ? 1.34 : 1.12);
+    item.y += itemFallSpeed;
     if (!item.taken && item.lane === g.lane && item.y >= 70 && item.y <= 92) {
       item.taken = true;
       collectSeasonTwoItem(item, s, g);
@@ -2714,10 +2765,10 @@ function poseSeasonTwoKaijuRun(group, tick = 0, isBossScene = false, isAttacking
 }
 
 function seasonTwoMonsterScale(size, mutationSize, isBossScene) {
-  const growthRatio = Math.max(0, size - 1) / Math.max(20, mutationSize);
-  const base = isBossScene ? 0.92 : 0.74;
-  const visualGrowth = Math.log1p(growthRatio) * 0.72 + Math.min(growthRatio, 6) * 0.06;
-  return Math.min(isBossScene ? 2.85 : 2.6, base + visualGrowth);
+  const growthRatio = Math.min(1.35, Math.max(0, size - 1) / Math.max(20, mutationSize));
+  const base = isBossScene ? 0.86 : 0.68;
+  const visualGrowth = growthRatio * 0.26;
+  return Math.min(isBossScene ? 1.24 : 1.1, base + visualGrowth);
 }
 
 function createSeasonTwoBoss3D(THREE, boss) {
@@ -2824,18 +2875,46 @@ function addSeasonTwoAttack3D(THREE, scene, kind = "flame", quality = 0.6) {
 }
 
 function addSeasonTwoBossCounter3D(THREE, scene) {
-  addSeasonTwoSphere(THREE, scene, 0.38, [-1.12, 1.22, -0.62], 0x7c3aed, [1.25, 0.72, 0.92], {
-    emissive: 0x7c3aed,
+  for (let index = 0; index < 6; index += 1) {
+    const t = index / 5;
+    const x = 1.45 - t * 2.9;
+    const y = 1.36 + Math.sin(t * Math.PI) * 0.22;
+    const color = index % 2 ? 0xef4444 : 0xf97316;
+    addSeasonTwoSphere(THREE, scene, 0.22 + t * 0.22, [x, y, -0.66], color, [1.22, 0.8, 0.96], {
+      emissive: color,
+      emissiveIntensity: 0.48,
+      transparent: true,
+      opacity: 0.62,
+    });
+  }
+  addSeasonTwoCone(THREE, scene, 0.46, 1.08, [-1.24, 1.34, -0.66], 0xfacc15, [0, 0, Math.PI / 2], 28, [1, 0.72, 1]);
+  addSeasonTwoSphere(THREE, scene, 0.58, [-1.58, 1.24, -0.64], 0xffffff, [1.18, 0.74, 0.92], {
+    emissive: 0xf97316,
     emissiveIntensity: 0.34,
     transparent: true,
-    opacity: 0.5,
+    opacity: 0.44,
   });
-  addSeasonTwoBox(THREE, scene, [2.1, 0.08, 0.1], [0.18, 1.18, -0.64], 0xc4b5fd, [0, 0, 0.06], {
-    emissive: 0x8b5cf6,
-    emissiveIntensity: 0.26,
-    transparent: true,
-    opacity: 0.56,
-  });
+}
+
+function addSeasonTwoBossDissolve3D(THREE, scene) {
+  for (let index = 0; index < 10; index += 1) {
+    const angle = (Math.PI * 2 * index) / 10;
+    const radius = 0.24 + (index % 3) * 0.16;
+    addSeasonTwoSphere(
+      THREE,
+      scene,
+      0.22 + (index % 4) * 0.06,
+      [2.35 + Math.cos(angle) * radius, 1.1 + index * 0.12, -0.78 + Math.sin(angle) * radius * 0.6],
+      index % 2 ? 0xf8fafc : 0xfef3c7,
+      [1.34, 0.74, 1],
+      {
+        emissive: index % 2 ? 0xa5f3fc : 0xfacc15,
+        emissiveIntensity: 0.12,
+        transparent: true,
+        opacity: 0.34,
+      },
+    );
+  }
 }
 
 function addSeasonTwoThreeWorld(THREE, scene, data) {
@@ -2915,7 +2994,17 @@ function renderSeasonTwoThreeFrame(THREE, renderer, data, panProgress = 1) {
     const boss = createSeasonTwoBoss3D(THREE, data.boss);
     boss.position.set(2.55, 0.18, -0.85);
     boss.rotation.y = -Math.PI / 2;
-    scene.add(boss);
+    if (data.bossTurnEffectActive) {
+      boss.position.x -= 0.52;
+      boss.position.y += 0.06;
+      boss.rotation.z = -0.12;
+      boss.scale.multiplyScalar(1.08);
+    }
+    if (data.phase === "win") {
+      addSeasonTwoBossDissolve3D(THREE, scene);
+    } else {
+      scene.add(boss);
+    }
     if (data.attackEffectActive) addSeasonTwoAttack3D(THREE, scene, data.attackKind, data.attackEffectQuality);
     if (data.bossTurnEffectActive) addSeasonTwoBossCounter3D(THREE, scene);
   } else {
@@ -2992,6 +3081,7 @@ function renderSeasonTwo() {
   const laneLeft = seasonTwoLaneLeft(g.lane);
   const phaseLabel = g.phase === "runner" ? "러너" : g.phase === "boss" ? "보스전" : g.phase === "win" ? "승리" : "도전 종료";
   const isBossScene = g.phase === "boss" || g.phase === "win" || g.phase === "gameOver";
+  const bossTurnActive = g.phase === "boss" && g.bossTurn === "boss";
   const attackEffectActive = isBossScene && (g.attackEffectUntil || 0) > performance.now();
   const bossTurnEffectActive = isBossScene && (g.bossTurnEffectUntil || 0) > performance.now();
   const attackQuality = Math.max(0, Math.min(1, g.attackEffectQuality || g.lastTiming?.quality || 0));
@@ -3029,14 +3119,20 @@ function renderSeasonTwo() {
       <strong>${g.lastTiming?.damage || ""}</strong>
     </div>
   ` : "";
-  const bossCounterEffect = bossTurnEffectActive ? `<div class="boss-counter-effect"><span></span></div>` : "";
+  const bossCounterEffect = bossTurnEffectActive ? `<div class="boss-counter-effect"><span></span><strong>${g.pendingBossDamage || ""}</strong></div>` : "";
   const playerBar = isBossScene ? `<div class="fighter-bar player-hp"><span style="width:${hpPercent}%"></span></div>` : "";
+  const resultPopup = g.phase === "win" ? `
+    <div class="season-two-result-popup win">
+      <strong>승리!</strong>
+      <span>${g.boss.name} 격파! 괴수 러너 클리어!</span>
+    </div>
+  ` : "";
   setHud(
     s.runner_title || `${s.baby_name} 출동!`,
     `점수 ${g.score} · 몸집 ${Math.round(g.size)} · ${evolution.name} · 에너지 ${g.hp}/${g.maxHp} · ${phaseLabel}`,
   );
-  els.action.textContent = g.phase === "boss" ? "Space 타이밍 공격" : g.phase === "runner" ? "← → 이동으로 먹기" : "결과 확인";
-  const boardClass = `kaiju-runner-game chapter-${chapter} phase-${g.phase} ${cameraClass} ${attackEffectActive ? `attack-strike attack-${attackKind}` : ""} ${bossTurnEffectActive ? "boss-counter-strike" : ""}`.trim();
+  els.action.textContent = bossTurnActive ? "보스 공격 중" : g.phase === "boss" ? "Space 타이밍 공격" : g.phase === "runner" ? "← → 이동으로 먹기" : "결과 확인";
+  const boardClass = `kaiju-runner-game chapter-${chapter} phase-${g.phase} ${cameraClass} ${attackEffectActive ? `attack-strike attack-${attackKind}` : ""} ${bossTurnActive ? "boss-turn-active" : ""} ${bossTurnEffectActive ? "boss-counter-strike" : ""}`.trim();
 
   els.gameMount.innerHTML = `
     <div class="${boardClass}">
@@ -3065,11 +3161,12 @@ function renderSeasonTwo() {
       </div>
       ${bossAttackEffect}
       ${bossCounterEffect}
+      ${resultPopup}
       ${timingPanel}
       <div class="runner-dashboard">
         <div>
           <strong>${g.message}</strong>
-          <span>${isBossScene ? `내 에너지 ${g.hp}/${g.maxHp} · 보스 에너지 ${g.bossHp}/${g.boss.maxHp} · Space로 교대 공격` : `← → 좌우 이동 · ${gorillaScore}점 고릴라 · ${dinoScore}점 공룡`}</span>
+          <span>${isBossScene ? `${bossTurnActive ? "보스 공격을 피하는 중" : "내 공격 차례"} · 내 에너지 ${g.hp}/${g.maxHp} · 보스 에너지 ${g.bossHp}/${g.boss.maxHp}` : `← → 좌우 이동 · ${gorillaScore}점 고릴라 · ${dinoScore}점 공룡`}</span>
         </div>
         <div class="${isBossScene ? "boss-badges" : "runner-bars"}">
           ${isBossScene ? renderSeasonTwoBossBadges(g.boss) : `
@@ -3089,11 +3186,13 @@ function renderSeasonTwo() {
     attackEffectQuality: attackQuality,
     attackKind,
     bossTurnEffectActive,
+    bossTurnActive,
     items: g.items.map((item) => ({ ...item })),
     lane: g.lane,
     mutationSize,
     size: g.size,
     tick: g.tick,
+    phase: g.phase,
   });
   if (isBossScene && !g.bossCameraReady) {
     window.setTimeout(() => {
@@ -3117,6 +3216,21 @@ function moveSeasonTwoLane(delta) {
   renderSeasonTwo();
 }
 
+function resolveSeasonTwoBossTurn(expectedDamage) {
+  const g = state.game.season_02;
+  if (state.activeSeason !== "season_02" || !g || g.phase !== "boss" || g.bossTurn !== "boss") return;
+  const damage = Math.max(1, Math.round(expectedDamage || g.pendingBossDamage || 1));
+  g.hp = Math.max(0, g.hp - damage);
+  g.bossTurn = "player";
+  g.pendingBossDamage = 0;
+  g.bossMeterStartedAt = performance.now();
+  g.message = `${g.boss.name} 반격! 내 에너지 -${damage} · 다시 Space로 공격!`;
+  if (g.hp <= 0) {
+    finishSeasonTwo("gameOver", `${g.boss.name}에게 졌어. 러너 구간에서 고기를 더 모아 에너지를 키워 보자!`);
+  }
+  renderSeasonTwo();
+}
+
 function seasonTwoAction() {
   if (!state.gameStarted) return;
   const s = state.settings.season_02;
@@ -3128,6 +3242,11 @@ function seasonTwoAction() {
     return;
   }
   if (g.phase !== "boss") return;
+  if (g.bossTurn === "boss") {
+    g.message = `${g.boss.name} 공격 중! 잠깐 기다렸다가 다시 Space를 눌러 보자.`;
+    renderSeasonTwo();
+    return;
+  }
   const evolution = seasonTwoEvolution(g.score, s);
   const timing = seasonTwoTimingResult(g);
   const attackKind = g.nextAttackKind || "flame";
@@ -3150,16 +3269,19 @@ function seasonTwoAction() {
   }
   const enrage = 1 + (1 - g.bossHp / Math.max(1, g.boss.maxHp)) * 0.35;
   const bossDamage = Math.max(1, Math.round(g.boss.power * enrage));
-  g.hp = Math.max(0, g.hp - bossDamage);
+  g.bossTurn = "boss";
+  g.pendingBossDamage = bossDamage;
   g.bossTurnEffectUntil = performance.now() + SEASON_TWO_BOSS_TURN_EFFECT_MS;
-  g.message += ` · ${g.boss.name} 반격! 내 에너지 -${bossDamage}`;
-  if (g.hp <= 0) finishSeasonTwo("gameOver", `${g.boss.name}에게 졌어. 러너 구간에서 고기를 더 모아 에너지를 키워 보자!`);
+  g.message += ` · ${g.boss.name}의 공격 차례!`;
   renderSeasonTwo();
+  window.setTimeout(() => {
+    resolveSeasonTwoBossTurn(bossDamage);
+  }, Math.max(240, SEASON_TWO_BOSS_TURN_EFFECT_MS - 160));
   window.setTimeout(() => {
     const latest = state.game.season_02;
     if (state.activeSeason !== "season_02" || !latest || latest.phase !== "boss") return;
     if ((latest.attackEffectUntil || 0) <= performance.now() && (latest.bossTurnEffectUntil || 0) <= performance.now()) renderSeasonTwo();
-  }, Math.max(SEASON_TWO_ATTACK_EFFECT_MS, SEASON_TWO_BOSS_TURN_EFFECT_MS) + 80);
+  }, Math.max(SEASON_TWO_ATTACK_EFFECT_MS, SEASON_TWO_BOSS_TURN_EFFECT_MS) + 120);
 }
 
 function seasonThreeReset() {
