@@ -128,19 +128,21 @@ select option {
 
 .ide-layout {
   display: grid;
-  grid-template-columns: minmax(180px, 15vw) minmax(420px, 1.12fr) minmax(420px, 1fr);
+  grid-template-columns: minmax(168px, 12vw) minmax(430px, 0.9fr) minmax(360px, 38vw);
   gap: 12px;
   align-items: stretch;
+  min-height: calc(100vh - 156px);
 }
 
-.right-stack {
+.study-stack {
   display: grid;
-  grid-template-rows: minmax(210px, 0.82fr) minmax(420px, 1.5fr);
+  grid-template-rows: minmax(360px, 1fr) minmax(238px, 0.36fr);
   gap: 12px;
   min-height: calc(100vh - 156px);
 }
 
 .file-panel,
+.study-stack,
 .lesson-panel,
 .code-panel,
 .play-panel {
@@ -157,8 +159,17 @@ select option {
   padding: 18px;
 }
 
+.study-stack {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
 .lesson-panel {
   position: relative;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
   isolation: isolate;
   overflow: hidden;
   border: 2px solid rgba(255, 255, 255, 0.84);
@@ -200,7 +211,7 @@ select option {
 .file-panel {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  min-height: calc(100vh - 156px);
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -287,15 +298,17 @@ select option {
 
 .lesson-body {
   display: grid;
-  min-height: 152px;
+  min-height: 0;
   margin-top: 16px;
+  overflow: hidden;
 }
 
 .lesson-note {
   position: relative;
   display: grid;
   align-content: start;
-  min-height: 152px;
+  min-height: 0;
+  height: 100%;
   padding: 22px 22px 18px;
   border: 3px solid #ffffff;
   border-radius: 8px;
@@ -457,8 +470,8 @@ select option {
 
 .code-panel {
   display: grid;
-  grid-template-rows: auto minmax(520px, 1fr) auto;
-  min-height: calc(100vh - 156px);
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -479,26 +492,30 @@ select option {
 .play-panel {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: calc(100vh - 156px);
   overflow: hidden;
 }
 
 .hud {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 64px;
-  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 4px;
+  min-height: 62px;
+  padding: 10px 16px;
   border-bottom: 1px solid var(--glass-border);
 }
 
 .hud strong {
-  font-size: 20px;
+  font-size: 19px;
+  line-height: 1.18;
 }
 
 .hud span {
   color: var(--text-muted);
-  text-align: right;
+  font-size: 13px;
+  line-height: 1.25;
+  text-align: left;
 }
 
 .hud .hud-score {
@@ -508,16 +525,31 @@ select option {
 }
 
 .game-mount {
+  display: grid;
+  place-items: center;
   min-height: 0;
-  padding: 18px;
+  padding: 10px;
   overflow: hidden;
+}
+
+.play-panel .game-mount > .board,
+.play-panel .game-mount > .kaiju-runner-game {
+  align-self: stretch;
+  justify-self: center;
+  width: auto;
+  height: 100%;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 9 / 16;
 }
 
 .controls {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 8px;
-  padding: 14px 18px 18px;
+  padding: 10px 14px 12px;
   border-top: 1px solid var(--glass-border);
 }
 
@@ -1996,15 +2028,15 @@ select option {
 
 .runner-dashboard {
   position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: 12px;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
   z-index: 10;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(140px, 0.56fr);
-  gap: 10px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
   align-items: center;
-  padding: 10px 12px;
+  padding: 8px 9px;
   border: 1px solid rgba(255, 255, 255, 0.54);
   border-radius: 8px;
   background: rgba(15, 23, 42, 0.74);
@@ -2018,7 +2050,11 @@ select option {
 }
 
 .runner-dashboard strong {
-  font-size: 13px;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .runner-dashboard span {
@@ -2026,15 +2062,19 @@ select option {
   font-size: 11px;
 }
 
+.runner-dashboard > div:first-child > span {
+  display: none;
+}
+
 .runner-bars {
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
 .runner-bar,
 .fighter-bar {
   display: block;
-  height: 11px;
+  height: 9px;
   overflow: hidden;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.18);

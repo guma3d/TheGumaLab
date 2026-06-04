@@ -683,6 +683,7 @@ function renderFields() {
     ? `챕터 ${globalChapterNumber()} / ${chapterOffset() + 12} · ${editPlan.lines}줄 수정`
     : season.chapters;
   els.seasonTitle.textContent = chapterInfo ? chapterInfo.title : season.title;
+  if (!els.parsedParams) return;
   els.parsedParams.innerHTML = "";
 
   for (const [key, label, value] of season.fields) {

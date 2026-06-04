@@ -35,22 +35,7 @@
           <div id="fileTree" class="file-tree"></div>
         </aside>
 
-        <aside class="code-panel">
-          <div class="code-panel-head">
-            <div>
-              <p class="eyebrow">코드 내용</p>
-              <h2 id="activeFileLabel">upgrade_zone.py</h2>
-            </div>
-            <button id="applyUpgradeBtn" class="primary" type="button">업그레이드 적용</button>
-          </div>
-          <textarea id="codeEditor" class="code-editor" spellcheck="false" aria-label="업그레이드 코드 편집"></textarea>
-          <section class="parsed-panel">
-            <p class="eyebrow">적용된 파라미터</p>
-            <div id="parsedParams" class="parsed-params"></div>
-          </section>
-        </aside>
-
-        <section class="right-stack">
+        <section class="study-stack">
           <section class="lesson-panel">
             <p class="eyebrow" id="chapterLabel">챕터 1~12</p>
             <h2 id="seasonTitle">보물 점수 게임</h2>
@@ -63,20 +48,31 @@
             <p id="saveStatus" class="status">서버 저장을 사용할 수 있습니다.</p>
           </section>
 
-          <section class="play-panel">
-            <div class="hud">
-              <strong id="hudTitle">번개용사 등장!</strong>
-              <span id="hudStats">점수 10 · 체력 100</span>
+          <aside class="code-panel">
+            <div class="code-panel-head">
+              <div>
+                <p class="eyebrow">코드 내용</p>
+                <h2 id="activeFileLabel">upgrade_zone.py</h2>
+              </div>
+              <button id="applyUpgradeBtn" class="primary" type="button">업그레이드 적용</button>
             </div>
+            <textarea id="codeEditor" class="code-editor" spellcheck="false" aria-label="업그레이드 코드 편집"></textarea>
+          </aside>
+        </section>
 
-            <div id="gameMount" class="game-mount"></div>
+        <section class="play-panel">
+          <div class="hud">
+            <strong id="hudTitle">번개용사 등장!</strong>
+            <span id="hudStats">점수 10 · 체력 100</span>
+          </div>
 
-            <div class="controls">
-              <button id="startGameBtn" class="primary" type="button">게임 시작</button>
-              <button id="actionBtn" type="button">액션</button>
-              <button id="resetBtn" type="button">다시 시작</button>
-            </div>
-          </section>
+          <div id="gameMount" class="game-mount"></div>
+
+          <div class="controls">
+            <button id="startGameBtn" class="primary" type="button">게임 시작</button>
+            <button id="actionBtn" type="button">액션</button>
+            <button id="resetBtn" type="button">다시 시작</button>
+          </div>
         </section>
       </section>
     </main>
