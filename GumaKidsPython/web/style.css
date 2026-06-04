@@ -663,9 +663,9 @@ select option {
 
 .title-arch {
   left: 50%;
-  top: 14px;
-  width: min(300px, calc(100% - 120px));
-  padding: 10px 14px;
+  top: 10px;
+  width: min(220px, calc(100% - 28px));
+  padding: 8px 12px;
   border: 2px solid rgba(125, 211, 252, 0.72);
   border-radius: 14px 14px 999px 999px;
   background: linear-gradient(180deg, rgba(14, 165, 233, 0.86), rgba(15, 23, 42, 0.72));
@@ -679,8 +679,8 @@ select option {
 .report-badge,
 .combo-plaque,
 .portal-hint {
-  right: 14px;
-  max-width: 166px;
+  right: 10px;
+  max-width: 138px;
   padding: 8px 10px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 8px;
@@ -694,25 +694,30 @@ select option {
 }
 
 .report-badge {
-  left: 14px;
-  right: auto;
-  bottom: 14px;
-  max-width: calc(100% - 28px);
+  left: 10px;
+  right: 10px;
+  top: 58px;
+  bottom: auto;
+  max-width: none;
   border-color: rgba(125, 211, 252, 0.32);
   background: rgba(8, 47, 73, 0.68);
   color: #bae6fd;
+  font-size: 11px;
+  text-align: center;
   white-space: nowrap;
 }
 
 .combo-plaque {
-  top: 116px;
+  top: 94px;
+  right: 50%;
+  max-width: min(178px, calc(100% - 24px));
   color: #fde68a;
+  text-align: center;
+  transform: translateX(50%);
 }
 
 .portal-hint {
-  right: 16px;
-  bottom: 14px;
-  color: #ddd6fe;
+  display: none;
 }
 
 .scene-prop {
@@ -722,35 +727,37 @@ select option {
 }
 
 .coin-road {
-  left: 31%;
-  top: 39%;
-  width: 46%;
-  height: 24%;
+  left: 22%;
+  top: 25%;
+  width: 56%;
+  height: 56%;
   border-radius: 50%;
   border: 2px dashed rgba(250, 204, 21, 0.45);
-  transform: rotate(-18deg);
+  transform: rotate(10deg);
 }
 
 .treasure-gate {
-  right: 4%;
-  top: 26%;
+  left: 50%;
+  top: 5%;
   width: 86px;
   height: 64px;
   border: 5px solid rgba(250, 204, 21, 0.56);
   border-bottom: 0;
   border-radius: 52px 52px 0 0;
   box-shadow: 0 0 24px rgba(245, 158, 11, 0.34);
+  transform: translateX(-50%);
 }
 
 .portal-aura {
-  right: 2%;
-  bottom: 2%;
+  left: 50%;
+  top: 4%;
   width: 96px;
   height: 96px;
   border-radius: 50%;
   background:
     radial-gradient(circle, rgba(255, 255, 255, 0.36) 0 6%, transparent 7% 31%, rgba(167, 139, 250, 0.38) 32% 48%, transparent 49%);
   filter: blur(0.2px);
+  margin-left: -48px;
   animation: portal-aura 1.4s linear infinite;
 }
 
@@ -764,14 +771,14 @@ select option {
 }
 
 .crystal-left {
-  left: 12%;
-  bottom: 15%;
+  left: 8%;
+  top: 18%;
   transform: rotate(-10deg);
 }
 
 .crystal-right {
-  right: 18%;
-  bottom: 19%;
+  right: 8%;
+  top: 29%;
   transform: rotate(12deg) scale(0.82);
 }
 

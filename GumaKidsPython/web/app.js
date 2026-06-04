@@ -1599,21 +1599,21 @@ function seasonOneHas(chapter) {
 
 function seasonOneItemsForChapter(chapter, settings = {}) {
   const items = [];
-  if (chapter >= 4) items.push({ kind: "starter_chest", x: 24, y: 40, label: settings.starter_chest_label || "보물상자", taken: false });
+  if (chapter >= 4) items.push({ kind: "starter_chest", x: 40, y: 62, label: settings.starter_chest_label || "보물상자", taken: false });
   if (chapter >= 5) {
-    items.push({ kind: "treasure", x: 60, y: 28, label: settings.treasure_label || "보물", taken: false });
-    items.push({ kind: "coin", x: 72, y: 60, label: settings.coin_label || "동전", taken: false });
+    items.push({ kind: "treasure", x: 12, y: 46, label: settings.treasure_label || "보물", taken: false });
+    items.push({ kind: "coin", x: 68, y: 46, label: settings.coin_label || "동전", taken: false });
   }
-  if (chapter >= 6) items.push({ kind: "potion", x: 18, y: 70, label: settings.potion_label || "체력 물약", taken: false });
-  if (chapter >= 7) items.push({ kind: "boost", x: 40, y: 78, label: settings.wind_shoes_label || "바람신발", taken: false });
+  if (chapter >= 6) items.push({ kind: "potion", x: 12, y: 72, label: settings.potion_label || "체력 물약", taken: false });
+  if (chapter >= 7) items.push({ kind: "boost", x: 68, y: 72, label: settings.wind_shoes_label || "바람신발", taken: false });
   if (chapter >= 10) {
-    items.push({ kind: "gem", x: 44, y: 52, label: settings.gem_label || "루비", taken: false });
-    items.push({ kind: "chest", x: 84, y: 38, label: settings.chest_label || "상자", taken: false });
+    items.push({ kind: "gem", x: 40, y: 34, label: settings.gem_label || "루비", taken: false });
+    items.push({ kind: "chest", x: 68, y: 22, label: settings.chest_label || "상자", taken: false });
   }
-  if (chapter >= 11) items.push({ kind: "trap", x: 58, y: 64, label: settings.trap_label || "함정", taken: false });
+  if (chapter >= 11) items.push({ kind: "trap", x: 40, y: 44, label: settings.trap_label || "함정", taken: false });
   if (chapter >= 12) {
-    items.push({ kind: "bonus", x: 44, y: 20, label: settings.bonus_label || "보너스별", taken: false });
-    items.push({ kind: "portal", x: 88, y: 76, label: settings.portal_label || "포털", taken: false });
+    items.push({ kind: "bonus", x: 12, y: 22, label: settings.bonus_label || "보너스별", taken: false });
+    items.push({ kind: "portal", x: 40, y: 8, label: settings.portal_label || "포털", taken: false });
   }
   return items;
 }
@@ -1651,8 +1651,8 @@ function seasonOneReset() {
   const s = state.settings.season_01;
   const chapter = seasonOneChapter();
   state.game.season_01 = {
-    x: 10,
-    y: 18,
+    x: 40,
+    y: 80,
     direction: "down",
     step: 0,
     score: toNumber(s.score, toNumber(s.start_score, 10)),
