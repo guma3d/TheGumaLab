@@ -138,7 +138,7 @@ select option {
 
 .ide-layout {
   display: grid;
-  grid-template-columns: minmax(168px, 12vw) minmax(390px, 1fr) minmax(430px, min(46vw, 620px));
+  grid-template-columns: minmax(168px, 12vw) minmax(390px, 1fr) minmax(500px, min(52vw, 744px));
   gap: 12px;
   align-items: stretch;
   height: 100%;
@@ -146,7 +146,7 @@ select option {
 }
 
 body.file-tree-collapsed .ide-layout {
-  grid-template-columns: 58px minmax(390px, 1fr) minmax(430px, min(46vw, 620px));
+  grid-template-columns: 58px minmax(390px, 1fr) minmax(500px, min(52vw, 744px));
 }
 
 .study-stack {
@@ -551,7 +551,7 @@ body.file-tree-collapsed .file-tree {
 
 .play-panel {
   display: grid;
-  grid-template-columns: minmax(124px, 148px) minmax(0, 1fr);
+  grid-template-columns: minmax(104px, 112px) minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   grid-template-areas:
     "hud game"
@@ -568,19 +568,19 @@ body.file-tree-collapsed .file-tree {
   align-items: start;
   gap: 4px;
   min-height: 0;
-  padding: 14px 12px;
+  padding: 12px 10px;
   border-bottom: 1px solid var(--glass-border);
   border-right: 1px solid var(--glass-border);
 }
 
 .hud strong {
-  font-size: 18px;
+  font-size: 15px;
   line-height: 1.18;
 }
 
 .hud span {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.25;
   text-align: left;
 }
@@ -596,7 +596,7 @@ body.file-tree-collapsed .file-tree {
   display: grid;
   place-items: center;
   min-height: 0;
-  padding: 10px;
+  padding: 8px;
   overflow: hidden;
 }
 
@@ -609,7 +609,7 @@ body.file-tree-collapsed .file-tree {
   min-height: 0;
   max-width: 100%;
   max-height: 100%;
-  aspect-ratio: 13.5 / 16;
+  aspect-ratio: 81 / 80;
 }
 
 .controls {
@@ -618,9 +618,9 @@ body.file-tree-collapsed .file-tree {
   flex-direction: column;
   flex-wrap: nowrap;
   justify-content: flex-start;
-  gap: 8px;
+  gap: 7px;
   min-height: 0;
-  padding: 12px;
+  padding: 10px;
   overflow: auto;
   border-top: 0;
   border-right: 1px solid var(--glass-border);
@@ -628,8 +628,8 @@ body.file-tree-collapsed .file-tree {
 
 .controls button {
   width: 100%;
-  min-height: 42px;
-  padding: 9px 10px;
+  min-height: 40px;
+  padding: 8px;
   white-space: normal;
 }
 
