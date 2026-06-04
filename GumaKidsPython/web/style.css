@@ -551,23 +551,30 @@ body.file-tree-collapsed .file-tree {
 
 .play-panel {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(124px, 148px) minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    "hud game"
+    "controls game";
   min-height: 0;
   overflow: hidden;
 }
 
 .hud {
+  grid-area: hud;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+  align-content: start;
   align-items: start;
   gap: 4px;
-  min-height: 62px;
-  padding: 10px 16px;
+  min-height: 0;
+  padding: 14px 12px;
   border-bottom: 1px solid var(--glass-border);
+  border-right: 1px solid var(--glass-border);
 }
 
 .hud strong {
-  font-size: 19px;
+  font-size: 18px;
   line-height: 1.18;
 }
 
@@ -585,6 +592,7 @@ body.file-tree-collapsed .file-tree {
 }
 
 .game-mount {
+  grid-area: game;
   display: grid;
   place-items: center;
   min-height: 0;
@@ -605,12 +613,24 @@ body.file-tree-collapsed .file-tree {
 }
 
 .controls {
+  grid-area: controls;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
   gap: 8px;
-  padding: 10px 14px 12px;
-  border-top: 1px solid var(--glass-border);
+  min-height: 0;
+  padding: 12px;
+  overflow: auto;
+  border-top: 0;
+  border-right: 1px solid var(--glass-border);
+}
+
+.controls button {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 10px;
+  white-space: normal;
 }
 
 .board {
@@ -2622,13 +2642,35 @@ body.file-tree-collapsed .file-tree {
     grid-template-rows: auto auto;
   }
 
+  .play-panel {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "hud"
+      "game"
+      "controls";
+  }
+
   .hud {
     align-items: flex-start;
-    flex-direction: column;
+    border-right: 0;
+    border-bottom: 1px solid var(--glass-border);
   }
 
   .hud span {
     text-align: left;
+  }
+
+  .controls {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    border-top: 1px solid var(--glass-border);
+    border-right: 0;
+  }
+
+  .controls button {
+    width: auto;
   }
 
   .board {
