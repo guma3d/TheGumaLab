@@ -12,7 +12,7 @@ if "%~1"=="" (
     echo Usage: pull_update.bat ^<ProjectName^> [container_to_restart]
     echo.
     echo Available projects:
-    echo   GumaStockReport  GumaServerStatus  GumaTube
+    echo   GumaKidsPython  GumaStockReport  GumaServerStatus  GumaTube
     echo   GumaTutorDoc  Index  Nginx
     echo.
     exit /b 1
@@ -21,6 +21,18 @@ if "%~1"=="" (
 set PROJECT=%~1
 set CONTAINER=%~2
 set PROJECT_DIR=D:\TheGumaLab\%PROJECT%
+
+if "%DOCKER_CONFIG%"=="" (
+    where docker-credential-desktop.exe >nul 2>nul
+    if errorlevel 1 (
+        set DOCKER_CONFIG=%TEMP%\thegumalab-docker-config
+        if not exist "%DOCKER_CONFIG%" mkdir "%DOCKER_CONFIG%"
+        if not exist "%DOCKER_CONFIG%\config.json" (
+            > "%DOCKER_CONFIG%\config.json" echo {}
+        )
+        echo [INFO] Using temporary Docker config without desktop credential helper.
+    )
+)
 
 if not exist "%PROJECT_DIR%" (
     echo [INFO] Project directory not found. Syncing repository root first...
