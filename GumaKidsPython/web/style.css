@@ -2307,6 +2307,55 @@ body.file-tree-collapsed .file-tree {
   animation: season-two-popup-in 0.56s cubic-bezier(0.16, 0.86, 0.26, 1) both;
 }
 
+.season-two-turn-popup {
+  position: absolute;
+  left: 50%;
+  top: 31%;
+  z-index: 17;
+  display: grid;
+  min-width: min(72%, 280px);
+  min-height: 92px;
+  place-items: center;
+  padding: 14px 18px;
+  border: 3px solid rgba(255, 255, 255, 0.78);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.36), transparent 56%),
+    linear-gradient(135deg, rgba(14, 165, 233, 0.94), rgba(37, 99, 235, 0.94));
+  color: #f8fafc;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 20px 46px rgba(15, 23, 42, 0.38), 0 0 34px rgba(56, 189, 248, 0.36);
+  animation: season-two-turn-pop 0.46s cubic-bezier(0.16, 0.86, 0.26, 1) both;
+}
+
+.season-two-turn-popup.boss {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(254, 240, 138, 0.42), transparent 56%),
+    linear-gradient(135deg, rgba(185, 28, 28, 0.95), rgba(249, 115, 22, 0.95));
+  box-shadow: 0 20px 46px rgba(15, 23, 42, 0.42), 0 0 40px rgba(249, 115, 22, 0.46);
+}
+
+.season-two-turn-popup strong,
+.season-two-turn-popup span {
+  display: block;
+}
+
+.season-two-turn-popup strong {
+  font-size: 24px;
+  font-weight: 1000;
+  line-height: 1;
+  text-shadow: 0 3px 0 rgba(15, 23, 42, 0.34);
+}
+
+.season-two-turn-popup span {
+  margin-top: 8px;
+  color: rgba(248, 250, 252, 0.9);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
 .season-two-result-popup strong,
 .season-two-result-popup span {
   display: block;
@@ -2331,6 +2380,12 @@ body.file-tree-collapsed .file-tree {
 @keyframes season-two-popup-in {
   from { opacity: 0; transform: translate(-50%, -42%) scale(0.78); }
   72% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes season-two-turn-pop {
+  from { opacity: 0; transform: translate(-50%, -42%) scale(0.72); }
+  72% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
   to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
