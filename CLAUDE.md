@@ -185,6 +185,41 @@ ssh HomeServer "docker logs <container_name> --tail 20"
 
 ---
 
+## ✅ 6-2. Codex 검증된 HomeServer 배포 경로
+
+로컬 PC에서 `ssh HomeServer` 별칭이나 `~/.ssh/id_ed25519_HomeServer` 키가 없으면 직접 SSH에 집착하지 말고 GitHub Actions `HomeServer Control` 워크플로우를 사용한다. 현재 이 경로가 실제로 성공한 표준 fallback이다.
+
+**성공 절차**:
+1. 로컬에서 수정·검증 후 커밋.
+2. GitHub SSH push 전 PowerShell 세션에 `$env:GIT_SSH="C:\Windows\System32\OpenSSH\ssh.exe"` 설정.
+3. `git push origin main`.
+4. 홈서버 반영:
+   ```bash
+   gh workflow run server-control.yml --ref main -f action=pull -f project=<ProjectName>
+   gh run watch <run_id> --exit-status
+   ```
+5. 컨테이너 재시작이 필요한 서비스는 별도 실행:
+   ```bash
+   gh workflow run server-control.yml --ref main -f action=restart -f container=<container_name>
+   gh run watch <run_id> --exit-status
+   ```
+6. 최종 확인:
+   ```bash
+   gh workflow run server-control.yml --ref main -f action=logs -f container=<container_name> -f log_lines=40
+   gh run watch <run_id> --exit-status
+   ```
+
+**GumaKidsPython 기준값**:
+- project: `GumaKidsPython`
+- container: `gumakidspython_app`
+- 검증 성공 로그: `Container gumakidspython_app Started`, `gumakidspython_app Up`, `Serving Flask app 'server'`, `Running on http://127.0.0.1:5000`
+
+**실패 대응**:
+- `docker-credential-desktop` 오류는 `pull_update.bat`의 임시 `DOCKER_CONFIG` fallback으로 처리한다.
+- `pull_update.bat` 자체를 갱신한 직후 첫 실행이 중간 실패하면, 홈서버 작업트리가 새 커밋으로 reset됐는지 로그에서 `HEAD is now at <commit>`을 확인하고 같은 `pull` 워크플로우를 한 번 더 실행한다.
+
+---
+
 ## 🗂️ 7. 리포지토리 구조
 
 - **Monorepo**: 모든 하위 서비스는 `D:\TheGumaLab\` 아래 각자 루트 폴더로 존재.

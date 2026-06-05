@@ -118,6 +118,22 @@ tools/         # 강의자료 생성 도구
 - 홈서버 반영 뒤에는 홈서버의 최신 커밋, 컨테이너 상태, 필요 시 HTTP 응답을 확인한다.
 - 단순 조사나 답변처럼 저장소 변경이 없는 작업은 푸시와 배포를 생략한다.
 
+### Codex에서 성공한 빠른 배포 fallback
+
+현재 PC에 `ssh HomeServer` alias나 홈서버 개인키가 없어 직접 SSH가 실패하면 GitHub Actions `HomeServer Control`을 사용한다.
+
+```bash
+gh workflow run server-control.yml --ref main -f action=pull -f project=GumaKidsPython
+gh run watch <run_id> --exit-status
+gh workflow run server-control.yml --ref main -f action=restart -f container=gumakidspython_app
+gh run watch <run_id> --exit-status
+gh workflow run server-control.yml --ref main -f action=logs -f container=gumakidspython_app -f log_lines=40
+gh run watch <run_id> --exit-status
+```
+
+- 성공 기준은 `Deploy completed: GumaKidsPython`, `gumakidspython_app Up`, `Serving Flask app 'server'` 로그다.
+- `pull_update.bat` 자체를 고친 직후 첫 `pull`이 실패하면 홈서버가 새 커밋으로 reset됐는지 확인하고 같은 `pull`을 한 번 더 실행한다.
+
 ## 웹앱 원칙
 
 - 웹앱은 GumaKidsPython의 유일한 기준 실행 환경이다.
