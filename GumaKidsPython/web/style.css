@@ -1777,6 +1777,34 @@ body.file-tree-collapsed .file-tree {
     transform 1.1s cubic-bezier(0.22, 0.86, 0.26, 1);
 }
 
+.runner-kaiju::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  z-index: -1;
+  width: 118px;
+  height: 118px;
+  border-radius: 50%;
+  opacity: 0;
+  transform: translateX(-50%) scale(0.72);
+  pointer-events: none;
+}
+
+.kaiju-runner-game.pickup-glow .runner-kaiju::before {
+  animation: runner-pickup-glow 1s ease-out both;
+}
+
+.kaiju-runner-game.pickup-good .runner-kaiju::before {
+  background: radial-gradient(circle, rgba(147, 197, 253, 0.9) 0 22%, rgba(56, 189, 248, 0.42) 23% 52%, transparent 70%);
+  box-shadow: 0 0 34px rgba(56, 189, 248, 0.82);
+}
+
+.kaiju-runner-game.pickup-bad .runner-kaiju::before {
+  background: radial-gradient(circle, rgba(254, 202, 202, 0.9) 0 20%, rgba(239, 68, 68, 0.5) 21% 54%, transparent 72%);
+  box-shadow: 0 0 36px rgba(239, 68, 68, 0.86);
+}
+
 .kaiju-runner-game.phase-boss .runner-kaiju,
 .kaiju-runner-game.phase-win .runner-kaiju,
 .kaiju-runner-game.phase-gameOver .runner-kaiju {
@@ -1793,15 +1821,6 @@ body.file-tree-collapsed .file-tree {
 
 .kaiju-runner-game.attack-strike .runner-kaiju {
   animation: runner-fighter-lunge 0.72s cubic-bezier(0.12, 0.82, 0.22, 1) both;
-}
-
-.kaiju-runner-game.attack-punch .runner-kaiju {
-  animation-name: runner-fighter-punch;
-}
-
-.kaiju-runner-game.attack-punch .runner-kaiju .kaiju-arm.arm-b {
-  animation: kaiju-punch-arm 0.72s cubic-bezier(0.12, 0.82, 0.22, 1) both;
-  transform-origin: top center;
 }
 
 .runner-kaiju .player-hp {
@@ -2120,6 +2139,14 @@ body.file-tree-collapsed .file-tree {
   to { transform: rotate(-16deg) translateY(2px); }
 }
 
+@keyframes runner-pickup-glow {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.58); }
+  18% { opacity: 1; transform: translateX(-50%) scale(1.08); }
+  42% { opacity: 0.55; transform: translateX(-50%) scale(0.88); }
+  68% { opacity: 0.95; transform: translateX(-50%) scale(1); }
+  100% { opacity: 0; transform: translateX(-50%) scale(1.28); }
+}
+
 .runner-item {
   position: absolute;
   z-index: 5;
@@ -2292,6 +2319,22 @@ body.file-tree-collapsed .file-tree {
 
 .runner-dashboard > div:first-child > span {
   display: none;
+}
+
+.runner-energy-goal {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 22px;
+  padding: 4px 8px;
+  border: 1px solid rgba(125, 211, 252, 0.44);
+  border-radius: 999px;
+  background: rgba(14, 165, 233, 0.2);
+  color: #e0f2fe;
+  font-size: 11px;
+  font-weight: 1000;
+  line-height: 1;
+  box-shadow: inset 0 0 12px rgba(56, 189, 248, 0.18);
 }
 
 .season-two-result-popup {
@@ -2578,72 +2621,48 @@ body.file-tree-collapsed .file-tree {
 }
 
 .boss-attack-effect.flame {
-  left: 24%;
-  top: 34%;
-  width: 58%;
-  height: 32%;
-  animation-name: boss-flame-breath;
-  filter: saturate(1.46) contrast(1.08) drop-shadow(0 0 24px rgba(248, 113, 113, 0.72));
+  left: 30%;
+  top: 39%;
+  width: 44%;
+  height: 90px;
+  animation-name: boss-fireball-shot;
+  filter: saturate(1.35) contrast(1.08) drop-shadow(0 0 20px rgba(248, 113, 113, 0.72));
 }
 
 .boss-attack-effect.flame::before {
-  top: 28%;
-  height: 70px;
-  border-radius: 999px 82% 78% 999px;
+  left: 4%;
+  top: 46%;
+  width: 72%;
+  height: 18px;
+  border-radius: 999px;
   background:
-    radial-gradient(circle at 92% 48%, #ffffff 0 7%, #fef08a 8% 22%, #f97316 23% 48%, rgba(220, 38, 38, 0.96) 49% 68%, transparent 69%),
-    radial-gradient(circle at 68% 30%, rgba(255, 247, 237, 0.98) 0 9%, rgba(251, 146, 60, 0.94) 10% 39%, transparent 40%),
-    radial-gradient(circle at 48% 68%, rgba(251, 146, 60, 0.86) 0 14%, rgba(239, 68, 68, 0.72) 15% 44%, transparent 45%),
-    radial-gradient(circle at 24% 42%, rgba(254, 240, 138, 0.62) 0 10%, rgba(249, 115, 22, 0.52) 11% 36%, transparent 37%),
-    linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(250, 204, 21, 0.95), rgba(249, 115, 22, 0.96) 58%, rgba(185, 28, 28, 0.96));
-  box-shadow: 0 0 46px rgba(249, 115, 22, 0.9), 0 0 84px rgba(239, 68, 68, 0.68);
+    radial-gradient(circle at 100% 50%, rgba(255, 255, 255, 0.95) 0 12%, rgba(254, 240, 138, 0.9) 13% 24%, transparent 25%),
+    linear-gradient(90deg, transparent, rgba(250, 204, 21, 0.2) 18%, rgba(249, 115, 22, 0.78) 72%, rgba(239, 68, 68, 0.86));
+  box-shadow: 0 0 24px rgba(249, 115, 22, 0.72);
 }
 
 .boss-attack-effect.flame::after {
-  right: -34px;
-  top: -4%;
-  width: 126px;
-  height: 126px;
+  right: -18px;
+  top: 10%;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
   background:
-    radial-gradient(circle at 48% 50%, #ffffff 0 8%, #fef08a 9% 23%, #f97316 24% 48%, rgba(220, 38, 38, 0.9) 49% 64%, transparent 65%),
-    conic-gradient(from -20deg, transparent 0 7%, rgba(254, 240, 138, 0.98) 7% 15%, transparent 15% 25%, rgba(249, 115, 22, 0.92) 25% 39%, transparent 39% 54%, rgba(220, 38, 38, 0.82) 54% 66%, transparent 66%);
-  filter: blur(0.2px);
+    radial-gradient(circle at 42% 38%, #ffffff 0 10%, #fef08a 11% 27%, #fb923c 28% 50%, #dc2626 51% 67%, transparent 68%),
+    conic-gradient(from -28deg, transparent 0 8%, rgba(254, 240, 138, 0.95) 8% 17%, transparent 17% 28%, rgba(249, 115, 22, 0.9) 28% 43%, transparent 43% 56%, rgba(220, 38, 38, 0.82) 56% 70%, transparent 70%);
+  box-shadow: 0 0 30px rgba(249, 115, 22, 0.92), 0 0 52px rgba(220, 38, 38, 0.56);
 }
 
 .boss-attack-effect.flame span {
-  left: 6%;
-  top: 3%;
-  width: 86%;
-  height: 84%;
+  left: 18%;
+  top: 22%;
+  width: 54%;
+  height: 56px;
   border: 0;
   background:
-    radial-gradient(circle at 35% 50%, rgba(254, 240, 138, 0.7) 0 10%, transparent 11%),
-    radial-gradient(circle at 56% 36%, rgba(249, 115, 22, 0.58) 0 12%, transparent 13%),
-    radial-gradient(circle at 72% 62%, rgba(239, 68, 68, 0.54) 0 14%, transparent 15%);
-}
-
-.boss-attack-effect.punch {
-  left: 36%;
-  top: 42%;
-  width: 34%;
-  height: 18%;
-  animation-name: boss-punch-hit;
-}
-
-.boss-attack-effect.punch::before {
-  top: 46%;
-  height: 14px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0), #ffffff 24%, #facc15 62%, #fb923c);
-}
-
-.boss-attack-effect.punch::after {
-  right: -4px;
-  top: 0;
-  width: 72px;
-  height: 72px;
-  border: 6px solid rgba(254, 240, 138, 0.82);
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 12%, rgba(250, 204, 21, 0.58) 13% 35%, transparent 36%);
-  box-shadow: 0 0 30px rgba(250, 204, 21, 0.72);
+    radial-gradient(circle at 22% 60%, rgba(254, 240, 138, 0.72) 0 10%, transparent 11%),
+    radial-gradient(circle at 46% 34%, rgba(249, 115, 22, 0.66) 0 12%, transparent 13%),
+    radial-gradient(circle at 66% 64%, rgba(239, 68, 68, 0.58) 0 14%, transparent 15%);
 }
 
 .boss-counter-effect {
@@ -2713,24 +2732,71 @@ body.file-tree-collapsed .file-tree {
   box-shadow: 0 0 28px rgba(251, 146, 60, 0.72);
 }
 
+.boss-hit-explosion {
+  position: absolute;
+  top: 38%;
+  z-index: 14;
+  width: 92px;
+  height: 92px;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: boss-hit-explosion-pop 0.76s ease-out both;
+}
+
+.boss-hit-explosion.hit-boss {
+  left: 73%;
+}
+
+.boss-hit-explosion.hit-player {
+  left: 28%;
+}
+
+.boss-hit-explosion::before,
+.boss-hit-explosion::after,
+.boss-hit-explosion span,
+.boss-hit-explosion i {
+  position: absolute;
+  content: "";
+  display: block;
+  border-radius: 50%;
+}
+
+.boss-hit-explosion::before {
+  inset: 6px;
+  background:
+    radial-gradient(circle, #ffffff 0 10%, #fef08a 11% 25%, #fb923c 26% 48%, rgba(220, 38, 38, 0.9) 49% 66%, transparent 67%);
+  box-shadow: 0 0 34px rgba(249, 115, 22, 0.88), 0 0 62px rgba(239, 68, 68, 0.52);
+}
+
+.boss-hit-explosion::after {
+  inset: -8px;
+  border: 7px solid rgba(254, 240, 138, 0.72);
+  border-left-color: transparent;
+  border-bottom-color: rgba(239, 68, 68, 0.56);
+}
+
+.boss-hit-explosion span {
+  left: 48%;
+  top: 48%;
+  width: 120px;
+  height: 18px;
+  background: linear-gradient(90deg, transparent, rgba(254, 240, 138, 0.9), transparent);
+  transform: translate(-50%, -50%) rotate(24deg);
+}
+
+.boss-hit-explosion i {
+  left: 48%;
+  top: 48%;
+  width: 112px;
+  height: 16px;
+  background: linear-gradient(90deg, transparent, rgba(251, 146, 60, 0.86), transparent);
+  transform: translate(-50%, -50%) rotate(-42deg);
+}
+
 @keyframes runner-fighter-lunge {
   0% { transform: translateX(-50%) rotateX(0deg) rotateY(0deg) scale(1.08); }
   42% { transform: translateX(-36%) rotateX(0deg) rotateY(0deg) scale(1.14); }
   100% { transform: translateX(-50%) rotateX(0deg) rotateY(0deg) scale(1.08); }
-}
-
-@keyframes runner-fighter-punch {
-  0% { transform: translateX(-50%) rotateX(0deg) rotateY(0deg) scale(1.08); }
-  22% { transform: translateX(-44%) rotateX(0deg) rotateY(0deg) scale(1.12); }
-  48% { transform: translateX(-18%) rotateX(0deg) rotateY(0deg) scale(1.18); }
-  100% { transform: translateX(-50%) rotateX(0deg) rotateY(0deg) scale(1.08); }
-}
-
-@keyframes kaiju-punch-arm {
-  0% { transform: rotate(-18deg) translate(0, 0) scaleY(1); }
-  42% { transform: rotate(-92deg) translate(18px, -9px) scaleY(1.48); }
-  72% { transform: rotate(-72deg) translate(10px, -4px) scaleY(1.28); }
-  100% { transform: rotate(-18deg) translate(0, 0) scaleY(1); }
 }
 
 @keyframes boss-attack-sweep {
@@ -2739,17 +2805,11 @@ body.file-tree-collapsed .file-tree {
   100% { opacity: 0; transform: scaleX(1.08) translateY(-8px) rotate(-6deg); }
 }
 
-@keyframes boss-flame-breath {
-  0% { opacity: 0; transform: scaleX(0.18) translateY(14px) rotate(-7deg); }
-  24% { opacity: 1; transform: scaleX(0.82) translateY(2px) rotate(-7deg); }
-  70% { opacity: 1; transform: scaleX(1.08) translateY(-4px) rotate(-7deg); }
-  100% { opacity: 0; transform: scaleX(1.16) translateY(-10px) rotate(-7deg); }
-}
-
-@keyframes boss-punch-hit {
-  0% { opacity: 0; transform: scaleX(0.18) translateX(-22px); }
-  30% { opacity: 1; transform: scaleX(1) translateX(0); }
-  100% { opacity: 0; transform: scaleX(1.06) translateX(10px); }
+@keyframes boss-fireball-shot {
+  0% { opacity: 0; transform: translateX(-28px) translateY(12px) scale(0.44) rotate(-4deg); }
+  18% { opacity: 1; transform: translateX(0) translateY(2px) scale(0.72) rotate(-4deg); }
+  72% { opacity: 1; transform: translateX(18px) translateY(-4px) scale(1.04) rotate(-4deg); }
+  100% { opacity: 0; transform: translateX(34px) translateY(-8px) scale(1.18) rotate(-4deg); }
 }
 
 @keyframes boss-counter-shot {
@@ -2757,6 +2817,13 @@ body.file-tree-collapsed .file-tree {
   24% { opacity: 1; transform: scaleX(0.86) translateX(18px) rotate(2deg); }
   70% { opacity: 1; transform: scaleX(1.06) translateX(-8px) rotate(-3deg); }
   100% { opacity: 0; transform: scaleX(1.12) translateX(-32px) rotate(-5deg); }
+}
+
+@keyframes boss-hit-explosion-pop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.24) rotate(-18deg); }
+  18% { opacity: 1; transform: translate(-50%, -50%) scale(1.1) rotate(8deg); }
+  52% { opacity: 0.95; transform: translate(-50%, -50%) scale(0.92) rotate(-4deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.46) rotate(18deg); }
 }
 
 .boss-timing-panel strong,
