@@ -2018,7 +2018,7 @@ const SEASON_TWO_TURN_AFTER_EFFECT_DELAY_MS = 720;
 const SEASON_TWO_RUNNER_SPEED_MULTIPLIER = 2;
 const SEASON_TWO_TIMER_MS = 110;
 const SEASON_TWO_RUN_DISTANCE_STEP = 0.42;
-const SEASON_TWO_PICKUP_GLOW_MS = 1000;
+const SEASON_TWO_PICKUP_GLOW_MS = 2000;
 const SEASON_TWO_HIT_EXPLOSION_MS = 760;
 const SEASON_TWO_GORILLA_SCORE = 200;
 const SEASON_TWO_DINO_SCORE = 500;
@@ -2756,6 +2756,7 @@ function createSeasonTwoKaiju3D(THREE, evolution, scale = 1) {
   shadow.receiveShadow = false;
   shadow.material.transparent = true;
   shadow.material.opacity = 0.2;
+  shadow.userData.isGroundShadow = true;
 
   addSeasonTwoSphere(THREE, group, form.body[0], form.body[1], palette.body, form.body[2], { flatShading: true });
   addSeasonTwoSphere(THREE, group, form.belly[0], form.belly[1], palette.belly, form.belly[2], { roughness: 0.76 });
@@ -3062,16 +3063,47 @@ function addSeasonTwoHitExplosion3D(THREE, scene, target = "boss") {
   });
 }
 
-function addSeasonTwoPickupGlow3D(THREE, scene, position, kind = "good", isBossScene = false) {
-  const color = kind === "bad" ? 0xef4444 : 0x38bdf8;
-  const y = position.y + (isBossScene ? 1.14 : 1.0);
-  addSeasonTwoSphere(THREE, scene, 0.88, [position.x, y, position.z], color, [1.05, 1.22, 0.78], {
-    emissive: color,
-    emissiveIntensity: 0.34,
-    transparent: true,
-    opacity: 0.18,
+function addSeasonTwoPickupGlow3D(THREE, scene, data) {
+  const color = data.pickupGlowKind === "bad" ? 0xef4444 : 0x38bdf8;
+  const alpha = Math.max(0, Math.min(1, data.pickupGlowAlpha ?? 1));
+  const outline = createSeasonTwoKaiju3D(
+    THREE,
+    data.evolution,
+    seasonTwoMonsterScale(data.size, data.mutationSize, data.isBossScene),
+  );
+
+  if (data.isBossScene) {
+    outline.position.set(-2.45, 0.2, -0.68);
+    outline.rotation.y = Math.PI / 2;
+    poseSeasonTwoKaijuRun(outline, data.tick, true, data.attackEffectActive, data.attackKind);
+  } else {
+    outline.position.set(seasonTwoThreeLaneX(data.lane), 0.14, 5.45);
+    poseSeasonTwoKaijuRun(outline, data.tick, false, false);
+  }
+
+  outline.scale.multiplyScalar(data.isBossScene ? 1.065 : 1.08);
+  outline.renderOrder = -1;
+  outline.traverse((object) => {
+    if (!object.isMesh) return;
+    if (object.userData?.isGroundShadow) {
+      object.visible = false;
+      return;
+    }
+    const oldMaterials = Array.isArray(object.material) ? object.material : [object.material];
+    oldMaterials.forEach((material) => material?.dispose?.());
+    object.material = new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: alpha * 0.44,
+      side: THREE.BackSide,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    object.renderOrder = -1;
+    object.castShadow = false;
+    object.receiveShadow = false;
   });
-  addSeasonTwoCylinder(THREE, scene, 0.78, 0.78, 0.04, [position.x, position.y + 0.08, position.z], color, [Math.PI / 2, 0, 0], 44);
+  scene.add(outline);
 }
 
 function addSeasonTwoBossCounter3D(THREE, scene) {
@@ -3212,7 +3244,7 @@ function renderSeasonTwoThreeFrame(THREE, renderer, data, panProgress = 1) {
     player.position.set(seasonTwoThreeLaneX(data.lane), 0.14, 5.45);
     poseSeasonTwoKaijuRun(player, data.tick, false, false);
   }
-  if (data.pickupGlowActive) addSeasonTwoPickupGlow3D(THREE, scene, player.position, data.pickupGlowKind, data.isBossScene);
+  if (data.pickupGlowActive) addSeasonTwoPickupGlow3D(THREE, scene, data);
   scene.add(player);
 
   renderer.setSize(width, height, false);
@@ -3297,6 +3329,7 @@ function renderSeasonTwo() {
   const bossTurnEffectActive = isBossScene && (g.bossTurnEffectUntil || 0) > now;
   const hitExplosionActive = isBossScene && (g.hitExplosionUntil || 0) > now;
   const pickupGlowActive = (g.pickupGlowUntil || 0) > now;
+  const pickupGlowAlpha = pickupGlowActive ? Math.max(0, Math.min(1, (g.pickupGlowUntil - now) / SEASON_TWO_PICKUP_GLOW_MS)) : 0;
   const attackQuality = Math.max(0, Math.min(1, g.attackEffectQuality || g.lastTiming?.quality || 0));
   const attackClass = attackQuality >= 0.9 ? "perfect" : attackQuality >= 0.72 ? "strong" : "normal";
   const attackKind = g.attackKind || g.lastTiming?.kind || "flame";
@@ -3415,6 +3448,7 @@ function renderSeasonTwo() {
     hitExplosionActive,
     hitExplosionTarget: g.hitExplosionTarget || "boss",
     pickupGlowActive,
+    pickupGlowAlpha,
     pickupGlowKind: g.pickupGlowKind || "good",
     items: g.items.map((item) => ({ ...item })),
     lane: g.lane,
