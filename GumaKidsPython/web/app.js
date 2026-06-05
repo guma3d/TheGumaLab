@@ -2020,6 +2020,9 @@ const SEASON_TWO_TIMER_MS = 110;
 const SEASON_TWO_RUN_DISTANCE_STEP = 0.42;
 const SEASON_TWO_PICKUP_GLOW_MS = 2000;
 const SEASON_TWO_HIT_EXPLOSION_MS = 760;
+const SEASON_TWO_ITEM_COLLISION_MIN_Y = 88;
+const SEASON_TWO_ITEM_COLLISION_MAX_Y = 101;
+const SEASON_TWO_ITEM_DESPAWN_Y = 124;
 const SEASON_TWO_GORILLA_SCORE = 200;
 const SEASON_TWO_DINO_SCORE = 500;
 const SEASON_TWO_ITEM_VERTICAL_GAP = 32;
@@ -2598,12 +2601,17 @@ function updateSeasonTwoRunner() {
   const itemFallSpeed = seasonTwoItemFallSpeed(s, chapter, progress) * SEASON_TWO_RUNNER_SPEED_MULTIPLIER;
   for (const item of g.items) {
     item.y += itemFallSpeed;
-    if (!item.taken && item.lane === g.lane && item.y >= 70 && item.y <= 92) {
+    if (
+      !item.taken
+      && item.lane === g.lane
+      && item.y >= SEASON_TWO_ITEM_COLLISION_MIN_Y
+      && item.y <= SEASON_TWO_ITEM_COLLISION_MAX_Y
+    ) {
       item.taken = true;
       collectSeasonTwoItem(item, s, g);
     }
   }
-  g.items = g.items.filter((item) => !item.taken && item.y < 112);
+  g.items = g.items.filter((item) => !item.taken && item.y < SEASON_TWO_ITEM_DESPAWN_Y);
 
   if (g.phase === "runner" && g.distance >= g.goal) enterSeasonTwoBossFight(g, s);
   renderSeasonTwo();
@@ -2703,7 +2711,7 @@ function seasonTwoThreeLaneX(lane) {
 }
 
 function seasonTwoThreeItemZ(itemY) {
-  return -16 + itemY * 0.25;
+  return -24 + itemY * 0.32;
 }
 
 function makeSeasonTwoThreeMaterial(THREE, color, roughness = 0.72, metalness = 0.05, options = {}) {
@@ -3108,32 +3116,75 @@ function createSeasonTwoItem3D(THREE, item) {
   return group;
 }
 
-function addSeasonTwoAttack3D(THREE, scene, kind = "flame", quality = 0.6) {
-  const power = Math.max(0.45, Math.min(1, quality || 0.6));
-  const fireballs = [
-    { t: 0.12, radius: 0.2, color: 0xffedd5, opacity: 0.62 },
-    { t: 0.28, radius: 0.24, color: 0xfacc15, opacity: 0.66 },
-    { t: 0.46, radius: 0.34, color: 0xf97316, opacity: 0.72 },
-    { t: 0.66, radius: 0.44, color: 0xef4444, opacity: 0.76 },
-    { t: 0.86, radius: 0.52 + power * 0.16, color: 0xfff7ed, opacity: 0.82 },
-  ];
-  fireballs.forEach((ball, index) => {
-    const x = -1.55 + ball.t * 3.28;
-    const y = 1.52 + Math.sin(ball.t * Math.PI) * 0.22 + Math.sin(index * 1.7) * 0.03;
-    addSeasonTwoSphere(THREE, scene, ball.radius, [x, y, -0.72], ball.color, [1.16, 0.9, 0.96], {
-      emissive: ball.color,
-      emissiveIntensity: 0.64,
-      transparent: true,
-      opacity: ball.opacity,
-    });
+function addSeasonTwoLaserSegment3D(THREE, scene, start, end, radius, color, opacity, radialSegments = 24) {
+  const direction = new THREE.Vector3().subVectors(end, start);
+  const length = direction.length();
+  if (length <= 0.01) return;
+  const geometry = new THREE.CylinderGeometry(radius, radius, length, radialSegments, 1, true);
+  const material = new THREE.MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
   });
-  for (let index = 0; index < 8; index += 1) {
-    const t = index / 7;
-    addSeasonTwoSphere(THREE, scene, 0.07 + t * 0.05, [-1.82 + t * 3.18, 1.34 + Math.sin(t * Math.PI) * 0.2, -0.76], 0xf97316, [1, 1, 1], {
-      emissive: 0xf97316,
-      emissiveIntensity: 0.5,
+  const beam = new THREE.Mesh(geometry, material);
+  beam.position.copy(start).add(end).multiplyScalar(0.5);
+  beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
+  scene.add(beam);
+}
+
+function addSeasonTwoAttack3D(THREE, scene, kind = "flame", quality = 0.6, progress = 1) {
+  const power = Math.max(0.45, Math.min(1, quality || 0.6));
+  const effectProgress = Math.max(0, Math.min(1, progress ?? 1));
+  const grow = effectProgress * effectProgress * (3 - 2 * effectProgress);
+  const fadeIn = Math.min(1, effectProgress / 0.16);
+  const fadeOut = effectProgress > 0.82 ? Math.max(0, (1 - effectProgress) / 0.18) : 1;
+  const opacity = fadeIn * fadeOut;
+  const start = new THREE.Vector3(-2.08, 1.42, -0.68);
+  const target = new THREE.Vector3(2.22, 1.5, -0.68);
+  const beamEnd = start.clone().lerp(target, Math.min(1, grow * 1.08));
+  const pulse = 0.86 + Math.sin(effectProgress * Math.PI * 8) * 0.14;
+  const laserColor = kind === "flame" ? 0x38bdf8 : 0x67e8f9;
+
+  addSeasonTwoLaserSegment3D(THREE, scene, start, beamEnd, (0.09 + power * 0.055) * pulse, 0x0ea5e9, opacity * 0.18, 28);
+  addSeasonTwoLaserSegment3D(THREE, scene, start, beamEnd, (0.052 + power * 0.026) * pulse, laserColor, opacity * 0.44, 24);
+  addSeasonTwoLaserSegment3D(THREE, scene, start, beamEnd, (0.018 + power * 0.012) * pulse, 0xf8fafc, opacity * 0.92, 18);
+
+  addSeasonTwoSphere(THREE, scene, 0.14 + power * 0.05, [start.x, start.y, start.z], 0xe0f2fe, [1.28, 0.8, 0.8], {
+    emissive: 0x38bdf8,
+    emissiveIntensity: 0.68,
+    transparent: true,
+    opacity: opacity * 0.58,
+  });
+
+  for (let index = 0; index < 6; index += 1) {
+    const streamT = (effectProgress * 1.45 + index * 0.18) % 1;
+    if (streamT > grow) continue;
+    const spark = start.clone().lerp(target, streamT);
+    spark.y += Math.sin((streamT + index) * Math.PI * 4) * 0.045;
+    spark.z += Math.cos((streamT + index) * Math.PI * 3) * 0.045;
+    addSeasonTwoSphere(THREE, scene, 0.035 + power * 0.018, [spark.x, spark.y, spark.z], 0xf8fafc, [1.2, 0.8, 1], {
+      emissive: 0x67e8f9,
+      emissiveIntensity: 0.58,
       transparent: true,
-      opacity: 0.22 + t * 0.22,
+      opacity: opacity * 0.34,
+    });
+  }
+
+  const impact = Math.max(0, Math.min(1, (grow - 0.82) / 0.18));
+  if (impact > 0) {
+    addSeasonTwoSphere(THREE, scene, 0.18 + power * 0.13 * impact, [target.x, target.y, target.z], 0xf8fafc, [1.32, 0.82, 1], {
+      emissive: 0x22d3ee,
+      emissiveIntensity: 0.78,
+      transparent: true,
+      opacity: opacity * impact * 0.66,
+    });
+    addSeasonTwoSphere(THREE, scene, 0.34 + power * 0.18 * impact, [target.x, target.y, target.z], 0x38bdf8, [1.22, 0.58, 1], {
+      emissive: 0x0ea5e9,
+      emissiveIntensity: 0.42,
+      transparent: true,
+      opacity: opacity * impact * 0.22,
     });
   }
 }
@@ -3186,7 +3237,7 @@ function addSeasonTwoPickupGlow3D(THREE, scene, data) {
     poseSeasonTwoKaijuRun(outline, data.tick, false, false);
   }
 
-  outline.scale.multiplyScalar(data.isBossScene ? 1.065 : 1.08);
+  outline.scale.multiplyScalar(data.isBossScene ? 1.024 : 1.032);
   outline.renderOrder = -1;
   outline.traverse((object) => {
     if (!object.isMesh) return;
@@ -3199,7 +3250,7 @@ function addSeasonTwoPickupGlow3D(THREE, scene, data) {
     object.material = new THREE.MeshBasicMaterial({
       color,
       transparent: true,
-      opacity: alpha * 0.44,
+      opacity: alpha * 0.26,
       side: THREE.BackSide,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
@@ -3256,7 +3307,7 @@ function addSeasonTwoBossDissolve3D(THREE, scene) {
 
 function addSeasonTwoThreeWorld(THREE, scene, data) {
   scene.background = new THREE.Color(0x8bdcfb);
-  scene.fog = new THREE.Fog(0x8bdcfb, 18, 42);
+  scene.fog = new THREE.Fog(0x8bdcfb, 28, 72);
   scene.add(new THREE.HemisphereLight(0xffffff, 0x7dd3fc, 1.8));
   const sun = new THREE.DirectionalLight(0xffffff, 2.4);
   sun.position.set(6, 10, 8);
@@ -3265,25 +3316,25 @@ function addSeasonTwoThreeWorld(THREE, scene, data) {
   const rim = new THREE.DirectionalLight(0xa5f3fc, 1.1);
   rim.position.set(-5, 4.2, 6);
   scene.add(rim);
-  addSeasonTwoBox(THREE, scene, [18, 0.16, 34], [0, -0.12, -4], 0x7ddf9b, [0, 0, 0], { roughness: 0.9 });
-  addSeasonTwoBox(THREE, scene, [7.6, 0.28, 34], [0, 0, -4], 0x475569, [0, 0, 0], { roughness: 0.82 });
-  addSeasonTwoBox(THREE, scene, [0.22, 0.08, 34], [-3.95, 0.18, -4], 0x22c55e);
-  addSeasonTwoBox(THREE, scene, [0.22, 0.08, 34], [3.95, 0.18, -4], 0x22c55e);
-  for (let z = -18; z <= 11; z += 2.6) {
+  addSeasonTwoBox(THREE, scene, [18, 0.16, 58], [0, -0.12, -12], 0x7ddf9b, [0, 0, 0], { roughness: 0.9 });
+  addSeasonTwoBox(THREE, scene, [7.6, 0.28, 58], [0, 0, -12], 0x475569, [0, 0, 0], { roughness: 0.82 });
+  addSeasonTwoBox(THREE, scene, [0.22, 0.08, 58], [-3.95, 0.18, -12], 0x22c55e);
+  addSeasonTwoBox(THREE, scene, [0.22, 0.08, 58], [3.95, 0.18, -12], 0x22c55e);
+  for (let z = -40; z <= 13; z += 2.6) {
     addSeasonTwoBox(THREE, scene, [0.08, 0.07, 1.1], [-1.27, 0.23, z], 0xfde047);
     addSeasonTwoBox(THREE, scene, [0.08, 0.07, 1.1], [1.27, 0.23, z], 0xfde047);
   }
   for (let i = 0; i < 9; i += 1) {
     const x = -7.4 + i * 1.85;
     const height = 1.2 + ((i * 37) % 5) * 0.42;
-    addSeasonTwoBox(THREE, scene, [1.1, height, 0.9], [x, height * 0.5 - 0.04, -20.5], i % 2 ? 0x93c5fd : 0xbfdbfe, [0, 0, 0], { roughness: 0.88 });
+    addSeasonTwoBox(THREE, scene, [1.1, height, 0.9], [x, height * 0.5 - 0.04, -38], i % 2 ? 0x93c5fd : 0xbfdbfe, [0, 0, 0], { roughness: 0.88 });
   }
   const sunGeometry = new THREE.SphereGeometry(1.1, 28, 18);
   const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xfde047 });
   const sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
-  sunMesh.position.set(6.6, 7.8, -18);
+  sunMesh.position.set(6.6, 7.8, -34);
   scene.add(sunMesh);
-  for (const cloud of [[-5.6, 5.3, -12], [-2.7, 6.1, -16], [4.1, 5.6, -13]]) {
+  for (const cloud of [[-5.6, 5.3, -23], [-2.7, 6.1, -31], [4.1, 5.6, -26]]) {
     const group = new THREE.Group();
     addSeasonTwoSphere(THREE, group, 0.54, [0, 0, 0], 0xffffff, [1.5, 0.58, 0.5]);
     addSeasonTwoSphere(THREE, group, 0.42, [0.54, 0.08, 0.04], 0xffffff, [1.18, 0.5, 0.44]);
@@ -3298,12 +3349,12 @@ function addSeasonTwoThreeWorld(THREE, scene, data) {
 function renderSeasonTwoThreeFrame(THREE, renderer, data, panProgress = 1) {
   const { width, height } = data;
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(data.isBossScene ? 42 : 52, width / height, 0.1, 80);
+  const camera = new THREE.PerspectiveCamera(data.isBossScene ? 42 : 58, width / height, 0.1, 100);
   addSeasonTwoThreeWorld(THREE, scene, data);
 
   const runnerCamera = {
-    position: new THREE.Vector3(0, 5.05, 12.2),
-    target: new THREE.Vector3(0, 1.12, -0.7),
+    position: new THREE.Vector3(0, 5.55, 13.6),
+    target: new THREE.Vector3(0, 1.02, -5.2),
   };
   const bossCamera = {
     position: new THREE.Vector3(0, 1.9, 10.4),
@@ -3342,7 +3393,13 @@ function renderSeasonTwoThreeFrame(THREE, renderer, data, panProgress = 1) {
     } else {
       scene.add(boss);
     }
-    if (data.attackEffectActive) addSeasonTwoAttack3D(THREE, scene, data.attackKind, data.attackEffectQuality);
+    if (data.attackEffectActive) addSeasonTwoAttack3D(
+      THREE,
+      scene,
+      data.attackKind,
+      data.attackEffectQuality,
+      data.attackEffectProgress,
+    );
     if (data.bossTurnEffectActive) addSeasonTwoBossCounter3D(THREE, scene);
     if (data.hitExplosionActive) addSeasonTwoHitExplosion3D(THREE, scene, data.hitExplosionTarget);
   } else {
@@ -3431,10 +3488,18 @@ function renderSeasonTwo() {
   const playerNoticeActive = g.phase === "boss" && g.bossTurn === "playerNotice";
   const turnDelayActive = g.phase === "boss" && g.bossTurn === "turnDelay";
   const attackEffectActive = isBossScene && (g.attackEffectUntil || 0) > now;
+  const attackEffectProgress = attackEffectActive
+    ? Math.max(0, Math.min(1, 1 - ((g.attackEffectUntil - now) / SEASON_TWO_ATTACK_EFFECT_MS)))
+    : 0;
   const bossTurnEffectActive = isBossScene && (g.bossTurnEffectUntil || 0) > now;
   const hitExplosionActive = isBossScene && (g.hitExplosionUntil || 0) > now;
   const pickupGlowActive = (g.pickupGlowUntil || 0) > now;
-  const pickupGlowAlpha = pickupGlowActive ? Math.max(0, Math.min(1, (g.pickupGlowUntil - now) / SEASON_TWO_PICKUP_GLOW_MS)) : 0;
+  const pickupGlowProgress = pickupGlowActive
+    ? Math.max(0, Math.min(1, 1 - ((g.pickupGlowUntil - now) / SEASON_TWO_PICKUP_GLOW_MS)))
+    : 0;
+  const pickupGlowFade = pickupGlowActive ? Math.max(0, Math.min(1, (g.pickupGlowUntil - now) / SEASON_TWO_PICKUP_GLOW_MS)) : 0;
+  const pickupGlowPulse = pickupGlowActive ? 0.08 + (Math.sin(pickupGlowProgress * Math.PI * 6) ** 2) * 0.92 : 0;
+  const pickupGlowAlpha = pickupGlowFade * pickupGlowPulse;
   const attackQuality = Math.max(0, Math.min(1, g.attackEffectQuality || g.lastTiming?.quality || 0));
   const attackClass = attackQuality >= 0.9 ? "perfect" : attackQuality >= 0.72 ? "strong" : "normal";
   const attackKind = g.attackKind || g.lastTiming?.kind || "flame";
@@ -3546,6 +3611,7 @@ function renderSeasonTwo() {
     evolution,
     isBossScene,
     attackEffectActive,
+    attackEffectProgress,
     attackEffectQuality: attackQuality,
     attackKind,
     bossTurnEffectActive,

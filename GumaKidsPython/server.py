@@ -15,6 +15,12 @@ WEB_DIR = ROOT / "web"
 DATA_DIR = ROOT / "data"
 SAVES_DIR = DATA_DIR / "saves"
 PROFILE_RE = re.compile(r"^[A-Za-z0-9_-]{1,40}$")
+WEB_MIME_TYPES = {
+    ".css": "text/css",
+    ".html": "text/html",
+    ".js": "text/javascript",
+    ".mjs": "text/javascript",
+}
 
 
 app = Flask(__name__, static_folder=None)
@@ -34,6 +40,10 @@ def _profile_name(raw: str | None) -> str:
 
 def _save_path(profile: str) -> Path:
     return SAVES_DIR / f"{profile}.json"
+
+
+def _web_mimetype(path: str) -> str | None:
+    return WEB_MIME_TYPES.get(Path(path).suffix.lower())
 
 
 def _default_save(profile: str) -> dict[str, Any]:
@@ -97,12 +107,12 @@ def no_store(response):
 
 @app.get("/")
 def index():
-    return send_from_directory(WEB_DIR, "index.html")
+    return send_from_directory(WEB_DIR, "index.html", mimetype=_web_mimetype("index.html"))
 
 
 @app.get("/<path:path>")
 def static_files(path: str):
-    return send_from_directory(WEB_DIR, path)
+    return send_from_directory(WEB_DIR, path, mimetype=_web_mimetype(path))
 
 
 @app.get("/api/health")
