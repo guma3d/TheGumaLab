@@ -36,6 +36,7 @@ on:
         options:
           - '-'
           - GumaPhoto
+          - GumaKidsPython
           - GumaStockReport
           - GumaImageAnalyzer
           - GumaServerStatus
