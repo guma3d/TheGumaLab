@@ -526,6 +526,15 @@ const audio = {
 const seasonTwoThree = {
   modulePromise: null,
   renderer: null,
+  scene: null,
+  camera: null,
+  staticGroup: null,
+  dynamicGroup: null,
+  dynamicKey: "",
+  width: 0,
+  height: 0,
+  pixelRatio: 0,
+  fov: 0,
   renderToken: 0,
   panToken: 0,
 };
@@ -2961,6 +2970,40 @@ function disposeThreeScene(scene) {
   });
 }
 
+function clearSeasonTwoThreeGroup(group) {
+  if (!group) return;
+  [...group.children].forEach((child) => {
+    group.remove(child);
+    disposeThreeScene(child);
+  });
+}
+
+function seasonTwoThreeDynamicKey(data) {
+  const itemsKey = data.items
+    .map((item) => `${item.id}:${item.kind}:${item.lane}:${Math.round(item.y * 10)}`)
+    .join("|");
+  return [
+    data.phase,
+    data.isBossScene ? 1 : 0,
+    data.boss?.className || "",
+    data.evolution?.className || "",
+    Math.round(data.size * 100),
+    Math.round(data.mutationSize * 100),
+    data.lane,
+    data.tick,
+    data.attackEffectActive ? 1 : 0,
+    Math.round((data.attackEffectProgress || 0) * 100),
+    Math.round((data.attackEffectQuality || 0) * 100),
+    data.attackKind || "",
+    data.bossTurnEffectActive ? 1 : 0,
+    Math.round((data.bossTurnEffectProgress || 0) * 100),
+    data.pickupGlowActive ? 1 : 0,
+    data.pickupGlowKind || "",
+    Math.round((data.pickupGlowAlpha || 0) * 100),
+    itemsKey,
+  ].join(";");
+}
+
 function seasonTwoThreeLaneX(lane) {
   return [-2.25, 0, 2.25][Math.max(0, Math.min(2, lane))] || 0;
 }
@@ -3490,9 +3533,7 @@ function addSeasonTwoBossDissolve3D(THREE, scene) {
   }
 }
 
-function addSeasonTwoThreeWorld(THREE, scene, data) {
-  scene.background = new THREE.Color(0x8bdcfb);
-  scene.fog = new THREE.Fog(0x8bdcfb, 28, 72);
+function addSeasonTwoThreeWorld(THREE, scene) {
   scene.add(new THREE.HemisphereLight(0xffffff, 0x7dd3fc, 1.8));
   const sun = new THREE.DirectionalLight(0xffffff, 2.4);
   sun.position.set(6, 10, 8);
@@ -3526,34 +3567,40 @@ function addSeasonTwoThreeWorld(THREE, scene, data) {
     group.position.set(cloud[0], cloud[1], cloud[2]);
     scene.add(group);
   }
-  if (!data.isBossScene) {
-    data.items.forEach((item) => scene.add(createSeasonTwoItem3D(THREE, item)));
-  }
 }
 
-function renderSeasonTwoThreeFrame(THREE, renderer, data, panProgress = 1) {
-  const { width, height } = data;
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(data.isBossScene ? 42 : 58, width / height, 0.1, 100);
-  addSeasonTwoThreeWorld(THREE, scene, data);
+function ensureSeasonTwoThreeScene(THREE) {
+  if (!seasonTwoThree.scene) {
+    seasonTwoThree.scene = new THREE.Scene();
+    seasonTwoThree.scene.background = new THREE.Color(0x8bdcfb);
+    seasonTwoThree.scene.fog = new THREE.Fog(0x8bdcfb, 28, 72);
+    seasonTwoThree.staticGroup = new THREE.Group();
+    seasonTwoThree.dynamicGroup = new THREE.Group();
+    addSeasonTwoThreeWorld(THREE, seasonTwoThree.staticGroup);
+    seasonTwoThree.scene.add(seasonTwoThree.staticGroup);
+    seasonTwoThree.scene.add(seasonTwoThree.dynamicGroup);
+  }
+  if (!seasonTwoThree.camera) {
+    seasonTwoThree.camera = new THREE.PerspectiveCamera(58, 1, 0.1, 100);
+  }
+  return {
+    scene: seasonTwoThree.scene,
+    camera: seasonTwoThree.camera,
+    dynamicGroup: seasonTwoThree.dynamicGroup,
+  };
+}
 
-  const runnerCamera = {
-    position: new THREE.Vector3(0, 5.55, 13.6),
-    target: new THREE.Vector3(0, 1.02, -5.2),
-  };
-  const bossCamera = {
-    position: new THREE.Vector3(0, 1.9, 10.4),
-    target: new THREE.Vector3(0, 1.32, -0.68),
-  };
-  const eased = panProgress * panProgress * (3 - 2 * panProgress);
-  const cameraPosition = data.isBossScene
-    ? runnerCamera.position.clone().lerp(bossCamera.position, eased)
-    : runnerCamera.position;
-  const cameraTarget = data.isBossScene
-    ? runnerCamera.target.clone().lerp(bossCamera.target, eased)
-    : runnerCamera.target;
-  camera.position.copy(cameraPosition);
-  camera.lookAt(cameraTarget);
+function updateSeasonTwoThreeDynamic(THREE, data) {
+  const dynamicGroup = seasonTwoThree.dynamicGroup;
+  if (!dynamicGroup) return;
+  const dynamicKey = seasonTwoThreeDynamicKey(data);
+  if (seasonTwoThree.dynamicKey === dynamicKey) return;
+  clearSeasonTwoThreeGroup(dynamicGroup);
+  seasonTwoThree.dynamicKey = dynamicKey;
+
+  if (!data.isBossScene) {
+    data.items.forEach((item) => dynamicGroup.add(createSeasonTwoItem3D(THREE, item)));
+  }
 
   const player = createSeasonTwoKaiju3D(
     THREE,
@@ -3574,29 +3621,70 @@ function renderSeasonTwoThreeFrame(THREE, renderer, data, panProgress = 1) {
       boss.scale.multiplyScalar(1.08);
     }
     if (data.phase === "win") {
-      addSeasonTwoBossDissolve3D(THREE, scene);
+      addSeasonTwoBossDissolve3D(THREE, dynamicGroup);
     } else {
-      scene.add(boss);
+      dynamicGroup.add(boss);
     }
     if (data.attackEffectActive) addSeasonTwoAttack3D(
       THREE,
-      scene,
+      dynamicGroup,
       data.attackKind,
       data.attackEffectQuality,
       data.attackEffectProgress,
     );
-    if (data.bossTurnEffectActive) addSeasonTwoBossCounter3D(THREE, scene, data.bossTurnEffectProgress);
+    if (data.bossTurnEffectActive) addSeasonTwoBossCounter3D(THREE, dynamicGroup, data.bossTurnEffectProgress);
   } else {
     player.position.set(seasonTwoThreeLaneX(data.lane), 0.14, 5.45);
     poseSeasonTwoKaijuRun(player, data.tick, false, false);
   }
-  if (data.pickupGlowActive) addSeasonTwoPickupGlow3D(THREE, scene, data);
-  scene.add(player);
+  if (data.pickupGlowActive) addSeasonTwoPickupGlow3D(THREE, dynamicGroup, data);
+  dynamicGroup.add(player);
+}
 
-  renderer.setSize(width, height, false);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+function renderSeasonTwoThreeFrame(THREE, renderer, data, panProgress = 1) {
+  const { width, height } = data;
+  const { scene, camera } = ensureSeasonTwoThreeScene(THREE);
+  updateSeasonTwoThreeDynamic(THREE, data);
+
+  const runnerCamera = {
+    position: new THREE.Vector3(0, 5.55, 13.6),
+    target: new THREE.Vector3(0, 1.02, -5.2),
+  };
+  const bossCamera = {
+    position: new THREE.Vector3(0, 1.9, 10.4),
+    target: new THREE.Vector3(0, 1.32, -0.68),
+  };
+  const eased = panProgress * panProgress * (3 - 2 * panProgress);
+  const cameraPosition = data.isBossScene
+    ? runnerCamera.position.clone().lerp(bossCamera.position, eased)
+    : runnerCamera.position;
+  const cameraTarget = data.isBossScene
+    ? runnerCamera.target.clone().lerp(bossCamera.target, eased)
+    : runnerCamera.target;
+  const fov = data.isBossScene ? 42 : 58;
+  const aspect = width / height;
+  if (seasonTwoThree.fov !== fov || camera.aspect !== aspect) {
+    camera.fov = fov;
+    camera.aspect = aspect;
+    camera.updateProjectionMatrix();
+    seasonTwoThree.fov = fov;
+  }
+  camera.position.copy(cameraPosition);
+  camera.lookAt(cameraTarget);
+
+  const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+  if (
+    seasonTwoThree.width !== width
+    || seasonTwoThree.height !== height
+    || seasonTwoThree.pixelRatio !== pixelRatio
+  ) {
+    renderer.setPixelRatio(pixelRatio);
+    renderer.setSize(width, height, false);
+    seasonTwoThree.width = width;
+    seasonTwoThree.height = height;
+    seasonTwoThree.pixelRatio = pixelRatio;
+  }
   renderer.render(scene, camera);
-  disposeThreeScene(scene);
 }
 
 function renderSeasonTwoThreeScene(data) {
