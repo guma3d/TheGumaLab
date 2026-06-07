@@ -2202,6 +2202,7 @@ const SEASON_TWO_ITEM_FALL_SPEED_MULTIPLIER = SEASON_TWO_RUNNER_SPEED_MULTIPLIER
 const SEASON_TWO_ITEM_SPAWN_INTERVAL_MULTIPLIER = 0.67;
 const SEASON_TWO_TIMER_MS = 110;
 const SEASON_TWO_RUN_DISTANCE_STEP = 0.42;
+const SEASON_TWO_ROAR_SPEECH_MS = 2200;
 const SEASON_TWO_PICKUP_GLOW_MS = 2000;
 const SEASON_TWO_HIT_EXPLOSION_MS = 760;
 const SEASON_TWO_ITEM_COLLISION_MIN_Y = 88;
@@ -2479,6 +2480,7 @@ function seasonTwoReset() {
     bossCameraReady: false,
     shieldCharges: toBool(s.shield_ready) ? 2 : 0,
     dashCharges: toBool(s.dash_ready) ? 2 : 0,
+    roarSpeechUntil: chapter >= 2 ? performance.now() + SEASON_TWO_ROAR_SPEECH_MS : 0,
     message: s.runner_title || "괴수 러너 출발!",
   };
   const previewKinds = seasonTwoPreviewKinds(chapter);
@@ -3760,7 +3762,8 @@ function renderSeasonTwo() {
   const bossCounterEffect = bossTurnEffectActive ? `<div class="boss-counter-effect"><span></span><strong>${g.pendingBossDamage || ""}</strong></div>` : "";
   const hitExplosion = hitExplosionActive ? `<div class="boss-hit-explosion hit-${g.hitExplosionTarget || "boss"}"><span></span><i></i></div>` : "";
   const playerBar = "";
-  const roarSpeech = state.gameStarted && !isBossScene && s.roar_text ? `
+  const roarSpeechActive = state.gameStarted && !isBossScene && s.roar_text && (g.roarSpeechUntil || 0) > now;
+  const roarSpeech = roarSpeechActive ? `
     <div class="runner-speech-overlay" style="left:${playerLeft}%">
       <span>${s.baby_name || "괴수"}</span>
       <strong>${s.roar_text}</strong>
@@ -3821,7 +3824,7 @@ function renderSeasonTwo() {
           <span class="boss-gate" style="--gate-glow:${progress}%">${g.boss.name}</span>
           ${runnerItems}
           <div class="runner-kaiju" style="left:${playerLeft}%">
-            <span class="kaiju-speech">${s.roar_text}</span>
+            ${roarSpeechActive ? `<span class="kaiju-speech">${s.roar_text}</span>` : ""}
             ${seasonTwoMonsterMarkup(s.baby_name, evolution, isBossScene ? "fighter-model" : "", monsterVisualScale)}
             ${playerBar}
           </div>
