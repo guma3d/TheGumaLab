@@ -2208,7 +2208,6 @@ const SEASON_TWO_TURN_NOTICE_MS = 3000;
 const SEASON_TWO_TURN_AFTER_EFFECT_DELAY_MS = 720;
 const SEASON_TWO_RUNNER_SPEED_MULTIPLIER = 4;
 const SEASON_TWO_ITEM_FALL_SPEED_MULTIPLIER = SEASON_TWO_RUNNER_SPEED_MULTIPLIER * 1.05;
-const SEASON_TWO_ITEM_SPAWN_INTERVAL_MULTIPLIER = 0.5;
 const SEASON_TWO_TIMER_MS = 110;
 const SEASON_TWO_RUN_DISTANCE_STEP = 0.42;
 const SEASON_TWO_ROAR_SPEECH_MS = 2200;
@@ -2221,27 +2220,56 @@ const SEASON_TWO_DINO_SCORE = 500;
 const SEASON_TWO_ITEM_VERTICAL_GAP = 13;
 const SEASON_TWO_ITEM_SPAWN_Y = -4;
 const SEASON_TWO_MIN_TARGET_SECONDS = 30;
-const SEASON_TWO_MAX_TARGET_SECONDS = 90;
+const SEASON_TWO_MAX_TARGET_SECONDS = 60;
+const SEASON_TWO_MIN_MEAT_COUNT = 30;
+const SEASON_TWO_MAX_MEAT_COUNT = 60;
+const SEASON_TWO_MIN_BOMB_COUNT = 24;
+const SEASON_TWO_MAX_BOMB_COUNT = 54;
 const SEASON_TWO_EXPECTED_MEAT_COLLECT_RATIO = 0.8;
 const SEASON_TWO_BOSS_EXPECTED_MEAT_COLLECT_RATIO = 1;
-const SEASON_TWO_BOSS_MIN_HP_ENERGY_RATIO = 1;
-const SEASON_TWO_BOSS_MAX_HP_ENERGY_RATIO = 1.2;
-const SEASON_TWO_BOSS_PERFECT_SURVIVE_ENERGY_RATIO = 0.92;
-const SEASON_TWO_MIN_BOSS_MAX_HITS = 2;
+const SEASON_TWO_MIN_BOSS_MAX_HITS = 3;
 const SEASON_TWO_MAX_BOSS_MAX_HITS = 5;
-const SEASON_TWO_PREVIEW_KINDS = ["meat", "double_meat", "meat", "double_meat", "bomb"];
-const SEASON_TWO_PREVIEW_LANES = [1, 1, 1, 1, 0];
-const SEASON_TWO_PREVIEW_Y = [-4, -22, -40, -58, 18];
 
 function seasonTwoHas(chapter) {
   return seasonTwoChapter() >= chapter;
+}
+
+function seasonTwoChapterBalance(chapter) {
+  const difficulty = seasonTwoItemDifficulty(chapter);
+  const lerpInt = (min, max) => Math.round(min + difficulty * (max - min));
+  return {
+    difficulty,
+    targetSeconds: lerpInt(SEASON_TWO_MIN_TARGET_SECONDS, SEASON_TWO_MAX_TARGET_SECONDS),
+    meatCount: lerpInt(SEASON_TWO_MIN_MEAT_COUNT, SEASON_TWO_MAX_MEAT_COUNT),
+    bombCount: lerpInt(SEASON_TWO_MIN_BOMB_COUNT, SEASON_TWO_MAX_BOMB_COUNT),
+    playerHitsToWin: lerpInt(SEASON_TWO_MIN_BOSS_MAX_HITS, SEASON_TWO_MAX_BOSS_MAX_HITS),
+    bossHitsToDefeat: lerpInt(SEASON_TWO_MIN_BOSS_MAX_HITS, SEASON_TWO_MAX_BOSS_MAX_HITS),
+  };
+}
+
+function seasonTwoBaseEnergy(chapter, settings = state.settings.season_02 || {}) {
+  const startEnergy = Math.max(1, toNumber(settings.hp, 100));
+  const snackBonus = chapter >= 3 ? Math.max(0, toNumber(settings.snack_score, 10)) : 0;
+  return startEnergy + snackBonus;
+}
+
+function seasonTwoMeatEnergyValue(settings = state.settings.season_02 || {}) {
+  const meatPoint = Math.max(1, toNumber(settings.meat_score, 100));
+  const foodLabel = String(settings.food_name || settings.favorite_food || "고기").trim() || "고기";
+  const favoriteFood = String(settings.favorite_food || "고기").trim() || "고기";
+  const favoriteBonus = favoriteFood === foodLabel ? Math.max(0, toNumber(settings.favorite_bonus, 20)) : 0;
+  return meatPoint + favoriteBonus;
+}
+
+function seasonTwoAllMeatEnergy(chapter, settings = state.settings.season_02 || {}) {
+  const balance = seasonTwoChapterBalance(chapter);
+  return seasonTwoBaseEnergy(chapter, settings) + balance.meatCount * seasonTwoMeatEnergyValue(settings);
 }
 
 function seasonTwoBossForChapter(chapter = seasonTwoChapter(), settings = state.settings.season_02) {
   const config = settings || {};
   const index = Math.min(3, Math.floor((chapter - 1) / 3));
   const base = seasonTwoBosses[index];
-  const tunedPower = toNumber(config.boss_power, 24);
   const expectedEnergy = seasonTwoBossExpectedEnergy(chapter, config);
   const expectedEvolution = seasonTwoEvolution(expectedEnergy, config);
   const maxGaugeTiming = { label: "완벽 타이밍", multiplier: 2.65, quality: 1 };
@@ -2249,14 +2277,14 @@ function seasonTwoBossForChapter(chapter = seasonTwoChapter(), settings = state.
     chapter,
     hp: expectedEnergy,
   });
-  const targetHits = seasonTwoBossMaxGaugeHits(chapter);
-  const energyBasedHp = Math.round(expectedEnergy * seasonTwoBossHpEnergyRatio(chapter));
-  const energyBasedPower = Math.round(expectedEnergy * seasonTwoBossPowerEnergyRatio(chapter));
+  const balance = seasonTwoChapterBalance(chapter);
+  const expectedBossHp = Math.round(maxGaugeDamage * balance.playerHitsToWin);
+  const expectedBossPower = Math.ceil(expectedEnergy / Math.max(1, balance.bossHitsToDefeat));
   return {
     ...base,
     name: chapter >= 12 ? (config.boss_name || base.name) : base.name,
-    maxHp: Math.max(base.hp, energyBasedHp, Math.round(maxGaugeDamage * targetHits)),
-    power: Math.max(base.power, tunedPower, energyBasedPower),
+    maxHp: Math.max(base.hp, expectedBossHp),
+    power: Math.max(base.power, expectedBossPower),
   };
 }
 
@@ -2325,46 +2353,15 @@ function seasonTwoItemDifficulty(chapter) {
 }
 
 function seasonTwoRunnerTargetSeconds(chapter) {
-  return Math.round(SEASON_TWO_MIN_TARGET_SECONDS + seasonTwoItemDifficulty(chapter) * (SEASON_TWO_MAX_TARGET_SECONDS - SEASON_TWO_MIN_TARGET_SECONDS));
+  return seasonTwoChapterBalance(chapter).targetSeconds;
 }
 
 function seasonTwoBossMaxGaugeHits(chapter) {
-  return SEASON_TWO_MIN_BOSS_MAX_HITS + seasonTwoItemDifficulty(chapter) * (SEASON_TWO_MAX_BOSS_MAX_HITS - SEASON_TWO_MIN_BOSS_MAX_HITS);
-}
-
-function seasonTwoBossHpEnergyRatio(chapter) {
-  const difficulty = seasonTwoItemDifficulty(chapter);
-  return SEASON_TWO_BOSS_MIN_HP_ENERGY_RATIO
-    + difficulty * (SEASON_TWO_BOSS_MAX_HP_ENERGY_RATIO - SEASON_TWO_BOSS_MIN_HP_ENERGY_RATIO);
-}
-
-function seasonTwoBossPowerEnergyRatio(chapter) {
-  const targetHits = seasonTwoBossMaxGaugeHits(chapter);
-  const perfectHits = Math.max(1, Math.ceil(targetHits));
-  let counterPressure = 0;
-  for (let attackIndex = 1; attackIndex < perfectHits; attackIndex += 1) {
-    const defeatedRatio = Math.min(1, attackIndex / Math.max(1, targetHits));
-    counterPressure += 1 + defeatedRatio * 0.35;
-  }
-  return counterPressure > 0 ? SEASON_TWO_BOSS_PERFECT_SURVIVE_ENERGY_RATIO / counterPressure : 0;
+  return seasonTwoChapterBalance(chapter).playerHitsToWin;
 }
 
 function seasonTwoMaxGaugeEnergyDamageRatio(chapter) {
-  return seasonTwoBossHpEnergyRatio(chapter) / Math.max(1, seasonTwoBossMaxGaugeHits(chapter));
-}
-
-function seasonTwoItemChances(chapter) {
-  const difficulty = seasonTwoItemDifficulty(chapter);
-  const nukeChance = chapter >= 10 ? 0.04 + difficulty * 0.05 : 0;
-  const doubleMeatChance = chapter >= 7 ? 0.1 + difficulty * 0.08 : 0;
-  const bombChance = 0.34 + difficulty * 0.26;
-  const meatChance = Math.max(0, 1 - nukeChance - doubleMeatChance - bombChance);
-  return { nukeChance, doubleMeatChance, bombChance, meatChance };
-}
-
-function seasonTwoRowPairChance(chapter) {
-  const difficulty = seasonTwoItemDifficulty(chapter);
-  return 0.36 + difficulty * 0.34;
+  return 1 / Math.max(1, seasonTwoBossMaxGaugeHits(chapter));
 }
 
 function seasonTwoIsMeatKind(kind) {
@@ -2375,65 +2372,44 @@ function seasonTwoIsBombKind(kind) {
   return kind === "bomb" || kind === "nuke";
 }
 
-function seasonTwoRewardKindForChapter(chapter) {
-  const difficulty = seasonTwoItemDifficulty(chapter);
-  const doubleChance = chapter >= 7 ? 0.18 + difficulty * 0.12 : 0;
-  return Math.random() < doubleChance ? "double_meat" : "meat";
+function shuffleSeasonTwoRows(rows) {
+  return rows
+    .map((row) => ({ row, order: Math.random() }))
+    .sort((a, b) => a.order - b.order)
+    .map((entry) => entry.row);
 }
 
-function seasonTwoPreviewKinds(chapter) {
-  const previewCount = Math.min(5, Math.max(2, Math.ceil(chapter / 3)));
-  return SEASON_TWO_PREVIEW_KINDS.slice(0, previewCount);
-}
+function createSeasonTwoSpawnPlan(chapter) {
+  const balance = seasonTwoChapterBalance(chapter);
+  const tickCount = Math.max(1, Math.round((balance.targetSeconds * 1000) / SEASON_TWO_TIMER_MS));
+  let meatRemaining = balance.meatCount;
+  let bombRemaining = balance.bombCount;
+  const rows = [];
 
-function seasonTwoSpawnRate(speed, progress) {
-  const baseRate = 24 - Math.round(speed) - Math.floor(progress * 5);
-  return Math.max(6, Math.round(baseRate * SEASON_TWO_ITEM_SPAWN_INTERVAL_MULTIPLIER));
-}
-
-function seasonTwoExpectedSpawnRows(chapter, settings = state.settings.season_02 || {}) {
-  const speed = Math.max(2, Math.min(10, toNumber(settings.run_speed, 5)));
-  const tickCount = Math.max(1, Math.round((seasonTwoRunnerTargetSeconds(chapter) * 1000) / SEASON_TWO_TIMER_MS));
-  let rows = 0;
-  for (let tick = 1; tick <= tickCount; tick += 1) {
-    const progress = Math.max(0, Math.min(1, tick / tickCount));
-    if (tick % seasonTwoSpawnRate(speed, progress) === 0) rows += 1;
+  while (meatRemaining > 0 && bombRemaining > 0) {
+    rows.push(["meat", "bomb"]);
+    meatRemaining -= 1;
+    bombRemaining -= 1;
   }
-  return rows;
-}
+  while (meatRemaining > 0) {
+    rows.push(["meat"]);
+    meatRemaining -= 1;
+  }
+  while (bombRemaining > 0) {
+    rows.push(["bomb"]);
+    bombRemaining -= 1;
+  }
 
-function seasonTwoExpectedRowRewardEnergy(chapter, settings = state.settings.season_02 || {}) {
-  const meatPoint = Math.max(1, toNumber(settings.meat_score, 100));
-  const foodLabel = String(settings.food_name || settings.favorite_food || "고기").trim() || "고기";
-  const favoriteBonus = String(settings.favorite_food || "고기").trim() === foodLabel
-    ? Math.max(0, toNumber(settings.favorite_bonus, 20))
-    : 0;
-  const { doubleMeatChance, bombChance, meatChance } = seasonTwoItemChances(chapter);
-  const singleRewardEnergy = meatChance * (meatPoint + favoriteBonus) + doubleMeatChance * (meatPoint * 2 + favoriteBonus);
-  const rewardChance = meatChance + doubleMeatChance;
-  const averageRewardEnergy = rewardChance > 0 ? singleRewardEnergy / rewardChance : meatPoint;
-  return singleRewardEnergy + seasonTwoRowPairChance(chapter) * bombChance * averageRewardEnergy;
-}
-
-function seasonTwoExpectedPreviewRewardEnergy(chapter, settings = state.settings.season_02 || {}) {
-  const meatPoint = Math.max(1, toNumber(settings.meat_score, 100));
-  const foodLabel = String(settings.food_name || settings.favorite_food || "고기").trim() || "고기";
-  const favoriteBonus = String(settings.favorite_food || "고기").trim() === foodLabel
-    ? Math.max(0, toNumber(settings.favorite_bonus, 20))
-    : 0;
-  return seasonTwoPreviewKinds(chapter).reduce((sum, kind) => {
-    if (kind === "double_meat") return sum + meatPoint * 2 + favoriteBonus;
-    if (kind === "meat") return sum + meatPoint + favoriteBonus;
-    return sum;
-  }, 0);
+  return shuffleSeasonTwoRows(rows).map((kinds, index) => ({
+    kinds,
+    tick: Math.max(1, Math.round(((index + 0.35) / Math.max(1, rows.length)) * tickCount)),
+  }));
 }
 
 function seasonTwoExpectedCollectedEnergy(chapter, settings = state.settings.season_02 || {}, collectRatio = SEASON_TWO_EXPECTED_MEAT_COLLECT_RATIO) {
-  const startEnergy = Math.max(1, toNumber(settings.hp, 100));
-  const snackBonus = chapter >= 3 ? Math.max(0, toNumber(settings.snack_score, 10)) : 0;
-  const rewardEnergy = seasonTwoExpectedPreviewRewardEnergy(chapter, settings)
-    + seasonTwoExpectedSpawnRows(chapter, settings) * seasonTwoExpectedRowRewardEnergy(chapter, settings);
-  return Math.max(1, Math.round(startEnergy + snackBonus + rewardEnergy * Math.max(0, Math.min(1, collectRatio))));
+  const baseEnergy = seasonTwoBaseEnergy(chapter, settings);
+  const allMeatRewardEnergy = Math.max(0, seasonTwoAllMeatEnergy(chapter, settings) - baseEnergy);
+  return Math.max(1, Math.round(baseEnergy + allMeatRewardEnergy * Math.max(0, Math.min(1, collectRatio))));
 }
 
 function seasonTwoBossExpectedEnergy(chapter, settings = state.settings.season_02 || {}) {
@@ -2480,8 +2456,9 @@ function seasonTwoLaneLeft(lane) {
 function seasonTwoReset() {
   const s = state.settings.season_02;
   const chapter = seasonTwoChapter();
+  const balance = seasonTwoChapterBalance(chapter);
   const boss = seasonTwoBossForChapter(chapter, s);
-  const baseEnergy = Math.max(1, toNumber(s.hp, 100) + (chapter >= 3 ? Math.max(0, toNumber(s.snack_score, 10)) : 0));
+  const baseEnergy = seasonTwoBaseEnergy(chapter, s);
   const baseSize = seasonTwoEnergyVisualSize(baseEnergy, s);
   const targetEnergy = seasonTwoTargetEnergy(chapter, s);
   const targetSeconds = seasonTwoRunnerTargetSeconds(chapter);
@@ -2499,6 +2476,10 @@ function seasonTwoReset() {
     goal: seasonTwoRunnerGoal(chapter, s),
     targetEnergy,
     targetSeconds,
+    fixedMeatCount: balance.meatCount,
+    fixedBombCount: balance.bombCount,
+    spawnPlan: createSeasonTwoSpawnPlan(chapter),
+    spawnIndex: 0,
     combo: 0,
     items: [],
     boss,
@@ -2523,26 +2504,6 @@ function seasonTwoReset() {
     roarSpeechUntil: chapter >= 2 ? performance.now() + SEASON_TWO_ROAR_SPEECH_MS : 0,
     message: s.runner_title || "괴수 러너 출발!",
   };
-  const previewKinds = seasonTwoPreviewKinds(chapter);
-  const previewCount = previewKinds.length;
-  for (let index = 0; index < previewCount; index += 1) {
-    createSeasonTwoItemEntry(
-      state.game.season_02,
-      s,
-      previewKinds[index] || "meat",
-      SEASON_TWO_PREVIEW_LANES[index] ?? (index % 3),
-      SEASON_TWO_PREVIEW_Y[index] ?? (SEASON_TWO_ITEM_SPAWN_Y + index * 18),
-    );
-  }
-}
-
-function seasonTwoItemForChapter(chapter) {
-  const roll = Math.random();
-  const { nukeChance, doubleMeatChance, bombChance } = seasonTwoItemChances(chapter);
-  if (roll < nukeChance) return "nuke";
-  if (roll < nukeChance + doubleMeatChance) return "double_meat";
-  if (roll < nukeChance + doubleMeatChance + bombChance) return "bomb";
-  return "meat";
 }
 
 function seasonTwoItemData(kind, settings) {
@@ -2575,18 +2536,22 @@ function createSeasonTwoItemEntry(game, settings, kind, lane, y) {
   return entry;
 }
 
-function spawnSeasonTwoItem(game, settings, chapter, forcedKind = null) {
-  const kind = forcedKind || seasonTwoItemForChapter(chapter);
-  const rowKinds = seasonTwoSpawnRowKinds(chapter, kind);
+function spawnSeasonTwoRow(game, settings, rowKinds) {
   const spawnSlots = seasonTwoSpawnSlots(game, rowKinds);
   if (!spawnSlots) return null;
   return spawnSlots.map((slot) => createSeasonTwoItemEntry(game, settings, slot.kind, slot.lane, slot.y));
 }
 
-function seasonTwoSpawnRowKinds(chapter, primaryKind) {
-  if (primaryKind === "nuke" || Math.random() >= seasonTwoRowPairChance(chapter)) return [primaryKind];
-  if (seasonTwoIsBombKind(primaryKind)) return [primaryKind, seasonTwoRewardKindForChapter(chapter)];
-  return [primaryKind, "bomb"];
+function spawnSeasonTwoScheduledItems(game, settings) {
+  const plan = game.spawnPlan || [];
+  while (game.spawnIndex < plan.length && game.tick >= plan[game.spawnIndex].tick) {
+    const spawned = spawnSeasonTwoRow(game, settings, plan[game.spawnIndex].kinds);
+    if (!spawned) {
+      plan[game.spawnIndex].tick += 1;
+      break;
+    }
+    game.spawnIndex += 1;
+  }
 }
 
 function seasonTwoSpawnRowAllowed(kinds) {
@@ -2852,8 +2817,7 @@ function updateSeasonTwoRunner() {
   g.tick += 1;
   g.distance += speed * SEASON_TWO_RUN_DISTANCE_STEP * SEASON_TWO_RUNNER_SPEED_MULTIPLIER;
   const progress = Math.max(0, Math.min(1, g.distance / Math.max(1, g.goal)));
-  const spawnRate = seasonTwoSpawnRate(speed, progress);
-  if (g.tick % spawnRate === 0) spawnSeasonTwoItem(g, s, chapter);
+  spawnSeasonTwoScheduledItems(g, s);
 
   const itemFallSpeed = seasonTwoItemFallSpeed(s, chapter, progress) * SEASON_TWO_ITEM_FALL_SPEED_MULTIPLIER;
   for (const item of g.items) {
@@ -3840,10 +3804,10 @@ function renderSeasonTwo() {
       <span>${turnNoticeKind === "boss" ? `${g.boss.name}의 반격이 시작됩니다` : "Space 타이밍 공격을 준비하세요"}</span>
     </div>
   ` : "";
-  const resultPopup = g.phase === "win" ? `
-    <div class="season-two-result-popup win">
-      <strong>승리!</strong>
-      <span>${g.boss.name} 격파! 괴수 러너 클리어!</span>
+  const resultPopup = ["win", "gameOver"].includes(g.phase) ? `
+    <div class="season-two-result-popup ${g.phase === "win" ? "win" : "lose"}">
+      <strong>${g.phase === "win" ? "승리" : "패배"}</strong>
+      <span>${g.message}</span>
     </div>
   ` : "";
   setHud(
@@ -3890,7 +3854,7 @@ function renderSeasonTwo() {
           <strong>${g.message}</strong>
           <span>${isBossScene ? `${turnDelayActive ? "다음 차례 준비 중" : bossNoticeActive ? "보스가 공격을 준비 중" : bossTurnActive ? "보스 공격을 피하는 중" : playerNoticeActive ? "내 공격 차례 준비" : "내 공격 차례"} · 내 에너지 ${g.hp} · 보스 에너지 ${g.bossHp}/${g.boss.maxHp}` : `← → 좌우 이동 · 에너지 ${gorillaScore} 고릴라 · 에너지 ${dinoScore} 공룡`}</span>
         </div>
-        <div class="runner-energy-goal">${isBossScene ? `내 에너지 ${g.hp} · 보스 ${g.bossHp}/${g.boss.maxHp}` : `목표 에너지 ${g.targetEnergy} · 예상 ${g.targetSeconds}초`}</div>
+        <div class="runner-energy-goal">${isBossScene ? `내 에너지 ${g.hp} · 보스 ${g.bossHp}/${g.boss.maxHp}` : `목표 에너지 ${g.targetEnergy} · ${g.targetSeconds}초 · 고기 ${g.fixedMeatCount} · 폭탄 ${g.fixedBombCount}`}</div>
         <div class="${isBossScene ? "boss-badges" : "runner-bars"}">
           ${isBossScene ? renderSeasonTwoBossBadges(g.boss) : `
           <span class="runner-bar"><i style="width:${progress}%"></i></span>
@@ -3991,8 +3955,7 @@ function seasonTwoAction() {
     renderSeasonTwo();
     return;
   }
-  const enrage = 1 + (1 - g.bossHp / Math.max(1, g.boss.maxHp)) * 0.35;
-  const bossDamage = Math.max(1, Math.round(g.boss.power * enrage));
+  const bossDamage = Math.max(1, Math.round(g.boss.power));
   scheduleSeasonTwoBossTurn(g, bossDamage);
   renderSeasonTwo();
   window.setTimeout(() => {
