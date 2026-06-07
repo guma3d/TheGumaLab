@@ -530,6 +530,17 @@ const seasonTwoThree = {
   camera: null,
   staticGroup: null,
   dynamicGroup: null,
+  playerGroup: null,
+  playerModelPromise: null,
+  playerModelRoot: null,
+  playerMixer: null,
+  playerAction: null,
+  playerMeshes: [],
+  playerGlowLight: null,
+  lastAnimationTime: 0,
+  animationFrame: 0,
+  animationLoopToken: 0,
+  currentFrameData: null,
   dynamicKey: "",
   width: 0,
   height: 0,
@@ -2202,6 +2213,10 @@ function seasonTwoChapter() {
 }
 
 const SEASON_TWO_CHARACTER_SIZE_MULTIPLIER = 0.5;
+const SEASON_TWO_PLAYER_MODEL_NAME = "Alien Blob";
+const SEASON_TWO_PLAYER_MODEL_URL = "/models/blob/Alien.gltf";
+const SEASON_TWO_PLAYER_RUNNER_SCALE = 0.44;
+const SEASON_TWO_PLAYER_BOSS_SCALE = 0.54;
 const SEASON_TWO_ATTACK_EFFECT_MS = 920;
 const SEASON_TWO_BOSS_TURN_EFFECT_MS = 1120;
 const SEASON_TWO_TURN_NOTICE_MS = 3000;
@@ -2271,7 +2286,7 @@ function seasonTwoBossForChapter(chapter = seasonTwoChapter(), settings = state.
   const index = Math.min(3, Math.floor((chapter - 1) / 3));
   const base = seasonTwoBosses[index];
   const expectedEnergy = seasonTwoBossExpectedEnergy(chapter, config);
-  const expectedEvolution = seasonTwoEvolution(expectedEnergy, config);
+  const expectedEvolution = seasonTwoPlayerModelEvolution();
   const maxGaugeTiming = { label: "완벽 타이밍", multiplier: 2.65, quality: 1 };
   const maxGaugeDamage = seasonTwoPlayerAttackDamage("flame", maxGaugeTiming, expectedEvolution, config, {
     chapter,
@@ -2286,6 +2301,10 @@ function seasonTwoBossForChapter(chapter = seasonTwoChapter(), settings = state.
     maxHp: Math.max(base.hp, expectedBossHp),
     power: Math.max(base.power, expectedBossPower),
   };
+}
+
+function seasonTwoPlayerModelEvolution() {
+  return { name: SEASON_TWO_PLAYER_MODEL_NAME, className: "alien-blob", scale: 1, rank: 1 };
 }
 
 function seasonTwoMutationScores(settings = state.settings.season_02 || {}) {
@@ -2329,12 +2348,11 @@ function seasonTwoAttackEnergyMultiplier(energy, chapter, settings = state.setti
 function seasonTwoPlayerAttackDamage(kind, timing, evolution, settings = state.settings.season_02 || {}, game = null) {
   const coreBonusReady = toBool(settings.has_core_bonus) || toBool(settings.red_core) || toBool(settings.blue_core);
   let baseDamage = Math.max(1, toNumber(settings.flame_damage, 200));
-  if (coreBonusReady && evolution.rank >= 3) baseDamage += 50;
-  else if (evolution.rank === 2) baseDamage += 20;
+  if (coreBonusReady) baseDamage += 50;
   const finalAttack = toNumber(settings.final_attack, baseDamage);
   baseDamage = Math.max(1, baseDamage, finalAttack);
   const timingBonus = Math.max(0.35, timing?.multiplier ?? 1);
-  const formBonus = evolution.rank >= 3 ? 1 : evolution.rank === 2 ? 0.9 : 0.75;
+  const formBonus = 1;
   const chapter = game?.chapter ?? seasonTwoChapter();
   const energyBonus = seasonTwoAttackEnergyMultiplier(Math.max(0, game?.hp ?? 0), chapter, settings);
   const tunedDamage = baseDamage * timingBonus * formBonus * energyBonus;
@@ -2459,7 +2477,7 @@ function seasonTwoReset() {
   const balance = seasonTwoChapterBalance(chapter);
   const boss = seasonTwoBossForChapter(chapter, s);
   const baseEnergy = seasonTwoBaseEnergy(chapter, s);
-  const baseSize = seasonTwoEnergyVisualSize(baseEnergy, s);
+  const baseSize = 1;
   const targetEnergy = seasonTwoTargetEnergy(chapter, s);
   const targetSeconds = seasonTwoRunnerTargetSeconds(chapter);
   state.game.season_02 = {
@@ -2471,7 +2489,7 @@ function seasonTwoReset() {
     hp: baseEnergy,
     maxHp: baseEnergy,
     size: baseSize,
-    growth: toNumber(s.growth, 0),
+    growth: 0,
     distance: 0,
     goal: seasonTwoRunnerGoal(chapter, s),
     targetEnergy,
@@ -2502,7 +2520,7 @@ function seasonTwoReset() {
     shieldCharges: toBool(s.shield_ready) ? 2 : 0,
     dashCharges: toBool(s.dash_ready) ? 2 : 0,
     roarSpeechUntil: chapter >= 2 ? performance.now() + SEASON_TWO_ROAR_SPEECH_MS : 0,
-    message: s.runner_title || "괴수 러너 출발!",
+    message: `${SEASON_TWO_PLAYER_MODEL_NAME} 출동!`,
   };
 }
 
@@ -2579,7 +2597,6 @@ function seasonTwoSpawnSlots(game, kinds) {
 }
 
 function collectSeasonTwoItem(item, settings, game) {
-  const beforeEvolution = seasonTwoEvolution(game.hp, settings);
   const difficulty = seasonTwoItemDifficulty(game.chapter);
   const markPickupGlow = (kind) => {
     game.pickupGlowKind = kind;
@@ -2597,7 +2614,7 @@ function collectSeasonTwoItem(item, settings, game) {
     }
     markPickupGlow("bad");
     game.hp = 0;
-    game.size = seasonTwoEnergyVisualSize(game.hp, settings);
+    game.size = 1;
     game.combo = 0;
     game.message = "핵폭탄을 먹었어! 거대한 폭발로 게임 실패!";
     playPickupSound("trap");
@@ -2612,10 +2629,9 @@ function collectSeasonTwoItem(item, settings, game) {
     const rawDamage = Math.max(6, Math.round(Math.abs(item.energy) * (1 + difficulty * 0.5)));
     const damage = dashShieldReady ? 0 : shieldReady ? Math.max(1, Math.round(rawDamage * 0.45)) : rawDamage;
     game.hp = Math.max(0, game.hp - damage);
-    game.size = seasonTwoEnergyVisualSize(game.hp, settings);
+    game.size = 1;
     game.combo = 0;
-    const evolution = seasonTwoEvolution(game.hp, settings);
-    game.message = damage > 0 ? `폭탄! 에너지 -${damage} · 현재 ${evolution.name}` : "방어막과 대시로 폭탄 피해를 막았어!";
+    game.message = damage > 0 ? `폭탄! 에너지 -${damage} · 현재 에너지 ${game.hp}` : "방어막과 대시로 폭탄 피해를 막았어!";
     playPickupSound("trap");
     if (game.hp <= 0) finishSeasonTwo("gameOver", "에너지가 0이 되었어. 고기를 더 모아 보자!");
     return;
@@ -2630,16 +2646,11 @@ function collectSeasonTwoItem(item, settings, game) {
   game.hp += energyGain;
   game.maxHp = Math.max(game.maxHp, game.hp);
   game.score = game.hp;
-  game.size = seasonTwoEnergyVisualSize(game.hp, settings);
-  game.growth = Math.max(0, game.growth + Math.max(1, toNumber(settings.growth_per_item, 12)));
+  game.size = 1;
+  game.growth = 0;
   game.combo += 1;
 
-  const afterEvolution = seasonTwoEvolution(game.hp, settings);
-  if (afterEvolution.rank > beforeEvolution.rank) {
-    game.message = `${item.label} 획득! 에너지 ${game.hp}, ${koreanDirection(afterEvolution.name)} 변신했어!`;
-  } else {
-    game.message = `${item.label} 획득! 에너지 +${energyGain}${favoriteBonus ? " · 좋아하는 먹이 보너스!" : ""} · 현재 에너지 ${game.hp}`;
-  }
+  game.message = `${item.label} 획득! 에너지 +${energyGain}${favoriteBonus ? " · 좋아하는 먹이 보너스!" : ""} · 현재 에너지 ${game.hp}`;
   playPickupSound(item.kind === "double_meat" ? "bonus" : "treasure");
 }
 
@@ -2845,26 +2856,9 @@ function updateSeasonTwoRunner() {
 }
 
 function seasonTwoMonsterMarkup(name, evolution, extraClass = "", scale = 1) {
-  const safeName = name || "괴수";
+  const safeName = name || SEASON_TWO_PLAYER_MODEL_NAME;
   return `
-    <div class="kaiju-model ${evolution.className} ${extraClass}" style="--monster-scale:${scale * evolution.scale * SEASON_TWO_CHARACTER_SIZE_MULTIPLIER}">
-      <span class="kaiju-shadow"></span>
-      <span class="kaiju-tail"></span>
-      <span class="kaiju-leg leg-a"></span>
-      <span class="kaiju-leg leg-b"></span>
-      <span class="kaiju-body">
-        <span class="kaiju-belly"></span>
-        <span class="kaiju-spikes"></span>
-      </span>
-      <span class="kaiju-head">
-        <span class="kaiju-horn horn-a"></span>
-        <span class="kaiju-horn horn-b"></span>
-        <span class="kaiju-eye eye-a"></span>
-        <span class="kaiju-eye eye-b"></span>
-        <span class="kaiju-mouth"></span>
-      </span>
-      <span class="kaiju-arm arm-a"></span>
-      <span class="kaiju-arm arm-b"></span>
+    <div class="kaiju-model alien-blob ${extraClass}" style="--monster-scale:${scale}">
       <span class="kaiju-name">${safeName}</span>
     </div>
   `;
@@ -2919,9 +2913,158 @@ function koreanDirection(text) {
 
 function loadSeasonTwoThree() {
   if (!seasonTwoThree.modulePromise) {
-    seasonTwoThree.modulePromise = import("/vendor/three.module.min.js");
+    seasonTwoThree.modulePromise = Promise.all([
+      import("/vendor/three.module.min.js"),
+      import("/vendor/GLTFLoader.js"),
+    ]).then(([threeModule, gltfModule]) => ({
+      THREE: threeModule.default || threeModule,
+      GLTFLoader: gltfModule.GLTFLoader,
+    }));
   }
   return seasonTwoThree.modulePromise;
+}
+
+function seasonTwoPlayerModelScale(isBossScene) {
+  return isBossScene ? SEASON_TWO_PLAYER_BOSS_SCALE : SEASON_TWO_PLAYER_RUNNER_SCALE;
+}
+
+function prepareSeasonTwoPlayerModel(THREE, root) {
+  const meshes = [];
+  root.traverse((object) => {
+    if (!object.isMesh) return;
+    object.castShadow = true;
+    object.receiveShadow = true;
+    meshes.push(object);
+    const materials = Array.isArray(object.material) ? object.material : [object.material];
+    materials.forEach((material) => {
+      if (!material) return;
+      material.userData.seasonTwoBaseEmissive = material.emissive?.getHex?.() ?? 0x000000;
+      material.userData.seasonTwoBaseEmissiveIntensity = material.emissiveIntensity || 0;
+      if (material.map && THREE.SRGBColorSpace) material.map.colorSpace = THREE.SRGBColorSpace;
+      material.needsUpdate = true;
+    });
+  });
+  seasonTwoThree.playerMeshes = meshes;
+}
+
+function ensureSeasonTwoPlayerModel(THREE, GLTFLoader) {
+  if (seasonTwoThree.playerModelRoot) return Promise.resolve(seasonTwoThree.playerModelRoot);
+  if (!seasonTwoThree.playerModelPromise) {
+    seasonTwoThree.playerModelPromise = new Promise((resolve, reject) => {
+      const loader = new GLTFLoader();
+      loader.load(
+        SEASON_TWO_PLAYER_MODEL_URL,
+        (gltf) => {
+          const root = gltf.scene || gltf.scenes?.[0];
+          if (!root) {
+            reject(new Error("Alien Blob glTF scene is empty"));
+            return;
+          }
+          root.name = SEASON_TWO_PLAYER_MODEL_NAME;
+          prepareSeasonTwoPlayerModel(THREE, root);
+          seasonTwoThree.playerModelRoot = root;
+          if (seasonTwoThree.playerGroup && root.parent !== seasonTwoThree.playerGroup) {
+            seasonTwoThree.playerGroup.add(root);
+          }
+
+          const idleClip = gltf.animations?.find((clip) => /idle/i.test(clip.name)) || gltf.animations?.[0];
+          if (idleClip) {
+            seasonTwoThree.playerMixer = new THREE.AnimationMixer(root);
+            seasonTwoThree.playerAction = seasonTwoThree.playerMixer.clipAction(idleClip);
+            seasonTwoThree.playerAction.reset().play();
+          }
+          resolve(root);
+        },
+        undefined,
+        reject,
+      );
+    });
+  }
+  return seasonTwoThree.playerModelPromise;
+}
+
+function applySeasonTwoPlayerGlow(THREE, data) {
+  const group = seasonTwoThree.playerGroup;
+  if (!group || !seasonTwoThree.playerModelRoot) return;
+  const colorHex = data.pickupGlowKind === "bad" ? 0xef4444 : 0x38bdf8;
+  const alpha = data.pickupGlowActive ? Math.max(0, Math.min(1, data.pickupGlowAlpha || 0)) : 0;
+  const glowColor = new THREE.Color(colorHex);
+
+  seasonTwoThree.playerMeshes.forEach((mesh) => {
+    const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    materials.forEach((material) => {
+      if (!material?.emissive) return;
+      material.emissive.setHex(material.userData.seasonTwoBaseEmissive ?? 0x000000);
+      if (alpha > 0) material.emissive.lerp(glowColor, Math.min(1, alpha * 0.85));
+      material.emissiveIntensity = (material.userData.seasonTwoBaseEmissiveIntensity || 0) + alpha * 1.45;
+    });
+  });
+
+  if (!seasonTwoThree.playerGlowLight || seasonTwoThree.playerGlowLight.parent !== group) {
+    seasonTwoThree.playerGlowLight = new THREE.PointLight(colorHex, 0, 3.6);
+    seasonTwoThree.playerGlowLight.position.set(0, 1.35, 0.18);
+    group.add(seasonTwoThree.playerGlowLight);
+  }
+  seasonTwoThree.playerGlowLight.color.setHex(colorHex);
+  seasonTwoThree.playerGlowLight.intensity = alpha * 2.1;
+}
+
+function updateSeasonTwoPlayerModelTransform(THREE, data) {
+  const group = seasonTwoThree.playerGroup;
+  const root = seasonTwoThree.playerModelRoot;
+  if (!group || !root) return;
+  if (root.parent !== group) group.add(root);
+  group.visible = true;
+  group.scale.setScalar(seasonTwoPlayerModelScale(data.isBossScene));
+
+  if (data.isBossScene) {
+    group.position.set(-2.45, 0.1, -0.68);
+    group.rotation.set(-0.02, Math.PI / 2, 0);
+    if (data.attackEffectActive) {
+      group.position.x += 0.28;
+      group.position.y += 0.05;
+      group.rotation.z = -0.08;
+    }
+  } else {
+    const bob = Math.abs(Math.sin((data.tick || 0) * 0.72)) * 0.04;
+    group.position.set(seasonTwoThreeLaneX(data.lane), 0.06 + bob, 5.45);
+    group.rotation.set(-0.03, Math.PI - 0.1, 0);
+  }
+  applySeasonTwoPlayerGlow(THREE, data);
+}
+
+function updateSeasonTwoPlayerModel(THREE, GLTFLoader, data) {
+  const group = seasonTwoThree.playerGroup;
+  if (!group || !GLTFLoader) return;
+  if (!seasonTwoThree.playerModelRoot) {
+    group.visible = false;
+    ensureSeasonTwoPlayerModel(THREE, GLTFLoader)
+      .then(() => updateSeasonTwoPlayerModelTransform(THREE, seasonTwoThree.currentFrameData || data))
+      .catch((error) => console.error("Alien Blob model load failed", error));
+    return;
+  }
+  updateSeasonTwoPlayerModelTransform(THREE, data);
+}
+
+function startSeasonTwoThreeAnimationLoop(THREE, renderer) {
+  if (seasonTwoThree.animationFrame) return;
+  seasonTwoThree.lastAnimationTime = 0;
+  const loopToken = ++seasonTwoThree.animationLoopToken;
+  const animate = (now) => {
+    if (loopToken !== seasonTwoThree.animationLoopToken || !renderer.domElement.isConnected) {
+      seasonTwoThree.animationFrame = 0;
+      return;
+    }
+    seasonTwoThree.animationFrame = window.requestAnimationFrame(animate);
+    const previousTime = seasonTwoThree.lastAnimationTime || now;
+    seasonTwoThree.lastAnimationTime = now;
+    const delta = Math.min(0.05, Math.max(0, (now - previousTime) / 1000));
+    if (seasonTwoThree.playerMixer) seasonTwoThree.playerMixer.update(delta);
+    if (seasonTwoThree.scene && seasonTwoThree.camera) {
+      renderer.render(seasonTwoThree.scene, seasonTwoThree.camera);
+    }
+  };
+  seasonTwoThree.animationFrame = window.requestAnimationFrame(animate);
 }
 
 function disposeThreeScene(scene) {
@@ -2950,10 +3093,6 @@ function seasonTwoThreeDynamicKey(data) {
     data.phase,
     data.isBossScene ? 1 : 0,
     data.boss?.className || "",
-    data.evolution?.className || "",
-    Math.round(data.size * 100),
-    Math.round(data.mutationSize * 100),
-    data.lane,
     data.tick,
     data.attackEffectActive ? 1 : 0,
     Math.round((data.attackEffectProgress || 0) * 100),
@@ -3540,9 +3679,14 @@ function ensureSeasonTwoThreeScene(THREE) {
     seasonTwoThree.scene.fog = new THREE.Fog(0x8bdcfb, 28, 72);
     seasonTwoThree.staticGroup = new THREE.Group();
     seasonTwoThree.dynamicGroup = new THREE.Group();
+    seasonTwoThree.playerGroup = new THREE.Group();
     addSeasonTwoThreeWorld(THREE, seasonTwoThree.staticGroup);
     seasonTwoThree.scene.add(seasonTwoThree.staticGroup);
     seasonTwoThree.scene.add(seasonTwoThree.dynamicGroup);
+    seasonTwoThree.scene.add(seasonTwoThree.playerGroup);
+  } else if (!seasonTwoThree.playerGroup) {
+    seasonTwoThree.playerGroup = new THREE.Group();
+    seasonTwoThree.scene.add(seasonTwoThree.playerGroup);
   }
   if (!seasonTwoThree.camera) {
     seasonTwoThree.camera = new THREE.PerspectiveCamera(58, 1, 0.1, 100);
@@ -3551,12 +3695,14 @@ function ensureSeasonTwoThreeScene(THREE) {
     scene: seasonTwoThree.scene,
     camera: seasonTwoThree.camera,
     dynamicGroup: seasonTwoThree.dynamicGroup,
+    playerGroup: seasonTwoThree.playerGroup,
   };
 }
 
-function updateSeasonTwoThreeDynamic(THREE, data) {
+function updateSeasonTwoThreeDynamic(THREE, GLTFLoader, data) {
   const dynamicGroup = seasonTwoThree.dynamicGroup;
   if (!dynamicGroup) return;
+  updateSeasonTwoPlayerModel(THREE, GLTFLoader, data);
   const dynamicKey = seasonTwoThreeDynamicKey(data);
   if (seasonTwoThree.dynamicKey === dynamicKey) return;
   clearSeasonTwoThreeGroup(dynamicGroup);
@@ -3566,15 +3712,7 @@ function updateSeasonTwoThreeDynamic(THREE, data) {
     data.items.forEach((item) => dynamicGroup.add(createSeasonTwoItem3D(THREE, item)));
   }
 
-  const player = createSeasonTwoKaiju3D(
-    THREE,
-    data.evolution,
-    seasonTwoMonsterScale(data.size, data.mutationSize, data.isBossScene),
-  );
   if (data.isBossScene) {
-    player.position.set(-2.45, 0.2, -0.68);
-    player.rotation.y = Math.PI / 2;
-    poseSeasonTwoKaijuRun(player, data.tick, true, data.attackEffectActive, data.attackKind);
     const boss = createSeasonTwoBoss3D(THREE, data.boss);
     boss.position.set(2.55, 0.18, -0.68);
     boss.rotation.y = -Math.PI / 2;
@@ -3597,18 +3735,13 @@ function updateSeasonTwoThreeDynamic(THREE, data) {
       data.attackEffectProgress,
     );
     if (data.bossTurnEffectActive) addSeasonTwoBossCounter3D(THREE, dynamicGroup, data.bossTurnEffectProgress);
-  } else {
-    player.position.set(seasonTwoThreeLaneX(data.lane), 0.14, 5.45);
-    poseSeasonTwoKaijuRun(player, data.tick, false, false);
   }
-  if (data.pickupGlowActive) addSeasonTwoPickupGlow3D(THREE, dynamicGroup, data);
-  dynamicGroup.add(player);
 }
 
-function renderSeasonTwoThreeFrame(THREE, renderer, data, panProgress = 1) {
+function renderSeasonTwoThreeFrame(THREE, GLTFLoader, renderer, data, panProgress = 1) {
   const { width, height } = data;
   const { scene, camera } = ensureSeasonTwoThreeScene(THREE);
-  updateSeasonTwoThreeDynamic(THREE, data);
+  updateSeasonTwoThreeDynamic(THREE, GLTFLoader, data);
 
   const runnerCamera = {
     position: new THREE.Vector3(0, 5.55, 13.6),
@@ -3659,9 +3792,10 @@ function renderSeasonTwoThreeScene(data) {
   const width = Math.max(2, Math.floor(rect.width));
   const height = Math.max(2, Math.floor(rect.height));
   const frameData = { ...data, width, height };
+  seasonTwoThree.currentFrameData = frameData;
 
   loadSeasonTwoThree()
-    .then((THREE) => {
+    .then(({ THREE, GLTFLoader }) => {
       if (!mount.isConnected || renderToken !== seasonTwoThree.renderToken) return;
       if (!seasonTwoThree.renderer) {
         seasonTwoThree.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -3672,6 +3806,7 @@ function renderSeasonTwoThreeScene(data) {
       if (renderer.domElement.parentElement !== mount) mount.appendChild(renderer.domElement);
       mount.classList.add("three-ready");
       mount.classList.remove("three-failed");
+      startSeasonTwoThreeAnimationLoop(THREE, renderer);
 
       if (frameData.isBossScene && !frameData.bossCameraReady) {
         const panToken = ++seasonTwoThree.panToken;
@@ -3679,13 +3814,13 @@ function renderSeasonTwoThreeScene(data) {
         const animate = (now) => {
           if (!mount.isConnected || panToken !== seasonTwoThree.panToken) return;
           const progress = Math.min(1, (now - startedAt) / 1250);
-          renderSeasonTwoThreeFrame(THREE, renderer, frameData, progress);
+          renderSeasonTwoThreeFrame(THREE, GLTFLoader, renderer, frameData, progress);
           if (progress < 1) window.requestAnimationFrame(animate);
         };
         window.requestAnimationFrame(animate);
         return;
       }
-      renderSeasonTwoThreeFrame(THREE, renderer, frameData, 1);
+      renderSeasonTwoThreeFrame(THREE, GLTFLoader, renderer, frameData, 1);
     })
     .catch((error) => {
       mount.dataset.error = String(error?.message || error);
@@ -3703,13 +3838,12 @@ function renderSeasonTwo() {
     renderSeasonTwo();
     return;
   }
-  const mutationSize = Math.max(10, toNumber(s.mutation_size, 60));
+  const mutationSize = 1;
   g.targetEnergy = seasonTwoTargetEnergy(chapter, s);
   g.targetSeconds = seasonTwoRunnerTargetSeconds(chapter);
-  g.size = seasonTwoEnergyVisualSize(g.hp, s);
-  const evolution = seasonTwoEvolution(g.hp, s);
-  const { gorillaScore, dinoScore } = seasonTwoMutationScores(s);
-  const monsterVisualScale = seasonTwoMonsterScale(g.size, mutationSize, g.phase === "boss" || g.phase === "win" || g.phase === "gameOver");
+  g.size = 1;
+  const evolution = seasonTwoPlayerModelEvolution();
+  const monsterVisualScale = 1;
   const progress = Math.min(100, (g.distance / g.goal) * 100);
   const energyPercent = Math.max(0, Math.min(100, (g.hp / Math.max(1, g.targetEnergy)) * 100));
   const hpPercent = Math.max(0, Math.min(100, (g.hp / Math.max(1, g.maxHp)) * 100));
@@ -3778,14 +3912,14 @@ function renderSeasonTwo() {
   const roarSpeechActive = state.gameStarted && !isBossScene && s.roar_text && (g.roarSpeechUntil || 0) > now;
   const roarSpeech = roarSpeechActive ? `
     <div class="runner-speech-overlay" style="left:${playerLeft}%">
-      <span>${s.baby_name || "괴수"}</span>
+      <span>${SEASON_TWO_PLAYER_MODEL_NAME}</span>
       <strong>${s.roar_text}</strong>
     </div>
   ` : "";
   const bossFightHud = isBossScene ? `
     <div class="boss-fight-hud">
       <div class="boss-fight-health player">
-        <span>${s.baby_name || "괴수"}</span>
+        <span>${SEASON_TWO_PLAYER_MODEL_NAME}</span>
         <div><i style="width:${hpPercent}%"></i></div>
         <strong>${g.hp}/${g.maxHp}</strong>
       </div>
@@ -3811,8 +3945,8 @@ function renderSeasonTwo() {
     </div>
   ` : "";
   setHud(
-    s.runner_title || `${s.baby_name} 출동!`,
-    `에너지 ${g.hp}/${g.targetEnergy} · ${evolution.name} · ${phaseLabel}`,
+    `${SEASON_TWO_PLAYER_MODEL_NAME} 출동!`,
+    `에너지 ${g.hp}/${g.targetEnergy} · ${SEASON_TWO_PLAYER_MODEL_NAME} · ${phaseLabel}`,
   );
   els.action.textContent = turnDelayActive ? "턴 전환 중" : playerNoticeActive ? "내 차례 준비" : bossNoticeActive ? "보스 차례 준비" : bossTurnActive ? "보스 공격 중" : g.phase === "boss" ? "Space 타이밍 공격" : g.phase === "runner" ? "← → 이동으로 먹기" : "결과 확인";
   const boardClass = `kaiju-runner-game chapter-${chapter} phase-${g.phase} ${cameraClass} ${turnNoticeActive ? `turn-notice turn-${turnNoticeKind}` : ""} ${attackEffectActive ? `attack-strike attack-${attackKind}` : ""} ${turnDelayActive ? "turn-delay" : ""} ${bossTurnActive ? "boss-turn-active" : ""} ${bossTurnEffectActive ? "boss-counter-strike" : ""} ${pickupGlowActive ? `pickup-glow pickup-${g.pickupGlowKind || "good"}` : ""}`.trim();
@@ -3838,7 +3972,7 @@ function renderSeasonTwo() {
           ${runnerItems}
           <div class="runner-kaiju" style="left:${playerLeft}%">
             ${roarSpeechActive ? `<span class="kaiju-speech">${s.roar_text}</span>` : ""}
-            ${seasonTwoMonsterMarkup(s.baby_name, evolution, isBossScene ? "fighter-model" : "", monsterVisualScale)}
+            ${seasonTwoMonsterMarkup(SEASON_TWO_PLAYER_MODEL_NAME, evolution, isBossScene ? "fighter-model" : "", monsterVisualScale)}
             ${playerBar}
           </div>
           ${bossFighter}
@@ -3852,7 +3986,7 @@ function renderSeasonTwo() {
       <div class="runner-dashboard">
         <div>
           <strong>${g.message}</strong>
-          <span>${isBossScene ? `${turnDelayActive ? "다음 차례 준비 중" : bossNoticeActive ? "보스가 공격을 준비 중" : bossTurnActive ? "보스 공격을 피하는 중" : playerNoticeActive ? "내 공격 차례 준비" : "내 공격 차례"} · 내 에너지 ${g.hp} · 보스 에너지 ${g.bossHp}/${g.boss.maxHp}` : `← → 좌우 이동 · 에너지 ${gorillaScore} 고릴라 · 에너지 ${dinoScore} 공룡`}</span>
+          <span>${isBossScene ? `${turnDelayActive ? "다음 차례 준비 중" : bossNoticeActive ? "보스가 공격을 준비 중" : bossTurnActive ? "보스 공격을 피하는 중" : playerNoticeActive ? "내 공격 차례 준비" : "내 공격 차례"} · 내 에너지 ${g.hp} · 보스 에너지 ${g.bossHp}/${g.boss.maxHp}` : `← → 좌우 이동 · ${SEASON_TWO_PLAYER_MODEL_NAME} 테스트 · 고기 에너지 수집`}</span>
         </div>
         <div class="runner-energy-goal">${isBossScene ? `내 에너지 ${g.hp} · 보스 ${g.bossHp}/${g.boss.maxHp}` : `목표 에너지 ${g.targetEnergy} · ${g.targetSeconds}초 · 고기 ${g.fixedMeatCount} · 폭탄 ${g.fixedBombCount}`}</div>
         <div class="${isBossScene ? "boss-badges" : "runner-bars"}">
@@ -3913,7 +4047,7 @@ function resolveSeasonTwoBossTurn(expectedDamage) {
   if (state.activeSeason !== "season_02" || !g || g.phase !== "boss" || g.bossTurn !== "boss") return;
   const damage = Math.max(1, Math.round(expectedDamage || g.pendingBossDamage || 1));
   g.hp = Math.max(0, g.hp - damage);
-  g.size = seasonTwoEnergyVisualSize(g.hp, state.settings.season_02);
+  g.size = 1;
   g.pendingBossDamage = 0;
   if (g.hp <= 0) {
     finishSeasonTwo("gameOver", `${g.boss.name}에게 졌어. 러너 구간에서 고기를 더 모아 에너지를 키워 보자!`);
@@ -3935,7 +4069,7 @@ function seasonTwoAction() {
   }
   if (g.phase !== "boss") return;
   if (!seasonTwoCanAttack(g)) return;
-  const evolution = seasonTwoEvolution(g.hp, s);
+  const evolution = seasonTwoPlayerModelEvolution();
   const timing = seasonTwoTimingResult(g);
   const attackKind = "flame";
   const damage = seasonTwoPlayerAttackDamage(attackKind, timing, evolution, s, g);
