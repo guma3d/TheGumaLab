@@ -733,6 +733,7 @@ body.file-tree-collapsed .file-tree {
 }
 
 .title-arch,
+.mission-badge,
 .report-badge,
 .combo-plaque,
 .portal-hint {
@@ -756,6 +757,7 @@ body.file-tree-collapsed .file-tree {
   box-shadow: 0 12px 28px rgba(14, 165, 233, 0.22);
 }
 
+.mission-badge,
 .report-badge,
 .combo-plaque,
 .portal-hint {
@@ -770,6 +772,20 @@ body.file-tree-collapsed .file-tree {
   font-weight: 800;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mission-badge {
+  left: 10px;
+  right: 10px;
+  top: 14px;
+  bottom: auto;
+  max-width: none;
+  border-color: rgba(250, 204, 21, 0.5);
+  background: linear-gradient(90deg, rgba(113, 63, 18, 0.82), rgba(30, 41, 59, 0.76));
+  color: #fef3c7;
+  font-size: 12px;
+  text-align: center;
   white-space: nowrap;
 }
 
