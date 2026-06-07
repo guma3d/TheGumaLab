@@ -1847,46 +1847,64 @@ body.file-tree-collapsed .file-tree {
   animation: runner-fighter-lunge 0.72s cubic-bezier(0.12, 0.82, 0.22, 1) both;
 }
 
-.runner-roar-banner {
+.runner-speech-overlay {
   position: absolute;
-  top: 14px;
-  left: 14px;
-  right: 14px;
+  bottom: 31%;
   z-index: 24;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  max-width: calc(100% - 28px);
-  padding: 8px 10px;
-  border: 1px solid rgba(125, 211, 252, 0.54);
-  border-radius: 10px;
-  background: rgba(15, 23, 42, 0.78);
-  box-shadow: 0 14px 32px rgba(2, 6, 23, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  color: #ecfeff;
+  gap: 3px;
+  width: min(220px, 42%);
+  padding: 8px 11px;
+  border: 2px solid rgba(15, 23, 42, 0.18);
+  border-radius: 16px 16px 16px 5px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 15px 34px rgba(15, 23, 42, 0.2);
+  color: #17324a;
   pointer-events: none;
-  backdrop-filter: blur(8px);
+  transform: translate(-50%, 0);
+  animation: runner-speech-pop 0.24s ease-out both;
 }
 
-.runner-roar-banner span {
-  flex: 0 0 auto;
-  max-width: 34%;
+.runner-speech-overlay::after {
+  content: "";
+  position: absolute;
+  left: 20px;
+  bottom: -9px;
+  width: 16px;
+  height: 16px;
+  border-right: 2px solid rgba(15, 23, 42, 0.18);
+  border-bottom: 2px solid rgba(15, 23, 42, 0.18);
+  background: rgba(255, 255, 255, 0.92);
+  transform: rotate(45deg);
+}
+
+.runner-speech-overlay span {
+  max-width: 100%;
   overflow: hidden;
-  color: #7dd3fc;
+  color: #0284c7;
   font-size: 11px;
   font-weight: 900;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.runner-roar-banner strong {
-  min-width: 0;
+.runner-speech-overlay strong {
+  max-width: 100%;
   overflow: hidden;
-  color: #f8fafc;
+  color: #17324a;
   font-size: 13px;
   font-weight: 900;
   letter-spacing: 0;
+  line-height: 1.22;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+@keyframes runner-speech-pop {
+  from { opacity: 0; transform: translate(-50%, 8px) scale(0.88); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
 }
 
 .runner-kaiju .player-hp {
@@ -2217,13 +2235,16 @@ body.file-tree-collapsed .file-tree {
 }
 
 .runner-item {
+  --item-scale: 1;
   position: absolute;
   z-index: 5;
   display: grid;
   place-items: center;
   width: 66px;
   height: 54px;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(var(--item-scale));
+  transform-origin: center center;
+  transition: transform 0.08s linear;
 }
 
 .runner-item span {
@@ -2241,6 +2262,7 @@ body.file-tree-collapsed .file-tree {
   color: #1e293b;
   font-size: 11px;
   font-weight: 900;
+  opacity: clamp(0, calc((var(--item-scale) - 0.42) * 3), 1);
 }
 
 .runner-item.item-snack span {
@@ -2600,7 +2622,7 @@ body.file-tree-collapsed .file-tree {
 .boss-timing-panel {
   position: absolute;
   left: 50%;
-  top: 8%;
+  top: 18%;
   z-index: 11;
   width: min(270px, 54%);
   padding: 9px 11px;
@@ -2610,6 +2632,79 @@ body.file-tree-collapsed .file-tree {
   color: #f8fafc;
   transform: translateX(-50%);
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.22);
+}
+
+.boss-fight-hud {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: 14px;
+  z-index: 24;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.boss-fight-round {
+  display: grid;
+  place-items: center;
+  height: 32px;
+  border: 2px solid rgba(254, 240, 138, 0.78);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.82);
+  color: #fef08a;
+  font-size: 13px;
+  font-weight: 1000;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.28);
+}
+
+.boss-fight-health {
+  display: grid;
+  gap: 4px;
+  color: #f8fafc;
+  text-shadow: 0 1px 2px rgba(15, 23, 42, 0.72);
+}
+
+.boss-fight-health.enemy {
+  text-align: right;
+}
+
+.boss-fight-health span {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 1000;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.boss-fight-health strong {
+  color: rgba(248, 250, 252, 0.78);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.boss-fight-health div {
+  height: 18px;
+  overflow: hidden;
+  border: 2px solid rgba(248, 250, 252, 0.86);
+  border-radius: 4px;
+  background: rgba(15, 23, 42, 0.68);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.12), 0 8px 18px rgba(15, 23, 42, 0.26);
+}
+
+.boss-fight-health i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #22c55e 0%, #a3e635 58%, #facc15 100%);
+  box-shadow: inset 0 -5px 0 rgba(15, 23, 42, 0.18);
+}
+
+.boss-fight-health.enemy i {
+  margin-left: auto;
+  background: linear-gradient(270deg, #ef4444 0%, #f97316 62%, #facc15 100%);
 }
 
 .boss-attack-effect {

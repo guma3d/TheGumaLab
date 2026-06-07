@@ -2198,7 +2198,8 @@ const SEASON_TWO_BOSS_TURN_EFFECT_MS = 1120;
 const SEASON_TWO_TURN_NOTICE_MS = 3000;
 const SEASON_TWO_TURN_AFTER_EFFECT_DELAY_MS = 720;
 const SEASON_TWO_RUNNER_SPEED_MULTIPLIER = 4;
-const SEASON_TWO_ITEM_FALL_SPEED_MULTIPLIER = SEASON_TWO_RUNNER_SPEED_MULTIPLIER * 1.5;
+const SEASON_TWO_ITEM_FALL_SPEED_MULTIPLIER = SEASON_TWO_RUNNER_SPEED_MULTIPLIER * 1.05;
+const SEASON_TWO_ITEM_SPAWN_INTERVAL_MULTIPLIER = 0.67;
 const SEASON_TWO_TIMER_MS = 110;
 const SEASON_TWO_RUN_DISTANCE_STEP = 0.42;
 const SEASON_TWO_PICKUP_GLOW_MS = 2000;
@@ -2208,7 +2209,8 @@ const SEASON_TWO_ITEM_COLLISION_MAX_Y = 101;
 const SEASON_TWO_ITEM_DESPAWN_Y = 124;
 const SEASON_TWO_GORILLA_SCORE = 200;
 const SEASON_TWO_DINO_SCORE = 500;
-const SEASON_TWO_ITEM_VERTICAL_GAP = 32;
+const SEASON_TWO_ITEM_VERTICAL_GAP = 18;
+const SEASON_TWO_ITEM_SPAWN_Y = -4;
 const SEASON_TWO_MIN_TARGET_SECONDS = 30;
 const SEASON_TWO_MAX_TARGET_SECONDS = 90;
 const SEASON_TWO_EXPECTED_MEAT_COLLECT_RATIO = 0.8;
@@ -2216,7 +2218,7 @@ const SEASON_TWO_MIN_BOSS_MAX_HITS = 2;
 const SEASON_TWO_MAX_BOSS_MAX_HITS = 5;
 const SEASON_TWO_PREVIEW_KINDS = ["meat", "double_meat", "meat", "double_meat", "bomb"];
 const SEASON_TWO_PREVIEW_LANES = [1, 1, 1, 1, 0];
-const SEASON_TWO_PREVIEW_Y = [10, -26, -62, -98, 46];
+const SEASON_TWO_PREVIEW_Y = [-4, -22, -40, -58, 18];
 
 function seasonTwoHas(chapter) {
   return seasonTwoChapter() >= chapter;
@@ -2346,7 +2348,8 @@ function seasonTwoPreviewKinds(chapter) {
 }
 
 function seasonTwoSpawnRate(speed, progress) {
-  return Math.max(10, 24 - Math.round(speed) - Math.floor(progress * 5));
+  const baseRate = 24 - Math.round(speed) - Math.floor(progress * 5);
+  return Math.max(6, Math.round(baseRate * SEASON_TWO_ITEM_SPAWN_INTERVAL_MULTIPLIER));
 }
 
 function seasonTwoExpectedSpawnRows(chapter, settings = state.settings.season_02 || {}) {
@@ -2486,7 +2489,7 @@ function seasonTwoReset() {
       s,
       previewKinds[index] || "meat",
       SEASON_TWO_PREVIEW_LANES[index] ?? (index % 3),
-      SEASON_TWO_PREVIEW_Y[index] ?? (10 + index * 36),
+      SEASON_TWO_PREVIEW_Y[index] ?? (SEASON_TWO_ITEM_SPAWN_Y + index * 18),
     );
   }
 }
@@ -2553,7 +2556,7 @@ function seasonTwoSpawnRowAllowed(kinds) {
 
 function seasonTwoSpawnSlots(game, kinds) {
   if (!seasonTwoSpawnRowAllowed(kinds)) return null;
-  const spawnY = 8;
+  const spawnY = SEASON_TWO_ITEM_SPAWN_Y;
   const blocked = game.items.some((item) => (
     !item.taken
     && Math.abs(item.y - spawnY) < SEASON_TWO_ITEM_VERTICAL_GAP
@@ -2864,7 +2867,8 @@ function seasonTwoMonsterMarkup(name, evolution, extraClass = "", scale = 1) {
 function renderSeasonTwoItems(game) {
   return game.items.map((item) => {
     const left = seasonTwoLaneLeft(item.lane);
-    return `<div class="runner-item item-${item.kind}" style="left:${left}%;top:${item.y}%"><span></span><strong>${item.label}</strong></div>`;
+    const itemScale = Math.max(0.34, Math.min(1, 0.36 + Math.max(0, item.y) * 0.0068));
+    return `<div class="runner-item item-${item.kind}" style="left:${left}%;top:${item.y}%;--item-scale:${itemScale.toFixed(2)}"><span></span><strong>${item.label}</strong></div>`;
   }).join("");
 }
 
@@ -3744,7 +3748,6 @@ function renderSeasonTwo() {
         <span class="boss-arm arm-right"></span>
         <strong>${g.boss.name}</strong>
       </div>
-      <div class="fighter-bar boss-hp"><span style="width:${bossPercent}%"></span></div>
     </div>
     <div class="versus-flash">VS</div>
   ` : "";
@@ -3756,11 +3759,26 @@ function renderSeasonTwo() {
   ` : "";
   const bossCounterEffect = bossTurnEffectActive ? `<div class="boss-counter-effect"><span></span><strong>${g.pendingBossDamage || ""}</strong></div>` : "";
   const hitExplosion = hitExplosionActive ? `<div class="boss-hit-explosion hit-${g.hitExplosionTarget || "boss"}"><span></span><i></i></div>` : "";
-  const playerBar = isBossScene ? `<div class="fighter-bar player-hp"><span style="width:${hpPercent}%"></span></div>` : "";
-  const roarBanner = !isBossScene && s.roar_text ? `
-    <div class="runner-roar-banner">
+  const playerBar = "";
+  const roarSpeech = state.gameStarted && !isBossScene && s.roar_text ? `
+    <div class="runner-speech-overlay" style="left:${playerLeft}%">
       <span>${s.baby_name || "괴수"}</span>
       <strong>${s.roar_text}</strong>
+    </div>
+  ` : "";
+  const bossFightHud = isBossScene ? `
+    <div class="boss-fight-hud">
+      <div class="boss-fight-health player">
+        <span>${s.baby_name || "괴수"}</span>
+        <div><i style="width:${hpPercent}%"></i></div>
+        <strong>${g.hp}/${g.maxHp}</strong>
+      </div>
+      <div class="boss-fight-round">VS</div>
+      <div class="boss-fight-health enemy">
+        <span>${g.boss.name}</span>
+        <div><i style="width:${bossPercent}%"></i></div>
+        <strong>${g.bossHp}/${g.boss.maxHp}</strong>
+      </div>
     </div>
   ` : "";
   const turnNoticeKind = g.turnNoticeKind || (bossNoticeActive || bossTurnActive ? "boss" : "player");
@@ -3788,7 +3806,8 @@ function renderSeasonTwo() {
       <div class="runner-three-layer" aria-label="시즌2 3D 게임 장면">
         <span class="runner-three-badge">WebGL 3D</span>
       </div>
-      ${roarBanner}
+      ${roarSpeech}
+      ${bossFightHud}
       <div class="runner-sky">
         <span class="runner-cloud cloud-a"></span>
         <span class="runner-cloud cloud-b"></span>
