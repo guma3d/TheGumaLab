@@ -20,7 +20,7 @@ const seasons = {
       ["speed", "이동 속도", 5],
       ["wind_multiplier", "바람신발 배율", 2],
       ["mission_text", "미션 문장", "번개용사의 미션: 보물 3개 모으기"],
-      ["status_text", "리포트 문장", "번개용사 리포트: 점수 10, 체력 100"],
+      ["mission_status", "미션 상태 문장", "번개용사 미션: 점수 10, 체력 100"],
       ["portal_hint", "포털 안내 문장", "보물을 모아 포털을 열자"],
       ["starter_chest_label", "보물상자 이름", "보물상자"],
       ["treasure_label", "보물 이름", "보물"],
@@ -37,6 +37,11 @@ const seasons = {
       ["coin_point", "동전 점수", 5],
       ["gem_point", "루비 점수", 20],
       ["chest_point", "상자 점수", 30],
+      ["treasure_1", "계산 보물 1", 10],
+      ["treasure_2", "계산 보물 2", 20],
+      ["treasure_3", "계산 보물 3", 30],
+      ["trap_1", "계산 함정", 20],
+      ["current_score", "계산 점수", 40],
       ["trap_damage", "함정 데미지", 20],
       ["trap_speed", "함정 속도", 2],
       ["bonus_multiplier", "보너스 배율", 2],
@@ -129,7 +134,7 @@ const seasonOneEditPlans = {
   6: { lines: 4, keys: ["score", "hp", "potion_heal", "treasure_point"], labels: ["score", "hp", "potion_heal", "treasure_point"] },
   7: { lines: 5, keys: ["score", "hp", "speed", "wind_multiplier", "coin_point"], labels: ["score", "hp", "speed", "wind_multiplier", "coin_point"] },
   8: { lines: 6, keys: ["hero_name", "hero_message", "start_score", "score", "speed", "mission_text"], labels: ["hero_name", "hero_message", "start_score", "score", "speed", "mission_text"] },
-  9: { lines: 7, keys: ["hero_name", "hero_message", "start_score", "score", "hp", "speed", "status_text"], labels: ["hero_name", "hero_message", "start_score", "score", "hp", "speed", "status_text"] },
+  9: { lines: 7, keys: ["hero_name", "hero_message", "start_score", "score", "hp", "speed", "mission_status"], labels: ["hero_name", "hero_message", "start_score", "score", "hp", "speed", "mission_status"] },
   10: { lines: 8, keys: ["hero_name", "score", "treasure_1", "treasure_2", "treasure_3", "trap_1", "current_score", "hp"], labels: ["hero_name", "score", "treasure_1", "treasure_2", "treasure_3", "trap_1", "current_score", "hp"] },
   11: { lines: 9, keys: ["hero_name", "score", "hp", "treasure_point", "gem_point", "chest_point", "trap_label", "trap_damage", "trap_speed"], labels: ["hero_name", "score", "hp", "treasure_point", "gem_point", "chest_point", "trap_label", "trap_damage", "trap_speed"] },
   12: { lines: 10, keys: ["hero_name", "score", "hp", "speed", "wind_multiplier", "trap_speed", "treasure_point", "gem_point", "trap_damage", "bonus_multiplier"], labels: ["hero_name", "score", "hp", "speed", "wind_multiplier", "trap_speed", "treasure_point", "gem_point", "trap_damage", "bonus_multiplier"] },
@@ -144,8 +149,8 @@ const seasonOneUnlocks = {
   6: "체력 숫자와 체력 물약이 추가됩니다.",
   7: "바람신발을 먹으면 이동 속도가 계속 빨라집니다.",
   8: "이름과 문장이 합쳐진 미션 메시지가 게임판에 붙습니다.",
-  9: "이름과 점수가 들어간 모험 리포트가 붙습니다.",
-  10: "보물 점수는 더하고 함정 점수는 빼는 계산 미션이 생깁니다.",
+  9: "이름, 점수, 체력이 들어간 미션 상태판이 붙습니다.",
+  10: "보물 점수는 더하고 점수 함정은 빼는 계산 미션이 생깁니다.",
   11: "랜덤으로 움직이는 함정과 체력 피해가 들어와 긴장감이 생깁니다.",
   12: "보너스 별, 마법 포털, 승리 연출로 완성됩니다.",
 };
@@ -248,15 +253,15 @@ const seasonOneChapters = {
     ],
   },
   9: {
-    title: "모험 리포트",
-    focus: "status_text",
+    title: "미션 상태판",
+    focus: "mission_status",
     syntax: "f-string은 문자열 안에 변수 값을 넣는 방법입니다. 문자열 앞에 f를 붙이고, 중괄호 안에 hero_name이나 score 같은 변수 이름을 씁니다.",
     pages: [
-      ["1. 오늘의 장면", "게임 안에 짧은 모험 리포트 문장을 붙입니다."],
-      ["2. 오늘의 코드", "f\"{hero_name} 리포트: 점수 {score}, 체력 {hp}\" 는 변수 값을 문장 안에 넣습니다."],
+      ["1. 오늘의 장면", "게임 안에 짧은 미션 상태 문장을 붙입니다."],
+      ["2. 오늘의 코드", "f\"{hero_name} 미션: 점수 {score}, 체력 {hp}\" 는 변수 값을 문장 안에 넣습니다."],
       ["3. 기술 설명", "f-string은 문자열 앞에 f를 붙이고 중괄호 안의 변수 값을 글자로 바꿔 넣습니다."],
-      ["4. 바꿔보기", "리포트 문장의 순서를 바꿔 봅니다."],
-      ["5. 미션", "이름, 점수, 체력이 들어간 짧은 리포트를 만들어 봅니다."],
+      ["4. 바꿔보기", "미션 상태 문장의 순서를 바꿔 봅니다."],
+      ["5. 미션", "이름, 점수, 체력이 들어간 짧은 미션 상태 문장을 만들어 봅니다."],
     ],
   },
   10: {
@@ -264,11 +269,11 @@ const seasonOneChapters = {
     focus: "current_score",
     syntax: "+ 는 숫자를 더하고 - 는 숫자를 뺍니다. current_score는 보물 점수들을 더하고 함정 점수를 뺀 최종 점수입니다. 아직 함수 def는 쓰지 않고 한 줄 계산식으로 연습합니다.",
     pages: [
-      ["1. 오늘의 장면", "보물은 점수를 올리고 함정은 점수를 깎습니다."],
+      ["1. 오늘의 장면", "보물은 점수를 올리고 점수 함정은 점수를 깎습니다."],
       ["2. 오늘의 코드", "current_score = treasure_1 + treasure_2 + treasure_3 - trap_1 처럼 한 줄로 계산합니다."],
       ["3. 기술 설명", "+ 는 더하기, - 는 빼기입니다. 계산 결과를 current_score에 저장하면 게임 점수로 보여 줍니다."],
       ["4. 바꿔보기", "보물 숫자와 함정 숫자를 바꿔 최종 점수가 어떻게 달라지는지 비교합니다."],
-      ["5. 미션", "보물은 기분 좋게 오르고 함정은 아프게 줄어드는 점수 규칙을 만듭니다."],
+      ["5. 미션", "보물은 기분 좋게 오르고 점수 함정은 아프게 줄어드는 규칙을 만듭니다."],
     ],
   },
   11: {
@@ -1037,11 +1042,11 @@ function generateCode(seasonKey) {
     const hp = toNumber(s.hp, 100);
     const heroName = s.hero_name || "번개용사";
     const missionText = s.mission_text || `${heroName}의 미션: 보물 3개 모으기`;
-    const defaultReport = `${heroName} 리포트: 점수 ${score}, 체력 ${hp}`;
-    const statusText = s.status_text || defaultReport;
+    const defaultMissionStatus = `${heroName} 미션: 점수 ${score}, 체력 ${hp}`;
+    const missionStatus = s.mission_status || s.status_text || defaultMissionStatus;
     const scoreLine = score === startScore ? "score = start_score" : `score = ${score}`;
     const missionLine = missionText === `${heroName}의 미션: 보물 3개 모으기` ? 'mission_text = hero_name + "의 미션: 보물 3개 모으기"' : `mission_text = "${missionText}"`;
-    const statusLine = statusText === defaultReport ? 'status_text = f"{hero_name} 리포트: 점수 {score}, 체력 {hp}"' : `status_text = "${statusText}"`;
+    const missionStatusLine = missionStatus === defaultMissionStatus ? 'mission_status = f"{hero_name} 미션: 점수 {score}, 체력 {hp}"' : `mission_status = "${missionStatus}"`;
     return [
       "# 시즌 1: 보물 점수 게임 업그레이드 존",
       "# 전체 코드를 볼 수 있습니다. 오늘 배울 곳은 [오늘의 업그레이드] 아래입니다.",
@@ -1114,11 +1119,11 @@ function generateCode(seasonKey) {
       missionLine,
       "",
       "# =========================",
-      "# [챕터 9] 모험 리포트",
+      "# [챕터 9] 미션 상태판",
       today(9),
       "# =========================",
-      targetHint("status_text"),
-      statusLine,
+      targetHint("mission_status"),
+      missionStatusLine,
       "",
       "# =========================",
       "# [화면 이름표] 게임에 보이는 이름",
@@ -1551,17 +1556,17 @@ function parseCode(seasonKey, source) {
     if (evaluated !== null) return evaluated;
     return base.mission_text ?? `${heroName}의 미션: 보물 3개 모으기`;
   };
-  const seasonOneStatusValue = (heroName, score, hp) => {
-    const literalMatch = source.match(/^\s*status_text\s*=\s*["']([^"']*)["']/m);
+  const seasonOneMissionStatusValue = (heroName, score, hp) => {
+    const literalMatch = source.match(/^\s*(?:mission_status|status_text)\s*=\s*["']([^"']*)["']/m);
     if (literalMatch) return literalMatch[1];
-    const fStringMatch = source.match(/^\s*status_text\s*=\s*f["']([^"']*)["']/m);
+    const fStringMatch = source.match(/^\s*(?:mission_status|status_text)\s*=\s*f["']([^"']*)["']/m);
     if (fStringMatch) {
       return fStringMatch[1]
         .replaceAll("{hero_name}", heroName)
         .replaceAll("{score}", String(score))
         .replaceAll("{hp}", String(hp));
     }
-    return base.status_text ?? `${heroName} 리포트: 점수 ${score}, 체력 ${hp}`;
+    return base.mission_status ?? base.status_text ?? `${heroName} 미션: 점수 ${score}, 체력 ${hp}`;
   };
   const boolValue = (name) => {
     const match = source.match(new RegExp(`^\\s*${name}\\s*=\\s*(True|False|true|false)`, "m"));
@@ -1578,6 +1583,7 @@ function parseCode(seasonKey, source) {
     const heroName = stringValue("hero_name");
     const startScore = numberValue("start_score");
     const score = seasonOneScoreValue(startScore);
+    const currentScore = evaluateNumberExpression("current_score", { start_score: startScore }) ?? score;
     const hp = numberValue("hp");
     return {
       start_message: stringValue("start_message"),
@@ -1585,12 +1591,13 @@ function parseCode(seasonKey, source) {
       hero_name: heroName,
       start_score: startScore,
       score,
+      current_score: currentScore,
       hp,
       potion_heal: numberValue("potion_heal"),
       speed: numberValue("speed"),
       wind_multiplier: numberValue("wind_multiplier"),
       mission_text: seasonOneMissionValue(heroName),
-      status_text: seasonOneStatusValue(heroName, score, hp),
+      mission_status: seasonOneMissionStatusValue(heroName, score, hp),
       portal_hint: stringValue("portal_hint"),
       starter_chest_label: stringValue("starter_chest_label"),
       treasure_label: stringValue("treasure_label"),
@@ -1685,6 +1692,7 @@ function seasonOneItemsForChapter(chapter, settings = {}) {
   if (chapter >= 10) {
     items.push({ kind: "gem", x: 40, y: 34, label: settings.gem_label || "루비", taken: false });
     items.push({ kind: "chest", x: 68, y: 22, label: settings.chest_label || "상자", taken: false });
+    items.push({ kind: "score_trap", x: 12, y: 22, label: settings.trap_label || "함정", taken: false });
   }
   if (chapter >= 11) items.push({ kind: "trap", x: 40, y: 44, label: settings.trap_label || "함정", taken: false });
   if (chapter >= 12) {
@@ -1700,6 +1708,7 @@ function seasonOneItemPoint(kind, settings) {
   if (kind === "gem") return toNumber(settings.gem_point, 20);
   if (kind === "chest") return toNumber(settings.chest_point, 30);
   if (kind === "treasure") return toNumber(settings.treasure_point, 10);
+  if (kind === "score_trap") return -Math.abs(toNumber(settings.trap_1, toNumber(settings.trap_damage, 20)));
   return 0;
 }
 
@@ -1753,6 +1762,7 @@ function seasonOneReset() {
       boost: 0,
       bonus: 0,
       trap: 0,
+      score_trap: 0,
     },
     items: seasonOneItemsForChapter(chapter, s),
   };
@@ -1797,7 +1807,7 @@ function seasonOneHudStats(settings, game, chapter) {
 function renderSeasonOneScenery(board, settings, game, chapter) {
   if (chapter >= 5) seasonOneProp(board, "coin-road");
   if (chapter >= 8) addSeasonOneScenery(board, "mission-badge", settings.mission_text || `${settings.hero_name || "번개용사"}의 미션: 보물 3개 모으기`);
-  if (chapter >= 9) addSeasonOneScenery(board, "report-badge", settings.status_text || `${settings.hero_name || "번개용사"} 리포트: 점수 ${game.score}, 체력 ${game.hp}`);
+  if (chapter >= 9) addSeasonOneScenery(board, "mission-status-badge", settings.mission_status || settings.status_text || `${settings.hero_name || "번개용사"} 미션: 점수 ${game.score}, 체력 ${game.hp}`);
   if (chapter >= 10) addSeasonOneScenery(board, "combo-plaque", `콤보 ${game.combo} · 보물 ${game.collected.treasure + game.collected.gem + game.collected.chest}`);
   if (chapter >= 10) seasonOneProp(board, "treasure-gate");
   if (chapter >= 12) {
@@ -1887,7 +1897,7 @@ function renderSeasonOne() {
 
   for (const item of g.items.filter((entry) => !entry.taken)) {
     const sprite = document.createElement("div");
-    const category = item.kind === "trap" ? "trap" : "treasure";
+    const category = item.kind === "trap" || item.kind === "score_trap" ? "trap" : "treasure";
     sprite.className = `sprite voxel-item ${category} item-${item.kind}`;
     sprite.innerHTML = `<span class="item-icon"></span><span>${item.label}</span>`;
     Object.assign(sprite.style, percentStyle(item.x, item.y));
@@ -1993,7 +2003,7 @@ function collectSeasonOne() {
     renderSeasonOne();
     return;
   }
-  g.collected ||= { score: 0, starter_chest: 0, treasure: 0, coin: 0, gem: 0, chest: 0, potion: 0, boost: 0, bonus: 0, trap: 0 };
+  g.collected ||= { score: 0, starter_chest: 0, treasure: 0, coin: 0, gem: 0, chest: 0, potion: 0, boost: 0, bonus: 0, trap: 0, score_trap: 0 };
   if (near.kind === "trap") {
     triggerSeasonOneTrap(near, s, g);
     renderSeasonOne();
@@ -2034,6 +2044,13 @@ function collectSeasonOne() {
     g.combo += 1;
     g.score = g.score * toNumber(s.bonus_multiplier, 2);
     g.message = `${near.label}! 점수가 ${toNumber(s.bonus_multiplier, 2)}배가 되었어.`;
+  } else if (near.kind === "score_trap") {
+    const point = seasonOneItemPoint(near.kind, s);
+    g.collected.score_trap += 1;
+    g.combo = 0;
+    g.score = Math.max(0, g.score + point);
+    g.message = `${near.label}을 밟았어. ${point}점`;
+    playPickupSound("trap");
   } else {
     const point = seasonOneItemPoint(near.kind, s);
     g.collected[near.kind] = (g.collected[near.kind] || 0) + 1;

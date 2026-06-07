@@ -734,6 +734,7 @@ body.file-tree-collapsed .file-tree {
 
 .title-arch,
 .mission-badge,
+.mission-status-badge,
 .report-badge,
 .combo-plaque,
 .portal-hint {
@@ -758,6 +759,7 @@ body.file-tree-collapsed .file-tree {
 }
 
 .mission-badge,
+.mission-status-badge,
 .report-badge,
 .combo-plaque,
 .portal-hint {
@@ -789,6 +791,7 @@ body.file-tree-collapsed .file-tree {
   white-space: nowrap;
 }
 
+.mission-status-badge,
 .report-badge {
   left: 10px;
   right: 10px;
