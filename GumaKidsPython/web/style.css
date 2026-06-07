@@ -1826,7 +1826,8 @@ body.file-tree-collapsed .file-tree {
 }
 
 .kaiju-runner-game.pickup-glow .runner-kaiju .kaiju-model {
-  animation: runner-pickup-outline-glow 2s linear both;
+  animation: none;
+  filter: none;
 }
 
 .kaiju-runner-game.phase-boss .runner-kaiju,

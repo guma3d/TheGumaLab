@@ -536,6 +536,9 @@ const seasonTwoThree = {
   playerMixer: null,
   playerAction: null,
   playerMeshes: [],
+  playerOutlineRoot: null,
+  playerOutlineMixer: null,
+  playerOutlineMaterials: [],
   playerGlowLight: null,
   lastAnimationTime: 0,
   animationFrame: 0,
@@ -2217,6 +2220,8 @@ const SEASON_TWO_PLAYER_MODEL_NAME = "Alien Blob";
 const SEASON_TWO_PLAYER_MODEL_URL = "/models/blob/Alien.gltf";
 const SEASON_TWO_PLAYER_RUNNER_SCALE = 0.44;
 const SEASON_TWO_PLAYER_BOSS_SCALE = 0.54;
+const SEASON_TWO_PLAYER_OUTLINE_SCALE = 1.036;
+const SEASON_TWO_BOSS_POWER_MULTIPLIER = 0.8;
 const SEASON_TWO_ATTACK_EFFECT_MS = 920;
 const SEASON_TWO_BOSS_TURN_EFFECT_MS = 1120;
 const SEASON_TWO_TURN_NOTICE_MS = 3000;
@@ -2295,11 +2300,12 @@ function seasonTwoBossForChapter(chapter = seasonTwoChapter(), settings = state.
   const balance = seasonTwoChapterBalance(chapter);
   const expectedBossHp = Math.round(maxGaugeDamage * balance.playerHitsToWin);
   const expectedBossPower = Math.ceil(expectedEnergy / Math.max(1, balance.bossHitsToDefeat));
+  const tunedBossPower = Math.ceil(Math.max(base.power, expectedBossPower) * SEASON_TWO_BOSS_POWER_MULTIPLIER);
   return {
     ...base,
     name: chapter >= 12 ? (config.boss_name || base.name) : base.name,
     maxHp: Math.max(base.hp, expectedBossHp),
-    power: Math.max(base.power, expectedBossPower),
+    power: Math.max(1, tunedBossPower),
   };
 }
 
@@ -2916,9 +2922,11 @@ function loadSeasonTwoThree() {
     seasonTwoThree.modulePromise = Promise.all([
       import("/vendor/three.module.min.js"),
       import("/vendor/GLTFLoader.js"),
-    ]).then(([threeModule, gltfModule]) => ({
+      import("/vendor/SkeletonUtils.js"),
+    ]).then(([threeModule, gltfModule, skeletonUtilsModule]) => ({
       THREE: threeModule.default || threeModule,
       GLTFLoader: gltfModule.GLTFLoader,
+      cloneSkinnedModel: skeletonUtilsModule.clone,
     }));
   }
   return seasonTwoThree.modulePromise;
@@ -2947,7 +2955,51 @@ function prepareSeasonTwoPlayerModel(THREE, root) {
   seasonTwoThree.playerMeshes = meshes;
 }
 
-function ensureSeasonTwoPlayerModel(THREE, GLTFLoader) {
+function playSeasonTwoIdleClip(THREE, mixer, clip) {
+  const action = mixer.clipAction(clip);
+  action.enabled = true;
+  action.paused = false;
+  action.timeScale = 1;
+  action.clampWhenFinished = false;
+  action.setLoop(THREE.LoopRepeat, Infinity);
+  action.setEffectiveWeight(1);
+  action.reset().play();
+  return action;
+}
+
+function createSeasonTwoPlayerOutline(THREE, cloneSkinnedModel, root, idleClip) {
+  if (seasonTwoThree.playerOutlineRoot) return;
+  const outlineRoot = cloneSkinnedModel ? cloneSkinnedModel(root) : root.clone(true);
+  const outlineMaterials = [];
+  outlineRoot.name = `${SEASON_TWO_PLAYER_MODEL_NAME} Outline`;
+  outlineRoot.visible = false;
+  outlineRoot.scale.setScalar(SEASON_TWO_PLAYER_OUTLINE_SCALE);
+  outlineRoot.traverse((object) => {
+    if (!object.isMesh) return;
+    object.castShadow = false;
+    object.receiveShadow = false;
+    object.renderOrder = -1;
+    const material = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0,
+      side: THREE.BackSide,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    object.material = material;
+    outlineMaterials.push(material);
+  });
+  seasonTwoThree.playerOutlineRoot = outlineRoot;
+  seasonTwoThree.playerOutlineMaterials = outlineMaterials;
+  if (seasonTwoThree.playerGroup) seasonTwoThree.playerGroup.add(outlineRoot);
+  if (idleClip) {
+    seasonTwoThree.playerOutlineMixer = new THREE.AnimationMixer(outlineRoot);
+    playSeasonTwoIdleClip(THREE, seasonTwoThree.playerOutlineMixer, idleClip);
+  }
+}
+
+function ensureSeasonTwoPlayerModel(THREE, GLTFLoader, cloneSkinnedModel) {
   if (seasonTwoThree.playerModelRoot) return Promise.resolve(seasonTwoThree.playerModelRoot);
   if (!seasonTwoThree.playerModelPromise) {
     seasonTwoThree.playerModelPromise = new Promise((resolve, reject) => {
@@ -2970,9 +3022,9 @@ function ensureSeasonTwoPlayerModel(THREE, GLTFLoader) {
           const idleClip = gltf.animations?.find((clip) => /idle/i.test(clip.name)) || gltf.animations?.[0];
           if (idleClip) {
             seasonTwoThree.playerMixer = new THREE.AnimationMixer(root);
-            seasonTwoThree.playerAction = seasonTwoThree.playerMixer.clipAction(idleClip);
-            seasonTwoThree.playerAction.reset().play();
+            seasonTwoThree.playerAction = playSeasonTwoIdleClip(THREE, seasonTwoThree.playerMixer, idleClip);
           }
+          createSeasonTwoPlayerOutline(THREE, cloneSkinnedModel, root, idleClip);
           resolve(root);
         },
         undefined,
@@ -2983,30 +3035,49 @@ function ensureSeasonTwoPlayerModel(THREE, GLTFLoader) {
   return seasonTwoThree.playerModelPromise;
 }
 
+function seasonTwoCurrentPickupGlowState(data = {}) {
+  const game = state.game.season_02;
+  const now = performance.now();
+  const until = game?.pickupGlowUntil || 0;
+  const kind = game?.pickupGlowKind || data.pickupGlowKind || "good";
+  if (until <= now) return { active: false, alpha: 0, kind };
+  const progress = Math.max(0, Math.min(1, 1 - ((until - now) / SEASON_TWO_PICKUP_GLOW_MS)));
+  const fade = Math.max(0, Math.min(1, (until - now) / SEASON_TWO_PICKUP_GLOW_MS));
+  const pulse = 0.08 + (Math.sin(progress * Math.PI * 6) ** 2) * 0.92;
+  return { active: true, alpha: fade * pulse, kind };
+}
+
 function applySeasonTwoPlayerGlow(THREE, data) {
   const group = seasonTwoThree.playerGroup;
-  if (!group || !seasonTwoThree.playerModelRoot) return;
-  const colorHex = data.pickupGlowKind === "bad" ? 0xef4444 : 0x38bdf8;
-  const alpha = data.pickupGlowActive ? Math.max(0, Math.min(1, data.pickupGlowAlpha || 0)) : 0;
-  const glowColor = new THREE.Color(colorHex);
-
-  seasonTwoThree.playerMeshes.forEach((mesh) => {
-    const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-    materials.forEach((material) => {
-      if (!material?.emissive) return;
-      material.emissive.setHex(material.userData.seasonTwoBaseEmissive ?? 0x000000);
-      if (alpha > 0) material.emissive.lerp(glowColor, Math.min(1, alpha * 0.85));
-      material.emissiveIntensity = (material.userData.seasonTwoBaseEmissiveIntensity || 0) + alpha * 1.45;
-    });
+  const outlineRoot = seasonTwoThree.playerOutlineRoot;
+  if (!group || !outlineRoot) return;
+  const glow = seasonTwoCurrentPickupGlowState(data);
+  const colorHex = glow.kind === "bad" ? 0xef4444 : 0x38bdf8;
+  const alpha = Math.max(0, Math.min(1, glow.alpha || 0));
+  outlineRoot.visible = alpha > 0.015;
+  outlineRoot.scale.setScalar(SEASON_TWO_PLAYER_OUTLINE_SCALE + alpha * 0.012);
+  seasonTwoThree.playerOutlineMaterials.forEach((material) => {
+    material.color.setHex(colorHex);
+    material.opacity = alpha * 0.42;
   });
+  if (seasonTwoThree.playerGlowLight) seasonTwoThree.playerGlowLight.intensity = 0;
+}
 
-  if (!seasonTwoThree.playerGlowLight || seasonTwoThree.playerGlowLight.parent !== group) {
-    seasonTwoThree.playerGlowLight = new THREE.PointLight(colorHex, 0, 3.6);
-    seasonTwoThree.playerGlowLight.position.set(0, 1.35, 0.18);
-    group.add(seasonTwoThree.playerGlowLight);
-  }
-  seasonTwoThree.playerGlowLight.color.setHex(colorHex);
-  seasonTwoThree.playerGlowLight.intensity = alpha * 2.1;
+function applySeasonTwoPlayerIdleMotion(now = performance.now()) {
+  const group = seasonTwoThree.playerGroup;
+  const base = group?.userData?.seasonTwoBaseTransform;
+  if (!group || !base || !seasonTwoThree.playerModelRoot) return;
+  const t = now * 0.001;
+  const isBossScene = Boolean(seasonTwoThree.currentFrameData?.isBossScene);
+  const bob = Math.sin(t * (isBossScene ? 2.8 : 3.8)) * (isBossScene ? 0.022 : 0.04);
+  const breathe = Math.sin(t * 2.2) * 0.012;
+  const sway = Math.sin(t * 2.6) * (isBossScene ? 0.018 : 0.032);
+  group.position.set(base.position[0], base.position[1] + bob, base.position[2]);
+  group.rotation.set(
+    base.rotation[0] + breathe,
+    base.rotation[1] + (isBossScene ? breathe * 0.6 : sway * 0.35),
+    base.rotation[2] + sway,
+  );
 }
 
 function updateSeasonTwoPlayerModelTransform(THREE, data) {
@@ -3018,27 +3089,30 @@ function updateSeasonTwoPlayerModelTransform(THREE, data) {
   group.scale.setScalar(seasonTwoPlayerModelScale(data.isBossScene));
 
   if (data.isBossScene) {
-    group.position.set(-2.45, 0.1, -0.68);
-    group.rotation.set(-0.02, Math.PI / 2, 0);
+    const position = [-2.45, 0.1, -0.68];
+    const rotation = [-0.02, Math.PI / 2, 0];
     if (data.attackEffectActive) {
-      group.position.x += 0.28;
-      group.position.y += 0.05;
-      group.rotation.z = -0.08;
+      position[0] += 0.28;
+      position[1] += 0.05;
+      rotation[2] = -0.08;
     }
+    group.userData.seasonTwoBaseTransform = { position, rotation };
   } else {
-    const bob = Math.abs(Math.sin((data.tick || 0) * 0.72)) * 0.04;
-    group.position.set(seasonTwoThreeLaneX(data.lane), 0.06 + bob, 5.45);
-    group.rotation.set(-0.03, Math.PI - 0.1, 0);
+    group.userData.seasonTwoBaseTransform = {
+      position: [seasonTwoThreeLaneX(data.lane), 0.06, 5.45],
+      rotation: [-0.03, Math.PI - 0.1, 0],
+    };
   }
+  applySeasonTwoPlayerIdleMotion();
   applySeasonTwoPlayerGlow(THREE, data);
 }
 
-function updateSeasonTwoPlayerModel(THREE, GLTFLoader, data) {
+function updateSeasonTwoPlayerModel(THREE, GLTFLoader, cloneSkinnedModel, data) {
   const group = seasonTwoThree.playerGroup;
   if (!group || !GLTFLoader) return;
   if (!seasonTwoThree.playerModelRoot) {
     group.visible = false;
-    ensureSeasonTwoPlayerModel(THREE, GLTFLoader)
+    ensureSeasonTwoPlayerModel(THREE, GLTFLoader, cloneSkinnedModel)
       .then(() => updateSeasonTwoPlayerModelTransform(THREE, seasonTwoThree.currentFrameData || data))
       .catch((error) => console.error("Alien Blob model load failed", error));
     return;
@@ -3060,6 +3134,9 @@ function startSeasonTwoThreeAnimationLoop(THREE, renderer) {
     seasonTwoThree.lastAnimationTime = now;
     const delta = Math.min(0.05, Math.max(0, (now - previousTime) / 1000));
     if (seasonTwoThree.playerMixer) seasonTwoThree.playerMixer.update(delta);
+    if (seasonTwoThree.playerOutlineMixer) seasonTwoThree.playerOutlineMixer.update(delta);
+    applySeasonTwoPlayerIdleMotion(now);
+    applySeasonTwoPlayerGlow(THREE, seasonTwoThree.currentFrameData || {});
     if (seasonTwoThree.scene && seasonTwoThree.camera) {
       renderer.render(seasonTwoThree.scene, seasonTwoThree.camera);
     }
@@ -3699,10 +3776,10 @@ function ensureSeasonTwoThreeScene(THREE) {
   };
 }
 
-function updateSeasonTwoThreeDynamic(THREE, GLTFLoader, data) {
+function updateSeasonTwoThreeDynamic(THREE, GLTFLoader, cloneSkinnedModel, data) {
   const dynamicGroup = seasonTwoThree.dynamicGroup;
   if (!dynamicGroup) return;
-  updateSeasonTwoPlayerModel(THREE, GLTFLoader, data);
+  updateSeasonTwoPlayerModel(THREE, GLTFLoader, cloneSkinnedModel, data);
   const dynamicKey = seasonTwoThreeDynamicKey(data);
   if (seasonTwoThree.dynamicKey === dynamicKey) return;
   clearSeasonTwoThreeGroup(dynamicGroup);
@@ -3738,10 +3815,10 @@ function updateSeasonTwoThreeDynamic(THREE, GLTFLoader, data) {
   }
 }
 
-function renderSeasonTwoThreeFrame(THREE, GLTFLoader, renderer, data, panProgress = 1) {
+function renderSeasonTwoThreeFrame(THREE, GLTFLoader, cloneSkinnedModel, renderer, data, panProgress = 1) {
   const { width, height } = data;
   const { scene, camera } = ensureSeasonTwoThreeScene(THREE);
-  updateSeasonTwoThreeDynamic(THREE, GLTFLoader, data);
+  updateSeasonTwoThreeDynamic(THREE, GLTFLoader, cloneSkinnedModel, data);
 
   const runnerCamera = {
     position: new THREE.Vector3(0, 5.55, 13.6),
@@ -3795,7 +3872,7 @@ function renderSeasonTwoThreeScene(data) {
   seasonTwoThree.currentFrameData = frameData;
 
   loadSeasonTwoThree()
-    .then(({ THREE, GLTFLoader }) => {
+    .then(({ THREE, GLTFLoader, cloneSkinnedModel }) => {
       if (!mount.isConnected || renderToken !== seasonTwoThree.renderToken) return;
       if (!seasonTwoThree.renderer) {
         seasonTwoThree.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -3814,13 +3891,13 @@ function renderSeasonTwoThreeScene(data) {
         const animate = (now) => {
           if (!mount.isConnected || panToken !== seasonTwoThree.panToken) return;
           const progress = Math.min(1, (now - startedAt) / 1250);
-          renderSeasonTwoThreeFrame(THREE, GLTFLoader, renderer, frameData, progress);
+          renderSeasonTwoThreeFrame(THREE, GLTFLoader, cloneSkinnedModel, renderer, frameData, progress);
           if (progress < 1) window.requestAnimationFrame(animate);
         };
         window.requestAnimationFrame(animate);
         return;
       }
-      renderSeasonTwoThreeFrame(THREE, GLTFLoader, renderer, frameData, 1);
+      renderSeasonTwoThreeFrame(THREE, GLTFLoader, cloneSkinnedModel, renderer, frameData, 1);
     })
     .catch((error) => {
       mount.dataset.error = String(error?.message || error);
