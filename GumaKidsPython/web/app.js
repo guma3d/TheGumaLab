@@ -67,20 +67,31 @@ const seasons = {
       ["run_speed", "달리기 속도", 5],
       ["snack_score", "첫 에너지 보너스", 10],
       ["meat_score", "고기 에너지", 100],
+      ["food_name", "먹이 이름", "고기"],
+      ["favorite_bonus", "좋아하는 먹이 보너스", 20],
+      ["item_name", "검사용 아이템", "고기"],
+      ["bomb_damage", "폭탄 피해", 70],
       ["growth_per_item", "먹이 성장량", 12],
       ["mutation_size", "외형 표시 기준", 60],
       ["gorilla_score", "고릴라 변신 에너지", 200],
       ["dino_score", "공룡 변신 에너지", 500],
+      ["mutation_result", "현재 변신 결과", "원숭이"],
       ["hp", "체력", 100],
       ["danger_limit", "위험 체력 기준", 35],
       ["attack_power", "괴수 공격력", 18],
       ["flame_damage", "불꽃 피해", 200],
       ["boss_power", "보스 공격력", 24],
       ["boss_name", "최종 보스 이름", "메카 타이탄"],
+      ["has_shield", "장애물 방어막", "false"],
+      ["obstacle_result", "장애물 결과", "방어 성공"],
       ["shield_ready", "방어막 준비", "true"],
       ["dash_ready", "대시 준비", "false"],
+      ["can_dash_shield", "방어막+대시", "false"],
       ["red_core", "빨간 코어", "true"],
       ["blue_core", "파란 코어", "false"],
+      ["has_core_bonus", "변신 코어 보너스", "true"],
+      ["item_result", "아이템 계산 결과", 0],
+      ["final_attack", "최종 공격 피해", 200],
     ],
   },
   season_03: {
@@ -303,9 +314,9 @@ const seasonOneChapters = {
 
 const seasonTwoEditPlans = {
   1: { lines: 1, keys: ["baby_name"], labels: ["baby_name"] },
-  2: { lines: 2, keys: ["baby_name", "roar_text"], labels: ["baby_name", "roar_text"] },
-  3: { lines: 3, keys: ["baby_name", "snack_score", "meat_score"], labels: ["baby_name", "snack_score", "meat_score"] },
-  4: { lines: 4, keys: ["baby_name", "gorilla_score", "dino_score", "mutation_result"], labels: ["baby_name", "gorilla_score", "dino_score", "mutation_result"] },
+  2: { lines: 2, keys: ["runner_title", "roar_text"], labels: ["runner_title", "roar_text"] },
+  3: { lines: 3, keys: ["start_size", "snack_score", "meat_score"], labels: ["start_size", "snack_score", "meat_score"] },
+  4: { lines: 4, keys: ["mutation_size", "gorilla_score", "dino_score", "mutation_result"], labels: ["mutation_size", "gorilla_score", "dino_score", "mutation_result"] },
   5: { lines: 5, keys: ["baby_name", "favorite_food", "food_name", "meat_score", "favorite_bonus"], labels: ["baby_name", "favorite_food", "food_name", "meat_score", "favorite_bonus"] },
   6: { lines: 6, keys: ["baby_name", "hp", "danger_limit", "has_shield", "obstacle_result", "run_speed"], labels: ["baby_name", "hp", "danger_limit", "has_shield", "obstacle_result", "run_speed"] },
   7: { lines: 7, keys: ["baby_name", "item_name", "meat_score", "bomb_damage", "item_result", "flame_damage", "boss_power"], labels: ["baby_name", "item_name", "meat_score", "bomb_damage", "item_result", "flame_damage", "boss_power"] },
@@ -1183,7 +1194,8 @@ function generateCode(seasonKey) {
   }
   if (seasonKey === "season_02") {
     const activePlan = seasonTwoEditPlans[state.activeChapter] || { lines: 1, keys: [], labels: [] };
-    const targetHint = (key) => {
+    const targetHint = (key, chapter) => {
+      if (chapter !== state.activeChapter) return null;
       const index = activePlan.keys.indexOf(key);
       if (index < 0) return null;
       return `# 오늘 줄 ${index + 1}/${activePlan.lines}: ${activePlan.labels[index]}`;
@@ -1198,41 +1210,41 @@ function generateCode(seasonKey) {
       "# baby_name = input(\"괴수 이름은? \") 와 같은 역할입니다.",
       `# [오늘의 업그레이드: ${activePlan.lines}줄]`,
       "# =========================",
-      targetHint("baby_name"),
+      targetHint("baby_name", 1),
       `baby_name = "${s.baby_name}"`,
       "",
       "# =========================",
       "# [챕터 14] 포효 문자열",
       "# =========================",
-      targetHint("runner_title"),
+      targetHint("runner_title", 2),
       `runner_title = "${s.runner_title}"`,
-      targetHint("roar_text"),
+      targetHint("roar_text", 2),
       `roar_text = "${s.roar_text}"`,
       "",
       "# =========================",
       "# [챕터 15] 숫자 에너지",
       "# snack_score = int(input(\"첫 에너지는? \")) 와 같은 생각입니다.",
       "# =========================",
-      targetHint("start_size"),
+      targetHint("start_size", 3),
       `start_size = ${toNumber(s.start_size, 1)}`,
-      targetHint("snack_score"),
+      targetHint("snack_score", 3),
       `snack_score = ${toNumber(s.snack_score, 10)}`,
-      targetHint("meat_score"),
+      targetHint("meat_score", 3),
       `meat_score = ${toNumber(s.meat_score, 100)}`,
       "start_energy = hp + snack_score",
       "",
       "# =========================",
       "# [챕터 16] if로 변신 조건 만들기",
       "# =========================",
-      targetHint("mutation_size"),
+      targetHint("mutation_size", 4),
       `mutation_size = ${toNumber(s.mutation_size, 60)}`,
-      targetHint("gorilla_score"),
+      targetHint("gorilla_score", 4),
       `gorilla_score = ${toNumber(s.gorilla_score, 200)}`,
-      targetHint("dino_score"),
+      targetHint("dino_score", 4),
       `dino_score = ${toNumber(s.dino_score, 500)}`,
       "",
       "energy = hp + meat_score",
-      targetHint("mutation_result"),
+      targetHint("mutation_result", 4),
       "mutation_result = \"원숭이\"",
       "if energy >= dino_score:",
       "    mutation_result = \"공룡\"",
@@ -1242,13 +1254,15 @@ function generateCode(seasonKey) {
       "# =========================",
       "# [챕터 17] == 로 좋아하는 먹이 확인",
       "# =========================",
-      targetHint("favorite_food"),
+      targetHint("baby_name", 5),
+      `baby_name = "${s.baby_name}"`,
+      targetHint("favorite_food", 5),
       `favorite_food = "${s.favorite_food}"`,
-      targetHint("food_name"),
+      targetHint("food_name", 5),
       `food_name = "${s.food_name || "고기"}"`,
-      targetHint("meat_score"),
+      targetHint("meat_score", 5),
       `meat_score = ${toNumber(s.meat_score, 100)}`,
-      targetHint("favorite_bonus"),
+      targetHint("favorite_bonus", 5),
       `favorite_bonus = ${toNumber(s.favorite_bonus, 20)}`,
       "",
       "food_energy = meat_score",
@@ -1258,14 +1272,18 @@ function generateCode(seasonKey) {
       "# =========================",
       "# [챕터 18] else로 장애물 실패 처리",
       "# =========================",
-      targetHint("hp"),
+      targetHint("baby_name", 6),
+      `baby_name = "${s.baby_name}"`,
+      targetHint("hp", 6),
       `hp = ${toNumber(s.hp, 100)}`,
-      targetHint("danger_limit"),
+      targetHint("danger_limit", 6),
       `danger_limit = ${toNumber(s.danger_limit, 35)}`,
-      targetHint("has_shield"),
+      targetHint("has_shield", 6),
       `has_shield = ${toBool(s.has_shield) ? "True" : "False"}`,
+      targetHint("run_speed", 6),
+      `run_speed = ${toNumber(s.run_speed, 5)}`,
       "",
-      targetHint("obstacle_result"),
+      targetHint("obstacle_result", 6),
       "obstacle_result = \"방어 성공\"",
       "if has_shield:",
       "    obstacle_result = \"방어막으로 통과\"",
@@ -1277,20 +1295,22 @@ function generateCode(seasonKey) {
       "# =========================",
       "# [챕터 19] elif로 먹이별 결과 만들기",
       "# =========================",
-      targetHint("item_name"),
+      targetHint("baby_name", 7),
+      `baby_name = "${s.baby_name}"`,
+      targetHint("item_name", 7),
       `item_name = "${s.item_name || "고기"}"`,
-      targetHint("meat_score"),
+      targetHint("meat_score", 7),
       `meat_score = ${toNumber(s.meat_score, 100)}`,
-      targetHint("bomb_damage"),
+      targetHint("bomb_damage", 7),
       `bomb_damage = ${toNumber(s.bomb_damage, 70)}`,
-      targetHint("attack_power"),
+      targetHint("attack_power", 7),
       `attack_power = ${toNumber(s.attack_power, 18)}`,
-      targetHint("flame_damage"),
+      targetHint("flame_damage", 7),
       `flame_damage = ${toNumber(s.flame_damage, 200)}`,
-      targetHint("boss_power"),
+      targetHint("boss_power", 7),
       `boss_power = ${toNumber(s.boss_power, 24)}`,
       "",
-      targetHint("item_result"),
+      targetHint("item_result", 7),
       "item_result = 0",
       "if item_name == \"고기\":",
       "    item_result = meat_score",
@@ -1304,11 +1324,23 @@ function generateCode(seasonKey) {
       "# =========================",
       "# [챕터 20] > 와 < 로 위험 상태 비교",
       "# =========================",
-      targetHint("run_speed"),
+      targetHint("runner_title", 8),
+      `runner_title = "${s.runner_title}"`,
+      targetHint("roar_text", 8),
+      `roar_text = "${s.roar_text}"`,
+      targetHint("start_size", 8),
+      `start_size = ${toNumber(s.start_size, 1)}`,
+      targetHint("meat_score", 8),
+      `meat_score = ${toNumber(s.meat_score, 100)}`,
+      targetHint("gorilla_score", 8),
+      `gorilla_score = ${toNumber(s.gorilla_score, 200)}`,
+      targetHint("dino_score", 8),
+      `dino_score = ${toNumber(s.dino_score, 500)}`,
+      targetHint("run_speed", 8),
       `run_speed = ${toNumber(s.run_speed, 5)}`,
-      targetHint("danger_limit"),
+      targetHint("danger_limit", 8),
       `danger_limit = ${toNumber(s.danger_limit, 35)}`,
-      targetHint("growth"),
+      targetHint("growth", 8),
       `growth = ${toNumber(s.growth, 0)}`,
       "",
       "is_danger = hp < danger_limit",
@@ -1317,7 +1349,23 @@ function generateCode(seasonKey) {
       "# =========================",
       "# [챕터 21] >= 로 보스 게이트 열기",
       "# =========================",
-      targetHint("boss_name"),
+      targetHint("baby_name", 9),
+      `baby_name = "${s.baby_name}"`,
+      targetHint("runner_title", 9),
+      `runner_title = "${s.runner_title}"`,
+      targetHint("roar_text", 9),
+      `roar_text = "${s.roar_text}"`,
+      targetHint("hp", 9),
+      `hp = ${toNumber(s.hp, 100)}`,
+      targetHint("danger_limit", 9),
+      `danger_limit = ${toNumber(s.danger_limit, 35)}`,
+      targetHint("run_speed", 9),
+      `run_speed = ${toNumber(s.run_speed, 5)}`,
+      targetHint("flame_damage", 9),
+      `flame_damage = ${toNumber(s.flame_damage, 200)}`,
+      targetHint("boss_power", 9),
+      `boss_power = ${toNumber(s.boss_power, 24)}`,
+      targetHint("boss_name", 9),
       `boss_name = "${s.boss_name}"`,
       "",
       "target_energy = dino_score",
@@ -1326,30 +1374,76 @@ function generateCode(seasonKey) {
       "# =========================",
       "# [챕터 22] and 조건: 방어막과 대시",
       "# =========================",
-      targetHint("shield_ready"),
+      targetHint("baby_name", 10),
+      `baby_name = "${s.baby_name}"`,
+      targetHint("gorilla_score", 10),
+      `gorilla_score = ${toNumber(s.gorilla_score, 200)}`,
+      targetHint("dino_score", 10),
+      `dino_score = ${toNumber(s.dino_score, 500)}`,
+      targetHint("shield_ready", 10),
       `shield_ready = ${toBool(s.shield_ready) ? "True" : "False"}`,
-      targetHint("dash_ready"),
+      targetHint("dash_ready", 10),
       `dash_ready = ${toBool(s.dash_ready) ? "True" : "False"}`,
+      targetHint("hp", 10),
+      `hp = ${toNumber(s.hp, 100)}`,
+      targetHint("run_speed", 10),
+      `run_speed = ${toNumber(s.run_speed, 5)}`,
+      targetHint("boss_power", 10),
+      `boss_power = ${toNumber(s.boss_power, 24)}`,
+      targetHint("boss_name", 10),
+      `boss_name = "${s.boss_name}"`,
       "",
-      targetHint("can_dash_shield"),
+      targetHint("can_dash_shield", 10),
       "can_dash_shield = shield_ready and dash_ready",
       "",
       "# =========================",
       "# [챕터 23] or 조건: 변신 코어",
       "# =========================",
-      targetHint("red_core"),
+      targetHint("baby_name", 11),
+      `baby_name = "${s.baby_name}"`,
+      targetHint("favorite_food", 11),
+      `favorite_food = "${s.favorite_food}"`,
+      targetHint("red_core", 11),
       `red_core = ${toBool(s.red_core) ? "True" : "False"}`,
-      targetHint("blue_core"),
+      targetHint("blue_core", 11),
       `blue_core = ${toBool(s.blue_core) ? "True" : "False"}`,
+      targetHint("meat_score", 11),
+      `meat_score = ${toNumber(s.meat_score, 100)}`,
+      targetHint("gorilla_score", 11),
+      `gorilla_score = ${toNumber(s.gorilla_score, 200)}`,
+      targetHint("dino_score", 11),
+      `dino_score = ${toNumber(s.dino_score, 500)}`,
+      targetHint("flame_damage", 11),
+      `flame_damage = ${toNumber(s.flame_damage, 200)}`,
+      targetHint("boss_power", 11),
+      `boss_power = ${toNumber(s.boss_power, 24)}`,
       "",
-      targetHint("has_core_bonus"),
+      targetHint("has_core_bonus", 11),
       "has_core_bonus = red_core or blue_core",
       "",
       "# =========================",
       "# [챕터 24] 조건문 종합 보스전",
       "# =========================",
-      targetHint("final_attack"),
+      targetHint("baby_name", 12),
+      `baby_name = "${s.baby_name}"`,
+      targetHint("runner_title", 12),
+      `runner_title = "${s.runner_title}"`,
+      targetHint("roar_text", 12),
+      `roar_text = "${s.roar_text}"`,
+      targetHint("meat_score", 12),
+      `meat_score = ${toNumber(s.meat_score, 100)}`,
+      targetHint("gorilla_score", 12),
+      `gorilla_score = ${toNumber(s.gorilla_score, 200)}`,
+      targetHint("dino_score", 12),
+      `dino_score = ${toNumber(s.dino_score, 500)}`,
+      targetHint("final_attack", 12),
       "final_attack = flame_damage",
+      targetHint("boss_power", 12),
+      `boss_power = ${toNumber(s.boss_power, 24)}`,
+      targetHint("boss_name", 12),
+      `boss_name = "${s.boss_name}"`,
+      targetHint("hp", 12),
+      `hp = ${toNumber(s.hp, 100)}`,
       "",
       "if has_core_bonus and mutation_result == \"공룡\":",
       "    final_attack = flame_damage + 50",
@@ -2104,6 +2198,7 @@ const SEASON_TWO_BOSS_TURN_EFFECT_MS = 1120;
 const SEASON_TWO_TURN_NOTICE_MS = 3000;
 const SEASON_TWO_TURN_AFTER_EFFECT_DELAY_MS = 720;
 const SEASON_TWO_RUNNER_SPEED_MULTIPLIER = 4;
+const SEASON_TWO_ITEM_FALL_SPEED_MULTIPLIER = SEASON_TWO_RUNNER_SPEED_MULTIPLIER * 1.5;
 const SEASON_TWO_TIMER_MS = 110;
 const SEASON_TWO_RUN_DISTANCE_STEP = 0.42;
 const SEASON_TWO_PICKUP_GLOW_MS = 2000;
@@ -2188,7 +2283,12 @@ function seasonTwoAttackEnergyMultiplier(energy, chapter, settings = state.setti
 }
 
 function seasonTwoPlayerAttackDamage(kind, timing, evolution, settings = state.settings.season_02 || {}, game = null) {
-  const baseDamage = Math.max(1, toNumber(settings.flame_damage, 200));
+  const coreBonusReady = toBool(settings.has_core_bonus) || toBool(settings.red_core) || toBool(settings.blue_core);
+  let baseDamage = Math.max(1, toNumber(settings.flame_damage, 200));
+  if (coreBonusReady && evolution.rank >= 3) baseDamage += 50;
+  else if (evolution.rank === 2) baseDamage += 20;
+  const finalAttack = toNumber(settings.final_attack, baseDamage);
+  baseDamage = Math.max(1, baseDamage, finalAttack);
   const timingBonus = Math.max(0.35, timing?.multiplier ?? 1);
   const formBonus = evolution.rank >= 3 ? 1 : evolution.rank === 2 ? 0.9 : 0.75;
   const chapter = game?.chapter ?? seasonTwoChapter();
@@ -2262,8 +2362,12 @@ function seasonTwoExpectedSpawnRows(chapter, settings = state.settings.season_02
 
 function seasonTwoExpectedRowRewardEnergy(chapter, settings = state.settings.season_02 || {}) {
   const meatPoint = Math.max(1, toNumber(settings.meat_score, 100));
+  const foodLabel = String(settings.food_name || settings.favorite_food || "고기").trim() || "고기";
+  const favoriteBonus = String(settings.favorite_food || "고기").trim() === foodLabel
+    ? Math.max(0, toNumber(settings.favorite_bonus, 20))
+    : 0;
   const { doubleMeatChance, bombChance, meatChance } = seasonTwoItemChances(chapter);
-  const singleRewardEnergy = meatChance * meatPoint + doubleMeatChance * meatPoint * 2;
+  const singleRewardEnergy = meatChance * (meatPoint + favoriteBonus) + doubleMeatChance * (meatPoint * 2 + favoriteBonus);
   const rewardChance = meatChance + doubleMeatChance;
   const averageRewardEnergy = rewardChance > 0 ? singleRewardEnergy / rewardChance : meatPoint;
   return singleRewardEnergy + seasonTwoRowPairChance(chapter) * bombChance * averageRewardEnergy;
@@ -2271,19 +2375,23 @@ function seasonTwoExpectedRowRewardEnergy(chapter, settings = state.settings.sea
 
 function seasonTwoExpectedPreviewRewardEnergy(chapter, settings = state.settings.season_02 || {}) {
   const meatPoint = Math.max(1, toNumber(settings.meat_score, 100));
+  const foodLabel = String(settings.food_name || settings.favorite_food || "고기").trim() || "고기";
+  const favoriteBonus = String(settings.favorite_food || "고기").trim() === foodLabel
+    ? Math.max(0, toNumber(settings.favorite_bonus, 20))
+    : 0;
   return seasonTwoPreviewKinds(chapter).reduce((sum, kind) => {
-    if (kind === "double_meat") return sum + meatPoint * 2;
-    if (kind === "meat") return sum + meatPoint;
+    if (kind === "double_meat") return sum + meatPoint * 2 + favoriteBonus;
+    if (kind === "meat") return sum + meatPoint + favoriteBonus;
     return sum;
   }, 0);
 }
 
 function seasonTwoExpectedCollectedEnergy(chapter, settings = state.settings.season_02 || {}, collectRatio = SEASON_TWO_EXPECTED_MEAT_COLLECT_RATIO) {
   const startEnergy = Math.max(1, toNumber(settings.hp, 100));
-  const favoriteBonus = settings.favorite_food === "고기" ? 1.2 : 1;
+  const snackBonus = chapter >= 3 ? Math.max(0, toNumber(settings.snack_score, 10)) : 0;
   const rewardEnergy = seasonTwoExpectedPreviewRewardEnergy(chapter, settings)
     + seasonTwoExpectedSpawnRows(chapter, settings) * seasonTwoExpectedRowRewardEnergy(chapter, settings);
-  return Math.max(1, Math.round(startEnergy + rewardEnergy * Math.max(0, Math.min(1, collectRatio)) * favoriteBonus));
+  return Math.max(1, Math.round(startEnergy + snackBonus + rewardEnergy * Math.max(0, Math.min(1, collectRatio))));
 }
 
 function seasonTwoTargetEnergy(chapter, settings = state.settings.season_02 || {}) {
@@ -2327,7 +2435,7 @@ function seasonTwoReset() {
   const s = state.settings.season_02;
   const chapter = seasonTwoChapter();
   const boss = seasonTwoBossForChapter(chapter, s);
-  const baseEnergy = Math.max(1, toNumber(s.hp, 100));
+  const baseEnergy = Math.max(1, toNumber(s.hp, 100) + (chapter >= 3 ? Math.max(0, toNumber(s.snack_score, 10)) : 0));
   const baseSize = seasonTwoEnergyVisualSize(baseEnergy, s);
   const targetEnergy = seasonTwoTargetEnergy(chapter, s);
   const targetSeconds = seasonTwoRunnerTargetSeconds(chapter);
@@ -2395,10 +2503,12 @@ function seasonTwoItemForChapter(chapter) {
 function seasonTwoItemData(kind, settings) {
   const config = settings || {};
   const meatPoint = Math.max(1, toNumber(config.meat_score, 100));
+  const foodLabel = String(config.food_name || config.favorite_food || "고기").trim() || "고기";
+  const bombDamage = Math.max(1, toNumber(config.bomb_damage, Math.max(30, Math.round(meatPoint * 0.7))));
   const data = {
-    meat: { label: "고기", point: 0, growth: 0, energy: meatPoint },
-    double_meat: { label: "2배고기", point: 0, growth: 0, energy: meatPoint * 2 },
-    bomb: { label: "폭탄", point: 0, growth: 0, energy: -Math.max(30, Math.round(meatPoint * 0.7)) },
+    meat: { label: foodLabel, point: 0, growth: 0, energy: meatPoint },
+    double_meat: { label: `2배${foodLabel}`, point: 0, growth: 0, energy: meatPoint * 2 },
+    bomb: { label: "폭탄", point: 0, growth: 0, energy: -bombDamage },
     nuke: { label: "핵폭탄", point: 0, growth: 0, energy: -9999 },
   };
   return data[kind] || data.meat;
@@ -2467,6 +2577,14 @@ function collectSeasonTwoItem(item, settings, game) {
   };
 
   if (item.kind === "nuke") {
+    const dashShieldReady = toBool(settings.can_dash_shield) || (toBool(settings.shield_ready) && toBool(settings.dash_ready));
+    if (dashShieldReady) {
+      markPickupGlow("good");
+      game.combo = 0;
+      game.message = "방어막과 대시가 모두 준비되어 핵폭탄을 돌파했어!";
+      playPickupSound("bonus");
+      return;
+    }
     markPickupGlow("bad");
     game.hp = 0;
     game.size = seasonTwoEnergyVisualSize(game.hp, settings);
@@ -2479,32 +2597,38 @@ function collectSeasonTwoItem(item, settings, game) {
 
   if (item.kind === "bomb") {
     markPickupGlow("bad");
-    const damage = Math.max(6, Math.round(Math.abs(item.energy) * (1 + difficulty * 0.5)));
+    const shieldReady = toBool(settings.has_shield);
+    const dashShieldReady = toBool(settings.can_dash_shield) || (toBool(settings.shield_ready) && toBool(settings.dash_ready));
+    const rawDamage = Math.max(6, Math.round(Math.abs(item.energy) * (1 + difficulty * 0.5)));
+    const damage = dashShieldReady ? 0 : shieldReady ? Math.max(1, Math.round(rawDamage * 0.45)) : rawDamage;
     game.hp = Math.max(0, game.hp - damage);
     game.size = seasonTwoEnergyVisualSize(game.hp, settings);
     game.combo = 0;
     const evolution = seasonTwoEvolution(game.hp, settings);
-    game.message = `폭탄! 에너지 -${damage} · 현재 ${evolution.name}`;
+    game.message = damage > 0 ? `폭탄! 에너지 -${damage} · 현재 ${evolution.name}` : "방어막과 대시로 폭탄 피해를 막았어!";
     playPickupSound("trap");
     if (game.hp <= 0) finishSeasonTwo("gameOver", "에너지가 0이 되었어. 고기를 더 모아 보자!");
     return;
   }
 
-  const favoriteBonus = settings.favorite_food === "고기" ? 1.2 : 1;
-  const energyGain = Math.max(1, Math.round(item.energy * favoriteBonus));
+  const favoriteFood = String(settings.favorite_food || "고기").trim();
+  const favoriteBonus = item.label === favoriteFood || item.label === `2배${favoriteFood}`
+    ? Math.max(0, toNumber(settings.favorite_bonus, 20))
+    : 0;
+  const energyGain = Math.max(1, Math.round(item.energy + favoriteBonus));
   markPickupGlow("good");
   game.hp += energyGain;
   game.maxHp = Math.max(game.maxHp, game.hp);
   game.score = game.hp;
   game.size = seasonTwoEnergyVisualSize(game.hp, settings);
-  game.growth = Math.max(0, Math.round(game.size));
+  game.growth = Math.max(0, game.growth + Math.max(1, toNumber(settings.growth_per_item, 12)));
   game.combo += 1;
 
   const afterEvolution = seasonTwoEvolution(game.hp, settings);
   if (afterEvolution.rank > beforeEvolution.rank) {
     game.message = `${item.label} 획득! 에너지 ${game.hp}, ${koreanDirection(afterEvolution.name)} 변신했어!`;
   } else {
-    game.message = `${item.label} 획득! 에너지 +${energyGain} · 현재 에너지 ${game.hp}`;
+    game.message = `${item.label} 획득! 에너지 +${energyGain}${favoriteBonus ? " · 좋아하는 먹이 보너스!" : ""} · 현재 에너지 ${game.hp}`;
   }
   playPickupSound(item.kind === "double_meat" ? "bonus" : "treasure");
 }
@@ -2686,7 +2810,7 @@ function updateSeasonTwoRunner() {
   const spawnRate = seasonTwoSpawnRate(speed, progress);
   if (g.tick % spawnRate === 0) spawnSeasonTwoItem(g, s, chapter);
 
-  const itemFallSpeed = seasonTwoItemFallSpeed(s, chapter, progress) * SEASON_TWO_RUNNER_SPEED_MULTIPLIER;
+  const itemFallSpeed = seasonTwoItemFallSpeed(s, chapter, progress) * SEASON_TWO_ITEM_FALL_SPEED_MULTIPLIER;
   for (const item of g.items) {
     item.y += itemFallSpeed;
     if (
@@ -2701,7 +2825,13 @@ function updateSeasonTwoRunner() {
   }
   g.items = g.items.filter((item) => !item.taken && item.y < SEASON_TWO_ITEM_DESPAWN_Y);
 
-  if (g.phase === "runner" && g.distance >= g.goal) enterSeasonTwoBossFight(g, s);
+  if (g.phase === "runner" && g.distance >= g.goal) {
+    if (g.hp >= g.targetEnergy) {
+      enterSeasonTwoBossFight(g, s);
+    } else {
+      finishSeasonTwo("gameOver", `목표 에너지 ${g.targetEnergy}에 부족해. 먹이를 더 모아 보자!`);
+    }
+  }
   renderSeasonTwo();
 }
 
@@ -3627,6 +3757,12 @@ function renderSeasonTwo() {
   const bossCounterEffect = bossTurnEffectActive ? `<div class="boss-counter-effect"><span></span><strong>${g.pendingBossDamage || ""}</strong></div>` : "";
   const hitExplosion = hitExplosionActive ? `<div class="boss-hit-explosion hit-${g.hitExplosionTarget || "boss"}"><span></span><i></i></div>` : "";
   const playerBar = isBossScene ? `<div class="fighter-bar player-hp"><span style="width:${hpPercent}%"></span></div>` : "";
+  const roarBanner = !isBossScene && s.roar_text ? `
+    <div class="runner-roar-banner">
+      <span>${s.baby_name || "괴수"}</span>
+      <strong>${s.roar_text}</strong>
+    </div>
+  ` : "";
   const turnNoticeKind = g.turnNoticeKind || (bossNoticeActive || bossTurnActive ? "boss" : "player");
   const turnPopup = turnNoticeActive ? `
     <div class="season-two-turn-popup ${turnNoticeKind}">
@@ -3652,6 +3788,7 @@ function renderSeasonTwo() {
       <div class="runner-three-layer" aria-label="시즌2 3D 게임 장면">
         <span class="runner-three-badge">WebGL 3D</span>
       </div>
+      ${roarBanner}
       <div class="runner-sky">
         <span class="runner-cloud cloud-a"></span>
         <span class="runner-cloud cloud-b"></span>
