@@ -79,7 +79,7 @@ const seasons = {
       ["hp", "체력", 100],
       ["danger_limit", "위험 체력 기준", 35],
       ["attack_power", "괴수 공격력", 18],
-      ["flame_damage", "불꽃 피해", 200],
+      ["flame_damage", "레이저 피해", 200],
       ["boss_power", "보스 공격력", 24],
       ["boss_name", "최종 보스 이름", "메카 타이탄"],
       ["has_shield", "장애물 방어막", "false"],
@@ -421,9 +421,9 @@ const seasonTwoChapters = {
     syntax: "elif는 여러 조건을 차례로 검사합니다. 고기, 2배고기, 폭탄처럼 아이템이나 공격 종류마다 다른 결과를 만들 때 좋습니다.",
     pages: [
       ["1. 오늘의 장면", "먹은 아이템 종류에 따라 에너지가 올라가거나 내려갑니다."],
-      ["2. 오늘의 코드", "flame_damage가 보스전 불똥 공격 피해를 만듭니다."],
+      ["2. 오늘의 코드", "flame_damage가 보스전 레이저빔 공격 피해를 만듭니다."],
       ["3. 기술 설명", "if, elif, else는 위에서 아래로 하나씩 확인합니다."],
-      ["4. 바꿔보기", "불똥 피해와 보스 공격력을 바꾸고 보스전 결과를 비교합니다."],
+      ["4. 바꿔보기", "레이저 피해와 보스 공격력을 바꾸고 보스전 결과를 비교합니다."],
       ["5. 미션", "첫 보스를 이길 만큼만 강한 괴수를 만듭니다."],
     ],
   },
@@ -2199,22 +2199,25 @@ const SEASON_TWO_TURN_NOTICE_MS = 3000;
 const SEASON_TWO_TURN_AFTER_EFFECT_DELAY_MS = 720;
 const SEASON_TWO_RUNNER_SPEED_MULTIPLIER = 4;
 const SEASON_TWO_ITEM_FALL_SPEED_MULTIPLIER = SEASON_TWO_RUNNER_SPEED_MULTIPLIER * 1.05;
-const SEASON_TWO_ITEM_SPAWN_INTERVAL_MULTIPLIER = 0.67;
+const SEASON_TWO_ITEM_SPAWN_INTERVAL_MULTIPLIER = 0.5;
 const SEASON_TWO_TIMER_MS = 110;
 const SEASON_TWO_RUN_DISTANCE_STEP = 0.42;
 const SEASON_TWO_ROAR_SPEECH_MS = 2200;
 const SEASON_TWO_PICKUP_GLOW_MS = 2000;
-const SEASON_TWO_HIT_EXPLOSION_MS = 760;
 const SEASON_TWO_ITEM_COLLISION_MIN_Y = 88;
 const SEASON_TWO_ITEM_COLLISION_MAX_Y = 101;
 const SEASON_TWO_ITEM_DESPAWN_Y = 124;
 const SEASON_TWO_GORILLA_SCORE = 200;
 const SEASON_TWO_DINO_SCORE = 500;
-const SEASON_TWO_ITEM_VERTICAL_GAP = 18;
+const SEASON_TWO_ITEM_VERTICAL_GAP = 13;
 const SEASON_TWO_ITEM_SPAWN_Y = -4;
 const SEASON_TWO_MIN_TARGET_SECONDS = 30;
 const SEASON_TWO_MAX_TARGET_SECONDS = 90;
 const SEASON_TWO_EXPECTED_MEAT_COLLECT_RATIO = 0.8;
+const SEASON_TWO_BOSS_EXPECTED_MEAT_COLLECT_RATIO = 1;
+const SEASON_TWO_BOSS_MIN_HP_ENERGY_RATIO = 1;
+const SEASON_TWO_BOSS_MAX_HP_ENERGY_RATIO = 1.2;
+const SEASON_TWO_BOSS_PERFECT_SURVIVE_ENERGY_RATIO = 0.92;
 const SEASON_TWO_MIN_BOSS_MAX_HITS = 2;
 const SEASON_TWO_MAX_BOSS_MAX_HITS = 5;
 const SEASON_TWO_PREVIEW_KINDS = ["meat", "double_meat", "meat", "double_meat", "bomb"];
@@ -2230,8 +2233,7 @@ function seasonTwoBossForChapter(chapter = seasonTwoChapter(), settings = state.
   const index = Math.min(3, Math.floor((chapter - 1) / 3));
   const base = seasonTwoBosses[index];
   const tunedPower = toNumber(config.boss_power, 24);
-  const chapterStep = Math.max(0, chapter - 1);
-  const expectedEnergy = seasonTwoExpectedCollectedEnergy(chapter, config, SEASON_TWO_EXPECTED_MEAT_COLLECT_RATIO);
+  const expectedEnergy = seasonTwoBossExpectedEnergy(chapter, config);
   const expectedEvolution = seasonTwoEvolution(expectedEnergy, config);
   const maxGaugeTiming = { label: "완벽 타이밍", multiplier: 2.65, quality: 1 };
   const maxGaugeDamage = seasonTwoPlayerAttackDamage("flame", maxGaugeTiming, expectedEvolution, config, {
@@ -2239,11 +2241,13 @@ function seasonTwoBossForChapter(chapter = seasonTwoChapter(), settings = state.
     hp: expectedEnergy,
   });
   const targetHits = seasonTwoBossMaxGaugeHits(chapter);
+  const energyBasedHp = Math.round(expectedEnergy * seasonTwoBossHpEnergyRatio(chapter));
+  const energyBasedPower = Math.round(expectedEnergy * seasonTwoBossPowerEnergyRatio(chapter));
   return {
     ...base,
     name: chapter >= 12 ? (config.boss_name || base.name) : base.name,
-    maxHp: Math.max(base.hp, Math.round(maxGaugeDamage * targetHits)),
-    power: Math.max(base.power, tunedPower) + chapterStep * 2,
+    maxHp: Math.max(base.hp, energyBasedHp, Math.round(maxGaugeDamage * targetHits)),
+    power: Math.max(base.power, tunedPower, energyBasedPower),
   };
 }
 
@@ -2296,7 +2300,11 @@ function seasonTwoPlayerAttackDamage(kind, timing, evolution, settings = state.s
   const formBonus = evolution.rank >= 3 ? 1 : evolution.rank === 2 ? 0.9 : 0.75;
   const chapter = game?.chapter ?? seasonTwoChapter();
   const energyBonus = seasonTwoAttackEnergyMultiplier(Math.max(0, game?.hp ?? 0), chapter, settings);
-  return Math.max(1, Math.round(baseDamage * timingBonus * formBonus * energyBonus));
+  const tunedDamage = baseDamage * timingBonus * formBonus * energyBonus;
+  const timingQuality = Math.max(0.15, Math.min(1, timing?.quality ?? Math.min(1, timingBonus / 2.65)));
+  const timingDamageScale = timingQuality >= 0.9 ? 1 : Math.max(0.18, (timingQuality ** 2.6) * 0.86);
+  const energyDamage = Math.max(0, game?.hp ?? 0) * seasonTwoMaxGaugeEnergyDamageRatio(chapter) * timingDamageScale * formBonus;
+  return Math.max(1, Math.round(Math.max(tunedDamage, energyDamage)));
 }
 
 function seasonTwoChapterGrowthMultiplier(chapter) {
@@ -2315,18 +2323,39 @@ function seasonTwoBossMaxGaugeHits(chapter) {
   return SEASON_TWO_MIN_BOSS_MAX_HITS + seasonTwoItemDifficulty(chapter) * (SEASON_TWO_MAX_BOSS_MAX_HITS - SEASON_TWO_MIN_BOSS_MAX_HITS);
 }
 
+function seasonTwoBossHpEnergyRatio(chapter) {
+  const difficulty = seasonTwoItemDifficulty(chapter);
+  return SEASON_TWO_BOSS_MIN_HP_ENERGY_RATIO
+    + difficulty * (SEASON_TWO_BOSS_MAX_HP_ENERGY_RATIO - SEASON_TWO_BOSS_MIN_HP_ENERGY_RATIO);
+}
+
+function seasonTwoBossPowerEnergyRatio(chapter) {
+  const targetHits = seasonTwoBossMaxGaugeHits(chapter);
+  const perfectHits = Math.max(1, Math.ceil(targetHits));
+  let counterPressure = 0;
+  for (let attackIndex = 1; attackIndex < perfectHits; attackIndex += 1) {
+    const defeatedRatio = Math.min(1, attackIndex / Math.max(1, targetHits));
+    counterPressure += 1 + defeatedRatio * 0.35;
+  }
+  return counterPressure > 0 ? SEASON_TWO_BOSS_PERFECT_SURVIVE_ENERGY_RATIO / counterPressure : 0;
+}
+
+function seasonTwoMaxGaugeEnergyDamageRatio(chapter) {
+  return seasonTwoBossHpEnergyRatio(chapter) / Math.max(1, seasonTwoBossMaxGaugeHits(chapter));
+}
+
 function seasonTwoItemChances(chapter) {
   const difficulty = seasonTwoItemDifficulty(chapter);
-  const nukeChance = chapter >= 10 ? 0.03 + difficulty * 0.03 : 0;
-  const doubleMeatChance = chapter >= 7 ? 0.14 + difficulty * 0.12 : 0;
-  const bombChance = 0.22 + difficulty * 0.18;
+  const nukeChance = chapter >= 10 ? 0.04 + difficulty * 0.05 : 0;
+  const doubleMeatChance = chapter >= 7 ? 0.1 + difficulty * 0.08 : 0;
+  const bombChance = 0.34 + difficulty * 0.26;
   const meatChance = Math.max(0, 1 - nukeChance - doubleMeatChance - bombChance);
   return { nukeChance, doubleMeatChance, bombChance, meatChance };
 }
 
 function seasonTwoRowPairChance(chapter) {
   const difficulty = seasonTwoItemDifficulty(chapter);
-  return 0.22 + difficulty * 0.26;
+  return 0.36 + difficulty * 0.34;
 }
 
 function seasonTwoIsMeatKind(kind) {
@@ -2396,6 +2425,10 @@ function seasonTwoExpectedCollectedEnergy(chapter, settings = state.settings.sea
   const rewardEnergy = seasonTwoExpectedPreviewRewardEnergy(chapter, settings)
     + seasonTwoExpectedSpawnRows(chapter, settings) * seasonTwoExpectedRowRewardEnergy(chapter, settings);
   return Math.max(1, Math.round(startEnergy + snackBonus + rewardEnergy * Math.max(0, Math.min(1, collectRatio))));
+}
+
+function seasonTwoBossExpectedEnergy(chapter, settings = state.settings.season_02 || {}) {
+  return seasonTwoExpectedCollectedEnergy(chapter, settings, SEASON_TWO_BOSS_EXPECTED_MEAT_COLLECT_RATIO);
 }
 
 function seasonTwoTargetEnergy(chapter, settings = state.settings.season_02 || {}) {
@@ -2473,8 +2506,6 @@ function seasonTwoReset() {
     attackEffectUntil: 0,
     attackEffectQuality: 0,
     bossTurnEffectUntil: 0,
-    hitExplosionTarget: "",
-    hitExplosionUntil: 0,
     pickupGlowKind: "",
     pickupGlowUntil: 0,
     bossCameraReady: false,
@@ -3358,89 +3389,41 @@ function addSeasonTwoLaserSegment3D(THREE, scene, start, end, radius, color, opa
   scene.add(beam);
 }
 
-function addSeasonTwoAttack3D(THREE, scene, kind = "flame", quality = 0.6, progress = 1) {
+function addSeasonTwoLaserBeam3D(THREE, scene, start, target, quality = 0.6, progress = 1) {
   const power = Math.max(0.45, Math.min(1, quality || 0.6));
   const effectProgress = Math.max(0, Math.min(1, progress ?? 1));
   const grow = effectProgress * effectProgress * (3 - 2 * effectProgress);
   const fadeIn = Math.min(1, effectProgress / 0.16);
   const fadeOut = effectProgress > 0.82 ? Math.max(0, (1 - effectProgress) / 0.18) : 1;
   const opacity = fadeIn * fadeOut;
-  const start = new THREE.Vector3(-2.08, 1.42, -0.68);
-  const target = new THREE.Vector3(2.22, 1.5, -0.68);
   const beamEnd = start.clone().lerp(target, Math.min(1, grow * 1.08));
   const pulse = 0.86 + Math.sin(effectProgress * Math.PI * 8) * 0.14;
-  const laserColor = kind === "flame" ? 0x38bdf8 : 0x67e8f9;
 
   addSeasonTwoLaserSegment3D(THREE, scene, start, beamEnd, (0.09 + power * 0.055) * pulse, 0x0ea5e9, opacity * 0.18, 28);
-  addSeasonTwoLaserSegment3D(THREE, scene, start, beamEnd, (0.052 + power * 0.026) * pulse, laserColor, opacity * 0.44, 24);
+  addSeasonTwoLaserSegment3D(THREE, scene, start, beamEnd, (0.052 + power * 0.026) * pulse, 0x38bdf8, opacity * 0.44, 24);
   addSeasonTwoLaserSegment3D(THREE, scene, start, beamEnd, (0.018 + power * 0.012) * pulse, 0xf8fafc, opacity * 0.92, 18);
-
-  addSeasonTwoSphere(THREE, scene, 0.14 + power * 0.05, [start.x, start.y, start.z], 0xe0f2fe, [1.28, 0.8, 0.8], {
-    emissive: 0x38bdf8,
-    emissiveIntensity: 0.68,
-    transparent: true,
-    opacity: opacity * 0.58,
-  });
-
-  for (let index = 0; index < 6; index += 1) {
-    const streamT = (effectProgress * 1.45 + index * 0.18) % 1;
-    if (streamT > grow) continue;
-    const spark = start.clone().lerp(target, streamT);
-    spark.y += Math.sin((streamT + index) * Math.PI * 4) * 0.045;
-    spark.z += Math.cos((streamT + index) * Math.PI * 3) * 0.045;
-    addSeasonTwoSphere(THREE, scene, 0.035 + power * 0.018, [spark.x, spark.y, spark.z], 0xf8fafc, [1.2, 0.8, 1], {
-      emissive: 0x67e8f9,
-      emissiveIntensity: 0.58,
-      transparent: true,
-      opacity: opacity * 0.34,
-    });
-  }
-
-  const impact = Math.max(0, Math.min(1, (grow - 0.82) / 0.18));
-  if (impact > 0) {
-    addSeasonTwoSphere(THREE, scene, 0.18 + power * 0.13 * impact, [target.x, target.y, target.z], 0xf8fafc, [1.32, 0.82, 1], {
-      emissive: 0x22d3ee,
-      emissiveIntensity: 0.78,
-      transparent: true,
-      opacity: opacity * impact * 0.66,
-    });
-    addSeasonTwoSphere(THREE, scene, 0.34 + power * 0.18 * impact, [target.x, target.y, target.z], 0x38bdf8, [1.22, 0.58, 1], {
-      emissive: 0x0ea5e9,
-      emissiveIntensity: 0.42,
-      transparent: true,
-      opacity: opacity * impact * 0.22,
-    });
-  }
 }
 
-function addSeasonTwoHitExplosion3D(THREE, scene, target = "boss") {
-  const centerX = target === "player" ? -1.72 : 1.72;
-  const baseY = target === "player" ? 1.3 : 1.46;
-  for (let index = 0; index < 10; index += 1) {
-    const angle = (Math.PI * 2 * index) / 10;
-    const radius = 0.18 + (index % 4) * 0.08;
-    const color = index % 3 === 0 ? 0xfffbeb : index % 3 === 1 ? 0xfacc15 : 0xef4444;
-    addSeasonTwoSphere(
-      THREE,
-      scene,
-      0.14 + (index % 3) * 0.05,
-      [centerX + Math.cos(angle) * radius, baseY + Math.sin(angle) * radius, -0.64 + Math.sin(angle) * 0.08],
-      color,
-      [1.2, 0.9, 1],
-      {
-        emissive: color,
-        emissiveIntensity: 0.6,
-        transparent: true,
-        opacity: 0.58,
-      },
-    );
-  }
-  addSeasonTwoSphere(THREE, scene, 0.42, [centerX, baseY, -0.64], 0xfff7ed, [1.28, 0.84, 1], {
-    emissive: 0xf97316,
-    emissiveIntensity: 0.7,
-    transparent: true,
-    opacity: 0.38,
-  });
+function addSeasonTwoAttack3D(THREE, scene, kind = "flame", quality = 0.6, progress = 1) {
+  addSeasonTwoLaserBeam3D(
+    THREE,
+    scene,
+    new THREE.Vector3(-2.08, 1.42, -0.68),
+    new THREE.Vector3(2.22, 1.5, -0.68),
+    quality,
+    progress,
+  );
+}
+
+function addSeasonTwoBossCounter3D(THREE, scene, progress = 1) {
+  addSeasonTwoLaserBeam3D(
+    THREE,
+    scene,
+    new THREE.Vector3(2.2, 1.5, -0.68),
+    new THREE.Vector3(-2.08, 1.42, -0.68),
+    0.92,
+    progress,
+  );
 }
 
 function addSeasonTwoPickupGlow3D(THREE, scene, data) {
@@ -3484,28 +3467,6 @@ function addSeasonTwoPickupGlow3D(THREE, scene, data) {
     object.receiveShadow = false;
   });
   scene.add(outline);
-}
-
-function addSeasonTwoBossCounter3D(THREE, scene) {
-  for (let index = 0; index < 6; index += 1) {
-    const t = index / 5;
-    const x = 1.45 - t * 2.9;
-    const y = 1.36 + Math.sin(t * Math.PI) * 0.22;
-    const color = index % 2 ? 0xef4444 : 0xf97316;
-    addSeasonTwoSphere(THREE, scene, 0.22 + t * 0.22, [x, y, -0.66], color, [1.22, 0.8, 0.96], {
-      emissive: color,
-      emissiveIntensity: 0.48,
-      transparent: true,
-      opacity: 0.62,
-    });
-  }
-  addSeasonTwoCone(THREE, scene, 0.46, 1.08, [-1.24, 1.34, -0.66], 0xfacc15, [0, 0, Math.PI / 2], 28, [1, 0.72, 1]);
-  addSeasonTwoSphere(THREE, scene, 0.58, [-1.58, 1.24, -0.64], 0xffffff, [1.18, 0.74, 0.92], {
-    emissive: 0xf97316,
-    emissiveIntensity: 0.34,
-    transparent: true,
-    opacity: 0.44,
-  });
 }
 
 function addSeasonTwoBossDissolve3D(THREE, scene) {
@@ -3624,8 +3585,7 @@ function renderSeasonTwoThreeFrame(THREE, renderer, data, panProgress = 1) {
       data.attackEffectQuality,
       data.attackEffectProgress,
     );
-    if (data.bossTurnEffectActive) addSeasonTwoBossCounter3D(THREE, scene);
-    if (data.hitExplosionActive) addSeasonTwoHitExplosion3D(THREE, scene, data.hitExplosionTarget);
+    if (data.bossTurnEffectActive) addSeasonTwoBossCounter3D(THREE, scene, data.bossTurnEffectProgress);
   } else {
     player.position.set(seasonTwoThreeLaneX(data.lane), 0.14, 5.45);
     poseSeasonTwoKaijuRun(player, data.tick, false, false);
@@ -3716,7 +3676,9 @@ function renderSeasonTwo() {
     ? Math.max(0, Math.min(1, 1 - ((g.attackEffectUntil - now) / SEASON_TWO_ATTACK_EFFECT_MS)))
     : 0;
   const bossTurnEffectActive = isBossScene && (g.bossTurnEffectUntil || 0) > now;
-  const hitExplosionActive = isBossScene && (g.hitExplosionUntil || 0) > now;
+  const bossTurnEffectProgress = bossTurnEffectActive
+    ? Math.max(0, Math.min(1, 1 - ((g.bossTurnEffectUntil - now) / SEASON_TWO_BOSS_TURN_EFFECT_MS)))
+    : 0;
   const pickupGlowActive = (g.pickupGlowUntil || 0) > now;
   const pickupGlowProgress = pickupGlowActive
     ? Math.max(0, Math.min(1, 1 - ((g.pickupGlowUntil - now) / SEASON_TWO_PICKUP_GLOW_MS)))
@@ -3760,7 +3722,6 @@ function renderSeasonTwo() {
     </div>
   ` : "";
   const bossCounterEffect = bossTurnEffectActive ? `<div class="boss-counter-effect"><span></span><strong>${g.pendingBossDamage || ""}</strong></div>` : "";
-  const hitExplosion = hitExplosionActive ? `<div class="boss-hit-explosion hit-${g.hitExplosionTarget || "boss"}"><span></span><i></i></div>` : "";
   const playerBar = "";
   const roarSpeechActive = state.gameStarted && !isBossScene && s.roar_text && (g.roarSpeechUntil || 0) > now;
   const roarSpeech = roarSpeechActive ? `
@@ -3802,7 +3763,7 @@ function renderSeasonTwo() {
     `에너지 ${g.hp}/${g.targetEnergy} · ${evolution.name} · ${phaseLabel}`,
   );
   els.action.textContent = turnDelayActive ? "턴 전환 중" : playerNoticeActive ? "내 차례 준비" : bossNoticeActive ? "보스 차례 준비" : bossTurnActive ? "보스 공격 중" : g.phase === "boss" ? "Space 타이밍 공격" : g.phase === "runner" ? "← → 이동으로 먹기" : "결과 확인";
-  const boardClass = `kaiju-runner-game chapter-${chapter} phase-${g.phase} ${cameraClass} ${turnNoticeActive ? `turn-notice turn-${turnNoticeKind}` : ""} ${attackEffectActive ? `attack-strike attack-${attackKind}` : ""} ${turnDelayActive ? "turn-delay" : ""} ${bossTurnActive ? "boss-turn-active" : ""} ${bossTurnEffectActive ? "boss-counter-strike" : ""} ${hitExplosionActive ? `hit-explosion hit-${g.hitExplosionTarget || "boss"}` : ""} ${pickupGlowActive ? `pickup-glow pickup-${g.pickupGlowKind || "good"}` : ""}`.trim();
+  const boardClass = `kaiju-runner-game chapter-${chapter} phase-${g.phase} ${cameraClass} ${turnNoticeActive ? `turn-notice turn-${turnNoticeKind}` : ""} ${attackEffectActive ? `attack-strike attack-${attackKind}` : ""} ${turnDelayActive ? "turn-delay" : ""} ${bossTurnActive ? "boss-turn-active" : ""} ${bossTurnEffectActive ? "boss-counter-strike" : ""} ${pickupGlowActive ? `pickup-glow pickup-${g.pickupGlowKind || "good"}` : ""}`.trim();
 
   els.gameMount.innerHTML = `
     <div class="${boardClass}">
@@ -3833,7 +3794,6 @@ function renderSeasonTwo() {
       </div>
       ${bossAttackEffect}
       ${bossCounterEffect}
-      ${hitExplosion}
       ${turnPopup}
       ${resultPopup}
       ${timingPanel}
@@ -3862,9 +3822,8 @@ function renderSeasonTwo() {
     attackEffectQuality: attackQuality,
     attackKind,
     bossTurnEffectActive,
+    bossTurnEffectProgress,
     bossTurnActive,
-    hitExplosionActive,
-    hitExplosionTarget: g.hitExplosionTarget || "boss",
     pickupGlowActive,
     pickupGlowAlpha,
     pickupGlowKind: g.pickupGlowKind || "good",
@@ -3903,8 +3862,6 @@ function resolveSeasonTwoBossTurn(expectedDamage) {
   const damage = Math.max(1, Math.round(expectedDamage || g.pendingBossDamage || 1));
   g.hp = Math.max(0, g.hp - damage);
   g.size = seasonTwoEnergyVisualSize(g.hp, state.settings.season_02);
-  g.hitExplosionTarget = "player";
-  g.hitExplosionUntil = performance.now() + SEASON_TWO_HIT_EXPLOSION_MS;
   g.pendingBossDamage = 0;
   if (g.hp <= 0) {
     finishSeasonTwo("gameOver", `${g.boss.name}에게 졌어. 러너 구간에서 고기를 더 모아 에너지를 키워 보자!`);
@@ -3937,10 +3894,8 @@ function seasonTwoAction() {
   const now = performance.now();
   g.attackEffectUntil = now + SEASON_TWO_ATTACK_EFFECT_MS;
   g.attackEffectQuality = timing.quality;
-  g.hitExplosionTarget = "boss";
-  g.hitExplosionUntil = now + SEASON_TWO_HIT_EXPLOSION_MS;
   g.bossMeterStartedAt = performance.now();
-  const attackLabel = "불똥";
+  const attackLabel = "레이저빔";
   g.message = `${timing.label}! ${koreanSubject(evolution.name)} ${attackLabel}로 ${g.boss.name}에게 ${damage} 피해`;
   playTone({ frequency: 240, duration: 0.12, type: "square", volume: 0.05, slide: 320 });
   if (g.bossHp <= 0) {

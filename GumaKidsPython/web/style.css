@@ -2787,14 +2787,15 @@ body.file-tree-collapsed .file-tree {
 
 .boss-counter-effect {
   position: absolute;
-  left: 20%;
-  top: 39%;
+  left: 23%;
+  top: 41%;
   z-index: 12;
-  width: 58%;
-  height: 24%;
+  width: 50%;
+  height: 92px;
   pointer-events: none;
-  animation: boss-counter-shot 1.12s ease-out both;
-  filter: saturate(1.28) drop-shadow(0 0 20px rgba(248, 113, 113, 0.7));
+  transform-origin: right center;
+  animation: boss-counter-shot 1.12s cubic-bezier(0.12, 0.82, 0.22, 1) both;
+  filter: saturate(1.35) drop-shadow(0 0 20px rgba(14, 165, 233, 0.56));
 }
 
 .boss-counter-effect::before,
@@ -2806,111 +2807,53 @@ body.file-tree-collapsed .file-tree {
 }
 
 .boss-counter-effect::before {
-  inset: 42% 0 auto 0;
-  height: 44px;
-  border-radius: 80% 999px 999px 80%;
-  background:
-    radial-gradient(circle at 18% 50%, #ffffff 0 7%, #fef08a 8% 20%, #f97316 21% 42%, rgba(220, 38, 38, 0.88) 43% 58%, transparent 59%),
-    linear-gradient(270deg, rgba(255, 255, 255, 0), rgba(220, 38, 38, 0.9), rgba(249, 115, 22, 0.92), rgba(250, 204, 21, 0.72));
-  box-shadow: 0 0 34px rgba(249, 115, 22, 0.72), 0 0 54px rgba(220, 38, 38, 0.48);
+  right: 0;
+  top: 46%;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(270deg, rgba(224, 242, 254, 0.16), #f8fafc 12%, #67e8f9 42%, #0ea5e9 74%, #f8fafc);
+  box-shadow: 0 0 12px rgba(103, 232, 249, 0.74), 0 0 28px rgba(14, 165, 233, 0.48);
+  transform-origin: right center;
+  animation: boss-laser-core-grow 1.12s cubic-bezier(0.12, 0.82, 0.22, 1) both;
 }
 
 .boss-counter-effect::after {
-  left: -18px;
-  top: 16%;
-  width: 92px;
-  height: 92px;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle, #ffffff 0 9%, #fef08a 10% 26%, #fb923c 27% 50%, rgba(185, 28, 28, 0.86) 51% 66%, transparent 67%),
-    conic-gradient(from 25deg, transparent 0 9%, rgba(254, 240, 138, 0.95) 9% 18%, transparent 18% 30%, rgba(239, 68, 68, 0.9) 30% 44%, transparent 44%);
+  right: 0;
+  top: calc(46% - 12px);
+  width: 100%;
+  height: 31px;
+  border-radius: 999px;
+  background: linear-gradient(270deg, transparent, rgba(125, 211, 252, 0.2) 16%, rgba(56, 189, 248, 0.34) 70%, rgba(248, 250, 252, 0.64));
+  filter: blur(5px);
+  transform-origin: right center;
+  animation: boss-laser-core-grow 1.12s cubic-bezier(0.12, 0.82, 0.22, 1) both;
 }
 
 .boss-counter-effect span {
-  right: -4px;
-  top: 22%;
-  width: 78px;
-  height: 78px;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle, rgba(15, 23, 42, 0.3) 0 12%, rgba(127, 29, 29, 0.78) 13% 34%, transparent 35%),
-    radial-gradient(circle, rgba(255, 255, 255, 0.8) 0 8%, rgba(250, 204, 21, 0.62) 9% 24%, transparent 25%);
+  right: 0;
+  top: calc(46% + 2px);
+  width: 30%;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(270deg, transparent, #ffffff, transparent);
+  box-shadow: 0 0 14px rgba(240, 249, 255, 0.9);
+  animation: boss-laser-scan-reverse 0.56s linear 0.1s 2 both;
 }
 
 .boss-counter-effect strong {
   position: absolute;
-  left: -8px;
-  top: -12px;
+  left: -10px;
+  top: 0;
   min-width: 42px;
   padding: 5px 8px;
   border-radius: 999px;
-  background: #fff7ed;
-  color: #9a3412;
+  background: #ecfeff;
+  color: #075985;
   font-size: 17px;
   font-weight: 1000;
   text-align: center;
-  box-shadow: 0 0 28px rgba(251, 146, 60, 0.72);
-}
-
-.boss-hit-explosion {
-  position: absolute;
-  top: 38%;
-  z-index: 14;
-  width: 92px;
-  height: 92px;
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-  animation: boss-hit-explosion-pop 0.76s ease-out both;
-}
-
-.boss-hit-explosion.hit-boss {
-  left: 73%;
-}
-
-.boss-hit-explosion.hit-player {
-  left: 28%;
-}
-
-.boss-hit-explosion::before,
-.boss-hit-explosion::after,
-.boss-hit-explosion span,
-.boss-hit-explosion i {
-  position: absolute;
-  content: "";
-  display: block;
-  border-radius: 50%;
-}
-
-.boss-hit-explosion::before {
-  inset: 6px;
-  background:
-    radial-gradient(circle, #ffffff 0 10%, #fef08a 11% 25%, #fb923c 26% 48%, rgba(220, 38, 38, 0.9) 49% 66%, transparent 67%);
-  box-shadow: 0 0 34px rgba(249, 115, 22, 0.88), 0 0 62px rgba(239, 68, 68, 0.52);
-}
-
-.boss-hit-explosion::after {
-  inset: -8px;
-  border: 7px solid rgba(254, 240, 138, 0.72);
-  border-left-color: transparent;
-  border-bottom-color: rgba(239, 68, 68, 0.56);
-}
-
-.boss-hit-explosion span {
-  left: 48%;
-  top: 48%;
-  width: 120px;
-  height: 18px;
-  background: linear-gradient(90deg, transparent, rgba(254, 240, 138, 0.9), transparent);
-  transform: translate(-50%, -50%) rotate(24deg);
-}
-
-.boss-hit-explosion i {
-  left: 48%;
-  top: 48%;
-  width: 112px;
-  height: 16px;
-  background: linear-gradient(90deg, transparent, rgba(251, 146, 60, 0.86), transparent);
-  transform: translate(-50%, -50%) rotate(-42deg);
+  box-shadow: 0 0 24px rgba(14, 165, 233, 0.56);
 }
 
 @keyframes runner-fighter-lunge {
@@ -2939,18 +2882,17 @@ body.file-tree-collapsed .file-tree {
   100% { opacity: 0; transform: translateX(238%); }
 }
 
-@keyframes boss-counter-shot {
-  0% { opacity: 0; transform: scaleX(0.18) translateX(54px) rotate(4deg); }
-  24% { opacity: 1; transform: scaleX(0.86) translateX(18px) rotate(2deg); }
-  70% { opacity: 1; transform: scaleX(1.06) translateX(-8px) rotate(-3deg); }
-  100% { opacity: 0; transform: scaleX(1.12) translateX(-32px) rotate(-5deg); }
+@keyframes boss-laser-scan-reverse {
+  0% { opacity: 0; transform: translateX(8%); }
+  18% { opacity: 0.95; transform: translateX(-10%); }
+  100% { opacity: 0; transform: translateX(-238%); }
 }
 
-@keyframes boss-hit-explosion-pop {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.24) rotate(-18deg); }
-  18% { opacity: 1; transform: translate(-50%, -50%) scale(1.1) rotate(8deg); }
-  52% { opacity: 0.95; transform: translate(-50%, -50%) scale(0.92) rotate(-4deg); }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.46) rotate(18deg); }
+@keyframes boss-counter-shot {
+  0% { opacity: 0; transform: translateX(6px) translateY(8px) rotate(3deg); }
+  16% { opacity: 1; transform: translateX(0) translateY(0) rotate(3deg); }
+  82% { opacity: 1; transform: translateX(0) translateY(0) rotate(3deg); }
+  100% { opacity: 0; transform: translateX(-7px) translateY(-3px) rotate(3deg); }
 }
 
 .boss-timing-panel strong,
