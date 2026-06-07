@@ -130,7 +130,7 @@ const seasonOneEditPlans = {
   7: { lines: 5, keys: ["score", "hp", "speed", "wind_multiplier", "coin_point"], labels: ["score", "hp", "speed", "wind_multiplier", "coin_point"] },
   8: { lines: 6, keys: ["hero_name", "hero_message", "start_score", "score", "speed", "mission_text"], labels: ["hero_name", "hero_message", "start_score", "score", "speed", "mission_text"] },
   9: { lines: 7, keys: ["hero_name", "hero_message", "start_score", "score", "hp", "speed", "status_text"], labels: ["hero_name", "hero_message", "start_score", "score", "hp", "speed", "status_text"] },
-  10: { lines: 8, keys: ["hero_name", "start_score", "score", "hp", "treasure_point", "coin_point", "gem_point", "chest_point"], labels: ["hero_name", "start_score", "score", "hp", "treasure_point", "coin_point", "gem_point", "chest_point"] },
+  10: { lines: 8, keys: ["hero_name", "score", "treasure_1", "treasure_2", "treasure_3", "trap_1", "current_score", "hp"], labels: ["hero_name", "score", "treasure_1", "treasure_2", "treasure_3", "trap_1", "current_score", "hp"] },
   11: { lines: 9, keys: ["hero_name", "score", "hp", "treasure_point", "gem_point", "chest_point", "trap_label", "trap_damage", "trap_speed"], labels: ["hero_name", "score", "hp", "treasure_point", "gem_point", "chest_point", "trap_label", "trap_damage", "trap_speed"] },
   12: { lines: 10, keys: ["hero_name", "score", "hp", "speed", "wind_multiplier", "trap_speed", "treasure_point", "gem_point", "trap_damage", "bonus_multiplier"], labels: ["hero_name", "score", "hp", "speed", "wind_multiplier", "trap_speed", "treasure_point", "gem_point", "trap_damage", "bonus_multiplier"] },
 };
@@ -145,7 +145,7 @@ const seasonOneUnlocks = {
   7: "바람신발을 먹으면 이동 속도가 계속 빨라집니다.",
   8: "이름과 문장이 합쳐진 미션 메시지가 게임판에 붙습니다.",
   9: "이름과 점수가 들어간 모험 리포트가 붙습니다.",
-  10: "큰 보물 상자와 연속 수집 콤보가 생깁니다.",
+  10: "보물 점수는 더하고 함정 점수는 빼는 계산 미션이 생깁니다.",
   11: "랜덤으로 움직이는 함정과 체력 피해가 들어와 긴장감이 생깁니다.",
   12: "보너스 별, 마법 포털, 승리 연출로 완성됩니다.",
 };
@@ -260,15 +260,15 @@ const seasonOneChapters = {
     ],
   },
   10: {
-    title: "더하기 마법",
-    focus: "treasure_point",
-    syntax: "+ 는 숫자를 더하는 연산자입니다. treasure_point, coin_point, gem_point, chest_point가 각각의 아이템 보상으로 현재 점수에 더해집니다.",
+    title: "더하기 빼기 마법",
+    focus: "current_score",
+    syntax: "+ 는 숫자를 더하고 - 는 숫자를 뺍니다. current_score는 보물 점수들을 더하고 함정 점수를 뺀 최종 점수입니다. 아직 함수 def는 쓰지 않고 한 줄 계산식으로 연습합니다.",
     pages: [
-      ["1. 오늘의 장면", "보물을 주우면 점수가 올라갑니다."],
-      ["2. 오늘의 코드", "current_score + treasure_point가 새 점수를 만듭니다."],
-      ["3. 기술 설명", "+ 는 숫자에서는 덧셈 연산자입니다. int + int 결과도 int입니다."],
-      ["4. 바꿔보기", "treasure_point, gem_point, chest_point를 바꿔 아이템별 점수 증가량을 비교합니다."],
-      ["5. 미션", "작은 보상과 큰 보상이 확실히 구분되도록 점수를 정합니다."],
+      ["1. 오늘의 장면", "보물은 점수를 올리고 함정은 점수를 깎습니다."],
+      ["2. 오늘의 코드", "current_score = treasure_1 + treasure_2 + treasure_3 - trap_1 처럼 한 줄로 계산합니다."],
+      ["3. 기술 설명", "+ 는 더하기, - 는 빼기입니다. 계산 결과를 current_score에 저장하면 게임 점수로 보여 줍니다."],
+      ["4. 바꿔보기", "보물 숫자와 함정 숫자를 바꿔 최종 점수가 어떻게 달라지는지 비교합니다."],
+      ["5. 미션", "보물은 기분 좋게 오르고 함정은 아프게 줄어드는 점수 규칙을 만듭니다."],
     ],
   },
   11: {
@@ -277,9 +277,9 @@ const seasonOneChapters = {
     syntax: "random은 매번 다른 값을 뽑는 함수입니다. 함정은 random으로 x축, y축 움직임을 골라 돌아다니고, trap_speed가 클수록 한 번에 더 멀리 움직입니다. 함정에 닿으면 폭파 이펙트가 나오고 게임이 끝납니다.",
     pages: [
       ["1. 오늘의 장면", "함정 하나가 랜덤하게 움직이고, 닿으면 폭발하며 게임이 종료됩니다."],
-      ["2. 오늘의 코드", "trap_speed는 함정 속도, trap_damage는 폭발 피해량입니다."],
+      ["2. 오늘의 코드", "trap_x_step = random.choice([-1, 0, 1]) * trap_speed 처럼 함정 이동값을 뽑습니다."],
       ["3. 기술 설명", "파이썬에서는 import random 뒤에 random.choice([-1, 0, 1])처럼 쓰면 여러 값 중 하나를 뽑을 수 있습니다."],
-      ["4. 바꿔보기", "trap_speed를 1, 3, 6으로 바꾸고 함정 움직임을 비교합니다."],
+      ["4. 바꿔보기", "trap_speed와 trap_damage를 바꾸고 함정 움직임과 체력 감소를 비교합니다."],
       ["5. 미션", "피할 수는 있지만 긴장되는 함정 속도와 폭발 피해량을 정합니다."],
     ],
   },
@@ -868,30 +868,25 @@ function readOnlyFileContent(fileName) {
   if (fileName === "game_rules.py") {
     return [
       "# game_rules.py",
-      "# 읽기 전용: 업그레이드 값이 게임 규칙으로 바뀌는 곳입니다.",
+      "# 읽기 전용: 업그레이드 값이 쉬운 계산식으로 바뀌는 곳입니다.",
       "import random",
       "",
-      "def move_speed(base_speed, has_wind_shoes):",
-      "    if has_wind_shoes:",
-      "        return base_speed * wind_multiplier",
-      "    return base_speed",
+      "base_speed = speed",
+      "wind_speed = speed * wind_multiplier",
       "",
-      "def treasure_score(current_score):",
-      "    return current_score + treasure_point",
+      "treasure_1 = treasure_point",
+      "treasure_2 = gem_point",
+      "treasure_3 = chest_point",
+      "trap_1 = trap_damage",
+      "current_score = treasure_1 + treasure_2 + treasure_3 - trap_1",
       "",
-      "def coin_score(current_score):",
-      "    return current_score + coin_point",
+      "potion_hp = hp + potion_heal",
       "",
-      "def potion_hp(current_hp):",
-      "    return current_hp + potion_heal",
+      "trap_x_step = random.choice([-1, 0, 1]) * trap_speed",
+      "trap_y_step = random.choice([-1, 0, 1]) * trap_speed",
+      "hp_after_trap = hp - trap_damage",
       "",
-      "def random_trap_step():",
-      "    x_step = random.choice([-1, 0, 1]) * trap_speed",
-      "    y_step = random.choice([-1, 0, 1]) * trap_speed",
-      "    return x_step, y_step",
-      "",
-      "def trap_hp(current_hp):",
-      "    return current_hp - trap_damage",
+      "bonus_score = current_score * bonus_multiplier",
     ].join("\n");
   }
   if (fileName === "save_data.py") {
@@ -1142,35 +1137,36 @@ function generateCode(seasonKey) {
       `portal_hint = "${s.portal_hint || "보물을 모아 포털을 열자"}"`,
       "",
       "# =========================",
-      "# [챕터 10] 더하기 마법",
+      "# [챕터 10] 더하기 빼기 마법",
       today(10),
       "# =========================",
-      targetHint("gem_point"),
       `gem_point = ${toNumber(s.gem_point, 20)}`,
-      targetHint("chest_point"),
       `chest_point = ${toNumber(s.chest_point, 30)}`,
+      `trap_damage = ${toNumber(s.trap_damage, 20)}`,
       "",
-      "def upgrade_score_when_get_treasure(current_score):",
-      "    new_score = current_score + treasure_point",
-      "    return new_score",
+      "# 보물은 더하고, 함정은 뺍니다.",
+      targetHint("treasure_1"),
+      `treasure_1 = ${toNumber(s.treasure_1, toNumber(s.treasure_point, 10))}`,
+      targetHint("treasure_2"),
+      `treasure_2 = ${toNumber(s.treasure_2, toNumber(s.gem_point, 20))}`,
+      targetHint("treasure_3"),
+      `treasure_3 = ${toNumber(s.treasure_3, toNumber(s.chest_point, 30))}`,
+      targetHint("trap_1"),
+      `trap_1 = ${toNumber(s.trap_1, toNumber(s.trap_damage, 20))}`,
+      targetHint("current_score"),
+      "current_score = treasure_1 + treasure_2 + treasure_3 - trap_1",
+      "score = current_score",
       "",
       "# =========================",
-      "# [챕터 11] 빼기 마법",
+      "# [챕터 11] 랜덤 함정",
       today(11),
       "# =========================",
-      targetHint("trap_damage"),
-      `trap_damage = ${toNumber(s.trap_damage, 20)}`,
       targetHint("trap_speed"),
       `trap_speed = ${toNumber(s.trap_speed, 2)}`,
       "",
-      "def random_trap_step():",
-      "    x_step = random.choice([-1, 0, 1]) * trap_speed",
-      "    y_step = random.choice([-1, 0, 1]) * trap_speed",
-      "    return x_step, y_step",
-      "",
-      "def upgrade_hp_when_hit_trap(current_hp):",
-      "    new_hp = current_hp - trap_damage",
-      "    return new_hp",
+      "trap_x_step = random.choice([-1, 0, 1]) * trap_speed",
+      "trap_y_step = random.choice([-1, 0, 1]) * trap_speed",
+      "hp_after_trap = hp - trap_damage",
       "",
       "# =========================",
       "# [챕터 12] 보너스 점수",
@@ -1179,9 +1175,7 @@ function generateCode(seasonKey) {
       targetHint("bonus_multiplier"),
       `bonus_multiplier = ${toNumber(s.bonus_multiplier, 2)}`,
       "",
-      "def upgrade_score_when_get_bonus(current_score):",
-      "    new_score = current_score * bonus_multiplier",
-      "    return new_score",
+      "bonus_score = current_score * bonus_multiplier",
     ].filter((line) => line !== null).join("\n");
   }
   if (seasonKey === "season_02") {
@@ -1471,7 +1465,52 @@ function parseCode(seasonKey, source) {
     const match = source.match(new RegExp(`^\\s*${name}\\s*=\\s*(-?\\d+(?:\\.\\d+)?)`, "m"));
     return match ? Number(match[1]) : base[name];
   };
+  const numberAssignments = () => {
+    const assignments = new Map();
+    for (const match of source.matchAll(/^\s*([A-Za-z_]\w*)\s*=\s*(-?\d+(?:\.\d+)?)\s*(?:#.*)?$/gm)) {
+      assignments.set(match[1], Number(match[2]));
+    }
+    return assignments;
+  };
+  const evaluateNumberExpression = (name, extra = {}) => {
+    const match = source.match(new RegExp(`^\\s*${name}\\s*=\\s*(.+)$`, "m"));
+    if (!match) return null;
+    const expression = match[1].split("#")[0].trim();
+    if (!expression) return null;
+    const variables = {
+      ...base,
+      ...Object.fromEntries(numberAssignments().entries()),
+      ...extra,
+    };
+    const tokens = expression.match(/[+-]|-?\d+(?:\.\d+)?|[A-Za-z_]\w*/g);
+    if (!tokens || !tokens.length) return null;
+    let sign = 1;
+    let total = 0;
+    let waitingForValue = true;
+    for (const token of tokens) {
+      if (token === "+") {
+        if (waitingForValue) return null;
+        sign = 1;
+        waitingForValue = true;
+        continue;
+      }
+      if (token === "-") {
+        if (waitingForValue) return null;
+        sign = -1;
+        waitingForValue = true;
+        continue;
+      }
+      const value = /^-?\d/.test(token) ? Number(token) : variables[token];
+      if (typeof value !== "number" || Number.isNaN(value)) return null;
+      total += sign * value;
+      sign = 1;
+      waitingForValue = false;
+    }
+    return waitingForValue ? null : total;
+  };
   const seasonOneScoreValue = (startScore) => {
+    const currentScore = evaluateNumberExpression("current_score", { start_score: startScore });
+    if (currentScore !== null) return currentScore;
     const numberMatch = source.match(/^\s*score\s*=\s*(-?\d+(?:\.\d+)?)/m);
     if (numberMatch) return Number(numberMatch[1]);
     const startScoreMatch = source.match(/^\s*score\s*=\s*start_score\s*$/m);
@@ -1568,6 +1607,10 @@ function parseCode(seasonKey, source) {
       coin_point: numberValue("coin_point"),
       gem_point: numberValue("gem_point"),
       chest_point: numberValue("chest_point"),
+      treasure_1: numberValue("treasure_1"),
+      treasure_2: numberValue("treasure_2"),
+      treasure_3: numberValue("treasure_3"),
+      trap_1: numberValue("trap_1"),
       trap_damage: numberValue("trap_damage"),
       trap_speed: numberValue("trap_speed"),
       bonus_multiplier: numberValue("bonus_multiplier"),

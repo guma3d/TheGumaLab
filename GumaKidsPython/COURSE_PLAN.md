@@ -63,8 +63,8 @@ Python에는 C/C++이나 Unreal의 `struct`와 완전히 같은 문법은 없지
 | 7 | 속도 만들기 | 속도와 바람신발 배율, 동전 보상까지 포함해 난이도 조절 | 바람신발과 영구 속도 배율 | 변수 값 변경 | 5 | `score`, `hp`, `speed`, `wind_multiplier`, `coin_point` | 기본 속도와 바람신발 배율 비교 | 값이 바뀌면 결과도 바뀜 |
 | 8 | 미션 만들기 | 이름과 미션 메시지 문장 합치기 | 게임판 미션 메시지 | 문자열 연결 `+` | 6 | `hero_name`, `hero_message`, `start_score`, `score`, `speed`, `mission_text` | 내 이름이 들어간 미션 메시지 만들기 | `+`가 글자에서 하는 일 |
 | 9 | 모험 리포트 | 문장 안에 여러 값 넣기 | 게임 안 리포트 배지 | f-string | 7 | `hero_name`, `hero_message`, `start_score`, `score`, `hp`, `speed`, `status_text` | 게임 리포트 문장 만들기 | `{}` 안에 넣는 값 |
-| 10 | 더하기 마법 | 아이템별 점수 규칙 조절 | 큰 보물과 콤보 | 덧셈 `+` | 8 | `hero_name`, `start_score`, `score`, `hp`, `treasure_point`, `coin_point`, `gem_point`, `chest_point` | 루비와 상자가 더 큰 점수를 주게 만들기 | 계산 후 점수 예측 |
-| 11 | 랜덤 함정 | 함정 데미지와 함정 속도 조절 | 랜덤 이동 함정과 폭파 종료 | 뺄셈 `-`, `random.choice()` | 9 | `hero_name`, `score`, `hp`, `treasure_point`, `gem_point`, `chest_point`, `trap_label`, `trap_damage`, `trap_speed` | 피할 수 있는 함정 속도와 폭발 데미지 정하기 | 랜덤 방향과 게임 종료 |
+| 10 | 더하기 빼기 마법 | 보물은 더하고 함정은 빼는 점수식 만들기 | 큰 보물, 함정 감점, 콤보 | 덧셈 `+`, 뺄셈 `-` | 8 | `hero_name`, `score`, `treasure_1`, `treasure_2`, `treasure_3`, `trap_1`, `current_score`, `hp` | 보물과 함정을 섞어 최종 점수 계산하기 | 계산 후 점수 예측 |
+| 11 | 랜덤 함정 | 함정 데미지와 랜덤 이동값 조절 | 랜덤 이동 함정과 폭파 종료 | 뺄셈 `-`, `random.choice()` | 9 | `hero_name`, `score`, `hp`, `treasure_point`, `gem_point`, `chest_point`, `trap_label`, `trap_damage`, `trap_speed` | 피할 수 있는 함정 속도와 폭발 데미지 정하기 | 랜덤 방향과 게임 종료 |
 | 12 | 보너스 점수 | 시즌 1 전체 규칙 종합 업그레이드 | 보너스별, 포털, 승리 연출 | 곱셈 `*` | 10 | `hero_name`, `score`, `hp`, `speed`, `wind_multiplier`, `trap_speed`, `treasure_point`, `gem_point`, `trap_damage`, `bonus_multiplier` | 보너스 점수 2배, 3배 만들기 | 곱하기 결과 |
 
 ## 시즌 2: 괴수 러너 성장 게임
