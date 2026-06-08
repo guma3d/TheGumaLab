@@ -2254,7 +2254,7 @@ const SEASON_TWO_MAX_MEAT_COUNT = 60;
 const SEASON_TWO_MIN_BOMB_COUNT = 24;
 const SEASON_TWO_MAX_BOMB_COUNT = 54;
 const SEASON_TWO_EXPECTED_MEAT_COLLECT_RATIO = 0.8;
-const SEASON_TWO_BOSS_EXPECTED_MEAT_COLLECT_RATIO = 1;
+const SEASON_TWO_BOSS_EXPECTED_MEAT_COLLECT_RATIO = 0.8;
 const SEASON_TWO_MIN_BOSS_MAX_HITS = 3;
 const SEASON_TWO_MAX_BOSS_MAX_HITS = 5;
 
@@ -2395,11 +2395,12 @@ function seasonTwoPlayerAttackDamage(kind, timing, evolution, settings = state.s
   const timingBonus = Math.max(0.35, timing?.multiplier ?? 1);
   const formBonus = 1;
   const chapter = game?.chapter ?? seasonTwoChapter();
-  const energyBonus = seasonTwoAttackEnergyMultiplier(Math.max(0, game?.hp ?? 0), chapter, settings);
+  const attackEnergy = Math.max(0, game?.bossEntryHp ?? game?.hp ?? 0);
+  const energyBonus = seasonTwoAttackEnergyMultiplier(attackEnergy, chapter, settings);
   const tunedDamage = baseDamage * timingBonus * formBonus * energyBonus;
   const timingQuality = Math.max(0.15, Math.min(1, timing?.quality ?? Math.min(1, timingBonus / 2.65)));
   const timingDamageScale = timingQuality >= 0.9 ? 1 : Math.max(0.18, (timingQuality ** 2.6) * 0.86);
-  const energyDamage = Math.max(0, game?.hp ?? 0) * seasonTwoMaxGaugeEnergyDamageRatio(chapter) * timingDamageScale * formBonus;
+  const energyDamage = attackEnergy * seasonTwoMaxGaugeEnergyDamageRatio(chapter) * timingDamageScale * formBonus;
   return Math.max(1, Math.round(Math.max(tunedDamage, energyDamage)));
 }
 
@@ -2550,6 +2551,10 @@ function seasonTwoReset() {
     turnNoticeUntil: 0,
     pendingTurnAt: 0,
     pendingBossDamage: 0,
+    pendingBossAttackId: 0,
+    activeBossAttackId: 0,
+    resolvedBossAttackId: 0,
+    bossEntryHp: 0,
     lastTiming: null,
     attackKind: "flame",
     nextAttackKind: "flame",
@@ -2757,7 +2762,7 @@ function scheduleSeasonTwoPlayerTurnAfterDelay(game, message, delay = SEASON_TWO
   }, delay);
 }
 
-function startSeasonTwoBossAttack(expectedDamage, noticeUntil) {
+function startSeasonTwoBossAttack(expectedDamage, noticeUntil, attackId) {
   const g = state.game.season_02;
   if (
     state.activeSeason !== "season_02"
@@ -2765,22 +2770,27 @@ function startSeasonTwoBossAttack(expectedDamage, noticeUntil) {
     || g.phase !== "boss"
     || g.bossTurn !== "bossNotice"
     || g.turnNoticeUntil !== noticeUntil
+    || g.pendingBossAttackId !== attackId
   ) return;
   g.bossTurn = "boss";
   g.turnNoticeUntil = 0;
   g.turnNoticeKind = "boss";
+  g.activeBossAttackId = attackId;
   g.bossTurnEffectUntil = performance.now() + SEASON_TWO_BOSS_TURN_EFFECT_MS;
   g.message = `${g.boss.name} 공격!`;
   renderSeasonTwo();
   window.setTimeout(() => {
-    resolveSeasonTwoBossTurn(expectedDamage);
+    resolveSeasonTwoBossTurn(expectedDamage, attackId);
   }, Math.max(240, SEASON_TWO_BOSS_TURN_EFFECT_MS - 120));
 }
 
 function scheduleSeasonTwoBossTurn(game, bossDamage) {
   const delay = SEASON_TWO_ATTACK_EFFECT_MS + SEASON_TWO_TURN_AFTER_EFFECT_DELAY_MS;
+  const attackId = (game.pendingBossAttackId || 0) + 1;
   game.bossTurn = "turnDelay";
   game.pendingBossDamage = bossDamage;
+  game.pendingBossAttackId = attackId;
+  game.activeBossAttackId = 0;
   game.pendingTurnAt = performance.now() + delay;
   game.bossTurnEffectUntil = 0;
   game.turnNoticeKind = "";
@@ -2801,7 +2811,7 @@ function scheduleSeasonTwoBossTurn(game, bossDamage) {
     const noticeUntil = setSeasonTwoTurnNotice(latest, "boss");
     renderSeasonTwo();
     window.setTimeout(() => {
-      startSeasonTwoBossAttack(bossDamage, noticeUntil);
+      startSeasonTwoBossAttack(bossDamage, noticeUntil, attackId);
     }, SEASON_TWO_TURN_NOTICE_MS);
   }, delay);
 }
@@ -2814,6 +2824,10 @@ function enterSeasonTwoBossFight(game, settings) {
   game.bossMeterStartedAt = performance.now();
   game.bossTurn = "playerNotice";
   game.pendingBossDamage = 0;
+  game.pendingBossAttackId = 0;
+  game.activeBossAttackId = 0;
+  game.resolvedBossAttackId = 0;
+  game.bossEntryHp = Math.max(1, game.hp);
   game.lastTiming = null;
   game.attackKind = "flame";
   game.nextAttackKind = "flame";
@@ -2833,6 +2847,7 @@ function finishSeasonTwo(result, message) {
   g.message = message;
   g.bossTurn = "done";
   g.pendingBossDamage = 0;
+  g.activeBossAttackId = 0;
   g.pendingTurnAt = 0;
   g.turnNoticeKind = "";
   g.turnNoticeUntil = 0;
@@ -4061,13 +4076,8 @@ function renderSeasonTwo() {
     </div>
     <div class="versus-flash">VS</div>
   ` : "";
-  const bossAttackEffect = attackEffectActive ? `
-    <div class="boss-attack-effect ${attackClass} ${attackKind}">
-      <span></span>
-      <strong>${g.lastTiming?.damage || ""}</strong>
-    </div>
-  ` : "";
-  const bossCounterEffect = bossTurnEffectActive ? `<div class="boss-counter-effect"><span></span><strong>${g.pendingBossDamage || ""}</strong></div>` : "";
+  const bossAttackEffect = "";
+  const bossCounterEffect = "";
   const playerBar = "";
   const roarSpeechActive = state.gameStarted && !isBossScene && s.roar_text && (g.roarSpeechUntil || 0) > now;
   const roarSpeech = roarSpeechActive ? `
@@ -4204,13 +4214,16 @@ function moveSeasonTwoLane(delta) {
   renderSeasonTwo();
 }
 
-function resolveSeasonTwoBossTurn(expectedDamage) {
+function resolveSeasonTwoBossTurn(expectedDamage, attackId) {
   const g = state.game.season_02;
   if (state.activeSeason !== "season_02" || !g || g.phase !== "boss" || g.bossTurn !== "boss") return;
+  if (attackId && (g.activeBossAttackId !== attackId || g.resolvedBossAttackId === attackId)) return;
+  if (attackId) g.resolvedBossAttackId = attackId;
   const damage = Math.max(1, Math.round(expectedDamage || g.pendingBossDamage || 1));
   g.hp = Math.max(0, g.hp - damage);
   g.size = 1;
   g.pendingBossDamage = 0;
+  g.activeBossAttackId = 0;
   if (g.hp <= 0) {
     finishSeasonTwo("gameOver", `${g.boss.name}에게 졌어. 러너 구간에서 고기를 더 모아 에너지를 키워 보자!`);
   } else {
