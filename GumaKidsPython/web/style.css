@@ -2335,6 +2335,10 @@ body.file-tree-collapsed .file-tree {
   animation: boss-enter-from-road 1.1s cubic-bezier(0.2, 0.82, 0.24, 1) both;
 }
 
+.runner-three-layer.three-ready ~ .runner-world .runner-boss {
+  display: none;
+}
+
 .kaiju-runner-game.camera-settled .runner-boss,
 .kaiju-runner-game.phase-win .runner-boss,
 .kaiju-runner-game.phase-gameOver .runner-boss {

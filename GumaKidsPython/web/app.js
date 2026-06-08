@@ -496,6 +496,21 @@ const seasonTwoBosses = [
   { name: "메카 타이탄", className: "titan", hp: 150, power: 16 },
 ];
 
+const seasonTwoFlyingBosses = [
+  { name: "Armabee", className: "armabee", hp: 70, power: 7, modelKey: "armabee", modelUrl: "/models/flying-bosses/Armabee.gltf" },
+  { name: "Glub", className: "glub", hp: 78, power: 8, modelKey: "glub", modelUrl: "/models/flying-bosses/Glub.gltf" },
+  { name: "Goleling", className: "goleling", hp: 86, power: 9, modelKey: "goleling", modelUrl: "/models/flying-bosses/Goleling.gltf" },
+  { name: "Alpaking", className: "alpaking", hp: 94, power: 10, modelKey: "alpaking", modelUrl: "/models/flying-bosses/Alpaking.gltf" },
+  { name: "Hywirl", className: "hywirl", hp: 102, power: 11, modelKey: "hywirl", modelUrl: "/models/flying-bosses/Hywirl.gltf" },
+  { name: "Squidle", className: "squidle", hp: 110, power: 12, modelKey: "squidle", modelUrl: "/models/flying-bosses/Squidle.gltf" },
+  { name: "Demon", className: "demon", hp: 118, power: 13, modelKey: "demon", modelUrl: "/models/flying-bosses/Demon.gltf" },
+  { name: "Ghost", className: "ghost", hp: 126, power: 14, modelKey: "ghost", modelUrl: "/models/flying-bosses/Ghost.gltf" },
+  { name: "Ghost Skull", className: "ghost-skull", hp: 134, power: 15, modelKey: "ghost-skull", modelUrl: "/models/flying-bosses/Ghost_Skull.gltf" },
+  { name: "Dragon", className: "dragon", hp: 142, power: 16, modelKey: "dragon", modelUrl: "/models/flying-bosses/Dragon.gltf" },
+  { name: "Dragon Evolved", className: "dragon-evolved", hp: 150, power: 17, modelKey: "dragon-evolved", modelUrl: "/models/flying-bosses/Dragon_Evolved.gltf" },
+  { name: "Tribal", className: "tribal", hp: 158, power: 18, modelKey: "tribal", modelUrl: "/models/flying-bosses/Tribal.gltf" },
+];
+
 const projectFiles = [
   { name: "upgrade_zone.py", role: "오늘 바꾸는 웹 업그레이드 코드", editable: true },
   { name: "player_stats.py", role: "캐릭터 이름, 체력, 성장 데이터", editable: false },
@@ -531,6 +546,7 @@ const seasonTwoThree = {
   staticGroup: null,
   dynamicGroup: null,
   playerGroup: null,
+  bossGroup: null,
   playerModelPromise: null,
   playerModelRoot: null,
   playerModelKey: "",
@@ -541,6 +557,12 @@ const seasonTwoThree = {
   playerOutlineRoot: null,
   playerOutlineMixer: null,
   playerOutlineMaterials: [],
+  bossModelPromise: null,
+  bossModelRoot: null,
+  bossModelKey: "",
+  bossModelLoadToken: 0,
+  bossMixer: null,
+  bossAction: null,
   playerGlowLight: null,
   lastAnimationTime: 0,
   animationFrame: 0,
@@ -2296,8 +2318,9 @@ function seasonTwoAllMeatEnergy(chapter, settings = state.settings.season_02 || 
 
 function seasonTwoBossForChapter(chapter = seasonTwoChapter(), settings = state.settings.season_02) {
   const config = settings || {};
-  const index = Math.min(3, Math.floor((chapter - 1) / 3));
-  const base = seasonTwoBosses[index];
+  const bosses = seasonTwoFlyingBosses;
+  const index = Math.min(bosses.length - 1, Math.max(0, chapter - 1));
+  const base = bosses[index];
   const expectedEnergy = seasonTwoBossExpectedEnergy(chapter, config);
   const expectedEvolution = seasonTwoPlayerModelEvolution();
   const maxGaugeTiming = { label: "완벽 타이밍", multiplier: 2.65, quality: 1 };
@@ -2311,7 +2334,7 @@ function seasonTwoBossForChapter(chapter = seasonTwoChapter(), settings = state.
   const tunedBossPower = Math.ceil(Math.max(base.power, expectedBossPower) * SEASON_TWO_BOSS_POWER_MULTIPLIER);
   return {
     ...base,
-    name: chapter >= 12 ? (config.boss_name || base.name) : base.name,
+    name: base.name,
     maxHp: Math.max(base.hp, expectedBossHp),
     power: Math.max(1, tunedBossPower),
   };
@@ -2931,7 +2954,7 @@ function renderSeasonTwoItems(game) {
 }
 
 function renderSeasonTwoBossBadges(activeBoss) {
-  return seasonTwoBosses.map((boss) => `
+  return seasonTwoFlyingBosses.map((boss) => `
     <span class="boss-badge ${boss.className === activeBoss.className ? "active" : ""}">${boss.name}</span>
   `).join("");
 }
@@ -3233,8 +3256,10 @@ function startSeasonTwoThreeAnimationLoop(THREE, renderer) {
     const delta = Math.min(0.05, Math.max(0, (now - previousTime) / 1000));
     if (seasonTwoThree.playerMixer) seasonTwoThree.playerMixer.update(delta);
     if (seasonTwoThree.playerOutlineMixer) seasonTwoThree.playerOutlineMixer.update(delta);
+    if (seasonTwoThree.bossMixer) seasonTwoThree.bossMixer.update(delta);
     applySeasonTwoPlayerIdleMotion(now);
     applySeasonTwoPlayerGlow(THREE, seasonTwoThree.currentFrameData || {});
+    applySeasonTwoBossModelTransform(seasonTwoThree.currentFrameData || {}, now);
     if (seasonTwoThree.scene && seasonTwoThree.camera) {
       renderer.render(seasonTwoThree.scene, seasonTwoThree.camera);
     }
@@ -3268,6 +3293,7 @@ function seasonTwoThreeDynamicKey(data) {
     data.phase,
     data.isBossScene ? 1 : 0,
     data.boss?.className || "",
+    data.boss?.modelKey || "",
     data.tick,
     data.attackEffectActive ? 1 : 0,
     Math.round((data.attackEffectProgress || 0) * 100),
@@ -3647,6 +3673,134 @@ function createSeasonTwoBoss3D(THREE, boss) {
   return group;
 }
 
+function resetSeasonTwoBossModelInstance() {
+  if (seasonTwoThree.bossAction) seasonTwoThree.bossAction.stop();
+  if (seasonTwoThree.bossMixer) seasonTwoThree.bossMixer.stopAllAction();
+  const group = seasonTwoThree.bossGroup;
+  if (seasonTwoThree.bossModelRoot) {
+    if (group && seasonTwoThree.bossModelRoot.parent === group) group.remove(seasonTwoThree.bossModelRoot);
+    disposeThreeScene(seasonTwoThree.bossModelRoot);
+  }
+  seasonTwoThree.bossModelPromise = null;
+  seasonTwoThree.bossModelRoot = null;
+  seasonTwoThree.bossModelKey = "";
+  seasonTwoThree.bossMixer = null;
+  seasonTwoThree.bossAction = null;
+}
+
+function prepareSeasonTwoBossModel(THREE, root) {
+  root.traverse((object) => {
+    if (!object.isMesh) return;
+    object.castShadow = true;
+    object.receiveShadow = true;
+    const materials = Array.isArray(object.material) ? object.material : [object.material];
+    materials.forEach((material) => {
+      if (!material) return;
+      if (material.map && THREE.SRGBColorSpace) material.map.colorSpace = THREE.SRGBColorSpace;
+      material.needsUpdate = true;
+    });
+  });
+  root.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(root);
+  const size = box.getSize(new THREE.Vector3());
+  const targetHeight = 2.25;
+  const normalScale = size.y > 0.01 ? targetHeight / size.y : 1;
+  root.scale.setScalar(normalScale);
+  root.updateMatrixWorld(true);
+  const normalizedBox = new THREE.Box3().setFromObject(root);
+  const center = normalizedBox.getCenter(new THREE.Vector3());
+  root.position.x -= center.x;
+  root.position.y -= normalizedBox.min.y;
+  root.position.z -= center.z;
+}
+
+function ensureSeasonTwoBossModel(THREE, GLTFLoader, boss) {
+  const modelKey = boss?.modelKey || boss?.className || "boss";
+  if (seasonTwoThree.bossModelRoot && seasonTwoThree.bossModelKey === modelKey) {
+    return Promise.resolve(seasonTwoThree.bossModelRoot);
+  }
+  if (seasonTwoThree.bossModelRoot && seasonTwoThree.bossModelKey !== modelKey) {
+    resetSeasonTwoBossModelInstance();
+  }
+  if (seasonTwoThree.bossModelPromise && seasonTwoThree.bossModelKey !== modelKey) {
+    resetSeasonTwoBossModelInstance();
+  }
+  if (!seasonTwoThree.bossModelPromise) {
+    const loadToken = ++seasonTwoThree.bossModelLoadToken;
+    seasonTwoThree.bossModelKey = modelKey;
+    seasonTwoThree.bossModelPromise = new Promise((resolve, reject) => {
+      const loader = new GLTFLoader();
+      loader.load(
+        boss?.modelUrl || "",
+        (gltf) => {
+          const root = gltf.scene || gltf.scenes?.[0];
+          if (!root) {
+            reject(new Error(`${boss?.name || "Boss"} glTF scene is empty`));
+            return;
+          }
+          if (loadToken !== seasonTwoThree.bossModelLoadToken || seasonTwoThree.bossModelKey !== modelKey) {
+            disposeThreeScene(root);
+            resolve(seasonTwoThree.bossModelRoot);
+            return;
+          }
+          root.name = boss?.name || "Flying Boss";
+          prepareSeasonTwoBossModel(THREE, root);
+          seasonTwoThree.bossModelRoot = root;
+          if (seasonTwoThree.bossGroup && root.parent !== seasonTwoThree.bossGroup) {
+            seasonTwoThree.bossGroup.add(root);
+          }
+          const idleClip = gltf.animations?.find((clip) => /flying[_-]?idle|idle/i.test(clip.name)) || gltf.animations?.[0];
+          if (idleClip) {
+            seasonTwoThree.bossMixer = new THREE.AnimationMixer(root);
+            seasonTwoThree.bossAction = playSeasonTwoIdleClip(THREE, seasonTwoThree.bossMixer, idleClip);
+          }
+          resolve(root);
+        },
+        undefined,
+        (error) => {
+          if (seasonTwoThree.bossModelKey === modelKey) resetSeasonTwoBossModelInstance();
+          reject(error);
+        },
+      );
+    });
+  }
+  return seasonTwoThree.bossModelPromise;
+}
+
+function applySeasonTwoBossModelTransform(data, now = performance.now()) {
+  const group = seasonTwoThree.bossGroup;
+  if (!group) return;
+  if (!data?.isBossScene || data.phase === "win") {
+    group.visible = false;
+    return;
+  }
+  const t = now * 0.001;
+  const lunge = data.bossTurnEffectActive ? Math.sin(Math.min(1, data.bossTurnEffectProgress || 0) * Math.PI) : 0;
+  group.visible = Boolean(seasonTwoThree.bossModelRoot);
+  group.position.set(2.62 - lunge * 0.45, 0.1 + Math.sin(t * 2.8) * 0.05, -0.68);
+  group.rotation.set(0.02 + lunge * 0.04, -Math.PI / 2 - 0.18 + Math.sin(t * 1.9) * 0.035, -lunge * 0.08);
+  group.scale.setScalar(1.02 + lunge * 0.08);
+}
+
+function updateSeasonTwoBossModel(THREE, GLTFLoader, data) {
+  const group = seasonTwoThree.bossGroup;
+  if (!group || !GLTFLoader) return;
+  if (!data?.isBossScene || data.phase === "win") {
+    group.visible = false;
+    return;
+  }
+  const boss = data.boss || {};
+  const modelKey = boss.modelKey || boss.className || "boss";
+  if (!seasonTwoThree.bossModelRoot || seasonTwoThree.bossModelKey !== modelKey) {
+    group.visible = false;
+    ensureSeasonTwoBossModel(THREE, GLTFLoader, boss)
+      .then(() => applySeasonTwoBossModelTransform(seasonTwoThree.currentFrameData || data))
+      .catch((error) => console.error(`${boss.name || "Boss"} model load failed`, error));
+    return;
+  }
+  applySeasonTwoBossModelTransform(data);
+}
+
 function createSeasonTwoItem3D(THREE, item) {
   const group = new THREE.Group();
   const kind = item.kind;
@@ -3855,13 +4009,19 @@ function ensureSeasonTwoThreeScene(THREE) {
     seasonTwoThree.staticGroup = new THREE.Group();
     seasonTwoThree.dynamicGroup = new THREE.Group();
     seasonTwoThree.playerGroup = new THREE.Group();
+    seasonTwoThree.bossGroup = new THREE.Group();
     addSeasonTwoThreeWorld(THREE, seasonTwoThree.staticGroup);
     seasonTwoThree.scene.add(seasonTwoThree.staticGroup);
     seasonTwoThree.scene.add(seasonTwoThree.dynamicGroup);
     seasonTwoThree.scene.add(seasonTwoThree.playerGroup);
+    seasonTwoThree.scene.add(seasonTwoThree.bossGroup);
   } else if (!seasonTwoThree.playerGroup) {
     seasonTwoThree.playerGroup = new THREE.Group();
     seasonTwoThree.scene.add(seasonTwoThree.playerGroup);
+  }
+  if (!seasonTwoThree.bossGroup) {
+    seasonTwoThree.bossGroup = new THREE.Group();
+    seasonTwoThree.scene.add(seasonTwoThree.bossGroup);
   }
   if (!seasonTwoThree.camera) {
     seasonTwoThree.camera = new THREE.PerspectiveCamera(58, 1, 0.1, 100);
@@ -3871,6 +4031,7 @@ function ensureSeasonTwoThreeScene(THREE) {
     camera: seasonTwoThree.camera,
     dynamicGroup: seasonTwoThree.dynamicGroup,
     playerGroup: seasonTwoThree.playerGroup,
+    bossGroup: seasonTwoThree.bossGroup,
   };
 }
 
@@ -3878,6 +4039,7 @@ function updateSeasonTwoThreeDynamic(THREE, GLTFLoader, cloneSkinnedModel, data)
   const dynamicGroup = seasonTwoThree.dynamicGroup;
   if (!dynamicGroup) return;
   updateSeasonTwoPlayerModel(THREE, GLTFLoader, cloneSkinnedModel, data);
+  updateSeasonTwoBossModel(THREE, GLTFLoader, data);
   const dynamicKey = seasonTwoThreeDynamicKey(data);
   if (seasonTwoThree.dynamicKey === dynamicKey) return;
   clearSeasonTwoThreeGroup(dynamicGroup);
@@ -3888,19 +4050,8 @@ function updateSeasonTwoThreeDynamic(THREE, GLTFLoader, cloneSkinnedModel, data)
   }
 
   if (data.isBossScene) {
-    const boss = createSeasonTwoBoss3D(THREE, data.boss);
-    boss.position.set(2.55, 0.18, -0.68);
-    boss.rotation.y = -Math.PI / 2;
-    if (data.bossTurnEffectActive) {
-      boss.position.x -= 0.52;
-      boss.position.y += 0.06;
-      boss.rotation.z = -0.12;
-      boss.scale.multiplyScalar(1.08);
-    }
     if (data.phase === "win") {
       addSeasonTwoBossDissolve3D(THREE, dynamicGroup);
-    } else {
-      dynamicGroup.add(boss);
     }
     if (data.attackEffectActive) addSeasonTwoAttack3D(
       THREE,
@@ -3923,8 +4074,8 @@ function renderSeasonTwoThreeFrame(THREE, GLTFLoader, cloneSkinnedModel, rendere
     target: new THREE.Vector3(0, 1.02, -5.2),
   };
   const bossCamera = {
-    position: new THREE.Vector3(0, 1.9, 10.4),
-    target: new THREE.Vector3(0, 1.32, -0.68),
+    position: new THREE.Vector3(0, 2.35, 14.2),
+    target: new THREE.Vector3(0, 1.24, -0.68),
   };
   const eased = panProgress * panProgress * (3 - 2 * panProgress);
   const cameraPosition = data.isBossScene
@@ -3933,7 +4084,7 @@ function renderSeasonTwoThreeFrame(THREE, GLTFLoader, cloneSkinnedModel, rendere
   const cameraTarget = data.isBossScene
     ? runnerCamera.target.clone().lerp(bossCamera.target, eased)
     : runnerCamera.target;
-  const fov = data.isBossScene ? 42 : 58;
+  const fov = data.isBossScene ? 48 : 58;
   const aspect = width / height;
   if (seasonTwoThree.fov !== fov || camera.aspect !== aspect) {
     camera.fov = fov;
