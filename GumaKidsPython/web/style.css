@@ -2275,6 +2275,19 @@ body.file-tree-collapsed .file-tree {
   border-radius: 58% 42% 48% 52%;
 }
 
+.runner-item.food-apple span {
+  background:
+    radial-gradient(circle at 58% 16%, #22c55e 0 10%, transparent 11%),
+    linear-gradient(135deg, #fecaca, #ef4444 58%, #991b1b);
+  border-radius: 50% 48% 54% 46%;
+}
+
+.runner-item.food-banana span {
+  background: linear-gradient(135deg, #fef08a, #facc15 62%, #ca8a04);
+  border-radius: 72% 18% 74% 18%;
+  transform: rotate(-16deg);
+}
+
 .runner-item.item-double_meat span {
   border: 2px solid rgba(255, 255, 255, 0.72);
   border-radius: 58% 42% 48% 52%;
@@ -2287,6 +2300,20 @@ body.file-tree-collapsed .file-tree {
   border-radius: 58% 42% 48% 52%;
   background: linear-gradient(135deg, #e0f2fe, #38bdf8 48%, #0369a1);
   box-shadow: 0 0 26px rgba(56, 189, 248, 0.76), 0 8px 0 rgba(15, 23, 42, 0.18), inset -6px -5px 0 rgba(15, 23, 42, 0.18);
+}
+
+.runner-item.item-double_meat.food-apple span,
+.runner-item.item-triple_meat.food-apple span {
+  background:
+    radial-gradient(circle at 58% 16%, #22c55e 0 10%, transparent 11%),
+    linear-gradient(135deg, #fecaca, #ef4444 58%, #991b1b);
+}
+
+.runner-item.item-double_meat.food-banana span,
+.runner-item.item-triple_meat.food-banana span {
+  background: linear-gradient(135deg, #fef08a, #facc15 62%, #ca8a04);
+  border-radius: 72% 18% 74% 18%;
+  transform: rotate(-16deg);
 }
 
 .runner-item.item-bomb span {

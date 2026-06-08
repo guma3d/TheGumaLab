@@ -51,46 +51,35 @@ const seasons = {
     title: "괴수 러너 성장 게임",
     chapters: "챕터 13~24",
     lesson: [
-      ["1. 오늘의 장면", "원숭이가 달리며 고기를 먹고 에너지를 키운 뒤 보스와 싸웁니다."],
-      ["2. 오늘의 코드", "입력값, 조건문, 비교 연산으로 성장과 변신, 보스전 규칙을 정합니다."],
-      ["3. 코드가 하는 일", "True와 False는 방어막, 대시, 변신 조건처럼 게임 규칙을 켜고 끕니다."],
-      ["4. 바꿔보기", "고기 에너지와 변신 에너지 기준을 바꾸고 변신 속도를 비교합니다."],
-      ["5. 미션", "원숭이가 고릴라, 공룡으로 두 번 변신하게 만듭니다."],
+      ["1. 오늘의 장면", "3D 캐릭터가 달리며 음식 리스트의 아이템을 먹고 에너지를 키운 뒤 보스와 싸웁니다."],
+      ["2. 오늘의 코드", "문자열, 숫자, 불리언을 복습하고 리스트, 튜플, 딕셔너리를 실제 게임 데이터로 연결합니다."],
+      ["3. 코드가 하는 일", "food_items에 사과와 바나나를 넣으면 실제 아이템이 나오고, item_scores는 획득 에너지를 바꿉니다."],
+      ["4. 바꿔보기", "정해진 후보 안에서 음식, 레인 이름, 변신 캐릭터, 보스를 바꾸며 화면 변화를 확인합니다."],
+      ["5. 미션", "자료형 값을 직접 고쳐 나만의 러너 규칙을 만들되, 게임 밸런스는 유지합니다."],
     ],
     fields: [
-      ["baby_name", "원숭이 이름", "꼬마구마"],
+      ["baby_name", "캐릭터 이름", "구마블롭"],
       ["runner_title", "출발 문장", "꼬마구마 출동!"],
       ["roar_text", "괴수 대사", "우와앙! 더 커질 거야!"],
-      ["favorite_food", "좋아하는 먹이", "고기"],
-      ["start_size", "시작 외형 크기", 1],
-      ["growth", "현재 성장", 0],
-      ["run_speed", "달리기 속도", 5],
+      ["favorite_food", "좋아하는 음식", "고기"],
+      ["hp", "시작 에너지", 100],
       ["snack_score", "첫 에너지 보너스", 10],
-      ["meat_score", "고기 에너지", 100],
-      ["food_name", "먹이 이름", "고기"],
-      ["favorite_bonus", "좋아하는 먹이 보너스", 20],
-      ["item_name", "검사용 아이템", "고기"],
-      ["bomb_damage", "폭탄 피해", 70],
-      ["growth_per_item", "먹이 성장량", 12],
-      ["mutation_size", "외형 표시 기준", 60],
-      ["gorilla_score", "고릴라 변신 에너지", 200],
-      ["dino_score", "공룡 변신 에너지", 500],
-      ["mutation_result", "현재 변신 결과", "원숭이"],
-      ["hp", "체력", 100],
-      ["danger_limit", "위험 체력 기준", 35],
-      ["attack_power", "괴수 공격력", 18],
-      ["flame_damage", "레이저 피해", 200],
-      ["boss_power", "보스 공격력", 24],
-      ["boss_name", "최종 보스 이름", "메카 타이탄"],
+      ["meat_score", "기본 음식 에너지", 100],
+      ["run_speed", "달리기 속도", 5],
       ["has_shield", "장애물 방어막", "false"],
-      ["obstacle_result", "장애물 결과", "방어 성공"],
       ["shield_ready", "방어막 준비", "true"],
       ["dash_ready", "대시 준비", "false"],
-      ["can_dash_shield", "방어막+대시", "false"],
+      ["food_items", "음식 리스트", "[\"고기\", \"사과\", \"바나나\"]"],
+      ["lane_names", "레인 이름 튜플", "(\"왼쪽\", \"가운데\", \"오른쪽\")"],
+      ["item_scores", "점수 딕셔너리", "{\"고기\": 100, \"사과\": 90, \"바나나\": 110, \"폭탄\": -70}"],
+      ["bomb_damage", "폭탄 피해", 70],
+      ["form_names", "변신 캐릭터 리스트", "[\"Alien Blob\", \"Big Alien\", \"Green Blob\", \"Big Dino\", \"Pink Blob\"]"],
+      ["favorite_bonus", "좋아하는 음식 보너스", 20],
+      ["flame_damage", "레이저 피해", 200],
+      ["boss", "보스 딕셔너리", "{\"name\": \"Dragon\", \"power\": 1200}"],
       ["red_core", "빨간 코어", "true"],
       ["blue_core", "파란 코어", "false"],
       ["has_core_bonus", "변신 코어 보너스", "true"],
-      ["item_result", "아이템 계산 결과", 0],
       ["final_attack", "최종 공격 피해", 200],
     ],
   },
@@ -313,36 +302,36 @@ const seasonOneChapters = {
 };
 
 const seasonTwoEditPlans = {
-  1: { lines: 1, keys: ["baby_name"], labels: ["baby_name"] },
-  2: { lines: 2, keys: ["runner_title", "roar_text"], labels: ["runner_title", "roar_text"] },
-  3: { lines: 3, keys: ["start_size", "snack_score", "meat_score"], labels: ["start_size", "snack_score", "meat_score"] },
-  4: { lines: 4, keys: ["mutation_size", "gorilla_score", "dino_score", "mutation_result"], labels: ["mutation_size", "gorilla_score", "dino_score", "mutation_result"] },
-  5: { lines: 5, keys: ["baby_name", "favorite_food", "food_name", "meat_score", "favorite_bonus"], labels: ["baby_name", "favorite_food", "food_name", "meat_score", "favorite_bonus"] },
-  6: { lines: 6, keys: ["baby_name", "hp", "danger_limit", "has_shield", "obstacle_result", "run_speed"], labels: ["baby_name", "hp", "danger_limit", "has_shield", "obstacle_result", "run_speed"] },
-  7: { lines: 7, keys: ["baby_name", "item_name", "meat_score", "bomb_damage", "item_result", "flame_damage", "boss_power"], labels: ["baby_name", "item_name", "meat_score", "bomb_damage", "item_result", "flame_damage", "boss_power"] },
-  8: { lines: 8, keys: ["runner_title", "roar_text", "start_size", "growth", "run_speed", "meat_score", "gorilla_score", "dino_score"], labels: ["runner_title", "roar_text", "start_size", "growth", "run_speed", "meat_score", "gorilla_score", "dino_score"] },
-  9: { lines: 9, keys: ["baby_name", "runner_title", "roar_text", "hp", "danger_limit", "run_speed", "flame_damage", "boss_power", "boss_name"], labels: ["baby_name", "runner_title", "roar_text", "hp", "danger_limit", "run_speed", "flame_damage", "boss_power", "boss_name"] },
-  10: { lines: 10, keys: ["baby_name", "gorilla_score", "dino_score", "shield_ready", "dash_ready", "can_dash_shield", "hp", "run_speed", "boss_power", "boss_name"], labels: ["baby_name", "gorilla_score", "dino_score", "shield_ready", "dash_ready", "can_dash_shield", "hp", "run_speed", "boss_power", "boss_name"] },
-  11: { lines: 10, keys: ["baby_name", "favorite_food", "red_core", "blue_core", "has_core_bonus", "meat_score", "gorilla_score", "dino_score", "flame_damage", "boss_power"], labels: ["baby_name", "favorite_food", "red_core", "blue_core", "has_core_bonus", "meat_score", "gorilla_score", "dino_score", "flame_damage", "boss_power"] },
-  12: { lines: 10, keys: ["baby_name", "runner_title", "roar_text", "meat_score", "gorilla_score", "dino_score", "final_attack", "boss_power", "boss_name", "hp"], labels: ["baby_name", "runner_title", "roar_text", "meat_score", "gorilla_score", "dino_score", "final_attack", "boss_power", "boss_name", "hp"] },
+  1: { lines: 2, keys: ["baby_name", "runner_title"], labels: ["baby_name", "runner_title"] },
+  2: { lines: 2, keys: ["roar_text", "favorite_food"], labels: ["roar_text", "favorite_food"] },
+  3: { lines: 3, keys: ["hp", "snack_score", "meat_score"], labels: ["hp", "snack_score", "meat_score"] },
+  4: { lines: 3, keys: ["has_shield", "shield_ready", "dash_ready"], labels: ["has_shield", "shield_ready", "dash_ready"] },
+  5: { lines: 1, keys: ["food_items"], labels: ["food_items"] },
+  6: { lines: 2, keys: ["lane_names", "run_speed"], labels: ["lane_names", "run_speed"] },
+  7: { lines: 1, keys: ["item_scores"], labels: ["item_scores"] },
+  8: { lines: 2, keys: ["form_names", "favorite_bonus"], labels: ["form_names", "favorite_bonus"] },
+  9: { lines: 2, keys: ["boss", "flame_damage"], labels: ["boss", "flame_damage"] },
+  10: { lines: 3, keys: ["food_items", "item_scores", "lane_names"], labels: ["food_items", "item_scores", "lane_names"] },
+  11: { lines: 4, keys: ["form_names", "red_core", "blue_core", "has_core_bonus"], labels: ["form_names", "red_core", "blue_core", "has_core_bonus"] },
+  12: { lines: 5, keys: ["baby_name", "food_items", "item_scores", "boss", "final_attack"], labels: ["baby_name", "food_items", "item_scores", "boss", "final_attack"] },
 };
 
 const seasonTwoUnlocks = {
-  1: "원숭이 이름표와 3D 스타일 세로 러너 캐릭터가 등장합니다.",
-  2: "괴수가 세로 트랙을 달리며 포효 말풍선을 보여 줍니다.",
-  3: "위에서 내려오는 고기 아이템을 먹으면 에너지가 오릅니다.",
-  4: "에너지 기준을 넘으면 원숭이가 고릴라로 변신합니다.",
-  5: "좋아하는 고기를 먹으면 에너지 보너스를 받습니다.",
-  6: "장애물과 체력 경고가 생겨 피해야 할 이유가 생깁니다.",
-  7: "첫 보스전이 열리고 공격력과 보스 공격력을 비교합니다.",
-  8: "여러 성장 단계가 화면에 확실히 쌓여 보입니다.",
-  9: "네 가지 보스 중 현재 챕터에 맞는 보스가 등장합니다.",
-  10: "방어막과 대시 조건을 켜고 끄며 러너 구간을 조절합니다.",
-  11: "빨간 코어 또는 파란 코어 조건으로 변신 보너스를 실험합니다.",
-  12: "세로 러너 구간에서 보스전으로 카메라가 부드럽게 넘어가며 시즌2가 완성됩니다.",
+  1: "캐릭터 이름과 출발 문장이 화면 이름표와 러너 안내에 바로 반영됩니다.",
+  2: "포효 말풍선과 좋아하는 음식 보너스 조건이 연결됩니다.",
+  3: "숫자 에너지 값이 시작 체력, 음식 보상, 목표 에너지 표시로 이어집니다.",
+  4: "True/False로 방어막 피해 감소와 대시 방어 규칙을 직접 켜고 끕니다.",
+  5: "food_items 리스트에 고기, 사과, 바나나를 넣으면 실제 러너 아이템으로 등장합니다.",
+  6: "lane_names 튜플의 세 이름이 이동 메시지와 레인 안내에 사용됩니다.",
+  7: "item_scores 딕셔너리의 음식/폭탄 점수가 실제 획득 에너지와 피해량을 바꿉니다.",
+  8: "form_names 리스트 순서대로 1000점마다 캐릭터 모델이 바뀝니다.",
+  9: "boss 딕셔너리의 name 값으로 챕터 후반 보스 모델을 고를 수 있습니다.",
+  10: "리스트, 튜플, 딕셔너리가 동시에 작동해 러너 구간 규칙을 완성합니다.",
+  11: "캐릭터 목록과 코어 불리언을 조합해 보스전 공격 보너스를 실험합니다.",
+  12: "시즌2 자료형 규칙이 러너, 변신, 보스전까지 하나의 완성 게임으로 연결됩니다.",
 };
 
-const seasonTwoChapters = {
+let seasonTwoChapters = {
   1: {
     title: "원숭이 출발",
     focus: "baby_name",
@@ -485,6 +474,153 @@ const seasonTwoChapters = {
       ["3. 기술 설명", "조건문은 게임 상태를 보고 다음 장면을 고르는 신호등입니다."],
       ["4. 바꿔보기", "보스 이름, 변신 에너지, 방어막, 대시, 공격 피해를 모두 조합합니다."],
       ["5. 미션", "내 괴수가 멋지게 성장하고 최종 보스를 이기는 밸런스를 완성합니다."],
+    ],
+  },
+};
+
+seasonTwoChapters = {
+  1: {
+    title: "캐릭터 입력 복습",
+    focus: "baby_name",
+    syntax: "input()으로 받은 글자는 문자열입니다. 웹버전에서는 baby_name과 runner_title 값을 바꿔 입력 결과처럼 사용합니다.",
+    pages: [
+      ["1. 오늘의 장면", "Alien Blob 캐릭터가 세로 러너 트랙에 처음 등장합니다."],
+      ["2. 오늘의 코드", "baby_name은 캐릭터 이름표, runner_title은 출발 안내 문장으로 보입니다."],
+      ["3. 기술 설명", "문자열은 따옴표 안에 넣은 글자 자료형입니다."],
+      ["4. 바꿔보기", "baby_name과 runner_title을 바꿔 내 캐릭터처럼 보이게 합니다."],
+      ["5. 미션", "캐릭터 이름과 출발 문장을 정해 화면 하단 안내가 바뀌는지 확인합니다."],
+    ],
+  },
+  2: {
+    title: "문자열 조건 복습",
+    focus: "favorite_food",
+    syntax: "== 는 두 문자열이 같은지 비교합니다. favorite_food가 먹은 아이템 이름과 같으면 보너스가 붙습니다.",
+    pages: [
+      ["1. 오늘의 장면", "캐릭터가 달리기 시작할 때 짧은 포효 말풍선을 보여 줍니다."],
+      ["2. 오늘의 코드", "roar_text는 말풍선 문장이고 favorite_food는 보너스 비교에 쓰입니다."],
+      ["3. 기술 설명", "= 는 저장, == 는 비교입니다. 두 기호는 역할이 다릅니다."],
+      ["4. 바꿔보기", "favorite_food는 고기, 사과, 바나나 중 하나로만 씁니다."],
+      ["5. 미션", "포효 문장을 만들고 favorite_food를 고기, 사과, 바나나 중 하나로 정합니다."],
+    ],
+  },
+  3: {
+    title: "숫자 에너지 복습",
+    focus: "meat_score",
+    syntax: "정수는 더하고 비교할 수 있는 숫자입니다. hp, snack_score, meat_score는 러너 에너지와 목표 표시의 기준이 됩니다.",
+    pages: [
+      ["1. 오늘의 장면", "음식을 먹으면 캐릭터 에너지가 오르고 보스전 준비 에너지가 쌓입니다."],
+      ["2. 오늘의 코드", "hp는 시작 에너지, snack_score는 초반 보너스, meat_score는 기본 음식 점수입니다."],
+      ["3. 기술 설명", "숫자 값은 너무 크면 밸런스가 깨지므로 게임에서 안전 범위로 계산합니다."],
+      ["4. 바꿔보기", "meat_score를 조금 바꾸고 목표 에너지 막대가 어떻게 변하는지 봅니다."],
+      ["5. 미션", "캐릭터가 챕터 15에서 1000점 미션을 향해 달릴 수 있게 숫자를 정합니다."],
+    ],
+  },
+  4: {
+    title: "불리언 방어막",
+    focus: "has_shield",
+    syntax: "True와 False는 기능을 켜고 끄는 자료형입니다. has_shield가 True이면 폭탄 피해가 줄어듭니다.",
+    pages: [
+      ["1. 오늘의 장면", "폭탄을 먹었을 때 방어막 여부에 따라 피해가 달라집니다."],
+      ["2. 오늘의 코드", "has_shield, shield_ready, dash_ready는 실제 러너 구간 방어 규칙에 연결됩니다."],
+      ["3. 기술 설명", "True는 켜짐, False는 꺼짐입니다. and 조건은 둘 다 True일 때만 성공합니다."],
+      ["4. 바꿔보기", "has_shield를 True/False로 바꿔 폭탄 피해 차이를 확인합니다."],
+      ["5. 미션", "초보자용은 has_shield = True, 도전용은 has_shield = False로 바꿔 봅니다."],
+    ],
+  },
+  5: {
+    title: "음식 리스트",
+    focus: "food_items",
+    syntax: "리스트는 여러 값을 순서대로 담는 자료형입니다. food_items에 넣은 고기, 사과, 바나나가 실제 아이템으로 나옵니다.",
+    pages: [
+      ["1. 오늘의 장면", "고기만 나오던 트랙에 사과와 바나나가 함께 등장합니다."],
+      ["2. 오늘의 코드", "food_items = [\"고기\", \"사과\", \"바나나\"]처럼 정해진 음식 이름을 넣습니다."],
+      ["3. 기술 설명", "이번 게임에서 허용되는 음식 이름은 반드시 고기, 사과, 바나나입니다."],
+      ["4. 바꿔보기", "리스트 순서를 바꾸거나 사과, 바나나 중 하나를 빼고 등장 아이템을 비교합니다."],
+      ["5. 미션", "food_items 리스트에 사과와 바나나를 반드시 넣어 실제 화면에 등장시키세요."],
+    ],
+  },
+  6: {
+    title: "레인 튜플",
+    focus: "lane_names",
+    syntax: "튜플은 바뀌면 곤란한 고정 순서 값을 담기 좋습니다. lane_names의 세 값은 왼쪽, 가운데, 오른쪽 레인 안내로 쓰입니다.",
+    pages: [
+      ["1. 오늘의 장면", "캐릭터가 세 레인을 오가며 음식을 피하고 먹습니다."],
+      ["2. 오늘의 코드", "lane_names = (\"왼쪽\", \"가운데\", \"오른쪽\")처럼 정확히 세 칸을 둡니다."],
+      ["3. 기술 설명", "튜플은 괄호를 쓰고, 이번 미션에서는 레인 세 개를 고정 데이터로 다룹니다."],
+      ["4. 바꿔보기", "레인 이름 순서를 바꿔 이동 메시지가 달라지는지 확인합니다."],
+      ["5. 미션", "lane_names에 왼쪽, 가운데, 오른쪽 세 단어를 모두 넣어 레인 안내를 완성합니다."],
+    ],
+  },
+  7: {
+    title: "점수 딕셔너리",
+    focus: "item_scores",
+    syntax: "딕셔너리는 이름표와 값을 짝지어 저장합니다. item_scores의 음식 점수와 폭탄 값이 실제 에너지 계산에 들어갑니다.",
+    pages: [
+      ["1. 오늘의 장면", "사과, 바나나, 고기를 먹을 때 에너지가 조금씩 다르게 오릅니다."],
+      ["2. 오늘의 코드", "item_scores = {\"고기\": 100, \"사과\": 90, \"바나나\": 110, \"폭탄\": -70}처럼 씁니다."],
+      ["3. 기술 설명", "왼쪽은 키, 오른쪽은 값입니다. 게임은 허용된 키만 읽고 값은 안전 범위로 제한합니다."],
+      ["4. 바꿔보기", "사과와 바나나 점수를 조금 바꾸고 에너지 획득 차이를 확인합니다."],
+      ["5. 미션", "고기, 사과, 바나나, 폭탄 네 키를 모두 넣고 폭탄은 음수로 둡니다."],
+    ],
+  },
+  8: {
+    title: "변신 리스트",
+    focus: "form_names",
+    syntax: "리스트 순서는 게임 순서가 될 수 있습니다. form_names의 캐릭터 이름 순서대로 1000점마다 모델이 바뀝니다.",
+    pages: [
+      ["1. 오늘의 장면", "1000점이 넘으면 Big Alien으로, 2000점이 넘으면 다음 Blob 캐릭터로 바뀝니다."],
+      ["2. 오늘의 코드", "form_names에는 준비된 모델 이름만 넣습니다."],
+      ["3. 기술 설명", "허용 모델은 Alien Blob, Big Alien, Green Blob, Pink Blob, Cactoro Blob, Ninja Blob, Wizard Blob, Big Dino입니다."],
+      ["4. 바꿔보기", "form_names 순서를 바꿔 변신 순서를 직접 디자인합니다."],
+      ["5. 미션", "Alien Blob으로 시작하고 Big Alien을 두 번째에 넣어 챕터 20 전에 변신을 경험하게 합니다."],
+    ],
+  },
+  9: {
+    title: "보스 딕셔너리",
+    focus: "boss",
+    syntax: "딕셔너리 하나로 보스 이름과 참고 공격력을 묶을 수 있습니다. boss의 name은 후반 챕터 보스 모델 선택에 반영됩니다.",
+    pages: [
+      ["1. 오늘의 장면", "러너가 끝나면 Flying 보스와 사이드뷰 보스전을 시작합니다."],
+      ["2. 오늘의 코드", "boss = {\"name\": \"Dragon\", \"power\": 1200}처럼 name과 power를 함께 둡니다."],
+      ["3. 기술 설명", "허용 보스 이름은 Armabee, Glub, Goleling, Alpaking, Hywirl, Squidle, Demon, Ghost, Ghost Skull, Dragon, Dragon Evolved, Tribal입니다."],
+      ["4. 바꿔보기", "boss의 name을 Dragon이나 Ghost Skull로 바꿔 보스 모델이 달라지는지 확인합니다."],
+      ["5. 미션", "boss 딕셔너리에 허용 보스 이름 하나와 숫자 power를 넣습니다."],
+    ],
+  },
+  10: {
+    title: "자료형 조합",
+    focus: "food_items",
+    syntax: "리스트, 튜플, 딕셔너리를 함께 쓰면 아이템 종류, 레인 이름, 점수 규칙을 한 화면에서 관리할 수 있습니다.",
+    pages: [
+      ["1. 오늘의 장면", "속도가 빨라진 러너 구간에서 음식과 폭탄이 좁은 간격으로 등장합니다."],
+      ["2. 오늘의 코드", "food_items, item_scores, lane_names가 동시에 실제 게임에 반영됩니다."],
+      ["3. 기술 설명", "데이터 자료형은 값이 많아질수록 코드가 읽기 쉬워지는 정리 상자입니다."],
+      ["4. 바꿔보기", "사과/바나나를 유지한 채 점수만 바꿔 난이도 변화를 비교합니다."],
+      ["5. 미션", "사과와 바나나는 유지하고 폭탄 점수는 음수로 두어 밸런스를 깨지 않습니다."],
+    ],
+  },
+  11: {
+    title: "캐릭터와 코어",
+    focus: "form_names",
+    syntax: "리스트 순서와 불리언 조건을 함께 쓰면 변신 순서와 공격 보너스를 분리해서 조절할 수 있습니다.",
+    pages: [
+      ["1. 오늘의 장면", "후반 챕터에서 여러 Blob과 Big 캐릭터가 점수에 따라 바뀝니다."],
+      ["2. 오늘의 코드", "form_names는 변신 모델 순서, red_core와 blue_core는 보스전 공격 보너스 조건입니다."],
+      ["3. 기술 설명", "or 조건은 둘 중 하나만 True여도 보너스를 켭니다."],
+      ["4. 바꿔보기", "캐릭터 순서를 바꾸고 red_core 또는 blue_core를 켜 보스전 피해를 비교합니다."],
+      ["5. 미션", "form_names에 최소 5개 모델을 넣고 red_core나 blue_core 중 하나를 True로 만듭니다."],
+    ],
+  },
+  12: {
+    title: "시즌2 완성",
+    focus: "final_attack",
+    syntax: "시즌2 최종 코드는 문자열, 숫자, 불리언, 리스트, 튜플, 딕셔너리를 모두 사용해 러너와 보스전을 완성합니다.",
+    pages: [
+      ["1. 오늘의 장면", "음식 리스트로 성장한 캐릭터가 선택한 보스와 마지막 전투를 합니다."],
+      ["2. 오늘의 코드", "food_items, item_scores, form_names, boss를 모두 확인하고 final_attack을 계산합니다."],
+      ["3. 기술 설명", "게임 밸런스는 챕터별 목표 에너지와 보스 체력 산식이 지키고, 아이 코드는 허용 데이터 안에서 변화를 만듭니다."],
+      ["4. 바꿔보기", "사과와 바나나, 변신 캐릭터, 보스를 모두 유지한 채 최종 화면을 확인합니다."],
+      ["5. 미션", "food_items에 사과와 바나나를 반드시 넣고, boss name은 허용 목록에서 하나를 골라 시즌2를 완성합니다."],
     ],
   },
 };
@@ -746,6 +882,11 @@ function renderFields() {
   const settings = state.settings[state.activeSeason] || defaultSettings(state.activeSeason);
   const chapterInfo = activeChapterInfo();
   const editPlan = activeEditPlan();
+  const formatParamValue = (value) => {
+    if (Array.isArray(value)) return `[${value.map((item) => `"${item}"`).join(", ")}]`;
+    if (value && typeof value === "object") return JSON.stringify(value);
+    return value;
+  };
   els.chapterLabel.textContent = chapterInfo && editPlan
     ? `챕터 ${globalChapterNumber()} / ${chapterOffset() + 12} · ${editPlan.lines}줄 수정`
     : season.chapters;
@@ -758,7 +899,7 @@ function renderFields() {
     wrap.className = "param-row";
     wrap.innerHTML = `
       <strong>${label}</strong>
-      <span>${settings[key] ?? value}</span>
+      <span>${formatParamValue(settings[key] ?? value)}</span>
     `;
     els.parsedParams.appendChild(wrap);
   }
@@ -821,34 +962,37 @@ function readOnlyFileContent(fileName) {
   const s = state.settings[state.activeSeason] || defaultSettings(state.activeSeason);
   if (state.activeSeason === "season_02") {
     if (fileName === "player_stats.py") {
+      const formNames = seasonTwoFormNames(s);
       return [
         "# player_stats.py",
         "# 읽기 전용: 시즌 2 괴수의 이름, 체력, 성장 데이터입니다.",
         "",
-        `baby_name = "${s.baby_name || "꼬마구마"}"`,
+        `baby_name = "${s.baby_name || "구마블롭"}"`,
         `roar_text = "${s.roar_text || "우와앙! 더 커질 거야!"}"`,
         `start_size = ${toNumber(s.start_size, 1)}`,
         `growth = ${toNumber(s.growth, 0)}`,
         `hp = ${toNumber(s.hp, 100)}`,
+        `form_names = [${formNames.map((name) => `"${name}"`).join(", ")}]`,
       ].join("\n");
     }
     if (fileName === "world_items.py") {
+      const foodItems = seasonTwoFoodItems(s, seasonTwoChapter());
+      const itemScores = seasonTwoItemScores(s);
+      const laneNames = seasonTwoLaneNames(s);
       return [
         "# world_items.py",
-        "# 읽기 전용: 러너 트랙의 먹이, 코어, 장애물 데이터입니다.",
+        "# 읽기 전용: 러너 트랙의 음식 리스트, 레인 튜플, 점수 딕셔너리입니다.",
         "",
         `favorite_food = "${s.favorite_food || "고기"}"`,
-        `snack_score = ${toNumber(s.snack_score, 10)}`,
-        `meat_score = ${toNumber(s.meat_score, 100)}`,
-        `growth_per_item = ${toNumber(s.growth_per_item, 12)}`,
-        `mutation_size = ${toNumber(s.mutation_size, 60)}`,
-        `gorilla_score = ${toNumber(s.gorilla_score, 200)}`,
-        `dino_score = ${toNumber(s.dino_score, 500)}`,
+        `food_items = [${foodItems.map((name) => `"${name}"`).join(", ")}]`,
+        `lane_names = (${laneNames.map((name) => `"${name}"`).join(", ")})`,
+        `item_scores = {${Object.entries(itemScores).map(([key, value]) => `"${key}": ${value}`).join(", ")}}`,
         "",
-        'runner_items = ["고기", "폭탄", "2배고기", "핵폭탄"]',
+        'allowed_foods = ["고기", "사과", "바나나"]',
       ].join("\n");
     }
     if (fileName === "game_rules.py") {
+      const bossConfig = seasonTwoBossConfig(s);
       return [
         "# game_rules.py",
         "# 읽기 전용: 조건문이 러너 게임 규칙으로 바뀌는 곳입니다.",
@@ -863,6 +1007,7 @@ function readOnlyFileContent(fileName) {
         `dash_ready = ${toBool(s.dash_ready) ? "True" : "False"}`,
         `red_core = ${toBool(s.red_core) ? "True" : "False"}`,
         `blue_core = ${toBool(s.blue_core) ? "True" : "False"}`,
+        `boss = {"name": "${bossConfig.name}", "power": ${bossConfig.power}}`,
         "",
         "can_dash_shield = shield_ready and dash_ready",
         "has_core_bonus = red_core or blue_core",
@@ -878,7 +1023,7 @@ function readOnlyFileContent(fileName) {
         "",
         "save_data = {",
         `    "chapter": ${globalChapterNumber()},`,
-        `    "baby_name": "${s.baby_name || "꼬마구마"}",`,
+        `    "baby_name": "${s.baby_name || "구마블롭"}",`,
         '    "best_energy": 0,',
         '    "boss_clear": False,',
         "}",
@@ -1242,39 +1387,52 @@ function generateCode(seasonKey) {
   }
   if (seasonKey === "season_02") {
     const activePlan = seasonTwoEditPlans[state.activeChapter] || { lines: 1, keys: [], labels: [] };
-    const targetHint = (key, chapter) => {
-      if (chapter !== state.activeChapter) return null;
+    const targetHint = (key, chapters) => {
+      const targetChapters = Array.isArray(chapters) ? chapters : [chapters];
+      if (!targetChapters.includes(state.activeChapter)) return null;
       const index = activePlan.keys.indexOf(key);
       if (index < 0) return null;
       return `# 오늘 줄 ${index + 1}/${activePlan.lines}: ${activePlan.labels[index]}`;
     };
+    const foodItems = seasonTwoSanitizeFoodNames(s.food_items ?? SEASON_TWO_DEFAULT_FOOD_NAMES);
+    const laneNames = seasonTwoLaneNames(s);
+    const itemScores = seasonTwoItemScores(s);
+    const formNames = seasonTwoFormNames(s);
+    const bossConfig = seasonTwoBossConfig(s);
+    const pyList = (items) => `[${items.map((item) => `"${item}"`).join(", ")}]`;
+    const pyTuple = (items) => `(${items.map((item) => `"${item}"`).join(", ")})`;
+    const pyDict = (entries) => `{${Object.entries(entries).map(([key, value]) => `"${key}": ${value}`).join(", ")}}`;
     return [
       "# 시즌 2: 괴수 러너 성장 게임 업그레이드 존",
-      "# 전체 코드를 볼 수 있습니다. 오늘 배울 곳은 [오늘의 업그레이드] 아래입니다.",
-      "# 웹버전에서는 input()을 직접 띄우지 않고, 아래 변수 값을 바꿔 입력처럼 사용합니다.",
+      "# 오늘 배울 곳은 [오늘의 업그레이드] 주석 아래입니다.",
+      "# 허용 음식 이름: \"고기\", \"사과\", \"바나나\"",
+      "# 허용 보스 이름: \"Armabee\", \"Glub\", \"Goleling\", \"Alpaking\", \"Hywirl\", \"Squidle\", \"Demon\", \"Ghost\", \"Ghost Skull\", \"Dragon\", \"Dragon Evolved\", \"Tribal\"",
+      "# 허용 캐릭터: \"Alien Blob\", \"Big Alien\", \"Green Blob\", \"Pink Blob\", \"Cactoro Blob\", \"Ninja Blob\", \"Wizard Blob\", \"Big Dino\"",
       "",
       "# =========================",
-      "# [챕터 13] 원숭이 이름 입력",
-      "# baby_name = input(\"괴수 이름은? \") 와 같은 역할입니다.",
+      "# [챕터 13] 문자열 입력 복습",
       `# [오늘의 업그레이드: ${activePlan.lines}줄]`,
       "# =========================",
-      targetHint("baby_name", 1),
-      `baby_name = "${s.baby_name}"`,
+      targetHint("baby_name", [1, 12]),
+      `baby_name = "${s.baby_name || "구마블롭"}"`,
+      targetHint("runner_title", 1),
+      `runner_title = "${s.runner_title || "꼬마구마 출동!"}"`,
       "",
       "# =========================",
-      "# [챕터 14] 포효 문자열",
+      "# [챕터 14] 문자열 비교 복습",
+      "# favorite_food는 반드시 \"고기\", \"사과\", \"바나나\" 중 하나로 씁니다.",
       "# =========================",
-      targetHint("runner_title", 2),
-      `runner_title = "${s.runner_title}"`,
       targetHint("roar_text", 2),
-      `roar_text = "${s.roar_text}"`,
+      `roar_text = "${s.roar_text || "우와앙! 더 커질 거야!"}"`,
+      targetHint("favorite_food", [2, 5]),
+      `favorite_food = "${s.favorite_food || "고기"}"`,
+      "is_favorite_food = favorite_food == \"고기\"",
       "",
       "# =========================",
-      "# [챕터 15] 숫자 에너지",
-      "# snack_score = int(input(\"첫 에너지는? \")) 와 같은 생각입니다.",
+      "# [챕터 15] 숫자 에너지 복습",
       "# =========================",
-      targetHint("start_size", 3),
-      `start_size = ${toNumber(s.start_size, 1)}`,
+      targetHint("hp", 3),
+      `hp = ${toNumber(s.hp, 100)}`,
       targetHint("snack_score", 3),
       `snack_score = ${toNumber(s.snack_score, 10)}`,
       targetHint("meat_score", 3),
@@ -1282,223 +1440,86 @@ function generateCode(seasonKey) {
       "start_energy = hp + snack_score",
       "",
       "# =========================",
-      "# [챕터 16] if로 변신 조건 만들기",
+      "# [챕터 16] 불리언 방어막",
       "# =========================",
-      targetHint("mutation_size", 4),
-      `mutation_size = ${toNumber(s.mutation_size, 60)}`,
-      targetHint("gorilla_score", 4),
-      `gorilla_score = ${toNumber(s.gorilla_score, 200)}`,
-      targetHint("dino_score", 4),
-      `dino_score = ${toNumber(s.dino_score, 500)}`,
-      "",
-      "energy = hp + meat_score",
-      targetHint("mutation_result", 4),
-      "mutation_result = \"원숭이\"",
-      "if energy >= dino_score:",
-      "    mutation_result = \"공룡\"",
-      "elif energy >= gorilla_score:",
-      "    mutation_result = \"고릴라\"",
-      "",
-      "# =========================",
-      "# [챕터 17] == 로 좋아하는 먹이 확인",
-      "# =========================",
-      targetHint("baby_name", 5),
-      `baby_name = "${s.baby_name}"`,
-      targetHint("favorite_food", 5),
-      `favorite_food = "${s.favorite_food}"`,
-      targetHint("food_name", 5),
-      `food_name = "${s.food_name || "고기"}"`,
-      targetHint("meat_score", 5),
-      `meat_score = ${toNumber(s.meat_score, 100)}`,
-      targetHint("favorite_bonus", 5),
-      `favorite_bonus = ${toNumber(s.favorite_bonus, 20)}`,
-      "",
-      "food_energy = meat_score",
-      "if food_name == favorite_food:",
-      "    food_energy = meat_score + favorite_bonus",
-      "",
-      "# =========================",
-      "# [챕터 18] else로 장애물 실패 처리",
-      "# =========================",
-      targetHint("baby_name", 6),
-      `baby_name = "${s.baby_name}"`,
-      targetHint("hp", 6),
-      `hp = ${toNumber(s.hp, 100)}`,
-      targetHint("danger_limit", 6),
-      `danger_limit = ${toNumber(s.danger_limit, 35)}`,
-      targetHint("has_shield", 6),
+      targetHint("has_shield", 4),
       `has_shield = ${toBool(s.has_shield) ? "True" : "False"}`,
-      targetHint("run_speed", 6),
-      `run_speed = ${toNumber(s.run_speed, 5)}`,
-      "",
-      targetHint("obstacle_result", 6),
-      "obstacle_result = \"방어 성공\"",
-      "if has_shield:",
-      "    obstacle_result = \"방어막으로 통과\"",
-      "else:",
-      "    hp = hp - 20",
-      "    obstacle_result = \"체력 감소\"",
-      "is_danger = hp < danger_limit",
-      "",
-      "# =========================",
-      "# [챕터 19] elif로 먹이별 결과 만들기",
-      "# =========================",
-      targetHint("baby_name", 7),
-      `baby_name = "${s.baby_name}"`,
-      targetHint("item_name", 7),
-      `item_name = "${s.item_name || "고기"}"`,
-      targetHint("meat_score", 7),
-      `meat_score = ${toNumber(s.meat_score, 100)}`,
-      targetHint("bomb_damage", 7),
-      `bomb_damage = ${toNumber(s.bomb_damage, 70)}`,
-      targetHint("attack_power", 7),
-      `attack_power = ${toNumber(s.attack_power, 18)}`,
-      targetHint("flame_damage", 7),
-      `flame_damage = ${toNumber(s.flame_damage, 200)}`,
-      targetHint("boss_power", 7),
-      `boss_power = ${toNumber(s.boss_power, 24)}`,
-      "",
-      targetHint("item_result", 7),
-      "item_result = 0",
-      "if item_name == \"고기\":",
-      "    item_result = meat_score",
-      "elif item_name == \"2배고기\":",
-      "    item_result = meat_score * 2",
-      "elif item_name == \"폭탄\":",
-      "    item_result = -bomb_damage",
-      "else:",
-      "    item_result = 0",
-      "",
-      "# =========================",
-      "# [챕터 20] > 와 < 로 위험 상태 비교",
-      "# =========================",
-      targetHint("runner_title", 8),
-      `runner_title = "${s.runner_title}"`,
-      targetHint("roar_text", 8),
-      `roar_text = "${s.roar_text}"`,
-      targetHint("start_size", 8),
-      `start_size = ${toNumber(s.start_size, 1)}`,
-      targetHint("meat_score", 8),
-      `meat_score = ${toNumber(s.meat_score, 100)}`,
-      targetHint("gorilla_score", 8),
-      `gorilla_score = ${toNumber(s.gorilla_score, 200)}`,
-      targetHint("dino_score", 8),
-      `dino_score = ${toNumber(s.dino_score, 500)}`,
-      targetHint("run_speed", 8),
-      `run_speed = ${toNumber(s.run_speed, 5)}`,
-      targetHint("danger_limit", 8),
-      `danger_limit = ${toNumber(s.danger_limit, 35)}`,
-      targetHint("growth", 8),
-      `growth = ${toNumber(s.growth, 0)}`,
-      "",
-      "is_danger = hp < danger_limit",
-      "is_fast_runner = run_speed > 6",
-      "",
-      "# =========================",
-      "# [챕터 21] >= 로 보스 게이트 열기",
-      "# =========================",
-      targetHint("baby_name", 9),
-      `baby_name = "${s.baby_name}"`,
-      targetHint("runner_title", 9),
-      `runner_title = "${s.runner_title}"`,
-      targetHint("roar_text", 9),
-      `roar_text = "${s.roar_text}"`,
-      targetHint("hp", 9),
-      `hp = ${toNumber(s.hp, 100)}`,
-      targetHint("danger_limit", 9),
-      `danger_limit = ${toNumber(s.danger_limit, 35)}`,
-      targetHint("run_speed", 9),
-      `run_speed = ${toNumber(s.run_speed, 5)}`,
-      targetHint("flame_damage", 9),
-      `flame_damage = ${toNumber(s.flame_damage, 200)}`,
-      targetHint("boss_power", 9),
-      `boss_power = ${toNumber(s.boss_power, 24)}`,
-      targetHint("boss_name", 9),
-      `boss_name = "${s.boss_name}"`,
-      "",
-      "target_energy = dino_score",
-      "can_enter_boss_gate = energy >= target_energy",
-      "",
-      "# =========================",
-      "# [챕터 22] and 조건: 방어막과 대시",
-      "# =========================",
-      targetHint("baby_name", 10),
-      `baby_name = "${s.baby_name}"`,
-      targetHint("gorilla_score", 10),
-      `gorilla_score = ${toNumber(s.gorilla_score, 200)}`,
-      targetHint("dino_score", 10),
-      `dino_score = ${toNumber(s.dino_score, 500)}`,
-      targetHint("shield_ready", 10),
+      targetHint("shield_ready", 4),
       `shield_ready = ${toBool(s.shield_ready) ? "True" : "False"}`,
-      targetHint("dash_ready", 10),
+      targetHint("dash_ready", 4),
       `dash_ready = ${toBool(s.dash_ready) ? "True" : "False"}`,
-      targetHint("hp", 10),
-      `hp = ${toNumber(s.hp, 100)}`,
-      targetHint("run_speed", 10),
-      `run_speed = ${toNumber(s.run_speed, 5)}`,
-      targetHint("boss_power", 10),
-      `boss_power = ${toNumber(s.boss_power, 24)}`,
-      targetHint("boss_name", 10),
-      `boss_name = "${s.boss_name}"`,
-      "",
-      targetHint("can_dash_shield", 10),
       "can_dash_shield = shield_ready and dash_ready",
       "",
       "# =========================",
-      "# [챕터 23] or 조건: 변신 코어",
+      "# [챕터 17] 음식 리스트",
+      "# 미션: 사과와 바나나를 반드시 넣어 실제 아이템으로 등장시키세요.",
       "# =========================",
-      targetHint("baby_name", 11),
-      `baby_name = "${s.baby_name}"`,
-      targetHint("favorite_food", 11),
-      `favorite_food = "${s.favorite_food}"`,
+      targetHint("food_items", [5, 10, 12]),
+      `food_items = ${pyList(foodItems)}`,
+      "",
+      "# =========================",
+      "# [챕터 18] 레인 튜플",
+      "# 세 값은 왼쪽, 가운데, 오른쪽을 모두 포함해야 합니다.",
+      "# =========================",
+      targetHint("lane_names", [6, 10]),
+      `lane_names = ${pyTuple(laneNames)}`,
+      targetHint("run_speed", 6),
+      `run_speed = ${toNumber(s.run_speed, 5)}`,
+      "",
+      "# =========================",
+      "# [챕터 19] 점수 딕셔너리",
+      "# 고기, 사과, 바나나는 양수 / 폭탄은 음수로 둡니다.",
+      "# =========================",
+      targetHint("item_scores", [7, 10, 12]),
+      `item_scores = ${pyDict(itemScores)}`,
+      targetHint("bomb_damage", 7),
+      `bomb_damage = ${toNumber(s.bomb_damage, 70)}`,
+      "",
+      "# =========================",
+      "# [챕터 20] 변신 캐릭터 리스트",
+      "# 1000점마다 다음 캐릭터로 바뀝니다.",
+      "# =========================",
+      targetHint("form_names", [8, 11]),
+      `form_names = ${pyList(formNames)}`,
+      targetHint("favorite_bonus", 8),
+      `favorite_bonus = ${toNumber(s.favorite_bonus, 20)}`,
+      "",
+      "# =========================",
+      "# [챕터 21] 보스 딕셔너리",
+      "# name은 허용 보스 이름 중 하나로 씁니다.",
+      "# =========================",
+      targetHint("boss", [9, 12]),
+      `boss = {"name": "${bossConfig.name}", "power": ${bossConfig.power}}`,
+      targetHint("flame_damage", 9),
+      `flame_damage = ${toNumber(s.flame_damage, 200)}`,
+      "",
+      "# =========================",
+      "# [챕터 22] 자료형 조합",
+      "# =========================",
+      "food_count = len(food_items)",
+      "lane_count = len(lane_names)",
+      "score_keys = item_scores.keys()",
+      "",
+      "# =========================",
+      "# [챕터 23] 캐릭터와 코어",
+      "# =========================",
+      "current_form_count = len(form_names)",
       targetHint("red_core", 11),
       `red_core = ${toBool(s.red_core) ? "True" : "False"}`,
       targetHint("blue_core", 11),
       `blue_core = ${toBool(s.blue_core) ? "True" : "False"}`,
-      targetHint("meat_score", 11),
-      `meat_score = ${toNumber(s.meat_score, 100)}`,
-      targetHint("gorilla_score", 11),
-      `gorilla_score = ${toNumber(s.gorilla_score, 200)}`,
-      targetHint("dino_score", 11),
-      `dino_score = ${toNumber(s.dino_score, 500)}`,
-      targetHint("flame_damage", 11),
-      `flame_damage = ${toNumber(s.flame_damage, 200)}`,
-      targetHint("boss_power", 11),
-      `boss_power = ${toNumber(s.boss_power, 24)}`,
-      "",
       targetHint("has_core_bonus", 11),
       "has_core_bonus = red_core or blue_core",
       "",
       "# =========================",
-      "# [챕터 24] 조건문 종합 보스전",
+      "# [챕터 24] 시즌2 완성",
       "# =========================",
-      targetHint("baby_name", 12),
-      `baby_name = "${s.baby_name}"`,
-      targetHint("runner_title", 12),
-      `runner_title = "${s.runner_title}"`,
-      targetHint("roar_text", 12),
-      `roar_text = "${s.roar_text}"`,
-      targetHint("meat_score", 12),
-      `meat_score = ${toNumber(s.meat_score, 100)}`,
-      targetHint("gorilla_score", 12),
-      `gorilla_score = ${toNumber(s.gorilla_score, 200)}`,
-      targetHint("dino_score", 12),
-      `dino_score = ${toNumber(s.dino_score, 500)}`,
+      "final_food_count = len(food_items)",
+      "final_boss_name = boss[\"name\"]",
       targetHint("final_attack", 12),
       "final_attack = flame_damage",
-      targetHint("boss_power", 12),
-      `boss_power = ${toNumber(s.boss_power, 24)}`,
-      targetHint("boss_name", 12),
-      `boss_name = "${s.boss_name}"`,
-      targetHint("hp", 12),
-      `hp = ${toNumber(s.hp, 100)}`,
-      "",
-      "if has_core_bonus and mutation_result == \"공룡\":",
+      "if has_core_bonus:",
       "    final_attack = flame_damage + 50",
-      "elif mutation_result == \"고릴라\":",
-      "    final_attack = flame_damage + 20",
-      "else:",
-      "    final_attack = flame_damage",
     ].filter((line) => line !== null).join("\n");
   }
   if (seasonKey === "season_03") {
@@ -1606,7 +1627,8 @@ function renderCodeEditor() {
       els.codeEditor.scrollTop = 0;
       return;
     }
-    const marker = els.codeEditor.value.indexOf("# [오늘의 업그레이드");
+    const todayMarker = els.codeEditor.value.indexOf("# 오늘 줄 1/");
+    const marker = todayMarker >= 0 ? todayMarker : els.codeEditor.value.indexOf("# [오늘의 업그레이드");
     if (marker <= 0) {
       els.codeEditor.scrollTop = 0;
       return;
@@ -1627,7 +1649,8 @@ function parseCode(seasonKey, source) {
     return stringAssignments.has(name) ? stringAssignments.get(name) : base[name];
   };
   const numberValue = (name) => {
-    const match = source.match(new RegExp(`^\\s*${name}\\s*=\\s*(-?\\d+(?:\\.\\d+)?)`, "m"));
+    const matches = [...source.matchAll(new RegExp(`^\\s*${name}\\s*=\\s*(-?\\d+(?:\\.\\d+)?)`, "gm"))];
+    const match = matches.at(-1);
     return match ? Number(match[1]) : base[name];
   };
   const numberAssignments = () => {
@@ -1729,7 +1752,8 @@ function parseCode(seasonKey, source) {
     return base.mission_status ?? base.status_text ?? `${heroName} 미션: 점수 ${score}, 체력 ${hp}`;
   };
   const boolValue = (name) => {
-    const match = source.match(new RegExp(`^\\s*${name}\\s*=\\s*(True|False|true|false)`, "m"));
+    const matches = [...source.matchAll(new RegExp(`^\\s*${name}\\s*=\\s*(True|False|true|false)`, "gm"))];
+    const match = matches.at(-1);
     return match ? String(match[1]).toLowerCase() : base[name];
   };
   const listValue = (name) => {
@@ -1737,6 +1761,50 @@ function parseCode(seasonKey, source) {
     if (!match) return base[name];
     const items = [...match[1].matchAll(/["']([^"']+)["']/g)].map((entry) => entry[1]);
     return items.length ? items.join(", ") : base[name];
+  };
+  const assignmentBody = (name, openChar, closeChar) => {
+    const escapedOpen = openChar.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const escapedClose = closeChar.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const matches = [...source.matchAll(new RegExp(`^\\s*${name}\\s*=\\s*${escapedOpen}([^${escapedClose}]*)${escapedClose}`, "gm"))];
+    const match = matches.at(-1);
+    return match ? match[1] : null;
+  };
+  const quotedItemsFrom = (raw) => {
+    if (Array.isArray(raw)) return raw.map((item) => String(item).trim()).filter(Boolean);
+    const text = String(raw ?? "").trim();
+    if (!text) return [];
+    const quoted = [...text.matchAll(/["']([^"']+)["']/g)].map((entry) => entry[1].trim()).filter(Boolean);
+    return quoted.length ? quoted : listFromText(text);
+  };
+  const sequenceValue = (name, fallback = []) => {
+    const body = assignmentBody(name, "[", "]") ?? assignmentBody(name, "(", ")");
+    const parsed = body === null ? [] : quotedItemsFrom(body);
+    return parsed.length ? parsed : quotedItemsFrom(base[name] ?? fallback);
+  };
+  const dictNumberValue = (name, fallback = {}) => {
+    const body = assignmentBody(name, "{", "}");
+    const readEntries = (raw) => {
+      const entries = {};
+      for (const match of String(raw ?? "").matchAll(/["']([^"']+)["']\s*:\s*(-?\d+(?:\.\d+)?)/g)) {
+        entries[match[1]] = Number(match[2]);
+      }
+      return entries;
+    };
+    const parsed = body === null ? {} : readEntries(body);
+    if (Object.keys(parsed).length) return parsed;
+    if (base[name] && typeof base[name] === "object" && !Array.isArray(base[name])) return base[name];
+    const fallbackEntries = readEntries(base[name]) || readEntries(JSON.stringify(fallback));
+    return Object.keys(fallbackEntries).length ? fallbackEntries : fallback;
+  };
+  const bossDictValue = () => {
+    const body = assignmentBody("boss", "{", "}");
+    const sourceText = body ?? String(base.boss ?? "");
+    const nameMatch = String(sourceText).match(/["']name["']\s*:\s*["']([^"']+)["']/);
+    const powerMatch = String(sourceText).match(/["']power["']\s*:\s*(-?\d+(?:\.\d+)?)/);
+    return {
+      name: nameMatch ? nameMatch[1] : stringValue("boss_name"),
+      power: powerMatch ? Number(powerMatch[1]) : numberValue("boss_power"),
+    };
   };
 
   if (seasonKey === "season_01") {
@@ -1784,12 +1852,29 @@ function parseCode(seasonKey, source) {
     };
   }
   if (seasonKey === "season_02") {
+    const parsedFoodItems = seasonTwoSanitizeFoodNames(sequenceValue("food_items", ["고기", "사과", "바나나"]));
+    const parsedLaneNames = seasonTwoSanitizeLaneNames(sequenceValue("lane_names", ["왼쪽", "가운데", "오른쪽"]));
+    const parsedItemScores = seasonTwoSanitizeItemScores(dictNumberValue("item_scores", SEASON_TWO_DEFAULT_ITEM_SCORES), {
+      meatScore: numberValue("meat_score"),
+      bombDamage: numberValue("bomb_damage"),
+    });
+    const parsedFormNames = seasonTwoFormNames({ form_names: sequenceValue("form_names", SEASON_TWO_DEFAULT_FORM_NAMES) });
+    const parsedBoss = seasonTwoBossConfig({
+      boss: bossDictValue(),
+      boss_name: stringValue("boss_name"),
+      boss_power: numberValue("boss_power"),
+    });
     return {
       baby_name: stringValue("baby_name"),
       runner_title: stringValue("runner_title"),
       roar_text: stringValue("roar_text"),
       favorite_food: stringValue("favorite_food"),
       food_name: stringValue("food_name"),
+      food_items: parsedFoodItems,
+      lane_names: parsedLaneNames,
+      item_scores: parsedItemScores,
+      form_names: parsedFormNames,
+      boss: parsedBoss,
       item_name: stringValue("item_name"),
       start_size: numberValue("start_size"),
       growth: numberValue("growth"),
@@ -2298,6 +2383,123 @@ const SEASON_TWO_PLAYER_FORMS = [
   { name: "Big Yeti", modelKey: "big-yeti", modelUrl: "/models/big/Yeti.gltf" },
   { name: "Wizard Blob", modelKey: "wizard-blob", modelUrl: "/models/blob/Wizard.gltf" },
 ];
+const SEASON_TWO_ALLOWED_FOODS = [
+  { name: "고기", key: "meat", color: 0xf97316, dark: 0xb45309, glow: 0xfacc15 },
+  { name: "사과", key: "apple", color: 0xef4444, dark: 0x991b1b, glow: 0xfca5a5 },
+  { name: "바나나", key: "banana", color: 0xfacc15, dark: 0xca8a04, glow: 0xfef08a },
+];
+const SEASON_TWO_DEFAULT_FOOD_NAMES = ["고기", "사과", "바나나"];
+const SEASON_TWO_DEFAULT_LANE_NAMES = ["왼쪽", "가운데", "오른쪽"];
+const SEASON_TWO_DEFAULT_ITEM_SCORES = { 고기: 100, 사과: 90, 바나나: 110, 폭탄: -70 };
+const SEASON_TWO_DEFAULT_FORM_NAMES = ["Alien Blob", "Big Alien", "Green Blob", "Big Dino", "Pink Blob"];
+const SEASON_TWO_ALLOWED_FORM_NAMES = SEASON_TWO_PLAYER_FORMS.map((form) => form.name);
+const SEASON_TWO_FORM_BY_NAME = Object.fromEntries(SEASON_TWO_PLAYER_FORMS.map((form) => [form.name, form]));
+
+function clampSeasonTwoNumber(value, min, max, fallback) {
+  const number = toNumber(value, fallback);
+  return Math.max(min, Math.min(max, number));
+}
+
+function seasonTwoNamesFromValue(value) {
+  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
+  const text = String(value ?? "").trim();
+  if (!text) return [];
+  const quoted = [...text.matchAll(/["']([^"']+)["']/g)].map((entry) => entry[1].trim()).filter(Boolean);
+  if (quoted.length) return quoted;
+  return listFromText(text.replace(/[\[\](){}]/g, ""));
+}
+
+function seasonTwoUniqueAllowedNames(values, allowedNames, fallback, max = allowedNames.length) {
+  const allowed = new Set(allowedNames);
+  const result = [];
+  seasonTwoNamesFromValue(values).forEach((name) => {
+    if (allowed.has(name) && !result.includes(name)) result.push(name);
+  });
+  return result.length ? result.slice(0, max) : [...fallback];
+}
+
+function seasonTwoSanitizeFoodNames(value) {
+  return seasonTwoUniqueAllowedNames(
+    value,
+    SEASON_TWO_ALLOWED_FOODS.map((food) => food.name),
+    SEASON_TWO_DEFAULT_FOOD_NAMES,
+    SEASON_TWO_ALLOWED_FOODS.length,
+  );
+}
+
+function seasonTwoFoodItems(settings = state.settings.season_02 || {}, chapter = seasonTwoChapter()) {
+  if (chapter < 5) return ["고기"];
+  return seasonTwoSanitizeFoodNames(settings.food_items ?? settings.food_name ?? SEASON_TWO_DEFAULT_FOOD_NAMES);
+}
+
+function seasonTwoFoodMeta(foodName = "고기") {
+  return SEASON_TWO_ALLOWED_FOODS.find((food) => food.name === foodName) || SEASON_TWO_ALLOWED_FOODS[0];
+}
+
+function seasonTwoSanitizeLaneNames(value) {
+  const names = seasonTwoUniqueAllowedNames(value, SEASON_TWO_DEFAULT_LANE_NAMES, SEASON_TWO_DEFAULT_LANE_NAMES, 3);
+  const hasAllLanes = names.length === 3 && SEASON_TWO_DEFAULT_LANE_NAMES.every((lane) => names.includes(lane));
+  return hasAllLanes ? names : [...SEASON_TWO_DEFAULT_LANE_NAMES];
+}
+
+function seasonTwoLaneNames(settings = state.settings.season_02 || {}) {
+  return seasonTwoSanitizeLaneNames(settings.lane_names ?? SEASON_TWO_DEFAULT_LANE_NAMES);
+}
+
+function seasonTwoSanitizeItemScores(value, options = {}) {
+  const raw = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  const meatScore = clampSeasonTwoNumber(options.meatScore, 90, 130, SEASON_TWO_DEFAULT_ITEM_SCORES["고기"]);
+  const bombFallback = -Math.abs(clampSeasonTwoNumber(options.bombDamage, 50, 110, Math.abs(SEASON_TWO_DEFAULT_ITEM_SCORES["폭탄"])));
+  const base = {
+    고기: meatScore,
+    사과: SEASON_TWO_DEFAULT_ITEM_SCORES["사과"],
+    바나나: SEASON_TWO_DEFAULT_ITEM_SCORES["바나나"],
+    폭탄: bombFallback,
+  };
+  ["고기", "사과", "바나나"].forEach((name) => {
+    if (Object.prototype.hasOwnProperty.call(raw, name)) {
+      base[name] = Math.round(clampSeasonTwoNumber(raw[name], 90, 130, base[name]));
+    }
+  });
+  if (Object.prototype.hasOwnProperty.call(raw, "폭탄")) {
+    base["폭탄"] = -Math.round(clampSeasonTwoNumber(Math.abs(toNumber(raw["폭탄"], Math.abs(base["폭탄"]))), 50, 110, Math.abs(base["폭탄"])));
+  }
+  return base;
+}
+
+function seasonTwoItemScores(settings = state.settings.season_02 || {}) {
+  return seasonTwoSanitizeItemScores(settings.item_scores, {
+    meatScore: settings.meat_score,
+    bombDamage: settings.bomb_damage,
+  });
+}
+
+function seasonTwoFormNames(settings = state.settings.season_02 || {}) {
+  return seasonTwoUniqueAllowedNames(
+    settings.form_names ?? SEASON_TWO_DEFAULT_FORM_NAMES,
+    SEASON_TWO_ALLOWED_FORM_NAMES,
+    SEASON_TWO_DEFAULT_FORM_NAMES,
+    SEASON_TWO_PLAYER_FORMS.length,
+  );
+}
+
+function seasonTwoPlayerForms(settings = state.settings.season_02 || {}) {
+  return seasonTwoFormNames(settings).map((name) => SEASON_TWO_FORM_BY_NAME[name]).filter(Boolean);
+}
+
+function seasonTwoBossByName(name) {
+  return seasonTwoFlyingBosses.find((boss) => boss.name === name) || null;
+}
+
+function seasonTwoBossConfig(settings = state.settings.season_02 || {}) {
+  const rawBoss = settings.boss && typeof settings.boss === "object" ? settings.boss : {};
+  const rawName = rawBoss.name || settings.boss_name || "Dragon";
+  const boss = seasonTwoBossByName(rawName) || seasonTwoBossByName("Dragon") || seasonTwoFlyingBosses[0];
+  return {
+    name: boss.name,
+    power: Math.round(clampSeasonTwoNumber(rawBoss.power ?? settings.boss_power, 1, 9999, 1200)),
+  };
+}
 
 function seasonTwoHas(chapter) {
   return seasonTwoChapter() >= chapter;
@@ -2323,11 +2525,15 @@ function seasonTwoBaseEnergy(chapter, settings = state.settings.season_02 || {})
 }
 
 function seasonTwoMeatEnergyValue(settings = state.settings.season_02 || {}) {
-  const meatPoint = Math.max(1, toNumber(settings.meat_score, 100));
-  const foodLabel = String(settings.food_name || settings.favorite_food || "고기").trim() || "고기";
+  const foods = seasonTwoFoodItems(settings, 12);
+  const scores = seasonTwoItemScores(settings);
   const favoriteFood = String(settings.favorite_food || "고기").trim() || "고기";
-  const favoriteBonus = favoriteFood === foodLabel ? Math.max(0, toNumber(settings.favorite_bonus, 20)) : 0;
-  return meatPoint + favoriteBonus;
+  const favoriteBonus = Math.max(0, toNumber(settings.favorite_bonus, 20));
+  const total = foods.reduce((sum, foodName) => {
+    const baseScore = scores[foodName] ?? scores["고기"];
+    return sum + baseScore + (favoriteFood === foodName ? favoriteBonus : 0);
+  }, 0);
+  return Math.max(1, Math.round(total / Math.max(1, foods.length)));
 }
 
 function seasonTwoAllMeatEnergy(chapter, settings = state.settings.season_02 || {}) {
@@ -2342,9 +2548,10 @@ function seasonTwoBossForChapter(chapter = seasonTwoChapter(), settings = state.
   const config = settings || {};
   const bosses = seasonTwoFlyingBosses;
   const index = Math.min(bosses.length - 1, Math.max(0, chapter - 1));
-  const base = bosses[index];
+  const learnedBoss = chapter >= 9 ? seasonTwoBossByName(seasonTwoBossConfig(config).name) : null;
+  const base = learnedBoss || bosses[index];
   const expectedEnergy = seasonTwoBossExpectedEnergy(chapter, config);
-  const expectedEvolution = seasonTwoPlayerModelEvolution({ chapter, meatEnergyCollected: expectedEnergy });
+  const expectedEvolution = seasonTwoPlayerModelEvolution({ chapter, meatEnergyCollected: expectedEnergy }, config);
   const maxGaugeTiming = { label: "완벽 타이밍", multiplier: 2.65, quality: 1 };
   const maxGaugeDamage = seasonTwoPlayerAttackDamage("flame", maxGaugeTiming, expectedEvolution, config, {
     chapter,
@@ -2353,7 +2560,11 @@ function seasonTwoBossForChapter(chapter = seasonTwoChapter(), settings = state.
   const balance = seasonTwoChapterBalance(chapter);
   const expectedBossHp = Math.round(maxGaugeDamage * balance.playerHitsToWin);
   const expectedBossPower = Math.ceil(expectedEnergy / Math.max(1, balance.bossHitsToDefeat));
-  const tunedBossPower = Math.ceil(Math.max(base.power, expectedBossPower) * SEASON_TWO_BOSS_POWER_MULTIPLIER);
+  const learnedPower = chapter >= 9 ? seasonTwoBossConfig(config).power : 0;
+  const learnedPowerFloor = Math.ceil(expectedBossPower * 0.75);
+  const learnedPowerCeil = Math.ceil(expectedBossPower * 1.25);
+  const clampedLearnedPower = learnedPower ? Math.max(learnedPowerFloor, Math.min(learnedPowerCeil, learnedPower)) : 0;
+  const tunedBossPower = Math.ceil(Math.max(base.power, expectedBossPower, clampedLearnedPower) * SEASON_TWO_BOSS_POWER_MULTIPLIER);
   return {
     ...base,
     name: base.name,
@@ -2369,9 +2580,9 @@ function seasonTwoPlayerGrowthScore(source = 0) {
   return Math.max(0, Math.round(toNumber(rawScore, 0)));
 }
 
-function seasonTwoPlayerFormIndex(score) {
+function seasonTwoPlayerFormIndex(score, forms = SEASON_TWO_PLAYER_FORMS) {
   const stepIndex = Math.floor(Math.max(0, score) / SEASON_TWO_PLAYER_TRANSFORM_SCORE);
-  return Math.max(0, Math.min(SEASON_TWO_PLAYER_FORMS.length - 1, stepIndex));
+  return Math.max(0, Math.min(forms.length - 1, stepIndex));
 }
 
 function seasonTwoPlayerGrowthScale(score, formIndex = seasonTwoPlayerFormIndex(score)) {
@@ -2383,15 +2594,16 @@ function seasonTwoPlayerGrowthScale(score, formIndex = seasonTwoPlayerFormIndex(
   return 1 + progress * SEASON_TWO_PLAYER_GROWTH_SCALE_GAIN;
 }
 
-function seasonTwoPlayerModelEvolution(source = 0) {
+function seasonTwoPlayerModelEvolution(source = 0, settings = state.settings.season_02 || {}) {
   const growthScore = seasonTwoPlayerGrowthScore(source);
   const sourceChapter = typeof source === "object" && source !== null
     ? Math.max(1, Math.min(12, Number(source.chapter) || seasonTwoChapter()))
     : seasonTwoChapter();
-  const rawFormIndex = seasonTwoPlayerFormIndex(growthScore);
+  const forms = seasonTwoPlayerForms(settings);
+  const rawFormIndex = seasonTwoPlayerFormIndex(growthScore, forms);
   const transformUnlocked = sourceChapter >= SEASON_TWO_TRANSFORM_UNLOCK_CHAPTER;
   const formIndex = transformUnlocked ? rawFormIndex : 0;
-  const form = SEASON_TWO_PLAYER_FORMS[formIndex] || SEASON_TWO_PLAYER_FORMS[0];
+  const form = forms[formIndex] || forms[0] || SEASON_TWO_PLAYER_FORMS[0];
   const transformed = formIndex > 0;
   return {
     name: form.name,
@@ -2691,22 +2903,32 @@ function seasonTwoReset() {
     pickupGlowKind: "",
     pickupGlowUntil: 0,
     bossCameraReady: false,
+    foodSpawnIndex: 0,
     shieldCharges: toBool(s.shield_ready) ? 2 : 0,
     dashCharges: toBool(s.dash_ready) ? 2 : 0,
     roarSpeechUntil: chapter >= 2 ? performance.now() + SEASON_TWO_ROAR_SPEECH_MS : 0,
-    message: `${SEASON_TWO_PLAYER_MODEL_NAME} 출동!`,
+    message: s.runner_title || `${SEASON_TWO_PLAYER_MODEL_NAME} 출동!`,
   };
 }
 
-function seasonTwoItemData(kind, settings) {
+function seasonTwoFoodForSpawn(game, settings) {
+  const foods = seasonTwoFoodItems(settings, game.chapter);
+  const index = game.foodSpawnIndex || 0;
+  game.foodSpawnIndex = index + 1;
+  return foods[index % Math.max(1, foods.length)] || "고기";
+}
+
+function seasonTwoItemData(kind, settings, foodName = "고기") {
   const config = settings || {};
-  const meatPoint = Math.max(1, toNumber(config.meat_score, 100));
-  const foodLabel = String(config.food_name || config.favorite_food || "고기").trim() || "고기";
-  const bombDamage = Math.max(1, toNumber(config.bomb_damage, Math.max(30, Math.round(meatPoint * 0.7))));
+  const scores = seasonTwoItemScores(config);
+  const foodMeta = seasonTwoFoodMeta(foodName);
+  const foodLabel = foodMeta.name;
+  const meatPoint = Math.max(1, scores[foodLabel] ?? scores["고기"] ?? toNumber(config.meat_score, 100));
+  const bombDamage = Math.max(1, Math.abs(scores["폭탄"] ?? toNumber(config.bomb_damage, Math.max(30, Math.round(meatPoint * 0.7)))));
   const data = {
-    meat: { label: foodLabel, point: 0, growth: 0, energy: meatPoint, multiplier: 1 },
-    double_meat: { label: `대왕${foodLabel}`, point: 0, growth: 0, energy: meatPoint * 2, multiplier: 2 },
-    triple_meat: { label: `초대왕${foodLabel}`, point: 0, growth: 0, energy: meatPoint * 3, multiplier: 3 },
+    meat: { label: foodLabel, point: 0, growth: 0, energy: meatPoint, multiplier: 1, foodName: foodLabel, foodKey: foodMeta.key },
+    double_meat: { label: `대왕${foodLabel}`, point: 0, growth: 0, energy: meatPoint * 2, multiplier: 2, foodName: foodLabel, foodKey: foodMeta.key },
+    triple_meat: { label: `초대왕${foodLabel}`, point: 0, growth: 0, energy: meatPoint * 3, multiplier: 3, foodName: foodLabel, foodKey: foodMeta.key },
     bomb: { label: "폭탄", point: 0, growth: 0, energy: -bombDamage },
     nuke: { label: "핵폭탄", point: 0, growth: 0, energy: -9999 },
   };
@@ -2714,7 +2936,8 @@ function seasonTwoItemData(kind, settings) {
 }
 
 function createSeasonTwoItemEntry(game, settings, kind, lane, y) {
-  const item = seasonTwoItemData(kind, settings);
+  const foodName = seasonTwoIsMeatKind(kind) ? seasonTwoFoodForSpawn(game, settings) : "고기";
+  const item = seasonTwoItemData(kind, settings, foodName);
   const entry = {
     kind,
     label: item.label,
@@ -2722,6 +2945,8 @@ function createSeasonTwoItemEntry(game, settings, kind, lane, y) {
     growth: item.growth,
     energy: item.energy,
     multiplier: item.multiplier || seasonTwoMeatRewardMultiplier(kind),
+    foodName: item.foodName || "",
+    foodKey: item.foodKey || "",
     lane,
     y,
     id: `${kind}-${game.tick}-${Math.random().toString(36).slice(2, 6)}`,
@@ -2809,12 +3034,12 @@ function collectSeasonTwoItem(item, settings, game) {
     game.combo = 0;
     game.message = damage > 0 ? `폭탄! 에너지 -${damage} · 현재 에너지 ${game.hp}` : "방어막과 대시로 폭탄 피해를 막았어!";
     playPickupSound("trap");
-    if (game.hp <= 0) finishSeasonTwo("gameOver", "에너지가 0이 되었어. 고기를 더 모아 보자!");
+    if (game.hp <= 0) finishSeasonTwo("gameOver", "에너지가 0이 되었어. 음식을 더 모아 보자!");
     return;
   }
 
   const favoriteFood = String(settings.favorite_food || "고기").trim() || "고기";
-  const foodLabel = String(settings.food_name || settings.favorite_food || "고기").trim() || "고기";
+  const foodLabel = item.foodName || item.label || "고기";
   const meatMultiplier = seasonTwoMeatRewardMultiplier(item.kind);
   const favoriteBonus = seasonTwoIsMeatKind(item.kind) && foodLabel === favoriteFood
     ? Math.max(0, toNumber(settings.favorite_bonus, 20)) * meatMultiplier
@@ -3095,7 +3320,8 @@ function renderSeasonTwoItems(game) {
   return game.items.map((item) => {
     const left = seasonTwoLaneLeft(item.lane);
     const itemScale = Math.max(0.34, Math.min(1, 0.36 + Math.max(0, item.y) * 0.0068));
-    return `<div class="runner-item item-${item.kind}" style="left:${left}%;top:${item.y}%;--item-scale:${itemScale.toFixed(2)}"><span></span><strong>${item.label}</strong></div>`;
+    const foodClass = item.foodKey ? ` food-${item.foodKey}` : "";
+    return `<div class="runner-item item-${item.kind}${foodClass}" style="left:${left}%;top:${item.y}%;--item-scale:${itemScale.toFixed(2)}"><span></span><strong>${item.label}</strong></div>`;
   }).join("");
 }
 
@@ -4065,20 +4291,40 @@ function createSeasonTwoItem3D(THREE, item) {
     }
   } else {
     const multiplier = seasonTwoMeatRewardMultiplier(kind);
-    const meatColor = kind === "triple_meat" ? 0x38bdf8 : kind === "double_meat" ? 0xfacc15 : 0xf97316;
-    const meatDark = kind === "triple_meat" ? 0x0369a1 : kind === "double_meat" ? 0xca8a04 : 0xb45309;
-    const glowColor = kind === "triple_meat" ? 0x7dd3fc : 0xfacc15;
-    addSeasonTwoSphere(THREE, group, multiplier > 1 ? 0.44 + (multiplier - 2) * 0.05 : 0.34, [0.05, 0.02, 0], meatColor, [1.28, 0.9, 0.82], {
-      roughness: 0.58,
-      emissive: multiplier > 1 ? glowColor : 0x000000,
-      emissiveIntensity: multiplier > 1 ? 0.12 + (multiplier - 2) * 0.08 : 0,
-    });
-    addSeasonTwoSphere(THREE, group, 0.22, [0.18, 0.08, 0.08], meatDark, [1, 0.72, 0.72]);
-    addSeasonTwoCylinder(THREE, group, 0.08, 0.08, 0.55, [-0.38, 0, 0], 0xfef3c7, [0, 0, Math.PI / 2], 16);
-    addSeasonTwoSphere(THREE, group, 0.11, [-0.64, 0.1, 0], 0xfef3c7, [1, 1, 1]);
-    addSeasonTwoSphere(THREE, group, 0.11, [-0.64, -0.1, 0], 0xfef3c7, [1, 1, 1]);
+    const foodMeta = seasonTwoFoodMeta(item.foodName || "고기");
+    const glowColor = multiplier > 2 ? 0x7dd3fc : foodMeta.glow;
+    if (foodMeta.key === "apple") {
+      addSeasonTwoSphere(THREE, group, multiplier > 1 ? 0.42 : 0.34, [0, 0.02, 0], foodMeta.color, [1.04, 1, 0.96], {
+        roughness: 0.48,
+        emissive: multiplier > 1 ? glowColor : 0x000000,
+        emissiveIntensity: multiplier > 1 ? 0.14 + (multiplier - 2) * 0.06 : 0,
+      });
+      addSeasonTwoCylinder(THREE, group, 0.035, 0.045, 0.25, [0.02, 0.36, 0], 0x7c2d12, [0.2, 0, 0.1], 10);
+      addSeasonTwoSphere(THREE, group, 0.11, [0.16, 0.42, 0], 0x22c55e, [1.28, 0.5, 0.72], { roughness: 0.6 });
+    } else if (foodMeta.key === "banana") {
+      addSeasonTwoSphere(THREE, group, multiplier > 1 ? 0.32 : 0.26, [-0.12, 0, 0], foodMeta.color, [0.78, 1.82, 0.52], {
+        roughness: 0.52,
+        emissive: multiplier > 1 ? glowColor : 0x000000,
+        emissiveIntensity: multiplier > 1 ? 0.12 + (multiplier - 2) * 0.06 : 0,
+      });
+      addSeasonTwoSphere(THREE, group, 0.16, [0.12, -0.02, 0], 0xfef08a, [0.76, 1.5, 0.48]);
+      addSeasonTwoSphere(THREE, group, 0.055, [-0.36, 0.22, 0], 0x854d0e, [1, 1, 1]);
+      addSeasonTwoSphere(THREE, group, 0.055, [0.34, -0.24, 0], 0x854d0e, [1, 1, 1]);
+    } else {
+      const meatColor = kind === "triple_meat" ? 0x38bdf8 : kind === "double_meat" ? 0xfacc15 : foodMeta.color;
+      const meatDark = kind === "triple_meat" ? 0x0369a1 : kind === "double_meat" ? 0xca8a04 : foodMeta.dark;
+      addSeasonTwoSphere(THREE, group, multiplier > 1 ? 0.44 + (multiplier - 2) * 0.05 : 0.34, [0.05, 0.02, 0], meatColor, [1.28, 0.9, 0.82], {
+        roughness: 0.58,
+        emissive: multiplier > 1 ? glowColor : 0x000000,
+        emissiveIntensity: multiplier > 1 ? 0.12 + (multiplier - 2) * 0.08 : 0,
+      });
+      addSeasonTwoSphere(THREE, group, 0.22, [0.18, 0.08, 0.08], meatDark, [1, 0.72, 0.72]);
+      addSeasonTwoCylinder(THREE, group, 0.08, 0.08, 0.55, [-0.38, 0, 0], 0xfef3c7, [0, 0, Math.PI / 2], 16);
+      addSeasonTwoSphere(THREE, group, 0.11, [-0.64, 0.1, 0], 0xfef3c7, [1, 1, 1]);
+      addSeasonTwoSphere(THREE, group, 0.11, [-0.64, -0.1, 0], 0xfef3c7, [1, 1, 1]);
+    }
     if (multiplier > 1) {
-      addSeasonTwoSphere(THREE, group, 0.13, [0.44, 0.2, 0.02], kind === "triple_meat" ? 0xe0f2fe : 0xfef9c3, [1, 1, 1], {
+      addSeasonTwoSphere(THREE, group, 0.13, [0.44, 0.2, 0.02], multiplier > 2 ? 0xe0f2fe : 0xfef9c3, [1, 1, 1], {
         emissive: glowColor,
         emissiveIntensity: 0.22,
       });
@@ -4419,7 +4665,8 @@ function renderSeasonTwo() {
   g.targetEnergy = seasonTwoTargetEnergy(chapter, s);
   g.targetSeconds = seasonTwoRunnerTargetSeconds(chapter);
   g.size = 1;
-  const evolution = seasonTwoPlayerModelEvolution(g);
+  const evolution = seasonTwoPlayerModelEvolution(g, s);
+  const playerName = s.baby_name || evolution.name;
   const monsterVisualScale = evolution.scale;
   const progress = Math.min(100, (g.distance / g.goal) * 100);
   const energyPercent = Math.max(0, Math.min(100, (g.hp / Math.max(1, g.targetEnergy)) * 100));
@@ -4458,8 +4705,10 @@ function renderSeasonTwo() {
   const cameraClass = isBossScene ? (g.bossCameraReady ? "camera-settled" : "camera-panning") : "";
   const playerLeft = isBossScene ? 27 : laneLeft;
   const runnerItems = g.phase === "runner" ? renderSeasonTwoItems(g) : "";
+  const foodListLabel = seasonTwoFoodItems(s, chapter).join(", ");
   const runnerFoodSummary = [
-    `고기 총 ${g.fixedMeatCount || 0}`,
+    `음식 총 ${g.fixedMeatCount || 0}`,
+    `목록 ${foodListLabel}`,
     (g.fixedDoubleMeatCount || 0) > 0 ? `대왕 ${g.fixedDoubleMeatCount}` : "",
     (g.fixedTripleMeatCount || 0) > 0 ? `초대왕 ${g.fixedTripleMeatCount}` : "",
     `폭탄 ${g.fixedBombCount || 0}`,
@@ -4492,14 +4741,14 @@ function renderSeasonTwo() {
   const roarSpeechActive = state.gameStarted && !isBossScene && s.roar_text && (g.roarSpeechUntil || 0) > now;
   const roarSpeech = roarSpeechActive ? `
     <div class="runner-speech-overlay" style="left:${playerLeft}%">
-      <span>${evolution.name}</span>
+      <span>${playerName}</span>
       <strong>${s.roar_text}</strong>
     </div>
   ` : "";
   const bossFightHud = isBossScene ? `
     <div class="boss-fight-hud">
       <div class="boss-fight-health player">
-        <span>${evolution.name}</span>
+        <span>${playerName}</span>
         <div><i style="width:${hpPercent}%"></i></div>
         <strong>${g.hp}/${g.maxHp}</strong>
       </div>
@@ -4525,7 +4774,7 @@ function renderSeasonTwo() {
     </div>
   ` : "";
   setHud(
-    `${evolution.name} 출동!`,
+    `${playerName} 출동!`,
     `에너지 ${g.hp}/${g.targetEnergy} · ${evolution.name} · ${phaseLabel}`,
   );
   els.action.textContent = resultDelayActive ? "결과 확인 중" : turnDelayActive ? "턴 전환 중" : playerNoticeActive ? "내 차례 준비" : bossNoticeActive ? "보스 차례 준비" : bossTurnActive ? "보스 공격 중" : g.phase === "boss" ? "Space 타이밍 공격" : g.phase === "runner" ? "← → 이동으로 먹기" : "결과 확인";
@@ -4552,7 +4801,7 @@ function renderSeasonTwo() {
           ${runnerItems}
           <div class="runner-kaiju" style="left:${playerLeft}%">
             ${roarSpeechActive ? `<span class="kaiju-speech">${s.roar_text}</span>` : ""}
-            ${seasonTwoMonsterMarkup(evolution.name, evolution, isBossScene ? "fighter-model" : "", monsterVisualScale)}
+            ${seasonTwoMonsterMarkup(playerName, evolution, isBossScene ? "fighter-model" : "", monsterVisualScale)}
             ${playerBar}
           </div>
           ${bossFighter}
@@ -4566,7 +4815,7 @@ function renderSeasonTwo() {
       <div class="runner-dashboard">
         <div>
           <strong>${g.message}</strong>
-          <span>${isBossScene ? `${turnDelayActive ? "다음 차례 준비 중" : bossNoticeActive ? "보스가 공격을 준비 중" : bossTurnActive ? "보스 공격을 피하는 중" : playerNoticeActive ? "내 공격 차례 준비" : "내 공격 차례"} · 내 에너지 ${g.hp} · 보스 에너지 ${g.bossHp}/${g.boss.maxHp}` : `← → 좌우 이동 · ${evolution.name} 테스트 · 고기 에너지 수집`}</span>
+          <span>${isBossScene ? `${turnDelayActive ? "다음 차례 준비 중" : bossNoticeActive ? "보스가 공격을 준비 중" : bossTurnActive ? "보스 공격을 피하는 중" : playerNoticeActive ? "내 공격 차례 준비" : "내 공격 차례"} · 내 에너지 ${g.hp} · 보스 에너지 ${g.bossHp}/${g.boss.maxHp}` : `← → 좌우 이동 · ${evolution.name} 테스트 · 음식 에너지 수집`}</span>
         </div>
         <div class="runner-energy-goal">${isBossScene ? `내 에너지 ${g.hp} · 보스 ${g.bossHp}/${g.boss.maxHp}` : `목표 에너지 ${g.targetEnergy} · ${g.targetSeconds}초 · ${runnerFoodSummary}`}</div>
         <div class="${isBossScene ? "boss-badges" : "runner-bars"}">
@@ -4619,7 +4868,8 @@ function moveSeasonTwoLane(delta) {
   const g = state.game.season_02;
   if (!g || g.phase !== "runner") return;
   g.lane = Math.max(0, Math.min(2, g.lane + delta));
-  g.message = `${g.lane === 0 ? "왼쪽" : g.lane === 1 ? "가운데" : "오른쪽"} 레인으로 이동!`;
+  const laneNames = seasonTwoLaneNames(state.settings.season_02);
+  g.message = `${laneNames[g.lane] || SEASON_TWO_DEFAULT_LANE_NAMES[g.lane]} 레인으로 이동!`;
   playFootstep();
   renderSeasonTwo();
 }
@@ -4638,7 +4888,7 @@ function resolveSeasonTwoBossTurn(expectedDamage, attackId) {
     scheduleSeasonTwoResult(
       g,
       "gameOver",
-      `${g.boss.name}에게 졌어. 러너 구간에서 고기를 더 모아 에너지를 키워 보자!`,
+      `${g.boss.name}에게 졌어. 러너 구간에서 음식을 더 모아 에너지를 키워 보자!`,
       "player",
       SEASON_TWO_RESULT_POPUP_DELAY_MS,
       0,
@@ -4663,7 +4913,8 @@ function seasonTwoAction() {
   }
   if (g.phase !== "boss") return;
   if (!seasonTwoCanAttack(g)) return;
-  const evolution = seasonTwoPlayerModelEvolution(g);
+  const evolution = seasonTwoPlayerModelEvolution(g, s);
+  const playerName = s.baby_name || evolution.name;
   const timing = seasonTwoTimingResult(g);
   const attackKind = "flame";
   const damage = seasonTwoPlayerAttackDamage(attackKind, timing, evolution, s, g);
@@ -4676,7 +4927,7 @@ function seasonTwoAction() {
   g.attackEffectQuality = timing.quality;
   g.bossMeterStartedAt = performance.now();
   const attackLabel = "레이저빔";
-  g.message = `${timing.label}! ${koreanSubject(evolution.name)} ${attackLabel}로 ${g.boss.name}에게 ${damage} 피해`;
+  g.message = `${timing.label}! ${koreanSubject(playerName)} ${attackLabel}로 ${g.boss.name}에게 ${damage} 피해`;
   playTone({ frequency: 240, duration: 0.12, type: "square", volume: 0.05, slide: 320 });
   if (g.bossHp <= 0) {
     scheduleSeasonTwoResult(
