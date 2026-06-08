@@ -533,6 +533,8 @@ const seasonTwoThree = {
   playerGroup: null,
   playerModelPromise: null,
   playerModelRoot: null,
+  playerModelKey: "",
+  playerModelLoadToken: 0,
   playerMixer: null,
   playerAction: null,
   playerMeshes: [],
@@ -2217,7 +2219,13 @@ function seasonTwoChapter() {
 
 const SEASON_TWO_CHARACTER_SIZE_MULTIPLIER = 0.5;
 const SEASON_TWO_PLAYER_MODEL_NAME = "Alien Blob";
+const SEASON_TWO_PLAYER_MODEL_KEY = "alien-blob";
 const SEASON_TWO_PLAYER_MODEL_URL = "/models/blob/Alien.gltf";
+const SEASON_TWO_BIG_PLAYER_MODEL_NAME = "Big Alien";
+const SEASON_TWO_BIG_PLAYER_MODEL_KEY = "big-alien";
+const SEASON_TWO_BIG_PLAYER_MODEL_URL = "/models/big/Alien.gltf";
+const SEASON_TWO_PLAYER_TRANSFORM_SCORE = 5000;
+const SEASON_TWO_PLAYER_GROWTH_SCALE_GAIN = 0.3;
 const SEASON_TWO_PLAYER_RUNNER_SCALE = 0.44;
 const SEASON_TWO_PLAYER_BOSS_SCALE = 0.54;
 const SEASON_TWO_PLAYER_OUTLINE_SCALE = 1.036;
@@ -2309,8 +2317,35 @@ function seasonTwoBossForChapter(chapter = seasonTwoChapter(), settings = state.
   };
 }
 
-function seasonTwoPlayerModelEvolution() {
-  return { name: SEASON_TWO_PLAYER_MODEL_NAME, className: "alien-blob", scale: 1, rank: 1 };
+function seasonTwoPlayerGrowthScore(source = 0) {
+  const rawScore = typeof source === "object" && source !== null
+    ? source.meatEnergyCollected ?? source.meatScore ?? source.score ?? 0
+    : source;
+  return Math.max(0, Math.round(toNumber(rawScore, 0)));
+}
+
+function seasonTwoPlayerGrowthScale(score, transformed) {
+  const baseScore = transformed ? Math.max(0, score - SEASON_TWO_PLAYER_TRANSFORM_SCORE) : score;
+  const progress = Math.max(0, Math.min(1, baseScore / SEASON_TWO_PLAYER_TRANSFORM_SCORE));
+  return 1 + progress * SEASON_TWO_PLAYER_GROWTH_SCALE_GAIN;
+}
+
+function seasonTwoPlayerModelEvolution(source = 0) {
+  const growthScore = seasonTwoPlayerGrowthScore(source);
+  const transformed = growthScore >= SEASON_TWO_PLAYER_TRANSFORM_SCORE;
+  const name = transformed ? SEASON_TWO_BIG_PLAYER_MODEL_NAME : SEASON_TWO_PLAYER_MODEL_NAME;
+  const modelKey = transformed ? SEASON_TWO_BIG_PLAYER_MODEL_KEY : SEASON_TWO_PLAYER_MODEL_KEY;
+  const modelUrl = transformed ? SEASON_TWO_BIG_PLAYER_MODEL_URL : SEASON_TWO_PLAYER_MODEL_URL;
+  return {
+    name,
+    className: modelKey,
+    scale: seasonTwoPlayerGrowthScale(growthScore, transformed),
+    rank: transformed ? 2 : 1,
+    modelKey,
+    modelUrl,
+    growthScore,
+    transformed,
+  };
 }
 
 function seasonTwoMutationScores(settings = state.settings.season_02 || {}) {
@@ -2492,6 +2527,7 @@ function seasonTwoReset() {
     lane: 1,
     tick: 0,
     score: 0,
+    meatEnergyCollected: 0,
     hp: baseEnergy,
     maxHp: baseEnergy,
     size: baseSize,
@@ -2651,6 +2687,7 @@ function collectSeasonTwoItem(item, settings, game) {
   markPickupGlow("good");
   game.hp += energyGain;
   game.maxHp = Math.max(game.maxHp, game.hp);
+  game.meatEnergyCollected = seasonTwoPlayerGrowthScore(game.meatEnergyCollected) + energyGain;
   game.score = game.hp;
   game.size = 1;
   game.growth = 0;
@@ -2967,11 +3004,32 @@ function playSeasonTwoIdleClip(THREE, mixer, clip) {
   return action;
 }
 
-function createSeasonTwoPlayerOutline(THREE, cloneSkinnedModel, root, idleClip) {
+function resetSeasonTwoPlayerModelInstance() {
+  if (seasonTwoThree.playerAction) seasonTwoThree.playerAction.stop();
+  if (seasonTwoThree.playerMixer) seasonTwoThree.playerMixer.stopAllAction();
+  if (seasonTwoThree.playerOutlineMixer) seasonTwoThree.playerOutlineMixer.stopAllAction();
+  const group = seasonTwoThree.playerGroup;
+  [seasonTwoThree.playerModelRoot, seasonTwoThree.playerOutlineRoot].forEach((root) => {
+    if (!root) return;
+    if (group && root.parent === group) group.remove(root);
+    disposeThreeScene(root);
+  });
+  seasonTwoThree.playerModelPromise = null;
+  seasonTwoThree.playerModelRoot = null;
+  seasonTwoThree.playerModelKey = "";
+  seasonTwoThree.playerMixer = null;
+  seasonTwoThree.playerAction = null;
+  seasonTwoThree.playerMeshes = [];
+  seasonTwoThree.playerOutlineRoot = null;
+  seasonTwoThree.playerOutlineMixer = null;
+  seasonTwoThree.playerOutlineMaterials = [];
+}
+
+function createSeasonTwoPlayerOutline(THREE, cloneSkinnedModel, root, idleClip, modelName = SEASON_TWO_PLAYER_MODEL_NAME) {
   if (seasonTwoThree.playerOutlineRoot) return;
   const outlineRoot = cloneSkinnedModel ? cloneSkinnedModel(root) : root.clone(true);
   const outlineMaterials = [];
-  outlineRoot.name = `${SEASON_TWO_PLAYER_MODEL_NAME} Outline`;
+  outlineRoot.name = `${modelName} Outline`;
   outlineRoot.visible = false;
   outlineRoot.scale.setScalar(SEASON_TWO_PLAYER_OUTLINE_SCALE);
   outlineRoot.traverse((object) => {
@@ -2999,20 +3057,37 @@ function createSeasonTwoPlayerOutline(THREE, cloneSkinnedModel, root, idleClip) 
   }
 }
 
-function ensureSeasonTwoPlayerModel(THREE, GLTFLoader, cloneSkinnedModel) {
-  if (seasonTwoThree.playerModelRoot) return Promise.resolve(seasonTwoThree.playerModelRoot);
+function ensureSeasonTwoPlayerModel(THREE, GLTFLoader, cloneSkinnedModel, form = seasonTwoPlayerModelEvolution()) {
+  const modelForm = form || seasonTwoPlayerModelEvolution();
+  const modelKey = modelForm.modelKey || SEASON_TWO_PLAYER_MODEL_KEY;
+  if (seasonTwoThree.playerModelRoot && seasonTwoThree.playerModelKey === modelKey) {
+    return Promise.resolve(seasonTwoThree.playerModelRoot);
+  }
+  if (seasonTwoThree.playerModelRoot && seasonTwoThree.playerModelKey !== modelKey) {
+    resetSeasonTwoPlayerModelInstance();
+  }
+  if (seasonTwoThree.playerModelPromise && seasonTwoThree.playerModelKey !== modelKey) {
+    resetSeasonTwoPlayerModelInstance();
+  }
   if (!seasonTwoThree.playerModelPromise) {
+    const loadToken = ++seasonTwoThree.playerModelLoadToken;
+    seasonTwoThree.playerModelKey = modelKey;
     seasonTwoThree.playerModelPromise = new Promise((resolve, reject) => {
       const loader = new GLTFLoader();
       loader.load(
-        SEASON_TWO_PLAYER_MODEL_URL,
+        modelForm.modelUrl || SEASON_TWO_PLAYER_MODEL_URL,
         (gltf) => {
           const root = gltf.scene || gltf.scenes?.[0];
           if (!root) {
-            reject(new Error("Alien Blob glTF scene is empty"));
+            reject(new Error(`${modelForm.name || SEASON_TWO_PLAYER_MODEL_NAME} glTF scene is empty`));
             return;
           }
-          root.name = SEASON_TWO_PLAYER_MODEL_NAME;
+          if (loadToken !== seasonTwoThree.playerModelLoadToken || seasonTwoThree.playerModelKey !== modelKey) {
+            disposeThreeScene(root);
+            resolve(seasonTwoThree.playerModelRoot);
+            return;
+          }
+          root.name = modelForm.name || SEASON_TWO_PLAYER_MODEL_NAME;
           prepareSeasonTwoPlayerModel(THREE, root);
           seasonTwoThree.playerModelRoot = root;
           if (seasonTwoThree.playerGroup && root.parent !== seasonTwoThree.playerGroup) {
@@ -3024,11 +3099,14 @@ function ensureSeasonTwoPlayerModel(THREE, GLTFLoader, cloneSkinnedModel) {
             seasonTwoThree.playerMixer = new THREE.AnimationMixer(root);
             seasonTwoThree.playerAction = playSeasonTwoIdleClip(THREE, seasonTwoThree.playerMixer, idleClip);
           }
-          createSeasonTwoPlayerOutline(THREE, cloneSkinnedModel, root, idleClip);
+          createSeasonTwoPlayerOutline(THREE, cloneSkinnedModel, root, idleClip, modelForm.name);
           resolve(root);
         },
         undefined,
-        reject,
+        (error) => {
+          if (seasonTwoThree.playerModelKey === modelKey) resetSeasonTwoPlayerModelInstance();
+          reject(error);
+        },
       );
     });
   }
@@ -3051,11 +3129,13 @@ function applySeasonTwoPlayerGlow(THREE, data) {
   const group = seasonTwoThree.playerGroup;
   const outlineRoot = seasonTwoThree.playerOutlineRoot;
   if (!group || !outlineRoot) return;
+  const form = data.playerForm || seasonTwoPlayerModelEvolution(data);
+  const growthScale = Math.max(0.01, form.scale || 1);
   const glow = seasonTwoCurrentPickupGlowState(data);
   const colorHex = glow.kind === "bad" ? 0xef4444 : 0x38bdf8;
   const alpha = Math.max(0, Math.min(1, glow.alpha || 0));
   outlineRoot.visible = alpha > 0.015;
-  outlineRoot.scale.setScalar(SEASON_TWO_PLAYER_OUTLINE_SCALE + alpha * 0.012);
+  outlineRoot.scale.setScalar(growthScale * (SEASON_TWO_PLAYER_OUTLINE_SCALE + alpha * 0.012));
   seasonTwoThree.playerOutlineMaterials.forEach((material) => {
     material.color.setHex(colorHex);
     material.opacity = alpha * 0.42;
@@ -3085,8 +3165,10 @@ function updateSeasonTwoPlayerModelTransform(THREE, data) {
   const root = seasonTwoThree.playerModelRoot;
   if (!group || !root) return;
   if (root.parent !== group) group.add(root);
+  const form = data.playerForm || seasonTwoPlayerModelEvolution(data);
   group.visible = true;
   group.scale.setScalar(seasonTwoPlayerModelScale(data.isBossScene));
+  root.scale.setScalar(Math.max(0.01, form.scale || 1));
 
   if (data.isBossScene) {
     const position = [-2.45, 0.1, -0.68];
@@ -3110,11 +3192,12 @@ function updateSeasonTwoPlayerModelTransform(THREE, data) {
 function updateSeasonTwoPlayerModel(THREE, GLTFLoader, cloneSkinnedModel, data) {
   const group = seasonTwoThree.playerGroup;
   if (!group || !GLTFLoader) return;
-  if (!seasonTwoThree.playerModelRoot) {
+  const form = data.playerForm || seasonTwoPlayerModelEvolution(data);
+  if (!seasonTwoThree.playerModelRoot || seasonTwoThree.playerModelKey !== form.modelKey) {
     group.visible = false;
-    ensureSeasonTwoPlayerModel(THREE, GLTFLoader, cloneSkinnedModel)
+    ensureSeasonTwoPlayerModel(THREE, GLTFLoader, cloneSkinnedModel, form)
       .then(() => updateSeasonTwoPlayerModelTransform(THREE, seasonTwoThree.currentFrameData || data))
-      .catch((error) => console.error("Alien Blob model load failed", error));
+      .catch((error) => console.error(`${form.name || SEASON_TWO_PLAYER_MODEL_NAME} model load failed`, error));
     return;
   }
   updateSeasonTwoPlayerModelTransform(THREE, data);
@@ -3919,8 +4002,8 @@ function renderSeasonTwo() {
   g.targetEnergy = seasonTwoTargetEnergy(chapter, s);
   g.targetSeconds = seasonTwoRunnerTargetSeconds(chapter);
   g.size = 1;
-  const evolution = seasonTwoPlayerModelEvolution();
-  const monsterVisualScale = 1;
+  const evolution = seasonTwoPlayerModelEvolution(g);
+  const monsterVisualScale = evolution.scale;
   const progress = Math.min(100, (g.distance / g.goal) * 100);
   const energyPercent = Math.max(0, Math.min(100, (g.hp / Math.max(1, g.targetEnergy)) * 100));
   const hpPercent = Math.max(0, Math.min(100, (g.hp / Math.max(1, g.maxHp)) * 100));
@@ -3989,14 +4072,14 @@ function renderSeasonTwo() {
   const roarSpeechActive = state.gameStarted && !isBossScene && s.roar_text && (g.roarSpeechUntil || 0) > now;
   const roarSpeech = roarSpeechActive ? `
     <div class="runner-speech-overlay" style="left:${playerLeft}%">
-      <span>${SEASON_TWO_PLAYER_MODEL_NAME}</span>
+      <span>${evolution.name}</span>
       <strong>${s.roar_text}</strong>
     </div>
   ` : "";
   const bossFightHud = isBossScene ? `
     <div class="boss-fight-hud">
       <div class="boss-fight-health player">
-        <span>${SEASON_TWO_PLAYER_MODEL_NAME}</span>
+        <span>${evolution.name}</span>
         <div><i style="width:${hpPercent}%"></i></div>
         <strong>${g.hp}/${g.maxHp}</strong>
       </div>
@@ -4049,7 +4132,7 @@ function renderSeasonTwo() {
           ${runnerItems}
           <div class="runner-kaiju" style="left:${playerLeft}%">
             ${roarSpeechActive ? `<span class="kaiju-speech">${s.roar_text}</span>` : ""}
-            ${seasonTwoMonsterMarkup(SEASON_TWO_PLAYER_MODEL_NAME, evolution, isBossScene ? "fighter-model" : "", monsterVisualScale)}
+            ${seasonTwoMonsterMarkup(evolution.name, evolution, isBossScene ? "fighter-model" : "", monsterVisualScale)}
             ${playerBar}
           </div>
           ${bossFighter}
@@ -4090,6 +4173,8 @@ function renderSeasonTwo() {
     pickupGlowActive,
     pickupGlowAlpha,
     pickupGlowKind: g.pickupGlowKind || "good",
+    playerForm: evolution,
+    meatEnergyCollected: g.meatEnergyCollected || 0,
     items: g.items.map((item) => ({ ...item })),
     lane: g.lane,
     mutationSize,
@@ -4146,7 +4231,7 @@ function seasonTwoAction() {
   }
   if (g.phase !== "boss") return;
   if (!seasonTwoCanAttack(g)) return;
-  const evolution = seasonTwoPlayerModelEvolution();
+  const evolution = seasonTwoPlayerModelEvolution(g);
   const timing = seasonTwoTimingResult(g);
   const attackKind = "flame";
   const damage = seasonTwoPlayerAttackDamage(attackKind, timing, evolution, s, g);
