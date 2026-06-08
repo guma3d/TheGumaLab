@@ -545,6 +545,7 @@ const seasonTwoThree = {
   camera: null,
   staticGroup: null,
   dynamicGroup: null,
+  effectGroup: null,
   playerGroup: null,
   bossGroup: null,
   playerModelPromise: null,
@@ -2462,7 +2463,7 @@ function shuffleSeasonTwoRows(rows) {
     .map((entry) => entry.row);
 }
 
-function createSeasonTwoSpawnPlan(chapter) {
+function createSeasonTwoSpawnPlan(chapter, settings = state.settings.season_02 || {}) {
   const balance = seasonTwoChapterBalance(chapter);
   const tickCount = Math.max(1, Math.round((balance.targetSeconds * 1000) / SEASON_TWO_TIMER_MS));
   let meatRemaining = balance.meatCount;
@@ -2483,9 +2484,22 @@ function createSeasonTwoSpawnPlan(chapter) {
     bombRemaining -= 1;
   }
 
+  const cumulativeDistanceByTick = [];
+  let cumulativeDistance = 0;
+  for (let tick = 1; tick <= tickCount; tick += 1) {
+    const progress = Math.max(0, Math.min(1, tick / tickCount));
+    cumulativeDistance += seasonTwoItemFallSpeed(settings, chapter, progress) * SEASON_TWO_ITEM_FALL_SPEED_MULTIPLIER;
+    cumulativeDistanceByTick.push(cumulativeDistance);
+  }
+  const totalDistance = cumulativeDistance || tickCount;
+  const tickForDistance = (targetDistance) => {
+    const index = cumulativeDistanceByTick.findIndex((distance) => distance >= targetDistance);
+    return Math.max(1, index >= 0 ? index + 1 : tickCount);
+  };
+
   return shuffleSeasonTwoRows(rows).map((kinds, index) => ({
     kinds,
-    tick: Math.max(1, Math.round(((index + 0.35) / Math.max(1, rows.length)) * tickCount)),
+    tick: tickForDistance(((index + 0.35) / Math.max(1, rows.length)) * totalDistance),
   }));
 }
 
@@ -2562,7 +2576,7 @@ function seasonTwoReset() {
     targetSeconds,
     fixedMeatCount: balance.meatCount,
     fixedBombCount: balance.bombCount,
-    spawnPlan: createSeasonTwoSpawnPlan(chapter),
+    spawnPlan: createSeasonTwoSpawnPlan(chapter, s),
     spawnIndex: 0,
     combo: 0,
     items: [],
@@ -3260,6 +3274,7 @@ function startSeasonTwoThreeAnimationLoop(THREE, renderer) {
     applySeasonTwoPlayerIdleMotion(now);
     applySeasonTwoPlayerGlow(THREE, seasonTwoThree.currentFrameData || {});
     applySeasonTwoBossModelTransform(seasonTwoThree.currentFrameData || {}, now);
+    updateSeasonTwoThreeEffects(THREE, now);
     if (seasonTwoThree.scene && seasonTwoThree.camera) {
       renderer.render(seasonTwoThree.scene, seasonTwoThree.camera);
     }
@@ -3285,6 +3300,42 @@ function clearSeasonTwoThreeGroup(group) {
   });
 }
 
+function seasonTwoLiveEffectProgress(until, duration, now = performance.now()) {
+  if (!until || until <= now || duration <= 0) return { active: false, progress: 0 };
+  return {
+    active: true,
+    progress: Math.max(0, Math.min(1, 1 - ((until - now) / duration))),
+  };
+}
+
+function updateSeasonTwoThreeEffects(THREE, now = performance.now()) {
+  const effectGroup = seasonTwoThree.effectGroup;
+  const g = state.game.season_02;
+  if (!effectGroup || state.activeSeason !== "season_02" || !g || !["boss", "win", "gameOver"].includes(g.phase)) {
+    if (effectGroup?.children.length) clearSeasonTwoThreeGroup(effectGroup);
+    return;
+  }
+
+  const attack = seasonTwoLiveEffectProgress(g.attackEffectUntil, SEASON_TWO_ATTACK_EFFECT_MS, now);
+  const bossCounter = seasonTwoLiveEffectProgress(g.bossTurnEffectUntil, SEASON_TWO_BOSS_TURN_EFFECT_MS, now);
+  if (!attack.active && !bossCounter.active) {
+    if (effectGroup.children.length) clearSeasonTwoThreeGroup(effectGroup);
+    return;
+  }
+
+  clearSeasonTwoThreeGroup(effectGroup);
+  if (attack.active) {
+    addSeasonTwoAttack3D(
+      THREE,
+      effectGroup,
+      g.attackKind || g.lastTiming?.kind || "flame",
+      Math.max(0, Math.min(1, g.attackEffectQuality || g.lastTiming?.quality || 0.75)),
+      attack.progress,
+    );
+  }
+  if (bossCounter.active) addSeasonTwoBossCounter3D(THREE, effectGroup, bossCounter.progress);
+}
+
 function seasonTwoThreeDynamicKey(data) {
   const itemsKey = data.items
     .map((item) => `${item.id}:${item.kind}:${item.lane}:${Math.round(item.y * 10)}`)
@@ -3295,12 +3346,6 @@ function seasonTwoThreeDynamicKey(data) {
     data.boss?.className || "",
     data.boss?.modelKey || "",
     data.tick,
-    data.attackEffectActive ? 1 : 0,
-    Math.round((data.attackEffectProgress || 0) * 100),
-    Math.round((data.attackEffectQuality || 0) * 100),
-    data.attackKind || "",
-    data.bossTurnEffectActive ? 1 : 0,
-    Math.round((data.bossTurnEffectProgress || 0) * 100),
     data.pickupGlowActive ? 1 : 0,
     data.pickupGlowKind || "",
     Math.round((data.pickupGlowAlpha || 0) * 100),
@@ -3775,7 +3820,14 @@ function applySeasonTwoBossModelTransform(data, now = performance.now()) {
     return;
   }
   const t = now * 0.001;
-  const lunge = data.bossTurnEffectActive ? Math.sin(Math.min(1, data.bossTurnEffectProgress || 0) * Math.PI) : 0;
+  const bossCounter = seasonTwoLiveEffectProgress(
+    state.game.season_02?.bossTurnEffectUntil,
+    SEASON_TWO_BOSS_TURN_EFFECT_MS,
+    now,
+  );
+  const fallbackProgress = data.bossTurnEffectActive ? Math.min(1, data.bossTurnEffectProgress || 0) : 0;
+  const lungeProgress = bossCounter.active ? bossCounter.progress : fallbackProgress;
+  const lunge = lungeProgress > 0 ? Math.sin(lungeProgress * Math.PI) : 0;
   group.visible = Boolean(seasonTwoThree.bossModelRoot);
   group.position.set(2.62 - lunge * 0.45, 0.1 + Math.sin(t * 2.8) * 0.05, -0.68);
   group.rotation.set(0.02 + lunge * 0.04, -Math.PI / 2 - 0.18 + Math.sin(t * 1.9) * 0.035, -lunge * 0.08);
@@ -4008,6 +4060,7 @@ function ensureSeasonTwoThreeScene(THREE) {
     seasonTwoThree.scene.fog = new THREE.Fog(0x8bdcfb, 28, 72);
     seasonTwoThree.staticGroup = new THREE.Group();
     seasonTwoThree.dynamicGroup = new THREE.Group();
+    seasonTwoThree.effectGroup = new THREE.Group();
     seasonTwoThree.playerGroup = new THREE.Group();
     seasonTwoThree.bossGroup = new THREE.Group();
     addSeasonTwoThreeWorld(THREE, seasonTwoThree.staticGroup);
@@ -4015,6 +4068,7 @@ function ensureSeasonTwoThreeScene(THREE) {
     seasonTwoThree.scene.add(seasonTwoThree.dynamicGroup);
     seasonTwoThree.scene.add(seasonTwoThree.playerGroup);
     seasonTwoThree.scene.add(seasonTwoThree.bossGroup);
+    seasonTwoThree.scene.add(seasonTwoThree.effectGroup);
   } else if (!seasonTwoThree.playerGroup) {
     seasonTwoThree.playerGroup = new THREE.Group();
     seasonTwoThree.scene.add(seasonTwoThree.playerGroup);
@@ -4023,6 +4077,10 @@ function ensureSeasonTwoThreeScene(THREE) {
     seasonTwoThree.bossGroup = new THREE.Group();
     seasonTwoThree.scene.add(seasonTwoThree.bossGroup);
   }
+  if (!seasonTwoThree.effectGroup) {
+    seasonTwoThree.effectGroup = new THREE.Group();
+    seasonTwoThree.scene.add(seasonTwoThree.effectGroup);
+  }
   if (!seasonTwoThree.camera) {
     seasonTwoThree.camera = new THREE.PerspectiveCamera(58, 1, 0.1, 100);
   }
@@ -4030,6 +4088,7 @@ function ensureSeasonTwoThreeScene(THREE) {
     scene: seasonTwoThree.scene,
     camera: seasonTwoThree.camera,
     dynamicGroup: seasonTwoThree.dynamicGroup,
+    effectGroup: seasonTwoThree.effectGroup,
     playerGroup: seasonTwoThree.playerGroup,
     bossGroup: seasonTwoThree.bossGroup,
   };
@@ -4053,14 +4112,6 @@ function updateSeasonTwoThreeDynamic(THREE, GLTFLoader, cloneSkinnedModel, data)
     if (data.phase === "win") {
       addSeasonTwoBossDissolve3D(THREE, dynamicGroup);
     }
-    if (data.attackEffectActive) addSeasonTwoAttack3D(
-      THREE,
-      dynamicGroup,
-      data.attackKind,
-      data.attackEffectQuality,
-      data.attackEffectProgress,
-    );
-    if (data.bossTurnEffectActive) addSeasonTwoBossCounter3D(THREE, dynamicGroup, data.bossTurnEffectProgress);
   }
 }
 
@@ -4107,6 +4158,7 @@ function renderSeasonTwoThreeFrame(THREE, GLTFLoader, cloneSkinnedModel, rendere
     seasonTwoThree.height = height;
     seasonTwoThree.pixelRatio = pixelRatio;
   }
+  updateSeasonTwoThreeEffects(THREE, performance.now());
   renderer.render(scene, camera);
 }
 
