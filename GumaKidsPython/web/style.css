@@ -1848,6 +1848,11 @@ body.file-tree-collapsed .file-tree {
   animation: runner-fighter-lunge 0.72s cubic-bezier(0.12, 0.82, 0.22, 1) both;
 }
 
+.kaiju-runner-game.result-pending.defeat-player .runner-kaiju,
+.kaiju-runner-game.phase-gameOver.defeat-player .runner-kaiju {
+  animation: player-defeat-dissolve 1.5s ease-out both;
+}
+
 .runner-speech-overlay {
   position: absolute;
   bottom: 31%;
@@ -2353,6 +2358,10 @@ body.file-tree-collapsed .file-tree {
   animation: boss-defeat-dissolve 1.2s ease-out both;
 }
 
+.kaiju-runner-game.result-pending.defeat-boss .runner-boss {
+  animation: boss-defeat-dissolve 1.5s ease-out both;
+}
+
 @keyframes boss-enter-from-road {
   from { opacity: 0; transform: translateX(-50%) translateY(-70px) rotateX(0deg) rotateY(0deg) scale(0.72); }
   to { opacity: 1; transform: translateX(-50%) rotateX(0deg) rotateY(0deg) scale(1.02); }
@@ -2369,6 +2378,12 @@ body.file-tree-collapsed .file-tree {
   0% { opacity: 1; filter: blur(0); transform: translateX(-50%) rotateX(0deg) rotateY(0deg) scale(1.02); }
   45% { opacity: 0.7; filter: blur(1px) brightness(1.4); transform: translateX(-50%) translateY(-18px) rotateX(0deg) rotateY(0deg) scale(0.88); }
   100% { opacity: 0; filter: blur(8px) brightness(1.8); transform: translateX(-50%) translateY(-70px) rotateX(0deg) rotateY(0deg) scale(0.28); }
+}
+
+@keyframes player-defeat-dissolve {
+  0% { opacity: 1; filter: blur(0); transform: translateX(-50%) rotateX(0deg) rotateY(0deg) scale(1.08); }
+  48% { opacity: 0.62; filter: blur(1px) brightness(1.25); transform: translateX(-50%) translateY(-14px) rotateX(0deg) rotateY(0deg) scale(0.92); }
+  100% { opacity: 0; filter: blur(8px) brightness(1.7); transform: translateX(-50%) translateY(-58px) rotateX(0deg) rotateY(0deg) scale(0.3); }
 }
 
 .runner-dashboard {
@@ -2481,7 +2496,7 @@ body.file-tree-collapsed .file-tree {
   text-align: center;
   transform: translate(-50%, -50%);
   box-shadow: 0 20px 46px rgba(15, 23, 42, 0.38), 0 0 34px rgba(56, 189, 248, 0.36);
-  animation: season-two-turn-pop 0.46s cubic-bezier(0.16, 0.86, 0.26, 1) both;
+  animation: season-two-turn-pop 3s cubic-bezier(0.16, 0.86, 0.26, 1) both;
 }
 
 .season-two-turn-popup.boss {
@@ -2539,9 +2554,11 @@ body.file-tree-collapsed .file-tree {
 }
 
 @keyframes season-two-turn-pop {
-  from { opacity: 0; transform: translate(-50%, -42%) scale(0.72); }
-  72% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
-  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  0% { opacity: 0; transform: translate(-50%, -42%) scale(0.72); }
+  12% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+  18% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  82% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -58%) scale(0.96); }
 }
 
 .runner-bars {

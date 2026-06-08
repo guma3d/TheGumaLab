@@ -2256,7 +2256,9 @@ const SEASON_TWO_BOSS_POWER_MULTIPLIER = 0.8;
 const SEASON_TWO_ATTACK_EFFECT_MS = 920;
 const SEASON_TWO_BOSS_TURN_EFFECT_MS = 1120;
 const SEASON_TWO_TURN_NOTICE_MS = 3000;
-const SEASON_TWO_TURN_AFTER_EFFECT_DELAY_MS = 720;
+const SEASON_TWO_TURN_AFTER_EFFECT_DELAY_MS = 2000;
+const SEASON_TWO_RESULT_POPUP_DELAY_MS = 2000;
+const SEASON_TWO_DEFEAT_FADE_MS = 1500;
 const SEASON_TWO_RUNNER_SPEED_MULTIPLIER = 4;
 const SEASON_TWO_ITEM_FALL_SPEED_MULTIPLIER = SEASON_TWO_RUNNER_SPEED_MULTIPLIER * 1.05;
 const SEASON_TWO_TIMER_MS = 110;
@@ -2592,6 +2594,13 @@ function seasonTwoReset() {
     activeBossAttackId: 0,
     resolvedBossAttackId: 0,
     bossEntryHp: 0,
+    pendingResult: "",
+    pendingResultMessage: "",
+    pendingResultAt: 0,
+    pendingResultFadeAt: 0,
+    pendingResultId: 0,
+    pendingResultTarget: "",
+    defeatedTarget: "",
     lastTiming: null,
     attackKind: "flame",
     nextAttackKind: "flame",
@@ -2799,6 +2808,37 @@ function scheduleSeasonTwoPlayerTurnAfterDelay(game, message, delay = SEASON_TWO
   }, delay);
 }
 
+function scheduleSeasonTwoResult(game, result, message, defeatedTarget, delay = SEASON_TWO_RESULT_POPUP_DELAY_MS, fadeDelay = 0) {
+  const now = performance.now();
+  const resultId = (game.pendingResultId || 0) + 1;
+  game.bossTurn = "resultDelay";
+  game.pendingResult = result;
+  game.pendingResultMessage = message;
+  game.pendingResultAt = now + delay;
+  game.pendingResultFadeAt = now + fadeDelay;
+  game.pendingResultId = resultId;
+  game.pendingResultTarget = defeatedTarget || "";
+  game.defeatedTarget = defeatedTarget || game.defeatedTarget || "";
+  game.pendingTurnAt = game.pendingResultAt;
+  game.pendingBossDamage = 0;
+  game.activeBossAttackId = 0;
+  game.turnNoticeKind = "";
+  game.turnNoticeUntil = 0;
+  game.message = message;
+  window.setTimeout(() => {
+    const latest = state.game.season_02;
+    if (
+      state.activeSeason !== "season_02"
+      || !latest
+      || latest.phase !== "boss"
+      || latest.bossTurn !== "resultDelay"
+      || latest.pendingResultId !== resultId
+    ) return;
+    finishSeasonTwo(result, message);
+    renderSeasonTwo();
+  }, delay);
+}
+
 function startSeasonTwoBossAttack(expectedDamage, noticeUntil, attackId) {
   const g = state.game.season_02;
   if (
@@ -2886,6 +2926,12 @@ function finishSeasonTwo(result, message) {
   g.pendingBossDamage = 0;
   g.activeBossAttackId = 0;
   g.pendingTurnAt = 0;
+  g.defeatedTarget = g.pendingResultTarget || g.defeatedTarget || (result === "win" ? "boss" : "");
+  g.pendingResult = "";
+  g.pendingResultMessage = "";
+  g.pendingResultAt = 0;
+  g.pendingResultFadeAt = 0;
+  g.pendingResultTarget = "";
   g.turnNoticeKind = "";
   g.turnNoticeUntil = 0;
   if (result === "win") g.bossDefeatedAt = performance.now();
@@ -3274,6 +3320,7 @@ function startSeasonTwoThreeAnimationLoop(THREE, renderer) {
     applySeasonTwoPlayerIdleMotion(now);
     applySeasonTwoPlayerGlow(THREE, seasonTwoThree.currentFrameData || {});
     applySeasonTwoBossModelTransform(seasonTwoThree.currentFrameData || {}, now);
+    applySeasonTwoDefeatFades(now);
     updateSeasonTwoThreeEffects(THREE, now);
     if (seasonTwoThree.scene && seasonTwoThree.camera) {
       renderer.render(seasonTwoThree.scene, seasonTwoThree.camera);
@@ -3306,6 +3353,63 @@ function seasonTwoLiveEffectProgress(until, duration, now = performance.now()) {
     active: true,
     progress: Math.max(0, Math.min(1, 1 - ((until - now) / duration))),
   };
+}
+
+function seasonTwoDefeatFadeState(target, now = performance.now()) {
+  const game = state.game.season_02;
+  if (!game || !target) return { active: false, progress: 0, opacity: 1 };
+  const defeatedTarget = game.pendingResultTarget || game.defeatedTarget || "";
+  if (defeatedTarget !== target) return { active: false, progress: 0, opacity: 1 };
+  if (["win", "gameOver"].includes(game.phase)) return { active: true, progress: 1, opacity: 0 };
+  const fadeAt = game.pendingResultFadeAt || game.pendingResultAt || now;
+  const progress = Math.max(0, Math.min(1, (now - fadeAt) / SEASON_TWO_DEFEAT_FADE_MS));
+  const eased = progress * progress * (3 - 2 * progress);
+  return { active: progress > 0, progress, opacity: Math.max(0, 1 - eased) };
+}
+
+function applySeasonTwoModelOpacity(root, opacity) {
+  if (!root) return;
+  const clampedOpacity = Math.max(0, Math.min(1, opacity));
+  const opacityKey = Math.round(clampedOpacity * 1000) / 1000;
+  root.visible = clampedOpacity > 0.015;
+  if (root.userData.seasonTwoCurrentOpacity === opacityKey) return;
+  root.userData.seasonTwoCurrentOpacity = opacityKey;
+  root.traverse((object) => {
+    if (!object.isMesh || !object.material) return;
+    const materials = Array.isArray(object.material) ? object.material : [object.material];
+    materials.forEach((material) => {
+      if (!material) return;
+      if (material.userData.seasonTwoBaseOpacity === undefined) {
+        material.userData.seasonTwoBaseOpacity = material.opacity ?? 1;
+        material.userData.seasonTwoBaseTransparent = Boolean(material.transparent);
+        material.userData.seasonTwoBaseDepthWrite = material.depthWrite !== false;
+      }
+      material.opacity = (material.userData.seasonTwoBaseOpacity ?? 1) * clampedOpacity;
+      material.transparent = clampedOpacity < 0.999 || Boolean(material.userData.seasonTwoBaseTransparent);
+      material.depthWrite = clampedOpacity >= 0.999 ? material.userData.seasonTwoBaseDepthWrite !== false : false;
+      material.needsUpdate = true;
+    });
+  });
+}
+
+function applySeasonTwoDefeatFades(now = performance.now()) {
+  const playerFade = seasonTwoDefeatFadeState("player", now);
+  const bossFade = seasonTwoDefeatFadeState("boss", now);
+  applySeasonTwoModelOpacity(seasonTwoThree.playerModelRoot, playerFade.opacity);
+  applySeasonTwoModelOpacity(seasonTwoThree.bossModelRoot, bossFade.opacity);
+  if (seasonTwoThree.playerOutlineRoot && playerFade.opacity < 0.98) {
+    seasonTwoThree.playerOutlineRoot.visible = false;
+  }
+  if (seasonTwoThree.playerGroup && playerFade.active) {
+    const baseScale = seasonTwoPlayerModelScale(Boolean(seasonTwoThree.currentFrameData?.isBossScene));
+    const scale = baseScale * (1 - playerFade.progress * 0.16);
+    seasonTwoThree.playerGroup.scale.setScalar(Math.max(0.01, scale));
+    seasonTwoThree.playerGroup.position.y += playerFade.progress * 0.34;
+  }
+  if (seasonTwoThree.bossGroup && bossFade.active) {
+    seasonTwoThree.bossGroup.scale.multiplyScalar(1 - bossFade.progress * 0.2);
+    seasonTwoThree.bossGroup.position.y += bossFade.progress * 0.46;
+  }
 }
 
 function updateSeasonTwoThreeEffects(THREE, now = performance.now()) {
@@ -4158,6 +4262,7 @@ function renderSeasonTwoThreeFrame(THREE, GLTFLoader, cloneSkinnedModel, rendere
     seasonTwoThree.height = height;
     seasonTwoThree.pixelRatio = pixelRatio;
   }
+  applySeasonTwoDefeatFades(performance.now());
   updateSeasonTwoThreeEffects(THREE, performance.now());
   renderer.render(scene, camera);
 }
@@ -4235,6 +4340,8 @@ function renderSeasonTwo() {
   const bossNoticeActive = g.phase === "boss" && g.bossTurn === "bossNotice";
   const playerNoticeActive = g.phase === "boss" && g.bossTurn === "playerNotice";
   const turnDelayActive = g.phase === "boss" && g.bossTurn === "turnDelay";
+  const resultDelayActive = g.phase === "boss" && g.bossTurn === "resultDelay";
+  const defeatedTarget = g.pendingResultTarget || g.defeatedTarget || "";
   const attackEffectActive = isBossScene && (g.attackEffectUntil || 0) > now;
   const attackEffectProgress = attackEffectActive
     ? Math.max(0, Math.min(1, 1 - ((g.attackEffectUntil - now) / SEASON_TWO_ATTACK_EFFECT_MS)))
@@ -4321,8 +4428,8 @@ function renderSeasonTwo() {
     `${SEASON_TWO_PLAYER_MODEL_NAME} 출동!`,
     `에너지 ${g.hp}/${g.targetEnergy} · ${SEASON_TWO_PLAYER_MODEL_NAME} · ${phaseLabel}`,
   );
-  els.action.textContent = turnDelayActive ? "턴 전환 중" : playerNoticeActive ? "내 차례 준비" : bossNoticeActive ? "보스 차례 준비" : bossTurnActive ? "보스 공격 중" : g.phase === "boss" ? "Space 타이밍 공격" : g.phase === "runner" ? "← → 이동으로 먹기" : "결과 확인";
-  const boardClass = `kaiju-runner-game chapter-${chapter} phase-${g.phase} ${cameraClass} ${turnNoticeActive ? `turn-notice turn-${turnNoticeKind}` : ""} ${attackEffectActive ? `attack-strike attack-${attackKind}` : ""} ${turnDelayActive ? "turn-delay" : ""} ${bossTurnActive ? "boss-turn-active" : ""} ${bossTurnEffectActive ? "boss-counter-strike" : ""} ${pickupGlowActive ? `pickup-glow pickup-${g.pickupGlowKind || "good"}` : ""}`.trim();
+  els.action.textContent = resultDelayActive ? "결과 확인 중" : turnDelayActive ? "턴 전환 중" : playerNoticeActive ? "내 차례 준비" : bossNoticeActive ? "보스 차례 준비" : bossTurnActive ? "보스 공격 중" : g.phase === "boss" ? "Space 타이밍 공격" : g.phase === "runner" ? "← → 이동으로 먹기" : "결과 확인";
+  const boardClass = `kaiju-runner-game chapter-${chapter} phase-${g.phase} ${cameraClass} ${turnNoticeActive ? `turn-notice turn-${turnNoticeKind}` : ""} ${attackEffectActive ? `attack-strike attack-${attackKind}` : ""} ${turnDelayActive ? "turn-delay" : ""} ${resultDelayActive ? "result-pending" : ""} ${defeatedTarget ? `defeat-${defeatedTarget}` : ""} ${bossTurnActive ? "boss-turn-active" : ""} ${bossTurnEffectActive ? "boss-counter-strike" : ""} ${pickupGlowActive ? `pickup-glow pickup-${g.pickupGlowKind || "good"}` : ""}`.trim();
 
   els.gameMount.innerHTML = `
     <div class="${boardClass}">
@@ -4428,7 +4535,16 @@ function resolveSeasonTwoBossTurn(expectedDamage, attackId) {
   g.pendingBossDamage = 0;
   g.activeBossAttackId = 0;
   if (g.hp <= 0) {
-    finishSeasonTwo("gameOver", `${g.boss.name}에게 졌어. 러너 구간에서 고기를 더 모아 에너지를 키워 보자!`);
+    scheduleSeasonTwoResult(
+      g,
+      "gameOver",
+      `${g.boss.name}에게 졌어. 러너 구간에서 고기를 더 모아 에너지를 키워 보자!`,
+      "player",
+      SEASON_TWO_RESULT_POPUP_DELAY_MS,
+      0,
+    );
+    renderSeasonTwo();
+    return;
   } else {
     scheduleSeasonTwoPlayerTurnAfterDelay(g, `${g.boss.name} 반격! 내 에너지 -${damage} · 내 공격 차례 준비!`);
   }
@@ -4463,7 +4579,14 @@ function seasonTwoAction() {
   g.message = `${timing.label}! ${koreanSubject(evolution.name)} ${attackLabel}로 ${g.boss.name}에게 ${damage} 피해`;
   playTone({ frequency: 240, duration: 0.12, type: "square", volume: 0.05, slide: 320 });
   if (g.bossHp <= 0) {
-    finishSeasonTwo("win", `${g.boss.name} 격파! 시즌2 보스전 승리!`);
+    scheduleSeasonTwoResult(
+      g,
+      "win",
+      `${g.boss.name} 격파! 시즌2 보스전 승리!`,
+      "boss",
+      SEASON_TWO_ATTACK_EFFECT_MS + SEASON_TWO_RESULT_POPUP_DELAY_MS,
+      Math.round(SEASON_TWO_ATTACK_EFFECT_MS * 0.72),
+    );
     renderSeasonTwo();
     return;
   }
