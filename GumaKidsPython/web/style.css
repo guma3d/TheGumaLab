@@ -2282,6 +2282,13 @@ body.file-tree-collapsed .file-tree {
   box-shadow: 0 0 22px rgba(250, 204, 21, 0.72), 0 8px 0 rgba(15, 23, 42, 0.18), inset -6px -5px 0 rgba(15, 23, 42, 0.18);
 }
 
+.runner-item.item-triple_meat span {
+  border: 2px solid rgba(255, 255, 255, 0.78);
+  border-radius: 58% 42% 48% 52%;
+  background: linear-gradient(135deg, #e0f2fe, #38bdf8 48%, #0369a1);
+  box-shadow: 0 0 26px rgba(56, 189, 248, 0.76), 0 8px 0 rgba(15, 23, 42, 0.18), inset -6px -5px 0 rgba(15, 23, 42, 0.18);
+}
+
 .runner-item.item-bomb span {
   border-radius: 50%;
   background:
