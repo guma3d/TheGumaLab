@@ -2252,6 +2252,7 @@ const SEASON_TWO_PLAYER_GROWTH_SCALE_GAIN = 0.3;
 const SEASON_TWO_PLAYER_RUNNER_SCALE = 0.44;
 const SEASON_TWO_PLAYER_BOSS_SCALE = 0.54;
 const SEASON_TWO_PLAYER_OUTLINE_SCALE = 1.036;
+const SEASON_TWO_TRANSFORM_UNLOCK_CHAPTER = 3;
 const SEASON_TWO_MIN_TARGET_ENERGY = 1000;
 const SEASON_TWO_MAX_TARGET_ENERGY = 10000;
 const SEASON_TWO_BOSS_POWER_MULTIPLIER = 0.8;
@@ -2281,7 +2282,7 @@ const SEASON_TWO_MAX_MEAT_COUNT = 60;
 const SEASON_TWO_MIN_BOMB_COUNT = 24;
 const SEASON_TWO_MAX_BOMB_COUNT = 54;
 const SEASON_TWO_EXPECTED_MEAT_COLLECT_RATIO = 0.8;
-const SEASON_TWO_BOSS_EXPECTED_MEAT_COLLECT_RATIO = 0.8;
+const SEASON_TWO_BOSS_EXPECTED_MEAT_COLLECT_RATIO = 1;
 const SEASON_TWO_MIN_BOSS_MAX_HITS = 3;
 const SEASON_TWO_MAX_BOSS_MAX_HITS = 5;
 const SEASON_TWO_PLAYER_FORMS = [
@@ -2343,7 +2344,7 @@ function seasonTwoBossForChapter(chapter = seasonTwoChapter(), settings = state.
   const index = Math.min(bosses.length - 1, Math.max(0, chapter - 1));
   const base = bosses[index];
   const expectedEnergy = seasonTwoBossExpectedEnergy(chapter, config);
-  const expectedEvolution = seasonTwoPlayerModelEvolution();
+  const expectedEvolution = seasonTwoPlayerModelEvolution({ chapter, meatEnergyCollected: expectedEnergy });
   const maxGaugeTiming = { label: "완벽 타이밍", multiplier: 2.65, quality: 1 };
   const maxGaugeDamage = seasonTwoPlayerAttackDamage("flame", maxGaugeTiming, expectedEvolution, config, {
     chapter,
@@ -2373,29 +2374,37 @@ function seasonTwoPlayerFormIndex(score) {
   return Math.max(0, Math.min(SEASON_TWO_PLAYER_FORMS.length - 1, stepIndex));
 }
 
-function seasonTwoPlayerGrowthScale(score) {
-  const formIndex = seasonTwoPlayerFormIndex(score);
+function seasonTwoPlayerGrowthScale(score, formIndex = seasonTwoPlayerFormIndex(score)) {
   const formStartScore = formIndex * SEASON_TWO_PLAYER_TRANSFORM_SCORE;
-  const scoreInForm = Math.max(0, score - formStartScore);
+  const scoreInForm = formIndex <= 0
+    ? Math.min(Math.max(0, score), SEASON_TWO_PLAYER_TRANSFORM_SCORE)
+    : Math.max(0, score - formStartScore);
   const progress = Math.max(0, Math.min(1, scoreInForm / SEASON_TWO_PLAYER_TRANSFORM_SCORE));
   return 1 + progress * SEASON_TWO_PLAYER_GROWTH_SCALE_GAIN;
 }
 
 function seasonTwoPlayerModelEvolution(source = 0) {
   const growthScore = seasonTwoPlayerGrowthScore(source);
-  const formIndex = seasonTwoPlayerFormIndex(growthScore);
+  const sourceChapter = typeof source === "object" && source !== null
+    ? Math.max(1, Math.min(12, Number(source.chapter) || seasonTwoChapter()))
+    : seasonTwoChapter();
+  const rawFormIndex = seasonTwoPlayerFormIndex(growthScore);
+  const transformUnlocked = sourceChapter >= SEASON_TWO_TRANSFORM_UNLOCK_CHAPTER;
+  const formIndex = transformUnlocked ? rawFormIndex : 0;
   const form = SEASON_TWO_PLAYER_FORMS[formIndex] || SEASON_TWO_PLAYER_FORMS[0];
   const transformed = formIndex > 0;
   return {
     name: form.name,
     className: form.modelKey,
-    scale: seasonTwoPlayerGrowthScale(growthScore),
+    scale: seasonTwoPlayerGrowthScale(growthScore, formIndex),
     rank: formIndex + 1,
     modelKey: form.modelKey,
     modelUrl: form.modelUrl,
     formIndex,
+    rawFormIndex,
     growthScore,
     transformed,
+    transformUnlocked,
   };
 }
 
