@@ -53,7 +53,7 @@ const seasons = {
     lesson: [
       ["1. 오늘의 장면", "3D 캐릭터가 달리며 음식 리스트의 아이템을 먹고 에너지를 키운 뒤 보스와 싸웁니다."],
       ["2. 오늘의 코드", "문자열, 숫자, 불리언을 복습하고 리스트, 튜플, 딕셔너리를 실제 게임 데이터로 연결합니다."],
-      ["3. 코드가 하는 일", "food_items에 사과와 바나나를 넣으면 실제 아이템이 나오고, item_scores는 획득 에너지를 바꿉니다."],
+      ["3. 코드가 하는 일", "food_items에 사과, 바나나, 주스, 쿠키, 밥을 넣으면 실제 아이템이 나오고, item_scores는 획득 에너지를 바꿉니다."],
       ["4. 바꿔보기", "정해진 후보 안에서 음식, 레인 이름, 변신 캐릭터, 보스를 바꾸며 화면 변화를 확인합니다."],
       ["5. 미션", "자료형 값을 직접 고쳐 나만의 러너 규칙을 만들되, 게임 밸런스는 유지합니다."],
     ],
@@ -69,9 +69,9 @@ const seasons = {
       ["has_shield", "장애물 방어막", "false"],
       ["shield_ready", "방어막 준비", "true"],
       ["dash_ready", "대시 준비", "false"],
-      ["food_items", "음식 리스트", "[\"고기\", \"사과\", \"바나나\"]"],
+      ["food_items", "음식 리스트", "[\"고기\", \"사과\", \"바나나\", \"주스\", \"쿠키\", \"밥\"]"],
       ["lane_names", "레인 이름 튜플", "(\"왼쪽\", \"가운데\", \"오른쪽\")"],
-      ["item_scores", "점수 딕셔너리", "{\"고기\": 100, \"사과\": 90, \"바나나\": 110, \"폭탄\": -70}"],
+      ["item_scores", "점수 딕셔너리", "{\"고기\": 100, \"사과\": 105, \"바나나\": 110, \"주스\": 120, \"쿠키\": 130, \"밥\": 140, \"폭탄\": -70}"],
       ["bomb_damage", "폭탄 피해", 70],
       ["form_names", "변신 캐릭터 리스트", "[\"Alien Blob\", \"Big Alien\", \"Green Blob\", \"Big Dino\", \"Pink Blob\"]"],
       ["favorite_bonus", "좋아하는 음식 보너스", 20],
@@ -321,7 +321,7 @@ const seasonTwoUnlocks = {
   2: "포효 말풍선과 좋아하는 음식 보너스 조건이 연결됩니다.",
   3: "숫자 에너지 값이 시작 체력, 음식 보상, 목표 에너지 표시로 이어집니다.",
   4: "True/False로 방어막 피해 감소와 대시 방어 규칙을 직접 켜고 끕니다.",
-  5: "food_items 리스트에 고기, 사과, 바나나를 넣으면 실제 러너 아이템으로 등장합니다.",
+  5: "food_items 리스트에 고기, 사과, 바나나, 주스, 쿠키, 밥을 넣으면 실제 러너 아이템으로 등장합니다.",
   6: "lane_names 튜플의 세 이름이 이동 메시지와 레인 안내에 사용됩니다.",
   7: "item_scores 딕셔너리의 음식/폭탄 점수가 실제 획득 에너지와 피해량을 바꿉니다.",
   8: "form_names 리스트 순서대로 1000점마다 캐릭터 모델이 바뀝니다.",
@@ -407,7 +407,7 @@ let seasonTwoChapters = {
   7: {
     title: "먹이별 결과",
     focus: "flame_damage",
-    syntax: "elif는 여러 조건을 차례로 검사합니다. 고기, 2배고기, 폭탄처럼 아이템이나 공격 종류마다 다른 결과를 만들 때 좋습니다.",
+    syntax: "elif는 여러 조건을 차례로 검사합니다. 음식과 폭탄처럼 아이템 종류마다 다른 결과를 만들 때 좋습니다.",
     pages: [
       ["1. 오늘의 장면", "먹은 아이템 종류에 따라 에너지가 올라가거나 내려갑니다."],
       ["2. 오늘의 코드", "flame_damage가 보스전 레이저빔 공격 피해를 만듭니다."],
@@ -499,8 +499,8 @@ seasonTwoChapters = {
       ["1. 오늘의 장면", "캐릭터가 달리기 시작할 때 짧은 포효 말풍선을 보여 줍니다."],
       ["2. 오늘의 코드", "roar_text는 말풍선 문장이고 favorite_food는 보너스 비교에 쓰입니다."],
       ["3. 기술 설명", "= 는 저장, == 는 비교입니다. 두 기호는 역할이 다릅니다."],
-      ["4. 바꿔보기", "favorite_food는 고기, 사과, 바나나 중 하나로만 씁니다."],
-      ["5. 미션", "포효 문장을 만들고 favorite_food를 고기, 사과, 바나나 중 하나로 정합니다."],
+      ["4. 바꿔보기", "favorite_food는 고기, 사과, 바나나, 주스, 쿠키, 밥 중 하나로만 씁니다."],
+      ["5. 미션", "포효 문장을 만들고 favorite_food를 고기, 사과, 바나나, 주스, 쿠키, 밥 중 하나로 정합니다."],
     ],
   },
   3: {
@@ -530,13 +530,13 @@ seasonTwoChapters = {
   5: {
     title: "음식 리스트",
     focus: "food_items",
-    syntax: "리스트는 여러 값을 순서대로 담는 자료형입니다. food_items에 넣은 고기, 사과, 바나나가 실제 아이템으로 나옵니다.",
+    syntax: "리스트는 여러 값을 순서대로 담는 자료형입니다. food_items에 넣은 고기, 사과, 바나나, 주스, 쿠키, 밥이 실제 아이템으로 나옵니다.",
     pages: [
-      ["1. 오늘의 장면", "고기만 나오던 트랙에 사과와 바나나가 함께 등장합니다."],
-      ["2. 오늘의 코드", "food_items = [\"고기\", \"사과\", \"바나나\"]처럼 정해진 음식 이름을 넣습니다."],
-      ["3. 기술 설명", "이번 게임에서 허용되는 음식 이름은 반드시 고기, 사과, 바나나입니다."],
-      ["4. 바꿔보기", "리스트 순서를 바꾸거나 사과, 바나나 중 하나를 빼고 등장 아이템을 비교합니다."],
-      ["5. 미션", "food_items 리스트에 사과와 바나나를 반드시 넣어 실제 화면에 등장시키세요."],
+      ["1. 오늘의 장면", "고기만 나오던 트랙에 사과, 바나나, 주스, 쿠키, 밥이 함께 등장합니다."],
+      ["2. 오늘의 코드", "food_items = [\"고기\", \"사과\", \"바나나\", \"주스\", \"쿠키\", \"밥\"]처럼 정해진 음식 이름을 넣습니다."],
+      ["3. 기술 설명", "이번 게임에서 허용되는 음식 이름은 반드시 고기, 사과, 바나나, 주스, 쿠키, 밥입니다."],
+      ["4. 바꿔보기", "리스트 순서를 바꾸거나 주스, 쿠키, 밥 중 하나를 빼고 등장 아이템을 비교합니다."],
+      ["5. 미션", "food_items 리스트에 주스, 쿠키, 밥을 반드시 넣어 실제 화면에 등장시키세요."],
     ],
   },
   6: {
@@ -556,11 +556,11 @@ seasonTwoChapters = {
     focus: "item_scores",
     syntax: "딕셔너리는 이름표와 값을 짝지어 저장합니다. item_scores의 음식 점수와 폭탄 값이 실제 에너지 계산에 들어갑니다.",
     pages: [
-      ["1. 오늘의 장면", "사과, 바나나, 고기를 먹을 때 에너지가 조금씩 다르게 오릅니다."],
-      ["2. 오늘의 코드", "item_scores = {\"고기\": 100, \"사과\": 90, \"바나나\": 110, \"폭탄\": -70}처럼 씁니다."],
+      ["1. 오늘의 장면", "여섯 가지 음식을 먹을 때 에너지가 조금씩 다르게 오릅니다."],
+      ["2. 오늘의 코드", "item_scores = {\"고기\": 100, \"사과\": 105, \"바나나\": 110, \"주스\": 120, \"쿠키\": 130, \"밥\": 140, \"폭탄\": -70}처럼 씁니다."],
       ["3. 기술 설명", "왼쪽은 키, 오른쪽은 값입니다. 게임은 허용된 키만 읽고 값은 안전 범위로 제한합니다."],
-      ["4. 바꿔보기", "사과와 바나나 점수를 조금 바꾸고 에너지 획득 차이를 확인합니다."],
-      ["5. 미션", "고기, 사과, 바나나, 폭탄 네 키를 모두 넣고 폭탄은 음수로 둡니다."],
+      ["4. 바꿔보기", "주스, 쿠키, 밥 점수를 조금 바꾸고 에너지 획득 차이를 확인합니다."],
+      ["5. 미션", "고기, 사과, 바나나, 주스, 쿠키, 밥, 폭탄 키를 모두 넣고 폭탄은 음수로 둡니다."],
     ],
   },
   8: {
@@ -595,8 +595,8 @@ seasonTwoChapters = {
       ["1. 오늘의 장면", "속도가 빨라진 러너 구간에서 음식과 폭탄이 좁은 간격으로 등장합니다."],
       ["2. 오늘의 코드", "food_items, item_scores, lane_names가 동시에 실제 게임에 반영됩니다."],
       ["3. 기술 설명", "데이터 자료형은 값이 많아질수록 코드가 읽기 쉬워지는 정리 상자입니다."],
-      ["4. 바꿔보기", "사과/바나나를 유지한 채 점수만 바꿔 난이도 변화를 비교합니다."],
-      ["5. 미션", "사과와 바나나는 유지하고 폭탄 점수는 음수로 두어 밸런스를 깨지 않습니다."],
+      ["4. 바꿔보기", "여섯 가지 음식을 유지한 채 점수만 바꿔 난이도 변화를 비교합니다."],
+      ["5. 미션", "고기, 사과, 바나나, 주스, 쿠키, 밥은 유지하고 폭탄 점수는 음수로 둡니다."],
     ],
   },
   11: {
@@ -619,8 +619,8 @@ seasonTwoChapters = {
       ["1. 오늘의 장면", "음식 리스트로 성장한 캐릭터가 선택한 보스와 마지막 전투를 합니다."],
       ["2. 오늘의 코드", "food_items, item_scores, form_names, boss를 모두 확인하고 final_attack을 계산합니다."],
       ["3. 기술 설명", "게임 밸런스는 챕터별 목표 에너지와 보스 체력 산식이 지키고, 아이 코드는 허용 데이터 안에서 변화를 만듭니다."],
-      ["4. 바꿔보기", "사과와 바나나, 변신 캐릭터, 보스를 모두 유지한 채 최종 화면을 확인합니다."],
-      ["5. 미션", "food_items에 사과와 바나나를 반드시 넣고, boss name은 허용 목록에서 하나를 골라 시즌2를 완성합니다."],
+      ["4. 바꿔보기", "여섯 가지 음식, 변신 캐릭터, 보스를 모두 유지한 채 최종 화면을 확인합니다."],
+      ["5. 미션", "food_items에 주스, 쿠키, 밥을 반드시 넣고, boss name은 허용 목록에서 하나를 골라 시즌2를 완성합니다."],
     ],
   },
 };
@@ -988,7 +988,7 @@ function readOnlyFileContent(fileName) {
         `lane_names = (${laneNames.map((name) => `"${name}"`).join(", ")})`,
         `item_scores = {${Object.entries(itemScores).map(([key, value]) => `"${key}": ${value}`).join(", ")}}`,
         "",
-        'allowed_foods = ["고기", "사과", "바나나"]',
+        'allowed_foods = ["고기", "사과", "바나나", "주스", "쿠키", "밥"]',
       ].join("\n");
     }
     if (fileName === "game_rules.py") {
@@ -1405,7 +1405,7 @@ function generateCode(seasonKey) {
     return [
       "# 시즌 2: 괴수 러너 성장 게임 업그레이드 존",
       "# 오늘 배울 곳은 [오늘의 업그레이드] 주석 아래입니다.",
-      "# 허용 음식 이름: \"고기\", \"사과\", \"바나나\"",
+      "# 허용 음식 이름: \"고기\", \"사과\", \"바나나\", \"주스\", \"쿠키\", \"밥\"",
       "# 허용 보스 이름: \"Armabee\", \"Glub\", \"Goleling\", \"Alpaking\", \"Hywirl\", \"Squidle\", \"Demon\", \"Ghost\", \"Ghost Skull\", \"Dragon\", \"Dragon Evolved\", \"Tribal\"",
       "# 허용 캐릭터: \"Alien Blob\", \"Big Alien\", \"Green Blob\", \"Pink Blob\", \"Cactoro Blob\", \"Ninja Blob\", \"Wizard Blob\", \"Big Dino\"",
       "",
@@ -1420,7 +1420,7 @@ function generateCode(seasonKey) {
       "",
       "# =========================",
       "# [챕터 14] 문자열 비교 복습",
-      "# favorite_food는 반드시 \"고기\", \"사과\", \"바나나\" 중 하나로 씁니다.",
+      "# favorite_food는 반드시 \"고기\", \"사과\", \"바나나\", \"주스\", \"쿠키\", \"밥\" 중 하나로 씁니다.",
       "# =========================",
       targetHint("roar_text", 2),
       `roar_text = "${s.roar_text || "우와앙! 더 커질 거야!"}"`,
@@ -1452,7 +1452,7 @@ function generateCode(seasonKey) {
       "",
       "# =========================",
       "# [챕터 17] 음식 리스트",
-      "# 미션: 사과와 바나나를 반드시 넣어 실제 아이템으로 등장시키세요.",
+      "# 미션: 주스, 쿠키, 밥을 반드시 넣어 실제 아이템으로 등장시키세요.",
       "# =========================",
       targetHint("food_items", [5, 10, 12]),
       `food_items = ${pyList(foodItems)}`,
@@ -1468,7 +1468,7 @@ function generateCode(seasonKey) {
       "",
       "# =========================",
       "# [챕터 19] 점수 딕셔너리",
-      "# 고기, 사과, 바나나는 양수 / 폭탄은 음수로 둡니다.",
+      "# 고기, 사과, 바나나, 주스, 쿠키, 밥은 양수 / 폭탄은 음수로 둡니다.",
       "# =========================",
       targetHint("item_scores", [7, 10, 12]),
       `item_scores = ${pyDict(itemScores)}`,
@@ -1852,7 +1852,7 @@ function parseCode(seasonKey, source) {
     };
   }
   if (seasonKey === "season_02") {
-    const parsedFoodItems = seasonTwoSanitizeFoodNames(sequenceValue("food_items", ["고기", "사과", "바나나"]));
+    const parsedFoodItems = seasonTwoSanitizeFoodNames(sequenceValue("food_items", SEASON_TWO_DEFAULT_FOOD_NAMES));
     const parsedLaneNames = seasonTwoSanitizeLaneNames(sequenceValue("lane_names", ["왼쪽", "가운데", "오른쪽"]));
     const parsedItemScores = seasonTwoSanitizeItemScores(dictNumberValue("item_scores", SEASON_TWO_DEFAULT_ITEM_SCORES), {
       meatScore: numberValue("meat_score"),
@@ -2387,10 +2387,13 @@ const SEASON_TWO_ALLOWED_FOODS = [
   { name: "고기", key: "meat", color: 0xf97316, dark: 0xb45309, glow: 0xfacc15 },
   { name: "사과", key: "apple", color: 0xef4444, dark: 0x991b1b, glow: 0xfca5a5 },
   { name: "바나나", key: "banana", color: 0xfacc15, dark: 0xca8a04, glow: 0xfef08a },
+  { name: "주스", key: "juice", color: 0x38bdf8, dark: 0x0369a1, glow: 0xbae6fd },
+  { name: "쿠키", key: "cookie", color: 0xb45309, dark: 0x78350f, glow: 0xfcd34d },
+  { name: "밥", key: "rice", color: 0xf8fafc, dark: 0x0f766e, glow: 0xccfbf1 },
 ];
-const SEASON_TWO_DEFAULT_FOOD_NAMES = ["고기", "사과", "바나나"];
+const SEASON_TWO_DEFAULT_FOOD_NAMES = ["고기", "사과", "바나나", "주스", "쿠키", "밥"];
 const SEASON_TWO_DEFAULT_LANE_NAMES = ["왼쪽", "가운데", "오른쪽"];
-const SEASON_TWO_DEFAULT_ITEM_SCORES = { 고기: 100, 사과: 90, 바나나: 110, 폭탄: -70 };
+const SEASON_TWO_DEFAULT_ITEM_SCORES = { 고기: 100, 사과: 105, 바나나: 110, 주스: 120, 쿠키: 130, 밥: 140, 폭탄: -70 };
 const SEASON_TWO_DEFAULT_FORM_NAMES = ["Alien Blob", "Big Alien", "Green Blob", "Big Dino", "Pink Blob"];
 const SEASON_TWO_ALLOWED_FORM_NAMES = SEASON_TWO_PLAYER_FORMS.map((form) => form.name);
 const SEASON_TWO_FORM_BY_NAME = Object.fromEntries(SEASON_TWO_PLAYER_FORMS.map((form) => [form.name, form]));
@@ -2450,15 +2453,14 @@ function seasonTwoSanitizeItemScores(value, options = {}) {
   const raw = value && typeof value === "object" && !Array.isArray(value) ? value : {};
   const meatScore = clampSeasonTwoNumber(options.meatScore, 90, 130, SEASON_TWO_DEFAULT_ITEM_SCORES["고기"]);
   const bombFallback = -Math.abs(clampSeasonTwoNumber(options.bombDamage, 50, 110, Math.abs(SEASON_TWO_DEFAULT_ITEM_SCORES["폭탄"])));
-  const base = {
-    고기: meatScore,
-    사과: SEASON_TWO_DEFAULT_ITEM_SCORES["사과"],
-    바나나: SEASON_TWO_DEFAULT_ITEM_SCORES["바나나"],
-    폭탄: bombFallback,
-  };
-  ["고기", "사과", "바나나"].forEach((name) => {
+  const base = Object.fromEntries(SEASON_TWO_ALLOWED_FOODS.map((food) => [
+    food.name,
+    food.name === "고기" ? meatScore : SEASON_TWO_DEFAULT_ITEM_SCORES[food.name],
+  ]));
+  base["폭탄"] = bombFallback;
+  SEASON_TWO_ALLOWED_FOODS.forEach(({ name }) => {
     if (Object.prototype.hasOwnProperty.call(raw, name)) {
-      base[name] = Math.round(clampSeasonTwoNumber(raw[name], 90, 130, base[name]));
+      base[name] = Math.round(clampSeasonTwoNumber(raw[name], 90, 170, base[name]));
     }
   });
   if (Object.prototype.hasOwnProperty.call(raw, "폭탄")) {
@@ -2706,7 +2708,6 @@ function seasonTwoIsBombKind(kind) {
 
 function seasonTwoMeatRewardMultiplier(kind) {
   if (kind === "triple_meat") return 3;
-  if (kind === "double_meat") return 2;
   return 1;
 }
 
@@ -2715,9 +2716,7 @@ function seasonTwoSpecialMeatCounts(chapter, meatCount) {
   const tripleCount = chapter >= 8
     ? Math.max(1, Math.round(meatCount * (0.18 + difficulty * 0.07)))
     : 0;
-  const doubleCount = chapter >= 4
-    ? Math.max(1, Math.round(meatCount * (0.22 + difficulty * 0.08)))
-    : 0;
+  const doubleCount = 0;
   const safeTripleCount = Math.max(0, Math.min(meatCount, tripleCount));
   const safeDoubleCount = Math.max(0, Math.min(meatCount - safeTripleCount, doubleCount));
   return { doubleCount: safeDoubleCount, tripleCount: safeTripleCount };
@@ -2927,7 +2926,7 @@ function seasonTwoItemData(kind, settings, foodName = "고기") {
   const bombDamage = Math.max(1, Math.abs(scores["폭탄"] ?? toNumber(config.bomb_damage, Math.max(30, Math.round(meatPoint * 0.7)))));
   const data = {
     meat: { label: foodLabel, point: 0, growth: 0, energy: meatPoint, multiplier: 1, foodName: foodLabel, foodKey: foodMeta.key },
-    double_meat: { label: `대왕${foodLabel}`, point: 0, growth: 0, energy: meatPoint * 2, multiplier: 2, foodName: foodLabel, foodKey: foodMeta.key },
+    double_meat: { label: foodLabel, point: 0, growth: 0, energy: meatPoint, multiplier: 1, foodName: foodLabel, foodKey: foodMeta.key },
     triple_meat: { label: `초대왕${foodLabel}`, point: 0, growth: 0, energy: meatPoint * 3, multiplier: 3, foodName: foodLabel, foodKey: foodMeta.key },
     bomb: { label: "폭탄", point: 0, growth: 0, energy: -bombDamage },
     nuke: { label: "핵폭탄", point: 0, growth: 0, energy: -9999 },
@@ -4302,17 +4301,53 @@ function createSeasonTwoItem3D(THREE, item) {
       addSeasonTwoCylinder(THREE, group, 0.035, 0.045, 0.25, [0.02, 0.36, 0], 0x7c2d12, [0.2, 0, 0.1], 10);
       addSeasonTwoSphere(THREE, group, 0.11, [0.16, 0.42, 0], 0x22c55e, [1.28, 0.5, 0.72], { roughness: 0.6 });
     } else if (foodMeta.key === "banana") {
-      addSeasonTwoSphere(THREE, group, multiplier > 1 ? 0.32 : 0.26, [-0.12, 0, 0], foodMeta.color, [0.78, 1.82, 0.52], {
-        roughness: 0.52,
+      const bananaGeometry = new THREE.TorusGeometry(0.34, multiplier > 1 ? 0.095 : 0.078, 14, 42, Math.PI * 1.28);
+      const bananaMaterial = new THREE.MeshStandardMaterial({
+        color: foodMeta.color,
+        roughness: 0.5,
         emissive: multiplier > 1 ? glowColor : 0x000000,
         emissiveIntensity: multiplier > 1 ? 0.12 + (multiplier - 2) * 0.06 : 0,
       });
-      addSeasonTwoSphere(THREE, group, 0.16, [0.12, -0.02, 0], 0xfef08a, [0.76, 1.5, 0.48]);
-      addSeasonTwoSphere(THREE, group, 0.055, [-0.36, 0.22, 0], 0x854d0e, [1, 1, 1]);
-      addSeasonTwoSphere(THREE, group, 0.055, [0.34, -0.24, 0], 0x854d0e, [1, 1, 1]);
+      const banana = new THREE.Mesh(bananaGeometry, bananaMaterial);
+      banana.rotation.set(Math.PI / 2, 0, -0.48);
+      banana.position.set(-0.1, 0.03, 0);
+      group.add(banana);
+      addSeasonTwoSphere(THREE, group, 0.06, [-0.42, -0.12, 0.01], 0x854d0e, [1.05, 0.9, 0.9]);
+      addSeasonTwoSphere(THREE, group, 0.06, [0.42, 0.14, 0.01], 0x854d0e, [1.05, 0.9, 0.9]);
+      addSeasonTwoSphere(THREE, group, 0.035, [0.03, -0.18, 0.03], 0xfef3c7, [1.7, 0.32, 0.26], { roughness: 0.62 });
+    } else if (foodMeta.key === "juice") {
+      addSeasonTwoCylinder(THREE, group, 0.22, 0.26, 0.58, [0, 0.02, 0], foodMeta.color, [0, 0, 0], 18, {
+        roughness: 0.28,
+        metalness: 0.02,
+        transparent: true,
+        opacity: 0.88,
+        emissive: multiplier > 1 ? glowColor : 0x000000,
+        emissiveIntensity: multiplier > 1 ? 0.12 : 0,
+      });
+      addSeasonTwoCylinder(THREE, group, 0.024, 0.024, 0.54, [0.15, 0.44, 0], 0xf8fafc, [0.28, 0, -0.26], 8);
+      addSeasonTwoCylinder(THREE, group, 0.25, 0.25, 0.035, [0, 0.33, 0], 0xe0f2fe, [0, 0, 0], 18);
+    } else if (foodMeta.key === "cookie") {
+      addSeasonTwoCylinder(THREE, group, 0.34, 0.34, 0.12, [0, 0.02, 0], foodMeta.color, [Math.PI / 2, 0, 0], 28, {
+        roughness: 0.82,
+        emissive: multiplier > 1 ? glowColor : 0x000000,
+        emissiveIntensity: multiplier > 1 ? 0.1 : 0,
+      });
+      [[-0.12, 0.12], [0.1, 0.08], [0.0, -0.1], [0.18, -0.12]].forEach(([x, y]) => {
+        addSeasonTwoSphere(THREE, group, 0.045, [x, y, 0.08], 0x431407, [1, 1, 0.45], { roughness: 0.7 });
+      });
+    } else if (foodMeta.key === "rice") {
+      addSeasonTwoSphere(THREE, group, 0.28, [0, 0.08, 0], 0xf8fafc, [1.18, 0.7, 1], {
+        roughness: 0.7,
+        emissive: multiplier > 1 ? glowColor : 0x000000,
+        emissiveIntensity: multiplier > 1 ? 0.08 : 0,
+      });
+      addSeasonTwoCylinder(THREE, group, 0.32, 0.42, 0.22, [0, -0.12, 0], foodMeta.dark, [0, 0, 0], 24, {
+        roughness: 0.5,
+      });
+      addSeasonTwoCylinder(THREE, group, 0.08, 0.08, 0.52, [0.32, 0.1, 0.02], 0x92400e, [0.2, 0, 0.82], 8);
     } else {
-      const meatColor = kind === "triple_meat" ? 0x38bdf8 : kind === "double_meat" ? 0xfacc15 : foodMeta.color;
-      const meatDark = kind === "triple_meat" ? 0x0369a1 : kind === "double_meat" ? 0xca8a04 : foodMeta.dark;
+      const meatColor = kind === "triple_meat" ? 0x38bdf8 : foodMeta.color;
+      const meatDark = kind === "triple_meat" ? 0x0369a1 : foodMeta.dark;
       addSeasonTwoSphere(THREE, group, multiplier > 1 ? 0.44 + (multiplier - 2) * 0.05 : 0.34, [0.05, 0.02, 0], meatColor, [1.28, 0.9, 0.82], {
         roughness: 0.58,
         emissive: multiplier > 1 ? glowColor : 0x000000,
@@ -4337,7 +4372,7 @@ function createSeasonTwoItem3D(THREE, item) {
     }
   }
   group.position.set(seasonTwoThreeLaneX(item.lane), 0.72, seasonTwoThreeItemZ(item.y));
-  group.scale.setScalar(kind === "nuke" ? 1.42 : kind === "triple_meat" ? 1.46 : kind === "double_meat" ? 1.34 : 1.18);
+  group.scale.setScalar(kind === "nuke" ? 1.42 : kind === "triple_meat" ? 1.46 : 1.18);
   group.rotation.y = (item.y + item.lane * 40) * 0.025;
   return group;
 }
@@ -4709,7 +4744,6 @@ function renderSeasonTwo() {
   const runnerFoodSummary = [
     `음식 총 ${g.fixedMeatCount || 0}`,
     `목록 ${foodListLabel}`,
-    (g.fixedDoubleMeatCount || 0) > 0 ? `대왕 ${g.fixedDoubleMeatCount}` : "",
     (g.fixedTripleMeatCount || 0) > 0 ? `초대왕 ${g.fixedTripleMeatCount}` : "",
     `폭탄 ${g.fixedBombCount || 0}`,
   ].filter(Boolean).join(" · ");
