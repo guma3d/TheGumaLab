@@ -2456,38 +2456,25 @@ body.file-tree-collapsed .file-tree {
   border-radius: 50% 48% 54% 46%;
 }
 
-.runner-item.food-banana span {
-  width: 46px;
-  height: 30px;
-  background: transparent;
-  border-radius: 0;
-  box-shadow: none;
-  transform: rotate(-16deg);
-}
-
-.runner-item.food-banana span::before {
-  content: "";
-  position: absolute;
-  left: 3px;
-  top: 1px;
-  width: 39px;
-  height: 24px;
-  border-bottom: 12px solid #facc15;
-  border-radius: 0 0 80% 80%;
-  box-shadow: inset 0 -3px 0 #ca8a04, 0 7px 0 rgba(15, 23, 42, 0.16);
-  transform: rotate(-8deg);
-}
-
-.runner-item.food-banana span::after {
-  content: "";
-  position: absolute;
-  left: 4px;
-  top: 18px;
-  width: 6px;
-  height: 6px;
+.runner-item.food-orange span {
   border-radius: 50%;
-  background: #854d0e;
-  box-shadow: 35px -12px 0 #854d0e, 18px -3px 0 -2px #fef3c7;
+  background:
+    radial-gradient(circle at 36% 28%, #fed7aa 0 10%, transparent 11%),
+    radial-gradient(circle at 56% 10%, #22c55e 0 9%, transparent 10%),
+    linear-gradient(135deg, #fdba74, #f97316 56%, #c2410c);
+  box-shadow: 0 0 16px rgba(249, 115, 22, 0.36), 0 8px 0 rgba(15, 23, 42, 0.18), inset -6px -5px 0 rgba(15, 23, 42, 0.16);
+}
+
+.runner-item.food-orange span::before {
+  content: "";
+  position: absolute;
+  left: 12px;
+  top: 7px;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(254, 243, 199, 0.42);
+  border-radius: 50%;
+  box-shadow: inset -3px -3px 0 rgba(194, 65, 12, 0.2);
 }
 
 .runner-item.food-juice span {
@@ -2507,11 +2494,28 @@ body.file-tree-collapsed .file-tree {
     linear-gradient(135deg, #f59e0b, #b45309 64%, #78350f);
 }
 
-.runner-item.food-rice span {
-  border-radius: 46% 46% 58% 58%;
+.runner-item.food-sandwich span {
+  width: 44px;
+  height: 32px;
+  border-radius: 6px;
   background:
-    radial-gradient(ellipse at 50% 25%, #ffffff 0 38%, transparent 39%),
-    linear-gradient(180deg, transparent 0 34%, #14b8a6 35% 72%, #0f766e 73%);
+    linear-gradient(160deg, transparent 0 14%, #22c55e 15% 26%, transparent 27%),
+    linear-gradient(20deg, transparent 0 20%, #ef4444 21% 32%, transparent 33%),
+    linear-gradient(145deg, #fef3c7 0 45%, #fde68a 46% 100%);
+  box-shadow: 0 8px 0 rgba(15, 23, 42, 0.18), inset -5px -4px 0 rgba(146, 64, 14, 0.14);
+  transform: rotate(-8deg);
+}
+
+.runner-item.food-burger span {
+  width: 44px;
+  height: 34px;
+  border-radius: 18px 18px 12px 12px;
+  background:
+    radial-gradient(circle at 30% 15%, #fffbeb 0 4%, transparent 5%),
+    radial-gradient(circle at 50% 10%, #fffbeb 0 4%, transparent 5%),
+    radial-gradient(circle at 70% 17%, #fffbeb 0 4%, transparent 5%),
+    linear-gradient(180deg, #f59e0b 0 38%, #facc15 39% 48%, #7c2d12 49% 68%, #22c55e 69% 76%, #d97706 77% 100%);
+  box-shadow: 0 8px 0 rgba(15, 23, 42, 0.18), inset -5px -4px 0 rgba(124, 45, 18, 0.22);
 }
 
 .runner-item.item-double_meat span {
@@ -2534,13 +2538,20 @@ body.file-tree-collapsed .file-tree {
     linear-gradient(135deg, #fecaca, #ef4444 58%, #991b1b);
 }
 
-.runner-item.item-double_meat.food-banana span,
-.runner-item.item-triple_meat.food-banana span {
+.runner-item.item-double_meat.food-orange span,
+.runner-item.item-triple_meat.food-orange span {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 36% 28%, #fed7aa 0 10%, transparent 11%),
+    radial-gradient(circle at 56% 10%, #22c55e 0 9%, transparent 10%),
+    linear-gradient(135deg, #fdba74, #f97316 56%, #c2410c);
+}
+
+.runner-item.item-double_meat.food-sandwich span,
+.runner-item.item-triple_meat.food-sandwich span,
+.runner-item.item-double_meat.food-burger span,
+.runner-item.item-triple_meat.food-burger span {
   border: 0;
-  background: transparent;
-  border-radius: 0;
-  box-shadow: none;
-  transform: rotate(-16deg);
 }
 
 .runner-item.item-bomb span {
