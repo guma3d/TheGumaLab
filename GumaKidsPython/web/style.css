@@ -421,6 +421,178 @@ body.file-tree-collapsed .file-tree {
   text-wrap: pretty;
 }
 
+.dictionary-term {
+  display: inline;
+  min-height: 0;
+  margin: 0 1px;
+  padding: 0 4px 1px;
+  border: 0;
+  border-radius: 6px;
+  background: linear-gradient(180deg, rgba(254, 240, 138, 0.92), rgba(253, 186, 116, 0.72));
+  color: #7c2d12;
+  box-shadow: 0 2px 0 rgba(124, 45, 18, 0.16);
+  font: inherit;
+  font-weight: 900;
+  text-decoration: underline;
+  text-decoration-color: rgba(124, 45, 18, 0.42);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+  vertical-align: baseline;
+  cursor: help;
+}
+
+.dictionary-term:hover:not(:disabled),
+.dictionary-term:focus-visible {
+  transform: none;
+  border: 0;
+  background: linear-gradient(180deg, #fde047, #fb7185);
+  color: #4a1d09;
+  outline: 3px solid rgba(255, 255, 255, 0.92);
+  outline-offset: 1px;
+}
+
+.dictionary-modal[hidden] {
+  display: none;
+}
+
+.dictionary-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.dictionary-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 5, 5, 0.66);
+  backdrop-filter: blur(8px);
+}
+
+.dictionary-card {
+  position: relative;
+  width: min(520px, calc(100vw - 32px));
+  max-height: min(78vh, 620px);
+  overflow: auto;
+  padding: 24px;
+  border: 3px solid #ffffff;
+  border-radius: 8px;
+  background:
+    linear-gradient(#fffaf0, #fffaf0) padding-box,
+    linear-gradient(135deg, #f43f5e, #facc15, #38bdf8, #22c55e) border-box;
+  color: #2f184f;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.46), 0 10px 0 rgba(251, 191, 36, 0.34);
+}
+
+.dictionary-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 2px solid rgba(76, 29, 149, 0.22);
+  border-radius: 50%;
+  background: #ffffff;
+  color: #4c1d95;
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 5px 0 rgba(76, 29, 149, 0.12);
+}
+
+.dictionary-close:hover:not(:disabled),
+.dictionary-close:focus-visible {
+  transform: translateY(-1px);
+  border-color: #4c1d95;
+  background: #fef08a;
+  color: #7c2d12;
+}
+
+.dictionary-category {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  margin: 0 44px 10px 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.dictionary-card h3 {
+  margin: 0 44px 6px 0;
+  color: #be123c;
+  font-size: 34px;
+  line-height: 1.05;
+}
+
+.dictionary-pronunciation {
+  margin: 0 0 12px;
+  color: #6d28d9;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.dictionary-meaning {
+  margin: 0 0 14px;
+  color: #3b2c66;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.45;
+}
+
+.dictionary-section {
+  margin: 0 0 14px;
+  padding: 12px 0 0;
+  border-top: 2px dashed rgba(124, 58, 237, 0.24);
+}
+
+.dictionary-section span,
+.dictionary-remember {
+  color: #0f766e;
+  font-weight: 900;
+}
+
+.dictionary-section p {
+  margin: 4px 0 0;
+  color: #3b2c66;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.dictionary-example {
+  margin: 0 0 12px;
+  padding: 14px;
+  overflow: auto;
+  border: 2px solid rgba(76, 29, 149, 0.18);
+  border-radius: 8px;
+  background: #24113f;
+  color: #fef3c7;
+  font-size: 15px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.dictionary-example code {
+  font-family: "Cascadia Code", "Consolas", monospace;
+}
+
+.dictionary-remember {
+  margin: 0;
+  padding-top: 10px;
+  border-top: 2px dashed rgba(15, 118, 110, 0.24);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
 .lesson-page-art {
   position: absolute;
   inset: 0;
@@ -3459,5 +3631,20 @@ body.file-tree-collapsed .file-tree {
 
   .enemy-fighter {
     right: 2%;
+  }
+
+  .dictionary-modal {
+    align-items: end;
+    padding: 14px;
+  }
+
+  .dictionary-card {
+    width: 100%;
+    max-height: 86vh;
+    padding: 20px;
+  }
+
+  .dictionary-card h3 {
+    font-size: 28px;
   }
 }

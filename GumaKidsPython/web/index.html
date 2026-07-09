@@ -84,6 +84,23 @@
       </section>
     </main>
 
+    <div id="dictionaryModal" class="dictionary-modal" hidden aria-hidden="true">
+      <div class="dictionary-backdrop" data-dictionary-close></div>
+      <section class="dictionary-card" role="dialog" aria-modal="true" aria-labelledby="dictionaryTitle" aria-describedby="dictionarySimple">
+        <button id="dictionaryCloseBtn" class="dictionary-close" type="button" aria-label="단어 설명 닫기">×</button>
+        <p id="dictionaryCategory" class="dictionary-category">파이썬 단어</p>
+        <h3 id="dictionaryTitle"></h3>
+        <p id="dictionaryPronunciation" class="dictionary-pronunciation"></p>
+        <p id="dictionaryMeaning" class="dictionary-meaning"></p>
+        <div class="dictionary-section">
+          <span>쉽게 말하면</span>
+          <p id="dictionarySimple"></p>
+        </div>
+        <pre class="dictionary-example"><code id="dictionaryExample"></code></pre>
+        <p id="dictionaryRemember" class="dictionary-remember"></p>
+      </section>
+    </div>
+
     <script src="/app.js"></script>
   </body>
 </html>

@@ -655,6 +655,405 @@ const projectFiles = [
   { name: "save_data.py", role: "챕터별 저장 데이터", editable: false },
 ];
 
+const dictionaryEntries = [
+  {
+    key: "data-type",
+    word: "data type",
+    aliases: ["data type", "type", "자료형"],
+    category: "값의 종류",
+    pronunciation: "데이터 타입",
+    meaning: "파이썬이 값을 어떤 종류로 봐야 하는지 알려주는 이름이에요.",
+    simple: "글자, 숫자, 참/거짓처럼 값의 성격표라고 생각하면 쉬워요.",
+    example: 'hero_name = "번개용사"\nscore = 10',
+    remember: "값마다 어울리는 일을 하려고 자료형을 나눠요.",
+  },
+  {
+    key: "str",
+    word: "str",
+    aliases: ["str", "string", "문자열"],
+    category: "글자 자료형",
+    pronunciation: "스트링",
+    meaning: "따옴표 안에 넣는 글자 값이에요.",
+    simple: "캐릭터 이름, 말풍선 문장처럼 계산하지 않고 그대로 보여줄 말을 담아요.",
+    example: 'hero_name = "번개용사"',
+    remember: "따옴표가 보이면 보통 str이에요.",
+  },
+  {
+    key: "int",
+    word: "int",
+    aliases: ["int", "integer", "정수"],
+    category: "숫자 자료형",
+    pronunciation: "인트",
+    meaning: "소수점이 없는 숫자예요.",
+    simple: "점수 10, 체력 100처럼 딱 떨어지는 숫자를 담아요.",
+    example: "score = 10\nhp = 100",
+    remember: "소수점이 없으면 int라고 생각해요.",
+  },
+  {
+    key: "float",
+    word: "float",
+    aliases: ["float", "소수"],
+    category: "숫자 자료형",
+    pronunciation: "플로트",
+    meaning: "소수점이 있는 숫자예요.",
+    simple: "속도 3.5처럼 반 칸, 조금 더 같은 값을 표현할 때 써요.",
+    example: "run_speed = 3.5",
+    remember: "점이 들어간 숫자는 float일 가능성이 높아요.",
+  },
+  {
+    key: "bool",
+    word: "Boolean",
+    aliases: ["Boolean", "bool", "True/False", "True", "False", "불리언"],
+    category: "참/거짓 자료형",
+    pronunciation: "불리언",
+    meaning: "맞다 또는 아니다를 나타내는 값이에요.",
+    simple: "방어막이 켜졌는지, 대시를 쓸 수 있는지처럼 스위치 역할을 해요.",
+    example: "shield_ready = True\ndash_ready = False",
+    remember: "True는 켜짐, False는 꺼짐처럼 생각해요.",
+  },
+  {
+    key: "variable",
+    word: "variable",
+    aliases: ["variable", "변수"],
+    category: "이름표",
+    pronunciation: "베리어블",
+    meaning: "값을 담아두는 이름이에요.",
+    simple: "상자에 이름표를 붙여서 나중에 다시 꺼내 쓰는 것과 비슷해요.",
+    example: 'favorite_food = "고기"',
+    remember: "왼쪽 이름이 변수, 오른쪽이 담기는 값이에요.",
+  },
+  {
+    key: "assignment",
+    word: "=",
+    aliases: ["=", "대입"],
+    category: "저장 기호",
+    pronunciation: "이퀄",
+    meaning: "오른쪽 값을 왼쪽 이름에 넣으라는 뜻이에요.",
+    simple: "수학의 같다보다, 파이썬에서는 저장한다는 느낌으로 봐요.",
+    example: "score = 10",
+    remember: "오른쪽에서 왼쪽 상자로 쏙 넣는 그림을 떠올려요.",
+  },
+  {
+    key: "comparison",
+    word: "==",
+    aliases: ["==", "comparison"],
+    category: "비교 기호",
+    pronunciation: "더블 이퀄",
+    meaning: "두 값이 같은지 물어볼 때 써요.",
+    simple: "게임이 좋아하는 음식인지 확인할 때 쓰는 질문표예요.",
+    example: 'favorite_food == "고기"',
+    remember: "물어볼 때는 ==, 저장할 때는 = 예요.",
+  },
+  {
+    key: "list",
+    word: "list",
+    aliases: ["list", "리스트"],
+    category: "순서 있는 상자",
+    pronunciation: "리스트",
+    meaning: "여러 값을 순서대로 담는 자료형이에요.",
+    simple: "음식 이름 여러 개를 한 줄로 모아두는 장바구니라고 생각해요.",
+    example: 'food_items = ["고기", "사과", "바나나"]',
+    remember: "대괄호 []를 보면 list일 가능성이 높아요.",
+  },
+  {
+    key: "tuple",
+    word: "tuple",
+    aliases: ["tuple", "튜플"],
+    category: "잘 안 바꾸는 묶음",
+    pronunciation: "튜플",
+    meaning: "여러 값을 순서대로 담지만, 정해진 값을 지킬 때 좋아요.",
+    simple: "왼쪽, 가운데, 오른쪽처럼 게임 레인이 고정되어 있을 때 잘 어울려요.",
+    example: 'lane_names = ("왼쪽", "가운데", "오른쪽")',
+    remember: "소괄호 ()로 묶여 있으면 tuple일 수 있어요.",
+  },
+  {
+    key: "dictionary",
+    word: "dictionary",
+    aliases: ["dictionary", "dict", "딕셔너리"],
+    category: "이름표 상자",
+    pronunciation: "딕셔너리",
+    meaning: "키와 값을 짝으로 저장하는 자료형이에요.",
+    simple: "음식 이름표를 보고 점수를 바로 찾는 사전 같아요.",
+    example: 'item_scores = {"고기": 100, "폭탄": -70}',
+    remember: "중괄호 {} 안에 이름: 값 짝이 있으면 dictionary예요.",
+  },
+  {
+    key: "key",
+    word: "key",
+    aliases: ["key"],
+    category: "딕셔너리 이름표",
+    pronunciation: "키",
+    meaning: "딕셔너리에서 값을 찾는 이름표예요.",
+    simple: "item_scores에서 \"고기\"는 에너지 100을 찾는 키예요.",
+    example: '"고기": 100',
+    remember: "키를 말하면 딕셔너리가 짝꿍 값을 찾아줘요.",
+  },
+  {
+    key: "value",
+    word: "value",
+    aliases: ["value"],
+    category: "저장된 값",
+    pronunciation: "밸류",
+    meaning: "변수나 키 안에 들어 있는 실제 값이에요.",
+    simple: "score라는 이름표 안에 10이 들어 있으면 10이 value예요.",
+    example: "score = 10",
+    remember: "값은 게임 규칙을 실제로 바꾸는 내용이에요.",
+  },
+  {
+    key: "f-string",
+    word: "f-string",
+    aliases: ["f-string"],
+    category: "문장 조립",
+    pronunciation: "에프 스트링",
+    meaning: "문장 안에 변수 값을 끼워 넣는 방법이에요.",
+    simple: "이름과 점수를 자동으로 문장에 넣어 말풍선을 만들 수 있어요.",
+    example: 'mission_status = f"{hero_name} 점수 {score}"',
+    remember: "문장 앞의 f와 중괄호 {}를 함께 봐요.",
+  },
+  {
+    key: "if",
+    word: "if",
+    aliases: ["if", "조건문"],
+    category: "조건 질문",
+    pronunciation: "이프",
+    meaning: "만약 어떤 일이 맞으면 코드를 실행하라는 뜻이에요.",
+    simple: "방어막이 있으면 피해를 줄이는 규칙처럼 게임의 갈림길을 만들어요.",
+    example: "if shield_ready:\n    damage = 10",
+    remember: "if는 '만약'이라고 읽으면 편해요.",
+  },
+  {
+    key: "elif",
+    word: "elif",
+    aliases: ["elif"],
+    category: "다음 조건",
+    pronunciation: "엘리프",
+    meaning: "앞 조건이 아니면 다른 조건도 검사하라는 뜻이에요.",
+    simple: "고기면 100점, 사과면 105점처럼 여러 선택지를 차례로 확인해요.",
+    example: "elif food == \"사과\":\n    energy = 105",
+    remember: "else if를 짧게 줄인 말이에요.",
+  },
+  {
+    key: "else",
+    word: "else",
+    aliases: ["else"],
+    category: "나머지 경우",
+    pronunciation: "엘스",
+    meaning: "위 조건들이 모두 아니면 실행하는 곳이에요.",
+    simple: "아무 음식도 아니면 기본 행동을 하게 만들 때 써요.",
+    example: "else:\n    energy = 0",
+    remember: "else는 '그 밖에는'이라고 읽어요.",
+  },
+  {
+    key: "and",
+    word: "and",
+    aliases: ["and"],
+    category: "조건 연결",
+    pronunciation: "앤드",
+    meaning: "두 조건이 모두 맞아야 할 때 써요.",
+    simple: "방어막도 준비되고 대시도 준비되어야 특별 방어가 되는 식이에요.",
+    example: "can_dash = shield_ready and dash_ready",
+    remember: "and는 둘 다 맞아야 True예요.",
+  },
+  {
+    key: "or",
+    word: "or",
+    aliases: ["or"],
+    category: "조건 연결",
+    pronunciation: "오어",
+    meaning: "둘 중 하나만 맞아도 될 때 써요.",
+    simple: "빨간 코어나 파란 코어 중 하나만 있어도 보너스를 주는 규칙이에요.",
+    example: "has_core_bonus = red_core or blue_core",
+    remember: "or는 하나라도 맞으면 True예요.",
+  },
+  {
+    key: "function",
+    word: "function",
+    aliases: ["function", "def", "함수"],
+    category: "코드 버튼",
+    pronunciation: "펑션",
+    meaning: "여러 줄 코드를 이름 하나로 묶은 거예요.",
+    simple: "공격하기 버튼처럼 필요할 때 한 번에 실행할 행동 묶음이에요.",
+    example: "def attack():\n    return 10",
+    remember: "파이썬에서는 def로 함수를 만들어요.",
+  },
+  {
+    key: "return",
+    word: "return",
+    aliases: ["return"],
+    category: "결과 돌려주기",
+    pronunciation: "리턴",
+    meaning: "함수가 만든 결과를 밖으로 보내는 말이에요.",
+    simple: "계산한 공격력을 함수 밖으로 건네주는 느낌이에요.",
+    example: "return final_attack",
+    remember: "return 뒤의 값이 함수의 결과예요.",
+  },
+  {
+    key: "print",
+    word: "print",
+    aliases: ["print"],
+    category: "보여주기",
+    pronunciation: "프린트",
+    meaning: "파이썬이 글자나 숫자를 화면에 보여주게 해요.",
+    simple: "코드가 무슨 말을 하는지 확인하는 작은 확성기예요.",
+    example: 'print("모험 시작!")',
+    remember: "print는 확인하고 싶을 때 자주 써요.",
+  },
+  {
+    key: "input",
+    word: "input",
+    aliases: ["input"],
+    category: "물어보기",
+    pronunciation: "인풋",
+    meaning: "사용자에게 값을 입력받는 말이에요.",
+    simple: "아이에게 이름을 물어보고 그 대답을 코드에 넣을 수 있어요.",
+    example: 'hero_name = input("이름은? ")',
+    remember: "input은 밖에서 값을 받아오는 문이에요.",
+  },
+  {
+    key: "import",
+    word: "import",
+    aliases: ["import"],
+    category: "도구 가져오기",
+    pronunciation: "임포트",
+    meaning: "파이썬에 이미 있는 도구를 가져오는 말이에요.",
+    simple: "random 같은 도구 상자를 코드에 불러오는 주문이에요.",
+    example: "import random",
+    remember: "import 뒤에는 가져올 도구 이름이 와요.",
+  },
+  {
+    key: "random",
+    word: "random",
+    aliases: ["random"],
+    category: "무작위",
+    pronunciation: "랜덤",
+    meaning: "매번 다른 값을 고르게 해주는 도구예요.",
+    simple: "보물이 어디 나올지, 함정이 어떻게 움직일지 섞을 때 좋아요.",
+    example: "trap_x_step = random.choice([-1, 0, 1])",
+    remember: "random은 게임을 덜 뻔하게 만들어줘요.",
+  },
+  {
+    key: "food-items",
+    word: "food_items",
+    aliases: ["food_items"],
+    category: "GumaKidsPython 변수",
+    pronunciation: "푸드 아이템스",
+    meaning: "러너 게임에 나오는 음식 목록이에요.",
+    simple: "리스트 안의 음식 이름이 실제 트랙 아이템으로 등장해요.",
+    example: 'food_items = ["고기", "사과", "바나나", "주스", "쿠키", "밥"]',
+    remember: "여러 음식 이름을 담으므로 list와 함께 봐요.",
+  },
+  {
+    key: "lane-names",
+    word: "lane_names",
+    aliases: ["lane_names"],
+    category: "GumaKidsPython 변수",
+    pronunciation: "레인 네임스",
+    meaning: "러너 게임의 세 길 이름이에요.",
+    simple: "왼쪽, 가운데, 오른쪽처럼 고정된 레인 이름을 담아요.",
+    example: 'lane_names = ("왼쪽", "가운데", "오른쪽")',
+    remember: "잘 바뀌지 않는 세 칸이라 tuple과 잘 어울려요.",
+  },
+  {
+    key: "item-scores",
+    word: "item_scores",
+    aliases: ["item_scores"],
+    category: "GumaKidsPython 변수",
+    pronunciation: "아이템 스코어스",
+    meaning: "아이템마다 얻거나 잃는 에너지 점수표예요.",
+    simple: "음식 이름을 키로 보고, 오른쪽 숫자를 에너지 값으로 써요.",
+    example: 'item_scores = {"고기": 100, "폭탄": -70}',
+    remember: "이름과 점수가 짝이므로 dictionary와 함께 봐요.",
+  },
+  {
+    key: "form-names",
+    word: "form_names",
+    aliases: ["form_names"],
+    category: "GumaKidsPython 변수",
+    pronunciation: "폼 네임스",
+    meaning: "성장할 때 바뀌는 캐릭터 모습 이름 목록이에요.",
+    simple: "에너지가 커질수록 리스트 순서대로 다음 모습이 나와요.",
+    example: 'form_names = ["Alien Blob", "Big Alien", "Green Blob"]',
+    remember: "순서가 중요하므로 list로 보기 좋아요.",
+  },
+  {
+    key: "hero-name",
+    word: "hero_name",
+    aliases: ["hero_name"],
+    category: "GumaKidsPython 변수",
+    pronunciation: "히어로 네임",
+    meaning: "주인공 이름을 담는 변수예요.",
+    simple: "이 값을 바꾸면 화면의 주인공 이름도 바뀌어요.",
+    example: 'hero_name = "번개용사"',
+    remember: "name이 붙으면 이름을 담는 경우가 많아요.",
+  },
+  {
+    key: "score",
+    word: "score",
+    aliases: ["score"],
+    category: "GumaKidsPython 변수",
+    pronunciation: "스코어",
+    meaning: "게임 점수를 담는 변수예요.",
+    simple: "보물을 먹거나 미션을 성공하면 이 숫자가 바뀌어요.",
+    example: "score = 10",
+    remember: "score는 게임에서 점수라는 뜻이에요.",
+  },
+  {
+    key: "hp",
+    word: "hp",
+    aliases: ["hp"],
+    category: "GumaKidsPython 변수",
+    pronunciation: "에이치피",
+    meaning: "캐릭터의 체력을 담는 변수예요.",
+    simple: "함정을 만나면 줄고, 물약을 먹으면 늘어나는 숫자예요.",
+    example: "hp = 100",
+    remember: "게임에서 hp는 체력으로 자주 써요.",
+  },
+  {
+    key: "speed",
+    word: "speed",
+    aliases: ["speed", "run_speed"],
+    category: "GumaKidsPython 변수",
+    pronunciation: "스피드",
+    meaning: "캐릭터가 얼마나 빠르게 움직이는지 담는 변수예요.",
+    simple: "숫자가 커지면 움직임이나 달리기가 더 빨라질 수 있어요.",
+    example: "run_speed = 5",
+    remember: "speed는 속도라는 뜻이에요.",
+  },
+  {
+    key: "boss",
+    word: "boss",
+    aliases: ["boss"],
+    category: "GumaKidsPython 변수",
+    pronunciation: "보스",
+    meaning: "보스 이름과 힘을 담는 변수예요.",
+    simple: "딕셔너리로 보스 이름과 power 숫자를 같이 저장해요.",
+    example: 'boss = {"name": "Dragon", "power": 1200}',
+    remember: "보스 정보는 여러 값이 짝으로 모여 있어요.",
+  },
+  {
+    key: "final-attack",
+    word: "final_attack",
+    aliases: ["final_attack"],
+    category: "GumaKidsPython 변수",
+    pronunciation: "파이널 어택",
+    meaning: "마지막 공격 피해량을 담는 변수예요.",
+    simple: "보스전에서 최종 공격이 얼마나 강한지 정하는 숫자예요.",
+    example: "final_attack = flame_damage + 50",
+    remember: "attack은 공격이라는 뜻이에요.",
+  },
+];
+
+const dictionaryByKey = new Map(dictionaryEntries.map((entry) => [entry.key, entry]));
+const dictionaryTermToKey = new Map();
+dictionaryEntries.forEach((entry) => {
+  [entry.word, ...entry.aliases].forEach((term) => {
+    dictionaryTermToKey.set(term.toLowerCase(), entry.key);
+  });
+});
+const dictionaryTerms = [...dictionaryTermToKey.keys()].sort((a, b) => b.length - a.length);
+const dictionaryTermPattern = new RegExp(dictionaryTerms.map((term) => term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"), "gi");
+let dictionaryFocusTarget = null;
+
 const state = {
   activeSeason: "season_01",
   activeChapter: 1,
@@ -727,6 +1126,15 @@ const els = {
   prevLesson: document.querySelector("#prevLessonBtn"),
   nextLesson: document.querySelector("#nextLessonBtn"),
   lessonPageLabel: document.querySelector("#lessonPageLabel"),
+  dictionaryModal: document.querySelector("#dictionaryModal"),
+  dictionaryClose: document.querySelector("#dictionaryCloseBtn"),
+  dictionaryCategory: document.querySelector("#dictionaryCategory"),
+  dictionaryTitle: document.querySelector("#dictionaryTitle"),
+  dictionaryPronunciation: document.querySelector("#dictionaryPronunciation"),
+  dictionaryMeaning: document.querySelector("#dictionaryMeaning"),
+  dictionarySimple: document.querySelector("#dictionarySimple"),
+  dictionaryExample: document.querySelector("#dictionaryExample"),
+  dictionaryRemember: document.querySelector("#dictionaryRemember"),
   codeEditor: document.querySelector("#codeEditor"),
   parsedParams: document.querySelector("#parsedParams"),
   applyUpgrade: document.querySelector("#applyUpgradeBtn"),
@@ -1198,6 +1606,62 @@ function setLockedControls() {
   });
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function isAsciiWordChar(char) {
+  return /[A-Za-z0-9_]/.test(char || "");
+}
+
+function canWrapDictionaryTerm(source, index, term) {
+  if (!/[A-Za-z0-9_]/.test(term)) return true;
+  const before = source[index - 1] || "";
+  const after = source[index + term.length] || "";
+  return !isAsciiWordChar(before) && !isAsciiWordChar(after);
+}
+
+function renderDictionaryText(text) {
+  return escapeHtml(text).replace(dictionaryTermPattern, (match, index, source) => {
+    if (!canWrapDictionaryTerm(source, index, match)) return match;
+    const key = dictionaryTermToKey.get(match.toLowerCase());
+    if (!key) return match;
+    return `<button class="dictionary-term" type="button" data-dictionary-term="${key}">${match}</button>`;
+  });
+}
+
+function openDictionaryModal(key, trigger) {
+  const entry = dictionaryByKey.get(key);
+  if (!entry || !els.dictionaryModal) return;
+  dictionaryFocusTarget = trigger || document.activeElement;
+  els.dictionaryCategory.textContent = entry.category;
+  els.dictionaryTitle.textContent = entry.word;
+  els.dictionaryPronunciation.textContent = `읽는 법: ${entry.pronunciation}`;
+  els.dictionaryMeaning.textContent = entry.meaning;
+  els.dictionarySimple.textContent = entry.simple;
+  els.dictionaryExample.textContent = entry.example;
+  els.dictionaryRemember.textContent = entry.remember;
+  els.dictionaryModal.hidden = false;
+  els.dictionaryModal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("dictionary-modal-open");
+  window.setTimeout(() => els.dictionaryClose?.focus(), 0);
+}
+
+function closeDictionaryModal() {
+  if (!els.dictionaryModal || els.dictionaryModal.hidden) return;
+  els.dictionaryModal.hidden = true;
+  els.dictionaryModal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("dictionary-modal-open");
+  const focusTarget = dictionaryFocusTarget;
+  dictionaryFocusTarget = null;
+  if (focusTarget && typeof focusTarget.focus === "function") focusTarget.focus();
+}
+
 function renderLesson() {
   const lesson = currentLessonPages();
   state.lessonPage = Math.max(0, Math.min(state.lessonPage, lesson.length - 1));
@@ -1212,8 +1676,8 @@ function renderLesson() {
         <span class="lesson-star star-a"></span>
         <span class="lesson-star star-b"></span>
       </div>
-      <strong>${title}</strong>
-      <p>${body}</p>
+      <strong>${renderDictionaryText(title)}</strong>
+      <p>${renderDictionaryText(body)}</p>
       <div class="lesson-progress" aria-hidden="true">${dots}</div>
     </article>
   `;
@@ -5228,6 +5692,19 @@ els.filePanelToggle?.addEventListener("click", () => {
   setFilePanelCollapsed(!document.body.classList.contains("file-tree-collapsed"));
 });
 
+els.lessonBody.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-dictionary-term]");
+  if (!button) return;
+  event.preventDefault();
+  openDictionaryModal(button.dataset.dictionaryTerm, button);
+});
+
+els.dictionaryClose?.addEventListener("click", closeDictionaryModal);
+
+els.dictionaryModal?.addEventListener("click", (event) => {
+  if (event.target.closest("[data-dictionary-close]")) closeDictionaryModal();
+});
+
 els.applyUpgrade.addEventListener("click", () => {
   if (state.gameStarted) return;
   if (state.activeFile !== "upgrade_zone.py") {
@@ -5299,6 +5776,11 @@ els.nextLesson.addEventListener("click", () => {
 });
 
 document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && els.dictionaryModal && !els.dictionaryModal.hidden) {
+    event.preventDefault();
+    closeDictionaryModal();
+    return;
+  }
   if (!["season_01", "season_02"].includes(state.activeSeason)) return;
   if (event.target.closest("textarea, input")) return;
   const isSpace = event.key === " " || event.key === "Space" || event.code === "Space";
