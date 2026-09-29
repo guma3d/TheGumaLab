@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  videofactory:
+    build: .
+    container_name: GumaVideoFactory_app
+    ports:
+      - "8085:8085"
+    volumes:
+      - .:/app
+      - ./storage:/app/storage
+    env_file:
+      - path: ../.env
+        required: false
+      - path: .env
+        required: false
+    restart: unless-stopped

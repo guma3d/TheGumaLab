@@ -1,9 +1,0 @@
-# basic requirements
-redis
-Flask
-requests
-pytz
-yfinance
-google-genai
-apscheduler
-watchfiles
