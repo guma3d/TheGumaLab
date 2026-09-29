@@ -1,372 +1,730 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GumaVideoFactory - AI 영상 제작 스튜디오</title>
+    <title>GumaVideoFactory - AI Video Studio</title>
+    <meta name="description" content="AI 기반 숏폼 영상 기획·생성·웹 편집 자동화 스튜디오 (Google Veo & Edge-TTS)">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- Fonts & Icons (GumaTube와 동일) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
+        /* =========================================================================
+           GumaTube (YouTubeToDoc) Premium Glassmorphism Theme Identical Styling
+           ========================================================================= */
+        :root {
+            --bg-dark: #050505;
+            --primary: #10b981;
+            --primary-hover: #059669;
+            --primary-glow: rgba(16, 185, 129, 0.4);
+            
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-card: rgba(255, 255, 255, 0.04);
+            
+            --text-main: #ffffff;
+            --text-muted: #a1a1aa;
+            
+            --gradient-1: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+            --gradient-title: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 20px;
-            background: #f4f6f9;
-            color: #333;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            padding-bottom: 60px;
         }
 
-        .container {
-            max-width: 1200px;
+        /* Ambient Glow Effects (GumaLab Universe 공통) */
+        .ambient-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+            opacity: 0.15;
+            filter: blur(90px);
+            z-index: 0;
+            top: -120px;
+            left: 15%;
+            pointer-events: none;
+            animation: pulseGlow 10s infinite alternate;
+        }
+
+        .ambient-glow-2 {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(52, 211, 153, 0.3) 0%, transparent 70%);
+            opacity: 0.1;
+            filter: blur(80px);
+            z-index: 0;
+            bottom: -100px;
+            right: 15%;
+            pointer-events: none;
+            animation: pulseGlow 8s infinite alternate-reverse;
+        }
+
+        @keyframes pulseGlow {
+            0% { transform: scale(1); opacity: 0.10; }
+            100% { transform: scale(1.15); opacity: 0.18; }
+        }
+
+        /* Layout Container */
+        .main-container {
+            width: 100%;
+            max-width: 1050px;
             margin: 0 auto;
+            padding: 32px 20px;
+            position: relative;
+            z-index: 10;
         }
 
-        .header {
+        /* Header (GumaTube / Portal 패밀리 룩) */
+        header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid #e1e4e8;
+            margin-bottom: 32px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--glass-border);
         }
 
-        .header-title-box {
+        .brand-box {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
         }
 
-        .logo-icon {
-            font-size: 32px;
-            color: #dc3545;
+        .brand-icon {
+            font-size: 2.2rem;
+            color: var(--primary);
+            text-shadow: 0 0 20px var(--primary-glow);
         }
 
-        h1 {
-            font-size: 26px;
-            color: #212529;
+        .brand-text h1 {
+            font-size: 1.85rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
             display: flex;
             align-items: center;
             gap: 10px;
+            background: var(--gradient-title);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-text p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
         }
 
         .badge-live {
-            background: #28a745;
-            color: white;
-            font-size: 11px;
-            padding: 3px 8px;
-            border-radius: 12px;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            font-size: 0.68rem;
+            padding: 2px 8px;
+            border-radius: 20px;
             text-transform: uppercase;
-            font-weight: 600;
+            font-weight: 700;
+            letter-spacing: 1px;
+            -webkit-text-fill-color: var(--primary);
         }
 
-        .subtitle {
-            font-size: 14px;
-            color: #6c757d;
-            margin-top: 4px;
-        }
-
-        .nav-buttons {
+        .nav-links {
             display: flex;
             gap: 10px;
         }
 
-        .nav-buttons a {
-            padding: 8px 16px;
-            background: white;
-            color: #495057;
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
             text-decoration: none;
-            border-radius: 6px;
-            border: 1px solid #ced4da;
-            font-size: 13px;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 0.85rem;
             font-weight: 500;
+            transition: all 0.25s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Glassmorphism Section Card */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 32px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .section-header {
             display: flex;
             align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
-        }
-
-        .nav-buttons a:hover {
-            background: #e9ecef;
-            color: #212529;
-        }
-
-        /* 메인 입력 섹션 (GumaTube 스타일) */
-        .card-section {
-            background: white;
-            padding: 24px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-            margin-bottom: 24px;
-            border-top: 4px solid #dc3545;
+            justify-content: space-between;
+            margin-bottom: 22px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         }
 
         .section-title {
-            font-size: 18px;
+            font-size: 1.15rem;
             font-weight: 600;
-            margin-bottom: 16px;
+            color: var(--text-main);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
 
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Form Inputs */
         .form-group {
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
 
         .form-label {
             display: block;
-            font-size: 14px;
-            font-weight: 600;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: var(--text-muted);
             margin-bottom: 8px;
-            color: #495057;
+            letter-spacing: 0.5px;
         }
 
         .input-textarea {
             width: 100%;
-            height: 100px;
-            padding: 12px;
-            font-size: 15px;
-            border: 1px solid #ced4da;
-            border-radius: 6px;
-            resize: vertical;
+            height: 90px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 14px 18px;
+            color: var(--text-main);
+            font-size: 0.95rem;
             font-family: inherit;
-            transition: border-color 0.2s;
+            line-height: 1.5;
+            resize: vertical;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-textarea::placeholder {
+            color: rgba(255, 255, 255, 0.25);
         }
 
         .input-textarea:focus {
-            outline: none;
-            border-color: #dc3545;
-            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+            border-color: var(--primary);
+            background: rgba(0, 0, 0, 0.45);
+            box-shadow: 0 0 0 4px var(--primary-glow);
         }
 
         .options-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
             gap: 16px;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
+        }
+
+        .select-wrapper {
+            position: relative;
         }
 
         .select-input {
             width: 100%;
-            padding: 10px;
-            font-size: 14px;
-            border: 1px solid #ced4da;
-            border-radius: 6px;
-            background: white;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: var(--text-main);
+            font-size: 0.9rem;
             font-family: inherit;
+            outline: none;
+            transition: all 0.3s ease;
+            appearance: none;
+            cursor: pointer;
         }
 
         .select-input:focus {
-            outline: none;
-            border-color: #dc3545;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
         }
 
-        .btn-submit {
+        .select-input option {
+            background: #121212;
+            color: #fff;
+        }
+
+        .select-icon {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+            font-size: 0.75rem;
+        }
+
+        /* Buttons (GumaTube Gradient Button) */
+        .btn-primary {
+            background: var(--gradient-1);
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            padding: 15px 32px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
             width: 100%;
-            padding: 14px;
-            font-size: 16px;
-            font-weight: 600;
-            background: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.2s;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.25);
         }
 
-        .btn-submit:hover {
-            background: #c82333;
+        .btn-primary:hover {
+            box-shadow: 0 8px 25px var(--primary-glow);
+            transform: translateY(-2px);
         }
 
-        .btn-submit:disabled {
-            background: #6c757d;
+        .btn-primary:active {
+            transform: translateY(1px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
-        /* 결과 및 프로젝트 리스트 */
-        .results-section {
-            background: white;
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 9px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
             border-radius: 8px;
-            padding: 24px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            border: 1px solid transparent;
         }
 
-        .project-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            gap: 20px;
-            margin-top: 16px;
+        .btn-action.generate {
+            background: var(--gradient-1);
+            color: #ffffff;
         }
 
-        .project-card {
-            background: #fff;
-            border: 1px solid #e1e4e8;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+        .btn-action.generate:hover {
+            box-shadow: 0 4px 15px var(--primary-glow);
+            transform: translateY(-1px);
+        }
+
+        .btn-action.download {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--glass-border);
+            color: #ffffff;
+        }
+
+        .btn-action.download:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.25);
+            color: var(--primary);
+        }
+
+        /* Active Tasks (GumaTube Active Tasks Item) */
+        .active-tasks-list {
             display: flex;
             flex-direction: column;
-            transition: transform 0.2s, box-shadow 0.2s;
+            gap: 14px;
+            margin-bottom: 30px;
         }
 
-        .project-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        .active-task-item {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid var(--primary);
+            border-radius: 14px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn 0.4s ease;
         }
 
-        .project-header {
-            padding: 14px 16px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #e9ecef;
+        .active-info {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .active-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .active-log {
+            font-size: 0.82rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .active-status {
+            font-size: 0.75rem;
+            background: var(--primary);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Progress Bar (GumaTube Style) */
+        .progress-wrapper {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 10px;
+            position: relative;
+        }
+
+        .progress-fill-infinite {
+            height: 100%;
+            width: 40%;
+            background: var(--gradient-1);
+            border-radius: 3px;
+            position: relative;
+            animation: movingProgress 1.6s infinite ease-in-out;
+        }
+
+        @keyframes movingProgress {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(250%); }
+        }
+
+        /* Projects Grid (GumaTube Tasks Grid) */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+            gap: 22px;
+        }
+
+        .grid-card {
+            background: var(--glass-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .grid-card:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.07);
+            border-color: var(--primary);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+        }
+
+        .card-header-bar {
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid var(--glass-border);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .project-id {
-            font-size: 12px;
-            font-weight: 700;
-            color: #6c757d;
+        .card-id {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 600;
         }
 
         .status-badge {
-            font-size: 12px;
+            font-size: 0.72rem;
             padding: 3px 8px;
-            border-radius: 4px;
-            font-weight: 600;
+            border-radius: 6px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .status-planning { background: #e2e3e5; color: #383d41; }
-        .status-planned { background: #cce5ff; color: #004085; }
-        .status-generating { background: #fff3cd; color: #856404; }
-        .status-ready { background: #d4edda; color: #155724; }
-        .status-failed { background: #f8d7da; color: #721c24; }
+        .status-planning { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .status-planned { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .status-generating { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid var(--primary); }
+        .status-ready { background: rgba(16, 185, 129, 0.2); color: #2aff89; border: 1px solid #10b981; }
+        .status-failed { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
 
-        .project-body {
-            padding: 16px;
-            flex: 1;
-        }
-
-        .project-idea {
-            font-size: 15px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #212529;
-            line-height: 1.4;
-        }
-
-        .project-msg {
-            font-size: 13px;
-            color: #6c757d;
-            margin-bottom: 12px;
-        }
-
-        .video-container {
+        .video-player-box {
             width: 100%;
             aspect-ratio: 9 / 16;
-            max-height: 380px;
+            max-height: 400px;
             background: #000;
-            border-radius: 6px;
-            overflow: hidden;
-            margin-bottom: 12px;
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
+            border-bottom: 1px solid var(--glass-border);
         }
 
-        .video-container video {
+        .video-player-box video {
             width: 100%;
             height: 100%;
             object-fit: contain;
         }
 
-        .project-actions {
+        .card-body {
+            padding: 16px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .project-idea-text {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #ffffff;
+            line-height: 1.45;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .project-meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .meta-pill {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 3px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .meta-pill i {
+            color: var(--primary);
+        }
+
+        .project-msg-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* Storyboard Scenes Accordion */
+        .storyboard-details {
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            margin-top: 4px;
+        }
+
+        .storyboard-summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--primary);
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .storyboard-summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .scene-list {
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 150px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .scene-item {
+            font-size: 0.75rem;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 6px 8px;
+            border-radius: 4px;
+            color: #d1d5db;
+        }
+
+        .scene-item strong {
+            color: #34d399;
+        }
+
+        .card-footer-actions {
             padding: 12px 16px;
-            background: #f8f9fa;
-            border-top: 1px solid #e9ecef;
+            background: rgba(0, 0, 0, 0.35);
+            border-top: 1px solid var(--glass-border);
             display: flex;
             gap: 8px;
         }
 
-        .btn-action {
-            flex: 1;
-            padding: 8px;
-            font-size: 13px;
-            text-align: center;
-            border-radius: 4px;
-            text-decoration: none;
-            border: 1px solid #ced4da;
-            background: white;
-            color: #495057;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-action.primary {
-            background: #dc3545;
-            color: white;
-            border-color: #dc3545;
-        }
-
-        .btn-action.primary:hover {
-            background: #c82333;
-        }
-
-        .btn-action:hover {
-            background: #e2e6ea;
-        }
-
+        /* Empty State (GumaTube Style) */
         .empty-state {
             text-align: center;
-            padding: 40px;
-            color: #6c757d;
+            padding: 50px 20px;
+            color: var(--text-muted);
         }
 
         .empty-state i {
-            font-size: 48px;
-            margin-bottom: 12px;
-            color: #adb5bd;
+            font-size: 3.5rem;
+            margin-bottom: 16px;
+            color: rgba(255, 255, 255, 0.15);
+        }
+
+        .empty-state p {
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 20px 14px;
+            }
+
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
+            .nav-links {
+                width: 100%;
+                justify-content: flex-start;
+                overflow-x: auto;
+                padding-bottom: 4px;
+            }
+
+            .glass-card {
+                padding: 1.5rem 1.2rem;
+            }
+
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
+
 <body>
-    <div class="container">
-        <!-- 상단 헤더 (GumaTube 스타일) -->
-        <header class="header">
-            <div class="header-title-box">
-                <i class="fa-solid fa-clapperboard logo-icon"></i>
-                <div>
+    <!-- Ambient Glow Effects -->
+    <div class="ambient-glow"></div>
+    <div class="ambient-glow-2"></div>
+
+    <div class="main-container">
+        <!-- Header (GumaTube / TheGumaLab Family) -->
+        <header>
+            <div class="brand-box">
+                <i class="fa-solid fa-clapperboard brand-icon"></i>
+                <div class="brand-text">
                     <h1>GumaVideoFactory <span class="badge-live">Veo 3.1</span></h1>
-                    <p class="subtitle">Google Veo & Edge-TTS 기반 자동 숏폼 영상 제작 스튜디오</p>
+                    <p>AI-Powered Short-Form Video & Audio Studio</p>
                 </div>
             </div>
-            <div class="nav-buttons">
-                <a href="https://home.guma3d.com/"><i class="fa-solid fa-house"></i> 포털 홈</a>
-                <a href="https://gumatube.guma3d.com/"><i class="fa-solid fa-video"></i> GumaTube</a>
-                <a href="https://gumaserverstatus.guma3d.com/"><i class="fa-solid fa-server"></i> 서버 상태</a>
+            <div class="nav-links">
+                <a href="https://home.guma3d.com/" class="nav-btn"><i class="fa-solid fa-house"></i> 포털 홈</a>
+                <a href="https://gumatube.guma3d.com/" class="nav-btn"><i class="fa-solid fa-video"></i> GumaTube</a>
+                <a href="https://gumaserverstatus.guma3d.com/" class="nav-btn"><i class="fa-solid fa-server"></i> 서버 상태</a>
             </div>
         </header>
 
-        <!-- 메인 생성 카드 -->
-        <section class="card-section">
-            <h2 class="section-title"><i class="fa-solid fa-wand-magic-sparkles"></i> 숏폼 영상 아이디어 입력</h2>
+        <!-- Generation Form Card -->
+        <section class="glass-card">
+            <div class="section-header">
+                <h2 class="section-title"><i class="fa-solid fa-wand-magic-sparkles"></i> 숏폼 영상 아이디어 입력</h2>
+                <span class="meta-pill"><i class="fa-solid fa-microchip"></i> Gemini 2.5 Flash + Veo 3.1</span>
+            </div>
+
             <form id="createForm">
                 <div class="form-group">
-                    <label class="form-label" for="ideaInput">어떤 영상을 만들고 싶으신가요?</label>
+                    <label class="form-label" for="ideaInput">어떤 숏폼 영상을 만들고 싶으신가요?</label>
                     <textarea 
                         id="ideaInput" 
                         class="input-textarea" 
-                        placeholder="예시: 미래 사이버펑크 서울의 네온사인 골목길을 걷는 로봇 고양이의 하루를 감성적인 시네마틱 숏폼으로 제작해줘." 
+                        placeholder="예시: 비 내리는 미래 서울의 사이버펑크 네온사인 골목길을 산책하는 귀여운 로봇 고양이의 하루를 시네마틱 숏폼으로 제작해줘." 
                         required
                     ></textarea>
                 </div>
@@ -374,95 +732,176 @@
                 <div class="options-grid">
                     <div>
                         <label class="form-label" for="durationSelect">목표 영상 길이</label>
-                        <select id="durationSelect" class="select-input">
-                            <option value="20">20초 (4개 컷)</option>
-                            <option value="30" selected>30초 (6개 컷)</option>
-                            <option value="40">40초 (8개 컷)</option>
-                        </select>
+                        <div class="select-wrapper">
+                            <select id="durationSelect" class="select-input">
+                                <option value="20">20초 (4개 컷)</option>
+                                <option value="30" selected>30초 (6개 컷)</option>
+                                <option value="40">40초 (8개 컷)</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down select-icon"></i>
+                        </div>
                     </div>
 
                     <div>
                         <label class="form-label" for="aspectSelect">화면 비율</label>
-                        <select id="aspectSelect" class="select-input">
-                            <option value="9:16" selected>9:16 (세로 숏폼 / 릴스)</option>
-                            <option value="16:9">16:9 (가로 시네마틱)</option>
-                        </select>
+                        <div class="select-wrapper">
+                            <select id="aspectSelect" class="select-input">
+                                <option value="9:16" selected>9:16 (세로 숏폼 / 릴스)</option>
+                                <option value="16:9">16:9 (가로 시네마틱)</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down select-icon"></i>
+                        </div>
                     </div>
 
                     <div>
-                        <label class="form-label" for="modelSelect">Veo 모델 선택</label>
-                        <select id="modelSelect" class="select-input">
-                            <option value="veo-3.1-fast-generate-preview" selected>Veo 3.1 Fast (고속 추천)</option>
-                            <option value="veo-3.1-generate-preview">Veo 3.1 Standard (시네마틱 고화질)</option>
-                        </select>
+                        <label class="form-label" for="modelSelect">Veo 비디오 모델</label>
+                        <div class="select-wrapper">
+                            <select id="modelSelect" class="select-input">
+                                <option value="veo-3.1-fast-generate-preview" selected>Veo 3.1 Fast (고속 권장)</option>
+                                <option value="veo-3.1-generate-preview">Veo 3.1 Standard (최고화질)</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down select-icon"></i>
+                        </div>
                     </div>
 
                     <div>
                         <label class="form-label" for="voiceSelect">AI 나레이션 음성</label>
-                        <select id="voiceSelect" class="select-input">
-                            <option value="ko-KR-SunHiNeural" selected>선희 (한국어 여성)</option>
-                            <option value="ko-KR-InJoonNeural">인준 (한국어 남성)</option>
-                        </select>
+                        <div class="select-wrapper">
+                            <select id="voiceSelect" class="select-input">
+                                <option value="ko-KR-SunHiNeural" selected>선희 (한국어 여성)</option>
+                                <option value="ko-KR-InJoonNeural">인준 (한국어 남성)</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down select-icon"></i>
+                        </div>
                     </div>
                 </div>
 
-                <button type="submit" id="submitBtn" class="btn-submit">
+                <button type="submit" id="submitBtn" class="btn-primary">
                     <i class="fa-solid fa-play"></i> AI 영상 기획 및 생성 시작
                 </button>
             </form>
         </section>
 
-        <!-- 제작 프로젝트 피드 -->
-        <section class="results-section">
-            <h2 class="section-title"><i class="fa-solid fa-film"></i> 제작된 프로젝트 및 영상 목록</h2>
-            
-            <div id="projectList" class="project-list">
+        <!-- Active Tasks (In Progress / Queued) -->
+        {% set active_projects = [] %}
+        {% if projects %}
+            {% for p in projects %}
+                {% if p.status in ['planning', 'generating'] %}
+                    {% set _ = active_projects.append(p) %}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+
+        {% if active_projects %}
+        <div class="active-tasks-list">
+            <h3 class="section-title" style="font-size: 1rem; margin-bottom: 4px;">
+                <i class="fa-solid fa-spinner fa-spin"></i> In Progress / Queued
+            </h3>
+            {% for p in active_projects %}
+                <div class="active-task-item" id="active-{{ p.id }}">
+                    <div class="active-info">
+                        <div class="active-title">{{ p.idea }}</div>
+                        <div class="active-log">
+                            <i class="fa-solid fa-circle-notch fa-spin"></i>
+                            <span>{{ p.progress_message }}</span>
+                        </div>
+                        <div class="progress-wrapper">
+                            <div class="progress-fill-infinite"></div>
+                        </div>
+                    </div>
+                    <span class="active-status">{{ p.status }}</span>
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Completed / Saved Projects Grid -->
+        <section class="glass-card" style="margin-top: 10px;">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Completed & Saved Projects
+                </h2>
+                <span class="meta-pill">{{ projects|length }} Projects</span>
+            </div>
+
+            <div id="projectGrid" class="projects-grid">
                 {% if projects %}
                     {% for p in projects %}
-                        <div class="project-card" id="card-{{ p.id }}">
-                            <div class="project-header">
-                                <span class="project-id">#{{ p.id }} · {{ p.created_at }}</span>
+                        <div class="grid-card" id="card-{{ p.id }}">
+                            <div class="card-header-bar">
+                                <span class="card-id">#{{ p.id }} · {{ p.created_at }}</span>
                                 <span class="status-badge status-{{ p.status }}">{{ p.status }}</span>
                             </div>
-                            <div class="project-body">
-                                <h3 class="project-idea">{{ p.idea }}</h3>
-                                <p class="project-msg" id="msg-{{ p.id }}">{{ p.progress_message }}</p>
 
-                                {% if p.output_video_url %}
-                                    <div class="video-container">
-                                        <video controls src="{{ p.output_video_url }}"></video>
-                                    </div>
+                            {% if p.output_video_url %}
+                                <div class="video-player-box">
+                                    <video controls playsinline preload="metadata" src="{{ p.output_video_url }}"></video>
+                                </div>
+                            {% endif %}
+
+                            <div class="card-body">
+                                <h3 class="project-idea-text" title="{{ p.idea }}">{{ p.idea }}</h3>
+                                
+                                <div class="project-meta-row">
+                                    <span class="meta-pill"><i class="fa-solid fa-stopwatch"></i> {{ p.target_duration }}s</span>
+                                    <span class="meta-pill"><i class="fa-solid fa-expand"></i> {{ p.aspect_ratio }}</span>
+                                    <span class="meta-pill"><i class="fa-solid fa-robot"></i> {{ p.model.split('-')[1] }}</span>
+                                </div>
+
+                                <p class="project-msg-text">{{ p.progress_message }}</p>
+
+                                {% if p.storyboard and p.storyboard.scenes %}
+                                    <details class="storyboard-details">
+                                        <summary class="storyboard-summary">
+                                            <span><i class="fa-solid fa-list-check"></i> 스토리보드 씬 ({{ p.storyboard.scenes|length }}컷)</span>
+                                            <i class="fa-solid fa-angle-down"></i>
+                                        </summary>
+                                        <div class="scene-list">
+                                            {% for scene in p.storyboard.scenes %}
+                                                <div class="scene-item">
+                                                    <strong>씬 {{ scene.scene_number }}:</strong> {{ scene.narration_ko or scene.visual_prompt[:60] }}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </details>
                                 {% endif %}
                             </div>
-                            <div class="project-actions">
+
+                            <div class="card-footer-actions">
                                 {% if p.status == 'planned' %}
-                                    <button class="btn-action primary" onclick="startGeneration('{{ p.id }}')">
-                                        <i class="fa-solid fa-bolt"></i> 영상 생성 실행
+                                    <button class="btn-action generate" style="width: 100%;" onclick="startGeneration('{{ p.id }}')">
+                                        <i class="fa-solid fa-bolt"></i> Veo 3.1 렌더링 실행
                                     </button>
                                 {% elif p.status == 'ready' and p.output_video_url %}
-                                    <a href="{{ p.output_video_url }}" download class="btn-action primary">
-                                        <i class="fa-solid fa-download"></i> 다운로드
+                                    <a href="{{ p.output_video_url }}" download class="btn-action download" style="width: 100%;">
+                                        <i class="fa-solid fa-download"></i> MP4 영상 다운로드
                                     </a>
+                                {% elif p.status in ['planning', 'generating'] %}
+                                    <button class="btn-action download" style="width: 100%;" disabled>
+                                        <i class="fa-solid fa-spinner fa-spin"></i> 처리 진행 중...
+                                    </button>
                                 {% endif %}
                             </div>
                         </div>
                     {% endfor %}
                 {% else %}
-                    <div class="empty-state">
-                        <i class="fa-solid fa-video-slash"></i>
-                        <p>아직 제작된 영상이 없습니다. 위의 입력창에서 첫 번째 숏폼 영상을 기획해보세요!</p>
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <i class="fa-solid fa-film"></i>
+                        <p>아직 제작된 영상 프로젝트가 없습니다.<br>위 입력창에서 아이디어를 입력하여 첫 번째 숏폼 영상을 생성해보세요!</p>
                     </div>
                 {% endif %}
             </div>
         </section>
     </div>
 
+    <!-- Frontend Script -->
     <script>
+        // 폼 제출 이벤트 핸들러
         document.getElementById("createForm").addEventListener("submit", async function(e) {
             e.preventDefault();
             const btn = document.getElementById("submitBtn");
             btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 기획 요청 중...';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> AI 기획 및 큐 등록 중...';
 
             const payload = {
                 idea: document.getElementById("ideaInput").value.trim(),
@@ -478,8 +917,10 @@
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
                 });
-                if (!res.ok) throw new Error("생성 요청 실패");
-                const project = await res.json();
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.detail || "생성 요청 실패");
+                }
                 location.reload();
             } catch (err) {
                 alert("오류: " + err.message);
@@ -488,23 +929,27 @@
             }
         });
 
+        // 렌더링 실행 함수
         async function startGeneration(projectId) {
             try {
                 const res = await fetch(`/api/projects/${projectId}/generate`, { method: "POST" });
-                if (!res.ok) throw new Error("영상 생성 시작 실패");
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.detail || "영상 생성 시작 실패");
+                }
                 location.reload();
             } catch (err) {
                 alert("오류: " + err.message);
             }
         }
 
-        // 진행 중인 프로젝트 상태 자동 폴링
-        setInterval(async () => {
-            const generatingCards = document.querySelectorAll(".status-generating, .status-planning");
-            if (generatingCards.length > 0) {
+        // 진행 중인 태스크가 있을 때 자동 스마트 폴링 (6초 간격)
+        const hasActiveTasks = document.querySelectorAll(".status-generating, .status-planning, .active-task-item").length > 0;
+        if (hasActiveTasks) {
+            setTimeout(() => {
                 location.reload();
-            }
-        }, 8000);
+            }, 6000);
+        }
     </script>
 </body>
 </html>
