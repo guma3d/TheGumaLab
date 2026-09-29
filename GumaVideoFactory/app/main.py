@@ -65,9 +65,9 @@ async def index_page(request: Request):
     projects = list_all_projects()
     has_api_key = bool(GEMINI_API_KEY)
     return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,
+        request=request,
+        name="index.html",
+        context={
             "projects": projects,
             "has_api_key": has_api_key,
             "default_model": VEO_MODEL,
