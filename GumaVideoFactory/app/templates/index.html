@@ -100,10 +100,9 @@
             z-index: 10;
         }
 
-        /* Header (GumaTube / Portal 패밀리 룩) */
+        /* Header (GumaTube Style Branding) */
         header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
             margin-bottom: 32px;
             padding-bottom: 20px;
@@ -154,33 +153,6 @@
             font-weight: 700;
             letter-spacing: 1px;
             -webkit-text-fill-color: var(--primary);
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 10px;
-        }
-
-        .nav-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
-            color: var(--text-muted);
-            text-decoration: none;
-            padding: 8px 14px;
-            border-radius: 10px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            transition: all 0.25s ease;
-        }
-
-        .nav-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            border-color: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
         }
 
         /* Glassmorphism Section Card */
@@ -661,19 +633,6 @@
                 padding: 20px 14px;
             }
 
-            header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 16px;
-            }
-
-            .nav-links {
-                width: 100%;
-                justify-content: flex-start;
-                overflow-x: auto;
-                padding-bottom: 4px;
-            }
-
             .glass-card {
                 padding: 1.5rem 1.2rem;
             }
@@ -703,11 +662,6 @@
                     <h1>GumaVideoFactory <span class="badge-live">Veo 3.1</span></h1>
                     <p>AI-Powered Short-Form Video & Audio Studio</p>
                 </div>
-            </div>
-            <div class="nav-links">
-                <a href="https://home.guma3d.com/" class="nav-btn"><i class="fa-solid fa-house"></i> 포털 홈</a>
-                <a href="https://gumatube.guma3d.com/" class="nav-btn"><i class="fa-solid fa-video"></i> GumaTube</a>
-                <a href="https://gumaserverstatus.guma3d.com/" class="nav-btn"><i class="fa-solid fa-server"></i> 서버 상태</a>
             </div>
         </header>
 
