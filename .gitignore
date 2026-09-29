@@ -9,22 +9,8 @@ GumaTube/huggingface-cache/
 *.pyc
 .env
 
-# Claude Code
-.claude/*
-!.claude/settings.json
-
 # WebAuthn credentials (민감 정보)
 Index/webauthn_credentials.json
-
-# GumaSpending — connected IDs + 조회 결과 (민감 정보: 카드사 인증 토큰, 승인내역)
-GumaSpending/connected_ids.json
-GumaSpending/transactions_*.json
-GumaSpending/bank_transactions_*.json
-GumaSpending/spending.db
-GumaSpending/__pycache__/
-
-# GumaPhoto (legacy/local)
-GumaPhoto/
 
 # GumaVideoFactory
 GumaVideoFactory/output/
