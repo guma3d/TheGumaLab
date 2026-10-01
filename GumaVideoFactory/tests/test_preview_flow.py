@@ -168,6 +168,8 @@ class PreviewFlowTests(unittest.TestCase):
         with TestClient(main.app) as client:
             page=client.get('/?category=tech').text
             self.assertIn(f'id="product-image-{p["id"]}"',page)
+            self.assertIn('아직 이미지가 생성되지 않았습니다.',page)
+            self.assertIn('사진 등록·프리뷰 생성',page)
             self.assertNotIn('최종 승인 · 영상 만들기',page)
         self.upload(p)
         saved=main.load_project(p['id'])
@@ -188,6 +190,18 @@ class PreviewFlowTests(unittest.TestCase):
             for call in images.call_args_list:
                 self.assertEqual(call.args[4],main.product_image_path(p['id']))
         self.assertIsNone(main.load_project(p['id'])['approved_at'])
+
+    def test_repeated_recommendation_tap_reuses_waiting_project(self):
+        item=dict(id='same-product',category='tech',subject='product',facts=['verified'])
+        request=main.CreateProjectRequest(idea='product',recommendation_id=item['id'],recommendation_date=main.now_kst().strftime('%Y-%m-%d'))
+        with patch.object(main,'load_daily',return_value={'items':[item]}):
+            first=asyncio.run(main.create_project(request,BackgroundTasks()))
+            first['status']='reference_required'; main.save_project(first)
+            tasks=BackgroundTasks()
+            second=asyncio.run(main.create_project(request,tasks))
+        self.assertEqual(first['id'],second['id'])
+        self.assertEqual(len(tasks.tasks),0)
+        self.assertEqual(len(main.list_all_projects()),1)
 
 
 if __name__ == "__main__":

@@ -813,7 +813,7 @@
                         <div class="grid-card" id="card-{{ p.id }}">
                             <div class="card-header-bar">
                                 <span class="card-id">#{{ p.id }} · {{ p.created_at }}</span>
-                                <span class="status-badge status-{{ p.status }}">{{ p.status }}</span>
+                                <span class="status-badge status-{{ p.status }}">{{ '상품 사진 대기' if p.status == 'reference_required' else p.status }}</span>
                             </div>
 
                             {% if p.output_video_url %}
@@ -832,12 +832,15 @@
                                 </div>
 
                                 <p class="project-msg-text">{{ p.progress_message }}</p>
+                                {% if p.status == 'reference_required' %}
+                                <p><strong>아직 이미지가 생성되지 않았습니다.</strong><br>아래에서 정확한 제품 사진을 선택하고 ‘사진 등록·프리뷰 생성’을 누르세요.</p>
+                                {% endif %}
                                 {% if p.category %}<p>{{ presets[p.category].label }}{% if p.recommendation %} · 추천 아이템: {{ p.recommendation.subject }}{% endif %}</p>{% endif %}
                                 {% if p.status in ['preview_ready', 'reference_required', 'preview_failed', 'planned'] and p.category and p.storyboard %}
                                 <div class="product-setup">
                                     <label for="product-image-{{ p.id }}">{% if p.category == 'tech' %}외형 기준·최종 컷용 상품 사진{% else %}최종 컷용 상품 사진{% endif %} (10MB 이하)</label>
                                     <input id="product-image-{{ p.id }}" type="file" accept="image/png,image/jpeg,image/webp">
-                                    <button class="btn-action" onclick="uploadProductImage('{{ p.id }}', this)">상품 사진 등록</button>
+                                    <button class="btn-action" onclick="uploadProductImage('{{ p.id }}', this)">{{ '사진 등록·프리뷰 생성' if p.status == 'reference_required' else '상품 사진 등록' }}</button>
                                     <p>{% if p.category == 'tech' %}외형이 잘 보이는 실제 사진을 등록하세요. 사진을 바꾸면 프리뷰도 다시 생성됩니다.{% else %}직접 촬영했거나 사용 권한이 있는 이미지를 등록하세요.{% endif %} 업로드 전 편집한 대본을 저장해주세요.</p>
                                     <label for="product-url-{{ p.id }}">쿠팡 파트너스 또는 상품 링크</label>
                                     <input id="product-url-{{ p.id }}" type="url" placeholder="https://link.coupang.com/..." value="{{ p.product_url or '' }}">
@@ -928,6 +931,8 @@
                     category: item.category, recommendation_id:item.id, recommendation_date:date
                 }) });
                 if (!res.ok) throw new Error((await res.json()).detail || '프리뷰 요청 실패');
+                const project = await res.json();
+                location.href = '/?category=' + encodeURIComponent(item.category) + '#card-' + project.id;
                 location.reload();
             } catch (e) { alert(e.message); button.disabled = false; }
         }

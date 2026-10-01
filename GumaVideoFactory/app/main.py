@@ -167,6 +167,17 @@ async def create_project(req: CreateProjectRequest, background_tasks: Background
             raise HTTPException(status_code=404, detail="선택한 카테고리의 추천 아이템을 찾을 수 없습니다.")
     if not req.idea.strip():
         raise HTTPException(status_code=400, detail="아이디어를 입력해주세요.")
+    if req.recommendation_id:
+        # Repeated taps should open the current pending preview, not spend on
+        # another plan while the same product is waiting for its photograph.
+        for existing in sorted(list_all_projects(), key=lambda p: p.get("created_at", ""), reverse=True):
+            if (
+                existing.get("category") == req.category
+                and (existing.get("recommendation") or {}).get("id") == req.recommendation_id
+                and existing.get("recommendation_date", existing.get("created_at", "")[:10]) == (req.recommendation_date or now_kst().strftime("%Y-%m-%d"))
+                and existing.get("status") in ("planning", "previewing", "reference_required")
+            ):
+                return existing
     project_id = str(uuid.uuid4())[:8]
     project = {
         "id": project_id,
@@ -177,6 +188,7 @@ async def create_project(req: CreateProjectRequest, background_tasks: Background
         "category": req.category,
         "media_mode": "real" if req.category == "food" else "generated",
         "recommendation": recommendation,
+        "recommendation_date": req.recommendation_date or now_kst().strftime("%Y-%m-%d"),
         "product_image_url": None,
         "product_url": "",
         "approved_at": None,
