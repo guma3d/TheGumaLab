@@ -1,23 +1,25 @@
 import json
 import uuid
 import logging
+import asyncio
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Literal
 
 from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.config import (
     PORT, HOST, STORAGE_DIR, PROJECTS_DIR, CLIPS_DIR, AUDIO_DIR, OUTPUTS_DIR,
-    PLANNER_MODEL, VEO_MODEL, DEFAULT_VOICE, GEMINI_API_KEY
+    PLANNER_MODEL, VEO_MODEL, DEFAULT_VOICE, GEMINI_API_KEY, IMAGES_DIR, IMAGE_MODEL
 )
 from app.core.planner import plan_video_storyboard, VideoStoryBoard
 from app.core.veo_client import generate_video_clip
 from app.core.tts_engine import synthesize_speech
+from app.core.image_client import generate_preview_image
 from app.core.ffmpeg_mixer import concatenate_clips_with_audio
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -32,11 +34,30 @@ templates_dir = Path(__file__).resolve().parent / "templates"
 templates = Jinja2Templates(directory=str(templates_dir))
 
 class CreateProjectRequest(BaseModel):
-    idea: str
+    idea: str = Field(min_length=1, max_length=5000)
     target_duration: int = 30
-    aspect_ratio: str = "9:16"
+    scene_count: int = Field(default=6, ge=6, le=8)
+    style_prompt: str = Field(default="Cinematic realistic imagery, consistent warm lighting and restrained colors", min_length=1, max_length=2000)
+    aspect_ratio: Literal["9:16", "16:9"] = "9:16"
     voice: str = DEFAULT_VOICE
     model: str = VEO_MODEL
+
+class ReviewRequest(BaseModel):
+    narrations: List[str] = Field(min_length=6, max_length=8)
+    approved: bool = False
+
+
+def preview_image_path(project_id: str, scene_number: int) -> Path:
+    return IMAGES_DIR / f"{project_id}_scene_{scene_number:02d}.png"
+
+
+def require_preview(project: dict):
+    scenes = (project.get("storyboard") or {}).get("scenes", [])
+    if not 6 <= len(scenes) <= 8 or not all(
+        s.get("image_url") and preview_image_path(project["id"], s["scene_number"]).is_file()
+        for s in scenes
+    ):
+        raise HTTPException(status_code=409, detail="6~8컷의 이미지 프리뷰가 모두 준비되어야 합니다.")
 
 def save_project(project: dict):
     path = PROJECTS_DIR / f"{project['id']}.json"
@@ -71,6 +92,8 @@ async def index_page(request: Request):
             "projects": projects,
             "has_api_key": has_api_key,
             "default_model": VEO_MODEL,
+            "planner_model": PLANNER_MODEL,
+            "image_model": IMAGE_MODEL,
         }
     )
 
@@ -93,7 +116,10 @@ async def create_project(req: CreateProjectRequest, background_tasks: Background
     project = {
         "id": project_id,
         "idea": req.idea,
-        "target_duration": req.target_duration,
+        "target_duration": req.scene_count * 4,
+        "scene_count": req.scene_count,
+        "style_prompt": req.style_prompt,
+        "approved_at": None,
         "aspect_ratio": req.aspect_ratio,
         "voice": req.voice,
         "model": req.model,
@@ -114,15 +140,17 @@ async def create_project(req: CreateProjectRequest, background_tasks: Background
 async def async_plan_and_prepare(project_id: str):
     try:
         project = load_project(project_id)
-        storyboard = plan_video_storyboard(
+        storyboard = await asyncio.to_thread(plan_video_storyboard,
             user_idea=project["idea"],
             target_duration=project["target_duration"],
-            aspect_ratio=project["aspect_ratio"]
+            aspect_ratio=project["aspect_ratio"],
+            scene_count=project["scene_count"],
+            style_prompt=project["style_prompt"],
         )
         project["storyboard"] = storyboard.model_dump()
-        project["status"] = "planned"
-        project["progress_message"] = "스토리보드 기획이 완료되었습니다. 영상 생성을 시작할 수 있습니다."
+        project["status"] = "previewing"
         save_project(project)
+        await prepare_preview_images(project_id)
     except Exception as e:
         logger.error(f"Planning failed for project {project_id}: {e}")
         project = load_project(project_id)
@@ -130,15 +158,64 @@ async def async_plan_and_prepare(project_id: str):
         project["progress_message"] = f"기획 중 오류 발생: {str(e)}"
         save_project(project)
 
+
+async def prepare_preview_images(project_id: str):
+    project = load_project(project_id)
+    try:
+        scenes = project["storyboard"]["scenes"]
+        for scene in scenes:
+            path = preview_image_path(project_id, scene["scene_number"])
+            if not (scene.get("image_url") and path.is_file()):
+                project["progress_message"] = f"컷 {scene['scene_number']}/{len(scenes)} 프리뷰 이미지 생성 중..."
+                save_project(project)
+                reference = preview_image_path(project_id, 1)
+                await asyncio.to_thread(
+                    generate_preview_image, scene["visual_prompt"], path,
+                    project["aspect_ratio"], project.get("style_prompt", "Cinematic realistic imagery"),
+                    reference if scene["scene_number"] != 1 and reference.is_file() else None,
+                )
+                scene["image_url"] = f"/storage/preview_images/{path.name}"
+                save_project(project)
+        project["status"] = "preview_ready"
+        project["progress_message"] = "이미지와 대본을 확인하고 최종 승인하면 영상 제작이 시작됩니다."
+    except Exception:
+        logger.exception("Preview generation failed for %s", project_id)
+        project["status"] = "preview_failed"
+        project["progress_message"] = "이미지 생성에 실패했습니다. 완성된 컷은 유지됩니다. 프리뷰 재시도를 눌러주세요."
+    save_project(project)
+
+
+@app.post("/api/projects/{project_id}/preview")
+async def retry_preview(project_id: str, background_tasks: BackgroundTasks):
+    project = load_project(project_id)
+    if project["status"] not in ["planned", "preview_failed"]:
+        raise HTTPException(status_code=409, detail="현재 상태에서는 프리뷰를 재시도할 수 없습니다.")
+    if not project.get("storyboard") or not 6 <= len(project["storyboard"]["scenes"]) <= 8:
+        raise HTTPException(status_code=409, detail="6~8컷으로 새 프로젝트를 만들어주세요.")
+    project["approved_at"] = None
+    project["status"] = "previewing"
+    save_project(project)
+    background_tasks.add_task(prepare_preview_images, project_id)
+    return {"message": "Preview started"}
+
 @app.get("/api/projects/{project_id}")
 async def get_project_details(project_id: str):
     return load_project(project_id)
 
 @app.post("/api/projects/{project_id}/generate")
-async def start_generation(project_id: str, background_tasks: BackgroundTasks):
+async def start_generation(project_id: str, req: ReviewRequest, background_tasks: BackgroundTasks):
     project = load_project(project_id)
-    if not project.get("storyboard"):
-        raise HTTPException(status_code=400, detail="스토리보드가 먼저 기획되어야 합니다.")
+    if project["status"] != "preview_ready":
+        raise HTTPException(status_code=409, detail="검토 가능한 프리뷰가 준비되어야 합니다.")
+    require_preview(project)
+    if not req.approved:
+        raise HTTPException(status_code=400, detail="최종 승인 후 영상 제작을 시작해주세요.")
+    scenes = project["storyboard"]["scenes"]
+    if len(req.narrations) != len(scenes) or any(not text.strip() or len(text) > 1000 for text in req.narrations):
+        raise HTTPException(status_code=400, detail="각 컷의 대본을 1~1000자로 입력해주세요.")
+    for scene, narration in zip(scenes, req.narrations):
+        scene["narration_ko"] = narration.strip()
+    project["approved_at"] = datetime.now().isoformat()
     
     project["status"] = "generating"
     project["progress_message"] = "Veo 3.1 비디오 및 오디오 클립 생성을 시작합니다..."
@@ -146,6 +223,21 @@ async def start_generation(project_id: str, background_tasks: BackgroundTasks):
 
     background_tasks.add_task(async_generate_video, project_id)
     return {"message": "Generation started", "project_id": project_id}
+
+
+@app.patch("/api/projects/{project_id}/review")
+async def save_review(project_id: str, req: ReviewRequest):
+    project = load_project(project_id)
+    if project["status"] != "preview_ready":
+        raise HTTPException(status_code=409, detail="프리뷰 준비가 완료된 후 대본을 수정할 수 있습니다.")
+    scenes = project["storyboard"]["scenes"]
+    if len(req.narrations) != len(scenes) or any(not t.strip() or len(t) > 1000 for t in req.narrations):
+        raise HTTPException(status_code=400, detail="모든 컷의 대본을 1~1000자로 입력해주세요.")
+    for scene, text in zip(scenes, req.narrations):
+        scene["narration_ko"] = text.strip()
+    project["approved_at"] = None
+    save_project(project)
+    return {"message": "대본을 저장했습니다."}
 
 async def async_generate_video(project_id: str):
     try:
@@ -163,12 +255,13 @@ async def async_generate_video(project_id: str):
             clip_filename = f"{project_id}_scene_{scene_num:02d}.mp4"
             clip_path = CLIPS_DIR / clip_filename
 
-            generate_video_clip(
-                prompt=scene["visual_prompt"],
+            await asyncio.to_thread(generate_video_clip,
+                prompt=f"{scene['visual_prompt']}\nCamera motion: {scene['camera_movement']}\nPreserve the supplied keyframe's visual style and subject appearance.",
                 output_path=clip_path,
                 duration_seconds=scene.get("duration_seconds", 5),
                 aspect_ratio=project["aspect_ratio"],
-                model_name=project.get("model")
+                model_name=project.get("model"),
+                image_path=preview_image_path(project_id, scene_num),
             )
             clips.append(str(clip_path))
             project["clips"].append(f"/storage/raw_clips/{clip_filename}")
@@ -193,7 +286,7 @@ async def async_generate_video(project_id: str):
         output_filename = f"{project_id}_final.mp4"
         output_path = OUTPUTS_DIR / output_filename
 
-        concatenate_clips_with_audio(
+        await asyncio.to_thread(concatenate_clips_with_audio,
             clip_paths=[Path(c) for c in clips],
             audio_path=audio_path,
             output_path=output_path,

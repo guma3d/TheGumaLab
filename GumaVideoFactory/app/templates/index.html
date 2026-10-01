@@ -24,14 +24,14 @@
             --primary: #10b981;
             --primary-hover: #059669;
             --primary-glow: rgba(16, 185, 129, 0.4);
-            
+
             --glass-bg: rgba(255, 255, 255, 0.03);
             --glass-border: rgba(255, 255, 255, 0.1);
             --glass-card: rgba(255, 255, 255, 0.04);
-            
+
             --text-main: #ffffff;
             --text-muted: #a1a1aa;
-            
+
             --gradient-1: linear-gradient(135deg, #10b981 0%, #34d399 100%);
             --gradient-title: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
 
@@ -645,6 +645,13 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        .preview-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin:16px 0; }
+        .preview-scene { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:12px; }
+        .preview-scene img { width:100%; height:auto; border-radius:8px; display:block; margin:8px 0; }
+        .preview-scene textarea { width:100%; min-height:100px; box-sizing:border-box; }
+        .grid-card:has(.preview-grid) { grid-column:1 / -1; }
+        .review-actions { display:flex; flex-wrap:wrap; gap:12px; align-items:center; padding:16px; }
     </style>
 </head>
 
@@ -669,29 +676,34 @@
         <section class="glass-card">
             <div class="section-header">
                 <h2 class="section-title"><i class="fa-solid fa-wand-magic-sparkles"></i> 숏폼 영상 아이디어 입력</h2>
-                <span class="meta-pill"><i class="fa-solid fa-microchip"></i> Gemini 2.5 Flash + Veo 3.1</span>
+                <span class="meta-pill"><i class="fa-solid fa-microchip"></i> {{ planner_model }} + Veo 3.1</span>
             </div>
 
             <form id="createForm">
                 <div class="form-group">
                     <label class="form-label" for="ideaInput">어떤 숏폼 영상을 만들고 싶으신가요?</label>
-                    <textarea 
-                        id="ideaInput" 
-                        class="input-textarea" 
-                        placeholder="예시: 비 내리는 미래 서울의 사이버펑크 네온사인 골목길을 산책하는 귀여운 로봇 고양이의 하루를 시네마틱 숏폼으로 제작해줘." 
+                    <textarea
+                        id="ideaInput"
+                        class="input-textarea"
+                        placeholder="예시: 비 내리는 미래 서울의 사이버펑크 네온사인 골목길을 산책하는 귀여운 로봇 고양이의 하루를 시네마틱 숏폼으로 제작해줘."
                         required
                     ></textarea>
                 </div>
 
+                <div class="form-group">
+                    <label class="form-label" for="styleInput">모든 컷에 적용할 공통 영상 스타일</label>
+                    <textarea id="styleInput" class="input-textarea" required maxlength="2000">차분한 시네마틱 실사, 절제된 색감, 부드럽고 따뜻한 조명, 일관된 인물 외형과 배경 분위기</textarea>
+                    <p>아이디어 → 이미지·대본 검토 → 최종 승인 → 영상 제작</p>
+                    <p>먼저 이미지와 대본만 생성합니다. 프리뷰 이미지 생성에도 API 사용 비용이 발생합니다.</p>
+                </div>
                 <div class="options-grid">
                     <div>
-                        <label class="form-label" for="durationSelect">목표 영상 길이</label>
+                        <label class="form-label" for="durationSelect">스토리보드 컷 수</label>
                         <div class="select-wrapper">
                             <select id="durationSelect" class="select-input">
-                                <option value="12" selected>12초 (3개 컷 - 빠른 제작)</option>
-                                <option value="16">16초 (4개 컷)</option>
-                                <option value="24">24초 (6개 컷)</option>
-                                <option value="32">32초 (8개 컷)</option>
+                                <option value="6" selected>6컷 (약 24초)</option>
+                                <option value="7">7컷 (약 28초)</option>
+                                <option value="8">8컷 (약 32초)</option>
                             </select>
                             <i class="fa-solid fa-chevron-down select-icon"></i>
                         </div>
@@ -732,7 +744,7 @@
                 </div>
 
                 <button type="submit" id="submitBtn" class="btn-primary">
-                    <i class="fa-solid fa-play"></i> AI 영상 기획 및 생성 시작
+                    <i class="fa-solid fa-play"></i> 6~8컷 이미지·대본 프리뷰 만들기
                 </button>
             </form>
         </section>
@@ -741,7 +753,7 @@
         {% set active_projects = [] %}
         {% if projects %}
             {% for p in projects %}
-                {% if p.status in ['planning', 'generating'] %}
+                {% if p.status in ['planning', 'previewing', 'generating'] %}
                     {% set _ = active_projects.append(p) %}
                 {% endif %}
             {% endfor %}
@@ -774,7 +786,7 @@
         <section class="glass-card" style="margin-top: 10px;">
             <div class="section-header">
                 <h2 class="section-title">
-                    <i class="fa-solid fa-clock-rotate-left"></i> Completed & Saved Projects
+                    <i class="fa-solid fa-clock-rotate-left"></i> 스토리보드 프리뷰 및 영상
                 </h2>
                 <span class="meta-pill">{{ projects|length }} Projects</span>
             </div>
@@ -796,7 +808,7 @@
 
                             <div class="card-body">
                                 <h3 class="project-idea-text" title="{{ p.idea }}">{{ p.idea }}</h3>
-                                
+
                                 <div class="project-meta-row">
                                     <span class="meta-pill"><i class="fa-solid fa-stopwatch"></i> {{ p.target_duration }}s</span>
                                     <span class="meta-pill"><i class="fa-solid fa-expand"></i> {{ p.aspect_ratio }}</span>
@@ -806,32 +818,38 @@
                                 <p class="project-msg-text">{{ p.progress_message }}</p>
 
                                 {% if p.storyboard and p.storyboard.scenes %}
-                                    <details class="storyboard-details">
-                                        <summary class="storyboard-summary">
-                                            <span><i class="fa-solid fa-list-check"></i> 스토리보드 씬 ({{ p.storyboard.scenes|length }}컷)</span>
-                                            <i class="fa-solid fa-angle-down"></i>
-                                        </summary>
-                                        <div class="scene-list">
-                                            {% for scene in p.storyboard.scenes %}
-                                                <div class="scene-item">
-                                                    <strong>씬 {{ scene.scene_number }}:</strong> {{ scene.narration_ko or scene.visual_prompt[:60] }}
-                                                </div>
-                                            {% endfor %}
+                                    <div class="preview-grid" id="review-{{ p.id }}">
+                                        {% for scene in p.storyboard.scenes %}
+                                        <div class="preview-scene">
+                                            <strong>컷 {{ scene.scene_number }} · {{ scene.duration_seconds }}초</strong>
+                                            {% if scene.image_url %}
+                                            <a href="{{ scene.image_url }}" target="_blank" rel="noopener"><img src="{{ scene.image_url }}" alt="컷 {{ scene.scene_number }} 프리뷰" loading="lazy"></a>
+                                            {% else %}<p>이미지 준비 전</p>{% endif %}
+                                            <label for="narration-{{ p.id }}-{{ scene.scene_number }}">나레이션 대본</label>
+                                            <textarea id="narration-{{ p.id }}-{{ scene.scene_number }}" class="input-textarea scene-narration" maxlength="1000" {% if p.status != 'preview_ready' %}disabled{% endif %}>{{ scene.narration_ko }}</textarea>
+                                            <details><summary>장면 설명</summary><p>{{ scene.visual_prompt }}</p></details>
                                         </div>
-                                    </details>
+                                        {% endfor %}
+                                    </div>
                                 {% endif %}
                             </div>
 
                             <div class="card-footer-actions">
-                                {% if p.status == 'planned' %}
-                                    <button class="btn-action generate" style="width: 100%;" onclick="startGeneration('{{ p.id }}')">
-                                        <i class="fa-solid fa-bolt"></i> Veo 3.1 렌더링 실행
+                                {% if p.status == 'preview_ready' %}
+                                    <div class="review-actions">
+                                        <button class="btn-action" onclick="saveReview('{{ p.id }}', this)">대본 수정 저장</button>
+                                        <label><input type="checkbox" id="approve-{{ p.id }}"> 모든 컷의 이미지와 대본을 확인했습니다.</label>
+                                        <button class="btn-action generate" onclick="startGeneration('{{ p.id }}', this)">최종 승인하고 영상 만들기</button>
+                                    </div>
+                                {% elif p.status in ['planned', 'preview_failed'] %}
+                                    <button class="btn-action generate" style="width: 100%;" onclick="retryPreview('{{ p.id }}', this)">
+                                        <i class="fa-solid fa-bolt"></i> 이미지 프리뷰 생성·재시도
                                     </button>
                                 {% elif p.status == 'ready' and p.output_video_url %}
                                     <a href="{{ p.output_video_url }}" download class="btn-action download" style="width: 100%;">
                                         <i class="fa-solid fa-download"></i> MP4 영상 다운로드
                                     </a>
-                                {% elif p.status in ['planning', 'generating'] %}
+                                {% elif p.status in ['planning', 'previewing', 'generating'] %}
                                     <button class="btn-action download" style="width: 100%;" disabled>
                                         <i class="fa-solid fa-spinner fa-spin"></i> 처리 진행 중...
                                     </button>
@@ -860,7 +878,8 @@
 
             const payload = {
                 idea: document.getElementById("ideaInput").value.trim(),
-                target_duration: parseInt(document.getElementById("durationSelect").value),
+                scene_count: parseInt(document.getElementById("durationSelect").value),
+                style_prompt: document.getElementById("styleInput").value.trim(),
                 aspect_ratio: document.getElementById("aspectSelect").value,
                 model: document.getElementById("modelSelect").value,
                 voice: document.getElementById("voiceSelect").value
@@ -880,26 +899,42 @@
             } catch (err) {
                 alert("오류: " + err.message);
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-play"></i> AI 영상 기획 및 생성 시작';
+                btn.innerHTML = '<i class="fa-solid fa-play"></i> 6~8컷 이미지·대본 프리뷰 만들기';
             }
         });
 
-        // 렌더링 실행 함수
-        async function startGeneration(projectId) {
+        function reviewPayload(projectId) {
+            return { narrations: Array.from(document.querySelectorAll(`#review-${projectId} .scene-narration`)).map(el => el.value.trim()) };
+        }
+        async function projectAction(projectId, suffix, method, payload, button) {
+            button.disabled = true;
             try {
-                const res = await fetch(`/api/projects/${projectId}/generate`, { method: "POST" });
+                const res = await fetch(`/api/projects/${projectId}/${suffix}`, {
+                    method, headers: { "Content-Type": "application/json" },
+                    ...(payload ? { body: JSON.stringify(payload) } : {})
+                });
                 if (!res.ok) {
-                    const errData = await res.json().catch(() => ({}));
-                    throw new Error(errData.detail || "영상 생성 시작 실패");
+                    const data = await res.json().catch(() => ({}));
+                    throw new Error(typeof data.detail === "string" ? data.detail : "요청을 처리하지 못했습니다.");
                 }
                 location.reload();
-            } catch (err) {
-                alert("오류: " + err.message);
+            } catch (err) { alert("오류: " + err.message); button.disabled = false; }
+        }
+        function saveReview(projectId, button) {
+            return projectAction(projectId, "review", "PATCH", reviewPayload(projectId), button);
+        }
+        function retryPreview(projectId, button) {
+            return projectAction(projectId, "preview", "POST", null, button);
+        }
+        function startGeneration(projectId, button) {
+            if (!document.getElementById(`approve-${projectId}`).checked) {
+                alert("이미지와 대본을 확인한 뒤 최종 승인 체크박스를 선택해주세요."); return;
             }
+            return projectAction(projectId, "generate", "POST", { ...reviewPayload(projectId), approved: true }, button);
         }
 
         // 진행 중인 태스크가 있을 때 자동 스마트 폴링 (6초 간격)
-        const hasActiveTasks = document.querySelectorAll(".status-generating, .status-planning, .active-task-item").length > 0;
+        const hasActiveTasks = document.querySelectorAll(".status-generating, .status-planning, .status-previewing, .active-task-item").length > 0;
         if (hasActiveTasks) {
             setTimeout(() => {
                 location.reload();

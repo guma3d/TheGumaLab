@@ -13,7 +13,8 @@ def generate_video_clip(
     output_path: Path,
     duration_seconds: int = 4,
     aspect_ratio: str = "9:16",
-    model_name: Optional[str] = None
+    model_name: Optional[str] = None,
+    image_path: Optional[Path] = None,
 ) -> Path:
     """Google Veo 3.1 API를 호출하여 프롬프트로부터 비디오 클립을 생성하고 mp4로 저장합니다."""
     if not GEMINI_API_KEY:
@@ -29,7 +30,10 @@ def generate_video_clip(
 
     operation = client.models.generate_videos(
         model=model,
-        source=types.GenerateVideosSource(prompt=prompt),
+        source=types.GenerateVideosSource(
+            prompt=prompt,
+            image=types.Image.from_file(location=str(image_path)) if image_path else None,
+        ),
         config=types.GenerateVideosConfig(
             number_of_videos=1,
             duration_seconds=valid_duration,
