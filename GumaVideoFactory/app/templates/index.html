@@ -663,6 +663,8 @@
         .recommendation-card p { margin:10px 0; line-height:1.6; color:#b5bec8; }
         .recommendation-card a { color:#35d4a1; }
         .product-setup { margin:16px 0; padding:16px; border:1px solid #26b78c; border-radius:12px; }
+        .product-setup label { display:block; margin:10px 0; }
+        .product-setup input:not([type=file]), .product-setup select { width:100%; padding:10px; background:#151b18; color:white; border:1px solid #354039; border-radius:8px; box-sizing:border-box; }
         .product-setup input[type=url] { width:100%; padding:12px; margin:10px 0; background:#111; color:white; border:1px solid #444; border-radius:8px; }
         [hidden] { display:none !important; }
     </style>
@@ -695,14 +697,16 @@
             <div class="section-header"><h2 class="section-title">{{ presets[active_category].label }} · 오늘의 제작 아이템</h2><span class="meta-pill">{{ recommendations.date }} · 카테고리별 5개</span></div>
             <p>매일 한국시간 09:00 · 15:00 · 21:00 조사. 출처와 후킹 포인트를 보고 선택하면 이미지·대본 프리뷰를 만듭니다.</p>
             <p id="research-status">{% if recommendations.researched_at %}마지막 조사: {{ recommendations.researched_at }} · 오늘 {{ recommendations.research_count }}회{% else %}오늘의 조사 결과를 기다리는 중입니다. 이전 추천 목록은 날짜를 선택해 확인할 수 있습니다.{% endif %}</p>
-            <p>기본 6컷 · 세로 숏폼 · 카테고리별 3D 스타일 자동 적용 <span class="meta-pill">{{ planner_model }} + Veo 3.1</span></p>
+            <p>기본 6컷 · 세로 숏폼 · {% if active_category == "food" %}실제 사진·영상 편집{% else %}핵심 기능 + 추가 주요 기능 · 정밀 3D{% endif %} <span class="meta-pill">{{ planner_model }} + Veo 3.1</span></p>
             <label for="recommendationDate">추천 날짜</label><input id="recommendationDate" type="date" value="{{ recommendations.date }}"><button class="btn-action" onclick="loadRecommendationDate()">날짜 조회</button>
             <div class="recommendation-grid" id="recommendationGrid">
                 {% for item in recommendations['items'] if item.category == active_category %}
                     <article class="recommendation-card" data-category="{{ item.category }}">
                         <span class="meta-pill">{{ presets[item.category].label }}</span>
                         <h3>{{ item.title }}</h3><p><strong>{{ item.hook }}</strong></p>
-                        <p>{{ item.why_now }}</p><p>핵심: {{ item.key_feature }}</p><p>3D 연출: {{ item.visual_concept }}</p>
+                        <p>{{ item.why_now }}</p><p>핵심: {{ item.key_feature }}</p><p>연출: {{ item.visual_concept }}</p>
+                        {% if item.supporting_features %}<p>함께 소개할 기능: {{ item.supporting_features|join(" · ") }}</p>{% endif %}
+                        {% if active_category == "food" %}<p>실사 자료: {% if item.media_sources %}{{ item.media_sources|length }}개 출처{% else %}자료 확보 대기{% endif %}</p>{% endif %}
                         <p>연결할 상품: {{ item.product_keyword }}</p>
                         <details><summary>확인한 사실과 출처</summary><ul>{% for fact in item.facts %}<li>{{ fact }}</li>{% endfor %}</ul>
                             {% for source in item.sources %}<p><a href="{{ source.url }}" target="_blank" rel="noopener">{{ source.title }}</a> · {{ source.published_date }}</p>{% endfor %}
@@ -789,7 +793,7 @@
                                     <p>직접 촬영했거나 사용 권한이 있는 이미지를 등록하세요. 업로드 전 편집한 대본을 저장해주세요.</p>
                                     <label for="product-url-{{ p.id }}">쿠팡 파트너스 또는 상품 링크</label>
                                     <input id="product-url-{{ p.id }}" type="url" placeholder="https://link.coupang.com/..." value="{{ p.product_url or '' }}">
-                                    <p>음식 영상은 마지막 애니메이션에서 이 사진으로 전환합니다. 상품 사진·링크 등록 후 승인할 수 있습니다.</p>
+                                    <p>음식은 실제 사진·영상을 편집합니다. 모든 컷의 자료와 상품 사진·링크 등록 후 승인할 수 있습니다.</p>
                                 </div>
                                 {% endif %}
                                 {% if p.product_url %}<a href="{{ p.product_url }}" target="_blank" rel="noopener">이 영상의 상품 링크</a>{% endif %}
@@ -801,7 +805,26 @@
                                             <strong>컷 {{ scene.scene_number }} · {{ scene.duration_seconds }}초 · {{ scene.purpose|default("설명") }}</strong>
                                             {% if scene.image_url %}
                                             <a href="{{ scene.image_url }}" target="_blank" rel="noopener"><img src="{{ scene.image_url }}" alt="컷 {{ scene.scene_number }} 프리뷰" loading="lazy"></a>
-                                            {% else %}<p>{% if scene.purpose == "product_reveal" %}실제 상품 사진 등록 대기{% else %}이미지 준비 전{% endif %}</p>{% endif %}
+                                            {% else %}<p>{% if scene.purpose == "product_reveal" %}실제 상품 사진 등록 대기{% elif p.media_mode == "real" %}실사 자료 등록 대기{% else %}이미지 준비 전{% endif %}</p>{% endif %}
+                                            {% if p.media_mode == 'real' and scene.purpose != 'product_reveal' %}
+                                            {% if scene.media_source %}
+                                            {% if scene.media_source.kind == 'video' %}<video controls playsinline preload="metadata" style="width:100%" src="{{ scene.media_url }}#t={{ scene.media_source.start_seconds }},{{ scene.media_source.start_seconds + scene.media_source.clip_seconds }}" poster="{{ scene.image_url }}"></video>{% endif %}
+                                            <p><a href="{{ scene.media_source.source_url }}" target="_blank" rel="noopener">{{ scene.media_source.title }}</a> · {{ scene.media_source.creator }} · {{ scene.media_source.license }}{% if scene.media_source.illustrative %} · 설명용 참고 장면{% endif %}</p>
+                                            {% endif %}
+                                            {% if p.status == 'preview_ready' %}
+                                            <details class="product-setup"><summary>{% if scene.media_source %}실사 자료 교체{% else %}실사 사진·영상 등록{% endif %}</summary>
+                                            <p>공식 자료의 사용 허락, CC 라이선스 또는 직접 촬영 자료를 연결합니다. 저장하지 않은 대본은 먼저 저장해주세요.</p>
+                                            <input id="media-file-{{ p.id }}-{{ scene.scene_number }}" type="file" accept="image/png,image/jpeg,image/webp,video/mp4">
+                                            <label>출처 주소<input id="media-source-{{ p.id }}-{{ scene.scene_number }}" type="url" placeholder="공식 자료 또는 원본 게시물 URL"></label>
+                                            <label>제작자<input id="media-creator-{{ p.id }}-{{ scene.scene_number }}" placeholder="원본 제작자"></label>
+                                            <label>사용 조건<select id="media-license-{{ p.id }}-{{ scene.scene_number }}"><option value="permission">공식 사용 허락</option><option value="CC BY">CC BY</option><option value="CC BY-SA">CC BY-SA</option><option value="CC0">CC0</option><option value="owned">직접 촬영</option></select></label>
+                                            <label>사용 조건 근거 주소<input id="media-terms-{{ p.id }}-{{ scene.scene_number }}" type="url" placeholder="라이선스 또는 허락 근거 URL"></label>
+                                            <label>출처 표기<input id="media-credit-{{ p.id }}-{{ scene.scene_number }}" placeholder="게시 설명란에 표시할 출처·조건"></label>
+                                            <label>발췌 길이(최대 4초)<input id="media-length-{{ p.id }}-{{ scene.scene_number }}" type="number" min="0.1" max="4" step="0.1" value="3"></label>
+                                            <label>영상 시작 위치(초)<input id="media-start-{{ p.id }}-{{ scene.scene_number }}" type="number" min="0" step="0.1" value="0"></label>
+                                            <button class="btn-action" onclick="uploadSceneMedia('{{ p.id }}', {{ scene.scene_number }}, this)">실사 자료 등록</button>
+                                            </details>
+                                            {% endif %}{% endif %}
                                             <label for="narration-{{ p.id }}-{{ scene.scene_number }}">나레이션 대본</label>
                                             <textarea id="narration-{{ p.id }}-{{ scene.scene_number }}" class="input-textarea scene-narration" maxlength="1000" {% if p.status != 'preview_ready' %}disabled{% endif %}>{{ scene.narration_ko }}</textarea>
                                             <details><summary>장면 설명</summary><p>{{ scene.visual_prompt }}</p></details>
@@ -826,6 +849,7 @@
                                     <a href="{{ p.output_video_url }}" download class="btn-action download" style="width: 100%;">
                                         <i class="fa-solid fa-download"></i> MP4 영상 다운로드
                                     </a>
+                                    {% if p.credits_url %}<a href="{{ p.credits_url }}" download class="btn-action">게시용 출처 표기 다운로드</a>{% endif %}
                                 {% elif p.status in ['planning', 'previewing', 'generating'] %}
                                     <button class="btn-action download" style="width: 100%;" disabled>
                                         <i class="fa-solid fa-spinner fa-spin"></i> 처리 진행 중...
@@ -872,13 +896,27 @@
                 daily.items.filter(item => item.category === selectedCategory).forEach(item => {
                     const card = document.createElement('article'); card.className='recommendation-card'; card.dataset.category=item.category;
                     addText(card,'h3',item.title); addText(card,'strong',item.hook);
-                    [item.why_now, item.key_feature, '3D 연출: '+item.visual_concept, '연결할 상품: '+item.product_keyword, ...item.facts, item.cautions].forEach(text => addText(card,'p',text));
+                    [item.why_now, item.key_feature, '연출: '+item.visual_concept, '연결할 상품: '+item.product_keyword, ...(item.supporting_features || []).map(feature=>'추가 주요 기능: '+feature), ...item.facts, item.cautions].forEach(text => addText(card,'p',text));
                     item.sources.forEach(source => { const a=addText(card,'a',source.title+' · '+source.published_date); a.href=source.url; a.target='_blank'; a.rel='noopener'; addText(card,'br',''); });
                     const button=addText(card,'button','선택하고 프리뷰 만들기'); button.className='btn-action generate'; button.onclick=()=>selectRecommendation(item,daily.date,button);
                     grid.append(card);
                 });
                 if (!grid.children.length) addText(grid,'p','해당 날짜의 카테고리 추천이 없습니다.');
             } catch(e) { alert(e.message); }
+        }
+        async function uploadSceneMedia(projectId, scene, button) {
+            const suffix=`${projectId}-${scene}`;
+            const value=name=>document.getElementById(`media-${name}-${suffix}`).value.trim();
+            const file=document.getElementById(`media-file-${suffix}`).files[0];
+            if (!file) { alert('사진 또는 MP4 영상을 선택해주세요.'); return; }
+            button.disabled=true;
+            try {
+                const data=new FormData(); data.append('file',file);
+                data.append('metadata', JSON.stringify({title:file.name, source_url:value('source'),creator:value('creator'),license:value('license'),license_url:value('terms'),attribution:value('credit'),kind:file.type==='video/mp4'?'video':'image',start_seconds:Number(value('start')),clip_seconds:Number(value('length')),provider:value('license')==='owned'?'owned':'licensed_search'}));
+                const res=await fetch(`/api/projects/${projectId}/scenes/${scene}/media`,{method:'POST',body:data});
+                if (!res.ok) throw new Error((await res.json()).detail || '자료 등록 실패');
+                location.reload();
+            } catch(e) { alert(e.message); button.disabled=false; }
         }
         async function uploadProductImage(projectId, button) {
             const file=document.getElementById(`product-image-${projectId}`).files[0];

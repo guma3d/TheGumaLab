@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, List, Literal
 
-from fastapi import FastAPI, Request, HTTPException, BackgroundTasks, UploadFile, File
+from fastapi import FastAPI, Request, HTTPException, BackgroundTasks, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -26,6 +26,7 @@ from app.core.image_client import generate_preview_image
 from app.core.ffmpeg_mixer import concatenate_clips_with_audio, render_product_still
 from app.core.categories import PRESETS
 from app.core.recommendations import load_daily, now_kst
+from app.core.source_media import MediaSource, store_media, media_preview, render_source_clip
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("GumaVideoFactory")
@@ -170,10 +171,11 @@ async def create_project(req: CreateProjectRequest, background_tasks: Background
     project = {
         "id": project_id,
         "idea": req.idea,
-        "target_duration": req.scene_count * 4 + (4 if req.category == "food" else 0),
+        "target_duration": req.scene_count * 4,
         "scene_count": req.scene_count,
         "style_prompt": req.style_prompt or PRESETS[req.category]["style"],
         "category": req.category,
+        "media_mode": "real" if req.category == "food" else "generated",
         "recommendation": recommendation,
         "product_image_url": None,
         "product_url": "",
@@ -210,9 +212,9 @@ async def async_plan_and_prepare(project_id: str):
         project["storyboard"] = storyboard.model_dump()
         # 결정적인 컷 역할은 모델 응답 대신 서비스에서 확정합니다.
         project["storyboard"]["scenes"][-1]["purpose"] = "product_reveal"
-        project["storyboard"]["scenes"][-2]["purpose"] = "transition" if project.get("category") == "food" else "summary"
-        if project.get("category") == "food":
-            project["storyboard"]["scenes"][-2]["duration_seconds"] = 8
+        project["storyboard"]["scenes"][-2]["purpose"] = "summary"
+        if project.get("category") == "tech" and not any(s.get("covered_features") for s in project["storyboard"]["scenes"]):
+            project["storyboard"]["scenes"][-3]["purpose"] = "supporting_features"
         project["storyboard"]["estimated_total_seconds"] = project["target_duration"]
         project["status"] = "previewing"
         save_project(project)
@@ -229,11 +231,25 @@ async def prepare_preview_images(project_id: str):
     project = load_project(project_id)
     try:
         scenes = project["storyboard"]["scenes"]
+        sources = (project.get("recommendation") or {}).get("media_sources", [])
+        real_media = project.get("media_mode") == "real"
         for scene in scenes:
             if scene.get("purpose") == "product_reveal":
                 # 실제 상품 사진은 사용자가 업로드한 뒤 프리뷰에 반영됩니다.
                 continue
             path = preview_image_path(project_id, scene["scene_number"])
+            if real_media:
+                # 자동 확보 자료를 컷 순서대로 배치하고 실제 프리뷰에서 검토합니다.
+                idx = scene["scene_number"] - 1
+                if not scene.get("media_source") and idx < len(sources):
+                    candidate = sources[idx]
+                    if candidate.get("local_file"):
+                        scene["media_source"] = candidate
+                if scene.get("media_source"):
+                    await asyncio.to_thread(media_preview, MediaSource(**scene["media_source"]), path, project["aspect_ratio"])
+                    scene["image_url"] = f"/storage/preview_images/{path.name}"
+                    scene["media_url"] = f"/storage/source_media/{scene['media_source']['local_file']}"
+                continue
             if not (scene.get("image_url") and path.is_file()):
                 project["progress_message"] = f"컷 {scene['scene_number']}/{len(scenes)} 프리뷰 이미지 생성 중..."
                 save_project(project)
@@ -246,7 +262,7 @@ async def prepare_preview_images(project_id: str):
                 scene["image_url"] = f"/storage/preview_images/{path.name}"
                 save_project(project)
         project["status"] = "preview_ready"
-        project["progress_message"] = "이미지·대본을 확인하고 실제 상품 사진과 링크를 등록한 뒤 최종 승인해주세요."
+        project["progress_message"] = "실사 자료·대본을 검토해주세요. 비어 있는 컷에는 사용 가능한 사진·영상을 등록하고 상품 사진·링크 확인 후 승인해주세요." if real_media else "이미지·대본을 확인하고 실제 상품 사진과 링크를 등록한 뒤 최종 승인해주세요."
     except Exception:
         logger.exception("Preview generation failed for %s", project_id)
         project["status"] = "preview_failed"
@@ -297,12 +313,44 @@ async def upload_product_image(project_id: str, file: UploadFile = File(...)):
     save_project(project)
     return {"message": "상품 사진을 등록했습니다."}
 
+@app.post("/api/projects/{project_id}/scenes/{scene_number}/media")
+async def upload_scene_media(project_id: str, scene_number: int, file: UploadFile = File(...), metadata: str = Form(...)):
+    project = load_project(project_id)
+    scenes = (project.get("storyboard") or {}).get("scenes", [])
+    if project.get("media_mode") != "real" or project["status"] != "preview_ready" or not 1 <= scene_number < len(scenes):
+        raise HTTPException(status_code=409, detail="실사 프리뷰의 상품 컷 이전 장면에만 자료를 등록할 수 있습니다.")
+    try:
+        source = MediaSource.model_validate_json(metadata)
+        content = await file.read(40 * 1024 * 1024 + 1)
+        source.local_file = await asyncio.to_thread(store_media, content, source.kind)
+        path = preview_image_path(project_id, scene_number)
+        # 실패 시 기존 프리뷰를 유지합니다.
+        staged = path.with_name(path.stem + "_staged.png")
+        await asyncio.to_thread(media_preview, source, staged, project["aspect_ratio"])
+        staged.replace(path)
+    except Exception:
+        raise HTTPException(status_code=400, detail="정상 사진/MP4 파일과 출처·제작자·사용 조건·표기 내용을 확인해주세요.")
+    scene = scenes[scene_number - 1]
+    scene["media_source"] = source.model_dump()
+    scene["image_url"] = f"/storage/preview_images/{path.name}?v={uuid.uuid4().hex[:8]}"
+    scene["media_url"] = f"/storage/source_media/{source.local_file}"
+    project["approved_at"] = None
+    save_project(project)
+    return {"message": "실사 자료를 등록했습니다."}
+
+
 @app.post("/api/projects/{project_id}/generate")
 async def start_generation(project_id: str, req: ReviewRequest, background_tasks: BackgroundTasks):
     project = load_project(project_id)
     if project["status"] != "preview_ready":
         raise HTTPException(status_code=409, detail="검토 가능한 프리뷰가 준비되어야 합니다.")
     require_preview(project)
+    if project.get("media_mode") == "real":
+        try:
+            for scene in project["storyboard"]["scenes"][:-1]:
+                MediaSource(**scene["media_source"]).file_path()
+        except (ValueError, KeyError):
+            raise HTTPException(status_code=409, detail="모든 실사 컷의 자료와 사용 조건이 준비되어야 합니다.")
     if not req.approved:
         raise HTTPException(status_code=400, detail="최종 승인 후 영상 제작을 시작해주세요.")
     if project.get("category"):
@@ -319,7 +367,7 @@ async def start_generation(project_id: str, req: ReviewRequest, background_tasks
     project["approved_at"] = now_kst().isoformat()
     
     project["status"] = "generating"
-    project["progress_message"] = "Veo 3.1 비디오 및 오디오 클립 생성을 시작합니다..."
+    project["progress_message"] = "실제 사진·영상 편집과 나레이션 합성을 시작합니다..." if project.get("media_mode") == "real" else "Veo 3.1 비디오 및 오디오 클립 생성을 시작합니다..."
     save_project(project)
 
     background_tasks.add_task(async_generate_video, project_id)
@@ -351,7 +399,7 @@ async def async_generate_video(project_id: str):
         # 1. 씬별 영상 생성
         for idx, scene in enumerate(scenes):
             scene_num = scene.get("scene_number", idx + 1)
-            project["progress_message"] = f"씬 {scene_num}/{len(scenes)} 영상 렌더링 중 (Veo 3.1)..."
+            project["progress_message"] = f"씬 {scene_num}/{len(scenes)} " + ("실제 사진·영상 편집 중..." if project.get("media_mode") == "real" else "영상 렌더링 중 (Veo 3.1)...")
             save_project(project)
 
             clip_filename = f"{project_id}_scene_{scene_num:02d}.mp4"
@@ -359,6 +407,8 @@ async def async_generate_video(project_id: str):
 
             if scene.get("purpose") == "product_reveal":
                 await asyncio.to_thread(render_product_still, product_image_path(project_id), clip_path, project["aspect_ratio"])
+            elif project.get("media_mode") == "real":
+                await asyncio.to_thread(render_source_clip, MediaSource(**scene["media_source"]), clip_path, project["aspect_ratio"], scene.get("duration_seconds", 4))
             else:
                 last_image = preview_image_path(project_id, len(scenes)) if scene.get("purpose") == "transition" and product_image_path(project_id).exists() else None
                 await asyncio.to_thread(generate_video_clip,
@@ -403,6 +453,17 @@ async def async_generate_video(project_id: str):
         )
 
         project["output_video_url"] = f"/storage/outputs/{output_filename}"
+        credits = []
+        for scene in scenes:
+            source = scene.get("media_source")
+            if source:
+                credit = f"{source['title']} — {source['creator']}\n{source['source_url']}\n{source['license']} ({source['license_url']})\n{source['attribution']}\n편집: 발췌·화면 비율 조정·나레이션 추가"
+                if credit not in credits:
+                    credits.append(credit)
+        if credits:
+            credit_path = OUTPUTS_DIR / f"{project_id}_credits.txt"
+            credit_path.write_text("\n\n".join(credits), encoding="utf-8")
+            project["credits_url"] = f"/storage/outputs/{credit_path.name}"
         project["status"] = "ready"
         project["progress_message"] = "영상 제작이 성공적으로 완료되었습니다!"
         save_project(project)

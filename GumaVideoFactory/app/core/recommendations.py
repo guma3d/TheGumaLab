@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 from pydantic import BaseModel, Field, field_validator, model_validator
 from app.config import RECOMMENDATIONS_DIR
 from app.core.categories import PRESETS
+from app.core.source_media import MediaSource
 
 KST = timezone(timedelta(hours=9))
 
@@ -50,6 +51,8 @@ class Recommendation(BaseModel):
     facts: list[str] = Field(min_length=1, max_length=8)
     cautions: str = Field(default="", max_length=1000)
     sources: list[Source] = Field(min_length=1, max_length=5)
+    supporting_features: list[str] = Field(default_factory=list, max_length=4)
+    media_sources: list[MediaSource] = Field(default_factory=list, max_length=8)
 
     @field_validator("category")
     @classmethod
@@ -82,6 +85,8 @@ class DailyBatch(BaseModel):
         if len({i.stable_id() for i in self.items}) != len(self.items):
             raise ValueError("중복 아이템은 사용할 수 없습니다.")
         for item in self.items:
+            if item.category == "tech" and len(item.supporting_features) < 2:
+                raise ValueError("테크 추천에는 검증된 추가 주요 기능이 2개 이상 필요합니다.")
             if not any((now_kst().date() - datetime.strptime(s.published_date, "%Y-%m-%d").date()).days <= 30 for s in item.sources):
                 raise ValueError("아이템마다 최근 30일 이내 출처가 하나 이상 필요합니다.")
         return self

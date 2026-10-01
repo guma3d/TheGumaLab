@@ -9,7 +9,7 @@ from app.core import recommendations as rec
 class RecommendationTests(unittest.TestCase):
     def batch(self):
         now=rec.now_kst()
-        return dict(date=now.strftime('%Y-%m-%d'), researched_at=now, items=[dict(category=c,title=f'{c}{i}',subject=f'{c}{i}',hook='hook',why_now='recent',key_feature='feature',visual_concept='3D',product_keyword='product',facts=['verified'],sources=[dict(title='source',url='https://example.com/news',published_date=now.strftime('%Y-%m-%d'))]) for c in ('tech','food') for i in range(5)])
+        return dict(date=now.strftime('%Y-%m-%d'), researched_at=now, items=[dict(category=c,title=f'{c}{i}',subject=f'{c}{i}',hook='hook',why_now='recent',key_feature='feature',visual_concept='3D',product_keyword='product',supporting_features=['feature two','feature three'] if c=='tech' else [],facts=['verified'],sources=[dict(title='source',url='https://example.com/news',published_date=now.strftime('%Y-%m-%d'))]) for c in ('tech','food') for i in range(5)])
     def test_exact_daily_counts_duplicates_and_freshness(self):
         data=self.batch(); self.assertEqual(len(rec.DailyBatch(**data).items),10)
         data['items'][0]['category']='food'

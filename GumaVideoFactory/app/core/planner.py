@@ -1,7 +1,7 @@
 import json
 import logging
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from google import genai
 from google.genai import types
 from app.config import GEMINI_API_KEY, PLANNER_MODEL
@@ -17,6 +17,7 @@ class ScenePlan(BaseModel):
     narration_ko: str
     image_url: Optional[str] = None
     purpose: str = "설명"
+    covered_features: List[str] = Field(default_factory=list)
 
 class VideoStoryBoard(BaseModel):
     title: str
@@ -60,8 +61,9 @@ Create a complete, highly engaging video storyboard plan for the following user 
 [Requirements]
 - Shared visual style for ALL scenes: {style_prompt}
 - Maintain the same palette, lighting, character appearance, materials and visual language across all scenes.
-- All scenes except the last are 3D explanatory visuals. Last scene purpose is exactly "product_reveal" and is reserved for the real product photograph uploaded by the user. Do not hallucinate packaging.
-- Penultimate scene purpose is exactly "transition" for food, "summary" for tech.
+- {'Use only actual photo/video shots for food; visual_prompt describes media to select. Never generate food images or animated transitions.' if category == 'food' else 'Use premium 3D explanation for tech. Main feature gets 2-3 scenes, secondary verified features get at least one scene labelled supporting_features, followed by benefits/tradeoffs.'}
+- Last scene purpose is exactly "product_reveal", reserved for the real product photograph. Do not hallucinate packaging.
+- Penultimate scene purpose is exactly "summary". Food uses editorial cuts between actual shots and product photograph.
 - Include a short Korean `purpose` label for every other scene.
 - Narration: one short Korean sentence per 4-second scene, no more than approximately 20 Korean syllables. Match voice duration; avoid rushed lists.
 - The last narration asks viewers to find the product through the profile product list, not to click a nonexistent link inside the video. Do not claim a personal trial.
@@ -74,6 +76,7 @@ Create a complete, highly engaging video storyboard plan for the following user 
   3. `camera_movement`: (e.g., 'Slow Dolly in', 'Fast panning right', 'Drone overhead shot', 'Low-angle tracking')
   4. `visual_prompt`: Detailed English prompt for a still keyframe and its subsequent animation. Follow the shared visual style, describe subjects, composition and lighting, no text/watermarks. Do not impose realism if the shared style calls for illustration or animation.
   5. `narration_ko`: Natural, engaging Korean voiceover script that matches the scene timing perfectly.
+  6. `covered_features`: For tech, copy the exact names of researched supporting_features explicitly explained in this scene. Cover all supplied supporting_features (up to the first 3) across the explanation scenes. The narration must explain them, not only this metadata. Otherwise use an empty list.
 """
 
     response = client.models.generate_content(
@@ -88,6 +91,15 @@ Create a complete, highly engaging video storyboard plan for the following user 
 
     data = json.loads(response.text)
     storyboard = VideoStoryBoard(**data)
+    if category == "tech" and evidence:
+        researched = json.loads(evidence)
+        required = researched.get("supporting_features", [])[:3]
+        covered = {name for scene in storyboard.scenes[:-1] for name in scene.covered_features}
+        if any(name not in covered for name in required):
+            raise ValueError("추가 주요 기능이 대본에서 누락됐습니다. 기획을 다시 시도해주세요.")
+        for scene in storyboard.scenes:
+            if scene.covered_features:
+                scene.purpose = "supporting_features"
     if len(storyboard.scenes) != num_scenes:
         raise ValueError("기획된 컷 수가 요청한 컷 수와 다릅니다. 다시 시도해주세요.")
     for index, scene in enumerate(storyboard.scenes, 1):

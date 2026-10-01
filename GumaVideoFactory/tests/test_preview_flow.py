@@ -17,7 +17,8 @@ class PreviewFlowTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.patches = [patch.object(main, "PROJECTS_DIR", self.root),
                         patch.object(main, "IMAGES_DIR", self.root),
-                        patch.object(main, "PRODUCT_IMAGES_DIR", self.root)]
+                        patch.object(main, "PRODUCT_IMAGES_DIR", self.root),
+                        patch("app.core.source_media.SOURCE_MEDIA_DIR", self.root)]
         for p in self.patches:
             p.start()
 
@@ -112,20 +113,30 @@ class PreviewFlowTests(unittest.TestCase):
         with self.assertRaises(HTTPException):
             asyncio.run(main.start_generation(tech['id'],req,BackgroundTasks()))
 
-    def test_recommendation_snapshot_and_food_transition(self):
+    def test_recommendation_snapshot_and_real_food_generation(self):
         item=dict(id="recommendation",category="food",subject="verified food",facts=["evidence"])
         with patch.object(main,"load_daily",return_value={"items":[item]}):
             p=asyncio.run(main.create_project(main.CreateProjectRequest(idea="food",category="food",recommendation_id="recommendation"),BackgroundTasks()))
             with self.assertRaises(HTTPException):
                 asyncio.run(main.create_project(main.CreateProjectRequest(idea="tech",category="tech",recommendation_id="recommendation"),BackgroundTasks()))
         self.assertEqual(main.load_project(p['id'])['recommendation']['facts'],['evidence'])
-        self.prepare(p); self.upload(p)
+        with patch.object(main,"plan_video_storyboard",return_value=self.board()), patch.object(main,"generate_preview_image",side_effect=AssertionError("Food must not generate images")) as image:
+            asyncio.run(main.async_plan_and_prepare(p["id"]))
+            image.assert_not_called()
+        photo=BytesIO(); Image.new('RGB',(80,60),'orange').save(photo,format='PNG')
+        metadata=dict(title='real food',source_url='https://example.com/source',creator='tester',license='CC BY',license_url='https://creativecommons.org/licenses/by/4.0/',attribution='tester, CC BY 4.0')
+        with TestClient(main.app) as client:
+            for number in range(1,6):
+                res=client.post(f"/api/projects/{p['id']}/scenes/{number}/media",files={'file':('food.png',photo.getvalue(),'image/png')},data={'metadata':__import__('json').dumps(metadata)})
+                self.assertEqual(res.status_code,200,res.text)
+        self.upload(p)
         asyncio.run(main.start_generation(p['id'],main.ReviewRequest(narrations=['test']*6,approved=True,product_url="https://example.com"),BackgroundTasks()))
-        with patch.object(main,"generate_video_clip") as video, patch.object(main,"synthesize_speech",new_callable=AsyncMock), patch.object(main,"concatenate_clips_with_audio"), patch.object(main,"render_product_still"):
+        with patch.object(main,"generate_video_clip") as video, patch.object(main,"synthesize_speech",new_callable=AsyncMock), patch.object(main,"concatenate_clips_with_audio"), patch.object(main,"render_product_still"), patch.object(main,"render_source_clip") as real:
             asyncio.run(main.async_generate_video(p['id']))
-            transition=video.call_args_list[-1].kwargs
-            self.assertEqual(transition['duration_seconds'],8)
-            self.assertEqual(transition['last_image_path'],main.preview_image_path(p['id'],6))
+            video.assert_not_called()
+            self.assertEqual(real.call_count,5)
+            self.assertIn('CC BY', (main.OUTPUTS_DIR/f"{p['id']}_credits.txt").read_text())
+            (main.OUTPUTS_DIR/f"{p['id']}_credits.txt").unlink()
 
     def test_rendered_preview_and_approved_images_reach_video_generation(self):
         p = self.create()
