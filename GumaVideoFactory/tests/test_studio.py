@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from app import studio, main
 from app.core import versions as store
 from app.core import studio_jobs as jobs
-from app.core.model_assets import fetch, Blueprint
+from app.core.model_assets import fetch, Blueprint, PageAssets
 
 
 class StudioTests(unittest.TestCase):
@@ -122,6 +122,13 @@ class StudioTests(unittest.TestCase):
             with self.assertRaises(ValueError):fetch('https://example.com/model.glb')
             network.assert_not_called()
         with self.assertRaises(ValueError):Blueprint.model_validate(dict(reference_matches_product=True,product_identity='X',uncertainties=['draft'],parts=[dict(name='x',shape='box',position=[0,0,0],dimensions=[-1,1,1],color=[1,1,1])]))
+
+    def test_product_page_exposes_relative_model_and_overview_links(self):
+        parser=PageAssets('https://example.com/news/article/')
+        parser.feed('<a href="/test-product/">Product</a><a href="/ar/product.usdz">AR</a><meta property="og:image" content="/photo.jpg">')
+        self.assertIn('https://example.com/test-product/',parser.links)
+        self.assertEqual(parser.models,['https://example.com/ar/product.usdz'])
+        self.assertEqual(parser.images,['https://example.com/photo.jpg'])
 
     def test_job_failure_is_retained_as_a_failed_version(self):
         self.start('3DModel')
