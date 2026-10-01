@@ -15,6 +15,7 @@ def generate_video_clip(
     aspect_ratio: str = "9:16",
     model_name: Optional[str] = None,
     image_path: Optional[Path] = None,
+    last_image_path: Optional[Path] = None,
 ) -> Path:
     """Google Veo 3.1 API를 호출하여 프롬프트로부터 비디오 클립을 생성하고 mp4로 저장합니다."""
     if not GEMINI_API_KEY:
@@ -24,7 +25,7 @@ def generate_video_clip(
     model = model_name or VEO_MODEL
 
     # Veo 3.1 supports 4 or 8 seconds
-    valid_duration = 8 if duration_seconds >= 7 else 4
+    valid_duration = 8 if last_image_path or duration_seconds >= 7 else 4
 
     logger.info(f"Generating video with model {model}: {prompt[:60]}... (duration: {valid_duration}s)")
 
@@ -39,6 +40,7 @@ def generate_video_clip(
             duration_seconds=valid_duration,
             aspect_ratio=aspect_ratio,
             enhance_prompt=True,
+            last_frame=types.Image.from_file(location=str(last_image_path)) if last_image_path else None,
         ),
     )
 

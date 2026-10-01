@@ -7,6 +7,20 @@ import imageio_ffmpeg
 
 logger = logging.getLogger(__name__)
 
+
+def render_product_still(image_path: Path, output_path: Path, aspect_ratio: str, duration: int = 4) -> Path:
+    """최종 실제 상품 이미지는 생성 모델로 변형하지 않고 원본을 영상화."""
+    width, height = (720, 1280) if aspect_ratio == "9:16" else (1280, 720)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    result = subprocess.run([
+        get_ffmpeg_bin(), "-y", "-loop", "1", "-i", str(image_path), "-t", str(duration),
+        "-vf", f"scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1",
+        "-r", "24", "-c:v", "libx264", "-pix_fmt", "yuv420p", str(output_path),
+    ], capture_output=True, text=True)
+    if result.returncode:
+        raise RuntimeError("실제 상품 이미지 영상화에 실패했습니다.")
+    return output_path
+
 def get_ffmpeg_bin() -> str:
     """시스템 ffmpeg 우선 사용, 없으면 imageio-ffmpeg 번들 경로 반환"""
     system_ffmpeg = shutil.which("ffmpeg")
@@ -48,6 +62,7 @@ def concatenate_clips_with_audio(
             "-c:a", "aac",
             "-map", "0:v:0",
             "-map", "1:a:0",
+            "-af", "apad",
             "-shortest",
         ])
     else:

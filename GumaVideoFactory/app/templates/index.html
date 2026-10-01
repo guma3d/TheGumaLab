@@ -652,6 +652,19 @@
         .preview-scene textarea { width:100%; min-height:100px; box-sizing:border-box; }
         .grid-card:has(.preview-grid) { grid-column:1 / -1; }
         .review-actions { display:flex; flex-wrap:wrap; gap:12px; align-items:center; padding:16px; }
+        .category-tabs { display:flex; gap:12px; margin:16px 0; flex-wrap:wrap; }
+        .category-tabs a { color:#b5bec8; text-decoration:none; border:1px solid #354039; border-radius:10px; }
+        .category-tabs a[aria-current=page] { color:white; border-color:#26b78c; }
+        .category-tabs a:hover { color:white; background:#183a2e; }
+        #recommendationDate { background:#151b18; color:white; border:1px solid #354039; border-radius:8px; padding:10px; margin:12px 8px; color-scheme:dark; }
+        .recommendation-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
+        .recommendation-card { border:1px solid rgba(255,255,255,.12); border-radius:14px; padding:18px; background:rgba(255,255,255,.03); }
+        .recommendation-card h3 { margin-bottom:12px; }
+        .recommendation-card p { margin:10px 0; line-height:1.6; color:#b5bec8; }
+        .recommendation-card a { color:#35d4a1; }
+        .product-setup { margin:16px 0; padding:16px; border:1px solid #26b78c; border-radius:12px; }
+        .product-setup input[type=url] { width:100%; padding:12px; margin:10px 0; background:#111; color:white; border:1px solid #444; border-radius:8px; }
+        [hidden] { display:none !important; }
     </style>
 </head>
 
@@ -672,6 +685,32 @@
             </div>
         </header>
 
+        <nav class="category-tabs" aria-label="제작 카테고리">
+            {% for key, preset in presets.items() %}
+            <a href="/?category={{ key }}" class="btn-action {% if key == active_category %}generate{% endif %}" {% if key == active_category %}aria-current="page"{% endif %}>{{ preset.label }}</a>
+            {% endfor %}
+        </nav>
+        <section class="glass-card">
+            <div class="section-header"><h2 class="section-title">{{ presets[active_category].label }} · 오늘의 제작 아이템</h2><span class="meta-pill">{{ recommendations.date }} · 카테고리별 5개</span></div>
+            <p>매일 한국시간 09:00 · 15:00 · 21:00 조사. 출처와 후킹 포인트를 보고 선택하면 이미지·대본 프리뷰를 만듭니다.</p>
+            <p id="research-status">{% if recommendations.researched_at %}마지막 조사: {{ recommendations.researched_at }} · 오늘 {{ recommendations.research_count }}회{% else %}오늘의 조사 결과를 기다리는 중입니다. 이전 추천 목록은 날짜를 선택해 확인할 수 있습니다.{% endif %}</p>
+            <label for="recommendationDate">추천 날짜</label><input id="recommendationDate" type="date" value="{{ recommendations.date }}"><button class="btn-action" onclick="loadRecommendationDate()">날짜 조회</button>
+            <div class="recommendation-grid" id="recommendationGrid">
+                {% for item in recommendations['items'] if item.category == active_category %}
+                    <article class="recommendation-card" data-category="{{ item.category }}">
+                        <span class="meta-pill">{{ presets[item.category].label }}</span>
+                        <h3>{{ item.title }}</h3><p><strong>{{ item.hook }}</strong></p>
+                        <p>{{ item.why_now }}</p><p>핵심: {{ item.key_feature }}</p><p>3D 연출: {{ item.visual_concept }}</p>
+                        <p>연결할 상품: {{ item.product_keyword }}</p>
+                        <details><summary>확인한 사실과 출처</summary><ul>{% for fact in item.facts %}<li>{{ fact }}</li>{% endfor %}</ul>
+                            {% for source in item.sources %}<p><a href="{{ source.url }}" target="_blank" rel="noopener">{{ source.title }}</a> · {{ source.published_date }}</p>{% endfor %}
+                            <p>{{ item.cautions }}</p>
+                        </details>
+                        <button class="btn-action generate" onclick='selectRecommendation({{ item|tojson }}, {{ recommendations.date|tojson }}, this)'>선택하고 프리뷰 만들기</button>
+                    </article>
+                {% else %}<p>등록된 추천 아이템이 없습니다.</p>{% endfor %}
+            </div>
+        </section>
         <!-- Generation Form Card -->
         <section class="glass-card">
             <div class="section-header">
@@ -680,19 +719,21 @@
             </div>
 
             <form id="createForm">
+                <input id="categorySelect" type="hidden" value="{{ active_category }}">
+                <p>{{ presets[active_category].label }} 전용 제작 · 다른 카테고리는 상단 탭에서 선택하세요.</p>
                 <div class="form-group">
                     <label class="form-label" for="ideaInput">어떤 숏폼 영상을 만들고 싶으신가요?</label>
                     <textarea
                         id="ideaInput"
                         class="input-textarea"
-                        placeholder="예시: 비 내리는 미래 서울의 사이버펑크 네온사인 골목길을 산책하는 귀여운 로봇 고양이의 하루를 시네마틱 숏폼으로 제작해줘."
+                        placeholder="{% if active_category == 'food' %}예시: 유행하는 디저트의 쫀득한 식감을 3D 재료 애니메이션으로 설명하고 마지막에 실제 재료 상품 사진으로 이어줘.{% else %}예시: 로봇청소기의 새로운 스팀 기능을 일상 속 청소 문제와 연결해 3D 분해·작동 원리로 설명해줘.{% endif %}"
                         required
                     ></textarea>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label" for="styleInput">모든 컷에 적용할 공통 영상 스타일</label>
-                    <textarea id="styleInput" class="input-textarea" required maxlength="2000">차분한 시네마틱 실사, 절제된 색감, 부드럽고 따뜻한 조명, 일관된 인물 외형과 배경 분위기</textarea>
+                    <textarea id="styleInput" class="input-textarea" required maxlength="2000">{{ presets[active_category].style }}</textarea>
                     <p>아이디어 → 이미지·대본 검토 → 최종 승인 → 영상 제작</p>
                     <p>먼저 이미지와 대본만 생성합니다. 프리뷰 이미지 생성에도 API 사용 비용이 발생합니다.</p>
                 </div>
@@ -701,9 +742,7 @@
                         <label class="form-label" for="durationSelect">스토리보드 컷 수</label>
                         <div class="select-wrapper">
                             <select id="durationSelect" class="select-input">
-                                <option value="6" selected>6컷 (약 24초)</option>
-                                <option value="7">7컷 (약 28초)</option>
-                                <option value="8">8컷 (약 32초)</option>
+                                {% for count in [6, 7, 8] %}<option value="{{ count }}" {% if count == 6 %}selected{% endif %}>{{ count }}컷 (약 {{ count * 4 + (4 if active_category == 'food' else 0) }}초)</option>{% endfor %}
                             </select>
                             <i class="fa-solid fa-chevron-down select-icon"></i>
                         </div>
@@ -816,15 +855,28 @@
                                 </div>
 
                                 <p class="project-msg-text">{{ p.progress_message }}</p>
+                                {% if p.category %}<p>{{ presets[p.category].label }}{% if p.recommendation %} · 추천 아이템: {{ p.recommendation.subject }}{% endif %}</p>{% endif %}
+                                {% if p.status == 'preview_ready' and p.category %}
+                                <div class="product-setup">
+                                    <label for="product-image-{{ p.id }}">최종 컷용 실제 상품 사진 (PNG/JPEG/WebP · 10MB 이하)</label>
+                                    <input id="product-image-{{ p.id }}" type="file" accept="image/png,image/jpeg,image/webp">
+                                    <button class="btn-action" onclick="uploadProductImage('{{ p.id }}', this)">상품 사진 등록</button>
+                                    <p>직접 촬영했거나 사용 권한이 있는 이미지를 등록하세요. 업로드 전 편집한 대본을 저장해주세요.</p>
+                                    <label for="product-url-{{ p.id }}">쿠팡 파트너스 또는 상품 링크</label>
+                                    <input id="product-url-{{ p.id }}" type="url" placeholder="https://link.coupang.com/..." value="{{ p.product_url or '' }}">
+                                    <p>음식 영상은 마지막 애니메이션에서 이 사진으로 전환합니다. 상품 사진·링크 등록 후 승인할 수 있습니다.</p>
+                                </div>
+                                {% endif %}
+                                {% if p.product_url %}<a href="{{ p.product_url }}" target="_blank" rel="noopener">이 영상의 상품 링크</a>{% endif %}
 
                                 {% if p.storyboard and p.storyboard.scenes %}
                                     <div class="preview-grid" id="review-{{ p.id }}">
                                         {% for scene in p.storyboard.scenes %}
                                         <div class="preview-scene">
-                                            <strong>컷 {{ scene.scene_number }} · {{ scene.duration_seconds }}초</strong>
+                                            <strong>컷 {{ scene.scene_number }} · {{ scene.duration_seconds }}초 · {{ scene.purpose|default("설명") }}</strong>
                                             {% if scene.image_url %}
                                             <a href="{{ scene.image_url }}" target="_blank" rel="noopener"><img src="{{ scene.image_url }}" alt="컷 {{ scene.scene_number }} 프리뷰" loading="lazy"></a>
-                                            {% else %}<p>이미지 준비 전</p>{% endif %}
+                                            {% else %}<p>{% if scene.purpose == "product_reveal" %}실제 상품 사진 등록 대기{% else %}이미지 준비 전{% endif %}</p>{% endif %}
                                             <label for="narration-{{ p.id }}-{{ scene.scene_number }}">나레이션 대본</label>
                                             <textarea id="narration-{{ p.id }}-{{ scene.scene_number }}" class="input-textarea scene-narration" maxlength="1000" {% if p.status != 'preview_ready' %}disabled{% endif %}>{{ scene.narration_ko }}</textarea>
                                             <details><summary>장면 설명</summary><p>{{ scene.visual_prompt }}</p></details>
@@ -869,6 +921,65 @@
 
     <!-- Frontend Script -->
     <script>
+        const presets = {{ presets|tojson }};
+        let selectedCategory = {{ active_category|tojson }};
+        function applyCategory(category) {
+            document.getElementById('categorySelect').value = category;
+            document.getElementById('styleInput').value = presets[category].style;
+        }
+        function filterRecommendations(category) {
+            selectedCategory = category;
+            document.querySelectorAll('.recommendation-card').forEach(card => card.hidden = card.dataset.category !== category);
+            applyCategory(category);
+        }
+        async function selectRecommendation(item, date, button) {
+            button.disabled = true;
+            try {
+                const res = await fetch('/api/projects', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
+                    idea: item.hook + '\n' + item.key_feature,
+                    category: item.category, recommendation_id:item.id, recommendation_date:date,
+                    scene_count:parseInt(document.getElementById('durationSelect').value),
+                    aspect_ratio:document.getElementById('aspectSelect').value,
+                    voice:document.getElementById('voiceSelect').value,
+                    model:document.getElementById('modelSelect').value
+                }) });
+                if (!res.ok) throw new Error((await res.json()).detail || '프리뷰 요청 실패');
+                location.reload();
+            } catch (e) { alert(e.message); button.disabled = false; }
+        }
+        function addText(parent, tag, text) {
+            const node = document.createElement(tag); node.textContent = text; parent.append(node); return node;
+        }
+        async function loadRecommendationDate() {
+            try {
+                const date = document.getElementById('recommendationDate').value;
+                const res = await fetch('/api/recommendations?date=' + encodeURIComponent(date));
+                if (!res.ok) throw new Error('추천 날짜를 확인해주세요.');
+                const daily = await res.json();
+                const grid = document.getElementById('recommendationGrid'); grid.replaceChildren();
+                document.getElementById('research-status').textContent = daily.researched_at ? `마지막 조사: ${daily.researched_at} · ${daily.research_count}회` : '해당 날짜의 추천 목록이 없습니다.';
+                daily.items.filter(item => item.category === selectedCategory).forEach(item => {
+                    const card = document.createElement('article'); card.className='recommendation-card'; card.dataset.category=item.category;
+                    addText(card,'h3',item.title); addText(card,'strong',item.hook);
+                    [item.why_now, item.key_feature, '3D 연출: '+item.visual_concept, '연결할 상품: '+item.product_keyword, ...item.facts, item.cautions].forEach(text => addText(card,'p',text));
+                    item.sources.forEach(source => { const a=addText(card,'a',source.title+' · '+source.published_date); a.href=source.url; a.target='_blank'; a.rel='noopener'; addText(card,'br',''); });
+                    const button=addText(card,'button','선택하고 프리뷰 만들기'); button.className='btn-action generate'; button.onclick=()=>selectRecommendation(item,daily.date,button);
+                    grid.append(card);
+                });
+                if (!grid.children.length) addText(grid,'p','해당 날짜의 카테고리 추천이 없습니다.');
+            } catch(e) { alert(e.message); }
+        }
+        async function uploadProductImage(projectId, button) {
+            const file=document.getElementById(`product-image-${projectId}`).files[0];
+            if (!file) { alert('상품 사진을 선택해주세요.'); return; }
+            button.disabled=true;
+            try {
+                const data=new FormData(); data.append('file',file);
+                const res=await fetch(`/api/projects/${projectId}/product-image`,{method:'POST',body:data});
+                if (!res.ok) throw new Error((await res.json()).detail || '업로드 실패');
+                location.reload();
+            } catch(e) { alert(e.message); button.disabled=false; }
+        }
         // 폼 제출 이벤트 핸들러
         document.getElementById("createForm").addEventListener("submit", async function(e) {
             e.preventDefault();
@@ -878,6 +989,7 @@
 
             const payload = {
                 idea: document.getElementById("ideaInput").value.trim(),
+                category: document.getElementById("categorySelect").value,
                 scene_count: parseInt(document.getElementById("durationSelect").value),
                 style_prompt: document.getElementById("styleInput").value.trim(),
                 aspect_ratio: document.getElementById("aspectSelect").value,
@@ -904,7 +1016,7 @@
         });
 
         function reviewPayload(projectId) {
-            return { narrations: Array.from(document.querySelectorAll(`#review-${projectId} .scene-narration`)).map(el => el.value.trim()) };
+            return { product_url: document.getElementById(`product-url-${projectId}`)?.value || "", narrations: Array.from(document.querySelectorAll(`#review-${projectId} .scene-narration`)).map(el => el.value.trim()) };
         }
         async function projectAction(projectId, suffix, method, payload, button) {
             button.disabled = true;

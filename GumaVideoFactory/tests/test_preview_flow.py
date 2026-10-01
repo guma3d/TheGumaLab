@@ -2,6 +2,8 @@ import asyncio
 import tempfile
 import unittest
 from pathlib import Path
+from io import BytesIO
+from PIL import Image
 from unittest.mock import patch, AsyncMock
 from fastapi.testclient import TestClient
 from fastapi import BackgroundTasks, HTTPException
@@ -14,7 +16,8 @@ class PreviewFlowTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
         self.patches = [patch.object(main, "PROJECTS_DIR", self.root),
-                        patch.object(main, "IMAGES_DIR", self.root)]
+                        patch.object(main, "IMAGES_DIR", self.root),
+                        patch.object(main, "PRODUCT_IMAGES_DIR", self.root)]
         for p in self.patches:
             p.start()
 
@@ -39,6 +42,13 @@ class PreviewFlowTests(unittest.TestCase):
         with patch.object(main, "plan_video_storyboard", return_value=self.board()), patch.object(main, "generate_preview_image", side_effect=self.fake_image):
             asyncio.run(main.async_plan_and_prepare(project["id"]))
 
+    def upload(self, p):
+        photo=BytesIO()
+        Image.new("RGB", (100, 100), "white").save(photo, format="PNG")
+        with TestClient(main.app) as client:
+            response=client.post(f"/api/projects/{p['id']}/product-image", files={"file":("product.png",photo.getvalue(),"image/png")})
+            self.assertEqual(response.status_code,200)
+
     def test_preview_then_explicit_approval_and_duplicate_guard(self):
         p = self.create()
         with patch.object(main, "generate_video_clip") as video:
@@ -50,7 +60,8 @@ class PreviewFlowTests(unittest.TestCase):
         with self.assertRaises(HTTPException):
             asyncio.run(main.start_generation(p["id"], main.ReviewRequest(narrations=["new"]*6), BackgroundTasks()))
         tasks = BackgroundTasks()
-        req = main.ReviewRequest(narrations=["수정 대본"]*6, approved=True)
+        self.upload(p)
+        req = main.ReviewRequest(narrations=["수정 대본"]*6, approved=True, product_url="https://example.com/product")
         asyncio.run(main.start_generation(p["id"], req, tasks))
         saved = main.load_project(p["id"])
         self.assertEqual(saved["status"], "generating")
@@ -72,7 +83,7 @@ class PreviewFlowTests(unittest.TestCase):
         with patch.object(main, "generate_preview_image", side_effect=self.fake_image) as images:
             asyncio.run(main.retry_preview(p["id"], BackgroundTasks()))
             asyncio.run(main.prepare_preview_images(p["id"]))
-            self.assertEqual(images.call_count, 5)
+            self.assertEqual(images.call_count, 4)
         self.assertEqual(main.load_project(p["id"])["status"], "preview_ready")
 
     def test_missing_preview_blocks_approval(self):
@@ -81,6 +92,40 @@ class PreviewFlowTests(unittest.TestCase):
         main.preview_image_path(p["id"], 2).unlink()
         with self.assertRaises(HTTPException):
             asyncio.run(main.start_generation(p["id"], main.ReviewRequest(narrations=["test"]*6, approved=True), BackgroundTasks()))
+
+    def test_tabs_isolate_projects_and_photo_link_are_required(self):
+        tech=self.create()
+        food=asyncio.run(main.create_project(main.CreateProjectRequest(idea="food-only-project", category="food"), BackgroundTasks()))
+        with TestClient(main.app) as client:
+            tech_page=client.get("/?category=tech").text
+            food_page=client.get("/?category=food").text
+            self.assertNotIn(f'id="card-{food["id"]}"',tech_page)
+            self.assertNotIn(f'id="card-{tech["id"]}"',food_page)
+            self.assertIn(f'id="card-{food["id"]}"',food_page)
+            self.assertEqual(client.get("/?category=unknown").status_code,404)
+        self.prepare(tech)
+        req=main.ReviewRequest(narrations=["test"]*6,approved=True,product_url="https://example.com")
+        with self.assertRaises(HTTPException):
+            asyncio.run(main.start_generation(tech['id'],req,BackgroundTasks()))
+        self.upload(tech)
+        req.product_url=""
+        with self.assertRaises(HTTPException):
+            asyncio.run(main.start_generation(tech['id'],req,BackgroundTasks()))
+
+    def test_recommendation_snapshot_and_food_transition(self):
+        item=dict(id="recommendation",category="food",subject="verified food",facts=["evidence"])
+        with patch.object(main,"load_daily",return_value={"items":[item]}):
+            p=asyncio.run(main.create_project(main.CreateProjectRequest(idea="food",category="food",recommendation_id="recommendation"),BackgroundTasks()))
+            with self.assertRaises(HTTPException):
+                asyncio.run(main.create_project(main.CreateProjectRequest(idea="tech",category="tech",recommendation_id="recommendation"),BackgroundTasks()))
+        self.assertEqual(main.load_project(p['id'])['recommendation']['facts'],['evidence'])
+        self.prepare(p); self.upload(p)
+        asyncio.run(main.start_generation(p['id'],main.ReviewRequest(narrations=['test']*6,approved=True,product_url="https://example.com"),BackgroundTasks()))
+        with patch.object(main,"generate_video_clip") as video, patch.object(main,"synthesize_speech",new_callable=AsyncMock), patch.object(main,"concatenate_clips_with_audio"), patch.object(main,"render_product_still"):
+            asyncio.run(main.async_generate_video(p['id']))
+            transition=video.call_args_list[-1].kwargs
+            self.assertEqual(transition['duration_seconds'],8)
+            self.assertEqual(transition['last_image_path'],main.preview_image_path(p['id'],6))
 
     def test_rendered_preview_and_approved_images_reach_video_generation(self):
         p = self.create()
@@ -91,10 +136,12 @@ class PreviewFlowTests(unittest.TestCase):
             self.assertEqual(page.text.count('class="input-textarea scene-narration"'), 6)
             self.assertIn("최종 승인하고 영상 만들기", page.text)
             self.assertIn("gemini-3.8-flash + Veo 3.1", page.text)
-        asyncio.run(main.start_generation(p["id"], main.ReviewRequest(narrations=["수정"]*6, approved=True), BackgroundTasks()))
-        with patch.object(main, "generate_video_clip") as video, patch.object(main, "synthesize_speech", new_callable=AsyncMock) as speech, patch.object(main, "concatenate_clips_with_audio"):
+        self.upload(p)
+        asyncio.run(main.start_generation(p["id"], main.ReviewRequest(narrations=["수정"]*6, approved=True, product_url="https://example.com/product"), BackgroundTasks()))
+        with patch.object(main, "generate_video_clip") as video, patch.object(main, "synthesize_speech", new_callable=AsyncMock) as speech, patch.object(main, "concatenate_clips_with_audio"), patch.object(main, "render_product_still") as still:
             asyncio.run(main.async_generate_video(p["id"]))
-            self.assertEqual(video.call_count, 6)
+            self.assertEqual(video.call_count, 5)
+            still.assert_called_once()
             self.assertEqual(video.call_args_list[0].kwargs["image_path"], main.preview_image_path(p["id"], 1))
             self.assertEqual(speech.call_args.args[0], " ".join(["수정"]*6))
         self.assertEqual(main.load_project(p["id"])["status"], "ready")

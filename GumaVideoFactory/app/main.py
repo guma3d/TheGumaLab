@@ -2,25 +2,30 @@ import json
 import uuid
 import logging
 import asyncio
+from io import BytesIO
+from urllib.parse import urlparse
+from PIL import Image, ImageOps, UnidentifiedImageError
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, List, Literal
 
-from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
+from fastapi import FastAPI, Request, HTTPException, BackgroundTasks, UploadFile, File
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.config import (
     PORT, HOST, STORAGE_DIR, PROJECTS_DIR, CLIPS_DIR, AUDIO_DIR, OUTPUTS_DIR,
-    PLANNER_MODEL, VEO_MODEL, DEFAULT_VOICE, GEMINI_API_KEY, IMAGES_DIR, IMAGE_MODEL
+    PLANNER_MODEL, VEO_MODEL, DEFAULT_VOICE, GEMINI_API_KEY, IMAGES_DIR, IMAGE_MODEL, PRODUCT_IMAGES_DIR
 )
 from app.core.planner import plan_video_storyboard, VideoStoryBoard
 from app.core.veo_client import generate_video_clip
 from app.core.tts_engine import synthesize_speech
 from app.core.image_client import generate_preview_image
-from app.core.ffmpeg_mixer import concatenate_clips_with_audio
+from app.core.ffmpeg_mixer import concatenate_clips_with_audio, render_product_still
+from app.core.categories import PRESETS
+from app.core.recommendations import load_daily, now_kst
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("GumaVideoFactory")
@@ -37,14 +42,37 @@ class CreateProjectRequest(BaseModel):
     idea: str = Field(min_length=1, max_length=5000)
     target_duration: int = 30
     scene_count: int = Field(default=6, ge=6, le=8)
-    style_prompt: str = Field(default="Cinematic realistic imagery, consistent warm lighting and restrained colors", min_length=1, max_length=2000)
+    category: str = "tech"
+    recommendation_id: Optional[str] = None
+    recommendation_date: Optional[str] = None
+    style_prompt: Optional[str] = Field(default=None, min_length=1, max_length=2000)
     aspect_ratio: Literal["9:16", "16:9"] = "9:16"
     voice: str = DEFAULT_VOICE
     model: str = VEO_MODEL
 
+    @field_validator("category")
+    @classmethod
+    def registered_category(cls, value):
+        if value not in PRESETS:
+            raise ValueError("등록되지 않은 카테고리입니다.")
+        return value
+
 class ReviewRequest(BaseModel):
     narrations: List[str] = Field(min_length=6, max_length=8)
     approved: bool = False
+    product_url: str = Field(default="", max_length=2000)
+
+
+def product_image_path(project_id: str) -> Path:
+    return PRODUCT_IMAGES_DIR / f"{project_id}.png"
+
+
+def validate_product_url(value):
+    value = value.strip()
+    parsed = urlparse(value)
+    if value and (parsed.scheme != "https" or not parsed.netloc or parsed.username or parsed.password):
+        raise HTTPException(status_code=400, detail="상품 링크는 HTTPS 주소로 입력해주세요.")
+    return value
 
 
 def preview_image_path(project_id: str, scene_number: int) -> Path:
@@ -65,6 +93,8 @@ def save_project(project: dict):
         json.dump(project, f, ensure_ascii=False, indent=2)
 
 def load_project(project_id: str) -> dict:
+    if len(project_id) != 8 or any(c not in "0123456789abcdef" for c in project_id):
+        raise HTTPException(status_code=404, detail="Project not found")
     path = PROJECTS_DIR / f"{project_id}.json"
     if not path.exists():
         raise HTTPException(status_code=404, detail="Project not found")
@@ -82,8 +112,10 @@ def list_all_projects() -> List[dict]:
     return projects
 
 @app.get("/", response_class=HTMLResponse)
-async def index_page(request: Request):
-    projects = list_all_projects()
+async def index_page(request: Request, category: str = "tech"):
+    if category not in PRESETS:
+        raise HTTPException(status_code=404, detail="등록되지 않은 카테고리입니다.")
+    projects = [p for p in list_all_projects() if p.get("category", "tech") == category]
     has_api_key = bool(GEMINI_API_KEY)
     return templates.TemplateResponse(
         request=request,
@@ -94,6 +126,9 @@ async def index_page(request: Request):
             "default_model": VEO_MODEL,
             "planner_model": PLANNER_MODEL,
             "image_model": IMAGE_MODEL,
+            "recommendations": load_daily(),
+            "presets": PRESETS,
+            "active_category": category,
         }
     )
 
@@ -110,22 +145,45 @@ async def health_check():
 async def get_projects():
     return list_all_projects()
 
+
+@app.get("/api/recommendations")
+async def get_recommendations(date: Optional[str] = None):
+    try:
+        return load_daily(date)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="날짜는 YYYY-MM-DD 형식으로 입력해주세요.")
+
 @app.post("/api/projects")
 async def create_project(req: CreateProjectRequest, background_tasks: BackgroundTasks):
+    recommendation = None
+    if req.recommendation_id:
+        try:
+            daily = load_daily(req.recommendation_date)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="추천 날짜가 올바르지 않습니다.")
+        recommendation = next((item for item in daily["items"] if item["id"] == req.recommendation_id), None)
+        if recommendation is None or recommendation["category"] != req.category:
+            raise HTTPException(status_code=404, detail="선택한 카테고리의 추천 아이템을 찾을 수 없습니다.")
+    if not req.idea.strip():
+        raise HTTPException(status_code=400, detail="아이디어를 입력해주세요.")
     project_id = str(uuid.uuid4())[:8]
     project = {
         "id": project_id,
         "idea": req.idea,
-        "target_duration": req.scene_count * 4,
+        "target_duration": req.scene_count * 4 + (4 if req.category == "food" else 0),
         "scene_count": req.scene_count,
-        "style_prompt": req.style_prompt,
+        "style_prompt": req.style_prompt or PRESETS[req.category]["style"],
+        "category": req.category,
+        "recommendation": recommendation,
+        "product_image_url": None,
+        "product_url": "",
         "approved_at": None,
         "aspect_ratio": req.aspect_ratio,
         "voice": req.voice,
         "model": req.model,
         "status": "planning",  # planning -> planned -> generating -> ready -> failed
         "progress_message": "AI Director가 스토리보드를 기획 중입니다...",
-        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "created_at": now_kst().strftime("%Y-%m-%d %H:%M:%S"),
         "storyboard": None,
         "clips": [],
         "audio_url": None,
@@ -146,8 +204,16 @@ async def async_plan_and_prepare(project_id: str):
             aspect_ratio=project["aspect_ratio"],
             scene_count=project["scene_count"],
             style_prompt=project["style_prompt"],
+            category=project.get("category", "tech"),
+            evidence=json.dumps(project.get("recommendation") or {}, ensure_ascii=False),
         )
         project["storyboard"] = storyboard.model_dump()
+        # 결정적인 컷 역할은 모델 응답 대신 서비스에서 확정합니다.
+        project["storyboard"]["scenes"][-1]["purpose"] = "product_reveal"
+        project["storyboard"]["scenes"][-2]["purpose"] = "transition" if project.get("category") == "food" else "summary"
+        if project.get("category") == "food":
+            project["storyboard"]["scenes"][-2]["duration_seconds"] = 8
+        project["storyboard"]["estimated_total_seconds"] = project["target_duration"]
         project["status"] = "previewing"
         save_project(project)
         await prepare_preview_images(project_id)
@@ -164,6 +230,9 @@ async def prepare_preview_images(project_id: str):
     try:
         scenes = project["storyboard"]["scenes"]
         for scene in scenes:
+            if scene.get("purpose") == "product_reveal":
+                # 실제 상품 사진은 사용자가 업로드한 뒤 프리뷰에 반영됩니다.
+                continue
             path = preview_image_path(project_id, scene["scene_number"])
             if not (scene.get("image_url") and path.is_file()):
                 project["progress_message"] = f"컷 {scene['scene_number']}/{len(scenes)} 프리뷰 이미지 생성 중..."
@@ -177,7 +246,7 @@ async def prepare_preview_images(project_id: str):
                 scene["image_url"] = f"/storage/preview_images/{path.name}"
                 save_project(project)
         project["status"] = "preview_ready"
-        project["progress_message"] = "이미지와 대본을 확인하고 최종 승인하면 영상 제작이 시작됩니다."
+        project["progress_message"] = "이미지·대본을 확인하고 실제 상품 사진과 링크를 등록한 뒤 최종 승인해주세요."
     except Exception:
         logger.exception("Preview generation failed for %s", project_id)
         project["status"] = "preview_failed"
@@ -202,6 +271,32 @@ async def retry_preview(project_id: str, background_tasks: BackgroundTasks):
 async def get_project_details(project_id: str):
     return load_project(project_id)
 
+
+@app.post("/api/projects/{project_id}/product-image")
+async def upload_product_image(project_id: str, file: UploadFile = File(...)):
+    project = load_project(project_id)
+    if project["status"] != "preview_ready":
+        raise HTTPException(status_code=409, detail="프리뷰 준비 후 상품 사진을 등록해주세요.")
+    content = await file.read(10 * 1024 * 1024 + 1)
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="상품 사진은 10MB 이하로 등록해주세요.")
+    try:
+        with Image.open(BytesIO(content)) as image:
+            if image.format not in ("JPEG", "PNG", "WEBP") or image.width * image.height > 25000000:
+                raise ValueError("Unsupported image")
+            image = ImageOps.exif_transpose(image).convert("RGB")
+            image.save(product_image_path(project_id), format="PNG")
+            # 모든 컷을 같은 720p 캔버스로 맞춰 최종 합성을 안정화합니다.
+            size = (720, 1280) if project["aspect_ratio"] == "9:16" else (1280, 720)
+            ImageOps.pad(image, size, color="black").save(preview_image_path(project_id, len(project["storyboard"]["scenes"])), format="PNG")
+    except (UnidentifiedImageError, ValueError, OSError, Image.DecompressionBombError):
+        raise HTTPException(status_code=400, detail="정상적인 PNG/JPEG/WebP 상품 사진을 등록해주세요.")
+    project["product_image_url"] = f"/storage/product_images/{project_id}.png?v={uuid.uuid4().hex[:8]}"
+    project["storyboard"]["scenes"][-1]["image_url"] = project["product_image_url"]
+    project["approved_at"] = None
+    save_project(project)
+    return {"message": "상품 사진을 등록했습니다."}
+
 @app.post("/api/projects/{project_id}/generate")
 async def start_generation(project_id: str, req: ReviewRequest, background_tasks: BackgroundTasks):
     project = load_project(project_id)
@@ -210,12 +305,18 @@ async def start_generation(project_id: str, req: ReviewRequest, background_tasks
     require_preview(project)
     if not req.approved:
         raise HTTPException(status_code=400, detail="최종 승인 후 영상 제작을 시작해주세요.")
+    if project.get("category"):
+        if not product_image_path(project_id).is_file():
+            raise HTTPException(status_code=409, detail="최종 컷에 사용할 실제 상품 사진을 등록해주세요.")
+        if not req.product_url.strip():
+            raise HTTPException(status_code=400, detail="상품 링크를 입력해주세요.")
+        project["product_url"] = validate_product_url(req.product_url)
     scenes = project["storyboard"]["scenes"]
     if len(req.narrations) != len(scenes) or any(not text.strip() or len(text) > 1000 for text in req.narrations):
         raise HTTPException(status_code=400, detail="각 컷의 대본을 1~1000자로 입력해주세요.")
     for scene, narration in zip(scenes, req.narrations):
         scene["narration_ko"] = narration.strip()
-    project["approved_at"] = datetime.now().isoformat()
+    project["approved_at"] = now_kst().isoformat()
     
     project["status"] = "generating"
     project["progress_message"] = "Veo 3.1 비디오 및 오디오 클립 생성을 시작합니다..."
@@ -236,6 +337,7 @@ async def save_review(project_id: str, req: ReviewRequest):
     for scene, text in zip(scenes, req.narrations):
         scene["narration_ko"] = text.strip()
     project["approved_at"] = None
+    project["product_url"] = validate_product_url(req.product_url)
     save_project(project)
     return {"message": "대본을 저장했습니다."}
 
@@ -255,14 +357,21 @@ async def async_generate_video(project_id: str):
             clip_filename = f"{project_id}_scene_{scene_num:02d}.mp4"
             clip_path = CLIPS_DIR / clip_filename
 
-            await asyncio.to_thread(generate_video_clip,
-                prompt=f"{scene['visual_prompt']}\nCamera motion: {scene['camera_movement']}\nPreserve the supplied keyframe's visual style and subject appearance.",
-                output_path=clip_path,
-                duration_seconds=scene.get("duration_seconds", 5),
-                aspect_ratio=project["aspect_ratio"],
-                model_name=project.get("model"),
-                image_path=preview_image_path(project_id, scene_num),
-            )
+            if scene.get("purpose") == "product_reveal":
+                await asyncio.to_thread(render_product_still, product_image_path(project_id), clip_path, project["aspect_ratio"])
+            else:
+                last_image = preview_image_path(project_id, len(scenes)) if scene.get("purpose") == "transition" and product_image_path(project_id).exists() else None
+                await asyncio.to_thread(generate_video_clip,
+                    prompt=f"{scene['visual_prompt']}\nCamera motion: {scene['camera_movement']}\nPreserve the supplied keyframe's visual style and subject appearance." + (
+                        "\nSmoothly transform the animated food scene into the supplied real product end frame. Match framing and finish on that exact photo; preserve packaging and text." if last_image else ""
+                    ),
+                    output_path=clip_path,
+                    duration_seconds=scene.get("duration_seconds", 4),
+                    aspect_ratio=project["aspect_ratio"],
+                    model_name=project.get("model"),
+                    image_path=preview_image_path(project_id, scene_num),
+                    last_image_path=last_image,
+                )
             clips.append(str(clip_path))
             project["clips"].append(f"/storage/raw_clips/{clip_filename}")
             save_project(project)
