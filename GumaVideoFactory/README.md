@@ -37,6 +37,7 @@ docker compose build videofactory
 docker compose up -d videofactory
 docker exec GumaVideoFactory_app python -m unittest discover -s tests -q
 docker exec GumaVideoFactory_app python -m tests.blender_smoke
+docker exec GumaVideoFactory_app python -m tests.studio_video_smoke
 ```
 
 정기 추천은 변경하지 않습니다. 한국시간 **09·15·21시**, 매일 카테고리별 5개를 조사하고 추천·조사 이력을 누적합니다. 예약 조사는 제작 API를 호출하지 않습니다. `RESEARCH.md` 참조. 자막 오버레이·임의 타임라인 편집·완전한 사진측량 복원·결제형 모델 구매는 구현 범위에 포함하지 않습니다.

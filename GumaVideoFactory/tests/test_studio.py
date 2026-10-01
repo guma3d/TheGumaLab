@@ -98,6 +98,7 @@ class StudioTests(unittest.TestCase):
             self.assertEqual(client.post(f'/api/ideas/{self.id}/Preview',json={'model_version':1}).status_code,409)
             self.assertEqual(client.post(f'/api/ideas/{self.id}/3DModel',json={}).json()['number'],1)
             self.assertEqual(work.await_count,1)
+            self.assertEqual(client.post('/api/projects',json={'idea':'bypass model approval'}).status_code,410)
 
     def test_restart_and_concurrent_reservation(self):
         def reserve():

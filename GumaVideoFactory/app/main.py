@@ -176,6 +176,12 @@ async def get_recommendations(date: Optional[str] = None):
         raise HTTPException(status_code=400, detail="날짜는 YYYY-MM-DD 형식으로 입력해주세요.")
 
 @app.post("/api/projects")
+async def legacy_create_disabled():
+    raise HTTPException(status_code=410, detail='새 제작은 추천 목록의 Generate 3D Model에서 시작해주세요. 제품별 버전과 외형 승인이 먼저 필요합니다.')
+
+
+# Historical project helpers remain for migration/compatibility, but this
+# creation path is not publicly routed: new jobs must use /api/ideas.
 async def create_project(req: CreateProjectRequest, background_tasks: BackgroundTasks):
     recommendation = None
     if req.recommendation_id:
