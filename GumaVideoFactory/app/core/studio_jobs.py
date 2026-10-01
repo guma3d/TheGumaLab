@@ -113,7 +113,7 @@ def model_job(idea_id, number):
 def model_revision_job(idea_id,number):
     """Reimport the existing source into a NEW version without paid research."""
     version=store.get(idea_id,'3DModel',number)
-    if version['revision_operation']!='single_product':raise ValueError('지원하지 않는 모델 수정입니다.')
+    if version['revision_operation'] not in ('single_product','restore_materials'):raise ValueError('지원하지 않는 모델 수정입니다.')
     parent=store.get(idea_id,'3DModel',version['parent_model_version'])
     original=store.version_dir(idea_id,'3DModel',parent['number'])
     folder=store.version_dir(idea_id,'3DModel',number)
@@ -127,18 +127,20 @@ def model_revision_job(idea_id,number):
         refs.append(dict(ref,preview_url=store.url(folder/filename)))
     for name in ('sources.json','search.json'):
         if (original/name).is_file():shutil.copyfile(original/name,folder/name)
-    progress(idea_id,'3DModel',number,'원본에서 정확한 기종 한 대를 분리해 새 버전으로 렌더링합니다.')
+    progress(idea_id,'3DModel',number,'원본의 제품 구성과 표면 재질을 새 버전으로 렌더링합니다.')
     blender.build(folder,source_copy,store.read(idea_id)['recommendation']['subject'])
     inspection=json.loads((folder/'inspection.json').read_text(encoding='utf-8'))
-    if inspection.get('selected_product_count')!=1 or inspection.get('selection')!='verified_dimensions':
+    if version['revision_operation']=='single_product' and (inspection.get('selected_product_count')!=1 or inspection.get('selection')!='verified_dimensions'):
         raise ValueError('원본에서 정확한 단일 제품을 분리하지 못했습니다. 기존 버전은 보존됩니다.')
+    if version['revision_operation']=='restore_materials' and inspection.get('selected_product_count')!=parent.get('inspection',{}).get('selected_product_count'):
+        raise ValueError('재질 수정 중 제품 구성이 달라져 완료하지 않았습니다.')
     store.update(idea_id,'3DModel',number,status='ready',kind='downloaded',references=refs,
         candidates=parent.get('candidates',[]),selected_source=parent.get('selected_source'),
         sources_url=store.url(folder/'sources.json'),inspection=inspection,
         parent_model_sha256=hashlib.sha256((original/'model.blend').read_bytes()).hexdigest(),
         source_asset_sha256=hashlib.sha256(source_copy.read_bytes()).hexdigest(),
         images=[store.url(folder/f'view_{i}.png') for i in range(1,5)],model_url=store.url(folder/'model.blend'),
-        message='제품 한 대로 수정했습니다. 이전 버전은 보존되어 있습니다. 외형을 확인하고 이 버전을 승인해주세요.')
+        message='새 모델 버전이 완성됐습니다. 이전 버전은 보존되어 있습니다. 외형을 확인하고 이 버전을 승인해주세요.')
 
 
 def preview_job(idea_id, number):

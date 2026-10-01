@@ -301,3 +301,7 @@ docker exec HomeServer_Nginx nginx -s reload
 cd D:\TheGumaLab\GumaVideoFactory
 docker compose up -d --build
 ```
+
+### 원본 재질 복원
+
+기존 다운로드 모델의 `재질 복원 · 새 버전`은 원본을 다시 검색하지 않고 새 버전에서 UV 맵, 색상·거칠기·노멀·투명도 등 정적 PBR 연결을 복원합니다. 기존 결과를 덮어쓰거나 승인하지 않습니다. 허용된 정적 노드만 새로 만들며 스크립트·드라이버·임의 노드 그룹은 복사하지 않습니다. 지원하지 않는 재질은 임의로 단순화하지 않고 오류로 표시합니다.

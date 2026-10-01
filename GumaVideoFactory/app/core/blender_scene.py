@@ -9,6 +9,7 @@ import _cycles
 from mathutils import Vector
 sys.path.insert(0,str(Path(__file__).parent))
 from product_selection import selection_policy, choose_phone
+from blender_materials import rebuild_material
 
 
 def material(name, color, metallic=.2, roughness=.3):
@@ -101,30 +102,8 @@ def import_model(path,product_name=''):
     meshes,inspection=select_single_product(product_name)
     if not meshes or sum(len(o.data.vertices) for o in meshes) > 3000000:
         raise ValueError('모델이 비어 있거나 300만 정점 제한을 초과했습니다.')
-    def clean_material(original):
-        color=tuple(original.diffuse_color[:3]) if original else (.3,.3,.3)
-        principled=next((n for n in original.node_tree.nodes if n.type=='BSDF_PRINCIPLED'),None) if original and original.use_nodes else None
-        if principled: color=tuple(principled.inputs['Base Color'].default_value[:3])
-        mat=material('Safe product material',color,
-            principled.inputs['Metallic'].default_value if principled else .2,
-            max(.05,principled.inputs['Roughness'].default_value) if principled else .3)
-        if principled:
-            links=principled.inputs['Base Color'].links
-            source=links[0].from_node if links else None
-            if source and source.type=='TEX_IMAGE' and source.image:
-                im=source.image
-                local=Path(bpy.path.abspath(im.filepath)).resolve()
-                # Rebuild a fresh static material; never copy downloaded nodes,
-                # drivers or groups. Preserve packed/asset-local base textures.
-                if im.packed_file or local.is_relative_to(path.parent.resolve()):
-                    if im.size[0]*im.size[1]<=25000000:
-                        image_node=mat.node_tree.nodes.new('ShaderNodeTexImage');image_node.image=im.copy()
-                        try:image_node.image.pack()
-                        except RuntimeError:pass
-                        mat.node_tree.links.new(image_node.outputs['Color'],mat.node_tree.nodes.get('Principled BSDF').inputs['Base Color'])
-        return mat
     records = [(o.data.copy(), o.matrix_world.copy(), o.name,
-                [clean_material(m) for m in o.data.materials]) for o in meshes]
+                [rebuild_material(m,path) for m in o.data.materials]) for o in meshes]
     for obj in list(bpy.data.objects): bpy.data.objects.remove(obj, do_unlink=True)
     for mesh, matrix, name, materials in records:
         obj = bpy.data.objects.new(name, mesh); bpy.context.collection.objects.link(obj); obj.matrix_world = matrix
@@ -186,6 +165,7 @@ def main():
         if args.build:
             build_blueprint(Path(args.build));inspection=dict(selection='reconstructed_draft',selected_product_count=None)
         else: inspection=import_model(Path(args.source),args.product_name)
+        inspection['material_pipeline']='static_pbr_uv_v2'
         inspection['blender_version']=bpy.app.version_string
         inspection['retained_mesh_count']=sum(o.type=='MESH' for o in bpy.context.scene.objects)
         (output/'inspection.json').write_text(json.dumps(inspection,ensure_ascii=False,indent=2),encoding='utf-8')

@@ -40,7 +40,7 @@ class Approval(BaseModel):
 
 
 class ModelRevision(BaseModel):
-    operation: Literal['single_product']='single_product'
+    operation: Literal['single_product','restore_materials']='single_product'
 
 
 def find(idea_id):
@@ -142,14 +142,14 @@ async def revise_model(idea_id:str,number:int,req:ModelRevision,tasks:Background
         if idea['category']!='tech' or parent['status']!='ready' or parent.get('kind')!='downloaded':
             raise HTTPException(409,'완료된 다운로드 모델에서 수정해주세요.')
         from app.core.product_selection import selection_policy
-        if not selection_policy(idea['recommendation']['subject']):
+        if req.operation=='single_product' and not selection_policy(idea['recommendation']['subject']):
             raise HTTPException(409,'이 제품은 기종을 구분할 치수 근거가 아직 없습니다. 임의로 모델을 분리하지 않습니다.')
         original=store.version_dir(idea_id,'3DModel',number)
         if not any(p.suffix in ('.blend','.glb','.usdz','.obj','.fbx') for p in original.glob('downloaded.*')):
             raise HTTPException(409,'수정할 원본 3D 자료가 없습니다.')
         try:
             result,_=store.reserve(idea_id,'3DModel',True,parent_model_version=number,
-                revision_operation=req.operation,revision_note='공식 치수로 기종 한 대를 분리하고 화면 중심 재정렬')
+                revision_operation=req.operation,revision_note=('공식 치수로 기종 한 대를 분리하고 화면 중심 재정렬' if req.operation=='single_product' else '원본 UV 좌표·표면 재질 복원: 잘못된 가로 띠 제거'))
         except ValueError as error:raise HTTPException(409,str(error))
         tasks.add_task(execute,idea_id,'3DModel',result['number'])
         return result
