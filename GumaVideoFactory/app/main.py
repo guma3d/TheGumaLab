@@ -27,11 +27,19 @@ from app.core.ffmpeg_mixer import concatenate_clips_with_audio, render_product_s
 from app.core.categories import PRESETS
 from app.core.recommendations import load_daily, now_kst
 from app.core.source_media import MediaSource, store_media, media_preview, render_source_clip
+from app.studio import router as studio_router
+from app.core import versions as version_store
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("GumaVideoFactory")
 
 app = FastAPI(title="GumaVideoFactory", description="AI 숏폼 영상 제작 및 편집 스튜디오")
+app.include_router(studio_router)
+
+@app.on_event('startup')
+async def recover_studio_jobs():
+    version_store.recover_interrupted()
+    version_store.link_legacy(list_all_projects())
 
 # Mount storage as static for video/audio preview playback
 app.mount("/storage", StaticFiles(directory=str(STORAGE_DIR)), name="storage")
@@ -113,25 +121,38 @@ def list_all_projects() -> List[dict]:
     return projects
 
 @app.get("/", response_class=HTMLResponse)
-async def index_page(request: Request, category: str = "tech"):
+async def index_page(request: Request, category: str = "tech", date: Optional[str] = None, page: int = 1):
     if category not in PRESETS:
         raise HTTPException(status_code=404, detail="등록되지 않은 카테고리입니다.")
     projects = [p for p in list_all_projects() if p.get("category", "tech") == category]
+    try:
+        daily = load_daily(date)
+    except ValueError:
+        raise HTTPException(400, '날짜를 확인해주세요.')
+    ideas = version_store.listing(category)
+    page = max(1, min(page, max(1, (len(ideas)+11)//12)))
     has_api_key = bool(GEMINI_API_KEY)
     return templates.TemplateResponse(
         request=request,
-        name="index.html",
+        name="studio.html",
         context={
-            "projects": projects,
+            "projects": projects[:12],
+            "ideas": ideas[(page-1)*12:page*12],
+            "page": page,
+            "page_count": max(1, (len(ideas)+11)//12),
             "has_api_key": has_api_key,
             "default_model": VEO_MODEL,
             "planner_model": PLANNER_MODEL,
             "image_model": IMAGE_MODEL,
-            "recommendations": load_daily(),
+            "recommendations": daily,
             "presets": PRESETS,
             "active_category": category,
         }
     )
+
+@app.get('/legacy/{project_id}', response_class=HTMLResponse)
+async def legacy_page(request: Request, project_id: str):
+    return templates.TemplateResponse(request=request,name='legacy.html',context={'project':load_project(project_id)})
 
 @app.get("/api/health")
 async def health_check():

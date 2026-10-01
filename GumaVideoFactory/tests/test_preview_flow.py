@@ -102,9 +102,9 @@ class PreviewFlowTests(unittest.TestCase):
         with TestClient(main.app) as client:
             tech_page=client.get("/?category=tech").text
             food_page=client.get("/?category=food").text
-            self.assertNotIn(f'id="card-{food["id"]}"',tech_page)
-            self.assertNotIn(f'id="card-{tech["id"]}"',food_page)
-            self.assertIn(f'id="card-{food["id"]}"',food_page)
+            self.assertNotIn(f'/legacy/{food["id"]}',tech_page)
+            self.assertNotIn(f'/legacy/{tech["id"]}',food_page)
+            self.assertIn(f'/legacy/{food["id"]}',food_page)
             self.assertEqual(client.get("/?category=unknown").status_code,404)
         self.prepare(tech)
         req=main.ReviewRequest(narrations=["test"]*6,approved=True,product_url="https://example.com")
@@ -144,11 +144,11 @@ class PreviewFlowTests(unittest.TestCase):
         p = self.create()
         self.prepare(p)
         with TestClient(main.app) as client:
-            page = client.get("/")
+            page = client.get(f"/legacy/{p['id']}")
             self.assertEqual(page.status_code, 200)
-            self.assertEqual(page.text.count('class="input-textarea scene-narration"'), 6)
-            self.assertIn("최종 승인 · 영상 만들기", page.text)
-            self.assertIn("gemini-3.8-flash + Veo 3.1", page.text)
+            self.assertEqual(page.text.count('class="card scene"'), 6)
+            self.assertIn("기존 파일은 보존되어 있습니다.", page.text)
+            self.assertNotIn('<textarea', page.text)
         self.upload(p)
         asyncio.run(main.start_generation(p["id"], main.ReviewRequest(narrations=["수정"]*6, approved=True, product_url="https://example.com/product"), BackgroundTasks()))
         with patch.object(main, "generate_video_clip") as video, patch.object(main, "synthesize_speech", new_callable=AsyncMock) as speech, patch.object(main, "concatenate_clips_with_audio"), patch.object(main, "render_product_still") as still:
@@ -167,9 +167,9 @@ class PreviewFlowTests(unittest.TestCase):
         self.assertEqual(main.load_project(p['id'])['status'],'reference_required')
         with TestClient(main.app) as client:
             page=client.get('/?category=tech').text
-            self.assertIn(f'id="product-image-{p["id"]}"',page)
-            self.assertIn('아직 이미지가 생성되지 않았습니다.',page)
-            self.assertIn('사진 등록·프리뷰 생성',page)
+            self.assertIn(f'/legacy/{p["id"]}',page)
+            self.assertIn('Generate 3D Model',page)
+            self.assertIn('Generate Preview',page)
             self.assertNotIn('최종 승인 · 영상 만들기',page)
         self.upload(p)
         saved=main.load_project(p['id'])

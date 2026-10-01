@@ -18,6 +18,8 @@ storage/preview_images/*
 storage/product_images/*
 storage/recommendations/*
 storage/source_media/*
+storage/products/
+storage/verification/
 !storage/raw_clips/.gitkeep
 !storage/audio/.gitkeep
 !storage/outputs/.gitkeep

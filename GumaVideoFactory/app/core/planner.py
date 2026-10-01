@@ -35,6 +35,7 @@ def plan_video_storyboard(
     style_prompt: str = "Cinematic realistic imagery, consistent warm lighting and restrained colors",
     category: str = "tech",
     evidence: str = "",
+    approved_model: bool = False,
 ) -> VideoStoryBoard:
     """Gemini API를 사용하여 사용자 아이디어를 바탕으로 숏폼 컷씬 스토리보드를 생성합니다."""
     if not GEMINI_API_KEY:
@@ -81,6 +82,8 @@ Create a complete, highly engaging video storyboard plan for the following user 
   6. `covered_features`: For tech, copy the exact names of researched supporting_features explicitly explained in this scene. Cover all supplied supporting_features (up to the first 3) across the explanation scenes. The narration must explain them, not only this metadata. Otherwise use an empty list.
 """
 
+    if approved_model:
+        prompt += "\nOVERRIDE PHOTO STAGING: The exterior will be rendered deterministically from a user-approved Blender mesh, never synthesized. Scenes 1, 4, 5 and 6 show that exact mesh with subtle orbit/dolly camera. Scenes 2 and 3 are isolated mechanism concept diagrams only. No invented product teardown. Explain supporting features in scenes 4 and 5. The final scene uses the approved mesh, not a photograph."
     response = client.models.generate_content(
         model=model,
         contents=prompt,
