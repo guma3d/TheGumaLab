@@ -133,3 +133,46 @@ def link_legacy(projects):
             if project['id'] not in ids:
                 ids.append(project['id'])
                 write_json(directory(idea['id'])/'idea.json',idea)
+
+
+def workflow(idea):
+    """Current version state for cards; a new model never inherits approval."""
+    stages = {s: history(idea['id'], s) for s in STAGES}
+    latest = {s: rows[0] if rows else None for s, rows in stages.items()}
+    model, preview, video = (latest[s] for s in STAGES)
+    names = {'3DModel': '모델' if idea['category']=='tech' else '실사 자료', 'Preview': '프리뷰', 'Video': '영상'}
+    next_stage = '3DModel'
+    message = '다음: ' + names['3DModel'] + ' 준비'
+    if model and model['status']=='ready':
+        if model.get('approved_at'):
+            next_stage = 'Preview'; message = '다음: 프리뷰 생성'
+            if preview and preview['status']=='ready':
+                next_stage = 'Video'; message = '다음: 최종 확인·영상 제작'
+                if preview.get('model_version') != model['number']:
+                    next_stage = 'Preview'; message = '이전 모델 프리뷰 · 버전 확인 필요'
+                elif video and video['status']=='ready' and video.get('preview_version')==preview['number']:
+                    message = '영상 완성 · 결과 확인'
+        else:
+            message = '다음: ' + names['3DModel'] + ' 확인·승인'
+    running = next((s for s in STAGES if latest[s] and latest[s]['status']=='running'), None)
+    if running:
+        next_stage = running; message = names[running] + ' 생성 중'
+    buttons = []
+    for stage in STAGES:
+        v = latest[stage]
+        allowed = stage=='3DModel' or bool(model and model['status']=='ready' and model.get('approved_at'))
+        if stage=='Video': allowed = allowed and bool(preview and preview['status']=='ready')
+        label = {'3DModel': 'Generate 3D Model' if idea['category']=='tech' else 'Prepare Real Media', 'Preview': 'Generate Preview', 'Video': 'Create Video'}[stage]
+        state = '대기'
+        if v:
+            state = {'running':'생성 중','failed':'실패','ready':'확인 대기'}.get(v['status'],'대기')
+            if v['status']=='ready':
+                state = '승인 완료' if stage=='3DModel' and v.get('approved_at') else ('완료' if stage=='Video' else '확인 대기')
+                label = names[stage] + (' 보기' if state in ('승인 완료','완료') else ' 확인·승인')
+            elif v['status']=='running': label = names[stage] + ' 생성 중'
+            elif v['status']=='failed': label = names[stage] + ' 오류 확인'
+        buttons.append(dict(stage=stage,label=label,state=state,number=v['number'] if v else None,
+            primary=stage==next_stage,disabled=not v and (not allowed or bool(running)),
+            regen_disabled=not allowed or bool(running),existing=bool(v)))
+    return dict(id=idea['id'],message=message,buttons=buttons,running=bool(running),
+        approved=bool(model and model['status']=='ready' and model.get('approved_at')))

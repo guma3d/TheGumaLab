@@ -131,6 +131,8 @@ async def index_page(request: Request, category: str = "tech", date: Optional[st
         raise HTTPException(400, '날짜를 확인해주세요.')
     ideas = version_store.listing(category)
     page = max(1, min(page, max(1, (len(ideas)+11)//12)))
+    summaries = {i['recommendation']['subject'].strip().casefold(): version_store.workflow(i) for i in ideas}
+    card_workflows = {item['id']: summaries.get(item['subject'].strip().casefold()) for item in daily['items'] if item['category']==category}
     has_api_key = bool(GEMINI_API_KEY)
     return templates.TemplateResponse(
         request=request,
@@ -138,6 +140,9 @@ async def index_page(request: Request, category: str = "tech", date: Optional[st
         context={
             "projects": projects[:12],
             "ideas": ideas[(page-1)*12:page*12],
+            "card_workflows": card_workflows,
+            "workflows": {v["id"]: v for v in summaries.values()},
+            "has_running": any(v["running"] for v in summaries.values()),
             "page": page,
             "page_count": max(1, (len(ideas)+11)//12),
             "has_api_key": has_api_key,

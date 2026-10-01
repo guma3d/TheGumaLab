@@ -36,6 +36,23 @@ class ModelRevisionTests(unittest.TestCase):
             self.assertEqual((folder/'model.blend').read_bytes(),b'old-approved-model')
             with self.assertRaises(HTTPException):asyncio.run(studio.revise_model(iid,1,studio.ModelRevision(),BackgroundTasks()))
 
+    def test_card_tracks_latest_approval_and_dependencies(self):
+        with tempfile.TemporaryDirectory() as temp,patch.object(store,'ROOT',Path(temp)):
+            idea=store.create(dict(category='tech',subject='iPhone 18 Pro'),'2026-10-02');iid=idea['id']
+            store.reserve(iid,'3DModel')
+            store.update(iid,'3DModel',1,status='ready',approved_at='approved')
+            flow=store.workflow(idea)
+            self.assertEqual(flow['message'],'다음: 프리뷰 생성')
+            self.assertEqual(flow['buttons'][0]['label'],'모델 보기')
+            self.assertTrue(flow['buttons'][1]['primary'])
+            self.assertTrue(flow['buttons'][2]['disabled'])
+            store.reserve(iid,'3DModel',True)
+            store.update(iid,'3DModel',2,status='ready')
+            flow=store.workflow(idea)
+            self.assertFalse(flow['approved'])
+            self.assertTrue(flow['buttons'][0]['primary'])
+            self.assertTrue(flow['buttons'][1]['disabled'])
+
     def test_renderer_refuses_overwrite(self):
         with tempfile.TemporaryDirectory() as temp:
             folder=Path(temp);(folder/'model.blend').write_bytes(b'keep')
