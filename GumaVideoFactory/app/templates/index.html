@@ -691,9 +691,11 @@
             {% endfor %}
         </nav>
         <section class="glass-card">
+            <p class="meta-pill">추천 선택 → 이미지·대본 프리뷰 → 최종 승인 → 영상 생성</p>
             <div class="section-header"><h2 class="section-title">{{ presets[active_category].label }} · 오늘의 제작 아이템</h2><span class="meta-pill">{{ recommendations.date }} · 카테고리별 5개</span></div>
             <p>매일 한국시간 09:00 · 15:00 · 21:00 조사. 출처와 후킹 포인트를 보고 선택하면 이미지·대본 프리뷰를 만듭니다.</p>
             <p id="research-status">{% if recommendations.researched_at %}마지막 조사: {{ recommendations.researched_at }} · 오늘 {{ recommendations.research_count }}회{% else %}오늘의 조사 결과를 기다리는 중입니다. 이전 추천 목록은 날짜를 선택해 확인할 수 있습니다.{% endif %}</p>
+            <p>기본 6컷 · 세로 숏폼 · 카테고리별 3D 스타일 자동 적용 <span class="meta-pill">{{ planner_model }} + Veo 3.1</span></p>
             <label for="recommendationDate">추천 날짜</label><input id="recommendationDate" type="date" value="{{ recommendations.date }}"><button class="btn-action" onclick="loadRecommendationDate()">날짜 조회</button>
             <div class="recommendation-grid" id="recommendationGrid">
                 {% for item in recommendations['items'] if item.category == active_category %}
@@ -711,83 +713,6 @@
                 {% else %}<p>등록된 추천 아이템이 없습니다.</p>{% endfor %}
             </div>
         </section>
-        <!-- Generation Form Card -->
-        <section class="glass-card">
-            <div class="section-header">
-                <h2 class="section-title"><i class="fa-solid fa-wand-magic-sparkles"></i> 숏폼 영상 아이디어 입력</h2>
-                <span class="meta-pill"><i class="fa-solid fa-microchip"></i> {{ planner_model }} + Veo 3.1</span>
-            </div>
-
-            <form id="createForm">
-                <input id="categorySelect" type="hidden" value="{{ active_category }}">
-                <p>{{ presets[active_category].label }} 전용 제작 · 다른 카테고리는 상단 탭에서 선택하세요.</p>
-                <div class="form-group">
-                    <label class="form-label" for="ideaInput">어떤 숏폼 영상을 만들고 싶으신가요?</label>
-                    <textarea
-                        id="ideaInput"
-                        class="input-textarea"
-                        placeholder="{% if active_category == 'food' %}예시: 유행하는 디저트의 쫀득한 식감을 3D 재료 애니메이션으로 설명하고 마지막에 실제 재료 상품 사진으로 이어줘.{% else %}예시: 로봇청소기의 새로운 스팀 기능을 일상 속 청소 문제와 연결해 3D 분해·작동 원리로 설명해줘.{% endif %}"
-                        required
-                    ></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="styleInput">모든 컷에 적용할 공통 영상 스타일</label>
-                    <textarea id="styleInput" class="input-textarea" required maxlength="2000">{{ presets[active_category].style }}</textarea>
-                    <p>아이디어 → 이미지·대본 검토 → 최종 승인 → 영상 제작</p>
-                    <p>먼저 이미지와 대본만 생성합니다. 프리뷰 이미지 생성에도 API 사용 비용이 발생합니다.</p>
-                </div>
-                <div class="options-grid">
-                    <div>
-                        <label class="form-label" for="durationSelect">스토리보드 컷 수</label>
-                        <div class="select-wrapper">
-                            <select id="durationSelect" class="select-input">
-                                {% for count in [6, 7, 8] %}<option value="{{ count }}" {% if count == 6 %}selected{% endif %}>{{ count }}컷 (약 {{ count * 4 + (4 if active_category == 'food' else 0) }}초)</option>{% endfor %}
-                            </select>
-                            <i class="fa-solid fa-chevron-down select-icon"></i>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="form-label" for="aspectSelect">화면 비율</label>
-                        <div class="select-wrapper">
-                            <select id="aspectSelect" class="select-input">
-                                <option value="9:16" selected>9:16 (세로 숏폼 / 릴스)</option>
-                                <option value="16:9">16:9 (가로 시네마틱)</option>
-                            </select>
-                            <i class="fa-solid fa-chevron-down select-icon"></i>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="form-label" for="modelSelect">Veo 비디오 모델</label>
-                        <div class="select-wrapper">
-                            <select id="modelSelect" class="select-input">
-                                <option value="veo-3.1-fast-generate-preview" selected>Veo 3.1 Fast (고속 권장)</option>
-                                <option value="veo-3.1-generate-preview">Veo 3.1 Standard (최고화질)</option>
-                            </select>
-                            <i class="fa-solid fa-chevron-down select-icon"></i>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="form-label" for="voiceSelect">AI 나레이션 음성</label>
-                        <div class="select-wrapper">
-                            <select id="voiceSelect" class="select-input">
-                                <option value="ko-KR-SunHiNeural" selected>선희 (한국어 여성)</option>
-                                <option value="ko-KR-InJoonNeural">인준 (한국어 남성)</option>
-                            </select>
-                            <i class="fa-solid fa-chevron-down select-icon"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <button type="submit" id="submitBtn" class="btn-primary">
-                    <i class="fa-solid fa-play"></i> 6~8컷 이미지·대본 프리뷰 만들기
-                </button>
-            </form>
-        </section>
-
         <!-- Active Tasks (In Progress / Queued) -->
         {% set active_projects = [] %}
         {% if projects %}
@@ -912,7 +837,7 @@
                 {% else %}
                     <div class="empty-state" style="grid-column: 1 / -1;">
                         <i class="fa-solid fa-film"></i>
-                        <p>아직 제작된 영상 프로젝트가 없습니다.<br>위 입력창에서 아이디어를 입력하여 첫 번째 숏폼 영상을 생성해보세요!</p>
+                        <p>아직 제작된 영상 프로젝트가 없습니다.<br>위 추천 목록에서 아이템을 선택해 이미지·대본 프리뷰를 만들어보세요!</p>
                     </div>
                 {% endif %}
             </div>
@@ -921,27 +846,13 @@
 
     <!-- Frontend Script -->
     <script>
-        const presets = {{ presets|tojson }};
-        let selectedCategory = {{ active_category|tojson }};
-        function applyCategory(category) {
-            document.getElementById('categorySelect').value = category;
-            document.getElementById('styleInput').value = presets[category].style;
-        }
-        function filterRecommendations(category) {
-            selectedCategory = category;
-            document.querySelectorAll('.recommendation-card').forEach(card => card.hidden = card.dataset.category !== category);
-            applyCategory(category);
-        }
+        const selectedCategory = {{ active_category|tojson }};
         async function selectRecommendation(item, date, button) {
             button.disabled = true;
             try {
                 const res = await fetch('/api/projects', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
                     idea: item.hook + '\n' + item.key_feature,
-                    category: item.category, recommendation_id:item.id, recommendation_date:date,
-                    scene_count:parseInt(document.getElementById('durationSelect').value),
-                    aspect_ratio:document.getElementById('aspectSelect').value,
-                    voice:document.getElementById('voiceSelect').value,
-                    model:document.getElementById('modelSelect').value
+                    category: item.category, recommendation_id:item.id, recommendation_date:date
                 }) });
                 if (!res.ok) throw new Error((await res.json()).detail || '프리뷰 요청 실패');
                 location.reload();
@@ -980,41 +891,6 @@
                 location.reload();
             } catch(e) { alert(e.message); button.disabled=false; }
         }
-        // 폼 제출 이벤트 핸들러
-        document.getElementById("createForm").addEventListener("submit", async function(e) {
-            e.preventDefault();
-            const btn = document.getElementById("submitBtn");
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> AI 기획 및 큐 등록 중...';
-
-            const payload = {
-                idea: document.getElementById("ideaInput").value.trim(),
-                category: document.getElementById("categorySelect").value,
-                scene_count: parseInt(document.getElementById("durationSelect").value),
-                style_prompt: document.getElementById("styleInput").value.trim(),
-                aspect_ratio: document.getElementById("aspectSelect").value,
-                model: document.getElementById("modelSelect").value,
-                voice: document.getElementById("voiceSelect").value
-            };
-
-            try {
-                const res = await fetch("/api/projects", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({}));
-                    throw new Error(errData.detail || "생성 요청 실패");
-                }
-                location.reload();
-            } catch (err) {
-                alert("오류: " + err.message);
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-play"></i> 6~8컷 이미지·대본 프리뷰 만들기';
-            }
-        });
-
         function reviewPayload(projectId) {
             return { product_url: document.getElementById(`product-url-${projectId}`)?.value || "", narrations: Array.from(document.querySelectorAll(`#review-${projectId} .scene-narration`)).map(el => el.value.trim()) };
         }
