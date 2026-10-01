@@ -40,13 +40,14 @@ class PreviewFlowTests(unittest.TestCase):
         return path
 
     def prepare(self, project):
+        Image.new('RGB',(100,100),'white').save(main.product_image_path(project['id']), format='PNG')
         with patch.object(main, "plan_video_storyboard", return_value=self.board()), patch.object(main, "generate_preview_image", side_effect=self.fake_image):
             asyncio.run(main.async_plan_and_prepare(project["id"]))
 
     def upload(self, p):
         photo=BytesIO()
         Image.new("RGB", (100, 100), "white").save(photo, format="PNG")
-        with TestClient(main.app) as client:
+        with TestClient(main.app) as client, patch.object(main, 'generate_preview_image', side_effect=self.fake_image):
             response=client.post(f"/api/projects/{p['id']}/product-image", files={"file":("product.png",photo.getvalue(),"image/png")})
             self.assertEqual(response.status_code,200)
 
@@ -74,8 +75,9 @@ class PreviewFlowTests(unittest.TestCase):
 
     def test_failed_images_resume_without_regenerating_completed_cut(self):
         p = self.create()
+        Image.new('RGB',(100,100),'white').save(main.product_image_path(p['id']), format='PNG')
         def fail_second(prompt, path, *args):
-            if '02' in path.name:
+            if '03' in path.name:
                 raise RuntimeError("mock failure")
             return self.fake_image(prompt, path)
         with patch.object(main, "plan_video_storyboard", return_value=self.board()), patch.object(main, "generate_preview_image", side_effect=fail_second):
@@ -84,7 +86,7 @@ class PreviewFlowTests(unittest.TestCase):
         with patch.object(main, "generate_preview_image", side_effect=self.fake_image) as images:
             asyncio.run(main.retry_preview(p["id"], BackgroundTasks()))
             asyncio.run(main.prepare_preview_images(p["id"]))
-            self.assertEqual(images.call_count, 4)
+            self.assertEqual(images.call_count, 2)
         self.assertEqual(main.load_project(p["id"])["status"], "preview_ready")
 
     def test_missing_preview_blocks_approval(self):
@@ -151,11 +153,41 @@ class PreviewFlowTests(unittest.TestCase):
         asyncio.run(main.start_generation(p["id"], main.ReviewRequest(narrations=["수정"]*6, approved=True, product_url="https://example.com/product"), BackgroundTasks()))
         with patch.object(main, "generate_video_clip") as video, patch.object(main, "synthesize_speech", new_callable=AsyncMock) as speech, patch.object(main, "concatenate_clips_with_audio"), patch.object(main, "render_product_still") as still:
             asyncio.run(main.async_generate_video(p["id"]))
-            self.assertEqual(video.call_count, 5)
-            still.assert_called_once()
-            self.assertEqual(video.call_args_list[0].kwargs["image_path"], main.preview_image_path(p["id"], 1))
+            self.assertEqual(video.call_count, 3)
+            self.assertEqual(still.call_count, 3)
+            self.assertEqual(video.call_args_list[0].kwargs["image_path"], main.preview_image_path(p["id"], 2))
             self.assertEqual(speech.call_args.args[0], " ".join(["수정"]*6))
         self.assertEqual(main.load_project(p["id"])["status"], "ready")
+
+    def test_tech_waits_for_actual_product_photo_before_paid_images(self):
+        p = self.create()
+        with patch.object(main,'plan_video_storyboard',return_value=self.board()), patch.object(main,'generate_preview_image') as images:
+            asyncio.run(main.async_plan_and_prepare(p['id']))
+            images.assert_not_called()
+        self.assertEqual(main.load_project(p['id'])['status'],'reference_required')
+        with TestClient(main.app) as client:
+            page=client.get('/?category=tech').text
+            self.assertIn(f'id="product-image-{p["id"]}"',page)
+            self.assertNotIn('최종 승인 · 영상 만들기',page)
+        self.upload(p)
+        saved=main.load_project(p['id'])
+        self.assertEqual(saved['status'],'preview_ready')
+        self.assertEqual(saved['storyboard']['scenes'][0]['visual_mode'],'product_photo')
+        self.assertEqual(saved['storyboard']['scenes'][1]['visual_mode'],'mechanism_concept')
+        with Image.open(main.preview_image_path(p['id'],1)) as photo:
+            self.assertEqual(photo.getpixel((360,640)),(255,255,255))
+
+    def test_changed_product_photo_invalidates_and_rebuilds_all_generated_cuts(self):
+        p=self.create()
+        self.prepare(p)
+        photo=BytesIO(); Image.new('RGB',(100,100),'red').save(photo,format='PNG')
+        with TestClient(main.app) as client, patch.object(main,'generate_preview_image',side_effect=self.fake_image) as images:
+            response=client.post(f"/api/projects/{p['id']}/product-image",files={'file':('new.png',photo.getvalue(),'image/png')})
+            self.assertEqual(response.status_code,200)
+            self.assertEqual(images.call_count,3)
+            for call in images.call_args_list:
+                self.assertEqual(call.args[4],main.product_image_path(p['id']))
+        self.assertIsNone(main.load_project(p['id'])['approved_at'])
 
 
 if __name__ == "__main__":

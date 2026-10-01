@@ -61,6 +61,8 @@ Create a complete, highly engaging video storyboard plan for the following user 
 [Requirements]
 - Shared visual style for ALL scenes: {style_prompt}
 - Maintain the same palette, lighting, character appearance, materials and visual language across all scenes.
+- For tech, name the exact researched product/model in every visual prompt that shows its exterior. Preserve real camera arrangement, enclosure, buttons, ports and proportions from the product photograph supplied at image generation. Never describe a generic replacement or invent a different material. For undocumented internal structures, use a separate conceptual mechanism diagram rather than presenting a fabricated product teardown as exact engineering.
+- For tech, the first, penultimate and final scenes use the actual product photograph. All remaining scenes are isolated 3D conceptual mechanism diagrams with no complete product, external housing or invented internal assembly. Keep the real product exterior out of generated scenes. Narration can explain main and supporting features while the actual product photograph is displayed.
 - {'Use only actual photo/video shots for food; visual_prompt describes media to select. Never generate food images or animated transitions.' if category == 'food' else 'Use premium 3D explanation for tech. Main feature gets 2-3 scenes, secondary verified features get at least one scene labelled supporting_features, followed by benefits/tradeoffs.'}
 - Last scene purpose is exactly "product_reveal", reserved for the real product photograph. Do not hallucinate packaging.
 - Penultimate scene purpose is exactly "summary". Food uses editorial cuts between actual shots and product photograph.

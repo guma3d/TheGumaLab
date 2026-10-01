@@ -8,14 +8,20 @@ from app.config import GEMINI_API_KEY, IMAGE_MODEL
 
 
 def generate_preview_image(prompt: str, output_path: Path, aspect_ratio: str,
-                           style_prompt: str, reference_path: Path | None = None) -> Path:
+                           style_prompt: str, reference_path: Path | None = None,
+                           product_name: str = "") -> Path:
     if not GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY is not set.")
     contents = [types.Part.from_text(text=(
         f"Create one storyboard keyframe, no text or watermarks.\n"
         f"Shared style: {style_prompt}\nScene: {prompt}\n"
-        "If a reference image is provided, retain its palette, lighting, materials "
-        "and recurring character appearance while showing the new scene."
+        f"Product identity: {product_name or 'the supplied reference product'}.\n"
+        "Create an isolated 3D mechanism concept diagram, never a complete product. "
+        "The attached real photo identifies the product being explained; do NOT redraw "
+        "its exterior, camera housing, enclosure, buttons or ports. The service displays "
+        "the actual exterior separately from the unmodified photograph. Internal elements "
+        "are conceptual mechanism illustrations, not invented exact product engineering. "
+        "Ignore any conflicting request to render a complete device in the scene prompt."
     ))]
     if reference_path:
         contents.append(types.Part.from_bytes(data=reference_path.read_bytes(), mime_type="image/png"))

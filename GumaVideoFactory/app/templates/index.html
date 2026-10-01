@@ -833,12 +833,12 @@
 
                                 <p class="project-msg-text">{{ p.progress_message }}</p>
                                 {% if p.category %}<p>{{ presets[p.category].label }}{% if p.recommendation %} · 추천 아이템: {{ p.recommendation.subject }}{% endif %}</p>{% endif %}
-                                {% if p.status == 'preview_ready' and p.category %}
+                                {% if p.status in ['preview_ready', 'reference_required', 'preview_failed', 'planned'] and p.category and p.storyboard %}
                                 <div class="product-setup">
-                                    <label for="product-image-{{ p.id }}">최종 컷용 실제 상품 사진 (PNG/JPEG/WebP · 10MB 이하)</label>
+                                    <label for="product-image-{{ p.id }}">{% if p.category == 'tech' %}외형 기준·최종 컷용 상품 사진{% else %}최종 컷용 상품 사진{% endif %} (10MB 이하)</label>
                                     <input id="product-image-{{ p.id }}" type="file" accept="image/png,image/jpeg,image/webp">
                                     <button class="btn-action" onclick="uploadProductImage('{{ p.id }}', this)">상품 사진 등록</button>
-                                    <p>직접 촬영했거나 사용 권한이 있는 이미지를 등록하세요. 업로드 전 편집한 대본을 저장해주세요.</p>
+                                    <p>{% if p.category == 'tech' %}외형이 잘 보이는 실제 사진을 등록하세요. 사진을 바꾸면 프리뷰도 다시 생성됩니다.{% else %}직접 촬영했거나 사용 권한이 있는 이미지를 등록하세요.{% endif %} 업로드 전 편집한 대본을 저장해주세요.</p>
                                     <label for="product-url-{{ p.id }}">쿠팡 파트너스 또는 상품 링크</label>
                                     <input id="product-url-{{ p.id }}" type="url" placeholder="https://link.coupang.com/..." value="{{ p.product_url or '' }}">
                                     <p>음식은 실제 사진·영상을 편집합니다. 모든 컷의 자료와 상품 사진·링크 등록 후 승인할 수 있습니다.</p>
@@ -851,6 +851,7 @@
                                         {% for scene in p.storyboard.scenes %}
                                         <div class="preview-scene">
                                             <strong>컷 {{ scene.scene_number }} · {{ scene.duration_seconds }}초 · {{ scene.purpose|default("설명") }}</strong>
+                                            {% if scene.visual_mode == 'mechanism_concept' %}<p>작동 원리 개념도 · 실제 내부 설계와 다를 수 있음</p>{% elif scene.visual_mode == 'product_photo' %}<p>실제 제품 사진</p>{% endif %}
                                             {% if scene.image_url %}
                                             <a href="{{ scene.image_url }}" target="_blank" rel="noopener"><img src="{{ scene.image_url }}" alt="컷 {{ scene.scene_number }} 프리뷰" loading="lazy"></a>
                                             {% else %}<p>{% if scene.purpose == "product_reveal" %}실제 상품 사진 등록 대기{% elif p.media_mode == "real" %}실사 자료 등록 대기{% else %}이미지 준비 전{% endif %}</p>{% endif %}
@@ -886,7 +887,7 @@
                                 {% if p.status == 'preview_ready' %}
                                     <div class="review-actions">
                                         <button class="btn-action" onclick="saveReview('{{ p.id }}', this)">대본 저장</button>
-                                        <label><input type="checkbox" id="approve-{{ p.id }}"> 프리뷰를 확인했습니다.</label>
+                                        <label><input type="checkbox" id="approve-{{ p.id }}"> 제품 외형·대본을 확인했습니다.</label>
                                         <button class="btn-action generate" onclick="startGeneration('{{ p.id }}', this)">최종 승인 · 영상 만들기</button>
                                     </div>
                                 {% elif p.status in ['planned', 'preview_failed'] %}

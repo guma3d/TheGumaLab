@@ -233,11 +233,26 @@ async def prepare_preview_images(project_id: str):
         scenes = project["storyboard"]["scenes"]
         sources = (project.get("recommendation") or {}).get("media_sources", [])
         real_media = project.get("media_mode") == "real"
+        if not real_media and not product_image_path(project_id).is_file():
+            project["status"] = "reference_required"
+            project["progress_message"] = "제품 외형을 맞추려면 실제 상품 사진을 먼저 등록해주세요. 등록하면 이 사진을 기준으로 프리뷰를 생성합니다."
+            save_project(project)
+            return
         for scene in scenes:
             if scene.get("purpose") == "product_reveal":
                 # 실제 상품 사진은 사용자가 업로드한 뒤 프리뷰에 반영됩니다.
                 continue
             path = preview_image_path(project_id, scene["scene_number"])
+            if not real_media and (scene["scene_number"] == 1 or scene.get("purpose") == "summary"):
+                # Never synthesize the marketed product's exterior, even with a
+                # reference: exact product pixels must survive into the video.
+                scene["visual_mode"] = "product_photo"
+                with Image.open(product_image_path(project_id)) as photo:
+                    size = (720, 1280) if project["aspect_ratio"] == "9:16" else (1280, 720)
+                    ImageOps.pad(photo.convert("RGB"), size, color="black").save(path, format="PNG")
+                scene["image_url"] = f"/storage/preview_images/{path.name}?v={uuid.uuid4().hex[:8]}"
+                save_project(project)
+                continue
             if real_media:
                 # 자동 확보 자료를 컷 순서대로 배치하고 실제 프리뷰에서 검토합니다.
                 idx = scene["scene_number"] - 1
@@ -251,13 +266,20 @@ async def prepare_preview_images(project_id: str):
                     scene["media_url"] = f"/storage/source_media/{scene['media_source']['local_file']}"
                 continue
             if not (scene.get("image_url") and path.is_file()):
+                scene["visual_mode"] = "mechanism_concept"
                 project["progress_message"] = f"컷 {scene['scene_number']}/{len(scenes)} 프리뷰 이미지 생성 중..."
                 save_project(project)
-                reference = preview_image_path(project_id, 1)
                 await asyncio.to_thread(
-                    generate_preview_image, scene["visual_prompt"], path,
+                    generate_preview_image, (
+                        scene["visual_prompt"] + "\nMANDATORY: Only a standalone conceptual mechanism diagram. "
+                        "Do not show any complete product, phone, device enclosure, product exterior, "
+                        "camera housing or invented exact product layout. Use isolated optical elements, "
+                        "aperture blades, rays, chip blocks or schematic components appropriate to the narration. "
+                        "The actual product exterior is displayed separately using its real photograph."
+                    ), path,
                     project["aspect_ratio"], project.get("style_prompt", "Cinematic realistic imagery"),
-                    reference if scene["scene_number"] != 1 and reference.is_file() else None,
+                    product_image_path(project_id),
+                    (project.get("recommendation") or {}).get("product_keyword", project["idea"]),
                 )
                 scene["image_url"] = f"/storage/preview_images/{path.name}"
                 save_project(project)
@@ -289,10 +311,11 @@ async def get_project_details(project_id: str):
 
 
 @app.post("/api/projects/{project_id}/product-image")
-async def upload_product_image(project_id: str, file: UploadFile = File(...)):
+async def upload_product_image(project_id: str, background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     project = load_project(project_id)
-    if project["status"] != "preview_ready":
-        raise HTTPException(status_code=409, detail="프리뷰 준비 후 상품 사진을 등록해주세요.")
+    if project["status"] not in ("reference_required", "planned", "preview_failed", "preview_ready") or not project.get("storyboard"):
+        raise HTTPException(status_code=409, detail="대본 준비 후 상품 사진을 등록해주세요.")
+    previous_photo = product_image_path(project_id).read_bytes() if product_image_path(project_id).is_file() else None
     content = await file.read(10 * 1024 * 1024 + 1)
     if len(content) > 10 * 1024 * 1024:
         raise HTTPException(status_code=413, detail="상품 사진은 10MB 이하로 등록해주세요.")
@@ -310,6 +333,16 @@ async def upload_product_image(project_id: str, file: UploadFile = File(...)):
     project["product_image_url"] = f"/storage/product_images/{project_id}.png?v={uuid.uuid4().hex[:8]}"
     project["storyboard"]["scenes"][-1]["image_url"] = project["product_image_url"]
     project["approved_at"] = None
+    if project.get("media_mode") != "real" and (
+        previous_photo != product_image_path(project_id).read_bytes()
+        or project["status"] == "reference_required"
+        or any(scene.get("visual_mode") not in ("product_photo", "mechanism_concept") for scene in project["storyboard"]["scenes"][:-1])
+    ):
+        for scene in project["storyboard"]["scenes"][:-1]:
+            scene["image_url"] = None
+        project["status"] = "previewing"
+        project["progress_message"] = "등록한 상품 사진을 기준으로 프리뷰를 생성합니다..."
+        background_tasks.add_task(prepare_preview_images, project_id)
     save_project(project)
     return {"message": "상품 사진을 등록했습니다."}
 
@@ -356,6 +389,8 @@ async def start_generation(project_id: str, req: ReviewRequest, background_tasks
     if project.get("category"):
         if not product_image_path(project_id).is_file():
             raise HTTPException(status_code=409, detail="최종 컷에 사용할 실제 상품 사진을 등록해주세요.")
+        if project.get("media_mode") != "real" and any(scene.get("visual_mode") not in ("product_photo", "mechanism_concept") for scene in project["storyboard"]["scenes"][:-1]):
+            raise HTTPException(status_code=409, detail="제품 외형 보호 기준으로 프리뷰를 다시 준비해야 합니다. 상품 사진을 다시 등록해주세요.")
         if not req.product_url.strip():
             raise HTTPException(status_code=400, detail="상품 링크를 입력해주세요.")
         project["product_url"] = validate_product_url(req.product_url)
@@ -405,14 +440,14 @@ async def async_generate_video(project_id: str):
             clip_filename = f"{project_id}_scene_{scene_num:02d}.mp4"
             clip_path = CLIPS_DIR / clip_filename
 
-            if scene.get("purpose") == "product_reveal":
+            if scene.get("purpose") == "product_reveal" or scene.get("visual_mode") == "product_photo":
                 await asyncio.to_thread(render_product_still, product_image_path(project_id), clip_path, project["aspect_ratio"])
             elif project.get("media_mode") == "real":
                 await asyncio.to_thread(render_source_clip, MediaSource(**scene["media_source"]), clip_path, project["aspect_ratio"], scene.get("duration_seconds", 4))
             else:
                 last_image = preview_image_path(project_id, len(scenes)) if scene.get("purpose") == "transition" and product_image_path(project_id).exists() else None
                 await asyncio.to_thread(generate_video_clip,
-                    prompt=f"{scene['visual_prompt']}\nCamera motion: {scene['camera_movement']}\nPreserve the supplied keyframe's visual style and subject appearance." + (
+                    prompt=f"{scene['visual_prompt']}\nCamera motion: {scene['camera_movement']}\nPreserve the supplied keyframe's visual style and subject appearance. Animate only the isolated conceptual mechanism. Never add a complete product, product exterior, device enclosure or phone housing." + (
                         "\nSmoothly transform the animated food scene into the supplied real product end frame. Match framing and finish on that exact photo; preserve packaging and text." if last_image else ""
                     ),
                     output_path=clip_path,
