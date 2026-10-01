@@ -70,7 +70,7 @@ async def approve_idea(req:IdeaRequest):
 
 @router.get('/api/ideas/{idea_id}')
 async def get_idea(idea_id:str):
-    find(idea_id);return store.snapshot(idea_id)
+    idea=find(idea_id);return dict(store.snapshot(idea_id),workflow=store.workflow(idea))
 
 
 @router.post('/api/ideas/{idea_id}/{stage}')

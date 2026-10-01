@@ -172,7 +172,8 @@ def workflow(idea):
             elif v['status']=='running': label = names[stage] + ' 생성 중'
             elif v['status']=='failed': label = names[stage] + ' 오류 확인'
         buttons.append(dict(stage=stage,label=label,state=state,number=v['number'] if v else None,
-            primary=stage==next_stage,disabled=not v and (not allowed or bool(running)),
+            status=v['status'] if v else 'empty',progress_message=v.get('message','') if v else '',
+            primary=stage==next_stage,disabled=bool(running) or not allowed or bool(v and v['status']=='ready'),
             regen_disabled=not allowed or bool(running),existing=bool(v)))
     return dict(id=idea['id'],message=message,buttons=buttons,running=bool(running),
         approved=bool(model and model['status']=='ready' and model.get('approved_at')))
