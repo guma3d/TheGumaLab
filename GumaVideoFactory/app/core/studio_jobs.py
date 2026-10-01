@@ -9,6 +9,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 from app.config import DEFAULT_VOICE
 from app.core import versions as store
+from app.core.production_rules import snapshot as rules_snapshot, prompt_context
 from app.core import blender_runner as blender
 from app.core.model_assets import discover, reconstruct, fetch
 from app.core.categories import PRESETS
@@ -28,6 +29,9 @@ def progress(idea_id, stage, number, text):
 
 async def execute(idea_id, stage, number):
     try:
+        rules=rules_snapshot(store.read(idea_id)['category'])
+        store.write_json(store.version_dir(idea_id,stage,number)/'production_rules.json',rules)
+        store.update(idea_id,stage,number,production_rules_revision=rules['revision'],production_rules_sha256=rules['sha256'])
         if stage == '3DModel': await asyncio.to_thread(model_job, idea_id, number)
         elif stage == 'Preview': await asyncio.to_thread(preview_job, idea_id, number)
         else: await video_job(idea_id, number)
@@ -150,7 +154,7 @@ def preview_job(idea_id, number):
     report=lambda text:progress(idea_id,'Preview',number,text)
     report('승인한 자료를 기준으로 6컷 대본을 기획합니다.')
     board=plan_video_storyboard(user_idea=rec['hook'],target_duration=24,scene_count=6,
-        category=idea['category'],style_prompt=PRESETS[idea['category']]['style'],
+        category=idea['category'],style_prompt=PRESETS[idea['category']]['style']+prompt_context(idea['category']),
         evidence=json.dumps(rec,ensure_ascii=False),approved_model=idea['category']=='tech').model_dump()
     store.write_json(folder/'storyboard.json',board)
     for idx,scene in enumerate(board['scenes']):

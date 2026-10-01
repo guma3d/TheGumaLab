@@ -1,0 +1,17 @@
+{
+  "revision": "2026-10-02.1",
+  "rules": [
+    {"id": "exact-product", "category": "tech", "instruction": "Match the exact product generation, variant, color and visible parts against actual reference photos. Never substitute another product or claim an unverified reconstruction is exact."},
+    {"id": "single-product", "category": "tech", "instruction": "Render one complete intended product assembly. Preserve its lenses, buttons, ports and accessories belonging to that assembly. Separate multiple variants only with verified identity/dimension evidence. Never pick an arbitrary first or largest mesh. Phone-specific dimensions must not be applied to other product categories."},
+    {"id": "surface-fidelity", "category": "tech", "instruction": "Preserve original per-texture UV coordinates, color, logo, roughness, normals, transparency and lens materials. Never invent surface stripes or silently simplify unsupported materials. Rebuild supported static materials and fail explicitly when fidelity cannot be preserved."},
+    {"id": "approved-exterior", "category": "tech", "instruction": "Exterior product scenes use the user-approved Blender model or authentic media. Generative visuals may explain isolated mechanisms only, labeled as conceptual rather than factual internal engineering."},
+    {"id": "real-food", "category": "food", "instruction": "Use authentic appetizing food photos/videos with recorded provenance and usage conditions. Preserve the identity of the promoted food or ingredient. Do not fabricate real food footage with 3D animation."},
+    {"id": "immutable-versions", "category": "all", "instruction": "Every regeneration or model correction produces a new version with parent/change history. Preserve previous outputs and require renewed approval of modified models. Do not inherit prior appearance approval."},
+    {"id": "clear-next-step", "category": "all", "instruction": "Display actual version/approval state and the next required step consistently in recommendation cards and detail views. Refresh approval state on browser back navigation."}
+  ],
+  "feedback": [
+    {"id": "multiple-handsets", "scope": "all-tech", "lesson": "Inspect complete assemblies before rendering; variant dimensions remain product-specific evidence."},
+    {"id": "rear-horizontal-bands", "scope": "all-tech", "lesson": "Keep named UV maps and full supported static PBR connections for every imported product, not only phones."},
+    {"id": "approved-card-still-generates-model", "scope": "all", "lesson": "Use current workflow state to label completed steps and highlight the next action."}
+  ]
+}

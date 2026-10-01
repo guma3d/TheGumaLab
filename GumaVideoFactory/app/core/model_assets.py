@@ -16,6 +16,7 @@ from google import genai
 from google.genai import types
 from app.config import GEMINI_API_KEY, PLANNER_MODEL
 from app.core.versions import write_json
+from app.core.production_rules import prompt_context
 
 
 def fetch(url, limit=12 * 1024 * 1024, hops=3):
@@ -109,7 +110,7 @@ Return JSON only: {{"models":[{{"title":"...","page_url":"https://...","download
 commercial_reuse true ONLY when explicit license permits promotional renders. Unknown/AR viewing-only is false.
 Maximum 5 models, 4 pages, 8 images.'''
     with genai.Client(api_key=GEMINI_API_KEY) as client:
-        response = client.models.generate_content(model=PLANNER_MODEL, contents=prompt,
+        response = client.models.generate_content(model=PLANNER_MODEL, contents=prompt+prompt_context("tech"),
             config=types.GenerateContentConfig(tools=[types.Tool(google_search=types.GoogleSearch())], temperature=0.1))
     data = json_response(response.text)
     write_json(folder / 'search.json', data)
@@ -164,7 +165,7 @@ Use coordinates: Z up, X width, Y depth; front faces negative Y. Normalize longe
 Return accurate relative dimensions, colors and surface materials. Use 15-80 components if supported by references. Keep parts joined spatially and match silhouette. List uncertain/hidden details in Korean; never claim exact engineering. Every photo should be considered. Explain if reference is a composite, wrong model or insufficient. Output the supplied JSON schema only.'''
     # Keep provider-specific structured-output limits out of nested geometry.
     # Still validate the entire returned JSON with strict local Pydantic types.
-    contents = [prompt+'\nJSON schema:\n'+json.dumps(Blueprint.model_json_schema())]
+    contents = [prompt+prompt_context('tech')+'\nJSON schema:\n'+json.dumps(Blueprint.model_json_schema())]
     for item in photos[:6]:
         contents.append(types.Part.from_bytes(data=(folder / item['file']).read_bytes(), mime_type='image/jpeg'))
     with genai.Client(api_key=GEMINI_API_KEY) as client:
