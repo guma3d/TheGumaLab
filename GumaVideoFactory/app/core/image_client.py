@@ -19,13 +19,16 @@ def generate_preview_image(prompt: str, output_path: Path, aspect_ratio: str,
     ))]
     if reference_path:
         contents.append(types.Part.from_bytes(data=reference_path.read_bytes(), mime_type="image/png"))
-    response = genai.Client(api_key=GEMINI_API_KEY).models.generate_content(
-        model=IMAGE_MODEL, contents=contents,
-        config=types.GenerateContentConfig(
-            response_modalities=["TEXT", "IMAGE"],
-            image_config=types.ImageConfig(aspect_ratio=aspect_ratio),
-        ),
-    )
+    # Keep the owning client alive until the request finishes. A temporary
+    # Client().models chain can close its transport during garbage collection.
+    with genai.Client(api_key=GEMINI_API_KEY) as client:
+        response = client.models.generate_content(
+            model=IMAGE_MODEL, contents=contents,
+            config=types.GenerateContentConfig(
+                response_modalities=["TEXT", "IMAGE"],
+                image_config=types.ImageConfig(aspect_ratio=aspect_ratio),
+            ),
+        )
     for part in response.parts or []:
         if part.inline_data and (part.inline_data.mime_type or "").startswith("image/"):
             output_path.parent.mkdir(parents=True, exist_ok=True)
