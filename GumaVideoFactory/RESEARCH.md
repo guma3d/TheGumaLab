@@ -11,6 +11,10 @@
 
 `app/core/recommendations.py`의 `DailyBatch` 스키마에 맞춰 UTF-8 JSON을 `storage/recommendations/inbox/`에 저장한다. 상위 키는 한국시간 오늘의 `date`, timezone이 있는 `researched_at`, 정확히 10개 `items`다. 아이템 키는 `category`, `title`, `subject`, `hook`, `why_now`, `key_feature`, `visual_concept`, `product_keyword`, `facts`, `cautions`, `sources`, `supporting_features`, `media_sources`다. sources는 `title`, `url`, `published_date`이며 아이템마다 최근 30일 이내 출처를 하나 이상 포함한다.
 
+사용자가 특정 카테고리만 조사하라고 요청하면 해당 카테고리 5개만 입력할 수 있다. 같은 날짜의 다른 카테고리는 그대로 보존하며, 전날 목록을 오늘 조사 결과로 복사하지 않는다. 정기 조사는 계속 5+5개를 작성한다.
+
+테크 영상의 퀄리티·3D 연출 벤치마크는 사용자가 지정한 https://www.instagram.com/reel/Dd5abfmz9XI/ , https://www.instagram.com/reel/DdFp4P7z3hn/ , https://www.instagram.com/reel/Dd8ZKExzJsB/ 를 참고한다. 사실적인 재질·조명, 정밀한 단면·분해·기구 동작, 부드러운 카메라 이동, 컷 사이 제품 형상 일관성을 visual_concept에 명시한다. 주제·대본을 모방하거나 링크만으로 모델이 영상을 시청했다고 가정하지 않는다. 각 추천은 핵심 새 기능의 생활 효용과 추가 주요 기능을 함께 소개한다.
+
 PowerShell의 작업 디렉터리를 `D:\TheGumaLab\GumaVideoFactory`로 지정하고 `python recommendation_import.py <JSON 절대경로>`를 실행한다. 호스트 Python 환경에 의존성이 없으면 `docker exec GumaVideoFactory_app python recommendation_import.py /app/storage/recommendations/inbox/<파일명>`으로 검증·저장한다. 오류가 나면 데이터를 고쳐 검증하며 근거가 부족하면 기존 목록을 보존하고 실패를 보고한다. import는 하루 최신 목록과 조사별 이력을 보존한다.
 
 저장 후 `http://localhost:8085/api/recommendations`의 오늘 날짜, 카테고리별 5개, 조사 시간을 확인한다. 추천 데이터는 Git에 커밋하지 않으며 배포·프리뷰 생성·유료 이미지/영상 API 호출을 하지 않는다.

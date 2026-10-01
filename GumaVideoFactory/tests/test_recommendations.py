@@ -25,3 +25,24 @@ class RecommendationTests(unittest.TestCase):
             self.assertEqual(len(list((Path(tmp)/'history').glob('*.json'))),1)
             self.assertEqual(rec.load_daily()['items'][0]['id'],saved['items'][0]['id'])
             with self.assertRaises(ValueError): rec.save_batch(batch)
+
+    def test_category_only_update_preserves_other_category(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.object(rec,'RECOMMENDATIONS_DIR',Path(tmp)):
+            original=rec.save_batch(rec.DailyBatch(**self.batch()))
+            data=self.batch()
+            data['researched_at']=data['researched_at']+timedelta(seconds=1)
+            data['items']=[item for item in data['items'] if item['category']=='tech']
+            data['items'][0]['title']='Updated tech'
+            saved=rec.save_batch(rec.DailyBatch(**data))
+            self.assertEqual(len(saved['items']),10)
+            self.assertEqual(saved['items'][0]['title'],'Updated tech')
+            self.assertEqual([i for i in saved['items'] if i['category']=='food'],[i for i in original['items'] if i['category']=='food'])
+
+    def test_first_category_only_batch_and_incomplete_category(self):
+        data=self.batch()
+        data['items']=data['items'][:5]
+        with tempfile.TemporaryDirectory() as tmp, patch.object(rec,'RECOMMENDATIONS_DIR',Path(tmp)):
+            saved=rec.save_batch(rec.DailyBatch(**data))
+            self.assertEqual(len(saved['items']),5)
+        data['items'].pop()
+        with self.assertRaises(ValidationError): rec.DailyBatch(**data)

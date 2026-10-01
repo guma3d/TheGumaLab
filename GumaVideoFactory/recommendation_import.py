@@ -17,5 +17,5 @@ if __name__ == "__main__":
                 except Exception as error:
                     print(f"{item.subject}: 자료 자동 확보 실패 ({type(error).__name__}), 프리뷰에서 등록 필요")
     result = save_batch(batch)
-    categories = ' / '.join(f"{preset['label']} 5개" for preset in PRESETS.values())
+    categories = ' / '.join(f"{PRESETS[category]['label']} 5개" for category in PRESETS if any(item.category == category for item in batch.items))
     print(f"{result['date']}: {categories} 저장 완료 (오늘 {result['research_count']}회 조사)")

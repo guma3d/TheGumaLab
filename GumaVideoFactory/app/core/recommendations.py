@@ -79,7 +79,7 @@ class DailyBatch(BaseModel):
             raise ValueError("조사 시간은 한국시간 기준 오늘이어야 합니다.")
         if self.researched_at > now_kst() + timedelta(minutes=5):
             raise ValueError("미래 조사 시간은 사용할 수 없습니다.")
-        for category in PRESETS:
+        for category in {item.category for item in self.items}:
             if sum(i.category == category for i in self.items) != 5:
                 raise ValueError("카테고리별 정확히 5개가 필요합니다.")
         if len({i.stable_id() for i in self.items}) != len(self.items):
@@ -106,6 +106,8 @@ def save_batch(batch: DailyBatch):
     if old.get("researched_at") and datetime.fromisoformat(old["researched_at"]) >= batch.researched_at:
         raise ValueError("이전 조사 결과로 최신 목록을 덮어쓸 수 없습니다.")
     data = batch.model_dump(mode="json")
+    updated_categories = {item.category for item in batch.items}
+    data["items"].extend(item for item in old.get("items", []) if item["category"] not in updated_categories)
     data["research_count"] = old.get("research_count", 0) + 1
     for item, record in zip(batch.items, data["items"]):
         record["id"] = item.stable_id()
