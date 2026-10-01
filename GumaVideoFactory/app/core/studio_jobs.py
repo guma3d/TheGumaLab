@@ -4,6 +4,7 @@ import json
 import logging
 import shutil
 import subprocess
+import hashlib
 from pathlib import Path
 from urllib.parse import urlparse
 from app.config import DEFAULT_VOICE
@@ -38,6 +39,8 @@ async def execute(idea_id, stage, number):
 
 
 def model_job(idea_id, number):
+    if store.get(idea_id,'3DModel',number).get('revision_operation'):
+        return model_revision_job(idea_id,number)
     idea=store.read(idea_id); rec=idea['recommendation']; folder=store.version_dir(idea_id,'3DModel',number)
     report=lambda text: progress(idea_id,'3DModel',number,text)
     if idea['category']=='food':
@@ -77,7 +80,7 @@ def model_job(idea_id, number):
     store.update(idea_id,'3DModel',number,references=refs,candidates=sources.get('models',[]),sources_url=store.url(folder/'sources.json'))
     if not refs: raise ValueError('제품 사진을 확보하지 못했습니다. 참고 사진을 등록하고 재생성해주세요.')
     imported=None; selected=None
-    for candidate in sources.get('models',[])[:8]:
+    for candidate_index,candidate in enumerate(sources.get('models',[])[:8],1):
         # Private inspection of a public download is not publication approval.
         # Usage rights must be confirmed in the explicit model approval gate.
         if not candidate.get('download_url'): continue
@@ -86,7 +89,11 @@ def model_job(idea_id, number):
         try:
             report('공개 모델을 내려받아 형상을 확인합니다.')
             imported=folder/('downloaded'+suffix); imported.write_bytes(fetch(candidate['download_url'],150*1024*1024))
-            blender.build(folder,imported);selected=candidate;break
+            attempt=folder/f'attempt_{candidate_index:02d}';attempt.mkdir(exist_ok=False)
+            blender.build(attempt,imported,rec['subject'])
+            for name in ['model.blend','inspection.json']+[f'view_{i}.png' for i in range(1,5)]:
+                shutil.copyfile(attempt/name,folder/name)
+            selected=candidate;break
         except Exception:
             imported=None
             logger.info('Model candidate unavailable for %s',idea_id)
@@ -95,11 +102,43 @@ def model_job(idea_id, number):
         report('제품 사진을 분석해 편집 가능한 3D 초안을 만듭니다.')
         blueprint=reconstruct(rec,sources,folder);uncertainties=blueprint.uncertainties
         report('Blender에서 제품의 네 방향 프리뷰를 렌더링합니다.')
-        blender.build(folder)
+        blender.build(folder,product_name=rec['subject'])
+    inspection=json.loads((folder/'inspection.json').read_text(encoding='utf-8'))
     store.update(idea_id,'3DModel',number,status='ready',kind='downloaded' if imported else 'reconstructed',
-        selected_source=selected,uncertainties=uncertainties,
+        selected_source=selected,uncertainties=uncertainties,inspection=inspection,
         images=[store.url(folder/f'view_{i}.png') for i in range(1,5)],model_url=store.url(folder/'model.blend'),
         message='외형 검토가 필요합니다. 사진과 모델의 형태·카메라·버튼·색상을 비교하고 승인해주세요.')
+
+
+def model_revision_job(idea_id,number):
+    """Reimport the existing source into a NEW version without paid research."""
+    version=store.get(idea_id,'3DModel',number)
+    if version['revision_operation']!='single_product':raise ValueError('지원하지 않는 모델 수정입니다.')
+    parent=store.get(idea_id,'3DModel',version['parent_model_version'])
+    original=store.version_dir(idea_id,'3DModel',parent['number'])
+    folder=store.version_dir(idea_id,'3DModel',number)
+    source=next((p for p in original.glob('downloaded.*') if p.suffix in ('.usdz','.glb','.blend','.obj','.fbx')),None)
+    if source is None:raise ValueError('수정에 필요한 원본 3D 자료가 없습니다.')
+    source_copy=folder/source.name;shutil.copyfile(source,source_copy)
+    refs=[]
+    for ref in parent.get('references',[]):
+        filename=Path(ref['file']).name
+        shutil.copyfile(original/filename,folder/filename)
+        refs.append(dict(ref,preview_url=store.url(folder/filename)))
+    for name in ('sources.json','search.json'):
+        if (original/name).is_file():shutil.copyfile(original/name,folder/name)
+    progress(idea_id,'3DModel',number,'원본에서 정확한 기종 한 대를 분리해 새 버전으로 렌더링합니다.')
+    blender.build(folder,source_copy,store.read(idea_id)['recommendation']['subject'])
+    inspection=json.loads((folder/'inspection.json').read_text(encoding='utf-8'))
+    if inspection.get('selected_product_count')!=1 or inspection.get('selection')!='verified_dimensions':
+        raise ValueError('원본에서 정확한 단일 제품을 분리하지 못했습니다. 기존 버전은 보존됩니다.')
+    store.update(idea_id,'3DModel',number,status='ready',kind='downloaded',references=refs,
+        candidates=parent.get('candidates',[]),selected_source=parent.get('selected_source'),
+        sources_url=store.url(folder/'sources.json'),inspection=inspection,
+        parent_model_sha256=hashlib.sha256((original/'model.blend').read_bytes()).hexdigest(),
+        source_asset_sha256=hashlib.sha256(source_copy.read_bytes()).hexdigest(),
+        images=[store.url(folder/f'view_{i}.png') for i in range(1,5)],model_url=store.url(folder/'model.blend'),
+        message='제품 한 대로 수정했습니다. 이전 버전은 보존되어 있습니다. 외형을 확인하고 이 버전을 승인해주세요.')
 
 
 def preview_job(idea_id, number):

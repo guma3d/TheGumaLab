@@ -39,6 +39,10 @@ class Approval(BaseModel):
     usage_confirmed: bool=False
 
 
+class ModelRevision(BaseModel):
+    operation: Literal['single_product']='single_product'
+
+
 def find(idea_id):
     try: return store.read(idea_id)
     except (ValueError,FileNotFoundError): raise HTTPException(404,'아이디어를 찾을 수 없습니다.')
@@ -128,6 +132,27 @@ async def approve_model(idea_id:str,number:int,req:Approval):
             if not path.is_file():raise HTTPException(409,'모델 파일이 없습니다.')
             proof['model_sha256']=hashlib.sha256(path.read_bytes()).hexdigest()
         return store.update(idea_id,'3DModel',number,approved_at=now_kst().isoformat(),message='외형·자료 승인 완료. 프리뷰를 생성할 수 있습니다.',**proof)
+
+
+@router.post('/api/ideas/{idea_id}/3DModel/{number}/revise')
+async def revise_model(idea_id:str,number:int,req:ModelRevision,tasks:BackgroundTasks):
+    idea=find(idea_id)
+    with store.LOCK:
+        parent=version(idea_id,'3DModel',number)
+        if idea['category']!='tech' or parent['status']!='ready' or parent.get('kind')!='downloaded':
+            raise HTTPException(409,'완료된 다운로드 모델에서 수정해주세요.')
+        from app.core.product_selection import selection_policy
+        if not selection_policy(idea['recommendation']['subject']):
+            raise HTTPException(409,'이 제품은 기종을 구분할 치수 근거가 아직 없습니다. 임의로 모델을 분리하지 않습니다.')
+        original=store.version_dir(idea_id,'3DModel',number)
+        if not any(p.suffix in ('.blend','.glb','.usdz','.obj','.fbx') for p in original.glob('downloaded.*')):
+            raise HTTPException(409,'수정할 원본 3D 자료가 없습니다.')
+        try:
+            result,_=store.reserve(idea_id,'3DModel',True,parent_model_version=number,
+                revision_operation=req.operation,revision_note='공식 치수로 기종 한 대를 분리하고 화면 중심 재정렬')
+        except ValueError as error:raise HTTPException(409,str(error))
+        tasks.add_task(execute,idea_id,'3DModel',result['number'])
+        return result
 
 
 @router.post('/api/ideas/{idea_id}/references')

@@ -7,6 +7,8 @@ from pathlib import Path
 import bpy
 import _cycles
 from mathutils import Vector
+sys.path.insert(0,str(Path(__file__).parent))
+from product_selection import selection_policy, choose_phone
 
 
 def material(name, color, metallic=.2, roughness=.3):
@@ -42,7 +44,47 @@ def build_blueprint(path):
         for polygon in obj.data.polygons: polygon.use_smooth = shape != 'box'
 
 
-def import_model(path):
+def select_single_product(product_name):
+    # Descend wrappers, then inspect complete sibling assemblies. Do not treat
+    # lens/button meshes as separate products or split by loose mesh islands.
+    def mesh_descendants(obj):
+        return ([obj] if obj.type=='MESH' else [])+[o for o in obj.children_recursive if o.type=='MESH']
+    groups=[o for o in bpy.context.scene.objects if not o.parent and mesh_descendants(o)]
+    while len(groups)==1 and groups[0].type!='MESH':
+        children=[o for o in groups[0].children if mesh_descendants(o)]
+        if not children:break
+        groups=children
+    all_meshes=[o for o in bpy.context.scene.objects if o.type=='MESH']
+    report=dict(product_name=product_name,source_mesh_count=len(all_meshes),detected_product_count=None,selected_product_count=None)
+    if len(groups)<2:
+        report.update(detected_product_count=1,selected_product_count=1,selection='single_hierarchy')
+        return all_meshes,report
+    candidates=[]
+    for group in groups:
+        meshes=mesh_descendants(group)
+        inverse=group.matrix_world.inverted_safe()
+        points=[inverse@o.matrix_world@Vector(c) for o in meshes for c in o.bound_box]
+        scale=group.matrix_world.to_scale()
+        size=[(max(p[i] for p in points)-min(p[i] for p in points))*abs(scale[i]) for i in range(3)]
+        candidates.append(dict(group=group.name,mesh_count=len(meshes),size_m=size))
+    # Complete repeated assemblies must account for ALL meshes and each contain
+    # many parts. Other layouts are retained for manual review, never chopped.
+    repeated=(2<=len(candidates)<=4 and min(g['mesh_count'] for g in candidates)>=10
+        and max(g['mesh_count'] for g in candidates)/min(g['mesh_count'] for g in candidates)<1.25)
+    policy=selection_policy(product_name)
+    if repeated:
+        selected=choose_phone(candidates,policy)
+        meshes=mesh_descendants(bpy.data.objects[selected['group']])
+        report.update(detected_product_count=len(candidates),selected_product_count=1,
+            selection='verified_dimensions',selected_group=selected['group'],groups=candidates,policy=policy)
+        return meshes,report
+    if policy:
+        raise ValueError('휴대폰 한 대의 부품 구성을 확정하지 못했습니다. 여러 제품을 그대로 합치지 않습니다.')
+    report.update(selection='unclassified_assembly',groups=candidates)
+    return all_meshes,report
+
+
+def import_model(path,product_name=''):
     if path.suffix == '.blend':
         with bpy.data.libraries.load(str(path), link=False) as (src, dst):
             dst.objects = src.objects[:1000]
@@ -56,7 +98,7 @@ def import_model(path):
     # Only static mesh geometry survives. Never evaluate downloaded drivers,
     # scripts, geometry nodes, external textures or object constraints.
     bpy.context.view_layer.update()
-    meshes = [o for o in bpy.context.scene.objects if o.type == 'MESH']
+    meshes,inspection=select_single_product(product_name)
     if not meshes or sum(len(o.data.vertices) for o in meshes) > 3000000:
         raise ValueError('모델이 비어 있거나 300만 정점 제한을 초과했습니다.')
     def clean_material(original):
@@ -89,6 +131,7 @@ def import_model(path):
         mesh.materials.clear()
         for mat in materials or [material(name,(.3,.3,.3))]: mesh.materials.append(mat)
     for text in list(bpy.data.texts): bpy.data.texts.remove(text)
+    return inspection
 
 
 def normalize():
@@ -131,6 +174,7 @@ def camera(angle, distance=5.4, elevation=1.25):
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument('--build'); parser.add_argument('--source'); parser.add_argument('--scene')
+    parser.add_argument('--product-name',default='')
     parser.add_argument('--output', required=True); parser.add_argument('--angle',type=float,default=25)
     parser.add_argument('--width',type=int,default=384); parser.add_argument('--height',type=int,default=684)
     parser.add_argument('--samples',type=int,default=64); parser.add_argument('--frames',type=int,default=1)
@@ -139,8 +183,12 @@ def main():
         bpy.ops.wm.open_mainfile(filepath=args.scene, load_ui=False, use_scripts=False)
     else:
         bpy.ops.wm.read_factory_settings(use_empty=True)
-        if args.build: build_blueprint(Path(args.build))
-        else: import_model(Path(args.source))
+        if args.build:
+            build_blueprint(Path(args.build));inspection=dict(selection='reconstructed_draft',selected_product_count=None)
+        else: inspection=import_model(Path(args.source),args.product_name)
+        inspection['blender_version']=bpy.app.version_string
+        inspection['retained_mesh_count']=sum(o.type=='MESH' for o in bpy.context.scene.objects)
+        (output/'inspection.json').write_text(json.dumps(inspection,ensure_ascii=False,indent=2),encoding='utf-8')
         normalize(); lighting(); camera(25)
         bpy.ops.wm.save_as_mainfile(filepath=str(output/'model.blend'))
     scene=bpy.context.scene

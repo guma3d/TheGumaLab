@@ -30,9 +30,11 @@ def run_blender(folder, *args, timeout=3600):
             raise ValueError('3D 렌더링에 실패했습니다. 해당 버전의 render.log를 확인해주세요.')
 
 
-def build(folder, source=None):
+def build(folder, source=None, product_name=''):
+    if (folder/'model.blend').exists():
+        raise ValueError('기존 Blender 파일은 덮어쓸 수 없습니다. 새 버전으로 생성해주세요.')
     params=['--source',source] if source else ['--build',folder/'blueprint.json']
-    run_blender(folder,*params,'--output',folder)
+    run_blender(folder,*params,'--output',folder,'--product-name',product_name)
     if not (folder/'model.blend').is_file() or not all((folder/f'view_{i}.png').is_file() for i in range(1,5)):
         raise ValueError('모델 프리뷰가 완성되지 않았습니다.')
 
