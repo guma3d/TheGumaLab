@@ -23,4 +23,4 @@ PowerShell의 작업 디렉터리를 `D:\TheGumaLab\GumaVideoFactory`로 지정�
 
 media_sources는 title, source_url(원본 게시물), creator, license(CC0/CC BY/CC BY-SA/permission/owned), license_url(조건·허락 근거), attribution(게시용 표기), provider(official/youtube_cc/commons/licensed_search/owned), kind(image/video), download_url(직접 HTTPS 파일 주소, 없으면 빈 문자열), start_seconds(발췌 시작), illustrative(다른 제품의 설명용 장면이면 true)를 포함한다. local_file은 직접 만들지 않는다. 공식 자료도 재사용 조건을 기록한다. 자료 라이선스의 정확한 버전은 license_url·attribution에 남긴다. 음악이 포함된 영상은 오디오를 사용하지 않는다.
 
-import 도구가 직접 파일 주소를 검증·확보한다. HTML 페이지·YouTube watch 링크를 영상 파일 주소로 넣지 않는다. 직접 파일을 합법적으로 확보할 수 없으면 출처 후보만 기록하고 미확보 사실을 알린다. 자료를 찾을 수 없는 컷은 업로드 대기 상태로 표시되며 생성 영상으로 대체하지 않는다. 자료가 확보돼야 완전한 실제 이미지 프리뷰와 승인 제작이 가능하다.
+import 도구가 직접 파일 주소를 검증·확보한다. HTML 페이지·YouTube watch 링크를 영상 파일 주소로 넣지 않는다. YouTube CC BY 영상은 provider=youtube_cc, kind=video, source_url=원본 watch 주소, download_url=빈 문자열로 기록하면 도구가 CC 메타데이터를 다시 확인한 뒤 지정한 짧은 구간만 확보한다. 로그인이나 다운로드 차단은 우회하지 않는다. 직접 파일 또는 CC 구간을 확보할 수 없으면 출처 후보만 기록하고 미확보 사실을 알린다. 자료를 찾을 수 없는 컷은 업로드 대기 상태로 표시되며 생성 영상으로 대체하지 않는다. 자료가 확보돼야 완전한 실제 이미지 프리뷰와 승인 제작이 가능하다.

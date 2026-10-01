@@ -2,7 +2,7 @@ import unittest,tempfile,json
 from pathlib import Path
 from io import BytesIO
 from PIL import Image
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from pydantic import ValidationError
 from app.core import source_media as media
 class SourceMediaTests(unittest.TestCase):
@@ -24,3 +24,21 @@ class SourceMediaTests(unittest.TestCase):
  def test_private_network_download_is_rejected(self):
   with patch.object(media.socket,'getaddrinfo',return_value=[(2,1,6,'',('127.0.0.1',443))]):
    with self.assertRaises(ValueError):media.download_media(self.source(download_url='https://example.com/file.png'))
+
+ def test_youtube_requires_platform_cc_metadata_before_download(self):
+  client=MagicMock();client.__enter__.return_value=client
+  source=self.source(provider='youtube_cc',kind='video',source_url='https://www.youtube.com/watch?v=abcdefghijk')
+  client.extract_info.return_value={'license':'Standard YouTube License','duration':60}
+  with patch('yt_dlp.YoutubeDL',return_value=client):
+   with self.assertRaises(ValueError):media.download_youtube_cc(source)
+   client.process_info.assert_not_called()
+  client.extract_info.return_value={'license':'Creative Commons Attribution license (reuse allowed)','duration':60}
+  def save_clip(info):
+   from pathlib import Path
+   target=Path(client.options['outtmpl'].replace('%(ext)s','mp4'));target.write_bytes(b'video')
+  def fake_downloader(options):
+   client.options=options;client.process_info.side_effect=save_clip;return client
+  with patch('yt_dlp.YoutubeDL',side_effect=fake_downloader),patch.object(media,'store_media',return_value='verified.mp4'):
+   self.assertEqual(media.download_youtube_cc(source),'verified.mp4')
+   self.assertEqual(source.start_seconds,0)
+   self.assertIn('원본 발췌 위치',source.attribution)

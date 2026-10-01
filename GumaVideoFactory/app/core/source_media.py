@@ -5,6 +5,8 @@ import socket
 import ssl
 import http.client
 import subprocess
+import tempfile
+import re
 from io import BytesIO
 from pathlib import Path
 from urllib.parse import urlparse
@@ -111,3 +113,35 @@ def render_source_clip(source,output_path,aspect_ratio,duration=4):
     result=subprocess.run(cmd,capture_output=True,timeout=120)
     if result.returncode: raise ValueError('실사 영상 편집에 실패했습니다.')
     return output_path
+
+def download_youtube_cc(source):
+    """CC BY 메타데이터가 확인되는 공개 YouTube 영상의 짧은 구간만 확보."""
+    import yt_dlp
+    from yt_dlp.utils import download_range_func
+    p=urlparse(source.source_url)
+    if source.license!='CC BY' or source.kind!='video' or p.scheme!='https' or p.hostname not in ('youtube.com','www.youtube.com','youtu.be') or p.username or p.password or p.port:
+        raise ValueError('공개 YouTube CC BY 영상만 자동 확보할 수 있습니다.')
+    from urllib.parse import parse_qs
+    video_id=p.path.strip('/') if p.hostname=='youtu.be' else parse_qs(p.query).get('v',[''])[0] if p.path=='/watch' else ''
+    if not re.fullmatch(r'[A-Za-z0-9_-]{11}',video_id): raise ValueError('단일 YouTube 영상 주소가 필요합니다.')
+    url='https://www.youtube.com/watch?v='+video_id
+    with tempfile.TemporaryDirectory(prefix='gumavideo_cc_') as directory:
+        options=dict(quiet=True,no_warnings=True,noplaylist=True,socket_timeout=20,retries=1,extractor_retries=1,
+                     format='bestvideo[ext=mp4][height<=720]/best[ext=mp4][height<=720]',
+                     outtmpl=str(Path(directory)/'source.%(ext)s'),max_filesize=40*1024*1024,
+                     download_ranges=download_range_func(None,[(source.start_seconds,source.start_seconds+source.clip_seconds)]),
+                     force_keyframes_at_cuts=True,ffmpeg_location=get_ffmpeg_bin())
+        with yt_dlp.YoutubeDL(options) as downloader:
+            info=downloader.extract_info(url,download=False)
+            license_text=str(info.get('license') or '').lower()
+            if 'creative commons' not in license_text or 'attribution' not in license_text or info.get('is_live') or info.get('_type','video')!='video':
+                raise ValueError('YouTube에서 CC BY 사용 조건을 확인할 수 없습니다.')
+            if float(info.get('duration') or 0)<=source.start_seconds:
+                raise ValueError('발췌 시작 위치가 영상 길이를 벗어났습니다.')
+            downloader.process_info(info)
+        path=Path(directory)/'source.mp4'
+        if not path.is_file() or path.stat().st_size>40*1024*1024: raise ValueError('짧은 MP4 구간을 확보하지 못했습니다.')
+        name=store_media(path.read_bytes(),'video')
+        source.attribution+=f"\n원본 발췌 위치: {source.start_seconds}초부터 {source.clip_seconds}초"
+        source.start_seconds=0
+        return name
