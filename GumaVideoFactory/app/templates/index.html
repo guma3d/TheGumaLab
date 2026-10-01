@@ -667,6 +667,54 @@
         .product-setup input:not([type=file]), .product-setup select { width:100%; padding:10px; background:#151b18; color:white; border:1px solid #354039; border-radius:8px; box-sizing:border-box; }
         .product-setup input[type=url] { width:100%; padding:12px; margin:10px 0; background:#111; color:white; border:1px solid #444; border-radius:8px; }
         [hidden] { display:none !important; }
+
+        .flow-steps { display:flex; align-items:center; gap:8px; list-style:none; margin-bottom:16px; font-size:.8rem; color:#b5bec8; white-space:nowrap; }
+        .flow-steps li + li::before { content:"›"; margin-right:8px; color:var(--primary); }
+        .section-header { gap:12px; }
+        .section-header .meta-pill, .badge-live { white-space:nowrap; flex-shrink:0; }
+        .research-schedule, #research-status { font-size:.85rem; line-height:1.7; color:var(--text-muted); }
+        .date-toolbar { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:10px; max-width:380px; margin:16px 0; }
+        .date-toolbar label, .date-toolbar button { white-space:nowrap; }
+        #recommendationDate { min-width:0; width:100%; margin:0; font:inherit; }
+        .production-info { color:var(--text-muted); font-size:.8rem; margin:12px 0 18px; }
+        .production-info summary { cursor:pointer; }
+        .production-info p { margin-top:8px; overflow-wrap:anywhere; }
+        .recommendation-grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr)); }
+        .recommendation-card { min-width:0; }
+        .recommendation-card h3 { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:1.05rem; line-height:1.5; word-break:keep-all; overflow-wrap:anywhere; }
+        .recommendation-card p { font-size:.9rem; word-break:keep-all; overflow-wrap:anywhere; }
+        .recommendation-card .card-hook { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .feature-chips { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0; }
+        .feature-chips span { max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; border:1px solid #354039; border-radius:6px; padding:4px 7px; font-size:.75rem; color:#b5bec8; }
+        .recommendation-card details { font-size:.85rem; margin-top:12px; }
+        .recommendation-card details summary { cursor:pointer; color:var(--primary); }
+        .recommendation-card .btn-action { width:100%; justify-content:center; margin-top:12px; }
+        .preview-scene, .grid-card { min-width:0; overflow-wrap:anywhere; }
+        @media (max-width:480px) {
+            .main-container { padding:18px 12px; }
+            header { margin-bottom:20px; padding-bottom:16px; }
+            .brand-box { width:100%; gap:8px; }
+            .brand-icon { font-size:1.6rem; flex-shrink:0; }
+            .brand-text { min-width:0; flex:1; }
+            .brand-text h1 { font-size:clamp(1rem,5.2vw,1.45rem); gap:6px; white-space:nowrap; letter-spacing:-.6px; }
+            .badge-live { font-size:.55rem; padding:3px 6px; letter-spacing:0; }
+            .brand-text p { font-size:.75rem; letter-spacing:0; }
+            .glass-card { padding:18px 14px; border-radius:16px; margin-bottom:20px; }
+            .section-header { margin-bottom:12px; padding-bottom:10px; }
+            .section-title { font-size:1rem; white-space:nowrap; }
+            .meta-pill { font-size:.75rem; }
+            .category-tabs { gap:8px; margin:12px 0 16px; }
+            .category-tabs a { padding:10px 14px; font-size:.85rem; white-space:nowrap; }
+            .date-toolbar { gap:8px; font-size:.8rem; }
+            .date-toolbar .btn-action { padding:10px 12px; }
+            .recommendation-card { padding:14px; }
+            .flow-steps { font-size:.75rem; gap:6px; }
+            .preview-grid { grid-template-columns:1fr; }
+            .empty-state { padding:28px 10px; }
+            .empty-state p { font-size:.85rem; line-height:1.6; letter-spacing:0; }
+            .review-actions { padding:12px; }
+            .review-actions .btn-action { width:100%; justify-content:center; }
+        }
     </style>
 </head>
 
@@ -682,7 +730,7 @@
                 <i class="fa-solid fa-clapperboard brand-icon"></i>
                 <div class="brand-text">
                     <h1>GumaVideoFactory <span class="badge-live">Veo 3.1</span></h1>
-                    <p>AI-Powered Short-Form Video & Audio Studio</p>
+                    <p>AI 숏폼 스튜디오</p>
                 </div>
             </div>
         </header>
@@ -692,29 +740,29 @@
             <a href="/?category={{ key }}" class="btn-action {% if key == active_category %}generate{% endif %}" {% if key == active_category %}aria-current="page"{% endif %}>{{ preset.label }}</a>
             {% endfor %}
         </nav>
-        <section class="glass-card">
-            <p class="meta-pill">추천 선택 → 이미지·대본 프리뷰 → 최종 승인 → 영상 생성</p>
-            <div class="section-header"><h2 class="section-title">{{ presets[active_category].label }} · 오늘의 제작 아이템</h2><span class="meta-pill">{{ recommendations.date }} · 카테고리별 5개</span></div>
-            <p>매일 한국시간 09:00 · 15:00 · 21:00 조사. 출처와 후킹 포인트를 보고 선택하면 이미지·대본 프리뷰를 만듭니다.</p>
-            <p id="research-status">{% if recommendations.researched_at %}마지막 조사: {{ recommendations.researched_at }} · 오늘 {{ recommendations.research_count }}회{% else %}오늘의 조사 결과를 기다리는 중입니다. 이전 추천 목록은 날짜를 선택해 확인할 수 있습니다.{% endif %}</p>
-            <p>기본 6컷 · 세로 숏폼 · {% if active_category == "food" %}실제 사진·영상 편집{% else %}핵심 기능 + 추가 주요 기능 · 정밀 3D{% endif %} <span class="meta-pill">{{ planner_model }} + Veo 3.1</span></p>
-            <label for="recommendationDate">추천 날짜</label><input id="recommendationDate" type="date" value="{{ recommendations.date }}"><button class="btn-action" onclick="loadRecommendationDate()">날짜 조회</button>
+        <section class="glass-card recommendation-section">
+            <ol class="flow-steps" aria-label="제작 순서"><li>추천 선택</li><li>프리뷰</li><li>승인·제작</li></ol>
+            <div class="section-header"><h2 class="section-title">추천 목록</h2><span class="meta-pill">하루 5개</span></div>
+            <p class="research-schedule">매일 09시 · 15시 · 21시 갱신</p>
+            <p id="research-status">{% if recommendations.researched_at %}{{ recommendations.researched_at[11:16] }} 갱신 · {{ recommendations.research_count }}회{% else %}추천 준비 중{% endif %}</p>
+            <div class="date-toolbar"><label for="recommendationDate">추천 날짜</label><input id="recommendationDate" type="date" value="{{ recommendations.date }}"><button class="btn-action" onclick="loadRecommendationDate()">조회</button></div>
+            <details class="production-info"><summary>제작 안내</summary><p>6컷 · 세로 영상 · {% if active_category == "food" %}실사 편집{% else %}정밀 3D{% endif %}</p><p>{% if active_category == "tech" %}핵심 기능과 추가 기능을 소개합니다.{% else %}실제 사진·영상을 사용합니다.{% endif %}</p><p>{{ planner_model }} + Veo 3.1</p></details>
             <div class="recommendation-grid" id="recommendationGrid">
                 {% for item in recommendations['items'] if item.category == active_category %}
                     <article class="recommendation-card" data-category="{{ item.category }}">
-                        <span class="meta-pill">{{ presets[item.category].label }}</span>
-                        <h3>{{ item.title }}</h3><p><strong>{{ item.hook }}</strong></p>
-                        <p>{{ item.why_now }}</p><p>핵심: {{ item.key_feature }}</p><p>연출: {{ item.visual_concept }}</p>
-                        {% if item.supporting_features %}<p>함께 소개할 기능: {{ item.supporting_features|join(" · ") }}</p>{% endif %}
-                        {% if active_category == "food" %}<p>실사 자료: {% if item.media_sources %}{{ item.media_sources|length }}개 출처{% else %}자료 확보 대기{% endif %}</p>{% endif %}
-                        <p>연결할 상품: {{ item.product_keyword }}</p>
-                        <details><summary>확인한 사실과 출처</summary><ul>{% for fact in item.facts %}<li>{{ fact }}</li>{% endfor %}</ul>
+                        <h3 title="{{ item.title }}">{{ item.title }}</h3>
+                        <p class="card-hook" title="{{ item.hook }}">{{ item.hook }}</p>
+                        {% if item.supporting_features %}<div class="feature-chips">{% for feature in item.supporting_features %}<span title="{{ feature }}">{{ feature }}</span>{% endfor %}</div>{% endif %}
+                        {% if active_category == "food" %}<p class="media-status">{% if item.media_sources %}실사 출처 {{ item.media_sources|length }}개{% else %}실사 자료 준비 중{% endif %}</p>{% endif %}
+                        <details><summary>상세·출처</summary>
+                            <p>{{ item.hook }}</p><p>{{ item.why_now }}</p><p>핵심: {{ item.key_feature }}</p><p>연출: {{ item.visual_concept }}</p><p>추천 상품: {{ item.product_keyword }}</p>
+                            <ul>{% for fact in item.facts %}<li>{{ fact }}</li>{% endfor %}</ul>
                             {% for source in item.sources %}<p><a href="{{ source.url }}" target="_blank" rel="noopener">{{ source.title }}</a> · {{ source.published_date }}</p>{% endfor %}
                             <p>{{ item.cautions }}</p>
                         </details>
-                        <button class="btn-action generate" onclick='selectRecommendation({{ item|tojson }}, {{ recommendations.date|tojson }}, this)'>선택하고 프리뷰 만들기</button>
+                        <button class="btn-action generate" onclick='selectRecommendation({{ item|tojson }}, {{ recommendations.date|tojson }}, this)'>프리뷰 만들기</button>
                     </article>
-                {% else %}<p>등록된 추천 아이템이 없습니다.</p>{% endfor %}
+                {% else %}<p>날짜를 바꿔 추천을 확인하세요.</p>{% endfor %}
             </div>
         </section>
         <!-- Active Tasks (In Progress / Queued) -->
@@ -754,9 +802,9 @@
         <section class="glass-card" style="margin-top: 10px;">
             <div class="section-header">
                 <h2 class="section-title">
-                    <i class="fa-solid fa-clock-rotate-left"></i> 스토리보드 프리뷰 및 영상
+                    <i class="fa-solid fa-clock-rotate-left"></i> 프리뷰·영상
                 </h2>
-                <span class="meta-pill">{{ projects|length }} Projects</span>
+                <span class="meta-pill">{{ projects|length }}개</span>
             </div>
 
             <div id="projectGrid" class="projects-grid">
@@ -837,13 +885,13 @@
                             <div class="card-footer-actions">
                                 {% if p.status == 'preview_ready' %}
                                     <div class="review-actions">
-                                        <button class="btn-action" onclick="saveReview('{{ p.id }}', this)">대본 수정 저장</button>
-                                        <label><input type="checkbox" id="approve-{{ p.id }}"> 모든 컷의 이미지와 대본을 확인했습니다.</label>
-                                        <button class="btn-action generate" onclick="startGeneration('{{ p.id }}', this)">최종 승인하고 영상 만들기</button>
+                                        <button class="btn-action" onclick="saveReview('{{ p.id }}', this)">대본 저장</button>
+                                        <label><input type="checkbox" id="approve-{{ p.id }}"> 프리뷰를 확인했습니다.</label>
+                                        <button class="btn-action generate" onclick="startGeneration('{{ p.id }}', this)">최종 승인 · 영상 만들기</button>
                                     </div>
                                 {% elif p.status in ['planned', 'preview_failed'] %}
                                     <button class="btn-action generate" style="width: 100%;" onclick="retryPreview('{{ p.id }}', this)">
-                                        <i class="fa-solid fa-bolt"></i> 이미지 프리뷰 생성·재시도
+                                        <i class="fa-solid fa-bolt"></i> 프리뷰 재시도
                                     </button>
                                 {% elif p.status == 'ready' and p.output_video_url %}
                                     <a href="{{ p.output_video_url }}" download class="btn-action download" style="width: 100%;">
@@ -861,7 +909,7 @@
                 {% else %}
                     <div class="empty-state" style="grid-column: 1 / -1;">
                         <i class="fa-solid fa-film"></i>
-                        <p>아직 제작된 영상 프로젝트가 없습니다.<br>위 추천 목록에서 아이템을 선택해 이미지·대본 프리뷰를 만들어보세요!</p>
+                        <p>아직 만든 영상이 없습니다.<br>추천을 선택해 시작하세요.</p>
                     </div>
                 {% endif %}
             </div>
@@ -892,16 +940,21 @@
                 if (!res.ok) throw new Error('추천 날짜를 확인해주세요.');
                 const daily = await res.json();
                 const grid = document.getElementById('recommendationGrid'); grid.replaceChildren();
-                document.getElementById('research-status').textContent = daily.researched_at ? `마지막 조사: ${daily.researched_at} · ${daily.research_count}회` : '해당 날짜의 추천 목록이 없습니다.';
+                document.getElementById('research-status').textContent = daily.researched_at ? `${daily.researched_at.slice(11,16)} 갱신 · ${daily.research_count}회` : '추천 없음';
                 daily.items.filter(item => item.category === selectedCategory).forEach(item => {
                     const card = document.createElement('article'); card.className='recommendation-card'; card.dataset.category=item.category;
-                    addText(card,'h3',item.title); addText(card,'strong',item.hook);
-                    [item.why_now, item.key_feature, '연출: '+item.visual_concept, '연결할 상품: '+item.product_keyword, ...(item.supporting_features || []).map(feature=>'추가 주요 기능: '+feature), ...item.facts, item.cautions].forEach(text => addText(card,'p',text));
-                    item.sources.forEach(source => { const a=addText(card,'a',source.title+' · '+source.published_date); a.href=source.url; a.target='_blank'; a.rel='noopener'; addText(card,'br',''); });
-                    const button=addText(card,'button','선택하고 프리뷰 만들기'); button.className='btn-action generate'; button.onclick=()=>selectRecommendation(item,daily.date,button);
+                    addText(card,'h3',item.title).title=item.title;
+                    const hook=addText(card,'p',item.hook); hook.className='card-hook'; hook.title=item.hook;
+                    const chips=document.createElement('div'); chips.className='feature-chips';
+                    (item.supporting_features || []).forEach(feature=>{ const chip=addText(chips,'span',feature); chip.title=feature; }); card.append(chips);
+                    if(item.category==='food') addText(card,'p',item.media_sources?.length ? `실사 출처 ${item.media_sources.length}개` : '실사 자료 준비 중');
+                    const details=document.createElement('details'); addText(details,'summary','상세·출처');
+                    [item.hook,item.why_now,'핵심: '+item.key_feature,'연출: '+item.visual_concept,'추천 상품: '+item.product_keyword,...item.facts,item.cautions].forEach(text=>addText(details,'p',text));
+                    item.sources.forEach(source=>{const p=document.createElement('p');const a=addText(p,'a',source.title+' · '+source.published_date);a.href=source.url;a.target='_blank';a.rel='noopener';details.append(p);}); card.append(details);
+                    const button=addText(card,'button','프리뷰 만들기'); button.className='btn-action generate'; button.onclick=()=>selectRecommendation(item,daily.date,button);
                     grid.append(card);
                 });
-                if (!grid.children.length) addText(grid,'p','해당 날짜의 카테고리 추천이 없습니다.');
+                if (!grid.children.length) addText(grid,'p','다른 날짜를 선택하세요.');
             } catch(e) { alert(e.message); }
         }
         async function uploadSceneMedia(projectId, scene, button) {

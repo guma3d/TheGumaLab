@@ -145,7 +145,7 @@ class PreviewFlowTests(unittest.TestCase):
             page = client.get("/")
             self.assertEqual(page.status_code, 200)
             self.assertEqual(page.text.count('class="input-textarea scene-narration"'), 6)
-            self.assertIn("최종 승인하고 영상 만들기", page.text)
+            self.assertIn("최종 승인 · 영상 만들기", page.text)
             self.assertIn("gemini-3.8-flash + Veo 3.1", page.text)
         self.upload(p)
         asyncio.run(main.start_generation(p["id"], main.ReviewRequest(narrations=["수정"]*6, approved=True, product_url="https://example.com/product"), BackgroundTasks()))
