@@ -169,7 +169,7 @@ def preview_job(idea_id, number):
             if not 0<=index<len(board['scenes']):raise ValueError('수정할 컷 번호를 확인해주세요.')
             if set(changes)-{'visual_mode','visual_subject','visual_prompt','narration_ko','purpose','covered_features','camera_movement','reference_candidates','reference_limitation','reference_presentation','camera_angle','camera_settings'}:
                 raise ValueError('지원하지 않는 컷 수정 항목입니다.')
-            if changes.get('visual_mode')=='approved_model':
+            if changes.get('visual_mode',board['scenes'][index].get('visual_mode'))=='approved_model':
                 for name in ('reference_presentation','reference_scene_file','reference_camera_distance','visual_review'):
                     board['scenes'][index].pop(name,None)
             board['scenes'][index].update(changes)
