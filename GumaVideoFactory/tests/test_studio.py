@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 from app import studio, main
 from app.core import versions as store
 from app.core import studio_jobs as jobs
+from app.core import job_queue
 from app.core.model_assets import fetch, Blueprint, PageAssets
 
 
@@ -86,9 +87,10 @@ class StudioTests(unittest.TestCase):
         with self.assertRaises(HTTPException):self.video(n)
 
     def test_http_dispatch(self):
-        with TestClient(main.app) as client,patch.object(studio,'execute',new_callable=AsyncMock) as work:
+        with patch.object(main,'Worker') as worker,TestClient(main.app) as client:
+            worker.return_value.stop=AsyncMock()
             response=client.post(f'/api/ideas/{self.id}/Preview',json={})
-            self.assertEqual(response.status_code,200);work.assert_awaited_once_with(self.id,'Preview',1)
+            self.assertEqual(response.status_code,200);self.assertEqual(response.json()['status'],'queued')
             self.assertEqual(client.post(f'/api/ideas/{self.id}/3DModel',json={}).status_code,404)
 
     def test_restart_and_concurrent_reservation(self):

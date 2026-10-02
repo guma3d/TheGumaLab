@@ -66,19 +66,19 @@ def history(idea_id, stage):
     return sorted(result, key=lambda v: v['number'], reverse=True)
 
 
-def reserve(idea_id, stage, regenerate=False, **parents):
+def reserve(idea_id, stage, regenerate=False, queued=False, **parents):
     with LOCK:
         read(idea_id)
         old = history(idea_id, stage)
-        if any(v['status'] == 'running' for s in STAGES for v in history(idea_id, s)):
+        if any(v['status'] in ('running','queued') for s in STAGES for v in history(idea_id, s)):
             raise ValueError('제작 중입니다. 완료 후 다시 실행해주세요.')
         if old and not regenerate:
             return old[0], False
         number = max((v['number'] for v in old), default=0) + 1
         folder = version_dir(idea_id, stage, number)
         folder.mkdir(parents=True, exist_ok=False)
-        value = dict(number=number, stage=stage, status='running', approved_at=None,
-                     created_at=now_kst().isoformat(), message='작업 준비 중')
+        value = dict(number=number, stage=stage, status='queued' if queued else 'running', approved_at=None,
+                     created_at=now_kst().isoformat(), message='제작 대기 중' if queued else '작업 준비 중')
         value.update(parents)
         write_json(folder / 'version.json', value)
         return value, True
@@ -95,6 +95,9 @@ def update(idea_id, stage, number, **fields):
 def snapshot(idea_id):
     idea = read(idea_id)
     idea['versions'] = {s: history(idea_id, s) for s in STAGES}
+    for stage, rows in idea['versions'].items():
+        for value in rows:
+            if value['status']=='queued':value['message']=queue_message(idea_id,stage,value)
     return idea
 
 
@@ -119,6 +122,21 @@ def recover_interrupted():
             if value.get('status') == 'running':
                 value.update(status='failed', message='서버 재시작으로 중단됐습니다. 재생성하면 새 버전으로 시작합니다.')
                 write_json(path, value)
+
+
+def pending_jobs():
+    jobs=[]
+    for path in ROOT.glob('*/*/v*/version.json'):
+        value=json.loads(path.read_text(encoding='utf-8'))
+        if value.get('status') in ('queued','running'):
+            jobs.append((path.parents[2].name,path.parents[1].name,value))
+    return sorted(jobs,key=lambda job:(job[2]['created_at'],job[0],job[1],job[2]['number']))
+
+
+def queue_message(idea_id, stage, value):
+    waiting=[job for job in pending_jobs() if job[2]['status']=='queued']
+    position=next((i for i,(idea,s,v) in enumerate(waiting,1) if (idea,s,v['number'])==(idea_id,stage,value['number'])),1)
+    return f'제작 대기 · {position}번째'
 
 
 def link_legacy(projects):
@@ -155,9 +173,9 @@ def workflow(idea):
                     message = '영상 완성 · 결과 확인'
         else:
             message = '다음: ' + names['3DModel'] + ' 확인·승인'
-    running = next((s for s in STAGES if latest[s] and latest[s]['status']=='running'), None)
+    running = next((s for s in STAGES if latest[s] and latest[s]['status'] in ('running','queued')), None)
     if running:
-        next_stage = running; message = names[running] + ' 생성 중'
+        next_stage = running; message = queue_message(idea['id'],running,latest[running]) if latest[running]['status']=='queued' else names[running] + ' 생성 중'
     buttons = []
     for stage in STAGES:
         v = latest[stage]
@@ -166,14 +184,14 @@ def workflow(idea):
         label = {'3DModel': 'Generate 3D Model' if idea['category']=='tech' else 'Prepare Real Media', 'Preview': 'Generate Preview', 'Video': 'Create Video'}[stage]
         state = '대기'
         if v:
-            state = {'running':'생성 중','failed':'실패','ready':'확인 대기'}.get(v['status'],'대기')
+            state = {'queued':'제작 대기','running':'생성 중','failed':'실패','ready':'확인 대기'}.get(v['status'],'대기')
             if v['status']=='ready':
                 state = '승인 완료' if stage=='3DModel' and v.get('approved_at') else ('완료' if stage=='Video' else '확인 대기')
                 label = names[stage] + (' 보기' if state in ('승인 완료','완료') else ' 확인·승인')
             elif v['status']=='running': label = names[stage] + ' 생성 중'
             elif v['status']=='failed': label = names[stage] + ' 오류 확인'
         buttons.append(dict(stage=stage,label=label,state=state,number=v['number'] if v else None,
-            status=v['status'] if v else 'empty',progress_message=v.get('message','') if v else '',
+            status=v['status'] if v else 'empty',progress_message=(queue_message(idea['id'],stage,v) if v['status']=='queued' else v.get('message','')) if v else '',
             primary=stage==next_stage,disabled=bool(running) or not allowed or bool(v and v['status']=='ready'),
             regen_disabled=not allowed or bool(running),existing=bool(v)))
     return dict(id=idea['id'],message=message,buttons=buttons,running=bool(running),
@@ -194,16 +212,16 @@ def clip_workflow(idea):
             message='다음: 3D 모델 확인·승인'
         if video and video['status']=='ready' and video.get('preview_version')==preview['number'] and (not needs or video.get('model_version')==(model or {}).get('number')):
             message='영상 완성 · 결과 확인'
-    running=next((s for s,v in latest.items() if v and v['status']=='running'),None)
+    running=next((s for s,v in latest.items() if v and v['status'] in ('running','queued')),None)
     names={'Preview':'프리뷰·클립','3DModel':'3D 모델','Video':'영상'}
-    if running:next_stage=running;message=names[running]+' 생성 중'
+    if running:next_stage=running;message=queue_message(idea['id'],running,latest[running]) if latest[running]['status']=='queued' else names[running]+' 생성 중'
     buttons=[]
     for stage in ('Preview','3DModel','Video'):
         v=latest[stage];allowed=stage=='Preview' or (ready and (needs if stage=='3DModel' else not needs or model_ok))
         stale=bool(stage=='3DModel' and v and ready and v.get('preview_version')!=preview['number'])
-        state='대기' if not v else {'running':'생성 중','failed':'실패','ready':'완료'}[v['status']]
+        state='대기' if not v else {'queued':'제작 대기','running':'생성 중','failed':'실패','ready':'완료'}[v['status']]
         if stage=='3DModel':state='이전 프리뷰 모델' if stale else '승인 완료' if model_ok else '불필요' if ready and not needs else '확인 대기' if v and v['status']=='ready' else state
         buttons.append(dict(stage=stage,state=state,label=names[stage],number=v['number'] if v else None,
-            status=v['status'] if v else 'empty',progress_message=v.get('message','') if v else '',primary=stage==next_stage,
+            status=v['status'] if v else 'empty',progress_message=(queue_message(idea['id'],stage,v) if v['status']=='queued' else v.get('message','')) if v else '',primary=stage==next_stage,
             disabled=bool(running) or not allowed or bool(v and v['status']=='ready'),regen_disabled=bool(running) or not allowed,existing=bool(v)))
     return dict(id=idea['id'],message=message,buttons=buttons,running=bool(running),approved=model_ok,needs_3d=needs)

@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-02.7",
+  "revision": "2026-10-02.8",
   "rules": [
     {
       "id": "exact-product",
@@ -39,7 +39,7 @@
     {
       "id": "clear-next-step",
       "category": "all",
-      "instruction": "Show current version/approval and next action. Generate inline on recommendation cards with an indeterminate button progress bar and live status polling, without navigation or page reload. Only product titles navigate to product details. Video still requires explicit final review and approval."
+      "instruction": "Use one durable FIFO queue for all products/stages; show queue position and inline progress without navigation. Persist unstarted jobs across restarts; never silently repeat interrupted paid requests. One failure must not cancel the next product. Only titles navigate; model and final video approval remain required."
     },
     {
       "id": "official-clips-first",

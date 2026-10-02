@@ -10,8 +10,8 @@ function paint(card,flow){
     const first=category==='tech'?'Preview':'3DModel';
     const actions=flow?.buttons||Object.keys(stageNames).map(stage=>({stage,status:'empty',state:'대기',primary:stage===first,disabled:stage!==first,regen_disabled:stage!==first}));
     card.querySelector('.steps').innerHTML=actions.map((a,i)=>{
-        const running=a.status==='running';
-        const label=running?`${stageNames[a.stage]} 생성 중`:a.status==='ready'?`${stageNames[a.stage]} ${a.state==='승인 완료'?'승인 완료':'완료'}`:a.status==='failed'?'다시 생성':generateLabels[a.stage];
+        const queued=a.status==='queued',running=queued||a.status==='running';
+        const label=queued?(a.progress_message||'제작 대기'):running?`${stageNames[a.stage]} 생성 중`:a.status==='ready'?`${stageNames[a.stage]} ${a.state==='승인 완료'?'승인 완료':'완료'}`:a.status==='failed'?'다시 생성':generateLabels[a.stage];
         return `<div class="stage-line"><div class="stage-caption"><span>${i+1} · ${stageNames[a.stage]}</span><span>${a.number?'v'+a.number+' · ':''}${esc(a.state)}</span></div><div class="step"><button data-stage="${a.stage}" class="${a.primary?'primary ':''}${running?'in-progress':a.status==='ready'?'stage-complete':''}" ${a.disabled||running?'disabled':''} aria-busy="${running}" onclick="runStage(this,'${a.stage}',false)">${running?'<span class="button-progress" role="progressbar" aria-label="생성 진행 중"></span>':''}<span>${esc(label)}</span></button><button class="regen" title="새 버전 생성" aria-label="${stageNames[a.stage]} 재생성" ${a.regen_disabled?'disabled':''} onclick="runStage(this,'${a.stage}',true)">↻</button></div>${running?`<small class="progress-note">${esc(a.progress_message||'작업 준비 중')}</small>`:''}</div>`;
     }).join('');
 }

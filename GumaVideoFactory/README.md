@@ -74,7 +74,7 @@ docker compose up -d --build
 | PORT / HOST | 8085 / 0.0.0.0 |
 | BLENDER_VIDEO_WIDTH | 720 또는 1080 |
 
-호스트 개발 실행은 Python 의존성, FFmpeg, Blender가 준비된 상태에서 `uvicorn app.main:app --host 0.0.0.0 --port 8085`를 사용합니다. 운영 환경은 Docker Compose를 권장합니다.
+호스트 개발 실행은 Python 의존성, FFmpeg, Blender가 준비된 상태에서 `uvicorn app.main:app --host 0.0.0.0 --port 8085`를 사용합니다. 운영은 Docker Compose를 사용합니다.
 
 검색·기획·생성 API는 비용이 발생할 수 있습니다. Blender 제품 컷은 로컬 렌더링하며 음성 길이에 맞춰 합성합니다. 사용 모델이나 결제 잔액은 외부 서비스 설정에 따라 달라지므로 문서에 잔액을 고정하지 않습니다.
 
@@ -89,6 +89,6 @@ docker exec GumaVideoFactory_app blender -b --factory-startup --disable-autoexec
 Invoke-RestMethod http://localhost:8085/api/health
 ```
 
-의존성·Dockerfile 변경 시 `docker compose up -d --build`로 재빌드합니다. 공개 접근은 Nginx·Cloudflare Tunnel과 중앙 인증을 사용합니다. 현재 라우팅은 `Nginx/nginx.conf`, 실행 상태는 `docker ps`로 확인합니다.
+의존성·Dockerfile 변경 시 `docker compose up -d --build`로 재빌드합니다. 공개 접근은 Nginx·Cloudflare Tunnel과 중앙 인증을 사용합니다. 라우팅은 `Nginx/nginx.conf`, 상태는 `docker ps`로 확인합니다.
 
-작업은 단일 서버의 백그라운드 작업으로 실행됩니다. 재시작으로 중단된 버전은 실패 처리되며 새 버전으로 재시도합니다. 자막 오버레이, 웹 타임라인 편집, 자동 상품 링크 검색은 현재 제공하지 않습니다.
+제작은 저장형 FIFO 큐에서 한 번에 하나씩 처리합니다. 화면에 대기 순번을 표시하고 재시작 후 미시작 작업은 이어갑니다. 중단된 실행은 실패로 남겨 자동 중복 과금을 피하며, 재생성은 새 버전입니다.

@@ -143,9 +143,8 @@ async def start(idea_id:str,stage:Literal['3DModel','Preview','Video'],req:Stage
                 model_path=store.version_dir(idea_id,'3DModel',model['number'])/'model.blend'
                 if hashlib.sha256(model_path.read_bytes()).hexdigest()!=model.get('model_sha256'):
                     raise HTTPException(409,'승인 후 모델 파일이 변경됐습니다. 외형을 다시 확인하고 승인해주세요.')
-        try: result,created=store.reserve(idea_id,stage,req.regenerate,**parents)
+        try: result,created=store.reserve(idea_id,stage,req.regenerate,queued=True,**parents)
         except ValueError as e: raise HTTPException(409,str(e))
-        if created: tasks.add_task(execute,idea_id,stage,result['number'])
         return result
 
 
@@ -179,11 +178,10 @@ async def revise_model(idea_id:str,number:int,req:ModelRevision,tasks:Background
         if not any(p.suffix in ('.blend','.glb','.usdz','.obj','.fbx') for p in original.glob('downloaded.*')):
             raise HTTPException(409,'수정할 원본 3D 자료가 없습니다.')
         try:
-            result,_=store.reserve(idea_id,'3DModel',True,parent_model_version=number,
+            result,_=store.reserve(idea_id,'3DModel',True,queued=True,parent_model_version=number,
                 preview_version=parent.get('preview_version'),
                 revision_operation=req.operation,revision_note=('공식 치수로 기종 한 대를 분리하고 화면 중심 재정렬' if req.operation=='single_product' else '원본 UV 좌표·표면 재질 복원: 잘못된 가로 띠 제거'))
         except ValueError as error:raise HTTPException(409,str(error))
-        tasks.add_task(execute,idea_id,'3DModel',result['number'])
         return result
 
 

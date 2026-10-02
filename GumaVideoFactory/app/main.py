@@ -29,6 +29,7 @@ from app.core.recommendations import load_daily, now_kst
 from app.core.source_media import MediaSource, store_media, media_preview, render_source_clip
 from app.studio import router as studio_router
 from app.core import versions as version_store
+from app.core.job_queue import Worker
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("GumaVideoFactory")
@@ -40,6 +41,11 @@ app.include_router(studio_router)
 async def recover_studio_jobs():
     version_store.recover_interrupted()
     version_store.link_legacy(list_all_projects())
+    app.state.production_worker=Worker()
+
+@app.on_event('shutdown')
+async def stop_studio_jobs():
+    await app.state.production_worker.stop()
 
 # Mount storage as static for video/audio preview playback
 app.mount("/storage", StaticFiles(directory=str(STORAGE_DIR)), name="storage")

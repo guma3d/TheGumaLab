@@ -18,7 +18,7 @@ from app.core.planner import ModelCamera
 
 class ClipScene(BaseModel):
     start_seconds: float = Field(ge=0, allow_inf_nan=False)
-    end_seconds: float = Field(gt=0, allow_inf_nan=False)
+    end_seconds: float = Field(ge=0.001, allow_inf_nan=False)
     purpose: str = Field(min_length=1)
     visible_evidence: str = Field(min_length=10)
     narration_ko: str = Field(min_length=1, max_length=1000)

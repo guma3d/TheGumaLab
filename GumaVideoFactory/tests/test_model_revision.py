@@ -31,7 +31,7 @@ class ModelRevisionTests(unittest.TestCase):
             revision=asyncio.run(studio.revise_model(iid,1,studio.ModelRevision(operation="restore_materials"),tasks))
             self.assertEqual(revision['revision_operation'],'restore_materials');self.assertIn('UV',revision['revision_note'])
             self.assertEqual(revision['number'],2);self.assertEqual(revision['parent_model_version'],1)
-            self.assertIsNone(revision['approved_at']);self.assertEqual(len(tasks.tasks),1)
+            self.assertIsNone(revision['approved_at']);self.assertEqual(revision['status'],'queued')
             self.assertEqual((folder/'version.json').read_bytes(),before)
             self.assertEqual((folder/'model.blend').read_bytes(),b'old-approved-model')
             with self.assertRaises(HTTPException):asyncio.run(studio.revise_model(iid,1,studio.ModelRevision(),BackgroundTasks()))
