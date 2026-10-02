@@ -16,7 +16,7 @@ from app.core.model_assets import discover, reconstruct, fetch
 from app.core.categories import PRESETS
 from app.core.planner import plan_video_storyboard
 from app.core.scene_visuals import validate_tech_visuals
-from app.core.feature_references import resolve_feature_references, motion_prompt, review_feature_image
+from app.core.feature_references import resolve_feature_references, motion_prompt, review_feature_image, apply_reference_policy
 from app.core.image_client import generate_preview_image
 from app.core.veo_client import generate_video_clip
 from app.core.source_media import MediaSource, download_media, download_youtube_cc, media_preview, render_source_clip
@@ -205,10 +205,7 @@ def preview_job(idea_id, number):
             refs=resolve_feature_references(rec['subject'],scene,folder,scene.get('reference_candidates'))
             scene['feature_references']=refs
             scene['reference_limitation']=' · '.join(r.get('limitation','') for r in refs if r.get('limitation'))
-            if not scene.get('reference_presentation') and any(r['scope']=='related_context' for r in refs):
-                import re
-                spoken=scene.get('narration_ko','')+' '+scene['visual_subject']
-                scene['reference_presentation']=('abstract_thermal' if re.search(r'베이퍼\s*챔버|vapo[u]?r\s*chamber',spoken,re.I) else 'display')
+            apply_reference_policy(scene,refs)
             if scene.get('reference_presentation'):
                 # Exact published pixels take priority over a distorted AI reconstruction.
                 kind='thermal' if scene['reference_presentation']=='abstract_thermal' else 'display'

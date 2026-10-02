@@ -1,6 +1,7 @@
 """Feature-specific manufacturer references, frozen inside each preview version."""
 import hashlib
 import json
+import re
 from io import BytesIO
 from urllib.parse import urlparse
 from PIL import Image
@@ -9,6 +10,20 @@ from google.genai import types
 from app.config import GEMINI_API_KEY, PLANNER_MODEL
 from app.core.model_assets import fetch, json_response
 from app.core.versions import write_json, url
+
+
+def apply_reference_policy(scene, references):
+    """Unknown geometry always becomes a labelled principle, for every tech product."""
+    documented=any(r.get('scope')=='exact_visible' for r in references)
+    scene['reference_fidelity']='documented_surface' if documented else 'principle_only'
+    if documented:
+        return
+    scene['reference_limitation']='실제 형상 미확보 · 작동 원리 표현이며 실물·내부 설계 재현이 아닙니다.'
+    scene['visual_prompt']=('ABSTRACT OPERATING PRINCIPLE ONLY. Explain only the verified narrated function. '
+        'No invented exact component shape, dimensions, internal layout, enclosure or complete product. '
+        'Related-context references establish the use case only, not geometry. '+scene['visual_prompt'])
+    spoken=scene.get('narration_ko','')+' '+scene.get('visual_subject','')
+    scene['reference_presentation']=('abstract_thermal' if re.search(r'베이퍼\s*챔버|vapo[u]?r\s*chamber',spoken,re.I) else None)
 
 
 def resolve_feature_references(product, scene, folder, supplied=None):

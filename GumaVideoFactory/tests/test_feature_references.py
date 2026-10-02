@@ -2,10 +2,25 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
-from app.core.feature_references import resolve_feature_references, motion_prompt, review_feature_image
+from app.core.feature_references import resolve_feature_references, motion_prompt, review_feature_image, apply_reference_policy
 
 
 class FeatureReferenceTests(unittest.TestCase):
+    def test_unknown_geometry_uses_principles_for_other_products_too(self):
+        for subject in ('로봇청소기 스팀 유로','헤드폰 소음 제거','카메라 안정화'):
+            scene=dict(visual_subject=subject,narration_ko='검증한 작동 원리',visual_prompt='feature',reference_presentation='display')
+            apply_reference_policy(scene,[dict(scope='related_context')])
+            self.assertEqual(scene['reference_fidelity'],'principle_only')
+            self.assertIsNone(scene['reference_presentation'])
+            self.assertIn('실제 형상 미확보',scene['reference_limitation'])
+            self.assertIn('No invented exact component',scene['visual_prompt'])
+
+    def test_documented_surface_is_not_replaced_by_context_photo(self):
+        scene=dict(visual_prompt='documented lens',reference_presentation='display')
+        apply_reference_policy(scene,[dict(scope='related_context'),dict(scope='exact_visible')])
+        self.assertEqual(scene['reference_fidelity'],'documented_surface')
+        self.assertEqual(scene['visual_prompt'],'documented lens')
+
     def test_missing_reference_stops_unfounded_generation(self):
         with tempfile.TemporaryDirectory() as temp:
             with self.assertRaisesRegex(ValueError,'임의 형상'):

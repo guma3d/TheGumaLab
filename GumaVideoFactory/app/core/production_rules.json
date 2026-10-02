@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-02.5",
+  "revision": "2026-10-02.6",
   "rules": [
     {
       "id": "exact-product",
@@ -19,7 +19,7 @@
     {
       "id": "approved-exterior",
       "category": "tech",
-      "instruction": "Use the approved exterior model. Every narrated main/secondary feature needs matching manufacturer-published explanation images saved per cut and actually passed to image generation. Reproduce visible documented shape, materials and proportions. If only context is published, state its limitations and use abstract principles, never invented exact internals. ProRes/Log show recording and grading workflow, not unrelated phone beauty shots or imaginary hardware."
+      "instruction": "Use the approved exterior model. Every narrated main/secondary feature needs matching manufacturer-published explanation images saved per cut and actually passed to image generation. Reproduce visible documented shape, materials and proportions. If only context is published, state its limitations and use abstract principles, never invented exact internals. ProRes/Log show recording and grading workflow, not unrelated phone beauty shots or imaginary hardware. When actual feature geometry cannot be verified, ALWAYS switch to an explicitly labelled operating-principle visualization for ANY tech product, not only vapor chambers. Explain verified function only; never fabricate exact parts, dimensions or internal layout. Record principle_only provenance in every new cut."
     },
     {
       "id": "premium-3d",
