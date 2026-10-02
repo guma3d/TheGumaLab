@@ -16,6 +16,7 @@ from app.core.model_assets import discover, reconstruct, fetch
 from app.core.categories import PRESETS
 from app.core.planner import plan_video_storyboard
 from app.core.scene_visuals import validate_tech_visuals
+from app.core.feature_references import resolve_feature_references, motion_prompt, review_feature_image
 from app.core.image_client import generate_preview_image
 from app.core.veo_client import generate_video_clip
 from app.core.source_media import MediaSource, download_media, download_youtube_cc, media_preview, render_source_clip
@@ -166,7 +167,7 @@ def preview_job(idea_id, number):
         for key,changes in revisions.items():
             index=int(key)-1
             if not 0<=index<len(board['scenes']):raise ValueError('수정할 컷 번호를 확인해주세요.')
-            if set(changes)-{'visual_mode','visual_subject','visual_prompt','narration_ko','purpose','covered_features'}:
+            if set(changes)-{'visual_mode','visual_subject','visual_prompt','narration_ko','purpose','covered_features','camera_movement','reference_candidates','reference_limitation','reference_presentation','camera_angle','camera_settings'}:
                 raise ValueError('지원하지 않는 컷 수정 항목입니다.')
             board['scenes'][index].update(changes)
         # Older saved previews did not have the descriptive subject field.
@@ -183,18 +184,45 @@ def preview_job(idea_id, number):
         path=folder/f'scene_{idx+1:02d}.png'
         if parent_folder and str(idx+1) not in revisions:
             shutil.copyfile(parent_folder/f'scene_{idx+1:02d}.png',path)
+            attachments=[r['file'] for r in scene.get('feature_references',[])]
+            if scene.get('reference_scene_file'):attachments.append(scene['reference_scene_file'])
+            for name in attachments:
+                if Path(name).name!=name:raise ValueError('잘못된 참고자료 파일 이름입니다.')
+                shutil.copyfile(parent_folder/name,folder/name)
+            for ref in scene.get('feature_references',[]):ref['preview_url']=store.url(folder/ref['file'])
         elif idea['category']=='food':
             sources=model['sources']; candidate=sources[min(idx,len(sources)-1)]
             source=MediaSource(**candidate)
             media_preview(source,path,'9:16')
             scene.update(visual_mode='real_media',media_source=candidate)
         elif scene['visual_mode']=='mechanism_concept':
-            generate_preview_image(scene['visual_prompt']+' Only isolated conceptual mechanisms. No complete product or exterior. No invented internal layout.',
-                path,'9:16',PRESETS['tech']['style'])
+            report(f'{idx+1}/{len(board["scenes"])} 컷의 기능별 공식 참고 이미지를 확인합니다.')
+            refs=resolve_feature_references(rec['subject'],scene,folder,scene.get('reference_candidates'))
+            scene['feature_references']=refs
+            scene['reference_limitation']=' · '.join(r.get('limitation','') for r in refs if r.get('limitation'))
+            if not scene.get('reference_presentation') and any(r['scope']=='related_context' for r in refs):
+                import re
+                spoken=scene.get('narration_ko','')+' '+scene['visual_subject']
+                scene['reference_presentation']=('abstract_thermal' if re.search(r'베이퍼\s*챔버|vapo[u]?r\s*chamber',spoken,re.I) else 'display')
+            if scene.get('reference_presentation'):
+                # Exact published pixels take priority over a distorted AI reconstruction.
+                kind='thermal' if scene['reference_presentation']=='abstract_thermal' else 'display'
+                blender.reference_still(folder/refs[0]['file'],path,scene.get('camera_angle',25),kind=kind)
+                scene['reference_limitation']+=(' · 물리 원리의 추상 3D 연출입니다. 실제 챔버 형상을 재현하지 않습니다.' if kind=='thermal'
+                    else ' · 공식 이미지 원본을 보존한 3D 디스플레이 연출이며 부품 복원 모델이 아닙니다.')
+                scene['visual_review']=dict(passed=True,method='abstract_physics_not_product_geometry' if kind=='thermal' else 'unmodified_official_texture',reference_sha256=refs[0]['sha256'])
+                scene['reference_scene_file']=path.with_suffix('.blend').name
+                scene['reference_camera_distance']=4.3 if kind=='thermal' else 5.8
+            else:
+                generate_preview_image(motion_prompt(scene),path,'9:16',PRESETS['tech']['style'],
+                    product_name=rec['subject'],feature_references=[dict(path=folder/r['file'],context=json.dumps(r,ensure_ascii=False)) for r in refs])
+                scene['visual_review']=review_feature_image(scene,path,refs,folder)
             scene['visual_mode']='mechanism_concept'
         else:
-            angle=scene.get('camera_angle',[25,70,110,145,315,20,225,25][idx])
-            blender.still(model_folder/'model.blend',path,angle)
+            angle=(scene.get('camera_settings') or {}).get('start_angle',scene.get('camera_angle',[25,70,110,145,315,20,225,25][idx]))
+            if scene.get('camera_settings'):
+                blender.still(model_folder/'model.blend',path,angle,camera_settings=scene['camera_settings'])
+            else:blender.still(model_folder/'model.blend',path,angle)
             scene.update(visual_mode='approved_model',camera_angle=angle)
         scene['image_url']=store.url(path)
         store.write_json(folder/'storyboard.json',board)
@@ -219,11 +247,14 @@ async def video_job(idea_id, number):
         duration=max(4,float(result.stdout.strip())+.3)
         raw=folder/f'raw_{idx:02d}.mp4'
         if scene['visual_mode']=='approved_model':
-            await asyncio.to_thread(blender.clip,model_folder/'model.blend',raw,scene['camera_angle'],duration)
+            await asyncio.to_thread(blender.clip,model_folder/'model.blend',raw,scene['camera_angle'],duration,camera_settings=scene.get('camera_settings'))
         elif scene['visual_mode']=='real_media':
             await asyncio.to_thread(render_source_clip,MediaSource(**scene['media_source']),raw,'9:16',4)
+        elif scene.get('reference_scene_file'):
+            await asyncio.to_thread(blender.clip,preview_folder/scene['reference_scene_file'],raw,scene.get('camera_angle',25),duration,
+                camera_settings=dict(distance=scene.get('reference_camera_distance',5.8),elevation=.5,end_angle=scene.get('camera_angle',25)+25))
         else:
-            await asyncio.to_thread(generate_video_clip,prompt=scene['visual_prompt']+' Animate only the isolated concept. No complete product or exterior.',
+            await asyncio.to_thread(generate_video_clip,prompt=motion_prompt(scene),
                 output_path=raw,duration_seconds=4,aspect_ratio='9:16',image_path=preview_folder/f'scene_{idx:02d}.png')
         output=folder/f'clip_{idx:02d}.mp4'
         cmd=[get_ffmpeg_bin(),'-v','error','-i',str(raw),'-i',str(audio),'-map','0:v:0','-map','1:a:0',
@@ -237,5 +268,5 @@ async def video_job(idea_id, number):
     joined=await asyncio.to_thread(subprocess.run,[get_ffmpeg_bin(),'-v','error','-f','concat','-safe','0','-i',str(listing),'-c','copy','-movflags','+faststart',str(output)],capture_output=True,timeout=180)
     if joined.returncode: raise ValueError('최종 영상 합성에 실패했습니다.')
     model=store.get(idea_id,'3DModel',preview['model_version'])
-    credits=folder/'sources.json';store.write_json(credits,dict(product_url=version['product_url'],model_source=model.get('selected_source'),media=model.get('sources',[]),research=idea['recommendation']['sources']))
+    credits=folder/'sources.json';store.write_json(credits,dict(product_url=version['product_url'],model_source=model.get('selected_source'),media=model.get('sources',[]),research=idea['recommendation']['sources'],feature_references=[dict(scene_number=s['scene_number'],references=s.get('feature_references',[]),limitation=s.get('reference_limitation','')) for s in board['scenes']]))
     store.update(idea_id,'Video',number,status='ready',output_url=store.url(output),sources_url=store.url(credits),message='영상이 완성됐습니다.')

@@ -144,10 +144,11 @@ def lighting():
     scene.view_settings.view_transform='AgX'
 
 
-def camera(angle, distance=5.4, elevation=1.25):
+def camera(angle, distance=5.4, elevation=1.25, target=(0,0,0)):
     obj=bpy.context.scene.camera
-    obj.location=(math.sin(math.radians(angle))*distance, -math.cos(math.radians(angle))*distance, elevation)
-    obj.rotation_euler=(-obj.location).to_track_quat('-Z','Y').to_euler()
+    center=Vector(target)
+    obj.location=center+Vector((math.sin(math.radians(angle))*distance, -math.cos(math.radians(angle))*distance, elevation))
+    obj.rotation_euler=(center-obj.location).to_track_quat('-Z','Y').to_euler()
 
 
 def main():
@@ -157,6 +158,8 @@ def main():
     parser.add_argument('--output', required=True); parser.add_argument('--angle',type=float,default=25)
     parser.add_argument('--width',type=int,default=384); parser.add_argument('--height',type=int,default=684)
     parser.add_argument('--samples',type=int,default=64); parser.add_argument('--frames',type=int,default=1)
+    parser.add_argument('--distance',type=float,default=5.4);parser.add_argument('--elevation',type=float,default=1.25)
+    parser.add_argument('--target',type=float,nargs=3,default=(0,0,0));parser.add_argument('--end-angle',type=float)
     args=parser.parse_args(sys.argv[sys.argv.index('--')+1:]); output=Path(args.output)
     if args.scene:
         bpy.ops.wm.open_mainfile(filepath=args.scene, load_ui=False, use_scripts=False)
@@ -179,7 +182,10 @@ def main():
     scene.render.image_settings.file_format='PNG'; scene.render.fps=24
     if args.scene:
         for frame in range(args.frames):
-            camera(args.angle + (frame / max(1,args.frames-1) - .5)*16 if args.frames>1 else args.angle)
+            fraction=frame/max(1,args.frames-1)
+            angle=(args.angle+(args.end_angle-args.angle)*fraction if args.end_angle is not None
+                else args.angle+(fraction-.5)*16 if args.frames>1 else args.angle)
+            camera(angle,args.distance,args.elevation,args.target)
             scene.render.filepath=str(output / f'frame_{frame+1:04d}.png') if args.frames>1 else str(output)
             bpy.ops.render.render(write_still=True)
     else:

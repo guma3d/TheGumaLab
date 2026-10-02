@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-02.4",
+  "revision": "2026-10-02.5",
   "rules": [
     {
       "id": "exact-product",
@@ -19,7 +19,12 @@
     {
       "id": "approved-exterior",
       "category": "tech",
-      "instruction": "Exterior shots use the approved model or authentic media. Assign visuals by narrated content, never fixed cut numbers. Every explained mechanism, including secondary features, needs a visible matching isolated concept diagram. Vapor chambers must show a thin flat chamber above an external chip, evaporation, spreading, condensation and wick return; never enclose the chip in a tall chamber box. Mark conceptual internal structures explicitly."
+      "instruction": "Use the approved exterior model. Every narrated main/secondary feature needs matching manufacturer-published explanation images saved per cut and actually passed to image generation. Reproduce visible documented shape, materials and proportions. If only context is published, state its limitations and use abstract principles, never invented exact internals. ProRes/Log show recording and grading workflow, not unrelated phone beauty shots or imaginary hardware."
+    },
+    {
+      "id": "premium-3d",
+      "category": "tech",
+      "instruction": "All tech shots use premium photorealistic 3D: real depth/thickness, oblique macro viewpoints, PBR glass/metal, controlled reflections and cinematic lighting. Lens explanations specify orbit start/end angles, dolly and parallax. Carry camera_movement into video generation. Flat front-on diagrams and simple poster zooms do not meet this direction."
     },
     {
       "id": "real-food",

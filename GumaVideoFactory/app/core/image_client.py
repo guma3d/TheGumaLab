@@ -9,7 +9,7 @@ from app.config import GEMINI_API_KEY, IMAGE_MODEL
 
 def generate_preview_image(prompt: str, output_path: Path, aspect_ratio: str,
                            style_prompt: str, reference_path: Path | None = None,
-                           product_name: str = "") -> Path:
+                           product_name: str = "", feature_references: list | None = None) -> Path:
     if not GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY is not set.")
     contents = [types.Part.from_text(text=(
@@ -25,6 +25,18 @@ def generate_preview_image(prompt: str, output_path: Path, aspect_ratio: str,
     ))]
     if reference_path:
         contents.append(types.Part.from_bytes(data=reference_path.read_bytes(), mime_type="image/png"))
+    if feature_references:
+        contents.append(types.Part.from_text(text=
+            'Use these OFFICIAL FEATURE references as visual evidence, not merely product identity. '
+            'Match documented silhouette, blade arrangement, surfaces and visible detail. '
+            'Related-context images do not establish hidden geometry: do not invent it. '
+            'ProRes/Log are recording and color-grading workflows, not physical chip or lens components. '
+            'Render cinematic photorealistic 3D with oblique macro perspective, real thickness, '
+            'occlusion, parallax-ready separated layers, glass refraction and restrained studio lighting. '
+            'No flat schematic or decorative fake device.'))
+        for item in feature_references:
+            contents.append(types.Part.from_text(text=item['context']))
+            contents.append(types.Part.from_bytes(data=Path(item['path']).read_bytes(),mime_type='image/png'))
     # Keep the owning client alive until the request finishes. A temporary
     # Client().models chain can close its transport during garbage collection.
     with genai.Client(api_key=GEMINI_API_KEY) as client:

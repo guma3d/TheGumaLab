@@ -27,10 +27,12 @@ class SceneVisualTests(unittest.TestCase):
             store.update(iid,'Preview',1,status='ready',storyboard=dict(scenes=scenes))
             edits={'4':dict(visual_mode='mechanism_concept',visual_subject='베이퍼 챔버',narration_ko='베이퍼 챔버의 열 확산',visual_prompt='Vapor chamber evaporation and condensation')}
             store.reserve(iid,'Preview',True,model_version=1,parent_preview_version=1,scene_revisions=edits)
-            def image(prompt,path,*args):path.write_bytes(b'new-concept')
-            with patch.object(jobs,'generate_preview_image',side_effect=image) as generate,patch.object(jobs.blender,'still') as render,patch.object(jobs,'plan_video_storyboard') as plan:
+            def image(prompt,path,*args,**kwargs):path.write_bytes(b'new-concept')
+            refs=[dict(file='reference.png',scope='exact_visible',page_url='https://example.com',limitation='')]
+            with patch.object(jobs,'review_feature_image',return_value=dict(passed=True)),patch.object(jobs,'resolve_feature_references',return_value=refs),patch.object(jobs,'generate_preview_image',side_effect=image) as generate,patch.object(jobs.blender,'still') as render,patch.object(jobs,'plan_video_storyboard') as plan:
                 jobs.preview_job(iid,2)
             generate.assert_called_once();render.assert_not_called();plan.assert_not_called()
+            self.assertEqual(len(generate.call_args.kwargs['feature_references']),1)
             folder=store.version_dir(iid,'Preview',2)
             self.assertEqual((folder/'scene_04.png').read_bytes(),b'new-concept')
             for i in (1,2,3,5,6):self.assertEqual((folder/f'scene_{i:02d}.png').read_bytes(),(parent/f'scene_{i:02d}.png').read_bytes())

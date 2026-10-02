@@ -1,13 +1,28 @@
 import json
 import logging
 from typing import List, Optional, Literal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from google import genai
 from google.genai import types
 from app.config import GEMINI_API_KEY, PLANNER_MODEL
 from app.core.categories import PRESETS
 
 logger = logging.getLogger(__name__)
+
+class ModelCamera(BaseModel):
+    start_angle: float = Field(default=25,ge=-360,le=360)
+    end_angle: float = Field(default=45,ge=-360,le=360)
+    distance: float = Field(default=5.4,ge=.5,le=10)
+    elevation: float = Field(default=1.25,ge=-3,le=5)
+    target: List[float] = Field(default_factory=lambda:[0,0,0],min_length=3,max_length=3)
+
+    @field_validator('target')
+    @classmethod
+    def valid_target(cls, value):
+        import math
+        if any(not math.isfinite(x) or abs(x)>2 for x in value):
+            raise ValueError('카메라 대상은 정규화한 제품 범위 안에 있어야 합니다.')
+        return value
 
 class ScenePlan(BaseModel):
     scene_number: int
@@ -20,6 +35,8 @@ class ScenePlan(BaseModel):
     covered_features: List[str] = Field(default_factory=list)
     visual_mode: Optional[Literal["approved_model", "mechanism_concept", "product_photo", "real_media"]] = None
     visual_subject: str = ""
+    camera_settings: Optional[ModelCamera] = None
+    reference_presentation: Optional[Literal['display','abstract_thermal']] = None
 
 class VideoStoryBoard(BaseModel):
     title: str
@@ -92,9 +109,20 @@ mechanism_concept for isolated explanations of physical mechanisms. The first an
 Every scene has visual_subject (Korean phrase describing the visible subject). Each narrated mechanism, including
 supporting features, must appear visibly in its own conceptual shot or be combined with a closely related mechanism.
 Do not merely list a feature while displaying an unrelated exterior beauty shot. A vapor chamber explanation must
-show a thin flat vapor chamber cutaway ABOVE an external heat-source chip, evaporation, vapor spreading,
-condensation and wick return. Never put the chip inside the vapor cavity or make the chamber a tall box.
-The chip produces heat; the chamber spreads it. No exact undocumented device interior, dimensions or teardown.
+use manufacturer-published feature images; match only visibly documented geometry, material and proportions.
+Official feature images will be fetched before image generation; do not invent unavailable internal structures.
+If chamber geometry is unpublished, explain evaporation/condensation using an explicitly abstract heat-flow
+visual without claiming it is the actual chamber. Never substitute a generic copper box for the real component.
+ProRes/Log explanations must show recording-to-grading workflow, not an unrelated phone back or imaginary codec chip.
+For exact software UI, set reference_presentation=display: preserve the official screenshot on a real 3D display stage.
+If a vapor chamber shape is unpublished, reference_presentation=abstract_thermal renders only abstract phase-change
+circulation in Blender, with no invented housing. Do not claim that a reference display is a reconstructed component.
+Every tech shot is premium photorealistic 3D with oblique viewpoints, real depth, glass/metal PBR and cinematic lighting.
+Lens shots require a specified camera orbit (start/end degrees), macro dolly and parallax; avoid flat front-on diagrams.
+Describe that motion in camera_movement and design the keyframe for it. No exact undocumented teardown.
+For approved_model shots also set camera_settings: start_angle/end_angle degrees, distance (0.5-10),
+elevation, target XYZ. The normalized model is centered with longest dimension 2. Keep unknown models framed;
+use a macro target only when documented product geometry supports it. Orbit is executed by Blender, not just text.
 Use conceptual diagrams for supporting features whenever their mechanism is explained; scenes 4 and 5 are not
 restricted to exterior renders. Keep all researched supporting features and use short, scientifically correct narration.
 Only the final product reveal must be an exterior shot. Concept prompts exclude the complete product/housing.
