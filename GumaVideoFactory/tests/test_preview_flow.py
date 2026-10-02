@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from fastapi import BackgroundTasks, HTTPException
 from app import main
 from app.core.planner import VideoStoryBoard, ScenePlan
+from app.core import versions as version_store
 
 
 class PreviewFlowTests(unittest.TestCase):
@@ -16,6 +17,8 @@ class PreviewFlowTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
         self.patches = [patch.object(main, "PROJECTS_DIR", self.root),
+                        patch.object(version_store, "ROOT", self.root / 'products'),
+                        patch.object(version_store, "STORAGE_DIR", self.root),
                         patch.object(main, "IMAGES_DIR", self.root),
                         patch.object(main, "PRODUCT_IMAGES_DIR", self.root),
                         patch("app.core.source_media.SOURCE_MEDIA_DIR", self.root)]
