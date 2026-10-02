@@ -1,10 +1,11 @@
 import asyncio
 import tempfile
 import unittest
+import hashlib
 from pathlib import Path
 from unittest.mock import patch
 from app.core import versions as store, job_queue as queue
-from app.core.official_clips import ClipBoard
+from app.core.official_clips import ClipBoard, reuse_source
 from google import genai
 from google.genai import _transformers
 
@@ -60,3 +61,19 @@ class ProviderSchemaTests(unittest.TestCase):
         with genai.Client(api_key='schema-test-no-network') as client:
             schema=_transformers.t_schema(client._api_client,ClipBoard)
             self.assertIsNotNone(schema.properties['scenes'].items)
+
+    def test_reuses_only_hash_and_channel_verified_original_in_new_version(self):
+        with tempfile.TemporaryDirectory() as temp,patch.object(store,'ROOT',Path(temp)):
+            iid=store.create(dict(category='tech',subject='Camera'),'2026-10-02')['id']
+            store.reserve(iid,'Preview');old=store.version_dir(iid,'Preview',1)
+            content=b'verified-video';(old/'source.mp4').write_bytes(content)
+            metadata=dict(url='https://www.youtube.com/watch?v=abcdefghijk',channel_id='official',sha256=hashlib.sha256(content).hexdigest())
+            store.write_json(old/'source.json',metadata);store.update(iid,'Preview',1,status='failed')
+            store.reserve(iid,'Preview',True);new=store.version_dir(iid,'Preview',2)
+            with patch('app.core.official_clips.duration',return_value=30):
+                result=reuse_source(iid,2,metadata,new)
+            self.assertEqual(result[1]['reused_from_preview'],1)
+            self.assertEqual((new/'source.mp4').read_bytes(),content)
+            self.assertEqual((old/'source.mp4').read_bytes(),content)
+            (old/'source.mp4').write_bytes(b'tampered')
+            self.assertIsNone(reuse_source(iid,2,metadata,new))

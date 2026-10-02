@@ -2,6 +2,7 @@
 import hashlib
 import json
 import math
+import shutil
 import subprocess
 from pathlib import Path
 from PIL import Image, ImageDraw
@@ -73,6 +74,25 @@ def download(source, folder):
     return path, metadata
 
 
+def reuse_source(idea_id, number, source, folder):
+    """Reuse verified original bytes; regenerate edits without downloading them again."""
+    for version in store.history(idea_id,'Preview'):
+        if version['number']>=number:continue
+        previous=store.version_dir(idea_id,'Preview',version['number'])
+        path=previous/'source.mp4';record=previous/'source.json'
+        if not path.is_file() or not record.is_file():continue
+        metadata=json.loads(record.read_text(encoding='utf-8'))
+        if metadata.get('url')!=source['url'] or metadata.get('channel_id')!=source['channel_id']:continue
+        if not 0 < path.stat().st_size <= 180*1024*1024:continue
+        if hashlib.sha256(path.read_bytes()).hexdigest()!=metadata.get('sha256'):continue
+        metadata=dict(metadata,reused_from_preview=version['number'])
+        target=folder/'source.mp4';shutil.copyfile(path,target)
+        metadata['duration']=duration(target)
+        store.write_json(folder/'source.json',metadata)
+        return target,metadata
+    return None
+
+
 def sheets(path, times, folder, prefix):
     """Absolute timestamps come from FFmpeg, never from a model's imagined timeline."""
     parts=[]
@@ -110,7 +130,8 @@ def validate_board(board, seconds, rec):
 def create_preview(idea_id, number, report):
     rec=store.read(idea_id)['recommendation'];folder=store.version_dir(idea_id,'Preview',number)
     report('공식 기술 영상을 확보합니다.')
-    path,meta=download(rec['technical_video'],folder)
+    cached=reuse_source(idea_id,number,rec['technical_video'],folder)
+    path,meta=cached if cached else download(rec['technical_video'],folder)
     report('실제 시간표가 표시된 원본 프레임으로 콘티를 분석합니다.')
     step=max(1,meta['duration']/96)
     times=[round(i*step,3) for i in range(math.ceil(meta['duration']/step)) if i*step < meta['duration']-.1]
