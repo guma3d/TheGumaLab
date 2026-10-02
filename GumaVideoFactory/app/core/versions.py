@@ -137,6 +137,7 @@ def link_legacy(projects):
 
 def workflow(idea):
     """Current version state for cards; a new model never inherits approval."""
+    if idea['category']=='tech':return clip_workflow(idea)
     stages = {s: history(idea['id'], s) for s in STAGES}
     latest = {s: rows[0] if rows else None for s, rows in stages.items()}
     model, preview, video = (latest[s] for s in STAGES)
@@ -177,3 +178,32 @@ def workflow(idea):
             regen_disabled=not allowed or bool(running),existing=bool(v)))
     return dict(id=idea['id'],message=message,buttons=buttons,running=bool(running),
         approved=bool(model and model['status']=='ready' and model.get('approved_at')))
+
+
+def clip_workflow(idea):
+    latest={s:next(iter(history(idea['id'],s)),None) for s in STAGES}
+    preview=latest['Preview'];model=latest['3DModel'];video=latest['Video']
+    ready=bool(preview and preview['status']=='ready')
+    needs=bool(ready and preview.get('needs_3d'))
+    model_ok=bool(model and model['status']=='ready' and model.get('approved_at') and ready and model.get('preview_version')==preview['number'])
+    next_stage='Preview';message='다음: 프리뷰·클립 생성'
+    if ready:
+        next_stage='3DModel' if needs and not model_ok else 'Video'
+        message='3D모델 생성 필요' if next_stage=='3DModel' else '다음: 최종 확인·영상 제작'
+        if needs and model and model['status']=='ready' and model.get('preview_version')==preview['number'] and not model.get('approved_at'):
+            message='다음: 3D 모델 확인·승인'
+        if video and video['status']=='ready' and video.get('preview_version')==preview['number'] and (not needs or video.get('model_version')==(model or {}).get('number')):
+            message='영상 완성 · 결과 확인'
+    running=next((s for s,v in latest.items() if v and v['status']=='running'),None)
+    names={'Preview':'프리뷰·클립','3DModel':'3D 모델','Video':'영상'}
+    if running:next_stage=running;message=names[running]+' 생성 중'
+    buttons=[]
+    for stage in ('Preview','3DModel','Video'):
+        v=latest[stage];allowed=stage=='Preview' or (ready and (needs if stage=='3DModel' else not needs or model_ok))
+        stale=bool(stage=='3DModel' and v and ready and v.get('preview_version')!=preview['number'])
+        state='대기' if not v else {'running':'생성 중','failed':'실패','ready':'완료'}[v['status']]
+        if stage=='3DModel':state='이전 프리뷰 모델' if stale else '승인 완료' if model_ok else '불필요' if ready and not needs else '확인 대기' if v and v['status']=='ready' else state
+        buttons.append(dict(stage=stage,state=state,label=names[stage],number=v['number'] if v else None,
+            status=v['status'] if v else 'empty',progress_message=v.get('message','') if v else '',primary=stage==next_stage,
+            disabled=bool(running) or not allowed or bool(v and v['status']=='ready'),regen_disabled=bool(running) or not allowed,existing=bool(v)))
+    return dict(id=idea['id'],message=message,buttons=buttons,running=bool(running),approved=model_ok,needs_3d=needs)

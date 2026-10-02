@@ -19,7 +19,7 @@ vm.createContext(sandbox);vm.runInContext(source,sandbox);
  await new Promise(r=>setImmediate(r));
  await sandbox.runStage(button,'Preview',false);
  assert.equal(writes.length,1,'double click must not submit twice');
- assert.equal(writes[0].body.model_version,4,'use approved model version');
+ assert.equal(writes[0].body.model_version,undefined,'preview must not require a model');
  assert.equal(sandbox.location.href,'unchanged');
  unblock();await first;
  assert.match(nodes['.steps'].innerHTML,/role="progressbar"/);

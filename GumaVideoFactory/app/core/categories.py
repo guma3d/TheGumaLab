@@ -1,7 +1,7 @@
 PRESETS = {
     "tech": {
         "label": "신형 테크",
-        "style": "Premium photorealistic 3D visualization, precise materials, clean dark studio, restrained cyan accents, scientific diagrams, smooth deliberate camera. Actual product exteriors use real photographs or explicitly user-approved Blender meshes rendered deterministically. Generative images/video show isolated conceptual mechanisms only, never a complete product or enclosure. No invented branding or labels.",
+        "style": "Official technical clips first, optional approved 3D supplements. Premium photorealistic 3D visualization, precise materials, clean dark studio, restrained cyan accents, scientific diagrams, smooth deliberate camera. Actual product exteriors use real photographs or explicitly user-approved Blender meshes rendered deterministically. Generative images/video show isolated conceptual mechanisms only, never a complete product or enclosure. No invented branding or labels.",
         "direction": "Introduce the product's main verified new feature through a daily-life problem, then also cover 2-3 other important VERIFIED features with smaller but explicit screen time. Allocate roughly 50-60 percent of explanation to the main feature and the rest to secondary features and tradeoffs. Dedicate at least one scene to secondary features; use only researched supporting_features and facts, never invent features to fill slots. Show exploded parts and scientific mechanisms as conceptual visualizations unless exact engineering sources are supplied. Distinguish manufacturer claims from proven performance. End with an actual product photograph. Never invent specifications, popularity, prices or test results.",
     },
     "food": {

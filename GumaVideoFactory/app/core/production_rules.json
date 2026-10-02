@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-02.6",
+  "revision": "2026-10-02.7",
   "rules": [
     {
       "id": "exact-product",
@@ -19,12 +19,12 @@
     {
       "id": "approved-exterior",
       "category": "tech",
-      "instruction": "Use the approved exterior model. Every narrated main/secondary feature needs matching manufacturer-published explanation images saved per cut and actually passed to image generation. Reproduce visible documented shape, materials and proportions. If only context is published, state its limitations and use abstract principles, never invented exact internals. ProRes/Log show recording and grading workflow, not unrelated phone beauty shots or imaginary hardware. When actual feature geometry cannot be verified, ALWAYS switch to an explicitly labelled operating-principle visualization for ANY tech product, not only vapor chambers. Explain verified function only; never fabricate exact parts, dimensions or internal layout. Record principle_only provenance in every new cut."
+      "instruction": "Official technical clips are the default visual foundation. First generate feature-matched clips and original Korean commentary. Use the exact product generation and official UI. Preserve all earlier product accuracy requirements. When actual internal geometry is unavailable, explicitly label operating-principle visuals; never invent precise parts, dimensions or internal layouts. ProRes/Log needs recording/grade workflow, not unrelated beauty footage."
     },
     {
       "id": "premium-3d",
       "category": "tech",
-      "instruction": "All tech shots use premium photorealistic 3D: real depth/thickness, oblique macro viewpoints, PBR glass/metal, controlled reflections and cinematic lighting. Lens explanations specify orbit start/end angles, dolly and parallax. Carry camera_movement into video generation. Flat front-on diagrams and simple poster zooms do not meet this direction."
+      "instruction": "Preserve premium official footage; add our own 3D only where it improves explanation. Plan exterior macro/orbit supplements after clip preview. Require approval of the matching preview and model before final video. PBR, real depth, restrained cinematic light and camera parallax remain mandatory for our 3D. Never use an exterior mesh as an invented internal component."
     },
     {
       "id": "real-food",
@@ -40,6 +40,11 @@
       "id": "clear-next-step",
       "category": "all",
       "instruction": "Show current version/approval and next action. Generate inline on recommendation cards with an indeterminate button progress bar and live status polling, without navigation or page reload. Only product titles navigate to product details. Video still requires explicit final review and approval."
+    },
+    {
+      "id": "official-clips-first",
+      "category": "tech",
+      "instruction": "Recommend only products with verified manufacturer technical videos and source links. Official reuse is a user working assumption, not verified license permission. Record creator, URL, timestamps and hash; discard original audio. Use timestamped source frames and independent interval review. Missing coverage fails instead of inventing scenes. Preview precedes optional 3D; mark 3D모델 생성 필요 and block final rendering until required model approval."
     }
   ],
   "feedback": [

@@ -151,6 +151,9 @@ def model_revision_job(idea_id,number):
 
 
 def preview_job(idea_id, number):
+    if store.read(idea_id)['category']=='tech' and not store.get(idea_id,'Preview',number).get('model_version'):
+        from app.core.official_clips import create_preview
+        return create_preview(idea_id,number,lambda text:progress(idea_id,'Preview',number,text))
     idea=store.read(idea_id); rec=idea['recommendation']; version=store.get(idea_id,'Preview',number)
     folder=store.version_dir(idea_id,'Preview',number); model_folder=store.version_dir(idea_id,'3DModel',version['model_version'])
     model=store.get(idea_id,'3DModel',version['model_version'])
@@ -241,7 +244,8 @@ async def video_job(idea_id, number):
     folder=store.version_dir(idea_id,'Video',number)
     preview=store.get(idea_id,'Preview',version['preview_version'])
     preview_folder=store.version_dir(idea_id,'Preview',version['preview_version'])
-    model_folder=store.version_dir(idea_id,'3DModel',preview['model_version'])
+    model_number=version.get('model_version') or preview.get('model_version')
+    model_folder=store.version_dir(idea_id,'3DModel',model_number) if model_number else None
     board=version['storyboard']; store.write_json(folder/'approved_storyboard.json',board)
     width,height=blender.video_size()
     clips=[]
@@ -252,7 +256,20 @@ async def video_job(idea_id, number):
         result=await asyncio.to_thread(subprocess.run,['ffprobe','-v','error','-show_entries','format=duration','-of','default=noprint_wrappers=1:nokey=1',str(audio)],capture_output=True,text=True,timeout=30)
         duration=max(4,float(result.stdout.strip())+.3)
         raw=folder/f'raw_{idx:02d}.mp4'
-        if scene['visual_mode']=='approved_model':
+        if scene['visual_mode']=='official_clip':
+            source=preview_folder/f'scene_{idx:02d}.mp4'
+            if scene.get('enhance_3d'):
+                if not model_folder:raise ValueError('3D 보완 모델이 필요합니다.')
+                # Preserve official footage first, then add the approved exterior macro/orbit.
+                base=folder/f'base_{idx:02d}.mp4';extra=folder/f'3d_{idx:02d}.mp4'
+                camera=scene.get('camera_settings') or dict(distance=5.4,elevation=1.25,end_angle=65)
+                await asyncio.to_thread(blender.clip,model_folder/'model.blend',extra,camera.get('start_angle',25),duration*.4,
+                    camera_settings=camera)
+                vf=f'scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=24,tpad=stop_mode=clone:stop_duration={duration}'
+                await asyncio.to_thread(subprocess.run,[get_ffmpeg_bin(),'-v','error','-i',str(source),'-vf',vf,'-t',str(duration*.6),'-an','-c:v','libx264','-pix_fmt','yuv420p',str(base)],check=True,capture_output=True,timeout=240)
+                await asyncio.to_thread(subprocess.run,[get_ffmpeg_bin(),'-v','error','-i',str(base),'-i',str(extra),'-filter_complex','[0:v][1:v]concat=n=2:v=1:a=0[v]','-map','[v]','-an','-c:v','libx264','-pix_fmt','yuv420p',str(raw)],check=True,capture_output=True,timeout=240)
+            else:shutil.copyfile(source,raw)
+        elif scene['visual_mode']=='approved_model':
             await asyncio.to_thread(blender.clip,model_folder/'model.blend',raw,scene['camera_angle'],duration,camera_settings=scene.get('camera_settings'))
         elif scene['visual_mode']=='real_media':
             await asyncio.to_thread(render_source_clip,MediaSource(**scene['media_source']),raw,'9:16',4)
@@ -273,6 +290,11 @@ async def video_job(idea_id, number):
     output=folder/'final.mp4'
     joined=await asyncio.to_thread(subprocess.run,[get_ffmpeg_bin(),'-v','error','-f','concat','-safe','0','-i',str(listing),'-c','copy','-movflags','+faststart',str(output)],capture_output=True,timeout=180)
     if joined.returncode: raise ValueError('최종 영상 합성에 실패했습니다.')
-    model=store.get(idea_id,'3DModel',preview['model_version'])
+    model=store.get(idea_id,'3DModel',model_number) if model_number else {}
     credits=folder/'sources.json';store.write_json(credits,dict(product_url=version['product_url'],model_source=model.get('selected_source'),media=model.get('sources',[]),research=idea['recommendation']['sources'],feature_references=[dict(scene_number=s['scene_number'],references=s.get('feature_references',[]),limitation=s.get('reference_limitation','')) for s in board['scenes']]))
+    if (preview_folder/'source.json').exists():
+        provenance=json.loads(credits.read_text(encoding='utf-8'))
+        provenance['official_video']=json.loads((preview_folder/'source.json').read_text(encoding='utf-8'))
+        provenance['clip_intervals']=[dict(start=s.get('start_seconds'),end=s.get('end_seconds'),feature=s['purpose']) for s in board['scenes']]
+        store.write_json(credits,provenance)
     store.update(idea_id,'Video',number,status='ready',output_url=store.url(output),sources_url=store.url(credits),message='영상이 완성됐습니다.')

@@ -26,79 +26,70 @@ class StudioTests(unittest.TestCase):
         tasks=BackgroundTasks()
         result=asyncio.run(studio.start(self.id,stage,studio.StageRequest(**kw),tasks))
         return result,tasks
-    def ready_model(self):
-        value,_=self.start('3DModel');n=value['number']
+    def ready_preview(self,needs=False):
+        value,_=self.start('Preview',regenerate=bool(store.history(self.id,'Preview')))
+        n=value['number'];scenes=[]
+        for i in range(1,7):
+            for ext in ('png','mp4'):(store.version_dir(self.id,'Preview',n)/f'scene_{i:02d}.{ext}').write_bytes(b'asset')
+            scenes.append(dict(scene_number=i,narration_ko='original',image_url='/test',visual_mode='official_clip'))
+        store.update(self.id,'Preview',n,status='ready',needs_3d=needs,storyboard=dict(scenes=scenes))
+        return n
+
+    def ready_model(self,preview):
+        value,_=self.start('3DModel',preview_version=preview,approved=True);n=value['number']
         (store.version_dir(self.id,'3DModel',n)/'model.blend').write_bytes(b'test-model')
         store.update(self.id,'3DModel',n,status='ready')
         asyncio.run(studio.approve_model(self.id,n,studio.Approval(appearance_confirmed=True,usage_confirmed=True)))
         return n
-    def ready_preview(self):
-        model=self.ready_model();value,_=self.start('Preview',model_version=model)
-        scenes=[]
-        for i in range(1,7):
-            path=store.version_dir(self.id,'Preview',value['number'])/f'scene_{i:02d}.png';path.write_bytes(b'image')
-            scenes.append(dict(scene_number=i,narration_ko='original',image_url='/test',visual_mode='approved_model'))
-        store.update(self.id,'Preview',value['number'],status='ready',storyboard=dict(scenes=scenes))
-        return value['number']
 
-    def test_idea_approval_is_idempotent_and_never_calls_generation(self):
-        with patch.object(studio,'load_daily',return_value={'items':[self.rec]}),patch.object(studio,'execute') as paid:
-            a=asyncio.run(studio.approve_idea(studio.IdeaRequest(recommendation_id='test',date='2026-10-02')))
-            b=asyncio.run(studio.approve_idea(studio.IdeaRequest(recommendation_id='test',date='2026-10-02')))
-            self.assertEqual(a['id'],b['id']);paid.assert_not_called()
-        self.assertEqual(store.history(self.id,'3DModel'),[])
+    def video(self,n,**kw):
+        return self.start('Video',preview_version=n,approved=True,narrations=['edited']*6,product_url='https://example.com/product',**kw)
 
-    def test_gate_prevents_preview_and_video_before_model_approval(self):
-        value,tasks=self.start('3DModel');self.assertEqual(len(tasks.tasks),1)
-        with self.assertRaises(HTTPException):self.start('Preview',model_version=1)
-        store.update(self.id,'3DModel',1,status='ready')
-        with self.assertRaises(HTTPException):self.start('Preview',model_version=1)
-        with self.assertRaises(HTTPException):asyncio.run(studio.approve_model(self.id,1,studio.Approval(appearance_confirmed=True)))
-        self.assertEqual(store.history(self.id,'Preview'),[])
-
-    def test_duplicate_click_reuses_and_regeneration_preserves_old_files(self):
-        first,_=self.start('3DModel');again,tasks=self.start('3DModel')
-        self.assertEqual(first,again);self.assertEqual(len(tasks.tasks),0)
-        with self.assertRaises(HTTPException):self.start('3DModel',regenerate=True)
-        path=store.version_dir(self.id,'3DModel',1)/'model.blend';path.write_bytes(b'old')
-        store.update(self.id,'3DModel',1,status='failed')
-        second,tasks=self.start('3DModel',regenerate=True)
-        self.assertEqual(second['number'],2);self.assertEqual(len(tasks.tasks),1);self.assertEqual(path.read_bytes(),b'old')
-
-    def test_video_requires_approval_and_snapshots_edits_and_parent(self):
+    def test_preview_first_and_optional_model_gate(self):
+        with self.assertRaises(HTTPException):self.start('3DModel')
         n=self.ready_preview()
-        with self.assertRaises(HTTPException):self.start('Video',preview_version=n)
-        video,_=self.start('Video',preview_version=n,approved=True,narrations=['edited']*6,product_url='https://example.com/product')
-        self.assertEqual(video['model_version'],1);self.assertEqual(video['preview_version'],n)
-        self.assertTrue(video['approved_at']);self.assertEqual(video['storyboard']['scenes'][0]['narration_ko'],'edited')
+        with self.assertRaises(HTTPException):self.start('3DModel',preview_version=n,approved=True)
+        result,_=self.video(n)
+        self.assertIsNone(result['model_version'])
+        self.assertEqual(result['storyboard']['scenes'][0]['narration_ko'],'edited')
         self.assertEqual(store.get(self.id,'Preview',n)['storyboard']['scenes'][0]['narration_ko'],'original')
-        store.update(self.id,'Video',1,status='ready')
-        (store.version_dir(self.id,'Video',1)/'final.mp4').write_bytes(b'original-video')
-        second,_=self.start('Video',regenerate=True,preview_version=n,approved=True,narrations=['new']*6,product_url='https://example.com/product')
-        self.assertEqual(second['number'],2)
-        self.assertEqual((store.version_dir(self.id,'Video',1)/'final.mp4').read_bytes(),b'original-video')
 
-    def test_model_change_does_not_rewrite_existing_preview_parent(self):
-        n=self.ready_preview();second,_=self.start('3DModel',regenerate=True)
-        store.update(self.id,'3DModel',2,status='ready')
-        with self.assertRaises(HTTPException):self.start('Preview',regenerate=True,model_version=2)
-        self.assertEqual(store.get(self.id,'Preview',n)['model_version'],1)
+    def test_needed_model_requires_preview_approval_and_matching_model(self):
+        n=self.ready_preview(True)
+        with self.assertRaises(HTTPException):self.start('3DModel',preview_version=n)
+        with self.assertRaises(HTTPException):self.video(n)
+        m=self.ready_model(n)
+        result,_=self.video(n);self.assertEqual(result['model_version'],m)
+        store.update(self.id,'Video',1,status='ready')
+        new=self.ready_preview(True)
+        with self.assertRaises(HTTPException):self.video(new,regenerate=True,model_version=m)
 
     def test_approved_geometry_cannot_change_silently(self):
-        n=self.ready_model()
-        (store.version_dir(self.id,'3DModel',n)/'model.blend').write_bytes(b'changed')
-        with self.assertRaises(HTTPException):self.start('Preview',model_version=n)
-        self.assertEqual(store.history(self.id,'Preview'),[])
+        n=self.ready_preview(True);m=self.ready_model(n)
+        (store.version_dir(self.id,'3DModel',m)/'model.blend').write_bytes(b'changed')
+        with self.assertRaises(HTTPException):self.video(n)
+        self.assertEqual(store.history(self.id,'Video'),[])
 
-    def test_http_stage_dispatch_and_rendered_script(self):
+    def test_regeneration_preserves_files_and_duplicate_click_is_free(self):
+        first,tasks=self.start('Preview');again,empty=self.start('Preview')
+        self.assertEqual(first,again);self.assertEqual(len(empty.tasks),0)
+        with self.assertRaises(HTTPException):self.start('Preview',regenerate=True)
+        path=store.version_dir(self.id,'Preview',1)/'test';path.write_bytes(b'old')
+        store.update(self.id,'Preview',1,status='failed')
+        second,tasks=self.start('Preview',regenerate=True)
+        self.assertEqual(second['number'],2);self.assertEqual(path.read_bytes(),b'old')
+
+    def test_final_approval_and_all_assets_required(self):
+        n=self.ready_preview()
+        with self.assertRaises(HTTPException):self.start('Video',preview_version=n)
+        (store.version_dir(self.id,'Preview',n)/'scene_06.mp4').unlink()
+        with self.assertRaises(HTTPException):self.video(n)
+
+    def test_http_dispatch(self):
         with TestClient(main.app) as client,patch.object(studio,'execute',new_callable=AsyncMock) as work:
-            response=client.post(f'/api/ideas/{self.id}/3DModel',json={})
-            self.assertEqual(response.status_code,200)
-            work.assert_awaited_once_with(self.id,'3DModel',1)
-            self.assertEqual(client.post(f'/api/ideas/{self.id}/Preview',json={'model_version':1}).status_code,409)
-            self.assertEqual(client.post(f'/api/ideas/{self.id}/3DModel',json={}).json()['number'],1)
-            self.assertEqual(work.await_count,1)
-            self.assertEqual(client.post('/api/projects',json={'idea':'bypass model approval'}).status_code,410)
+            response=client.post(f'/api/ideas/{self.id}/Preview',json={})
+            self.assertEqual(response.status_code,200);work.assert_awaited_once_with(self.id,'Preview',1)
+            self.assertEqual(client.post(f'/api/ideas/{self.id}/3DModel',json={}).status_code,404)
 
     def test_restart_and_concurrent_reservation(self):
         def reserve():
@@ -132,11 +123,11 @@ class StudioTests(unittest.TestCase):
         self.assertEqual(parser.images,['https://example.com/photo.jpg'])
 
     def test_job_failure_is_retained_as_a_failed_version(self):
-        self.start('3DModel')
-        with patch.object(jobs,'model_job',side_effect=ValueError('No matching sources')):
-            asyncio.run(jobs.execute(self.id,'3DModel',1))
-        self.assertEqual(store.get(self.id,'3DModel',1)['status'],'failed')
-        new,_=self.start('3DModel',regenerate=True);self.assertEqual(new['number'],2)
+        self.start('Preview')
+        with patch.object(jobs,'preview_job',side_effect=ValueError('No matching sources')):
+            asyncio.run(jobs.execute(self.id,'Preview',1))
+        self.assertEqual(store.get(self.id,'Preview',1)['status'],'failed')
+        new,_=self.start('Preview',regenerate=True);self.assertEqual(new['number'],2)
 
 
 if __name__=='__main__':unittest.main()

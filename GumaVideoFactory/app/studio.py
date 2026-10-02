@@ -81,7 +81,38 @@ async def start(idea_id:str,stage:Literal['3DModel','Preview','Video'],req:Stage
         # A normal click opens the existing result without additional API calls.
         existing=store.history(idea_id,stage)
         if existing and not req.regenerate: return existing[0]
-        if stage in ('Preview','Video'):
+        if idea['category']=='tech':
+            if stage=='3DModel':
+                preview=version(idea_id,'Preview',req.preview_version)
+                if preview['status']!='ready' or not preview.get('needs_3d'):
+                    raise HTTPException(409,'3D 보완이 필요한 완성 프리뷰를 먼저 선택해주세요.')
+                if not req.approved:raise HTTPException(400,'프리뷰·클립을 확인하고 3D 보완을 승인해주세요.')
+                parents=dict(preview_version=preview['number'],preview_approved_at=now_kst().isoformat())
+            elif stage=='Video':
+                preview=version(idea_id,'Preview',req.preview_version)
+                if preview['status']!='ready':raise HTTPException(409,'완성된 프리뷰가 필요합니다.')
+                if not req.approved:raise HTTPException(400,'대본과 클립을 확인하고 최종 승인해주세요.')
+                scenes=copy.deepcopy(preview['storyboard']['scenes'])
+                if len(req.narrations)!=len(scenes) or any(not s.strip() or len(s)>1000 for s in req.narrations):
+                    raise HTTPException(400,'각 컷의 대본을 1~1000자로 입력해주세요.')
+                folder=store.version_dir(idea_id,'Preview',preview['number'])
+                if not 6<=len(scenes)<=8 or any(not (folder/f'scene_{i:02d}.{ext}').is_file() for i in range(1,len(scenes)+1) for ext in ('png','mp4')):
+                    raise HTTPException(409,'모든 공식 클립·프리뷰가 준비되어야 합니다.')
+                p=urlparse(req.product_url.strip())
+                if p.scheme!='https' or not p.hostname or p.username or p.password:raise HTTPException(400,'HTTPS 상품 링크를 입력해주세요.')
+                model=None
+                if preview.get('needs_3d'):
+                    models=[v for v in store.history(idea_id,'3DModel') if v.get('preview_version')==preview['number']]
+                    model=version(idea_id,'3DModel',req.model_version) if req.model_version else (models[0] if models else None)
+                    if not model or model.get('preview_version')!=preview['number'] or model['status']!='ready' or not model.get('approved_at'):
+                        raise HTTPException(409,'이 프리뷰의 3D 모델을 생성하고 승인해야 합니다.')
+                    path=store.version_dir(idea_id,'3DModel',model['number'])/'model.blend'
+                    if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=model.get('model_sha256'):
+                        raise HTTPException(409,'승인한 모델이 변경됐습니다. 외형을 다시 확인해주세요.')
+                for scene,text in zip(scenes,req.narrations):scene['narration_ko']=text.strip()
+                parents=dict(preview_version=preview['number'],model_version=model['number'] if model else None,
+                    approved_at=now_kst().isoformat(),product_url=req.product_url.strip(),storyboard=dict(preview['storyboard'],scenes=scenes))
+        elif stage in ('Preview','Video'):
             if stage=='Preview':
                 if not req.model_version: raise HTTPException(409,'3D 모델·자료 버전을 선택해주세요.')
                 model=version(idea_id,'3DModel',req.model_version)
@@ -131,7 +162,7 @@ async def approve_model(idea_id:str,number:int,req:Approval):
             path=store.version_dir(idea_id,'3DModel',number)/'model.blend'
             if not path.is_file():raise HTTPException(409,'모델 파일이 없습니다.')
             proof['model_sha256']=hashlib.sha256(path.read_bytes()).hexdigest()
-        return store.update(idea_id,'3DModel',number,approved_at=now_kst().isoformat(),message='외형·자료 승인 완료. 프리뷰를 생성할 수 있습니다.',**proof)
+        return store.update(idea_id,'3DModel',number,approved_at=now_kst().isoformat(),message='외형·자료 승인 완료. 최종 영상을 제작할 수 있습니다.' if idea['category']=='tech' else '자료 승인 완료. 프리뷰를 생성할 수 있습니다.',**proof)
 
 
 @router.post('/api/ideas/{idea_id}/3DModel/{number}/revise')
@@ -149,6 +180,7 @@ async def revise_model(idea_id:str,number:int,req:ModelRevision,tasks:Background
             raise HTTPException(409,'수정할 원본 3D 자료가 없습니다.')
         try:
             result,_=store.reserve(idea_id,'3DModel',True,parent_model_version=number,
+                preview_version=parent.get('preview_version'),
                 revision_operation=req.operation,revision_note=('공식 치수로 기종 한 대를 분리하고 화면 중심 재정렬' if req.operation=='single_product' else '원본 UV 좌표·표면 재질 복원: 잘못된 가로 띠 제거'))
         except ValueError as error:raise HTTPException(409,str(error))
         tasks.add_task(execute,idea_id,'3DModel',result['number'])

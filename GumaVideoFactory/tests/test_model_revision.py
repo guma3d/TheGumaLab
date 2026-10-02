@@ -39,19 +39,20 @@ class ModelRevisionTests(unittest.TestCase):
     def test_card_tracks_latest_approval_and_dependencies(self):
         with tempfile.TemporaryDirectory() as temp,patch.object(store,'ROOT',Path(temp)):
             idea=store.create(dict(category='tech',subject='iPhone 18 Pro'),'2026-10-02');iid=idea['id']
-            store.reserve(iid,'3DModel')
-            store.update(iid,'3DModel',1,status='ready',approved_at='approved')
+            store.reserve(iid,'Preview')
+            store.update(iid,'Preview',1,status='ready',needs_3d=True)
             flow=store.workflow(idea)
-            self.assertEqual(flow['message'],'다음: 프리뷰 생성')
-            self.assertEqual(flow['buttons'][0]['label'],'모델 보기')
+            self.assertEqual(flow['message'],'3D모델 생성 필요')
             self.assertTrue(flow['buttons'][1]['primary'])
             self.assertTrue(flow['buttons'][2]['disabled'])
-            store.reserve(iid,'3DModel',True)
-            store.update(iid,'3DModel',2,status='ready')
+            store.reserve(iid,'3DModel',preview_version=1)
+            store.update(iid,'3DModel',1,status='ready',approved_at='approved')
             flow=store.workflow(idea)
-            self.assertFalse(flow['approved'])
-            self.assertTrue(flow['buttons'][0]['primary'])
-            self.assertTrue(flow['buttons'][1]['disabled'])
+            self.assertTrue(flow['approved']);self.assertFalse(flow['buttons'][2]['disabled'])
+            store.reserve(iid,'Preview',True)
+            store.update(iid,'Preview',2,status='ready',needs_3d=True)
+            flow=store.workflow(idea)
+            self.assertFalse(flow['approved']);self.assertTrue(flow['buttons'][2]['disabled'])
 
     def test_renderer_refuses_overwrite(self):
         with tempfile.TemporaryDirectory() as temp:

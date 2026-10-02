@@ -742,7 +742,7 @@
         </nav>
         <section class="glass-card recommendation-section">
             <ol class="flow-steps" aria-label="제작 순서"><li>추천 선택</li><li>프리뷰</li><li>승인·제작</li></ol>
-            <div class="section-header"><h2 class="section-title">추천 목록</h2><span class="meta-pill">하루 5개</span></div>
+            <div class="section-header"><h2 class="section-title">추천 목록</h2><span class="meta-pill">매회 3개</span></div>
             <p class="research-schedule">매일 09시 · 15시 · 21시 갱신</p>
             <p id="research-status">{% if recommendations.researched_at %}{{ recommendations.researched_at[11:16] }} 갱신 · {{ recommendations.research_count }}회{% else %}추천 준비 중{% endif %}</p>
             <div class="date-toolbar"><label for="recommendationDate">추천 날짜</label><input id="recommendationDate" type="date" value="{{ recommendations.date }}"><button class="btn-action" onclick="loadRecommendationDate()">조회</button></div>

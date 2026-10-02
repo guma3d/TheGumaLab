@@ -1,8 +1,10 @@
-"""검증된 조사 결과를 일별 5+5 추천 목록으로 저장. AI 생성/영상 호출 없음."""
+"""새 제품 3개와 공식 기술 영상을 검증·저장. 추천 이력으로 중복 방지."""
 import hashlib
 import json
 import os
 import uuid
+import re
+import unicodedata
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -39,6 +41,29 @@ class Source(BaseModel):
         return value
 
 
+class TechnicalVideo(Source):
+    creator: str = Field(min_length=1, max_length=200)
+    official_page: str
+    technical_content: str = Field(min_length=20, max_length=2000)
+    channel_id: str = Field(min_length=1, max_length=100)
+
+    @field_validator('url')
+    @classmethod
+    def video_url(cls, value):
+        if not re.fullmatch(r'https://www\.youtube\.com/watch\?v=[A-Za-z0-9_-]{11}', value):
+            raise ValueError('공식 YouTube 단일 영상 링크가 필요합니다.')
+        return value
+
+    @field_validator('official_page')
+    @classmethod
+    def official_url(cls, value):
+        return Source.safe_url(value)
+
+
+def product_key(value):
+    return re.sub(r'[^a-z0-9가-힣]', '', unicodedata.normalize('NFKD', value).casefold())
+
+
 class Recommendation(BaseModel):
     category: str
     title: str = Field(min_length=1, max_length=200)
@@ -53,6 +78,14 @@ class Recommendation(BaseModel):
     sources: list[Source] = Field(min_length=1, max_length=5)
     supporting_features: list[str] = Field(default_factory=list, max_length=4)
     media_sources: list[MediaSource] = Field(default_factory=list, max_length=8)
+    product_identity: str = Field(default='', max_length=200)
+    technical_video: TechnicalVideo | None = None
+
+    @model_validator(mode='after')
+    def technical_source(self):
+        if self.category == 'tech' and (not self.technical_video or not self.product_identity.strip()):
+            raise ValueError('테크는 정식 제품명 product_identity와 기술 설명 공식 영상이 필요합니다.')
+        return self
 
     @field_validator("category")
     @classmethod
@@ -80,8 +113,8 @@ class DailyBatch(BaseModel):
         if self.researched_at > now_kst() + timedelta(minutes=5):
             raise ValueError("미래 조사 시간은 사용할 수 없습니다.")
         for category in {item.category for item in self.items}:
-            if sum(i.category == category for i in self.items) != 5:
-                raise ValueError("카테고리별 정확히 5개가 필요합니다.")
+            if sum(i.category == category for i in self.items) != 3:
+                raise ValueError("매 조사에는 카테고리별 새 제품 3개가 필요합니다.")
         if len({i.stable_id() for i in self.items}) != len(self.items):
             raise ValueError("중복 아이템은 사용할 수 없습니다.")
         for item in self.items:
@@ -105,6 +138,14 @@ def save_batch(batch: DailyBatch):
     old = load_daily(batch.date)
     if old.get("researched_at") and datetime.fromisoformat(old["researched_at"]) >= batch.researched_at:
         raise ValueError("이전 조사 결과로 최신 목록을 덮어쓸 수 없습니다.")
+    seen = recommended_products()
+    current = set()
+    for item in batch.items:
+        key = product_key(item.product_identity or item.subject)
+        tagged = item.category + ':' + key
+        if tagged in seen or tagged in current:
+            raise ValueError('이미 추천한 제품입니다: ' + item.subject)
+        current.add(tagged)
     data = batch.model_dump(mode="json")
     updated_categories = {item.category for item in batch.items}
     data["items"].extend(item for item in old.get("items", []) if item["category"] not in updated_categories)
@@ -121,3 +162,12 @@ def save_batch(batch: DailyBatch):
     temp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     os.replace(temp, target)
     return data
+
+
+def recommended_products():
+    """History survives production resets; normalized identities forbid reworded repeats."""
+    seen = set()
+    for path in list(RECOMMENDATIONS_DIR.glob('????-??-??.json')) + list((RECOMMENDATIONS_DIR/'history').glob('*.json')):
+        for item in json.loads(path.read_text(encoding='utf-8')).get('items', []):
+            seen.add(item['category'] + ':' + product_key(item.get('product_identity') or item['subject']))
+    return seen
