@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-02.2",
+  "revision": "2026-10-02.3",
   "rules": [
     {
       "id": "exact-product",
@@ -19,7 +19,7 @@
     {
       "id": "approved-exterior",
       "category": "tech",
-      "instruction": "Exterior product scenes use the user-approved Blender model or authentic media. Generative visuals may explain isolated mechanisms only, labeled as conceptual rather than factual internal engineering."
+      "instruction": "Exterior shots use the approved model or authentic media. Assign visuals by narrated content, never fixed cut numbers. Every explained mechanism, including secondary features, needs a visible matching isolated concept diagram. Vapor chambers must show evaporation, spreading, condensation and wick return, not an exterior beauty shot. Mark conceptual internal structures explicitly."
     },
     {
       "id": "real-food",

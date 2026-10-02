@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import List, Optional
+from typing import List, Optional, Literal
 from pydantic import BaseModel, Field
 from google import genai
 from google.genai import types
@@ -18,6 +18,8 @@ class ScenePlan(BaseModel):
     image_url: Optional[str] = None
     purpose: str = "설명"
     covered_features: List[str] = Field(default_factory=list)
+    visual_mode: Optional[Literal["approved_model", "mechanism_concept", "product_photo", "real_media"]] = None
+    visual_subject: str = ""
 
 class VideoStoryBoard(BaseModel):
     title: str
@@ -83,7 +85,19 @@ Create a complete, highly engaging video storyboard plan for the following user 
 """
 
     if approved_model:
-        prompt += "\nOVERRIDE PHOTO STAGING: The exterior will be rendered deterministically from a user-approved Blender mesh, never synthesized. Scenes 1, 4, 5 and 6 show that exact mesh with subtle orbit/dolly camera. Scenes 2 and 3 are isolated mechanism concept diagrams only. No invented product teardown. Explain supporting features in scenes 4 and 5. The final scene uses the approved mesh, not a photograph."
+        prompt += """
+OVERRIDE PHOTO STAGING: Exterior shots use the exact user-approved Blender model.
+Set visual_mode per scene CONTENT, never by a fixed scene-number template: approved_model for exterior shots,
+mechanism_concept for isolated explanations of physical mechanisms. The first and final scenes use approved_model.
+Every scene has visual_subject (Korean phrase describing the visible subject). Each narrated mechanism, including
+supporting features, must appear visibly in its own conceptual shot or be combined with a closely related mechanism.
+Do not merely list a feature while displaying an unrelated exterior beauty shot. A vapor chamber explanation must
+show an isolated vapor chamber cross-section, heat source, evaporation, vapor spreading, condensation and wick return.
+The chip produces heat; the chamber spreads it. No exact undocumented device interior, dimensions or teardown.
+Use conceptual diagrams for supporting features whenever their mechanism is explained; scenes 4 and 5 are not
+restricted to exterior renders. Keep all researched supporting features and use short, scientifically correct narration.
+Only the final product reveal must be an exterior shot. Concept prompts exclude the complete product/housing.
+"""
     response = client.models.generate_content(
         model=model,
         contents=prompt,
@@ -113,4 +127,7 @@ Create a complete, highly engaging video storyboard plan for the following user 
         scene.image_url = None
     storyboard.target_aspect_ratio = aspect_ratio
     storyboard.estimated_total_seconds = num_scenes * 4
+    if approved_model:
+        from app.core.scene_visuals import validate_tech_visuals
+        validate_tech_visuals([scene.model_dump() for scene in storyboard.scenes])
     return storyboard

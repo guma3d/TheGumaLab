@@ -1,5 +1,6 @@
 """Version-scoped jobs. Nothing downstream starts until its parent is approved."""
 import asyncio
+import copy
 import json
 import logging
 import shutil
@@ -14,6 +15,7 @@ from app.core import blender_runner as blender
 from app.core.model_assets import discover, reconstruct, fetch
 from app.core.categories import PRESETS
 from app.core.planner import plan_video_storyboard
+from app.core.scene_visuals import validate_tech_visuals
 from app.core.image_client import generate_preview_image
 from app.core.veo_client import generate_video_clip
 from app.core.source_media import MediaSource, download_media, download_youtube_cc, media_preview, render_source_clip
@@ -153,24 +155,45 @@ def preview_job(idea_id, number):
     model=store.get(idea_id,'3DModel',version['model_version'])
     report=lambda text:progress(idea_id,'Preview',number,text)
     report('승인한 자료를 기준으로 6컷 대본을 기획합니다.')
-    board=plan_video_storyboard(user_idea=rec['hook'],target_duration=24,scene_count=6,
-        category=idea['category'],style_prompt=PRESETS[idea['category']]['style']+prompt_context(idea['category']),
-        evidence=json.dumps(rec,ensure_ascii=False),approved_model=idea['category']=='tech').model_dump()
+    parent_folder=None
+    revisions=version.get('scene_revisions')
+    if revisions:
+        parent=store.get(idea_id,'Preview',version['parent_preview_version'])
+        if parent['status']!='ready' or parent['model_version']!=version['model_version']:
+            raise ValueError('같은 모델을 사용하는 완성 프리뷰에서 수정해주세요.')
+        parent_folder=store.version_dir(idea_id,'Preview',parent['number'])
+        board=copy.deepcopy(parent['storyboard'])
+        for key,changes in revisions.items():
+            index=int(key)-1
+            if not 0<=index<len(board['scenes']):raise ValueError('수정할 컷 번호를 확인해주세요.')
+            if set(changes)-{'visual_mode','visual_subject','visual_prompt','narration_ko','purpose','covered_features'}:
+                raise ValueError('지원하지 않는 컷 수정 항목입니다.')
+            board['scenes'][index].update(changes)
+        # Older saved previews did not have the descriptive subject field.
+        for scene in board['scenes']:
+            scene.setdefault('visual_subject',scene.get('purpose','제품 설명'))
+    else:
+        board=plan_video_storyboard(user_idea=rec['hook'],target_duration=24,scene_count=6,
+            category=idea['category'],style_prompt=PRESETS[idea['category']]['style']+prompt_context(idea['category']),
+            evidence=json.dumps(rec,ensure_ascii=False),approved_model=idea['category']=='tech').model_dump()
+    if idea['category']=='tech':validate_tech_visuals(board['scenes'])
     store.write_json(folder/'storyboard.json',board)
     for idx,scene in enumerate(board['scenes']):
         report(f'{idx+1}/6 컷 프리뷰를 렌더링합니다.')
         path=folder/f'scene_{idx+1:02d}.png'
-        if idea['category']=='food':
+        if parent_folder and str(idx+1) not in revisions:
+            shutil.copyfile(parent_folder/f'scene_{idx+1:02d}.png',path)
+        elif idea['category']=='food':
             sources=model['sources']; candidate=sources[min(idx,len(sources)-1)]
             source=MediaSource(**candidate)
             media_preview(source,path,'9:16')
             scene.update(visual_mode='real_media',media_source=candidate)
-        elif idx in (1,2):
+        elif scene['visual_mode']=='mechanism_concept':
             generate_preview_image(scene['visual_prompt']+' Only isolated conceptual mechanisms. No complete product or exterior. No invented internal layout.',
                 path,'9:16',PRESETS['tech']['style'])
             scene['visual_mode']='mechanism_concept'
         else:
-            angle=[25,0,0,145,315,20][idx]
+            angle=scene.get('camera_angle',[25,70,110,145,315,20,225,25][idx])
             blender.still(model_folder/'model.blend',path,angle)
             scene.update(visual_mode='approved_model',camera_angle=angle)
         scene['image_url']=store.url(path)

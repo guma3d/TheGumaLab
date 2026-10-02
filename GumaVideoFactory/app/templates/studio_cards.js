@@ -56,7 +56,7 @@ function showVideoReview(card,data,regen){
     if(preview?.status!=='ready')throw Error('완성된 프리뷰가 필요합니다.');
     reviewRequest={card,idea:data.id,preview:preview.number,regen};
     document.getElementById('review-product').textContent=`${data.title} · 프리뷰 v${preview.number}`;
-    document.getElementById('review-scenes').innerHTML=preview.storyboard.scenes.map((s,i)=>`<div class="scene"><img src="${esc(safeLink(s.image_url))}" alt="컷 ${i+1}"><label>컷 ${i+1} 대본<textarea required maxlength="1000" class="review-narration">${esc(s.narration_ko)}</textarea></label></div>`).join('');
+    document.getElementById('review-scenes').innerHTML=preview.storyboard.scenes.map((s,i)=>`<div class="scene"><img src="${esc(safeLink(s.image_url))}" alt="컷 ${i+1}"><p><small>${s.visual_mode==='mechanism_concept'?'원리 개념도 · 실제 내부 설계 아님':s.visual_mode==='approved_model'?'승인한 제품 모델':'실사 자료'}</small></p><label>컷 ${i+1} 대본<textarea required maxlength="1000" class="review-narration">${esc(s.narration_ko)}</textarea></label></div>`).join('');
     document.getElementById('review-url').value=data.versions.Video[0]?.product_url||'';
     document.getElementById('review-approved').checked=false;
     document.getElementById('review-error').textContent='';
