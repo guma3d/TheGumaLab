@@ -219,7 +219,7 @@ def clip_workflow(idea):
     for stage in ('Preview','3DModel','Video'):
         v=latest[stage];allowed=stage=='Preview' or (ready and (needs if stage=='3DModel' else not needs or model_ok))
         stale=bool(stage=='3DModel' and v and ready and v.get('preview_version')!=preview['number'])
-        state='예약 준비' if not v else {'queued':'제작 대기','running':'생성 중','failed':'준비 실패','awaiting_review':'검증 중','ready':'완료'}.get(v['status'],'준비 중')
+        state=('최종 승인 대기' if stage=='Video' else '예약 준비') if not v else {'queued':'제작 대기','running':'생성 중','failed':'준비 실패','awaiting_review':'검증 중','ready':'완료'}.get(v['status'],'준비 중')
         if stage=='3DModel':state='이전 프리뷰 모델' if stale else ('승인 완료' if model.get('approved_at') else '검증 완료') if model_ok else '불필요' if ready and not needs else '확인 대기' if v and v['status']=='ready' else state
         buttons.append(dict(stage=stage,state=state,label=names[stage],number=v['number'] if v else None,
             status=v['status'] if v else 'empty',progress_message=(queue_message(idea['id'],stage,v) if v['status']=='queued' else v.get('message','')) if v else '',primary=stage==next_stage,

@@ -1,6 +1,6 @@
 // UI controller regression without paid generation or production data changes.
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const source=fs.readFileSync('app/templates/studio_cards.js','utf8');
+const source=fs.readFileSync(require('node:path').join(__dirname,'../app/templates/studio_cards.js'),'utf8');
 const nodes={},events={},writes=[];
 function node(){return {dataset:{},innerHTML:'',textContent:'',value:'',checked:false,classList:{add(){}},setAttribute(){},addEventListener(name,fn){events[name]=fn}}}
 const card=node();card.dataset={rec:'recommendation',idea:'product'};card.querySelector=s=>nodes[s]??=node();

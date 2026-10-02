@@ -68,7 +68,7 @@ function showVideoReview(card,data,regen){
     const model=data.versions['3DModel'].find(m=>m.number===preview.model_version);
     if(model)document.getElementById('review-scenes').innerHTML+=`<div><h3>함께 사용할 3D</h3><p>${esc((model.uncertainties||[]).join(' · '))}</p><div class="thumbs">${(model.images||[]).map(u=>`<img src="${esc(safeLink(u))}" alt="3D 검토 이미지">`).join('')}</div></div>`;
     document.getElementById('review-scenes').innerHTML+='<p>Veo: 제품 없는 추상 전환 4초. 제품 화면은 공식 클립을 보존합니다.</p>';
-    document.getElementById('review-url').value=data.versions.Video[0]?.product_url||'';
+    document.getElementById('review-url').value=data.versions.Video[0]?.product_url||data.recommendation.technical_video?.official_page||'';
     document.getElementById('review-approved').checked=false;
     document.getElementById('review-error').textContent='';
     document.getElementById('video-review').showModal();
