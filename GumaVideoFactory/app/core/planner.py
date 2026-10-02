@@ -92,7 +92,8 @@ mechanism_concept for isolated explanations of physical mechanisms. The first an
 Every scene has visual_subject (Korean phrase describing the visible subject). Each narrated mechanism, including
 supporting features, must appear visibly in its own conceptual shot or be combined with a closely related mechanism.
 Do not merely list a feature while displaying an unrelated exterior beauty shot. A vapor chamber explanation must
-show an isolated vapor chamber cross-section, heat source, evaporation, vapor spreading, condensation and wick return.
+show a thin flat vapor chamber cutaway ABOVE an external heat-source chip, evaporation, vapor spreading,
+condensation and wick return. Never put the chip inside the vapor cavity or make the chamber a tall box.
 The chip produces heat; the chamber spreads it. No exact undocumented device interior, dimensions or teardown.
 Use conceptual diagrams for supporting features whenever their mechanism is explained; scenes 4 and 5 are not
 restricted to exterior renders. Keep all researched supporting features and use short, scientifically correct narration.

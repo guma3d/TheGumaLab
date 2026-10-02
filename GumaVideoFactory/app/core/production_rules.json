@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-02.3",
+  "revision": "2026-10-02.4",
   "rules": [
     {
       "id": "exact-product",
@@ -19,7 +19,7 @@
     {
       "id": "approved-exterior",
       "category": "tech",
-      "instruction": "Exterior shots use the approved model or authentic media. Assign visuals by narrated content, never fixed cut numbers. Every explained mechanism, including secondary features, needs a visible matching isolated concept diagram. Vapor chambers must show evaporation, spreading, condensation and wick return, not an exterior beauty shot. Mark conceptual internal structures explicitly."
+      "instruction": "Exterior shots use the approved model or authentic media. Assign visuals by narrated content, never fixed cut numbers. Every explained mechanism, including secondary features, needs a visible matching isolated concept diagram. Vapor chambers must show a thin flat chamber above an external chip, evaporation, spreading, condensation and wick return; never enclose the chip in a tall chamber box. Mark conceptual internal structures explicitly."
     },
     {
       "id": "real-food",
