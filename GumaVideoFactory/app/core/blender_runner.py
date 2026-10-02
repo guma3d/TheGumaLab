@@ -60,7 +60,7 @@ def clip(model, output, angle=25, duration=4, camera_settings=None):
     run_blender(output.parent,'--scene',model,'--output',frames,'--angle',angle,
                 '--width',width,'--height',height,'--samples',128,'--frames',max(2,round(duration*24)),
                 '--distance',settings.get('distance',5.4),'--elevation',settings.get('elevation',1.25),
-                '--target',*settings.get('target',[0,0,0]),*motion,timeout=7200)
+                '--target',*settings.get('target',[0,0,0]),*motion,timeout=max(7200,round(duration*24)*240))
     result=subprocess.run([get_ffmpeg_bin(),'-v','error','-framerate','24','-i',str(frames/'frame_%04d.png'),
             '-c:v','libx264','-pix_fmt','yuv420p',str(output)],capture_output=True,timeout=180)
     if result.returncode: raise ValueError('3D 영상 인코딩에 실패했습니다.')

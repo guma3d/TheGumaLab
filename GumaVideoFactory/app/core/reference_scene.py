@@ -21,17 +21,22 @@ def main():
     bpy.ops.wm.read_factory_settings(use_empty=True)
     if args.kind=='thermal':
         # An abstract phase-change path, deliberately without a component enclosure.
-        for index in range(140):
-            theta=2*math.pi*index/140
+        for index in range(240):
+            theta=2*math.pi*index/240
             warm=math.sin(theta)>0
             color=(1,.25,.025) if warm else (.03,.7,1)
             point=(.7*math.sin(theta),.32*math.sin(theta*2),.8*math.cos(theta))
-            bpy.ops.mesh.primitive_uv_sphere_add(segments=12,ring_count=8,radius=.012 if warm else .022,location=point)
+            bpy.ops.mesh.primitive_uv_sphere_add(segments=24,ring_count=12,radius=.004 if warm else .009,location=point)
             obj=bpy.context.object;obj.name='Abstract vapor' if warm else 'Abstract condensate'
-            obj.data.materials.append(material(obj.name,color,.25,.15))
+            for face in obj.data.polygons:face.use_smooth=True
+            mat=material(obj.name,color,.25,.15)
+            shader=mat.node_tree.nodes.get('Principled BSDF')
+            shader.inputs['Emission Color'].default_value=(*color,1);shader.inputs['Emission Strength'].default_value=2
+            obj.data.materials.append(mat)
         for z,color,name in [(-.8,(1,.18,.01),'Evaporation region'),(.8,(.01,.5,1),'Condensation region')]:
-            bpy.ops.mesh.primitive_torus_add(major_radius=.18,minor_radius=.025,location=(0,0,z))
+            bpy.ops.mesh.primitive_uv_sphere_add(segments=32,ring_count=16,radius=.045,location=(0,0,z))
             bpy.context.object.name=name;bpy.context.object.data.materials.append(material(name,color,.4,.2))
+            for face in bpy.context.object.data.polygons:face.use_smooth=True
         lighting();camera(args.angle,distance=4.3,elevation=.5)
         scene=bpy.context.scene;scene.cycles.samples=128
         scene.render.resolution_x=1080;scene.render.resolution_y=1920;scene.render.resolution_percentage=100

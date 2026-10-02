@@ -169,6 +169,9 @@ def preview_job(idea_id, number):
             if not 0<=index<len(board['scenes']):raise ValueError('수정할 컷 번호를 확인해주세요.')
             if set(changes)-{'visual_mode','visual_subject','visual_prompt','narration_ko','purpose','covered_features','camera_movement','reference_candidates','reference_limitation','reference_presentation','camera_angle','camera_settings'}:
                 raise ValueError('지원하지 않는 컷 수정 항목입니다.')
+            if changes.get('visual_mode')=='approved_model':
+                for name in ('reference_presentation','reference_scene_file','reference_camera_distance','visual_review'):
+                    board['scenes'][index].pop(name,None)
             board['scenes'][index].update(changes)
         # Older saved previews did not have the descriptive subject field.
         for scene in board['scenes']:
@@ -182,7 +185,9 @@ def preview_job(idea_id, number):
     for idx,scene in enumerate(board['scenes']):
         report(f'{idx+1}/6 컷 프리뷰를 렌더링합니다.')
         path=folder/f'scene_{idx+1:02d}.png'
-        if parent_folder and str(idx+1) not in revisions:
+        metadata_only=(parent_folder and str(idx+1) in revisions and
+            set(revisions[str(idx+1)])<={'reference_limitation','camera_movement','purpose'})
+        if parent_folder and (str(idx+1) not in revisions or metadata_only):
             shutil.copyfile(parent_folder/f'scene_{idx+1:02d}.png',path)
             attachments=[r['file'] for r in scene.get('feature_references',[])]
             if scene.get('reference_scene_file'):attachments.append(scene['reference_scene_file'])
@@ -219,6 +224,10 @@ def preview_job(idea_id, number):
                 scene['visual_review']=review_feature_image(scene,path,refs,folder)
             scene['visual_mode']='mechanism_concept'
         else:
+            if parent_folder:
+                for ref in scene.get('feature_references',[]):
+                    shutil.copyfile(parent_folder/ref['file'],folder/ref['file'])
+                    ref['preview_url']=store.url(folder/ref['file'])
             angle=(scene.get('camera_settings') or {}).get('start_angle',scene.get('camera_angle',[25,70,110,145,315,20,225,25][idx]))
             if scene.get('camera_settings'):
                 blender.still(model_folder/'model.blend',path,angle,camera_settings=scene['camera_settings'])
