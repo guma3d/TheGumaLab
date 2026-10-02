@@ -46,6 +46,8 @@ async def execute(idea_id, stage, number):
 
 
 def model_job(idea_id, number):
+    if store.read(idea_id)['category']=='tech':
+        raise ValueError('테크 사전 준비는 Codex 예약 작업에서 로컬 도구로 처리합니다.')
     if store.get(idea_id,'3DModel',number).get('revision_operation'):
         return model_revision_job(idea_id,number)
     idea=store.read(idea_id); rec=idea['recommendation']; folder=store.version_dir(idea_id,'3DModel',number)
@@ -151,6 +153,8 @@ def model_revision_job(idea_id,number):
 
 
 def preview_job(idea_id, number):
+    if store.read(idea_id)['category']=='tech':
+        raise ValueError('테크 프리뷰는 Codex 예약 작업에서 준비합니다. 유료 분석은 호출하지 않습니다.')
     if store.read(idea_id)['category']=='tech' and not store.get(idea_id,'Preview',number).get('model_version'):
         from app.core.official_clips import create_preview
         return create_preview(idea_id,number,lambda text:progress(idea_id,'Preview',number,text))
@@ -249,6 +253,18 @@ async def video_job(idea_id, number):
     board=version['storyboard']; store.write_json(folder/'approved_storyboard.json',board)
     width,height=blender.video_size()
     clips=[]
+    if idea['category']=='tech' and version.get('veo_transition'):
+        from app.core.prepared_packages import verify_package
+        verify_package(idea_id,version['preview_version'])
+        transition=folder/'veo_transition.mp4';intro=folder/'intro.mp4'
+        motifs={'light':'Soft volumetric light sweeping over abstract polished surfaces.',
+            'signal':'Luminous particles traveling through abstract wave fields.',
+            'optics':'Abstract rays refracting through floating glass prisms.'}
+        prompt=motifs[version['veo_transition']]+' Premium cinematic 3D transition, dark clean studio, restrained teal accents, slow orbit and strong depth. No product, device, logo, text, people or specific engineering parts. Abstract visual metaphor only.'
+        progress(idea_id,'Video',number,'Veo로 추상 전환 컷을 제작합니다. 제품 원본은 보존합니다.')
+        await asyncio.to_thread(generate_video_clip,prompt=prompt,output_path=transition,duration_seconds=4,aspect_ratio='9:16')
+        await asyncio.to_thread(subprocess.run,[get_ffmpeg_bin(),'-v','error','-i',str(transition),'-f','lavfi','-i','anullsrc=r=48000:cl=stereo','-map','0:v:0','-map','1:a:0','-vf',f'scale={width}:{height},setsar=1,fps=24','-t','4','-c:v','libx264','-pix_fmt','yuv420p','-c:a','aac',str(intro)],check=True,capture_output=True,timeout=240)
+        clips.append(intro)
     for idx,scene in enumerate(board['scenes'],1):
         progress(idea_id,'Video',number,f'{idx}/6 컷 영상·음성을 만듭니다.')
         audio=folder/f'audio_{idx:02d}.mp3'
@@ -263,6 +279,8 @@ async def video_job(idea_id, number):
                 # Preserve official footage first, then add the approved exterior macro/orbit.
                 base=folder/f'base_{idx:02d}.mp4';extra=folder/f'3d_{idx:02d}.mp4'
                 camera=scene.get('camera_settings') or dict(distance=5.4,elevation=1.25,end_angle=65)
+                if store.get(idea_id,'3DModel',model_number).get('kind')=='principle':
+                    camera=dict(camera,distance=max(7.5,camera.get('distance',5.4)))
                 await asyncio.to_thread(blender.clip,model_folder/'model.blend',extra,camera.get('start_angle',25),duration*.4,
                     camera_settings=camera)
                 vf=f'scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=24,tpad=stop_mode=clone:stop_duration={duration}'
@@ -280,8 +298,11 @@ async def video_job(idea_id, number):
             await asyncio.to_thread(generate_video_clip,prompt=motion_prompt(scene),
                 output_path=raw,duration_seconds=4,aspect_ratio='9:16',image_path=preview_folder/f'scene_{idx:02d}.png')
         output=folder/f'clip_{idx:02d}.mp4'
+        filters=f'scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=24,tpad=stop_mode=clone:stop_duration={duration}'
+        if scene.get('enhance_3d') and model_number and store.get(idea_id,'3DModel',model_number).get('kind')=='principle':
+            filters+=f",drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf:text='PRINCIPLE VISUAL - NOT ACTUAL GEOMETRY':fontsize={max(10,width//42)}:fontcolor=white:box=1:boxcolor=black@0.7:x=(w-tw)/2:y=h*0.88:enable='gte(t,{duration*.6})'"
         cmd=[get_ffmpeg_bin(),'-v','error','-i',str(raw),'-i',str(audio),'-map','0:v:0','-map','1:a:0',
-            '-vf',f'scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=24,tpad=stop_mode=clone:stop_duration={duration}',
+            '-vf',filters,
             '-af','apad','-t',str(duration),'-c:v','libx264','-pix_fmt','yuv420p','-c:a','aac','-ar','48000','-ac','2',str(output)]
         mux=await asyncio.to_thread(subprocess.run,cmd,capture_output=True,timeout=240)
         if mux.returncode: raise ValueError('음성·영상 합성에 실패했습니다.')

@@ -190,7 +190,7 @@ def main():
             bpy.ops.render.render(write_still=True)
     else:
         for index, angle in enumerate((25,145,225,315),1):
-            camera(angle); scene.render.filepath=str(output/f'view_{index}.png'); bpy.ops.render.render(write_still=True)
+            camera(angle,args.distance,args.elevation,args.target); scene.render.filepath=str(output/f'view_{index}.png'); bpy.ops.render.render(write_still=True)
 
 
 if __name__=='__main__': main()

@@ -32,7 +32,7 @@ def read(idea_id):
     return json.loads((directory(idea_id) / 'idea.json').read_text(encoding='utf-8'))
 
 
-def create(recommendation, day):
+def create(recommendation, day, approved=True):
     # The same recommended product on different days continues its workspace.
     identity = recommendation['category'] + ':' + recommendation['subject'].strip().casefold()
     idea_id = hashlib.sha256(identity.encode()).hexdigest()[:16]
@@ -42,7 +42,7 @@ def create(recommendation, day):
             return read(idea_id)
         value = dict(id=idea_id, recommendation= recommendation, date=day,
                      category=recommendation['category'], title=recommendation['subject'],
-                     created_at=now_kst().isoformat(), idea_approved_at=now_kst().isoformat())
+                     created_at=now_kst().isoformat(), idea_approved_at=now_kst().isoformat() if approved else None)
         for stage in STAGES:
             (directory(idea_id) / stage).mkdir(parents=True, exist_ok=True)
         write_json(path, value)
@@ -201,14 +201,14 @@ def workflow(idea):
 def clip_workflow(idea):
     latest={s:next(iter(history(idea['id'],s)),None) for s in STAGES}
     preview=latest['Preview'];model=latest['3DModel'];video=latest['Video']
-    ready=bool(preview and preview['status']=='ready')
+    ready=bool(preview and preview['status']=='ready' and preview.get('package_ready'))
     needs=bool(ready and preview.get('needs_3d'))
-    model_ok=bool(model and model['status']=='ready' and model.get('approved_at') and ready and model.get('preview_version')==preview['number'])
-    next_stage='Preview';message='다음: 프리뷰·클립 생성'
+    model_ok=bool(model and model['status']=='ready' and (model.get('approved_at') or model.get('quality_reviewed_at')) and ready and model.get('preview_version')==preview['number'])
+    next_stage='Preview';message='예약 준비 · 매일 09·21시'
     if ready:
         next_stage='3DModel' if needs and not model_ok else 'Video'
         message='3D모델 생성 필요' if next_stage=='3DModel' else '다음: 최종 확인·영상 제작'
-        if needs and model and model['status']=='ready' and model.get('preview_version')==preview['number'] and not model.get('approved_at'):
+        if needs and model and model['status']=='ready' and model.get('preview_version')==preview['number'] and not (model.get('approved_at') or model.get('quality_reviewed_at')):
             message='다음: 3D 모델 확인·승인'
         if video and video['status']=='ready' and video.get('preview_version')==preview['number'] and (not needs or video.get('model_version')==(model or {}).get('number')):
             message='영상 완성 · 결과 확인'
@@ -219,9 +219,9 @@ def clip_workflow(idea):
     for stage in ('Preview','3DModel','Video'):
         v=latest[stage];allowed=stage=='Preview' or (ready and (needs if stage=='3DModel' else not needs or model_ok))
         stale=bool(stage=='3DModel' and v and ready and v.get('preview_version')!=preview['number'])
-        state='대기' if not v else {'queued':'제작 대기','running':'생성 중','failed':'실패','ready':'완료'}[v['status']]
-        if stage=='3DModel':state='이전 프리뷰 모델' if stale else '승인 완료' if model_ok else '불필요' if ready and not needs else '확인 대기' if v and v['status']=='ready' else state
+        state='예약 준비' if not v else {'queued':'제작 대기','running':'생성 중','failed':'준비 실패','awaiting_review':'검증 중','ready':'완료'}.get(v['status'],'준비 중')
+        if stage=='3DModel':state='이전 프리뷰 모델' if stale else ('승인 완료' if model.get('approved_at') else '검증 완료') if model_ok else '불필요' if ready and not needs else '확인 대기' if v and v['status']=='ready' else state
         buttons.append(dict(stage=stage,state=state,label=names[stage],number=v['number'] if v else None,
             status=v['status'] if v else 'empty',progress_message=(queue_message(idea['id'],stage,v) if v['status']=='queued' else v.get('message','')) if v else '',primary=stage==next_stage,
-            disabled=bool(running) or not allowed or bool(v and v['status']=='ready'),regen_disabled=bool(running) or not allowed,existing=bool(v)))
-    return dict(id=idea['id'],message=message,buttons=buttons,running=bool(running),approved=model_ok,needs_3d=needs)
+            disabled=stage!='Video' or bool(running) or not allowed or bool(v and v['status']=='ready'),regen_disabled=stage!='Video' or bool(running) or not allowed,existing=bool(v)))
+    return dict(id=idea['id'],message=message,buttons=buttons,running=bool(running),approved=bool(model and model.get('approved_at')),needs_3d=needs)

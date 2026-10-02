@@ -7,6 +7,14 @@ from app.core.source_media import download_media, download_youtube_cc
 
 if __name__ == "__main__":
     batch = DailyBatch.model_validate_json(Path(sys.argv[1]).read_text(encoding="utf-8-sig"))
+    from app.core import versions as store
+    from app.core.prepared_packages import verify_package
+    for item in batch.items:
+        if item.category=='tech':
+            previews=store.history(item.stable_id(),'Preview')
+            if not previews or previews[0].get('status')!='ready' or not previews[0].get('package_ready'):
+                raise ValueError(item.subject+': 클립·대본·필요한 3D 준비가 끝나야 추천할 수 있습니다.')
+            verify_package(item.stable_id(),previews[0]['number'])
     for item in batch.items:
         for source in item.media_sources:
             # 입력 JSON의 경로를 신뢰하지 않고 직접 확보한 파일만 연결합니다.

@@ -14,20 +14,14 @@ const sandbox={console,Set,Promise,JSON,Object,Error,initialFlows:{recommendatio
  api:async(url,body)=>{writes.push({url,body});await gate;state.workflow={...state.workflow,running:true,buttons:[{stage:'Preview',status:'running',state:'생성 중',number:1,primary:true,disabled:true,regen_disabled:true,progress_message:'1/6 컷'}]};return {number:1,status:'running'}}};
 vm.createContext(sandbox);vm.runInContext(source,sandbox);
 (async()=>{
- gate=new Promise(r=>unblock=r);
- const first=sandbox.runStage(button,'Preview',false);
- await new Promise(r=>setImmediate(r));
  await sandbox.runStage(button,'Preview',false);
- assert.equal(writes.length,1,'double click must not submit twice');
- assert.equal(writes[0].body.model_version,undefined,'preview must not require a model');
+ await sandbox.runStage(button,'Preview',true);
+ await sandbox.runStage(button,'3DModel',false);
+ await sandbox.runStage(button,'3DModel',true);
+ assert.equal(writes.length,0,'preparation buttons must never invoke paid APIs');
  assert.equal(sandbox.location.href,'unchanged');
- unblock();await first;
- assert.match(nodes['.steps'].innerHTML,/role="progressbar"/);
- assert.match(nodes['.steps'].innerHTML,/1\/6 컷/);
- assert.equal(sandbox.location.href,'unchanged');
- state.workflow.running=false;state.versions.Preview=[{number:1,status:'ready'}];
- await sandbox.runStage(button,'Preview',false);
- assert.equal(writes.length,1,'completed preview must not regenerate');
- assert.equal(sandbox.location.href,'unchanged');
- console.log('PASS: inline progress, approved parent, duplicate guard, no navigation or paid regeneration');
+ sandbox.paint(card,{id:'product',message:'준비 중',buttons:[{stage:'Preview',status:'awaiting_review',state:'검증 중'},{stage:'3DModel',status:'ready',state:'완료'}]});
+ assert.doesNotMatch(nodes['.steps'].innerHTML,/onclick=/);
+ assert.match(nodes['.steps'].innerHTML,/검증 중/);
+ console.log('PASS: scheduled preparation has no paid buttons or navigation');
 })().catch(e=>{console.error(e);process.exitCode=1});

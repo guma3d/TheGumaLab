@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-02.8",
+  "revision": "2026-10-02.9",
   "rules": [
     {
       "id": "exact-product",
@@ -24,7 +24,7 @@
     {
       "id": "premium-3d",
       "category": "tech",
-      "instruction": "Preserve premium official footage; add our own 3D only where it improves explanation. Plan exterior macro/orbit supplements after clip preview. Require approval of the matching preview and model before final video. PBR, real depth, restrained cinematic light and camera parallax remain mandatory for our 3D. Never use an exterior mesh as an invented internal component."
+      "instruction": "Codex prepares and visually reviews needed 3D before recommendations are published. Preserve PBR, depth and cinematic parallax. Use verified exact exterior assets or explicitly labelled abstract principles; never substitute a picture plane for a product model. Final human approval covers the entire prepared package."
     },
     {
       "id": "real-food",
@@ -44,7 +44,7 @@
     {
       "id": "official-clips-first",
       "category": "tech",
-      "instruction": "Recommend only products with verified manufacturer technical videos and source links. Official reuse is a user working assumption, not verified license permission. Record creator, URL, timestamps and hash; discard original audio. Use timestamped source frames and independent interval review. Missing coverage fails instead of inventing scenes. Preview precedes optional 3D; mark 3D모델 생성 필요 and block final rendering until required model approval."
+      "instruction": "Twice daily at 09:00 and 21:00 KST, prepare three unique tech packages: verified official technical clips, 6-8 original Korean narration scenes, required local Blender assets and a Veo transition plan. Codex inspects timed frames; FFmpeg and Blender run locally. Never call paid planning/image/model/video APIs before final approval. Seal reviewed file hashes; publish only complete packages. Record official reuse as user assumption and discard original audio. Veo at final approval adds abstract transitions, never regenerates exact products."
     }
   ],
   "feedback": [

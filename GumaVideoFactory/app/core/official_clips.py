@@ -115,8 +115,8 @@ def validate_board(board, seconds, rec):
     intervals=[]
     for scene in board.scenes:
         start,end=scene.start_seconds,scene.end_seconds
-        if end > seconds or not 2 <= end-start <= 10:
-            raise ValueError('클립 구간이 원본 길이 또는 2~10초 범위를 벗어났습니다.')
+        if end > seconds or not 1.5 <= end-start <= 10:
+            raise ValueError('클립 구간이 원본 길이 또는 1.5~10초 범위를 벗어났습니다.')
         if any(max(start,a)<min(end,b) for a,b in intervals):
             raise ValueError('서로 겹치는 클립 구간은 사용할 수 없습니다.')
         intervals.append((start,end));covered.update(scene.covered_features)
@@ -177,6 +177,12 @@ Only describe researched features. Do not invent folding mechanisms, physical mo
             config=types.GenerateContentConfig(response_mime_type='application/json',temperature=0))
         review=json.loads(audit.text);store.write_json(folder/'visual_review.json',review)
         if review.get('passed') is not True:raise ValueError('공식 클립과 설명의 일치 검토를 통과하지 못했습니다. 재생성해주세요.')
+    render_board(idea_id,number,board,path,meta,report)
+
+
+def render_board(idea_id,number,board,path,meta,report,publish=True):
+    """Local FFmpeg only. Analysis and visual approval belong to the caller."""
+    folder=store.version_dir(idea_id,'Preview',number)
     result=board.model_dump();result['needs_3d']=any(s.enhance_3d for s in board.scenes)
     for i,scene in enumerate(result['scenes'],1):
         report(f'{i}/{len(result["scenes"])} 공식 클립·프리뷰를 추출합니다.')
@@ -187,5 +193,6 @@ Only describe researched features. Do not invent folding mechanisms, physical mo
         scene.update(scene_number=i,visual_mode='official_clip',clip_url=store.url(clip),image_url=store.url(image),
             source_url=meta['url'],source_sha256=meta['sha256'],duration_seconds=scene['end_seconds']-scene['start_seconds'])
     store.write_json(folder/'storyboard.json',result)
+    if not publish:return result
     store.update(idea_id,'Preview',number,status='ready',storyboard=result,needs_3d=result['needs_3d'],
         message='3D모델 생성 필요 · 프리뷰를 확인하고 3D 보완을 시작하세요.' if result['needs_3d'] else '공식 클립·대본 준비 완료 · 최종 승인 후 영상 제작')

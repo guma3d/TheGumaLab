@@ -10,6 +10,7 @@ function paint(card,flow){
     const first=category==='tech'?'Preview':'3DModel';
     const actions=flow?.buttons||Object.keys(stageNames).map(stage=>({stage,status:'empty',state:'대기',primary:stage===first,disabled:stage!==first,regen_disabled:stage!==first}));
     card.querySelector('.steps').innerHTML=actions.map((a,i)=>{
+        if(category==='tech'&&a.stage!=='Video')return `<div class="stage-line"><div class="stage-caption"><span>${i+1} · ${stageNames[a.stage]}</span><span>${esc(a.state)}</span></div><p class="muted">${esc(a.progress_message||(a.status==='ready'?'준비 완료 · 제목에서 확인':'09·21시 Codex가 준비합니다.'))}</p></div>`;
         const queued=a.status==='queued',running=queued||a.status==='running';
         const label=queued?(a.progress_message||'제작 대기'):running?`${stageNames[a.stage]} 생성 중`:a.status==='ready'?`${stageNames[a.stage]} ${a.state==='승인 완료'?'승인 완료':'완료'}`:a.status==='failed'?'다시 생성':generateLabels[a.stage];
         return `<div class="stage-line"><div class="stage-caption"><span>${i+1} · ${stageNames[a.stage]}</span><span>${a.number?'v'+a.number+' · ':''}${esc(a.state)}</span></div><div class="step"><button data-stage="${a.stage}" class="${a.primary?'primary ':''}${running?'in-progress':a.status==='ready'?'stage-complete':''}" ${a.disabled||running?'disabled':''} aria-busy="${running}" onclick="runStage(this,'${a.stage}',false)">${running?'<span class="button-progress" role="progressbar" aria-label="생성 진행 중"></span>':''}<span>${esc(label)}</span></button><button class="regen" title="새 버전 생성" aria-label="${stageNames[a.stage]} 재생성" ${a.regen_disabled?'disabled':''} onclick="runStage(this,'${a.stage}',true)">↻</button></div>${running?`<small class="progress-note">${esc(a.progress_message||'작업 준비 중')}</small>`:''}</div>`;
@@ -33,6 +34,7 @@ function pendingButton(button){
     button.innerHTML='<span class="button-progress" role="progressbar" aria-label="작업 요청 중"></span><span>…</span>';
 }
 async function runStage(button,stage,regen){
+    if(category==='tech'&&stage!=='Video'){toast('Codex 예약 작업에서 준비합니다.');return}
     const card=button.closest('.recommendation');if(pending.has(card))return;
     pending.add(card);pendingButton(button);
     try{
@@ -59,10 +61,13 @@ async function runStage(button,stage,regen){
 }
 function showVideoReview(card,data,regen){
     const preview=data.versions.Preview[0];
-    if(preview?.status!=='ready')throw Error('완성된 프리뷰가 필요합니다.');
+    if(preview?.status!=='ready'||(category==='tech'&&!preview.package_ready))throw Error('예약 사전 준비가 완료되어야 합니다.');
     reviewRequest={card,idea:data.id,preview:preview.number,regen};
     document.getElementById('review-product').textContent=`${data.title} · 프리뷰 v${preview.number}`;
     document.getElementById('review-scenes').innerHTML=preview.storyboard.scenes.map((s,i)=>`<div class="scene">${s.clip_url?`<video controls muted playsinline preload="metadata" poster="${esc(safeLink(s.image_url))}" src="${esc(safeLink(s.clip_url))}"></video>`:`<img src="${esc(safeLink(s.image_url))}" alt="컷 ${i+1}">`}<p><small>${s.visual_mode==='official_clip'?'공식 클립':s.visual_mode==='mechanism_concept'?'원리 개념도 · 실제 내부 설계 아님':s.visual_mode==='approved_model'?'승인한 제품 모델':'실사 자료'}</small></p><p><small>${esc(s.camera_movement||'')}</small></p>${s.reference_limitation?`<p><small>${esc(s.reference_limitation)}</small></p>`:''}${(s.feature_references||[]).map(r=>`<p><a href="${esc(safeLink(r.page_url))}" target="_blank" rel="noopener noreferrer">공식 참고자료</a></p>`).join('')}<label>컷 ${i+1} 대본<textarea required maxlength="1000" class="review-narration">${esc(s.narration_ko)}</textarea></label></div>`).join('');
+    const model=data.versions['3DModel'].find(m=>m.number===preview.model_version);
+    if(model)document.getElementById('review-scenes').innerHTML+=`<div><h3>함께 사용할 3D</h3><p>${esc((model.uncertainties||[]).join(' · '))}</p><div class="thumbs">${(model.images||[]).map(u=>`<img src="${esc(safeLink(u))}" alt="3D 검토 이미지">`).join('')}</div></div>`;
+    document.getElementById('review-scenes').innerHTML+='<p>Veo: 제품 없는 추상 전환 4초. 제품 화면은 공식 클립을 보존합니다.</p>';
     document.getElementById('review-url').value=data.versions.Video[0]?.product_url||'';
     document.getElementById('review-approved').checked=false;
     document.getElementById('review-error').textContent='';

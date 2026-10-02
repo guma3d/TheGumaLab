@@ -28,19 +28,24 @@ class StudioTests(unittest.TestCase):
         result=asyncio.run(studio.start(self.id,stage,studio.StageRequest(**kw),tasks))
         return result,tasks
     def ready_preview(self,needs=False):
-        value,_=self.start('Preview',regenerate=bool(store.history(self.id,'Preview')))
+        value,_=store.reserve(self.id,'Preview',regenerate=bool(store.history(self.id,'Preview')))
         n=value['number'];scenes=[]
         for i in range(1,7):
             for ext in ('png','mp4'):(store.version_dir(self.id,'Preview',n)/f'scene_{i:02d}.{ext}').write_bytes(b'asset')
             scenes.append(dict(scene_number=i,narration_ko='original',image_url='/test',visual_mode='official_clip'))
-        store.update(self.id,'Preview',n,status='ready',needs_3d=needs,storyboard=dict(scenes=scenes))
+        store.update(self.id,'Preview',n,status='ready',package_ready=True,needs_3d=needs,storyboard=dict(scenes=scenes))
+        from app.core.prepared_packages import digest
+        f=store.version_dir(self.id,'Preview',n)
+        store.write_json(f/'package.json',dict(files={p.relative_to(store.directory(self.id)).as_posix():digest(p) for p in f.glob('scene_*')},veo_transition='light'))
         return n
 
     def ready_model(self,preview):
-        value,_=self.start('3DModel',preview_version=preview,approved=True);n=value['number']
+        value,_=store.reserve(self.id,'3DModel',True,preview_version=preview);n=value['number']
         (store.version_dir(self.id,'3DModel',n)/'model.blend').write_bytes(b'test-model')
         store.update(self.id,'3DModel',n,status='ready')
         asyncio.run(studio.approve_model(self.id,n,studio.Approval(appearance_confirmed=True,usage_confirmed=True)))
+        f=store.version_dir(self.id,'Preview',preview)/'package.json'
+        package=json.loads(f.read_text());package['model_version']=n;store.write_json(f,package)
         return n
 
     def video(self,n,**kw):
@@ -71,14 +76,12 @@ class StudioTests(unittest.TestCase):
         with self.assertRaises(HTTPException):self.video(n)
         self.assertEqual(store.history(self.id,'Video'),[])
 
-    def test_regeneration_preserves_files_and_duplicate_click_is_free(self):
-        first,tasks=self.start('Preview');again,empty=self.start('Preview')
-        self.assertEqual(first,again);self.assertEqual(len(empty.tasks),0)
-        with self.assertRaises(HTTPException):self.start('Preview',regenerate=True)
-        path=store.version_dir(self.id,'Preview',1)/'test';path.write_bytes(b'old')
-        store.update(self.id,'Preview',1,status='failed')
-        second,tasks=self.start('Preview',regenerate=True)
-        self.assertEqual(second['number'],2);self.assertEqual(path.read_bytes(),b'old')
+    def test_preparation_api_is_blocked_even_for_regeneration(self):
+        for stage in ('Preview','3DModel'):
+            for regenerate in (False,True):
+                with self.assertRaises(HTTPException) as caught:self.start(stage,regenerate=regenerate)
+                self.assertEqual(caught.exception.status_code,409)
+            self.assertEqual(store.history(self.id,stage),[])
 
     def test_final_approval_and_all_assets_required(self):
         n=self.ready_preview()
@@ -90,8 +93,8 @@ class StudioTests(unittest.TestCase):
         with patch.object(main,'Worker') as worker,TestClient(main.app) as client:
             worker.return_value.stop=AsyncMock()
             response=client.post(f'/api/ideas/{self.id}/Preview',json={})
-            self.assertEqual(response.status_code,200);self.assertEqual(response.json()['status'],'queued')
-            self.assertEqual(client.post(f'/api/ideas/{self.id}/3DModel',json={}).status_code,404)
+            self.assertEqual(response.status_code,409)
+            self.assertEqual(client.post(f'/api/ideas/{self.id}/3DModel',json={}).status_code,409)
 
     def test_restart_and_concurrent_reservation(self):
         def reserve():
@@ -125,11 +128,11 @@ class StudioTests(unittest.TestCase):
         self.assertEqual(parser.images,['https://example.com/photo.jpg'])
 
     def test_job_failure_is_retained_as_a_failed_version(self):
-        self.start('Preview')
+        store.reserve(self.id,'Preview')
         with patch.object(jobs,'preview_job',side_effect=ValueError('No matching sources')):
             asyncio.run(jobs.execute(self.id,'Preview',1))
         self.assertEqual(store.get(self.id,'Preview',1)['status'],'failed')
-        new,_=self.start('Preview',regenerate=True);self.assertEqual(new['number'],2)
+        new,_=store.reserve(self.id,'Preview',regenerate=True);self.assertEqual(new['number'],2)
 
 
 if __name__=='__main__':unittest.main()

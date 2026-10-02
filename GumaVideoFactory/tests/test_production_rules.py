@@ -25,5 +25,5 @@ class SharedRulesTests(unittest.TestCase):
                 store.reserve(idea['id'], '3DModel')
                 store.update(idea['id'], '3DModel', 1, status='ready', approved_at='approved')
                 flow = store.workflow(idea)
-                self.assertEqual(flow['message'], '다음: 프리뷰·클립 생성')
+                self.assertEqual(flow['message'], '예약 준비 · 매일 09·21시')
                 self.assertTrue(flow['buttons'][0]['primary'])

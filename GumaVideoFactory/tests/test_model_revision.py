@@ -40,7 +40,7 @@ class ModelRevisionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp,patch.object(store,'ROOT',Path(temp)):
             idea=store.create(dict(category='tech',subject='iPhone 18 Pro'),'2026-10-02');iid=idea['id']
             store.reserve(iid,'Preview')
-            store.update(iid,'Preview',1,status='ready',needs_3d=True)
+            store.update(iid,'Preview',1,status='ready',package_ready=True,needs_3d=True)
             flow=store.workflow(idea)
             self.assertEqual(flow['message'],'3D모델 생성 필요')
             self.assertTrue(flow['buttons'][1]['primary'])
@@ -50,7 +50,7 @@ class ModelRevisionTests(unittest.TestCase):
             flow=store.workflow(idea)
             self.assertTrue(flow['approved']);self.assertFalse(flow['buttons'][2]['disabled'])
             store.reserve(iid,'Preview',True)
-            store.update(iid,'Preview',2,status='ready',needs_3d=True)
+            store.update(iid,'Preview',2,status='ready',package_ready=True,needs_3d=True)
             flow=store.workflow(idea)
             self.assertFalse(flow['approved']);self.assertTrue(flow['buttons'][2]['disabled'])
 

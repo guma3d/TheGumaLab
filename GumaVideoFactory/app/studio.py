@@ -76,6 +76,8 @@ async def get_idea(idea_id:str):
 @router.post('/api/ideas/{idea_id}/{stage}')
 async def start(idea_id:str,stage:Literal['3DModel','Preview','Video'],req:StageRequest,tasks:BackgroundTasks):
     idea=find(idea_id)
+    if idea['category']=='tech' and stage!='Video':
+        raise HTTPException(409,'프리뷰·3D는 09·21시 Codex 예약 작업에서 준비합니다. 유료 사전 생성은 중단되었습니다.')
     with store.LOCK:
         parents={}
         # A normal click opens the existing result without additional API calls.
@@ -90,6 +92,9 @@ async def start(idea_id:str,stage:Literal['3DModel','Preview','Video'],req:Stage
                 parents=dict(preview_version=preview['number'],preview_approved_at=now_kst().isoformat())
             elif stage=='Video':
                 preview=version(idea_id,'Preview',req.preview_version)
+                from app.core.prepared_packages import verify_package
+                try: package=verify_package(idea_id,preview['number'])
+                except ValueError as e: raise HTTPException(409,str(e))
                 if preview['status']!='ready':raise HTTPException(409,'완성된 프리뷰가 필요합니다.')
                 if not req.approved:raise HTTPException(400,'대본과 클립을 확인하고 최종 승인해주세요.')
                 scenes=copy.deepcopy(preview['storyboard']['scenes'])
@@ -104,14 +109,16 @@ async def start(idea_id:str,stage:Literal['3DModel','Preview','Video'],req:Stage
                 if preview.get('needs_3d'):
                     models=[v for v in store.history(idea_id,'3DModel') if v.get('preview_version')==preview['number']]
                     model=version(idea_id,'3DModel',req.model_version) if req.model_version else (models[0] if models else None)
-                    if not model or model.get('preview_version')!=preview['number'] or model['status']!='ready' or not model.get('approved_at'):
+                    if not model or model['number']!=package.get('model_version'):
+                        raise HTTPException(409,'검수된 준비 묶음의 3D 모델을 사용해주세요.')
+                    if not model or model.get('preview_version')!=preview['number'] or model['status']!='ready' or not (model.get('approved_at') or model.get('quality_reviewed_at')):
                         raise HTTPException(409,'이 프리뷰의 3D 모델을 생성하고 승인해야 합니다.')
                     path=store.version_dir(idea_id,'3DModel',model['number'])/'model.blend'
                     if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=model.get('model_sha256'):
                         raise HTTPException(409,'승인한 모델이 변경됐습니다. 외형을 다시 확인해주세요.')
                 for scene,text in zip(scenes,req.narrations):scene['narration_ko']=text.strip()
                 parents=dict(preview_version=preview['number'],model_version=model['number'] if model else None,
-                    approved_at=now_kst().isoformat(),product_url=req.product_url.strip(),storyboard=dict(preview['storyboard'],scenes=scenes))
+                    approved_at=now_kst().isoformat(),veo_transition=package['veo_transition'],product_url=req.product_url.strip(),storyboard=dict(preview['storyboard'],scenes=scenes))
         elif stage in ('Preview','Video'):
             if stage=='Preview':
                 if not req.model_version: raise HTTPException(409,'3D 모델·자료 버전을 선택해주세요.')

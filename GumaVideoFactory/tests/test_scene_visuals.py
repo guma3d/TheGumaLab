@@ -15,7 +15,7 @@ class SceneVisualTests(unittest.TestCase):
         scenes[3].update(visual_mode='mechanism_concept',visual_prompt='Vapor chamber evaporation and condensation cross-section')
         validate_tech_visuals(scenes)
 
-    def test_revision_renders_cut_four_as_concept_and_preserves_other_cuts(self):
+    def test_legacy_tech_revision_cannot_call_paid_preview(self):
         with tempfile.TemporaryDirectory() as temp,patch.object(store,'ROOT',Path(temp)),patch.object(store,'STORAGE_DIR',Path(temp)):
             idea=store.create(dict(category='tech',subject='Test cooler',hook='cool'),'2026-10-02');iid=idea['id']
             store.reserve(iid,'3DModel');store.update(iid,'3DModel',1,status='ready',approved_at='approved')
@@ -30,11 +30,6 @@ class SceneVisualTests(unittest.TestCase):
             def image(prompt,path,*args,**kwargs):path.write_bytes(b'new-concept')
             refs=[dict(file='reference.png',scope='exact_visible',page_url='https://example.com',limitation='')]
             with patch.object(jobs,'review_feature_image',return_value=dict(passed=True)),patch.object(jobs,'resolve_feature_references',return_value=refs),patch.object(jobs,'generate_preview_image',side_effect=image) as generate,patch.object(jobs.blender,'still') as render,patch.object(jobs,'plan_video_storyboard') as plan:
-                jobs.preview_job(iid,2)
-            generate.assert_called_once();render.assert_not_called();plan.assert_not_called()
-            self.assertEqual(len(generate.call_args.kwargs['feature_references']),1)
-            folder=store.version_dir(iid,'Preview',2)
-            self.assertEqual((folder/'scene_04.png').read_bytes(),b'new-concept')
-            for i in (1,2,3,5,6):self.assertEqual((folder/f'scene_{i:02d}.png').read_bytes(),(parent/f'scene_{i:02d}.png').read_bytes())
+                with self.assertRaises(ValueError):jobs.preview_job(iid,2)
+            generate.assert_not_called();render.assert_not_called();plan.assert_not_called()
             self.assertEqual(store.get(iid,'Preview',1)['storyboard']['scenes'],original)
-            self.assertIsNone(store.get(iid,'Preview',2)['approved_at'])
