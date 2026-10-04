@@ -131,6 +131,8 @@ def enqueue(id,n,regenerate=False):
     folder=store.version_dir(id,'Preview',n);rec=read(folder/'recommendation.json')
     from app.core.recommendations import PurchaseLink
     purchase=PurchaseLink.model_validate(rec['purchase_link'])
+    previous=store.history(id,'Video')
+    regenerate=regenerate or bool(previous and previous[0].get('preview_version')!=n)
     return store.reserve(id,'Video',regenerate,queued=True,preview_version=n,execution_mode='astra_shopping',
         storyboard=read(folder/'storyboard.json'),product_url=purchase.affiliate_url,voice=DEFAULT_VOICE)[0]
 

@@ -56,7 +56,7 @@ def version(idea_id,stage,number):
 @router.get('/ideas/{idea_id}')
 async def idea_page(request:Request,idea_id:str):
     find(idea_id)
-    return templates.TemplateResponse(request=request,name='idea.html',context={'idea':store.snapshot(idea_id)})
+    return templates.TemplateResponse(request=request,name='idea.html',context={'idea':dict(store.snapshot(idea_id),workflow=store.workflow(store.read(idea_id)))})
 
 
 @router.post('/api/ideas')
