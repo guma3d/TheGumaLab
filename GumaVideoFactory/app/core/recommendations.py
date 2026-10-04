@@ -233,6 +233,24 @@ def visible_daily(date=None):
     return dict(data,items=visible)
 
 
+def replace_completed_item(date, old_id, new_id, reason):
+    """Explicit user-requested replacement; preserve the original history and daily quota."""
+    from app.core import versions as store
+    data=load_daily(date);idea=store.read(new_id);videos=store.history(new_id,'Video')
+    if not videos or videos[0].get('publication_state')!='private':
+        raise ValueError('교체 영상의 실제 비공개 업로드가 필요합니다.')
+    old=next((x for x in data['items'] if x['id']==old_id),None)
+    if not old or old['category']!=idea['category'] or len(reason)<10:
+        raise ValueError('같은 카테고리의 기존 항목과 교체 사유가 필요합니다.')
+    replacement=dict(idea['recommendation'],id=new_id,slot=old['slot'])
+    data['items']=[replacement if x['id']==old_id else x for x in data['items']]
+    data['replacement']={'old_id':old_id,'new_id':new_id,'reason':reason,'at':now_kst().isoformat()}
+    archive=RECOMMENDATIONS_DIR/'history';archive.mkdir(exist_ok=True,parents=True)
+    store.write_json(archive/f'{date}_replacement_{uuid.uuid4().hex[:8]}.json',data)
+    store.write_json(RECOMMENDATIONS_DIR/f'{date}.json',data)
+    return data
+
+
 def recommended_products():
     """History survives production resets; normalized identities forbid reworded repeats."""
     seen = set()

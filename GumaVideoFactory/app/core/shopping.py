@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 from typing import Literal
 from pydantic import BaseModel, Field, model_validator
-DEFAULT_VOICE = "ko-KR-HyunsuMultilingualNeural"
+DEFAULT_VOICE = "Achird"
 from app.core import quality
 from app.core import versions as store
 from app.core import official_clips as media
@@ -19,11 +19,36 @@ from app.core.tts_engine import synthesize_speech
 from app.core.veo_client import generate_video_clip
 
 ROLES = ('need', 'solution', 'reason', 'product', 'cta')
+DISCLOSURE = '이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.'
+
+
+def join_smooth(segments, output):
+    """Short dissolves overlap the trailing silence, never remove spoken endings."""
+    current=segments[0]
+    for i,next_clip in enumerate(segments[1:],1):
+        target=output.parent/f'transition_{i:02d}.mp4'
+        offset=round((media.duration(current)-.2)*30)/30
+        graph=(f'[0:v]setpts=PTS-STARTPTS,fps=30,settb=1/30[v0];'
+               f'[1:v]setpts=PTS-STARTPTS,fps=30,settb=1/30[v1];'
+               f'[v0][v1]xfade=transition=fade:duration=0.2:offset={offset}[v]')
+        media.run([media.get_ffmpeg_bin(),'-v','error','-filter_complex_threads','1','-i',str(current),'-i',str(next_clip),
+            '-filter_complex',graph,'-map','[v]','-an','-r','30','-c:v','libx264','-crf','16','-preset','fast',
+            '-pix_fmt','yuv420p',str(target)],600)
+        current=target
+    args=[media.get_ffmpeg_bin(),'-v','error','-i',str(current)]
+    filters=[]
+    for i,segment in enumerate(segments,1):
+        args+=['-i',str(segment)]
+        duration=round(media.duration(segment)*30)/30-(.2 if i<len(segments) else 0)
+        filters.append(f'[{i}:a]apad,atrim=duration={duration:.6f},asetpts=PTS-STARTPTS[a{i}]')
+    filters.append(''.join(f'[a{i}]' for i in range(1,len(segments)+1))+f'concat=n={len(segments)}:v=0:a=1[a]')
+    media.run(args+['-filter_complex',';'.join(filters),'-map','0:v','-map','[a]','-c:v','copy','-c:a','aac','-b:a','192k','-movflags','+faststart',str(output)],600)
+
 
 
 class Cut(BaseModel):
     role: Literal['need','solution','reason','product','cta']
-    mode: Literal['official_clip','official_image','veo']
+    mode: Literal['official_clip','official_image','veo','illustration_clip','explanatory_image']
     source_file: str
     source_url: str
     evidence: str = Field(min_length=10)
@@ -67,7 +92,7 @@ class Board(BaseModel):
             Source.safe_url(self.popularity_source_url)
         elif any(word in s.narration_ko for s in self.scenes for word in ('인기','품절','판매 1위','판매량 1위','대세')):
             raise ValueError('인기 주장은 원문 근거가 필요합니다. 없으면 관심을 끄는 이유로 설명하세요.')
-        if any(word in self.scenes[-1].narration_ko for word in ('하단 링크','댓글 링크','설명란 링크')):
+        if any(word in self.scenes[-1].narration_ko for word in ('하단 링크','댓글 링크를 클릭','설명란 링크를 클릭')):
             raise ValueError('쇼츠 CTA는 클릭 가능한 채널 프로필 링크로 안내하세요.')
         return self
 
@@ -89,7 +114,7 @@ def build(rec_path, board_path):
     n=value['number'];folder=store.version_dir(idea['id'],'Preview',n)
     try:
         result=board.model_dump();result['pipeline']='shopping_v2';result['needs_3d']=False
-        result['quality_revision']='director-v1'
+        result['quality_revision']='director-v2'
         result['category_style']=dict(PRESETS[rec.category])
         store.write_json(folder/'recommendation.json',rec.model_dump(mode='json'))
         store.write_json(folder/'production_rules.json',snapshot(rec.category))
@@ -119,6 +144,7 @@ def build(rec_path, board_path):
                 image_url=store.url(image),clip_url=store.url(clip),source_sha256=digest(copied),
                 source_file=copied.name,enhance_3d=False)
             result['scenes'][i-1]['source_quality']=measurement
+        quality.validate_variety(result['scenes'])
         store.write_json(folder/'storyboard.json',result)
         value=store.update(idea['id'],'Preview',n,status='awaiting_review',storyboard=result,needs_3d=False,
             message='Astra 컷씬 검수 대기',board_sha256=digest(folder/'storyboard.json'))
@@ -159,7 +185,7 @@ def enqueue(id,n,regenerate=False,reuse_video_version=None):
     previous=store.history(id,'Video')
     regenerate=regenerate or bool(previous and previous[0].get('preview_version')!=n)
     return store.reserve(id,'Video',regenerate,queued=True,preview_version=n,execution_mode='astra_shopping',
-        storyboard=read(folder/'storyboard.json'),product_url=purchase.affiliate_url,voice=DEFAULT_VOICE,voice_rate='+15%',quality_revision='director-v1',reuse_video_version=reuse_video_version)[0]
+        storyboard=read(folder/'storyboard.json'),product_url=purchase.affiliate_url,voice=DEFAULT_VOICE,voice_rate='natural-brisk',quality_revision='director-v2',reuse_video_version=reuse_video_version)[0]
 
 
 async def render(id,n):
@@ -169,14 +195,22 @@ async def render(id,n):
     # Validate every spoken duration before any paid Veo request.
     for i,scene in enumerate(board['scenes'],1):
         audio=folder/f'audio_{i:02d}.mp3'
-        await synthesize_speech(scene['narration_ko'],audio,voice=v['voice'],rate=v.get('voice_rate','+15%'))
-        if media.duration(audio)+.25>6.5:
+        reused_audio=False
+        if v.get('reuse_video_version'):
+            parent=store.get(id,'Video',v['reuse_video_version'])
+            old=parent['storyboard']['scenes'][i-1]
+            source=store.version_dir(id,'Video',v['reuse_video_version'])/audio.name
+            if source.is_file() and parent.get('voice')==v['voice'] and old['narration_ko']==scene['narration_ko']:
+                shutil.copyfile(source,audio);reused_audio=True
+        if not reused_audio:
+            await synthesize_speech(scene['narration_ko'],audio,voice=v['voice'],rate=v.get('voice_rate','natural-brisk'))
+        if media.duration(audio)+.4>(9 if scene['role']=='cta' else 6.5):
             raise ValueError(f'CUT {i}: 대사를 6초 안팎으로 간결하게 수정하세요.')
     for i,scene in enumerate(board['scenes'],1):
         store.update(id,'Video',n,message=f'{i}/{len(board["scenes"])} 컷·고정 음성 제작')
         audio=folder/f'audio_{i:02d}.mp3'
-        seconds=media.duration(audio)+.25
-        if seconds>6.5:
+        seconds=media.duration(audio)+.4
+        if seconds>(9 if scene['role']=='cta' else 6.5):
             raise ValueError(f'CUT {i}: 대사가 {seconds:.1f}초입니다. 6초 안팎으로 간결하게 수정하세요.')
         raw=preview/f'scene_{i:02d}.mp4'
         if scene['mode']=='veo':
@@ -189,7 +223,7 @@ async def render(id,n):
                 if source.is_file() and old.get('veo_prompt')==scene['veo_prompt'] and old.get('source_sha256')==scene.get('source_sha256'):
                     shutil.copyfile(source,raw);reused=True
             if not reused:
-                await asyncio.to_thread(generate_video_clip,prompt=scene['veo_prompt']+' Full vertical composition, no letterboxing. No speech or subtitles. Contextual lifestyle illustration only; no identifiable product, brand, food close-up or engineering internals. Product and technology views use the original official media.',output_path=raw,duration_seconds=8,aspect_ratio='9:16',resolution='1080p')
+                await asyncio.to_thread(generate_video_clip,prompt=scene['veo_prompt']+' Photorealistic everyday documentary footage. Soft diffused bright daylight, low contrast, lifted shadows, natural neutral colors, no dramatic rim light, no teal-orange grading, no glossy CGI, no slow motion, no posing. Full vertical composition, no letterboxing. No speech or subtitles. Contextual lifestyle illustration only; no identifiable product, brand, food close-up or engineering internals. Product and technology views use the original official media.',output_path=raw,duration_seconds=8,aspect_ratio='9:16',resolution='1080p')
             quality.inspect_source(raw)
         output=folder/f'cut_{i:02d}.mp4'
         style=board.get('category_style',PRESETS['tech'])
@@ -197,7 +231,7 @@ async def render(id,n):
         write_captions(subtitles,scene['narration_ko'],seconds,style,scene.get('headline',''),scene['mode']=='veo')
         # All runtime paths are controlled workspace paths; escape libavfilter delimiters.
         escaped=str(subtitles).replace('\\','/').replace(':',r'\:').replace("'",r"\'")
-        framing=quality.generated_portrait_filter(raw) if scene['mode']=='veo' else quality.portrait_filter('293638' if style['label']=='신형 테크' else 'f4eee8')
+        framing=quality.generated_portrait_filter(raw) if scene['mode'] in ('veo','illustration_clip') else quality.portrait_filter('293638' if style['label']=='신형 테크' else 'f4eee8')
         vf=framing+f",fps=30,tpad=stop_mode=clone:stop_duration={seconds},ass=filename='{escaped}'"
         await asyncio.to_thread(media.run,[media.get_ffmpeg_bin(),'-v','error','-i',str(raw),'-i',str(audio),'-map','0:v:0','-map','1:a:0','-vf',vf,'-af','apad','-t',str(seconds),'-c:v','libx264','-crf','18','-pix_fmt','yuv420p','-c:a','aac','-b:a','192k','-ar','48000','-ac','2',str(output)],240)
         segments.append(output)
@@ -205,12 +239,12 @@ async def render(id,n):
         cut_outputs.append(dict(number=i,role=scene["role"],narration_ko=scene["narration_ko"],video_url=store.url(output),audio_url=store.url(audio),mode=scene["mode"],technical_quality=cut_quality,file_sha256=digest(output)))
     listing=folder/'clips.txt';listing.write_text('\n'.join(f"file '{p.name}'" for p in segments),encoding='utf-8')
     output=folder/'final.mp4'
-    await asyncio.to_thread(media.run,[media.get_ffmpeg_bin(),'-v','error','-f','concat','-safe','0','-i',str(listing),'-c','copy','-movflags','+faststart',str(output)],240)
+    await asyncio.to_thread(join_smooth,segments,output)
     technical=quality.inspect_output(output)
     store.write_json(folder/'technical_review.json',dict(technical,file_sha256=digest(output)))
     store.write_json(folder/'sources.json',dict(product_url=v['product_url'],scenes=board['scenes'],voice=v['voice']))
     store.write_json(folder/'upload.json',dict(state='quality_review',privacy='private',channel='https://www.youtube.com/@GumaShop86',
-        title=board['title'],description=board['summary']+'\n상품은 채널 프로필 링크에서 확인하세요.\n'+v['product_url']+'\n쿠팡 파트너스 활동으로 일정액의 수수료를 제공받습니다.',file_sha256=digest(output)))
+        pinned_comment=DISCLOSURE+'\n영상 속 제품: '+store.read(id)['title']+'\n상품 주소: '+v['product_url'],comment_state='pending_publication',title=board['title'],description=DISCLOSURE+'\n\n'+board['summary']+'\n상품은 채널 프로필 링크에서 확인하세요.\n'+v['product_url'],file_sha256=digest(output)))
     return store.update(id,'Video',n,status='ready',cuts=cut_outputs,output_url=store.url(output),sources_url=store.url(folder/'sources.json'),message='영상 완성 · 음성·화면 검수 후 비공개 업로드',publication_state='quality_review')
 
 
@@ -233,20 +267,20 @@ PlayResY: 1280
 WrapStyle: 2
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Caption,{style['font']},38,&H00FFFFFF,&H00FFFFFF,&H00101010,&H80101010,-1,0,0,0,100,100,0,0,1,3,1,2,55,100,240,1
-Style: Brand,{style['font']},28,{color},{color},&H00101010,&H80101010,-1,0,0,0,100,100,0,0,1,2,0,7,48,100,150,1
+Style: Caption,{style['font']},38,&H00FFFFFF,&H00FFFFFF,&H00101010,&H80101010,-1,0,0,0,100,100,0,0,1,3,1,2,55,100,310,1
+Style: Ad,{style['font']},32,&H00FFFFFF,&H00FFFFFF,&H00202020,&H00202020,-1,0,0,0,100,100,0,0,3,8,0,9,48,65,100,1
+Style: Disclosure,{style['font']},22,&H00FFFFFF,&H00FFFFFF,&H00202020,&H00202020,0,0,0,0,100,100,0,0,3,5,0,2,45,80,150,1
 Style: Headline,{style['font']},46,&H00FFFFFF,{color},&H00202020,&H00202020,-1,0,0,0,100,100,0,0,1,3,1,8,50,70,230,1
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 '''
     def clock(t):
         cs=round(t*100);return f'{cs//360000}:{cs//6000%60:02d}:{cs//100%60:02d}.{cs%100:02d}'
-    events=[f"Dialogue: 0,0:00:00.00,{clock(seconds)},Brand,,0,0,0,,GumaShop · {style['label']}"]
+    events=[f'Dialogue: 2,0:00:00.00,{clock(seconds)},Ad,,0,0,0,,[광고]',f'Dialogue: 2,0:00:00.00,{clock(seconds)},Disclosure,,0,0,0,,이 포스팅은 쿠팡 파트너스 활동의 일환으로,\\N이에 따른 일정액의 수수료를 제공받습니다.']
     if headline:
         title=re.sub(r'[{}\\\r\n]',' ',headline)
         events.append(f'Dialogue: 1,0:00:00.00,{clock(seconds)},Headline,,0,0,0,,{title}')
-    if generated:
-        events.append(f'Dialogue: 0,0:00:00.00,{clock(seconds)},Brand,,48,100,110,,AI 상황 연출')
+
     total=sum(map(len,chunks));elapsed=0
     for chunk in chunks:
         end=elapsed+seconds*len(chunk)/total
@@ -264,7 +298,14 @@ def publication(id,n,action,evidence):
         data=read(path)
         if digest(folder/'final.mp4')!=data['file_sha256']:raise ValueError('검수 대상 영상이 변경됐습니다.')
         if len(evidence.get('notes',''))<10:raise ValueError('실제 확인 근거를 기록해주세요.')
-        if action=='review':
+        if action=='review_private':
+            if data['state']!='quality_review':raise ValueError('검수 대기 영상만 비공개 리뷰 준비가 가능합니다.')
+            quality.validate_private_review(evidence)
+            technical=read(folder/'technical_review.json')
+            if technical.get('file_sha256')!=data['file_sha256'] or technical.get('passed') is not True or evidence.get('file_sha256')!=data['file_sha256']:
+                raise ValueError('기술 검수 파일 해시를 확인하세요.')
+            data.update(state='upload_pending',audio_review='user_review_on_private_youtube')
+        elif action=='review':
             if store.get(id,'Video',n).get('quality_revision'):
                 quality.validate_editorial(evidence)
                 if evidence.get('file_sha256')!=data['file_sha256']:
@@ -288,4 +329,4 @@ def publication(id,n,action,evidence):
         else:raise ValueError('지원하지 않는 상태 변경입니다.')
         data.setdefault('events',[]).append(dict(action=action,at=now_kst().isoformat(),evidence=evidence))
         store.write_json(path,data)
-        return store.update(id,'Video',n,publication_state=data['state'],youtube_url=data.get('url'),message={'private':'YouTube 비공개 · 사용자 최종 리뷰 대기','public':'YouTube 공개 완료'}.get(data['state'],'업로드 준비·검증 중'))
+        return store.update(id,'Video',n,publication_state=data['state'],youtube_url=data.get('url'),pinned_comment=data.get('pinned_comment'),comment_state=data.get('comment_state'),message={'private':'YouTube 비공개 · 사용자 최종 리뷰 대기','public':'YouTube 공개 완료'}.get(data['state'],'업로드 준비·검증 중'))

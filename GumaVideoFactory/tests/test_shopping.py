@@ -11,6 +11,22 @@ from app.studio import request_publish, StageRequest
 
 
 class ShoppingTests(unittest.TestCase):
+    def test_private_review_does_not_invent_audio_verification(self):
+        evidence=dict(voice='Achird',user_selected_voice=True,visual_passed=True,
+            director_checks={k:True for k in s.quality.DIRECTOR_AXES},
+            audio_review='user_review_on_private_youtube',listened_to_audio=False)
+        s.quality.validate_private_review(evidence)
+        with self.assertRaises(ValueError):
+            s.quality.validate_private_review(dict(evidence,listened_to_audio=True))
+        evidence['director_checks']['narration_visual_match']=False
+        with self.assertRaises(ValueError):s.quality.validate_private_review(evidence)
+
+    def test_repeated_sources_are_rejected(self):
+        scene=lambda identity:dict(mode='official_image',source_sha256=identity)
+        with self.assertRaises(ValueError):s.quality.validate_variety([scene('a'),scene('a')])
+        with self.assertRaises(ValueError):s.quality.validate_variety([scene(x) for x in 'abaca'])
+        s.quality.validate_variety([scene(x) for x in 'abac'])
+
     def test_korean_topic_keys_remain_distinct(self):
         import unicodedata
         from app.core.recommendations import product_key
@@ -23,6 +39,8 @@ class ShoppingTests(unittest.TestCase):
         today=now_kst().date().isoformat()
         rec=dict(category='tech',title='Test',subject='Test',product_identity='Test',hook='문제 해결',why_now='새 공식 자료',key_feature='main',supporting_features=['a','b'],facts=['main'],visual_concept='실제 자료',product_keyword='Test',sources=[dict(title='source',url='https://example.org',published_date=today)],official_images=[dict(title='image',url='https://example.org/image',published_date=today)],purchase_link=dict(url='https://www.coupang.com/vp/products/123',seller='fixture',price_krw=99000,price_evidence='Synthetic verified option price',official_evidence='synthetic official evidence',rocket_evidence='synthetic rocket evidence',option='fixture',checked_at=now_kst().isoformat(),affiliate_url='https://link.coupang.com/a/fixture',affiliate_evidence='synthetic issued link evidence'))
         board=dict(author_model='gpt-6-astra',title='fixture',summary='test',popularity_basis='관심을 끄는 기능을 근거로 설명',scenes=[dict(role=role,mode='official_image',source_file=str(image),source_url='https://example.org/image',evidence='synthetic test image only',narration_ko='테스트입니다.',hook='문제가 있나요?' if i==0 else '',covered_features=['main','a','b'],duration_seconds=2) for i,role in enumerate(['need','solution','reason','product','product','cta'])])
+        for i,scene in enumerate(board['scenes']):
+            unique=root/f'fixture_{i}.png';Image.new('RGB',(1080,1920),(20+i*20,100,120)).save(unique);scene['source_file']=str(unique)
         rec.update(topic_key='fixture-topic',problem_key='fixture-problem',novelty_review=dict(checked_at=now_kst().isoformat(),channel='https://www.youtube.com/@GumaShop86',studio_checked=True,notes='Synthetic empty Studio fixture',comparisons=[]))
         return rec,board
 
@@ -86,10 +104,10 @@ class ShoppingTests(unittest.TestCase):
             folder=store.version_dir(id,'Preview',n)
             review=dict(preflight={k:True for k in s.quality.PREFLIGHT_AXES},reviewed_by='gpt-6-astra',passed=True,board_sha256=s.digest(folder/'storyboard.json'),scenes=[dict(number=i,passed=True,notes='Synthetic fixture verification') for i in range(1,7)])
             store.write_json(root/'review.json',review);s.seal(id,n,root/'review.json')
-            v=s.enqueue(id,n);self.assertEqual(v['voice'],'ko-KR-HyunsuMultilingualNeural')
+            v=s.enqueue(id,n);self.assertEqual(v['voice'],'Achird')
             self.assertEqual([x['stage'] for x in store.workflow(store.read(id))['buttons']],['Preview','Video'])
             async def speech(text,path,voice,rate):
-                self.assertEqual(voice,'ko-KR-HyunsuMultilingualNeural')
+                self.assertEqual(voice,'Achird')
                 s.media.run([s.media.get_ffmpeg_bin(),'-v','error','-f','lavfi','-i','sine=frequency=440','-t','0.3',str(path)])
             with patch.object(s,'synthesize_speech',side_effect=speech),patch.object(s,'generate_video_clip',side_effect=AssertionError('No Veo for official images')):
                 asyncio.run(s.render(id,v['number']))

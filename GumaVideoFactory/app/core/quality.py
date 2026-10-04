@@ -7,6 +7,27 @@ from PIL import Image, ImageOps
 
 REVIEW_AXES = ('source_fidelity', 'sharpness', 'vertical_composition', 'pacing', 'voice', 'audience_fit', 'hook')
 PREFLIGHT_AXES = ('source_fidelity','source_resolution','vertical_composition','script_pacing','audience_fit','hook')
+DIRECTOR_AXES = ('shot_variety','narration_visual_match','natural_bright_lighting','smooth_transitions','advertising_disclosure')
+
+def validate_variety(scenes):
+    from collections import Counter
+    identities=[s['source_sha256'] for s in scenes if s['mode']!='veo']
+    if any(n>2 for n in Counter(identities).values()):
+        raise ValueError('같은 원본을 3컷 이상 반복할 수 없습니다.')
+    for a,b in zip(scenes,scenes[1:]):
+        if a['mode']!='veo' and b['mode']!='veo' and a['source_sha256']==b['source_sha256']:
+            raise ValueError('인접 컷에 같은 화면을 반복할 수 없습니다.')
+
+def validate_private_review(review):
+    # Private review is explicitly authorized; never label unobserved audio as listened.
+    if review.get('voice')!='Achird' or review.get('user_selected_voice') is not True:
+        raise ValueError('사용자가 선택한 Achird 음성이 필요합니다.')
+    if any(review.get('director_checks',{}).get(k) is not True for k in DIRECTOR_AXES):
+        raise ValueError('반복·대사 대응·자연광·전환·광고 검수가 필요합니다.')
+    if review.get('visual_passed') is not True or review.get('unresolved_visual_issues'):
+        raise ValueError('화면 결함을 먼저 수정하세요.')
+    if review.get('audio_review')!='user_review_on_private_youtube' or review.get('listened_to_audio') is not False:
+        raise ValueError('청취하지 않은 음성은 YouTube 사용자 검토 대기로 기록하세요.')
 
 def validate_preflight(review):
     checks=review.get('preflight',{})
@@ -27,7 +48,7 @@ def inspect_output(path):
         with Image.open(io.BytesIO(raw)) as frame:
             gray=frame.convert('L')
             edges=[list(gray.crop(box).tobytes()) for box in ((0,0,108,12),(0,180,108,192))]
-            bars=all(sum(p<12 for p in edge)/len(edge)>.98 for edge in edges)
+            bars=all(sum(p<40 for p in edge)/len(edge)>.98 for edge in edges)
             samples.append(dict(at=round(duration*fraction,2),black_borders=bars))
     if any(s['black_borders'] for s in samples):
         raise ValueError('최종 영상 위아래 검은 여백이 감지됐습니다. 구도를 수정하세요.')

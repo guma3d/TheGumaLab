@@ -4,7 +4,7 @@ import json
 from app.core import shopping as s, versions as store
 
 parser=argparse.ArgumentParser()
-parser.add_argument('command',choices=['build','seal','enqueue','pending','review','claim','private','public','edits','edit-done'])
+parser.add_argument('command',choices=['build','seal','enqueue','pending','review','review_private','claim','private','public','edits','edit-done'])
 parser.add_argument('target',nargs='?')
 parser.add_argument('--file')
 parser.add_argument('--version',type=int)
