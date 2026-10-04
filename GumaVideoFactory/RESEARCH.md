@@ -12,7 +12,7 @@
 
 ## 로컬 사전 준비·저장
 
-후보 JSON은 app/core/recommendations.py의 Recommendation을 따른다. category=tech, title, subject, product_identity, hook, why_now, key_feature, supporting_features(2개 이상), facts, visual_concept, product_keyword, cautions, sources, technical_video를 입력한다. sources는 title/url/published_date. technical_video는 title/url/게시일/creator/channel_id/official_page/technical_content다. purchase_link는 url(쿠팡 상품 상세), seller, official_evidence, rocket_evidence, option, checked_at(24시간 내)다. 원문 확인 필수. API 연동 전 Chrome 로그인 세션을 computer-use로 활용해 파트너스 링크를 발급한다. 로그인 만료·본인인증은 해당 단계만 보류하고 사용자에게 요청한다. 연결 불가와 구분하며 인증을 우회하지 않는다.
+후보 JSON은 app/core/recommendations.py의 Recommendation을 따른다. category=tech, title, subject, product_identity, hook, why_now, key_feature, supporting_features(2개 이상), facts, visual_concept, product_keyword, cautions, sources, technical_video를 입력한다. sources는 title/url/published_date. technical_video는 title/url/게시일/creator/channel_id/official_page/technical_content다. purchase_link는 url(쿠팡 상품 상세), seller, official_evidence, rocket_evidence, option, checked_at(24시간 내)다. 원문 확인 필수. API 연동 전 연결된 인앱 브라우저(필요시 Chrome) 로그인 세션을 computer-use로 활용해 파트너스 링크를 발급한다. 로그인 만료·본인인증은 해당 단계만 보류하고 사용자에게 요청한다. 연결 불가와 구분하며 인증을 우회하지 않는다.
 
 후보는 storage/recommendations/inbox에 저장한다. 명령은 `docker exec GumaVideoFactory_app python prepare_package.py ...`로 실행한다. 유료 API 호출은 금지하며 Codex의 직접 조사·검수와 로컬 FFmpeg·Blender만 사용한다.
 
@@ -29,6 +29,6 @@ http://localhost:8085/api/recommendations의 오늘 날짜·조사 시간·3개�
 
 실제품은 공식 화면을 보존한다. 내부 형상 미확보 시 “실제 형상 미확보 · 작동 원리 표현”을 영상에도 표시한다. Instagram Dd5abfmz9XI / DdFp4P7z3hn / Dd8ZKExzJsB는 퀄리티 기준만 참고한다. 원본 오디오는 제거하고 자체 대본을 사용한다. 공식 재사용은 사용자 작업 가정이다.
 
-최종 승인 후 Veo 추상 전환·준비된 3D를 합성한다. 유튜브는 Chrome Studio의 computer-use로 승인된 완성본만 업로드한다. 채널·중복·결과 URL을 확인하고 로그인·인증 필요 시 요청한다. 공개 일정은 임의 설정하지 않는다. 연결은 미검증이다.
+최종 승인 후 Veo 추상 전환·준비된 3D를 합성한다. 유튜브는 연결된 브라우저의 Studio의 computer-use로 승인된 완성본만 업로드한다. 채널·중복·결과 URL을 확인하고 로그인·인증 필요 시 요청한다. 공개 일정은 임의 설정하지 않는다. 연결은 미검증이다.
 
 09·21시 각각 새 제품 3개, 하루 6개 완성을 목표로 한다. 성공하면 준비된 제목 3개와 https://videofactory.guma3d.com/ 링크를 알린다. 무변경은 조용히 유지하며 실패·필요한 조치는 사실대로 보고한다.

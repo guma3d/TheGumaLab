@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-04.4",
+  "revision": "2026-10-04.5",
   "rules": [
     {
       "id": "exact-product",
@@ -75,19 +75,20 @@
     "purchase_platform": "coupang",
     "affiliate_link_integration": "not_verified",
     "affiliate_browser_policy": {
-      "browser": "chrome",
+      "browser": "connected_in_app_first_chrome_fallback",
       "authorization": "Use the user-maintained signed-in Coupang Partners session to issue links before API integration.",
       "on_auth_required": "Pause affected work and ask user to log in or complete verification. Never bypass authentication.",
       "on_connection_unavailable": "Report browser connection issue separately; do not assume login expired.",
       "notification": "Notify actionable changes; avoid repeating unchanged blockers."
     },
     "youtube_upload_policy": {
-      "method": "computer_use_chrome_youtube_studio",
+      "method": "computer_use_connected_browser_youtube_studio",
       "integration_status": "not_verified",
       "channel_url": "https://www.youtube.com/@GumaShop86",
       "approval": "Preserve final user approval. Only upload the approved completed video; research completion alone is not approval.",
       "verification": "Confirm active channel and existing upload before submitting; record video URL and state to prevent duplicates. Do not invent publication schedule.",
-      "auth": "Ask user only when login or verification is required; distinguish browser disconnection. Never bypass authentication."
+      "auth": "Ask user only when login or verification is required; distinguish browser disconnection. Never bypass authentication.",
+      "browser": "Use connected in-app browser first; use Chrome if required capabilities are unavailable. Verify each browser session independently."
     }
   }
 }
