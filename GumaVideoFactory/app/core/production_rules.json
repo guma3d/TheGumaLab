@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-04.3",
+  "revision": "2026-10-04.4",
   "rules": [
     {
       "id": "exact-product",
@@ -80,6 +80,14 @@
       "on_auth_required": "Pause affected work and ask user to log in or complete verification. Never bypass authentication.",
       "on_connection_unavailable": "Report browser connection issue separately; do not assume login expired.",
       "notification": "Notify actionable changes; avoid repeating unchanged blockers."
+    },
+    "youtube_upload_policy": {
+      "method": "computer_use_chrome_youtube_studio",
+      "integration_status": "not_verified",
+      "channel_url": "https://www.youtube.com/@GumaShop86",
+      "approval": "Preserve final user approval. Only upload the approved completed video; research completion alone is not approval.",
+      "verification": "Confirm active channel and existing upload before submitting; record video URL and state to prevent duplicates. Do not invent publication schedule.",
+      "auth": "Ask user only when login or verification is required; distinguish browser disconnection. Never bypass authentication."
     }
   }
 }
