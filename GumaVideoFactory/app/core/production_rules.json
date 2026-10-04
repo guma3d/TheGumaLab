@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-04.1",
+  "revision": "2026-10-04.2",
   "rules": [
     {
       "id": "exact-product",
@@ -68,5 +68,11 @@
       "scope": "all",
       "lesson": "Current approval drives the next action; generation stays on the card with live button progress. Title opens detail. Update existing documentation in place and replace stale text without cumulative growth."
     }
-  ]
+  ],
+  "publishing": {
+    "youtube_channel_url": "https://www.youtube.com/@GumaShop86",
+    "channel_confirmed_by": "user",
+    "purchase_platform": "coupang",
+    "affiliate_link_integration": "not_verified"
+  }
 }
