@@ -18,7 +18,7 @@ RUN curl -fL --retry 2 https://download.blender.org/release/Blender4.5/blender-4
     && ln -s /opt/blender/blender-4.5.14-linux-x64/blender /usr/local/bin/blender \
     && rm /tmp/blender.tar.xz
 
-RUN apt-get update && apt-get install -y --no-install-recommends libsm6 libice6 \
+RUN apt-get update && apt-get install -y --no-install-recommends libsm6 libice6 fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

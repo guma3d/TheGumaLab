@@ -1,6 +1,6 @@
 {% extends 'studio_base.html' %}{% block content %}
 <a href="/?category={{idea.category}}">← 추천 목록</a><h1>{{idea.title}}</h1><p>{{idea.recommendation.hook}}</p>
-<div class="panel"><strong>쿠팡 검증 → 컷씬·음성 → 비공개 업로드 → 공개 승인</strong><p class="muted">09·15·21시 · 1개씩 자동 제작 · YouTube 비공개 리뷰</p><p id="flow"></p></div>
+<div class="panel"><strong>쿠팡 검증 → 컷씬·음성 → 비공개 업로드 → 공개 승인</strong><p class="muted">카테고리별 하루 1편 · YouTube 비공개 리뷰</p><p id="flow"></p></div>
 <nav class="tabs"><button onclick="tab('Preview')">컷씬</button><button onclick="tab('Video')">완성 영상</button></nav>
 <section class="panel"><select id="versions" aria-label="버전" onchange="selected[stage]=Number(this.value);render()"></select><div id="content"></div></section>
 <details><summary>기능·출처</summary><p>{{idea.recommendation.key_feature}}</p><p>{{idea.recommendation.cautions}}</p>{% for s in idea.recommendation.sources %}<p><a href="{{s.url}}" target="_blank" rel="noopener">{{s.title}}</a></p>{% endfor %}</details>

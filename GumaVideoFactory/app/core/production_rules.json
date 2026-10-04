@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-04.7",
+  "revision": "2026-10-04.8",
   "rules": [
     {
       "id": "exact-product",
@@ -40,6 +40,16 @@
       "id": "private-review",
       "category": "all",
       "instruction": "Automatically produce and inspect completed videos, then computer-use upload to @GumaShop86 PRIVATE only. Verify actual visibility and record URL/hash. Only the exact version explicitly approved by the user may become public. Never infer public approval from creation or private upload."
+    },
+    {
+      "id": "category-style",
+      "category": "all",
+      "instruction": "Follow categories.py: fixed Noto Sans CJK KR captions and ko-KR-SunHiNeural voice, stable safe area. Tech: dark technical explanations. Food: warm real food trend to ready-to-eat product or ingredient recipe; never guarantee identical taste. Household: practical problem, demonstration, verified benefit and limitations. Snapshot the category style in every storyboard."
+    },
+    {
+      "id": "weekly-novelty",
+      "category": "all",
+      "instruction": "Before selection inspect actual YouTube Studio uploads for the last seven days, including private videos, and local upload events. Record topic_key, problem_key, and per-video novelty comparisons. Reject similar subject/problem even for different products. One tech at 09:00, food at 15:00, household at 21:00 KST."
     }
   ],
   "feedback": [
@@ -72,7 +82,7 @@
     },
     "voice": "ko-KR-SunHiNeural",
     "planner_model": "gpt-6-astra",
-    "schedule": "09:00, 15:00, 21:00 Asia/Seoul; one item/video each, three per day",
+    "schedule": "09:00 tech, 15:00 food, 21:00 household Asia/Seoul; one per category daily",
     "workspace": "Production and editing workspace: preserve final per-cut videos with narration, identify by idea ID/video version/cut number, process edit_requests as new versions. User reviews final video on YouTube; only private-to-public remains after approval."
   }
 }

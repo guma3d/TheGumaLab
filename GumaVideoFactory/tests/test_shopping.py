@@ -16,6 +16,7 @@ class ShoppingTests(unittest.TestCase):
         today=now_kst().date().isoformat()
         rec=dict(category='tech',title='Test',subject='Test',product_identity='Test',hook='문제 해결',why_now='새 공식 자료',key_feature='main',supporting_features=['a','b'],facts=['main'],visual_concept='실제 자료',product_keyword='Test',sources=[dict(title='source',url='https://example.org',published_date=today)],official_images=[dict(title='image',url='https://example.org/image',published_date=today)],purchase_link=dict(url='https://www.coupang.com/vp/products/123',seller='fixture',official_evidence='synthetic official evidence',rocket_evidence='synthetic rocket evidence',option='fixture',checked_at=now_kst().isoformat(),affiliate_url='https://link.coupang.com/a/fixture',affiliate_evidence='synthetic issued link evidence'))
         board=dict(author_model='gpt-6-astra',title='fixture',summary='test',popularity_basis='관심을 끄는 기능을 근거로 설명',scenes=[dict(role=role,mode='official_image',source_file=str(image),source_url='https://example.org/image',evidence='synthetic test image only',narration_ko='테스트입니다.',hook='문제가 있나요?' if i==0 else '',covered_features=['main','a','b'],duration_seconds=2) for i,role in enumerate(['need','solution','reason','product','product','cta'])])
+        rec.update(topic_key='fixture-topic',problem_key='fixture-problem',novelty_review=dict(checked_at=now_kst().isoformat(),channel='https://www.youtube.com/@GumaShop86',studio_checked=True,notes='Synthetic empty Studio fixture',comparisons=[]))
         return rec,board
 
     def test_funnel_and_model(self):
@@ -30,13 +31,27 @@ class ShoppingTests(unittest.TestCase):
                 if change=='cta':bad['scenes'][-1]['narration_ko']='하단 링크를 클릭하세요.'
                 with self.assertRaises(ValueError,msg=change):s.Board(**bad)
 
+    def test_weekly_similarity_and_category_slot(self):
+        from app.core import recommendations as r
+        with tempfile.TemporaryDirectory() as temp:
+            rec,_=self.fixture(Path(temp));item=r.Recommendation(**rec)
+            old=dict(idea_id='other',url='https://www.youtube.com/watch?v=12345678901',topic_key='other-topic',problem_key='other-problem')
+            with patch.object(r,'recent_uploads',return_value=[old]):
+                with self.assertRaises(ValueError):r.validate_novelty(item)
+                item.novelty_review['comparisons']=[dict(url=old['url'],similar=False,reason='다른 문제와 사용 맥락을 다루는 테스트')]
+                r.validate_novelty(item)
+                old['problem_key']=item.problem_key
+                with self.assertRaises(ValueError):r.validate_novelty(item)
+            with patch.object(r,'recent_uploads',return_value=[]):
+                with self.assertRaises(ValueError):r.DailyBatch(date=r.now_kst().date().isoformat(),researched_at=r.now_kst(),slot='15:00',items=[item])
+
     def test_slot_accumulation_and_affiliate(self):
         from app.core import recommendations as recs
         with tempfile.TemporaryDirectory() as temp,patch.object(recs,'RECOMMENDATIONS_DIR',Path(temp)/'recommendations'):
             root=Path(temp);rec,_=self.fixture(root)
             for i,hour in enumerate((9,15,21)):
                 stamp=now_kst().replace(hour=hour,minute=0,second=0,microsecond=0)
-                item=copy.deepcopy(rec);item['subject']='fixture'+str(i);item['product_identity']=item['subject'];item['purchase_link']['checked_at']=stamp.isoformat()
+                item=copy.deepcopy(rec);item['subject']='fixture'+str(i);item['product_identity']=item['subject'];item['purchase_link']['checked_at']=stamp.isoformat();item['category']=['tech','food','household'][i];item['novelty_review']['checked_at']=stamp.isoformat()
                 with patch.object(recs,'now_kst',return_value=stamp):
                     data=dict(date=stamp.date().isoformat(),researched_at=stamp,slot=f'{hour:02d}:00',items=[item])
                     batch=DailyBatch(**data);result=recs.save_batch(batch)

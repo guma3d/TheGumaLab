@@ -12,6 +12,8 @@ from app.core import official_clips as media
 from app.core.prepared_packages import digest, read, verify_package
 from app.core.production_rules import snapshot
 from app.core.recommendations import Recommendation, now_kst
+from app.core.recommendations import validate_novelty
+from app.core.categories import PRESETS
 from app.core.tts_engine import synthesize_speech
 from app.core.veo_client import generate_video_clip
 
@@ -70,6 +72,7 @@ class Board(BaseModel):
 def build(rec_path, board_path):
     """Input media must already be acquired and inspected by Codex; never fetch arbitrary URLs."""
     rec=Recommendation.model_validate(read(rec_path))
+    validate_novelty(rec)
     if not rec.purchase_link or not rec.purchase_link.affiliate_url:
         raise ValueError('쿠팡 데이터와 실제 발급된 파트너스 링크를 먼저 확보하세요.')
     board=Board.model_validate(read(board_path))
@@ -81,6 +84,7 @@ def build(rec_path, board_path):
     n=value['number'];folder=store.version_dir(idea['id'],'Preview',n)
     try:
         result=board.model_dump();result['pipeline']='shopping_v2';result['needs_3d']=False
+        result['category_style']=dict(PRESETS[rec.category])
         store.write_json(folder/'recommendation.json',rec.model_dump(mode='json'))
         store.write_json(folder/'production_rules.json',snapshot(rec.category))
         for i,s in enumerate(board.scenes,1):
@@ -151,7 +155,12 @@ async def render(id,n):
             raw=folder/f'veo_{i:02d}.mp4'
             await asyncio.to_thread(generate_video_clip,prompt=scene['veo_prompt']+' No speech or subtitles. Contextual lifestyle illustration only; no identifiable product, brand, food close-up or engineering internals. Product and technology views use the original official media.',output_path=raw,duration_seconds=8,aspect_ratio='9:16')
         output=folder/f'cut_{i:02d}.mp4'
-        vf=f'scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=24,tpad=stop_mode=clone:stop_duration={seconds}'
+        style=board.get('category_style',PRESETS['tech'])
+        subtitles=folder/f'captions_{i:02d}.ass'
+        write_captions(subtitles,scene['narration_ko'],seconds,style)
+        # All runtime paths are controlled workspace paths; escape libavfilter delimiters.
+        escaped=str(subtitles).replace('\\','/').replace(':',r'\:').replace("'",r"\'")
+        vf=f"scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=24,tpad=stop_mode=clone:stop_duration={seconds},ass=filename='{escaped}'"
         await asyncio.to_thread(media.run,[media.get_ffmpeg_bin(),'-v','error','-i',str(raw),'-i',str(audio),'-map','0:v:0','-map','1:a:0','-vf',vf,'-af','apad','-t',str(seconds),'-c:v','libx264','-pix_fmt','yuv420p','-c:a','aac','-ar','48000','-ac','2',str(output)],240)
         segments.append(output)
         cut_outputs.append(dict(number=i,role=scene["role"],narration_ko=scene["narration_ko"],video_url=store.url(output),audio_url=store.url(audio),mode=scene["mode"]))
@@ -162,6 +171,41 @@ async def render(id,n):
     store.write_json(folder/'upload.json',dict(state='quality_review',privacy='private',channel='https://www.youtube.com/@GumaShop86',
         title=board['title'],description=board['summary']+'\n상품은 채널 프로필 링크에서 확인하세요.\n'+v['product_url']+'\n쿠팡 파트너스 활동으로 일정액의 수수료를 제공받습니다.',file_sha256=digest(output)))
     return store.update(id,'Video',n,status='ready',cuts=cut_outputs,output_url=store.url(output),sources_url=store.url(folder/'sources.json'),message='영상 완성 · 음성·화면 검수 후 비공개 업로드',publication_state='quality_review')
+
+
+def write_captions(path,text,seconds,style):
+    """Short readable subtitles in the same safe area for every category episode."""
+    clean=re.sub(r'[{}\\\r\n]',' ',text)
+    chunks=[];line=''
+    for word in clean.split():
+        # Korean words may be long; bound glyph count rather than trusting wrapping.
+        for part in [word[i:i+18] for i in range(0,len(word),18)]:
+            if line and len(line)+len(part)+1>18:chunks.append(line);line=''
+            line=(line+' '+part).strip()
+    if line:chunks.append(line)
+    chunks=chunks or [' ']
+    rgb=style['accent'];color='&H00'+rgb[4:6]+rgb[2:4]+rgb[:2]
+    header=f'''[Script Info]
+ScriptType: v4.00+
+PlayResX: 720
+PlayResY: 1280
+WrapStyle: 2
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Caption,{style['font']},38,&H00FFFFFF,&H00FFFFFF,&H00101010,&H80101010,-1,0,0,0,100,100,0,0,1,3,1,2,55,100,240,1
+Style: Brand,{style['font']},28,{color},{color},&H00101010,&H80101010,-1,0,0,0,100,100,0,0,1,2,0,7,48,100,150,1
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+'''
+    def clock(t):
+        cs=round(t*100);return f'{cs//360000}:{cs//6000%60:02d}:{cs//100%60:02d}.{cs%100:02d}'
+    events=[f"Dialogue: 0,0:00:00.00,{clock(seconds)},Brand,,0,0,0,,GumaShop · {style['label']}"]
+    total=sum(map(len,chunks));elapsed=0
+    for chunk in chunks:
+        end=elapsed+seconds*len(chunk)/total
+        events.append(f'Dialogue: 0,{clock(elapsed)},{clock(end)},Caption,,0,0,0,,{chunk}')
+        elapsed=end
+    path.write_text(header+'\n'.join(events)+'\n',encoding='utf-8')
 
 
 def publication(id,n,action,evidence):

@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 from typing import Literal
 from pydantic import BaseModel, Field, field_validator, model_validator
 from app.config import RECOMMENDATIONS_DIR
-from app.core.categories import PRESETS
+from app.core.categories import PRESETS, SLOT_CATEGORIES
 from app.core.source_media import MediaSource
 
 KST = timezone(timedelta(hours=9))
@@ -118,6 +118,9 @@ class Recommendation(BaseModel):
     technical_video: TechnicalVideo | None = None
     purchase_link: PurchaseLink | None = None
     official_images: list[Source] = Field(default_factory=list,max_length=8)
+    topic_key: str = Field(default='', max_length=100)
+    problem_key: str = Field(default='', max_length=100)
+    novelty_review: dict = Field(default_factory=dict)
 
     @model_validator(mode='after')
     def technical_source(self):
@@ -156,6 +159,9 @@ class DailyBatch(BaseModel):
         if len({i.stable_id() for i in self.items}) != len(self.items):
             raise ValueError("중복 아이템은 사용할 수 없습니다.")
         for item in self.items:
+            if item.category != SLOT_CATEGORIES[self.slot]:
+                raise ValueError('09시 테크·15시 음식·21시 생활용품으로 배정합니다.')
+            validate_novelty(item)
             if not item.purchase_link or not item.purchase_link.affiliate_url or len(item.purchase_link.affiliate_evidence)<10:
                 raise ValueError("공식 판매처·로켓배송이 검증된 쿠팡 상품 링크가 필요합니다.")
             if item.category == "tech" and len(item.supporting_features) < 2:
@@ -216,3 +222,44 @@ def recommended_products():
         for item in json.loads(path.read_text(encoding='utf-8')).get('items', []):
             seen.add(item['category'] + ':' + product_key(item.get('product_identity') or item['subject']))
     return seen
+
+
+def recent_uploads():
+    """Use upload events, not recommendation dates, including private videos."""
+    from app.core import versions as store
+    found = {}
+    for path in store.ROOT.glob('*/Video/v*/upload.json'):
+        upload = json.loads(path.read_text(encoding='utf-8'))
+        times = [datetime.fromisoformat(e['at']) for e in upload.get('events', []) if e.get('action') == 'private']
+        if not times or not timedelta(0) <= now_kst()-max(times) <= timedelta(days=7):
+            continue
+        idea = store.read(path.parents[2].name)
+        rec = idea['recommendation']
+        found[upload['url']] = dict(url=upload['url'], title=rec['subject'],
+            topic_key=rec.get('topic_key',''), problem_key=rec.get('problem_key',''),
+            idea_id=idea['id'])
+    return list(found.values())
+
+
+def validate_novelty(item):
+    review = item.novelty_review
+    if not item.topic_key.strip() or not item.problem_key.strip():
+        raise ValueError('유사 주제 검사용 topic_key·problem_key가 필요합니다.')
+    try:
+        checked = datetime.fromisoformat(review['checked_at'])
+        valid = checked.tzinfo and timedelta(0) <= now_kst()-checked <= timedelta(hours=24)
+    except (KeyError, TypeError, ValueError):
+        valid = False
+    if not valid or review.get('channel') != 'https://www.youtube.com/@GumaShop86' or review.get('studio_checked') is not True:
+        raise ValueError('최근 24시간 내 Studio에서 최근 7일 업로드를 확인해야 합니다.')
+    comparisons = review.get('comparisons', [])
+    if len(review.get('notes','')) < 10 or any(c.get('similar') is not False or len(c.get('reason','')) < 10 or not c.get('url') for c in comparisons):
+        raise ValueError('최근 7일 영상별 유사성 비교와 다른 선정 이유가 필요합니다.')
+    compared = {c['url'] for c in comparisons}
+    for old in recent_uploads():
+        if old['idea_id'] == item.stable_id():
+            continue  # importing or editing this already-uploaded item
+        if old['url'] not in compared:
+            raise ValueError('신규 업로드가 있습니다. 최근 7일 비교를 다시 진행하세요.')
+        if any(product_key(old[k]) == product_key(getattr(item,k)) for k in ('topic_key','problem_key') if old[k]):
+            raise ValueError('최근 7일 영상과 주제 또는 해결하려는 문제가 중복됩니다.')
