@@ -12,4 +12,4 @@ PRESETS = {
         direction='생활 불편·계절 수요·신기한 쓰임 → 사용 시연 → 편리한 이유와 한계. 신제품·트렌드는 날짜와 근거를 검증한다.'),
 }
 for preset in PRESETS.values():
-    preset.update(font='Noto Sans CJK KR', voice='ko-KR-SunHiNeural', style_revision='category-v1')
+    preset.update(font='Noto Sans CJK KR', voice='ko-KR-HyunsuMultilingualNeural', voice_rate='+15%', target_age='20-40', style_revision='category-v2')

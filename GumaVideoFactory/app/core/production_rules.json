@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-04.10",
+  "revision": "2026-10-04.11",
   "rules": [
     {
       "id": "exact-product",
@@ -34,7 +34,7 @@
     {
       "id": "selective-veo",
       "category": "all",
-      "instruction": "Regenerate suitable hook/context cuts with Veo; preserve official exact technical footage, real food and product identity. Inspect every result before private upload. Discard original audio and use ko-KR-SunHiNeural consistently in every video. Do not regenerate unsupported exact product shapes."
+      "instruction": "Regenerate suitable hook/context cuts with Veo; preserve official exact technical footage, real food and product identity. Inspect every result before private upload. Discard original audio and use ko-KR-HyunsuMultilingualNeural at +15% consistently in every video. Do not regenerate unsupported exact product shapes."
     },
     {
       "id": "private-review",
@@ -44,12 +44,17 @@
     {
       "id": "category-style",
       "category": "all",
-      "instruction": "Follow categories.py: fixed Noto Sans CJK KR captions and ko-KR-SunHiNeural voice, stable safe area. Tech: dark technical explanations. Food: warm real food trend to ready-to-eat product or ingredient recipe; never guarantee identical taste. Household: practical problem, demonstration, verified benefit and limitations. Snapshot the category style in every storyboard."
+      "instruction": "Follow categories.py: fixed Noto Sans CJK KR captions and ko-KR-HyunsuMultilingualNeural at +15% voice, stable safe area. Tech: dark technical explanations. Food: warm real food trend to ready-to-eat product or ingredient recipe; never guarantee identical taste. Household: practical problem, demonstration, verified benefit and limitations. Snapshot the category style in every storyboard."
     },
     {
       "id": "weekly-novelty",
       "category": "all",
       "instruction": "Before selection inspect actual YouTube Studio uploads for the last seven days, including private videos, and local upload events. Record topic_key, problem_key, and per-video novelty comparisons. Reject similar subject/problem even for different products. One tech at 09:00, food at 15:00, household at 21:00 KST."
+    },
+    {
+      "id": "director-quality",
+      "category": "all",
+      "instruction": "Target Korean adults aged 20-40. Tech must have a verified Coupang option price at most KRW 500000. Measure original dimensions; reject thumbnails. Deliver 1080x1920, 30fps, no black letterbox; use source-matched fill or alternate material. Before generation inspect sources, shot variety and pacing; after generation inspect full-resolution frames and actually listen to narration. Each fidelity, sharpness, composition, pacing, voice, audience fit and hook score must reach 8/10 with no unresolved issue before upload. Revise failed cuts in a new version; never mark automated transcription as listening. Korean dessert lifestyle actors should be young adult Korean women. Limit heat-sensor closeups to a brief contextual explanation, never repeated static logos. Generated supporting images are permitted when helpful but must not invent product identity or real food appearance."
     }
   ],
   "feedback": [
@@ -63,7 +68,7 @@
     "youtube_channel_url": "https://www.youtube.com/@GumaShop86",
     "channel_confirmed_by": "user",
     "purchase_platform": "coupang",
-    "affiliate_link_integration": "not_verified",
+    "affiliate_link_integration": "browser_verified",
     "affiliate_browser_policy": {
       "browser": "connected_in_app_first_chrome_fallback",
       "authorization": "Use the user-maintained signed-in Coupang Partners session to issue links before API integration.",
@@ -73,16 +78,17 @@
     },
     "youtube_upload_policy": {
       "method": "computer_use_connected_browser_youtube_studio",
-      "integration_status": "not_verified",
+      "integration_status": "private_upload_verified",
       "channel_url": "https://www.youtube.com/@GumaShop86",
       "approval": "Automatic private upload after audio/visual review is authorized. Public transition requires explicit per-version user approval.",
       "verification": "Confirm active channel and existing upload before submitting; record video URL and state to prevent duplicates. Do not invent publication schedule.",
       "auth": "Ask user only when login or verification is required; distinguish browser disconnection. Never bypass authentication.",
       "browser": "Use connected in-app browser first; use Chrome if required capabilities are unavailable. Verify each browser session independently."
     },
-    "voice": "ko-KR-SunHiNeural",
+    "voice": "ko-KR-HyunsuMultilingualNeural",
     "planner_model": "gpt-6-astra",
     "schedule": "09:00 tech, 15:00 food, 21:00 household Asia/Seoul; one per category daily",
-    "workspace": "Production and editing workspace: preserve final per-cut videos with narration, identify by idea ID/video version/cut number, process edit_requests as new versions. User reviews final video on YouTube; only private-to-public remains after approval."
+    "workspace": "Production and editing workspace: preserve final per-cut videos with narration, identify by idea ID/video version/cut number, process edit_requests as new versions. User reviews final video on YouTube; only private-to-public remains after approval.",
+    "voice_rate": "+15%"
   }
 }

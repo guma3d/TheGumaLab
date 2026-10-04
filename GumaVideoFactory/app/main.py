@@ -25,7 +25,7 @@ from app.core.tts_engine import synthesize_speech
 from app.core.image_client import generate_preview_image
 from app.core.ffmpeg_mixer import concatenate_clips_with_audio, render_product_still
 from app.core.categories import PRESETS
-from app.core.recommendations import load_daily, now_kst
+from app.core.recommendations import load_daily, visible_daily, now_kst
 from app.core.source_media import MediaSource, store_media, media_preview, render_source_clip
 from app.studio import router as studio_router
 from app.core import versions as version_store
@@ -132,7 +132,7 @@ async def index_page(request: Request, category: str = "tech", date: Optional[st
         raise HTTPException(status_code=404, detail="등록되지 않은 카테고리입니다.")
     projects = [p for p in list_all_projects() if p.get("category", "tech") == category]
     try:
-        daily = load_daily(date)
+        daily = visible_daily(date)
     except ValueError:
         raise HTTPException(400, '날짜를 확인해주세요.')
     ideas = version_store.listing(category)
@@ -182,13 +182,13 @@ async def get_projects():
 @app.get("/api/recommendations")
 async def get_recommendations(date: Optional[str] = None):
     try:
-        return load_daily(date)
+        return visible_daily(date)
     except ValueError:
         raise HTTPException(status_code=400, detail="날짜는 YYYY-MM-DD 형식으로 입력해주세요.")
 
 @app.post("/api/projects")
 async def legacy_create_disabled():
-    raise HTTPException(status_code=410, detail='새 제작은 추천 목록의 Generate 3D Model에서 시작해주세요. 제품별 버전과 외형 승인이 먼저 필요합니다.')
+    raise HTTPException(status_code=410, detail='새 제작은 예약 작업에서 자동 준비합니다. 아이템 작업실에서 컷별 영상과 대사를 확인해주세요.')
 
 
 # Historical project helpers remain for migration/compatibility, but this

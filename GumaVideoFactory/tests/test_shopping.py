@@ -19,9 +19,9 @@ class ShoppingTests(unittest.TestCase):
         self.assertEqual(product_key(unicodedata.normalize('NFD','프라이팬')), product_key('프라이팬'))
 
     def fixture(self,root):
-        image=root/'image.png';Image.new('RGB',(160,240),'teal').save(image)
+        image=root/'image.png';Image.new('RGB',(1080,1920),'teal').save(image)
         today=now_kst().date().isoformat()
-        rec=dict(category='tech',title='Test',subject='Test',product_identity='Test',hook='문제 해결',why_now='새 공식 자료',key_feature='main',supporting_features=['a','b'],facts=['main'],visual_concept='실제 자료',product_keyword='Test',sources=[dict(title='source',url='https://example.org',published_date=today)],official_images=[dict(title='image',url='https://example.org/image',published_date=today)],purchase_link=dict(url='https://www.coupang.com/vp/products/123',seller='fixture',official_evidence='synthetic official evidence',rocket_evidence='synthetic rocket evidence',option='fixture',checked_at=now_kst().isoformat(),affiliate_url='https://link.coupang.com/a/fixture',affiliate_evidence='synthetic issued link evidence'))
+        rec=dict(category='tech',title='Test',subject='Test',product_identity='Test',hook='문제 해결',why_now='새 공식 자료',key_feature='main',supporting_features=['a','b'],facts=['main'],visual_concept='실제 자료',product_keyword='Test',sources=[dict(title='source',url='https://example.org',published_date=today)],official_images=[dict(title='image',url='https://example.org/image',published_date=today)],purchase_link=dict(url='https://www.coupang.com/vp/products/123',seller='fixture',price_krw=99000,price_evidence='Synthetic verified option price',official_evidence='synthetic official evidence',rocket_evidence='synthetic rocket evidence',option='fixture',checked_at=now_kst().isoformat(),affiliate_url='https://link.coupang.com/a/fixture',affiliate_evidence='synthetic issued link evidence'))
         board=dict(author_model='gpt-6-astra',title='fixture',summary='test',popularity_basis='관심을 끄는 기능을 근거로 설명',scenes=[dict(role=role,mode='official_image',source_file=str(image),source_url='https://example.org/image',evidence='synthetic test image only',narration_ko='테스트입니다.',hook='문제가 있나요?' if i==0 else '',covered_features=['main','a','b'],duration_seconds=2) for i,role in enumerate(['need','solution','reason','product','product','cta'])])
         rec.update(topic_key='fixture-topic',problem_key='fixture-problem',novelty_review=dict(checked_at=now_kst().isoformat(),channel='https://www.youtube.com/@GumaShop86',studio_checked=True,notes='Synthetic empty Studio fixture',comparisons=[]))
         return rec,board
@@ -37,6 +37,14 @@ class ShoppingTests(unittest.TestCase):
                 if change=='veo':bad['scenes'][0].update(mode='veo',preserve_actual=True)
                 if change=='cta':bad['scenes'][-1]['narration_ko']='하단 링크를 클릭하세요.'
                 with self.assertRaises(ValueError,msg=change):s.Board(**bad)
+
+    def test_expensive_tech_is_rejected_before_reserving(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);rec,b=self.fixture(root)
+            rec['purchase_link']['price_krw']=500001
+            store.write_json(root/'rec.json',rec);store.write_json(root/'board.json',b)
+            with patch.object(store,'reserve',side_effect=AssertionError('must not reserve')):
+                with self.assertRaisesRegex(ValueError,'50만원'):s.build(root/'rec.json',root/'board.json')
 
     def test_weekly_similarity_and_category_slot(self):
         from app.core import recommendations as r
@@ -76,12 +84,12 @@ class ShoppingTests(unittest.TestCase):
             store.write_json(root/'rec.json',rec);store.write_json(root/'board.json',b)
             result=s.build(root/'rec.json',root/'board.json');id=result['idea_id'];n=result['number']
             folder=store.version_dir(id,'Preview',n)
-            review=dict(reviewed_by='gpt-6-astra',passed=True,board_sha256=s.digest(folder/'storyboard.json'),scenes=[dict(number=i,passed=True,notes='Synthetic fixture verification') for i in range(1,7)])
+            review=dict(preflight={k:True for k in s.quality.PREFLIGHT_AXES},reviewed_by='gpt-6-astra',passed=True,board_sha256=s.digest(folder/'storyboard.json'),scenes=[dict(number=i,passed=True,notes='Synthetic fixture verification') for i in range(1,7)])
             store.write_json(root/'review.json',review);s.seal(id,n,root/'review.json')
-            v=s.enqueue(id,n);self.assertEqual(v['voice'],'ko-KR-SunHiNeural')
+            v=s.enqueue(id,n);self.assertEqual(v['voice'],'ko-KR-HyunsuMultilingualNeural')
             self.assertEqual([x['stage'] for x in store.workflow(store.read(id))['buttons']],['Preview','Video'])
-            async def speech(text,path,voice):
-                self.assertEqual(voice,'ko-KR-SunHiNeural')
+            async def speech(text,path,voice,rate):
+                self.assertEqual(voice,'ko-KR-HyunsuMultilingualNeural')
                 s.media.run([s.media.get_ffmpeg_bin(),'-v','error','-f','lavfi','-i','sine=frequency=440','-t','0.3',str(path)])
             with patch.object(s,'synthesize_speech',side_effect=speech),patch.object(s,'generate_video_clip',side_effect=AssertionError('No Veo for official images')):
                 asyncio.run(s.render(id,v['number']))
@@ -96,7 +104,7 @@ class ShoppingTests(unittest.TestCase):
             self.assertEqual(request['id'],duplicate['id'])
             evidence=dict(notes='Synthetic test evidence only')
             with self.assertRaises(ValueError):s.publication(id,1,'public',dict(evidence,visibility='public',url='https://www.youtube.com/watch?v=12345678901'))
-            s.publication(id,1,'review',dict(evidence,audio_visual_passed=True));s.publication(id,1,'claim',evidence)
+            s.publication(id,1,'review',dict(evidence,audio_visual_passed=True,listened_to_audio=True,scores={k:8 for k in s.quality.REVIEW_AXES},file_sha256=s.digest(vf/'final.mp4')));s.publication(id,1,'claim',evidence)
             with self.assertRaises(ValueError):s.publication(id,1,'claim',evidence)
             s.publication(id,1,'private',dict(evidence,visibility='private',channel='https://www.youtube.com/@GumaShop86',url='https://www.youtube.com/watch?v=12345678901'))
             with self.assertRaises(Exception):asyncio.run(request_publish(id,1,StageRequest(approved=False)))

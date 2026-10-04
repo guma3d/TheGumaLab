@@ -1,39 +1,36 @@
-# 하루 3회 쇼핑쇼츠 자동 제작
+# 쇼핑쇼츠 운영·감독 절차
 
-한국시간 09시 테크·15시 음식·21시 생활용품 각 1편. 채널 https://www.youtube.com/@GumaShop86. 실행 모델 GPT-6 Astra를 확인하고 다른 모델이면 사용자에게 변경 요청한다. 
+09시 테크·15시 음식·21시 생활용품 각 1편. 20~40대 대상, 채널 https://www.youtube.com/@GumaShop86. GPT-6 Astra가 조사·콘티를 직접 작성한다. 실제 모델이 다르면 변경을 요청하며 허위 기록하지 않는다.
 
-## 조사와 쿠팡
+## 선정·쿠팡
 
-실제 검색·원문·게시일 확인: 최근 7일 우선, 최대 30일 근거. 공식 영상·이미지 필수. 미표기 게시일은 비워두고 최신성 근거로 쓰지 않는다. 전체 이력 동일 제품과 Studio 동영상·Shorts 최근 7일(비공개 포함)의 유사 주제·해결 문제를 제외. 가격·성능·인기 추정 금지. 핵심 기능과 추가 2개 검증.
+실제 검색·제조사 원문·게시일 확인: 최근 7일 우선, 최대30일 근거와 공식 영상/이미지 필수. 없는 날짜·인기·가격·효능을 만들지 않는다. 핵심 및 추가 기능2개를 검증한다. 전체 제품 이력과 Studio 최근7일 동영상·Shorts(비공개 포함)의 유사 주제·해결 문제를 제외한다. 사용자 지정 재편집은 새 추천과 구분한다.
 
-인앱 브라우저 우선, 필요시 Chrome에서 쿠팡 파트너스를 사용한다. 동일 모델·옵션의 공식 판매처 근거와 로켓배송을 독립 검증한다. 판매자로켓·로켓직구로 대체하지 않는다. 실제 계정에서 발급한 파트너스 링크와 확인 근거를 저장한다. 로그인·인증 필요시 해당 작업을 보류하고 요청한다. 
+인앱 브라우저 우선, 필요시 Chrome. 동일 모델·옵션의 공식 판매처와 로켓배송을 각각 확인한다. 판매자로켓·직구로 대체하지 않는다. 실제 발급된 파트너스 URL의 연결을 검증한다. 로그인·본인인증은 요청하며 우회하지 않는다. 테크는 확인 가격50만원 이하만 제작한다.
 
-Recommendation 입력은 app/core/recommendations.py를 따른다. purchase_link: url(쿠팡 상세), seller, option, official_evidence, rocket_evidence, checked_at(최근 24시간), affiliate_url, affiliate_evidence. technical_video 또는 official_images[{title,url,published_date}] 필요. sources에는 최신 원문을 기록한다. topic_key, problem_key, novelty_review={checked_at,channel,studio_checked:true,notes,comparisons:[{url,similar:false,reason}]}도 기록한다. 빈 이력도 실제 확인하고 notes에 남긴다.
+Recommendation 필드와 URL 검증은 recommendations.py를 따른다. purchase_link에 url, seller, option, official_evidence, rocket_evidence, checked_at(24시간), affiliate_url, affiliate_evidence, price_krw, price_evidence를 저장한다. sources와 technical_video 또는 official_images 필요. topic_key, problem_key, novelty_review의 Studio 확인·영상별 비교 근거도 기록한다.
 
-## 컷씬과 제작
+## 제작 전 감독
 
-Astra가 공식 자료를 실제로 읽고 이미지·영상 프레임을 본 뒤 app/core/shopping.py의 Board JSON을 직접 작성한다. author_model=gpt-6-astra, title, summary, popularity_basis, popularity_claimed, popularity_source_url, cta_destination=channel_profile, scenes=6~8개.
+categories.py의 글꼴·색감·자막 위치·Hyunsu 음성 +15%를 유지한다. 테크는 기술과 생활 문제, 음식은 최근 유행과 실제 질감, 생활용품은 불편과 쓰임을 연결한다. 한국 디저트 상황극은 한국의 젊은 성인 여성, 예열 마크는 짧은 설명만. 사용 경험·동일한 맛·인기 순위를 꾸미지 않는다.
 
-categories.py의 카테고리별 연출을 따른다. 고정 Noto Sans CJK KR·SunHi 음성·자막 위치, 테크 민트/음식 살구/생활용품 파랑.
+Board(author_model=gpt-6-astra)는 필요성→솔루션→관심 이유→제품 소개→채널 프로필 CTA 순서6~8컷. Cut 구조는 shopping.py 참조. 첫 컷 hook, 짧은 headline과 대사, 컷2~6초. 인기 주장에는 원문 근거. 공식 실물 보존, 맥락 컷만 Veo, 필요한 보조 이미지는 생성 가능. Gemini 기획·3D 모델은 사용하지 않는다.
 
-각 컷: role(need/solution/reason/product/cta), mode(official_clip/official_image/veo), source_file(확보한 로컬 MP4/이미지), source_url, evidence, narration_ko, hook, covered_features, start_seconds, duration_seconds(2~10), veo_prompt, preserve_actual. 첫 컷 hook 필수. 인기 주장에는 원문 근거 필수, 없으면 관심을 끄는 이유로 설명한다. CTA는 채널 프로필 링크이며 하단·댓글 URL을 클릭하라고 하지 않는다. Veo 참고 이미지가 완성 장면인 것처럼 표시하지 않는다.
+원본 짧은 변: 영상1080px·이미지720px 이상, 확대1.5배 이하. 낮은 해상도를 확대해 고해상도로 가장하지 않는다. 가로 원본은 원본색 배경이나 검수한 크롭 사용. 검은 여백 금지. 소스·전 컷 프레임·제품 정확성·기능 대응·구도·템포를 실제 확인한다.
 
-아래 명령은 docker exec GumaVideoFactory_app python shopping_package.py로 실행한다.
+## 제작·검수·업로드
 
-1. `build <후보.json> --file <콘티.json>`: 쿠팡 검증 후 새 Preview에 원본·컷·프레임 시트 저장. 출력 idea_id/number 기록. 모든 check_*_sheet를 실제 확인한다.
-2. `seal <id> --version N --file <review.json>`: reviewed_by=gpt-6-astra, passed=true, board_sha256, scenes=[{number,passed,notes}]. 실물·기능·후킹·인기 근거·경계 검수 후 해시 고정.
-3. `enqueue <id> --version N`: FIFO로 고정 음성·선택적 Veo·합성. 재생성은 --regenerate. 3D 모델은 생성·사용하지 않는다. 사전 승인 질문은 필요 없다. 실패한 유료 작업은 원인 확인 후 새 버전으로 처리한다.
-4. `pending`: 완성 영상 위치와 업로드 상태 확인. 실제 영상과 음성을 재생·검수하고 `review <id> --version V --file <검수.json>`을 실행한다. JSON은 audio_visual_passed=true, notes(실제 검수 내용). 검수 불합격은 업로드하지 않는다.
-5. `claim <id> --version V --file <근거.json>`으로 업로드 진행 기록 후 computer-use YouTube Studio에서 @GumaShop86과 기존 업로드를 확인한다. upload.json의 제목·설명·final.mp4를 사용하고 반드시 비공개로 저장한다. 로그인·파일 업로드 기능 차단은 요청한다. uploading 상태가 남으면 Studio 결과부터 확인하고 중복 업로드하지 않는다.
-6. 실제 비공개 표시를 확인하고 `private <id> --version V --file <결과.json>` 실행. 결과는 notes, visibility=private, channel=https://www.youtube.com/@GumaShop86, url=https://www.youtube.com/watch?v=실제ID. 임의 성공 기록 금지.
-7. 비공개 업로드된 새 제품 1개를 DailyBatch(date, researched_at, slot=09:00/15:00/21:00, items=[1개])로 recommendation_import.py에 저장한다. 하루 3회·회당 1개, 날짜 목록은 누적한다. 부족하면 기존 목록 유지·부족한 수 알림. 날짜·history·버전 삭제 금지. API의 준비 상태·비공개 URL·조사 시간·history를 검증한다.
+명령은 `docker exec GumaVideoFactory_app python shopping_package.py`로 실행한다.
 
-## 컷 편집·공개 승인
+1. `build 후보.json --file 콘티.json`: 새 Preview에 원본·컷·시트 저장. 모든 컷과 구간을 직접 본다.
+2. `seal ID --version N --file 검수.json`: reviewed_by, passed, board_sha256, scenes[{number,passed,notes}], preflight(quality.PREFLIGHT_AXES 전부true), unresolved_issues=[] 필요. 검수 해시 고정.
+3. `enqueue ID --version N`: 음성 길이를 먼저 검사하고 FIFO로1080p Veo·1080×1920·30fps 합성. --regenerate는 새 버전. 실패한 유료 요청을 맹목적으로 재시도하지 않는다.
+4. `pending`: 완성본 전 컷 화면·자막·템포·발음·음량·말투 검수. 미달 컷은 수정한 새 버전. `review ID --version V --file 검수.json`에 audio_visual_passed, listened_to_audio=true, file_sha256, scores(quality.REVIEW_AXES 각8~10), notes, unresolved_issues=[] 기록. 음성 인식 결과를 실제 청취로 가장하지 않는다. 기술 검수 통과가 연출 품질 통과를 의미하지 않는다.
+5. `claim` 후 computer-use Studio에서 채널·기존 업로드 확인, upload.json과 final.mp4로 비공개 업로드. 실제 가시성·URL 확인 후 `private`에 notes, visibility=private, channel, url 기록. uploading이 남으면 Studio부터 확인해 중복을 막는다.
+6. 비공개 완료된 새 아이템1개를 해당slot DailyBatch로 recommendation_import.py에 저장한다. 날짜 목록·시간별history 누적, 기존 결과와 버전 보존. 준비 미달이면 기존 목록 유지하고 부족 개수를 알린다. API의 상태·URL·날짜·history 검증.
 
-`shopping_package.py edits`로 컷 수정 요청을 확인한다. 아이템·부모 영상 버전·cut_number·narration·feedback을 반영해 새 콘티 버전을 제작한다. 이전 source_file은 부모 Preview 폴더의 절대 경로로 해석하고 출처를 보존한다. 새 영상 비공개 업로드 후 `edit-done <id> --version 새영상번호 --file 요청ID`로 완료 기록한다. 리뷰는 YouTube, 컷 피드백은 웹 작업실에서 진행한다.
+## 수정·공개·정리
 
-## 공개 승인과 알림
+`edits`의 아이템·부모 버전·CUT 번호·대사·피드백을 반영해 새 버전 제작 후 비공개 업로드하고 `edit-done`으로 기록한다. 과거 소스 경로·출처를 보존한다. 제외 아이템은 보관 처리하며 삭제하지 않는다.
 
-웹에서 사용자가 영상을 리뷰하고 공개 승인하면 upload.json이 publish_requested가 된다. 다음 브라우저 작업에서 동일 URL·버전만 공개로 전환하고 `public` 명령에 notes, visibility=public, url을 기록한다. 승인 없는 공개·예약 공개는 금지한다. 실패·확인 불가를 성공으로 표시하지 않는다.
-
-성공한 영상 1개의 제목·YouTube 비공개 URL과 https://videofactory.guma3d.com/ 를 안내한다. 새로운 실패·인증·연결 조치만 알리고 동일 상태는 조용히 유지한다. 브라우저 자동화는 Codex 실행 중에만 동작한다.
+사용자의 해당 버전 공개 승인(publish_requested) 이후에만 같은 URL을 공개로 전환하고 `public` 기록. 자동 제작·비공개 업로드는 승인됨. 완료를 가장하지 않으며 새 완료·실패·필요한 조치만 간결히 알린다. 동일 상태는 조용히 유지한다. 작업용 탭은 닫고 사용자 탭은 보존한다.

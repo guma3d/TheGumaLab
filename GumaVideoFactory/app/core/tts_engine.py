@@ -9,11 +9,12 @@ logger = logging.getLogger(__name__)
 async def synthesize_speech(
     text: str,
     output_path: Path,
-    voice: str = DEFAULT_VOICE
+    voice: str = DEFAULT_VOICE,
+    rate: str = '+0%'
 ) -> Path:
     """Edge-TTS를 사용하여 한국어 텍스트를 mp3 음성 파일로 생성합니다."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    communicate = edge_tts.Communicate(text, voice)
+    communicate = edge_tts.Communicate(text, voice, rate=rate)
     await communicate.save(str(output_path))
     logger.info(f"Synthesized TTS audio saved to {output_path}")
     return output_path

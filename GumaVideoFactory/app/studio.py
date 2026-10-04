@@ -112,6 +112,7 @@ async def start(idea_id:str,stage:Literal['3DModel','Preview','Video'],req:Stage
 @router.post('/api/ideas/{idea_id}/Video/{number}/publish')
 async def request_publish(idea_id:str,number:int,req:StageRequest):
     find(idea_id)
+    if store.read(idea_id).get('archived'):raise HTTPException(409,'제외된 아이템은 공개할 수 없습니다.')
     if not req.approved:raise HTTPException(400,'완성 영상을 확인하고 공개를 승인해주세요.')
     path=store.version_dir(idea_id,'Video',number)/'upload.json'
     with store.LOCK:

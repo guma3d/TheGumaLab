@@ -69,6 +69,8 @@ def product_key(value):
 
 class PurchaseLink(BaseModel):
     url: str
+    price_krw: int | None = Field(default=None, gt=0)
+    price_evidence: str = ''
     seller: str = Field(min_length=1)
     official_evidence: str = Field(min_length=10)
     rocket_evidence: str = Field(min_length=10)
@@ -168,6 +170,8 @@ class DailyBatch(BaseModel):
                 raise ValueError("공식 판매처·로켓배송이 검증된 쿠팡 상품 링크가 필요합니다.")
             if item.category == "tech" and len(item.supporting_features) < 2:
                 raise ValueError("테크 추천에는 검증된 추가 주요 기능이 2개 이상 필요합니다.")
+            if item.category=='tech' and (item.purchase_link.price_krw is None or item.purchase_link.price_krw>500000 or len(item.purchase_link.price_evidence)<10):
+                raise ValueError('테크 추천은 확인된 쿠팡 옵션 가격 50만원 이하만 허용합니다.')
             if not any(s.published_date and (now_kst().date() - datetime.strptime(s.published_date, "%Y-%m-%d").date()).days <= 30 for s in item.sources):
                 raise ValueError("아이템마다 최근 30일 이내 출처가 하나 이상 필요합니다.")
         return self
@@ -215,6 +219,18 @@ def save_batch(batch: DailyBatch):
     temp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     os.replace(temp, target)
     return data
+
+
+def visible_daily(date=None):
+    """Hide explicitly retired workspaces without deleting research history."""
+    from app.core import versions as store
+    data=load_daily(date)
+    visible=[]
+    for item in data['items']:
+        path=store.directory(item['id'])/'idea.json'
+        if not path.exists() or not json.loads(path.read_text(encoding='utf-8')).get('archived'):
+            visible.append(item)
+    return dict(data,items=visible)
 
 
 def recommended_products():

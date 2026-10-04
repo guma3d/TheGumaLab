@@ -105,7 +105,7 @@ def listing(category):
     rows = []
     for path in ROOT.glob('*/idea.json'):
         value = json.loads(path.read_text(encoding='utf-8'))
-        if value['category'] == category:
+        if value['category'] == category and not value.get('archived'):
             rows.append(value)
     return sorted(rows, key=lambda x: x['created_at'], reverse=True)
 
