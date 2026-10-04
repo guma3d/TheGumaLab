@@ -64,7 +64,7 @@ class TechnicalVideo(Source):
 
 
 def product_key(value):
-    return re.sub(r'[^a-z0-9가-힣]', '', unicodedata.normalize('NFKD', value).casefold())
+    return re.sub(r'[^a-z0-9가-힣]', '', unicodedata.normalize('NFKC', value).casefold())
 
 
 class PurchaseLink(BaseModel):

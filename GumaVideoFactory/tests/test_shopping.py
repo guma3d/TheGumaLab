@@ -11,6 +11,13 @@ from app.studio import request_publish, StageRequest
 
 
 class ShoppingTests(unittest.TestCase):
+    def test_korean_topic_keys_remain_distinct(self):
+        import unicodedata
+        from app.core.recommendations import product_key
+        self.assertEqual(product_key('프라이팬 예열'), '프라이팬예열')
+        self.assertNotEqual(product_key('프라이팬 예열'), product_key('딸기 크림떡'))
+        self.assertEqual(product_key(unicodedata.normalize('NFD','프라이팬')), product_key('프라이팬'))
+
     def fixture(self,root):
         image=root/'image.png';Image.new('RGB',(160,240),'teal').save(image)
         today=now_kst().date().isoformat()
@@ -47,7 +54,7 @@ class ShoppingTests(unittest.TestCase):
 
     def test_slot_accumulation_and_affiliate(self):
         from app.core import recommendations as recs
-        with tempfile.TemporaryDirectory() as temp,patch.object(recs,'RECOMMENDATIONS_DIR',Path(temp)/'recommendations'):
+        with tempfile.TemporaryDirectory() as temp,patch.object(recs,'RECOMMENDATIONS_DIR',Path(temp)/'recommendations'),patch.object(recs,'recent_uploads',return_value=[]):
             root=Path(temp);rec,_=self.fixture(root)
             for i,hour in enumerate((9,15,21)):
                 stamp=now_kst().replace(hour=hour,minute=0,second=0,microsecond=0)
