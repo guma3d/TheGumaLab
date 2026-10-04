@@ -10,11 +10,15 @@ if __name__ == "__main__":
     from app.core import versions as store
     from app.core.prepared_packages import verify_package
     for item in batch.items:
-        if item.category=='tech':
+        if True:
             previews=store.history(item.stable_id(),'Preview')
             if not previews or previews[0].get('status')!='ready' or not previews[0].get('package_ready'):
-                raise ValueError(item.subject+': 클립·대본·필요한 3D 준비가 끝나야 추천할 수 있습니다.')
-            verify_package(item.stable_id(),previews[0]['number'])
+                raise ValueError(item.subject+': 컷씬·고정 음성·비공개 영상 준비가 끝나야 추천할 수 있습니다.')
+            package=verify_package(item.stable_id(),previews[0]['number'])
+            if package.get('pipeline')!='shopping_v2':raise ValueError('새 쇼핑쇼츠 컷씬이 필요합니다.')
+            videos=store.history(item.stable_id(),'Video')
+            if not videos or videos[0].get('publication_state') not in ('private','publish_requested','public') or videos[0].get('preview_version')!=previews[0]['number']:
+                raise ValueError('비공개 업로드가 끝난 묶음만 추천합니다.')
     for item in batch.items:
         for source in item.media_sources:
             # 입력 JSON의 경로를 신뢰하지 않고 직접 확보한 파일만 연결합니다.

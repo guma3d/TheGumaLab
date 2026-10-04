@@ -71,6 +71,17 @@ class PurchaseLink(BaseModel):
     rocket_evidence: str = Field(min_length=10)
     option: str = Field(min_length=1)
     checked_at: datetime
+    affiliate_url: str = ""
+    affiliate_evidence: str = ""
+
+    @field_validator("affiliate_url")
+    @classmethod
+    def affiliate(cls, value):
+        if not value:return value
+        p=urlparse(value)
+        if p.scheme!="https" or p.hostname!="link.coupang.com" or p.username or p.password or not p.path.startswith("/a/"):
+            raise ValueError("실제 발급한 쿠팡 파트너스 링크가 필요합니다.")
+        return value
 
     @field_validator('url')
     @classmethod
@@ -105,11 +116,12 @@ class Recommendation(BaseModel):
     product_identity: str = Field(default='', max_length=200)
     technical_video: TechnicalVideo | None = None
     purchase_link: PurchaseLink | None = None
+    official_images: list[Source] = Field(default_factory=list,max_length=8)
 
     @model_validator(mode='after')
     def technical_source(self):
-        if self.category == 'tech' and (not self.technical_video or not self.product_identity.strip()):
-            raise ValueError('테크는 정식 제품명 product_identity와 기술 설명 공식 영상이 필요합니다.')
+        if self.category == 'tech' and (not (self.technical_video or self.official_images) or not self.product_identity.strip()):
+            raise ValueError('테크는 정식 제품명과 공식 영상 또는 이미지 출처가 필요합니다.')
         return self
 
     @field_validator("category")
@@ -137,13 +149,12 @@ class DailyBatch(BaseModel):
             raise ValueError("조사 시간은 한국시간 기준 오늘이어야 합니다.")
         if self.researched_at > now_kst() + timedelta(minutes=5):
             raise ValueError("미래 조사 시간은 사용할 수 없습니다.")
-        for category in {item.category for item in self.items}:
-            if sum(i.category == category for i in self.items) != 3:
-                raise ValueError("매 조사에는 카테고리별 새 제품 3개가 필요합니다.")
+        if len(self.items)!=3:
+            raise ValueError("하루 전체 추천은 카테고리 합계 3개입니다.")
         if len({i.stable_id() for i in self.items}) != len(self.items):
             raise ValueError("중복 아이템은 사용할 수 없습니다.")
         for item in self.items:
-            if not item.purchase_link:
+            if not item.purchase_link or not item.purchase_link.affiliate_url or len(item.purchase_link.affiliate_evidence)<10:
                 raise ValueError("공식 판매처·로켓배송이 검증된 쿠팡 상품 링크가 필요합니다.")
             if item.category == "tech" and len(item.supporting_features) < 2:
                 raise ValueError("테크 추천에는 검증된 추가 주요 기능이 2개 이상 필요합니다.")
@@ -165,6 +176,8 @@ def save_batch(batch: DailyBatch):
     old = load_daily(batch.date)
     if old.get("researched_at") and datetime.fromisoformat(old["researched_at"]) >= batch.researched_at:
         raise ValueError("이전 조사 결과로 최신 목록을 덮어쓸 수 없습니다.")
+    if old.get("research_count",0)>=1:
+        raise ValueError("오늘 추천은 이미 저장됐습니다. 하루 1회만 갱신합니다.")
     seen = recommended_products()
     current = set()
     for item in batch.items:
@@ -175,7 +188,7 @@ def save_batch(batch: DailyBatch):
         current.add(tagged)
     data = batch.model_dump(mode="json")
     updated_categories = {item.category for item in batch.items}
-    data["items"].extend(item for item in old.get("items", []) if item["category"] not in updated_categories)
+    # Keep historical dates intact; today contains exactly three items across categories.
     data["research_count"] = old.get("research_count", 0) + 1
     for item, record in zip(batch.items, data["items"]):
         record["id"] = item.stable_id()

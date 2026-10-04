@@ -43,7 +43,7 @@ def create(recommendation, day, approved=True):
         value = dict(id=idea_id, recommendation= recommendation, date=day,
                      category=recommendation['category'], title=recommendation['subject'],
                      created_at=now_kst().isoformat(), idea_approved_at=now_kst().isoformat() if approved else None)
-        for stage in STAGES:
+        for stage in ('Preview','Video'):
             (directory(idea_id) / stage).mkdir(parents=True, exist_ok=True)
         write_json(path, value)
         return value
@@ -154,74 +154,22 @@ def link_legacy(projects):
 
 
 def workflow(idea):
-    """Current version state for cards; a new model never inherits approval."""
-    if idea['category']=='tech':return clip_workflow(idea)
-    stages = {s: history(idea['id'], s) for s in STAGES}
-    latest = {s: rows[0] if rows else None for s, rows in stages.items()}
-    model, preview, video = (latest[s] for s in STAGES)
-    names = {'3DModel': '모델' if idea['category']=='tech' else '실사 자료', 'Preview': '프리뷰', 'Video': '영상'}
-    next_stage = '3DModel'
-    message = '다음: ' + names['3DModel'] + ' 준비'
-    if model and model['status']=='ready':
-        if model.get('approved_at'):
-            next_stage = 'Preview'; message = '다음: 프리뷰 생성'
-            if preview and preview['status']=='ready':
-                next_stage = 'Video'; message = '다음: 최종 확인·영상 제작'
-                if preview.get('model_version') != model['number']:
-                    next_stage = 'Preview'; message = '이전 모델 프리뷰 · 버전 확인 필요'
-                elif video and video['status']=='ready' and video.get('preview_version')==preview['number']:
-                    message = '영상 완성 · 결과 확인'
-        else:
-            message = '다음: ' + names['3DModel'] + ' 확인·승인'
-    running = next((s for s in STAGES if latest[s] and latest[s]['status'] in ('running','queued')), None)
-    if running:
-        next_stage = running; message = queue_message(idea['id'],running,latest[running]) if latest[running]['status']=='queued' else names[running] + ' 생성 중'
-    buttons = []
-    for stage in STAGES:
-        v = latest[stage]
-        allowed = stage=='3DModel' or bool(model and model['status']=='ready' and model.get('approved_at'))
-        if stage=='Video': allowed = allowed and bool(preview and preview['status']=='ready')
-        label = {'3DModel': 'Generate 3D Model' if idea['category']=='tech' else 'Prepare Real Media', 'Preview': 'Generate Preview', 'Video': 'Create Video'}[stage]
-        state = '대기'
-        if v:
-            state = {'queued':'제작 대기','running':'생성 중','failed':'실패','ready':'확인 대기'}.get(v['status'],'대기')
-            if v['status']=='ready':
-                state = '승인 완료' if stage=='3DModel' and v.get('approved_at') else ('완료' if stage=='Video' else '확인 대기')
-                label = names[stage] + (' 보기' if state in ('승인 완료','완료') else ' 확인·승인')
-            elif v['status']=='running': label = names[stage] + ' 생성 중'
-            elif v['status']=='failed': label = names[stage] + ' 오류 확인'
-        buttons.append(dict(stage=stage,label=label,state=state,number=v['number'] if v else None,
-            status=v['status'] if v else 'empty',progress_message=(queue_message(idea['id'],stage,v) if v['status']=='queued' else v.get('message','')) if v else '',
-            primary=stage==next_stage,disabled=bool(running) or not allowed or bool(v and v['status']=='ready'),
-            regen_disabled=not allowed or bool(running),existing=bool(v)))
-    return dict(id=idea['id'],message=message,buttons=buttons,running=bool(running),
-        approved=bool(model and model['status']=='ready' and model.get('approved_at')))
-
-
-def clip_workflow(idea):
-    latest={s:next(iter(history(idea['id'],s)),None) for s in STAGES}
-    preview=latest['Preview'];model=latest['3DModel'];video=latest['Video']
-    ready=bool(preview and preview['status']=='ready' and preview.get('package_ready'))
-    needs=bool(ready and preview.get('needs_3d'))
-    model_ok=bool(model and model['status']=='ready' and (model.get('approved_at') or model.get('quality_reviewed_at')) and ready and model.get('preview_version')==preview['number'])
-    next_stage='Preview';message='예약 준비 · 매일 09·21시'
-    if ready:
-        next_stage='3DModel' if needs and not model_ok else 'Video'
-        message='3D모델 생성 필요' if next_stage=='3DModel' else '다음: 최종 확인·영상 제작'
-        if needs and model and model['status']=='ready' and model.get('preview_version')==preview['number'] and not (model.get('approved_at') or model.get('quality_reviewed_at')):
-            message='다음: 3D 모델 확인·승인'
-        if video and video['status']=='ready' and video.get('preview_version')==preview['number'] and (not needs or video.get('model_version')==(model or {}).get('number')):
-            message='영상 완성 · 결과 확인'
-    running=next((s for s,v in latest.items() if v and v['status'] in ('running','queued')),None)
-    names={'Preview':'프리뷰·클립','3DModel':'3D 모델','Video':'영상'}
-    if running:next_stage=running;message=queue_message(idea['id'],running,latest[running]) if latest[running]['status']=='queued' else names[running]+' 생성 중'
+    latest={stage:next(iter(history(idea['id'],stage)),None) for stage in ('Preview','Video')}
+    preview=latest['Preview'];video=latest['Video']
+    ready=bool(preview and preview.get('package_ready') and preview.get('storyboard',{}).get('pipeline')=='shopping_v2')
+    message='매일 09시 · Astra 준비'
+    if preview and not ready:message='새 쇼핑쇼츠 기준으로 재준비 필요'
+    if ready:message='컷씬 완료 · 영상 자동 제작 준비'
+    if video:message=video.get('message',message)
+    running=any(v and v['status'] in ('running','queued') for v in latest.values())
+    active=next(((stage,v) for stage,v in latest.items() if v and v['status'] in ('running','queued')),None)
+    if active:
+        stage,value=active
+        message=queue_message(idea['id'],stage,value) if value['status']=='queued' else value.get('message','제작 중')
     buttons=[]
-    for stage in ('Preview','3DModel','Video'):
-        v=latest[stage];allowed=stage=='Preview' or (ready and (needs if stage=='3DModel' else not needs or model_ok))
-        stale=bool(stage=='3DModel' and v and ready and v.get('preview_version')!=preview['number'])
-        state=('최종 승인 대기' if stage=='Video' else '예약 준비') if not v else {'queued':'제작 대기','running':'생성 중','failed':'준비 실패','awaiting_review':'검증 중','ready':'완료'}.get(v['status'],'준비 중')
-        if stage=='3DModel':state='이전 프리뷰 모델' if stale else ('승인 완료' if model.get('approved_at') else '검증 완료') if model_ok else '불필요' if ready and not needs else '확인 대기' if v and v['status']=='ready' else state
-        buttons.append(dict(stage=stage,state=state,label=names[stage],number=v['number'] if v else None,
-            status=v['status'] if v else 'empty',progress_message=(queue_message(idea['id'],stage,v) if v['status']=='queued' else v.get('message','')) if v else '',primary=stage==next_stage,
-            disabled=stage!='Video' or bool(running) or not allowed or bool(v and v['status']=='ready'),regen_disabled=stage!='Video' or bool(running) or not allowed,existing=bool(v)))
-    return dict(id=idea['id'],message=message,buttons=buttons,running=bool(running),approved=bool(model and model.get('approved_at')),needs_3d=needs)
+    for stage,v in latest.items():
+        buttons.append(dict(stage=stage,label='컷씬' if stage=='Preview' else '영상',state=v.get('publication_state',v['status']) if v else '예약 준비',number=v['number'] if v else None,status=v['status'] if v else 'empty',progress_message=('이전 제작 방식 보관본' if stage=='Preview' and v and not ready else v.get('message','')) if v else '',primary=stage=='Video',disabled=stage!='Video' or not ready or running or bool(v and v['status']=='ready'),regen_disabled=stage!='Video' or not ready or running,existing=bool(v)))
+    return dict(id=idea['id'],message=message,buttons=buttons,running=running,approved=False,needs_3d=False)
+
+
+clip_workflow=workflow

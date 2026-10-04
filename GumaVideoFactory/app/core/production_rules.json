@@ -1,30 +1,10 @@
 {
-  "revision": "2026-10-04.5",
+  "revision": "2026-10-04.6",
   "rules": [
     {
       "id": "exact-product",
       "category": "tech",
       "instruction": "Match the exact product generation, variant, color and visible parts against actual reference photos. Never substitute another product or claim an unverified reconstruction is exact."
-    },
-    {
-      "id": "single-product",
-      "category": "tech",
-      "instruction": "Render one complete intended product assembly. Preserve its lenses, buttons, ports and accessories belonging to that assembly. Separate multiple variants only with verified identity/dimension evidence. Never pick an arbitrary first or largest mesh. Phone-specific dimensions must not be applied to other product categories."
-    },
-    {
-      "id": "surface-fidelity",
-      "category": "tech",
-      "instruction": "Preserve original per-texture UV coordinates, color, logo, roughness, normals, transparency and lens materials. Never invent surface stripes or silently simplify unsupported materials. Rebuild supported static materials and fail explicitly when fidelity cannot be preserved."
-    },
-    {
-      "id": "approved-exterior",
-      "category": "tech",
-      "instruction": "Official technical clips are the default visual foundation. First generate feature-matched clips and original Korean commentary. Use the exact product generation and official UI. Preserve all earlier product accuracy requirements. When actual internal geometry is unavailable, explicitly label operating-principle visuals; never invent precise parts, dimensions or internal layouts. ProRes/Log needs recording/grade workflow, not unrelated beauty footage."
-    },
-    {
-      "id": "premium-3d",
-      "category": "tech",
-      "instruction": "Codex prepares and visually reviews needed 3D before recommendations are published. Preserve PBR, depth and cinematic parallax. Use verified exact exterior assets or explicitly labelled abstract principles; never substitute a picture plane for a product model. Final human approval covers the entire prepared package."
     },
     {
       "id": "real-food",
@@ -34,39 +14,39 @@
     {
       "id": "immutable-versions",
       "category": "all",
-      "instruction": "Every regeneration or model correction produces a new version with parent/change history. Preserve previous outputs and require renewed approval of modified models. Do not inherit prior appearance approval."
+      "instruction": "Every regeneration creates a new immutable Preview or Video version. Preserve previous assets, provenance and publication records."
     },
     {
       "id": "clear-next-step",
       "category": "all",
-      "instruction": "Use one durable FIFO queue for all products/stages; show queue position and inline progress without navigation. Persist unstarted jobs across restarts; never silently repeat interrupted paid requests. One failure must not cancel the next product. Only titles navigate; model and final video approval remain required."
-    },
-    {
-      "id": "official-clips-first",
-      "category": "tech",
-      "instruction": "Twice daily at 09:00 and 21:00 KST, prepare three unique tech packages: verified official technical clips, 6-8 original Korean narration scenes, required local Blender assets and a Veo transition plan. Codex inspects timed frames; FFmpeg and Blender run locally. Never call paid planning/image/model/video APIs before final approval. Seal reviewed file hashes; publish only complete packages. Record official reuse as user assumption and discard original audio. Veo at final approval adds abstract transitions, never regenerates exact products."
+      "instruction": "Durable FIFO video queue with progress and no automatic retry of interrupted paid requests. Titles open detail. User approval is required for PUBLIC publication only, after private upload and review."
     },
     {
       "id": "coupang-purchase",
       "category": "all",
       "instruction": "Codex must find the exact product and option on Coupang before recommending. Verify official brand/authorized seller evidence and Rocket Delivery independently, recording seller, option, evidence and check time. Do not substitute Rocket Jikgu or seller Rocket, infer official status from delivery, or fabricate unavailable links. Keep reference URLs separate from purchase URLs. Affiliate links must be issued through the user account after enrollment, never invented. Recheck availability before publication."
+    },
+    {
+      "id": "shopping-funnel",
+      "category": "all",
+      "instruction": "Daily at 09:00 KST prepare three new products total across categories. GPT-6 Astra directly researches trends and authors 6-8 cuts after verified Coupang data and affiliate links. No Gemini planning. Official video OR images required. Need -> solution -> evidenced popularity/interest reasons -> product features -> channel profile purchase link CTA. Never invent popularity. No 3D model creation."
+    },
+    {
+      "id": "selective-veo",
+      "category": "all",
+      "instruction": "Regenerate suitable hook/context cuts with Veo; preserve official exact technical footage, real food and product identity. Inspect every result before private upload. Discard original audio and use ko-KR-SunHiNeural consistently in every video. Do not regenerate unsupported exact product shapes."
+    },
+    {
+      "id": "private-review",
+      "category": "all",
+      "instruction": "Automatically produce and inspect completed videos, then computer-use upload to @GumaShop86 PRIVATE only. Verify actual visibility and record URL/hash. Only the exact version explicitly approved by the user may become public. Never infer public approval from creation or private upload."
     }
   ],
   "feedback": [
     {
-      "id": "multiple-handsets",
-      "scope": "all-tech",
-      "lesson": "Inspect complete assemblies before rendering; variant dimensions remain product-specific evidence."
-    },
-    {
-      "id": "rear-horizontal-bands",
-      "scope": "all-tech",
-      "lesson": "Keep named UV maps and full supported static PBR connections for every imported product, not only phones."
-    },
-    {
-      "id": "approved-card-still-generates-model",
+      "id": "shopping-v2",
       "scope": "all",
-      "lesson": "Current approval drives the next action; generation stays on the card with live button progress. Title opens detail. Update existing documentation in place and replace stale text without cumulative growth."
+      "lesson": "Replace promotional excerpts with a need-led hook and evidence-based solution narrative. Remove inaccurate model stage; preserve actual product sources. Private upload precedes user public approval."
     }
   ],
   "publishing": {
@@ -85,10 +65,13 @@
       "method": "computer_use_connected_browser_youtube_studio",
       "integration_status": "not_verified",
       "channel_url": "https://www.youtube.com/@GumaShop86",
-      "approval": "Preserve final user approval. Only upload the approved completed video; research completion alone is not approval.",
+      "approval": "Automatic private upload after audio/visual review is authorized. Public transition requires explicit per-version user approval.",
       "verification": "Confirm active channel and existing upload before submitting; record video URL and state to prevent duplicates. Do not invent publication schedule.",
       "auth": "Ask user only when login or verification is required; distinguish browser disconnection. Never bypass authentication.",
       "browser": "Use connected in-app browser first; use Chrome if required capabilities are unavailable. Verify each browser session independently."
-    }
+    },
+    "voice": "ko-KR-SunHiNeural",
+    "planner_model": "gpt-6-astra",
+    "schedule": "09:00 Asia/Seoul, 3 total/day"
   }
 }
