@@ -20,6 +20,7 @@ storage/recommendations/*
 storage/source_media/*
 storage/products/
 storage/verification/
+storage/research/
 .reset_archive/
 !storage/raw_clips/.gitkeep
 !storage/audio/.gitkeep

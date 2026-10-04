@@ -99,7 +99,10 @@ def build(rec_path, board_path):
                 media.run([media.get_ffmpeg_bin(),'-v','error','-i',str(clip),'-frames:v','1',str(image)])
             else:
                 from PIL import Image,ImageOps
-                with Image.open(copied) as im:ImageOps.exif_transpose(im).convert('RGB').save(image)
+                with Image.open(copied) as im:
+                    rgba=ImageOps.exif_transpose(im).convert('RGBA')
+                    # Palette transparency contains arbitrary RGB values; composite before dropping alpha.
+                    Image.alpha_composite(Image.new('RGBA',rgba.size,'#f5f5f5'),rgba).convert('RGB').save(image)
                 from app.core.ffmpeg_mixer import render_product_still
                 render_product_still(image,clip,'9:16',s.duration_seconds)
             media.sheets(clip,[0,s.duration_seconds*.5,s.duration_seconds-.12],folder,f'check_{i:02d}')

@@ -23,7 +23,7 @@ def now_kst():
 class Source(BaseModel):
     title: str = Field(min_length=1, max_length=300)
     url: str
-    published_date: str
+    published_date: str = ''
 
     @field_validator("url")
     @classmethod
@@ -36,6 +36,8 @@ class Source(BaseModel):
     @field_validator("published_date")
     @classmethod
     def dated_source(cls, value):
+        if not value:
+            return value  # Undated official product pages must not receive invented dates.
         day = datetime.strptime(value, "%Y-%m-%d").date()
         if day > now_kst().date():
             raise ValueError("미래 날짜 출처는 사용할 수 없습니다.")
@@ -166,7 +168,7 @@ class DailyBatch(BaseModel):
                 raise ValueError("공식 판매처·로켓배송이 검증된 쿠팡 상품 링크가 필요합니다.")
             if item.category == "tech" and len(item.supporting_features) < 2:
                 raise ValueError("테크 추천에는 검증된 추가 주요 기능이 2개 이상 필요합니다.")
-            if not any((now_kst().date() - datetime.strptime(s.published_date, "%Y-%m-%d").date()).days <= 30 for s in item.sources):
+            if not any(s.published_date and (now_kst().date() - datetime.strptime(s.published_date, "%Y-%m-%d").date()).days <= 30 for s in item.sources):
                 raise ValueError("아이템마다 최근 30일 이내 출처가 하나 이상 필요합니다.")
         return self
 

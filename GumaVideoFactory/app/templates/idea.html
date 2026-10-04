@@ -28,7 +28,7 @@ function render(){
  }
  document.getElementById('content').innerHTML=h;
 }
-async function refresh(){data=await(await fetch(`/api/ideas/${data.id}`,{cache:'no-store'})).json();render()}
+async function refresh(){const r=await fetch(`/api/ideas/${data.id}`,{cache:'no-store'});if(!r.ok)return;const next=await r.json();if(!next.id)return;data=next;render()}
 async function makeVideo(){if(busy)return;busy=true;try{let v=await api(`/api/ideas/${data.id}/Video`,{preview_version:selected.Preview,regenerate:true});selected.Video=v.number;stage='Video';await refresh()}catch(e){toast(e.message)}finally{busy=false}}
 async function publish(){if(busy)return;if(!document.getElementById('publish-check').checked){toast('영상을 리뷰한 후 체크해주세요.');return}busy=true;try{await api(`/api/ideas/${data.id}/Video/${selected.Video}/publish`,{approved:true});await refresh()}catch(e){toast(e.message)}finally{busy=false}}
 async function saveCut(n){if(busy)return;busy=true;try{await api(`/api/ideas/${data.id}/Video/${selected.Video}/cuts/${n}/feedback`,{narration:document.getElementById('narration-'+n).value,feedback:document.getElementById('feedback-'+n).value});document.getElementById('saved-'+n).textContent='수정 요청 저장 · 다음 작업에서 새 버전 제작'}catch(e){toast(e.message)}finally{busy=false}}

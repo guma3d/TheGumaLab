@@ -39,7 +39,6 @@ def generate_video_clip(
             number_of_videos=1,
             duration_seconds=valid_duration,
             aspect_ratio=aspect_ratio,
-            enhance_prompt=True,
             last_frame=types.Image.from_file(location=str(last_image_path)) if last_image_path else None,
         ),
     )
@@ -54,6 +53,8 @@ def generate_video_clip(
 
     generated_video = operation.response.generated_videos[0].video
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    if not generated_video.video_bytes:
+        client.files.download(file=generated_video)
     generated_video.save(str(output_path))
     logger.info(f"Video clip saved to {output_path}")
 
