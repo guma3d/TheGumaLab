@@ -64,6 +64,30 @@ def product_key(value):
     return re.sub(r'[^a-z0-9가-힣]', '', unicodedata.normalize('NFKD', value).casefold())
 
 
+class PurchaseLink(BaseModel):
+    url: str
+    seller: str = Field(min_length=1)
+    official_evidence: str = Field(min_length=10)
+    rocket_evidence: str = Field(min_length=10)
+    option: str = Field(min_length=1)
+    checked_at: datetime
+
+    @field_validator('url')
+    @classmethod
+    def product_url(cls, value):
+        parsed = urlparse(value)
+        if parsed.scheme != 'https' or parsed.hostname != 'www.coupang.com' or parsed.username or parsed.password or not re.fullmatch(r'/vp/products/[0-9]+', parsed.path):
+            raise ValueError('정확한 쿠팡 상품 상세 URL이 필요합니다.')
+        return value
+
+    @field_validator('checked_at')
+    @classmethod
+    def recent_check(cls, value):
+        if value.tzinfo is None or not timedelta(0) <= now_kst() - value <= timedelta(hours=24):
+            raise ValueError('공식 판매처·로켓배송을 최근 24시간 내 확인해야 합니다.')
+        return value
+
+
 class Recommendation(BaseModel):
     category: str
     title: str = Field(min_length=1, max_length=200)
@@ -80,6 +104,7 @@ class Recommendation(BaseModel):
     media_sources: list[MediaSource] = Field(default_factory=list, max_length=8)
     product_identity: str = Field(default='', max_length=200)
     technical_video: TechnicalVideo | None = None
+    purchase_link: PurchaseLink | None = None
 
     @model_validator(mode='after')
     def technical_source(self):
@@ -118,6 +143,8 @@ class DailyBatch(BaseModel):
         if len({i.stable_id() for i in self.items}) != len(self.items):
             raise ValueError("중복 아이템은 사용할 수 없습니다.")
         for item in self.items:
+            if not item.purchase_link:
+                raise ValueError("공식 판매처·로켓배송이 검증된 쿠팡 상품 링크가 필요합니다.")
             if item.category == "tech" and len(item.supporting_features) < 2:
                 raise ValueError("테크 추천에는 검증된 추가 주요 기능이 2개 이상 필요합니다.")
             if not any((now_kst().date() - datetime.strptime(s.published_date, "%Y-%m-%d").date()).days <= 30 for s in item.sources):

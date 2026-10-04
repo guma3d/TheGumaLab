@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-02.9",
+  "revision": "2026-10-04.1",
   "rules": [
     {
       "id": "exact-product",
@@ -45,6 +45,11 @@
       "id": "official-clips-first",
       "category": "tech",
       "instruction": "Twice daily at 09:00 and 21:00 KST, prepare three unique tech packages: verified official technical clips, 6-8 original Korean narration scenes, required local Blender assets and a Veo transition plan. Codex inspects timed frames; FFmpeg and Blender run locally. Never call paid planning/image/model/video APIs before final approval. Seal reviewed file hashes; publish only complete packages. Record official reuse as user assumption and discard original audio. Veo at final approval adds abstract transitions, never regenerates exact products."
+    },
+    {
+      "id": "coupang-purchase",
+      "category": "all",
+      "instruction": "Codex must find the exact product and option on Coupang before recommending. Verify official brand/authorized seller evidence and Rocket Delivery independently, recording seller, option, evidence and check time. Do not substitute Rocket Jikgu or seller Rocket, infer official status from delivery, or fabricate unavailable links. Keep reference URLs separate from purchase URLs. Affiliate links must be issued through the user account after enrollment, never invented. Recheck availability before publication."
     }
   ],
   "feedback": [
