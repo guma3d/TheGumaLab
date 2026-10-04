@@ -1,6 +1,6 @@
 {% extends 'studio_base.html' %}{% block content %}
 <a href="/?category={{idea.category}}">← 추천 목록</a><h1>{{idea.title}}</h1><p>{{idea.recommendation.hook}}</p>
-<div class="panel"><strong>쿠팡 검증 → 컷씬·음성 → 비공개 업로드 → 공개 승인</strong><p class="muted">매일 09시 · 총 3개 · Astra 기획 · 동일한 한국어 음성</p><p id="flow"></p></div>
+<div class="panel"><strong>쿠팡 검증 → 컷씬·음성 → 비공개 업로드 → 공개 승인</strong><p class="muted">09·15·21시 · 1개씩 자동 제작 · YouTube 비공개 리뷰</p><p id="flow"></p></div>
 <nav class="tabs"><button onclick="tab('Preview')">컷씬</button><button onclick="tab('Video')">완성 영상</button></nav>
 <section class="panel"><select id="versions" aria-label="버전" onchange="selected[stage]=Number(this.value);render()"></select><div id="content"></div></section>
 <details><summary>기능·출처</summary><p>{{idea.recommendation.key_feature}}</p><p>{{idea.recommendation.cautions}}</p>{% for s in idea.recommendation.sources %}<p><a href="{{s.url}}" target="_blank" rel="noopener">{{s.title}}</a></p>{% endfor %}</details>
@@ -12,7 +12,7 @@ function render(){
  const rows=data.versions[stage]||[];if(!selected[stage])selected[stage]=rows[0]?.number;
  const v=rows.find(v=>v.number===selected[stage]);
  document.getElementById('versions').innerHTML=rows.map(v=>`<option value="${v.number}" ${v.number===selected[stage]?'selected':''}>v${v.number} · ${esc(v.status)}</option>`).join('')||'<option>준비 중</option>';
- let h=v?`<p role="status">${esc(stage==='Preview'&&v.storyboard?.pipeline!=='shopping_v2'?'이전 제작 방식 보관본':v.message)}</p>`:'<p>매일 09시 작업에서 준비합니다.</p>';
+ let h=v?`<p role="status">${esc(stage==='Preview'&&v.storyboard?.pipeline!=='shopping_v2'?'이전 제작 방식 보관본':v.message)}</p>`:'<p>예약 작업에서 자동으로 준비합니다.</p>';
  if(v&&stage==='Preview'&&v.storyboard){
   const modern=v.storyboard.pipeline==='shopping_v2';
   if(!modern)h+='<p class="notice">이전 제작 방식의 보관본입니다. 새 흐름으로 다시 준비해야 합니다.</p>';
@@ -21,6 +21,7 @@ function render(){
  }
  if(v&&stage==='Video'&&v.output_url){
   h+=`<video controls playsinline preload="metadata" src="${esc(safeLink(v.output_url))}"></video><p><a href="${esc(safeLink(v.output_url))}" download>영상 다운로드</a></p>`;
+  if(v.cuts?.length)h+='<h2>컷별 영상·대사</h2><p>아이템 이름 · 영상 버전 · CUT 번호로 피드백해주세요. 수정은 새 버전에 반영됩니다.</p><div class="grid">'+v.cuts.map(c=>`<article class="card" id="cut-${c.number}"><strong>CUT ${c.number}</strong><video controls playsinline preload="metadata" src="${esc(safeLink(c.video_url))}"></video><label>대사<textarea id="narration-${c.number}" rows="3" maxlength="1000">${esc(c.narration_ko)}</textarea></label><label>수정 요청<textarea id="feedback-${c.number}" rows="2" maxlength="3000" placeholder="이 컷에서 바꿀 내용을 입력하세요"></textarea></label><button onclick="saveCut(${c.number})">이 컷 수정 요청</button><p id="saved-${c.number}"></p></article>`).join('')+'</div>';
   if(v.youtube_url)h+=`<p><a href="${esc(safeLink(v.youtube_url))}" target="_blank" rel="noopener">YouTube에서 리뷰</a></p>`;
   if(v.publication_state==='private')h+='<label class="check"><input id="publish-check" type="checkbox">완성 영상과 상품 안내를 확인했으며 공개에 동의합니다.</label><button class="primary" onclick="publish()">공개 승인</button>';
   else if(v.publication_state==='publish_requested')h+='<p>공개 승인 완료 · 다음 브라우저 작업에서 전환합니다.</p>';
@@ -30,5 +31,6 @@ function render(){
 async function refresh(){data=await(await fetch(`/api/ideas/${data.id}`,{cache:'no-store'})).json();render()}
 async function makeVideo(){if(busy)return;busy=true;try{let v=await api(`/api/ideas/${data.id}/Video`,{preview_version:selected.Preview,regenerate:true});selected.Video=v.number;stage='Video';await refresh()}catch(e){toast(e.message)}finally{busy=false}}
 async function publish(){if(busy)return;if(!document.getElementById('publish-check').checked){toast('영상을 리뷰한 후 체크해주세요.');return}busy=true;try{await api(`/api/ideas/${data.id}/Video/${selected.Video}/publish`,{approved:true});await refresh()}catch(e){toast(e.message)}finally{busy=false}}
-render();setInterval(()=>{if(!busy&&!document.getElementById('publish-check')?.checked)refresh().catch(()=>{})},5000);
+async function saveCut(n){if(busy)return;busy=true;try{await api(`/api/ideas/${data.id}/Video/${selected.Video}/cuts/${n}/feedback`,{narration:document.getElementById('narration-'+n).value,feedback:document.getElementById('feedback-'+n).value});document.getElementById('saved-'+n).textContent='수정 요청 저장 · 다음 작업에서 새 버전 제작'}catch(e){toast(e.message)}finally{busy=false}}
+render();setInterval(()=>{if(!busy&&!document.querySelector('textarea')&&!document.getElementById('publish-check')?.checked)refresh().catch(()=>{})},5000);
 </script>{% endblock %}

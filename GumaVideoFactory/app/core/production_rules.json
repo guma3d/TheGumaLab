@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-04.6",
+  "revision": "2026-10-04.7",
   "rules": [
     {
       "id": "exact-product",
@@ -29,7 +29,7 @@
     {
       "id": "shopping-funnel",
       "category": "all",
-      "instruction": "Daily at 09:00 KST prepare three new products total across categories. GPT-6 Astra directly researches trends and authors 6-8 cuts after verified Coupang data and affiliate links. No Gemini planning. Official video OR images required. Need -> solution -> evidenced popularity/interest reasons -> product features -> channel profile purchase link CTA. Never invent popularity. No 3D model creation."
+      "instruction": "At 09:00, 15:00 and 21:00 KST each prepare one new item and privately upload one completed video; three per day across categories. GPT-6 Astra directly researches trends and authors 6-8 cuts after verified Coupang data and affiliate links. No Gemini planning. Official video OR images required. Need -> solution -> evidenced popularity/interest reasons -> product features -> channel profile purchase link CTA. Never invent popularity. No 3D model creation."
     },
     {
       "id": "selective-veo",
@@ -72,6 +72,7 @@
     },
     "voice": "ko-KR-SunHiNeural",
     "planner_model": "gpt-6-astra",
-    "schedule": "09:00 Asia/Seoul, 3 total/day"
+    "schedule": "09:00, 15:00, 21:00 Asia/Seoul; one item/video each, three per day",
+    "workspace": "Production and editing workspace: preserve final per-cut videos with narration, identify by idea ID/video version/cut number, process edit_requests as new versions. User reviews final video on YouTube; only private-to-public remains after approval."
   }
 }

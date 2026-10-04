@@ -53,6 +53,33 @@ def version(idea_id,stage,number):
     except (ValueError,FileNotFoundError,TypeError): raise HTTPException(404,'버전을 선택해주세요.')
 
 
+class CutFeedback(BaseModel):
+    narration: str = Field(min_length=1,max_length=1000)
+    feedback: str = Field(default='',max_length=3000)
+
+
+@router.post('/api/ideas/{idea_id}/Video/{number}/cuts/{cut}/feedback')
+async def cut_feedback(idea_id:str,number:int,cut:int,req:CutFeedback):
+    find(idea_id)
+    v=version(idea_id,'Video',number)
+    cuts=v.get('cuts',[])
+    if v['status']!='ready' or not 1<=cut<=len(cuts):
+        raise HTTPException(409,'완성된 영상의 컷 번호를 선택해주세요.')
+    request_id=uuid.uuid4().hex
+    data=dict(id=request_id,idea_id=idea_id,video_version=number,cut_number=cut,
+        original_narration=cuts[cut-1]['narration_ko'],narration=req.narration.strip(),
+        feedback=req.feedback.strip(),state='pending',created_at=now_kst().isoformat())
+    if not data['narration']:raise HTTPException(400,'대사를 입력해주세요.')
+    with store.LOCK:
+        folder=store.directory(idea_id)/'edit_requests'
+        for path in folder.glob('*.json'):
+            old=json.loads(path.read_text(encoding='utf-8'))
+            if old.get('state')=='pending' and all(old.get(k)==data[k] for k in ('video_version','cut_number','narration','feedback')):
+                return old
+        store.write_json(folder/(request_id+'.json'),data)
+    return data
+
+
 @router.get('/ideas/{idea_id}')
 async def idea_page(request:Request,idea_id:str):
     find(idea_id)

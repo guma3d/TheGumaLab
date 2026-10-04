@@ -30,15 +30,23 @@ class ShoppingTests(unittest.TestCase):
                 if change=='cta':bad['scenes'][-1]['narration_ko']='하단 링크를 클릭하세요.'
                 with self.assertRaises(ValueError,msg=change):s.Board(**bad)
 
-    def test_total_three_and_affiliate(self):
-        with tempfile.TemporaryDirectory() as temp:
-            rec,_=self.fixture(Path(temp));items=[]
-            for i in range(3):items.append(dict(rec,subject='fixture'+str(i),category='food' if i==2 else 'tech'))
-            data=dict(date=now_kst().date().isoformat(),researched_at=now_kst(),items=items)
-            DailyBatch(**data)
-            with self.assertRaises(ValueError):DailyBatch(**dict(data,items=items*2))
-            items[0]=copy.deepcopy(items[0]);items[0]['purchase_link']['affiliate_url']=''
-            with self.assertRaises(ValueError):DailyBatch(**dict(data,items=items))
+    def test_slot_accumulation_and_affiliate(self):
+        from app.core import recommendations as recs
+        with tempfile.TemporaryDirectory() as temp,patch.object(recs,'RECOMMENDATIONS_DIR',Path(temp)/'recommendations'):
+            root=Path(temp);rec,_=self.fixture(root)
+            for i,hour in enumerate((9,15,21)):
+                stamp=now_kst().replace(hour=hour,minute=0,second=0,microsecond=0)
+                item=copy.deepcopy(rec);item['subject']='fixture'+str(i);item['product_identity']=item['subject'];item['purchase_link']['checked_at']=stamp.isoformat()
+                with patch.object(recs,'now_kst',return_value=stamp):
+                    data=dict(date=stamp.date().isoformat(),researched_at=stamp,slot=f'{hour:02d}:00',items=[item])
+                    batch=DailyBatch(**data);result=recs.save_batch(batch)
+                    self.assertEqual(len(result['items']),i+1)
+                    self.assertEqual(result['research_count'],i+1)
+                    with self.assertRaises(ValueError):recs.save_batch(batch)
+                    with self.assertRaises(ValueError):DailyBatch(**dict(data,items=[item,item]))
+                    item['purchase_link']['affiliate_url']=''
+                    with self.assertRaises(ValueError):DailyBatch(**dict(data,items=[item]))
+            self.assertEqual(len(list((Path(temp)/'recommendations/history').glob('*.json'))),3)
 
     def test_images_render_private_and_explicit_public_approval(self):
         with tempfile.TemporaryDirectory() as temp,patch.object(store,'ROOT',Path(temp)/'products'),patch.object(store,'STORAGE_DIR',Path(temp)):
@@ -56,6 +64,14 @@ class ShoppingTests(unittest.TestCase):
             with patch.object(s,'synthesize_speech',side_effect=speech),patch.object(s,'generate_video_clip',side_effect=AssertionError('No Veo for official images')):
                 asyncio.run(s.render(id,v['number']))
             vf=store.version_dir(id,'Video',v['number']);self.assertTrue((vf/'final.mp4').is_file())
+            completed=store.get(id,'Video',v['number']);self.assertEqual(len(completed['cuts']),6)
+            from app.studio import cut_feedback,CutFeedback
+            request=asyncio.run(cut_feedback(id,1,2,CutFeedback(narration='수정 대사',feedback='두 번째 컷 교체')))
+            self.assertEqual(request['cut_number'],2)
+            self.assertEqual(request['state'],'pending')
+            self.assertEqual(completed['cuts'][1]['narration_ko'],'테스트입니다.')
+            duplicate=asyncio.run(cut_feedback(id,1,2,CutFeedback(narration='수정 대사',feedback='두 번째 컷 교체')))
+            self.assertEqual(request['id'],duplicate['id'])
             evidence=dict(notes='Synthetic test evidence only')
             with self.assertRaises(ValueError):s.publication(id,1,'public',dict(evidence,visibility='public',url='https://www.youtube.com/watch?v=12345678901'))
             s.publication(id,1,'review',dict(evidence,audio_visual_passed=True));s.publication(id,1,'claim',evidence)

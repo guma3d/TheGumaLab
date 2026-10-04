@@ -7,6 +7,7 @@ import re
 import unicodedata
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
+from typing import Literal
 from pydantic import BaseModel, Field, field_validator, model_validator
 from app.config import RECOMMENDATIONS_DIR
 from app.core.categories import PRESETS
@@ -140,6 +141,7 @@ class DailyBatch(BaseModel):
     date: str
     researched_at: datetime
     items: list[Recommendation] = Field(min_length=1)
+    slot: Literal["09:00","15:00","21:00"]
 
     @model_validator(mode="after")
     def complete_daily_list(self):
@@ -149,8 +151,8 @@ class DailyBatch(BaseModel):
             raise ValueError("조사 시간은 한국시간 기준 오늘이어야 합니다.")
         if self.researched_at > now_kst() + timedelta(minutes=5):
             raise ValueError("미래 조사 시간은 사용할 수 없습니다.")
-        if len(self.items)!=3:
-            raise ValueError("하루 전체 추천은 카테고리 합계 3개입니다.")
+        if len(self.items)!=1:
+            raise ValueError("각 시간대에는 아이템 1개만 등록합니다.")
         if len({i.stable_id() for i in self.items}) != len(self.items):
             raise ValueError("중복 아이템은 사용할 수 없습니다.")
         for item in self.items:
@@ -176,8 +178,10 @@ def save_batch(batch: DailyBatch):
     old = load_daily(batch.date)
     if old.get("researched_at") and datetime.fromisoformat(old["researched_at"]) >= batch.researched_at:
         raise ValueError("이전 조사 결과로 최신 목록을 덮어쓸 수 없습니다.")
-    if old.get("research_count",0)>=1:
-        raise ValueError("오늘 추천은 이미 저장됐습니다. 하루 1회만 갱신합니다.")
+    if batch.slot in old.get("completed_slots",[]):
+        raise ValueError("이 시간대 아이템은 이미 등록됐습니다.")
+    if old.get("research_count",0)>=3:
+        raise ValueError("하루 3개 등록이 완료됐습니다.")
     seen = recommended_products()
     current = set()
     for item in batch.items:
@@ -187,11 +191,12 @@ def save_batch(batch: DailyBatch):
             raise ValueError('이미 추천한 제품입니다: ' + item.subject)
         current.add(tagged)
     data = batch.model_dump(mode="json")
-    updated_categories = {item.category for item in batch.items}
-    # Keep historical dates intact; today contains exactly three items across categories.
+    data["completed_slots"] = [*old.get("completed_slots",[]),batch.slot]
     data["research_count"] = old.get("research_count", 0) + 1
     for item, record in zip(batch.items, data["items"]):
         record["id"] = item.stable_id()
+        record["slot"] = batch.slot
+    data["items"] = [*old.get("items",[]),*data["items"]]
     RECOMMENDATIONS_DIR.mkdir(parents=True, exist_ok=True)
     archive = RECOMMENDATIONS_DIR / "history"
     archive.mkdir(exist_ok=True)

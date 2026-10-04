@@ -1,6 +1,6 @@
-# 하루 1회 쇼핑쇼츠 준비
+# 하루 3회 쇼핑쇼츠 자동 제작
 
-매일 한국시간 09시, 테크·음식 합계 새 제품 3개. 채널 https://www.youtube.com/@GumaShop86. PC·앱·연결된 브라우저가 필요하다. 실행 모델 GPT-6 Astra를 확인하고 다른 모델이면 사용자에게 변경 요청한다. 모델 이름만 기록해 대체하지 않는다.
+매일 한국시간 09·15·21시 각각 새 아이템 1개·영상 1개(하루 3개). 채널 https://www.youtube.com/@GumaShop86. PC·앱·연결된 브라우저가 필요하다. 실행 모델 GPT-6 Astra를 확인하고 다른 모델이면 사용자에게 변경 요청한다. 모델 이름만 기록해 대체하지 않는다.
 
 ## 조사와 쿠팡
 
@@ -24,10 +24,14 @@ Astra가 공식 자료를 실제로 읽고 이미지·영상 프레임을 본 �
 4. `pending`: 완성 영상 위치와 업로드 상태 확인. 실제 영상과 음성을 재생·검수하고 `review <id> --version V --file <검수.json>`을 실행한다. JSON은 audio_visual_passed=true, notes(실제 검수 내용). 검수 불합격은 업로드하지 않는다.
 5. `claim <id> --version V --file <근거.json>`으로 업로드 진행 기록 후 computer-use YouTube Studio에서 @GumaShop86과 기존 업로드를 확인한다. upload.json의 제목·설명·final.mp4를 사용하고 반드시 비공개로 저장한다. 로그인·파일 업로드 기능 차단은 요청한다. uploading 상태가 남으면 Studio 결과부터 확인하고 중복 업로드하지 않는다.
 6. 실제 비공개 표시를 확인하고 `private <id> --version V --file <결과.json>` 실행. 결과는 notes, visibility=private, channel=https://www.youtube.com/@GumaShop86, url=https://www.youtube.com/watch?v=실제ID. 임의 성공 기록 금지.
-7. 비공개 업로드가 완료된 새 제품 3개만 DailyBatch로 recommendation_import.py에 저장한다. 하루 1회, 전체 3개. 부족하면 기존 목록 유지·부족한 수 알림. 날짜·history·버전 삭제 금지. API의 준비 상태·비공개 URL·조사 시간·history를 검증한다.
+7. 비공개 업로드된 새 제품 1개를 DailyBatch(date, researched_at, slot=09:00/15:00/21:00, items=[1개])로 recommendation_import.py에 저장한다. 하루 3회·회당 1개, 날짜 목록은 누적한다. 부족하면 기존 목록 유지·부족한 수 알림. 날짜·history·버전 삭제 금지. API의 준비 상태·비공개 URL·조사 시간·history를 검증한다.
+
+## 컷 편집·공개 승인
+
+`shopping_package.py edits`로 컷 수정 요청을 확인한다. 아이템·부모 영상 버전·cut_number·narration·feedback을 반영해 새 콘티 버전을 제작한다. 이전 source_file은 부모 Preview 폴더의 절대 경로로 해석하고 출처를 보존한다. 새 영상 비공개 업로드 후 `edit-done <id> --version 새영상번호 --file 요청ID`로 완료 기록한다. 사용자 리뷰는 YouTube 최종 영상으로 진행하며 GumaVideoFactory는 컷 영상·대사·수정 작업실이다.
 
 ## 공개 승인과 알림
 
 웹에서 사용자가 영상을 리뷰하고 공개 승인하면 upload.json이 publish_requested가 된다. 다음 브라우저 작업에서 동일 URL·버전만 공개로 전환하고 `public` 명령에 notes, visibility=public, url을 기록한다. 승인 없는 공개·예약 공개는 금지한다. 실패·확인 불가를 성공으로 표시하지 않는다.
 
-성공한 제목 3개와 https://videofactory.guma3d.com/ 를 안내한다. 새로운 실패·인증·연결 조치만 알리고 동일 상태는 조용히 유지한다. 자동화는 Codex 실행 시 브라우저를 조작하며 서버가 독립적으로 computer-use를 호출하는 구조는 아니다.
+성공한 영상 1개의 제목·YouTube 비공개 URL과 https://videofactory.guma3d.com/ 를 안내한다. 새로운 실패·인증·연결 조치만 알리고 동일 상태는 조용히 유지한다. 자동화는 Codex 실행 시 브라우저를 조작하며 서버가 독립적으로 computer-use를 호출하는 구조는 아니다.

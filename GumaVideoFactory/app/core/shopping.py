@@ -140,7 +140,7 @@ def enqueue(id,n,regenerate=False):
 async def render(id,n):
     v=store.get(id,'Video',n);verify_package(id,v['preview_version'])
     folder=store.version_dir(id,'Video',n);preview=store.version_dir(id,'Preview',v['preview_version'])
-    board=v['storyboard'];segments=[]
+    board=v['storyboard'];segments=[];cut_outputs=[]
     for i,scene in enumerate(board['scenes'],1):
         store.update(id,'Video',n,message=f'{i}/{len(board["scenes"])} 컷·고정 음성 제작')
         audio=folder/f'audio_{i:02d}.mp3'
@@ -154,13 +154,14 @@ async def render(id,n):
         vf=f'scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=24,tpad=stop_mode=clone:stop_duration={seconds}'
         await asyncio.to_thread(media.run,[media.get_ffmpeg_bin(),'-v','error','-i',str(raw),'-i',str(audio),'-map','0:v:0','-map','1:a:0','-vf',vf,'-af','apad','-t',str(seconds),'-c:v','libx264','-pix_fmt','yuv420p','-c:a','aac','-ar','48000','-ac','2',str(output)],240)
         segments.append(output)
+        cut_outputs.append(dict(number=i,role=scene["role"],narration_ko=scene["narration_ko"],video_url=store.url(output),audio_url=store.url(audio),mode=scene["mode"]))
     listing=folder/'clips.txt';listing.write_text('\n'.join(f"file '{p.name}'" for p in segments),encoding='utf-8')
     output=folder/'final.mp4'
     await asyncio.to_thread(media.run,[media.get_ffmpeg_bin(),'-v','error','-f','concat','-safe','0','-i',str(listing),'-c','copy','-movflags','+faststart',str(output)],240)
     store.write_json(folder/'sources.json',dict(product_url=v['product_url'],scenes=board['scenes'],voice=v['voice']))
     store.write_json(folder/'upload.json',dict(state='quality_review',privacy='private',channel='https://www.youtube.com/@GumaShop86',
         title=board['title'],description=board['summary']+'\n상품은 채널 프로필 링크에서 확인하세요.\n'+v['product_url']+'\n쿠팡 파트너스 활동으로 일정액의 수수료를 제공받습니다.',file_sha256=digest(output)))
-    return store.update(id,'Video',n,status='ready',output_url=store.url(output),sources_url=store.url(folder/'sources.json'),message='영상 완성 · 음성·화면 검수 후 비공개 업로드',publication_state='quality_review')
+    return store.update(id,'Video',n,status='ready',cuts=cut_outputs,output_url=store.url(output),sources_url=store.url(folder/'sources.json'),message='영상 완성 · 음성·화면 검수 후 비공개 업로드',publication_state='quality_review')
 
 
 def publication(id,n,action,evidence):
