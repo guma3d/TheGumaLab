@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-04.2",
+  "revision": "2026-10-04.3",
   "rules": [
     {
       "id": "exact-product",
@@ -73,6 +73,13 @@
     "youtube_channel_url": "https://www.youtube.com/@GumaShop86",
     "channel_confirmed_by": "user",
     "purchase_platform": "coupang",
-    "affiliate_link_integration": "not_verified"
+    "affiliate_link_integration": "not_verified",
+    "affiliate_browser_policy": {
+      "browser": "chrome",
+      "authorization": "Use the user-maintained signed-in Coupang Partners session to issue links before API integration.",
+      "on_auth_required": "Pause affected work and ask user to log in or complete verification. Never bypass authentication.",
+      "on_connection_unavailable": "Report browser connection issue separately; do not assume login expired.",
+      "notification": "Notify actionable changes; avoid repeating unchanged blockers."
+    }
   }
 }
