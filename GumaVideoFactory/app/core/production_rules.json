@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-05.10",
+  "revision": "2026-10-05.11",
   "rules": [
     {
       "id": "exact-product",
@@ -19,7 +19,7 @@
     {
       "id": "clear-next-step",
       "category": "all",
-      "instruction": "Durable FIFO video queue with progress and no automatic retry of interrupted paid requests. Titles open detail. User approval is required for PUBLIC publication only, after private upload and review."
+      "instruction": "Durable FIFO video queue with progress and no automatic retry of interrupted paid requests. Titles open detail. User approval is required for PUBLIC publication only, after web version review."
     },
     {
       "id": "coupang-purchase",
@@ -29,7 +29,7 @@
     {
       "id": "shopping-funnel",
       "category": "all",
-      "instruction": "At 09:00, 15:00 and 21:00 KST each prepare one new item and privately upload one completed video; three per day across categories. GPT-6 Astra directly researches trends and authors 6-8 cuts after verified Coupang data and affiliate links. No Gemini planning. Official video OR images required. Need -> solution -> evidenced popularity/interest reasons -> product features -> fixed Korean pinned-comment/channel-profile CTA. Never invent popularity. No 3D model creation. The first cut must strongly hook with verified interest/review counts or a current trend connected to a concrete use case. Record date and scope; never recast cumulative reviews as recent growth. Pokemon-card/food pairing is an example only when trend and real product are verified."
+      "instruction": "At 09:00, 15:00 and 21:00 KST each prepare one new item and save one completed video locally for web version review; three per day across categories. GPT-6 Astra directly researches trends and authors 6-8 cuts after verified Coupang data and affiliate links. No Gemini planning. Official video OR images required. Need -> solution -> evidenced popularity/interest reasons -> product features -> fixed Korean pinned-comment/channel-profile CTA. Never invent popularity. No 3D model creation. The first cut must strongly hook with verified interest/review counts or a current trend connected to a concrete use case. Record date and scope; never recast cumulative reviews as recent growth. Pokemon-card/food pairing is an example only when trend and real product are verified."
     },
     {
       "id": "selective-veo",
@@ -37,9 +37,9 @@
       "instruction": "For food revisions use browser-operated Flow Veo with existing credits; no Veo API fallback. Preserve official exact food/product sources; validate reference-guided package actions frame by frame. Discard original audio and retain the category voice. Never present invented shape or a method illustration as actual product footage."
     },
     {
-      "id": "private-review",
+      "id": "web-version-review",
       "category": "all",
-      "instruction": "Automatically produce and inspect completed videos, then computer-use upload to @GumaShop86 PRIVATE only. Verify actual visibility and record URL/hash. Only the exact version explicitly approved by the user may become public. Never infer public approval from creation or private upload."
+      "instruction": "Preserve original assets, every revision and final video locally in the project storage on D:\\TheGumaLab. Manage and review all versions through https://videofactory.guma3d.com and notify the user with exact version links. Never automatically upload to YouTube, even when the final version is complete. Upload only when the human requests that exact version; upload permission does not imply public release permission."
     },
     {
       "id": "category-style",
@@ -54,7 +54,7 @@
     {
       "id": "director-quality",
       "category": "all",
-      "instruction": "Target 20-40; verified tech option <= KRW500000. Original resolution gate and 1080x1920 no letterbox. Each narration must match visible action: thawing on a room-temperature counter, storage in a freezer, no unrelated beauty shot. No duplicated or visually overlapping image cuts, including crop/zoom/mirror variants. Different segments of one source video must show genuinely different subjects/actions/compositions. Perform two documented editorial reviews: before production and after final rendering; both check every cut for whole-video style continuity, distinct visuals and a strong evidence-backed opening hook. Veo: candid photorealistic, bright diffused natural light, low contrast, no cinematic shadows or posing. 0.2s dissolves preserving spoken endings. No top-left branding. Persistent top-right [광고], affiliate disclosure in description first line and beside links; YouTube AI-use setting enabled for realistic generated scenes. No routine burned-in affiliate or AI captions. Keep [광고]; all captions use outlines, no background boxes. Label virtual-person endorsements or omit those scenes. Review frames, motion, captions and disclosure before private upload. If hearing is unavailable, honestly retain audio as user-review-pending on private YouTube; user authorized category voices and private review. Never fabricate listening. Public release requires explicit version approval."
+      "instruction": "Target 20-40; verified tech option <= KRW500000. Original resolution gate and 1080x1920 no letterbox. Each narration must match visible action: thawing on a room-temperature counter, storage in a freezer, no unrelated beauty shot. No duplicated or visually overlapping image cuts, including crop/zoom/mirror variants. Different segments of one source video must show genuinely different subjects/actions/compositions. Perform two documented editorial reviews: before production and after final rendering; both check every cut for whole-video style continuity, distinct visuals and a strong evidence-backed opening hook. Veo: candid photorealistic, bright diffused natural light, low contrast, no cinematic shadows or posing. 0.2s dissolves preserving spoken endings. No top-left branding. Persistent top-right [광고], affiliate disclosure in description first line and beside links; YouTube AI-use setting enabled for realistic generated scenes. No routine burned-in affiliate or AI captions. Keep [광고]; all captions use outlines, no background boxes. Label virtual-person endorsements or omit those scenes. Review frames, motion, captions and disclosure before web review. If hearing is unavailable, honestly retain audio as user-review-pending on the web; user authorized category voices and web review. Never fabricate listening. Public release requires explicit version approval."
     },
     {
       "id": "required-bgm",
@@ -89,16 +89,16 @@
     },
     "youtube_upload_policy": {
       "method": "computer_use_connected_browser_youtube_studio",
-      "integration_status": "private_upload_verified",
+      "integration_status": "request_only",
       "channel_url": "https://www.youtube.com/@GumaShop86",
-      "approval": "Automatic private upload after audio/visual review is authorized. Public transition requires explicit per-version user approval.",
+      "approval": "No automatic private upload or quota retry. Preserve final versions on the web. Upload only on an explicit human request for the exact version. Public release requires separate explicit version approval.",
       "verification": "Confirm active channel and existing upload before submitting; record video URL and state to prevent duplicates. Do not invent publication schedule.",
       "auth": "Ask user only when login or verification is required; distinguish browser disconnection. Never bypass authentication.",
       "browser": "Use connected in-app browser first; use Chrome if required capabilities are unavailable. Verify each browser session independently."
     },
     "planner_model": "gpt-6-astra",
     "schedule": "09:00 tech, 15:00 food, 21:00 household Asia/Seoul; one per category daily",
-    "workspace": "Production and editing workspace: preserve final per-cut videos with narration, identify by idea ID/video version/cut number, process edit_requests as new versions. User reviews final video on YouTube; only private-to-public remains after approval.",
+    "workspace": "Store original assets, edits and final videos locally under project storage/products/<id>/Preview/vNNNN and Video/vNNNN. Manage every version and final output through the webservice with playback/download and version links. Missing YouTube upload is not a production blocker. Never auto-upload a completed final version.",
     "voice_rate": "natural-brisk",
     "cta": "영상 속 제품 정보는 고정댓글이나 채널 프로필에서 확인하세요.",
     "pinned_comment": "Store product name, issued affiliate URL and disclosure; include profile product number only after actual registration. Private videos cannot have comments; keep pending until public, never claim posted. Shorts comment URLs are not clickable.",

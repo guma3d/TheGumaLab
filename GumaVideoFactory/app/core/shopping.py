@@ -257,7 +257,7 @@ async def render(id,n):
     store.write_json(folder/'sources.json',dict(product_url=v['product_url'],scenes=board['scenes'],voice=v['voice']))
     store.write_json(folder/'upload.json',dict(state='quality_review',privacy='private',channel='https://www.youtube.com/@GumaShop86',
         pinned_comment=DISCLOSURE+'\n영상 속 제품: '+store.read(id)['title']+'\n상품 주소: '+v['product_url'],comment_state='pending_publication',title=board['title'],description=bgm.credit(DISCLOSURE+'\n\n'+board['summary']+'\n상품은 채널 프로필 링크에서 확인하세요.\n'+v['product_url'],music_review),file_sha256=digest(output)))
-    return store.update(id,'Video',n,status='ready',cuts=cut_outputs,output_url=store.url(output),sources_url=store.url(folder/'sources.json'),message='영상 완성 · 음성·화면 검수 후 비공개 업로드',publication_state='quality_review')
+    return store.update(id,'Video',n,status='ready',cuts=cut_outputs,output_url=store.url(output),sources_url=store.url(folder/'sources.json'),message='영상 완성 · 웹에서 버전별 검토 · YouTube 자동 업로드 없음',publication_state='quality_review',review_destination='web')
 
 
 def write_captions(path,text,seconds,style,headline='',generated=False):
@@ -317,13 +317,13 @@ def publication(id,n,action,evidence):
         if music.get('file_sha256')!=data['file_sha256'] or not music.get('clipping_passed') or music['track']['attribution'] not in data['description']:
             raise ValueError('현재 영상의 BGM 검수·크레딧이 필요합니다.')
         if len(evidence.get('notes',''))<10:raise ValueError('실제 확인 근거를 기록해주세요.')
-        if action=='review_private':
+        if action in ('review_web','review_private'):
             if data['state']!='quality_review':raise ValueError('검수 대기 영상만 비공개 리뷰 준비가 가능합니다.')
             quality.validate_private_review(evidence,expected_voice=store.get(id,'Video',n)['voice'])
             technical=read(folder/'technical_review.json')
             if technical.get('file_sha256')!=data['file_sha256'] or technical.get('passed') is not True or evidence.get('file_sha256')!=data['file_sha256']:
                 raise ValueError('기술 검수 파일 해시를 확인하세요.')
-            data.update(state='upload_pending',audio_review='user_review_on_private_youtube')
+            data.update(state='web_review',audio_review='user_review_on_web')
         elif action=='review':
             if store.get(id,'Video',n).get('quality_revision'):
                 quality.validate_editorial(evidence)
@@ -333,19 +333,24 @@ def publication(id,n,action,evidence):
                 if technical.get('file_sha256')!=data['file_sha256'] or technical.get('passed') is not True:
                     raise ValueError('최종 파일의 기술 검수가 필요합니다.')
             if data['state']!='quality_review' or evidence.get('audio_visual_passed') is not True:raise ValueError('실제 음성·화면 검수가 필요합니다.')
-            data['state']='upload_pending'
+            data['state']='web_review'
+        elif action=='authorize_upload':
+            if data['state']!='web_review' or evidence.get('user_approved') is not True or evidence.get('file_sha256')!=data['file_sha256']:
+                raise ValueError('이 버전의 별도 YouTube 업로드 지시와 해시가 필요합니다.')
+            data.update(state='upload_requested',upload_approved_at=now_kst().isoformat())
         elif action=='claim':
-            if data['state']!='upload_pending':raise ValueError('이미 진행 중입니다. Studio에서 기존 업로드를 먼저 확인하세요.')
+            if data['state'] not in ('upload_requested','publish_requested'):raise ValueError('웹 검토 후 별도 YouTube 업로드·공개 지시가 필요합니다.')
+            data['public_release_approved']=data['state']=='publish_requested'
             data['state']='uploading'
         elif action=='private':
-            if data['state'] not in ('uploading','upload_pending'):raise ValueError('업로드 대기·진행 상태가 아닙니다.')
+            if data['state']!='uploading':raise ValueError('승인된 업로드 진행 상태가 아닙니다.')
             if evidence.get('visibility')!='private' or evidence.get('channel')!=data['channel'] or not re.fullmatch(r'https://www.youtube.com/watch\?v=[A-Za-z0-9_-]{11}',evidence.get('url','')):
                 raise ValueError('채널과 비공개 상태·영상 URL을 확인해주세요.')
-            data.update(state='private',url=evidence['url'])
+            data.update(state='publish_requested' if data.get('public_release_approved') else 'private',url=evidence['url'])
         elif action=='public':
             if data['state']!='publish_requested' or evidence.get('visibility')!='public' or evidence.get('url')!=data.get('url'):raise ValueError('사용자 공개 승인과 동일 영상 확인이 필요합니다.')
             data.update(state='public',privacy='public')
         else:raise ValueError('지원하지 않는 상태 변경입니다.')
         data.setdefault('events',[]).append(dict(action=action,at=now_kst().isoformat(),evidence=evidence))
         store.write_json(path,data)
-        return store.update(id,'Video',n,publication_state=data['state'],youtube_url=data.get('url'),pinned_comment=data.get('pinned_comment'),comment_state=data.get('comment_state'),message={'private':'YouTube 비공개 · 사용자 최종 리뷰 대기','public':'YouTube 공개 완료'}.get(data['state'],'업로드 준비·검증 중'))
+        return store.update(id,'Video',n,publication_state=data['state'],youtube_url=data.get('url'),pinned_comment=data.get('pinned_comment'),comment_state=data.get('comment_state'),message={'web_review':'웹 검토본 저장 완료 · 버전별 리뷰 가능','private':'별도 요청한 YouTube 비공개 업로드 완료','public':'YouTube 공개 완료'}.get(data['state'],'승인된 게시 작업 진행 중'))

@@ -116,12 +116,12 @@ async def request_publish(idea_id:str,number:int,req:StageRequest):
     if not req.approved:raise HTTPException(400,'완성 영상을 확인하고 공개를 승인해주세요.')
     path=store.version_dir(idea_id,'Video',number)/'upload.json'
     with store.LOCK:
-        if not path.exists():raise HTTPException(409,'비공개 업로드가 먼저 필요합니다.')
+        if not path.exists():raise HTTPException(409,'웹 검토본을 먼저 저장해주세요.')
         data=json.loads(path.read_text(encoding='utf-8'))
         from app.core.prepared_packages import digest
         if digest(path.parent/'final.mp4')!=data['file_sha256']:raise HTTPException(409,'영상이 변경됐습니다.')
         if data['state']=='publish_requested':return data
-        if data['state']!='private':raise HTTPException(409,'비공개 업로드된 영상만 공개 승인할 수 있습니다.')
+        if data['state'] not in ('web_review','private'):raise HTTPException(409,'검수한 웹 영상만 공개 승인할 수 있습니다.')
         data.update(state='publish_requested',approved_at=now_kst().isoformat())
         store.write_json(path,data)
         store.update(idea_id,'Video',number,publication_state='publish_requested',message='공개 승인 완료 · 브라우저 작업 대기')

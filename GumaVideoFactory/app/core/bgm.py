@@ -60,7 +60,7 @@ def mix(source, output, board):
         raise ValueError('오디오 클리핑 검사를 통과하지 못했습니다.')
     return dict(track=track, video_stream_sha256=after, video_stream_unchanged=True,
         peak_dbfs=max(peaks), clipping_passed=True, ducking=True, fade_seconds=fade,
-        listened_to_audio=False, audio_review='user_review_on_private_youtube')
+        listened_to_audio=False, audio_review='user_review_on_web')
 
 
 def credit(description, review):

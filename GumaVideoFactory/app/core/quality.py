@@ -19,15 +19,15 @@ def validate_variety(scenes):
             raise ValueError('인접 컷에 같은 화면을 반복할 수 없습니다.')
 
 def validate_private_review(review, expected_voice='Achird'):
-    # Private review is explicitly authorized; never label unobserved audio as listened.
+    # Web review is the default; legacy private-review evidence remains readable.
     if review.get('voice')!=expected_voice or review.get('user_selected_voice') is not True:
         raise ValueError('이 영상 버전에 지정된 카테고리 음성이 필요합니다.')
     if any(review.get('director_checks',{}).get(k) is not True for k in DIRECTOR_AXES):
         raise ValueError('반복·대사 대응·자연광·전환·광고 검수가 필요합니다.')
     if review.get('visual_passed') is not True or review.get('unresolved_visual_issues'):
         raise ValueError('화면 결함을 먼저 수정하세요.')
-    if review.get('audio_review')!='user_review_on_private_youtube' or review.get('listened_to_audio') is not False:
-        raise ValueError('청취하지 않은 음성은 YouTube 사용자 검토 대기로 기록하세요.')
+    if review.get('audio_review') not in ('user_review_on_web','user_review_on_private_youtube') or review.get('listened_to_audio') is not False:
+        raise ValueError('청취하지 않은 음성은 웹 사용자 검토 대기로 기록하세요.')
 
 def validate_preflight(review):
     checks=review.get('preflight',{})

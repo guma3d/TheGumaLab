@@ -1,6 +1,6 @@
 {% extends 'studio_base.html' %}{% block content %}
 <a href="/?category={{idea.category}}">← 추천 목록</a><h1>{{idea.title}}</h1><p>{{idea.recommendation.hook}}</p>
-<div class="panel"><strong>쿠팡 검증 → 컷씬·음성 → 비공개 업로드 → 공개 승인</strong><p class="muted">카테고리별 하루 1편 · YouTube 비공개 리뷰</p><p id="flow"></p></div>
+<div class="panel"><strong>쿠팡 검증 → 컷씬·음성 → 웹 버전 저장 → 검토</strong><p class="muted">외부에서도 영상 재생·다운로드 · YouTube는 별도 지시 후 업로드</p><p id="flow"></p></div>
 <nav class="tabs"><button onclick="tab('Preview')">컷씬</button><button onclick="tab('Video')">완성 영상</button></nav>
 <section class="panel"><select id="versions" aria-label="버전" onchange="selected[stage]=Number(this.value);render()"></select><div id="content"></div></section>
 <details><summary>기능·출처</summary><p>{{idea.recommendation.key_feature}}</p><p>{{idea.recommendation.cautions}}</p>{% for s in idea.recommendation.sources %}<p><a href="{{s.url}}" target="_blank" rel="noopener">{{s.title}}</a></p>{% endfor %}</details>
@@ -21,13 +21,13 @@ function render(){
  }
  if(v&&stage==='Video'&&v.output_url){
   h+=v.quality_revision?'<p class="badge">1080 세로 · 제작 전/후 감독 검수</p>':'<p class="notice">이전 품질 기준의 보관본</p>';
-  if(v.publication_state==='quality_review')h+='<p class="notice">화면·음성 최종 검수 대기 · 아직 업로드되지 않았습니다.</p>';
+  if(v.publication_state==='quality_review')h+='<p class="notice">웹 검토본 · 화면·음성 검수 대기</p>';
   h+=`<video controls playsinline preload="metadata" src="${esc(safeLink(v.output_url))}"></video><p><a href="${esc(safeLink(v.output_url))}" download>영상 다운로드</a></p>`;
   if(v.cuts?.length)h+='<h2>컷별 영상·대사</h2><p>아이템 이름 · 영상 버전 · CUT 번호로 피드백해주세요. 수정은 새 버전에 반영됩니다.</p><div class="grid">'+v.cuts.map(c=>`<article class="card" id="cut-${c.number}"><strong>CUT ${c.number}</strong><video controls playsinline preload="metadata" src="${esc(safeLink(c.video_url))}"></video><label>대사<textarea id="narration-${c.number}" rows="3" maxlength="1000">${esc(c.narration_ko)}</textarea></label><label>수정 요청<textarea id="feedback-${c.number}" rows="2" maxlength="3000" placeholder="이 컷에서 바꿀 내용을 입력하세요"></textarea></label><button onclick="saveCut(${c.number})">이 컷 수정 요청</button><p id="saved-${c.number}"></p></article>`).join('')+'</div>';
   if(v.youtube_url)h+=`<p><a href="${esc(safeLink(v.youtube_url))}" target="_blank" rel="noopener">YouTube에서 리뷰</a></p>`;
   if(v.pinned_comment)h+=`<details><summary>공개 후 고정할 댓글 · 게시 대기</summary><p>비공개 영상에서는 댓글을 게시하지 않습니다.</p><textarea readonly rows="6">${esc(v.pinned_comment)}</textarea></details>`;
   if(data.archived)h+='<p class="notice">선정에서 제외된 보관 아이템입니다.</p>';
-  else if(v.publication_state==='private')h+='<label class="check"><input id="publish-check" type="checkbox">완성 영상과 상품 안내를 확인했으며 공개에 동의합니다.</label><button class="primary" onclick="publish()">공개 승인</button>';
+  else if(['web_review','private'].includes(v.publication_state))h+='<label class="check"><input id="publish-check" type="checkbox">이 버전의 완성 영상과 상품 안내를 확인했으며 YouTube 업로드·공개에 동의합니다.</label><button class="primary" onclick="publish()">YouTube 공개 승인</button>';
   else if(v.publication_state==='publish_requested')h+='<p>공개 승인 완료 · 다음 브라우저 작업에서 전환합니다.</p>';
  }
  document.getElementById('content').innerHTML=h;
