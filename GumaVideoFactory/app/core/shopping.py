@@ -230,7 +230,7 @@ async def render(id,n):
         output=folder/f'cut_{i:02d}.mp4'
         style=board.get('category_style',PRESETS['tech'])
         subtitles=folder/f'captions_{i:02d}.ass'
-        write_captions(subtitles,scene['narration_ko'],seconds,style,scene.get('headline',''),scene['mode']=='veo')
+        write_captions(subtitles,scene['narration_ko'],seconds,style,scene.get('headline',''),scene['mode'] in ('veo','illustration_clip','explanatory_image'))
         # All runtime paths are controlled workspace paths; escape libavfilter delimiters.
         escaped=str(subtitles).replace('\\','/').replace(':',r'\:').replace("'",r"\'")
         framing=quality.generated_portrait_filter(raw) if scene['mode'] in ('veo','illustration_clip') else quality.portrait_filter('293638' if style['label']=='신형 테크' else 'f4eee8')
@@ -255,7 +255,7 @@ def write_captions(path,text,seconds,style,headline='',generated=False):
     """Short readable subtitles in the same safe area for every category episode."""
     if style.get('caption_design') == 'food-editorial-v1':
         from app.core.food_captions import write_food_captions
-        return write_food_captions(path,text,seconds,headline)
+        return write_food_captions(path,text,seconds,headline,generated=generated)
     clean=re.sub(r'[{}\\\r\n]',' ',text)
     chunks=[];line=''
     for word in clean.split():

@@ -14,7 +14,7 @@ def _chunks(text, limit):
     return lines or [' ']
 
 
-def write_food_captions(path,text,seconds,headline):
+def write_food_captions(path,text,seconds,headline,generated=False):
     def clock(t):
         cs=round(t*100)
         return f'{cs//360000}:{cs//6000%60:02d}:{cs//100%60:02d}.{cs%100:02d}'
@@ -35,6 +35,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 '''
     lines=[f'Dialogue: 3,0:00:00.00,{end},Ad,,0,0,0,,[광고]',
         f'Dialogue: 3,0:00:00.00,{end},Disclosure,,0,0,0,,이 포스팅은 쿠팡 파트너스 활동의 일환으로,\\N이에 따른 일정액의 수수료를 제공받습니다.']
+    if generated:
+        lines.append(f'Dialogue: 2,0:00:00.00,{end},Disclosure,,0,0,335,,AI 연출 이미지·영상')
     if headline:
         title=r'\N'.join(_chunks(headline,14))
         lines.append(f'Dialogue: 2,0:00:00.00,{end},Headline,,0,0,0,,{title}')
