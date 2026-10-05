@@ -8,6 +8,7 @@ from typing import Literal
 from pydantic import BaseModel, Field, model_validator
 DEFAULT_VOICE = "Achird"
 from app.core import quality
+from app.core import bgm
 from app.core import versions as store
 from app.core import official_clips as media
 from app.core.prepared_packages import digest, read, verify_package
@@ -80,6 +81,7 @@ class Board(BaseModel):
     popularity_source_url: str = ''
     cta_destination: Literal['channel_profile'] = 'channel_profile'
     scenes: list[Cut] = Field(min_length=6,max_length=8)
+    bgm_track: str = ''
 
     @model_validator(mode='after')
     def funnel(self):
@@ -106,6 +108,7 @@ def build(rec_path, board_path):
     if not rec.purchase_link or not rec.purchase_link.affiliate_url:
         raise ValueError('쿠팡 데이터와 실제 발급된 파트너스 링크를 먼저 확보하세요.')
     board=Board.model_validate(read(board_path))
+    bgm.select(board.model_dump())
     if rec.category=='food' and any(s.mode=='veo' for s in board.scenes):
         raise ValueError('음식 영상은 Flow 크레딧으로 생성·검수한 파일을 먼저 등록하세요. Veo API는 호출하지 않습니다.')
     required={rec.key_feature,*rec.supporting_features[:2]}
@@ -184,6 +187,7 @@ def enqueue(id,n,regenerate=False,reuse_video_version=None):
         raise ValueError('테크는 확인된 50만원 이하 옵션만 제작합니다.')
     if not read(folder/'storyboard.json').get('quality_revision'):
         raise ValueError('새 해상도·감독 검수 기준으로 콘티를 다시 준비하세요.')
+    bgm.select(read(folder/'storyboard.json'))
     previous=store.history(id,'Video')
     regenerate=regenerate or bool(previous and previous[0].get('preview_version')!=n)
     return store.reserve(id,'Video',regenerate,queued=True,preview_version=n,execution_mode='astra_shopping',
@@ -194,6 +198,7 @@ async def render(id,n):
     v=store.get(id,'Video',n);verify_package(id,v['preview_version'])
     folder=store.version_dir(id,'Video',n);preview=store.version_dir(id,'Preview',v['preview_version'])
     board=v['storyboard'];segments=[];cut_outputs=[]
+    bgm.select(board)
     # Validate every spoken duration before any paid Veo request.
     for i,scene in enumerate(board['scenes'],1):
         audio=folder/f'audio_{i:02d}.mp3'
@@ -242,12 +247,16 @@ async def render(id,n):
         cut_outputs.append(dict(number=i,role=scene["role"],narration_ko=scene["narration_ko"],video_url=store.url(output),audio_url=store.url(audio),mode=scene["mode"],technical_quality=cut_quality,file_sha256=digest(output)))
     listing=folder/'clips.txt';listing.write_text('\n'.join(f"file '{p.name}'" for p in segments),encoding='utf-8')
     output=folder/'final.mp4'
-    await asyncio.to_thread(join_smooth,segments,output)
+    narration_only=folder/'narration-only.mp4'
+    await asyncio.to_thread(join_smooth,segments,narration_only)
+    music_review=await asyncio.to_thread(bgm.mix,narration_only,output,board)
+    music_review['file_sha256']=digest(output)
+    store.write_json(folder/'bgm_review.json',music_review)
     technical=quality.inspect_output(output)
     store.write_json(folder/'technical_review.json',dict(technical,file_sha256=digest(output)))
     store.write_json(folder/'sources.json',dict(product_url=v['product_url'],scenes=board['scenes'],voice=v['voice']))
     store.write_json(folder/'upload.json',dict(state='quality_review',privacy='private',channel='https://www.youtube.com/@GumaShop86',
-        pinned_comment=DISCLOSURE+'\n영상 속 제품: '+store.read(id)['title']+'\n상품 주소: '+v['product_url'],comment_state='pending_publication',title=board['title'],description=DISCLOSURE+'\n\n'+board['summary']+'\n상품은 채널 프로필 링크에서 확인하세요.\n'+v['product_url'],file_sha256=digest(output)))
+        pinned_comment=DISCLOSURE+'\n영상 속 제품: '+store.read(id)['title']+'\n상품 주소: '+v['product_url'],comment_state='pending_publication',title=board['title'],description=bgm.credit(DISCLOSURE+'\n\n'+board['summary']+'\n상품은 채널 프로필 링크에서 확인하세요.\n'+v['product_url'],music_review),file_sha256=digest(output)))
     return store.update(id,'Video',n,status='ready',cuts=cut_outputs,output_url=store.url(output),sources_url=store.url(folder/'sources.json'),message='영상 완성 · 음성·화면 검수 후 비공개 업로드',publication_state='quality_review')
 
 
@@ -302,6 +311,11 @@ def publication(id,n,action,evidence):
     with store.LOCK:
         data=read(path)
         if digest(folder/'final.mp4')!=data['file_sha256']:raise ValueError('검수 대상 영상이 변경됐습니다.')
+        music_path=folder/'bgm_review.json'
+        if not music_path.is_file():raise ValueError('BGM 추가와 음량 검수를 먼저 완료하세요.')
+        music=read(music_path)
+        if music.get('file_sha256')!=data['file_sha256'] or not music.get('clipping_passed') or music['track']['attribution'] not in data['description']:
+            raise ValueError('현재 영상의 BGM 검수·크레딧이 필요합니다.')
         if len(evidence.get('notes',''))<10:raise ValueError('실제 확인 근거를 기록해주세요.')
         if action=='review_private':
             if data['state']!='quality_review':raise ValueError('검수 대기 영상만 비공개 리뷰 준비가 가능합니다.')

@@ -50,6 +50,7 @@ class ShoppingTests(unittest.TestCase):
         for i,scene in enumerate(board['scenes']):
             unique=root/f'fixture_{i}.png';Image.new('RGB',(1080,1920),(20+i*20,100,120)).save(unique);scene['source_file']=str(unique)
         rec.update(topic_key='fixture-topic',problem_key='fixture-problem',novelty_review=dict(checked_at=now_kst().isoformat(),channel='https://www.youtube.com/@GumaShop86',studio_checked=True,notes='Synthetic empty Studio fixture',comparisons=[]))
+        board['bgm_track']='Carefree'
         return rec,board
 
     def test_funnel_and_model(self):
@@ -121,6 +122,10 @@ class ShoppingTests(unittest.TestCase):
                 asyncio.run(s.render(id,v['number']))
             vf=store.version_dir(id,'Video',v['number']);self.assertTrue((vf/'final.mp4').is_file())
             completed=store.get(id,'Video',v['number']);self.assertEqual(len(completed['cuts']),6)
+            music=s.read(vf/'bgm_review.json')
+            self.assertTrue(music['video_stream_unchanged'])
+            self.assertLess(music['peak_dbfs'],0)
+            self.assertIn(music['track']['attribution'],s.read(vf/'upload.json')['description'])
             from app.studio import cut_feedback,CutFeedback
             request=asyncio.run(cut_feedback(id,1,2,CutFeedback(narration='수정 대사',feedback='두 번째 컷 교체')))
             self.assertEqual(request['cut_number'],2)
