@@ -12,7 +12,7 @@ Recommendation 필드와 URL 검증은 recommendations.py를 따른다. purchase
 
 ## 제작 전 감독
 
-categories.py 스타일·음식 Zephyr 여성·나머지 Achird 남성 유지. 모든 음식은 [승인 콘티](docs/references/food-storyboard-approved-v1.png)처럼 후킹→재료·질감→개봉·준비→보관·즐기기→CTA로 구성한다. 단면 최대1컷, 각 컷 소재·행동·구도를 바꾼다. 제품별 검증된 과정만 적용하며 딸기·냉동을 강제하지 않는다. 밝은 저대비·Pretendard·떨림 없는 정지 컷. 시안은 방향 참고이며 실물·포장 대조 필수. 경험·맛·인기는 꾸미지 않는다.
+categories.py 스타일·음식 Zephyr 여성·나머지 Achird 남성 유지. 모든 음식은 [승인 콘티](docs/references/food-storyboard-approved-v1.png)처럼 후킹→재료·질감→개봉·준비→보관·즐기기→CTA로 구성한다. 단면 최대1컷, 각 컷 소재·행동·구도를 바꾼다. 제품별 검증된 과정만 적용하며 딸기·냉동을 강제하지 않는다. 밝은 저대비·Do Hyeon·배경 박스 없이 외곽선·떨림 없는 정지 컷. 시안은 방향 참고이며 실물·포장 대조 필수. 경험·맛·인기는 꾸미지 않는다.
 
 Board(author_model=gpt-6-astra)는 필요성→솔루션→관심 이유→제품 소개→고정댓글·채널 프로필 고정 CTA 순서6~8컷. Cut 구조는 shopping.py 참조. 첫 컷 hook, 짧은 headline과 대사, 컷2~6초. 인기 주장에는 원문 근거. 공식 실물 보존. 음식 수정은 Flow 크레딧으로 제작·다운로드 후 컷 원본 등록, Veo API 대체 금지. 생성 포장은 실물 대조 후 사용. Gemini 기획·3D 모델은 사용하지 않는다.
 
@@ -25,7 +25,7 @@ Board(author_model=gpt-6-astra)는 필요성→솔루션→관심 이유→제�
 1. `build 후보.json --file 콘티.json`: 새 Preview에 원본·컷·시트 저장. 모든 컷과 구간을 직접 본다.
 2. `seal ID --version N --file 검수.json`: reviewed_by, passed, board_sha256, scenes[{number,passed,notes}], preflight(quality.PREFLIGHT_AXES 전부true), unresolved_issues=[] 필요. 검수 해시 고정.
 3. `enqueue ID --version N`: 음성 길이를 먼저 검사하고 FIFO로1080p Veo·1080×1920·30fps 합성. --regenerate는 새 버전. 실패한 유료 요청을 맹목적으로 재시도하지 않는다.
-4. `pending`: 완성본 전 컷 화면·자막·템포·발음·음량·말투 검수. 미달 컷은 수정한 새 버전. `review ID --version V --file 검수.json`에 audio_visual_passed, listened_to_audio=true, file_sha256, scores(quality.REVIEW_AXES 각8~10), notes, unresolved_issues=[] 기록. 청취 불가 시 카테고리 음성·기술·화면 검수를 근거로 review_private를 사용하고 audio_review=user_review_on_private_youtube로 기록한다. 청취했다고 가장하지 않는다. 같은 원본 최대2회·연속 금지, 유사 장면·대사 행동 대응·밝은 저대비·0.2초 전환·오른쪽 위 [광고]·영상/설명 수수료 고지 검수, 왼쪽 위 브랜딩 제거.
+4. `pending`: 완성본 전 컷 화면·자막·템포·발음·음량·말투 검수. 미달 컷은 수정한 새 버전. `review ID --version V --file 검수.json`에 audio_visual_passed, listened_to_audio=true, file_sha256, scores(quality.REVIEW_AXES 각8~10), notes, unresolved_issues=[] 기록. 청취 불가 시 카테고리 음성·기술·화면 검수를 근거로 review_private를 사용하고 audio_review=user_review_on_private_youtube로 기록한다. 청취했다고 가장하지 않는다. 같은 원본 최대2회·연속 금지, 유사 장면·대사 행동 대응·밝은 저대비·0.2초 전환·오른쪽 위 [광고]·설명·링크 수수료 고지·YouTube AI 설정(상시 자막 제외) 검수, 왼쪽 위 브랜딩 제거.
 5. `claim` 후 computer-use Studio에서 채널·기존 업로드 확인, upload.json과 final.mp4로 비공개 업로드. 실제 가시성·URL 확인 후 `private`에 notes, visibility=private, channel, url 기록. uploading이 남으면 Studio부터 확인해 중복을 막는다.
 6. 비공개 완료된 새 아이템1개를 해당slot DailyBatch로 recommendation_import.py에 저장한다. 날짜 목록·시간별history 누적, 기존 결과와 버전 보존. 준비 미달이면 기존 목록 유지하고 부족 개수를 알린다. API의 상태·URL·날짜·history 검증.
 

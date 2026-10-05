@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-05.3",
+  "revision": "2026-10-05.4",
   "rules": [
     {
       "id": "exact-product",
@@ -44,7 +44,7 @@
     {
       "id": "category-style",
       "category": "all",
-      "instruction": "Follow categories.py: food uses Pretendard, strawberry-accent readable captions and static product stills without zoompan jitter. Other categories retain their style. Food uses Zephyr, a bright friendly female voice; tech and household retain Achird. All are naturally brisk. Keep captions out of product focal areas and retain ad/disclosure readability."
+      "instruction": "Follow categories.py: food uses Do Hyeon, strawberry-accent readable captions and static product stills without zoompan jitter. Other categories retain their style. Food uses Zephyr, a bright friendly female voice; tech and household retain Achird. All are naturally brisk. Keep captions out of product focal areas and retain ad/disclosure readability."
     },
     {
       "id": "weekly-novelty",
@@ -54,7 +54,7 @@
     {
       "id": "director-quality",
       "category": "all",
-      "instruction": "Target 20-40; verified tech option <= KRW500000. Original resolution gate and 1080x1920 no letterbox. Each narration must match visible action: thawing on a room-temperature counter, storage in a freezer, no unrelated beauty shot. Max two uses of identical source, never adjacent; inspect visual similarity too. Veo: candid photorealistic, bright diffused natural light, low contrast, no cinematic shadows or posing. 0.2s dissolves preserving spoken endings. No top-left branding. Persistent top-right [광고], affiliate disclosure in video and description first line. Review frames, motion, captions and disclosure before private upload. If hearing is unavailable, honestly retain audio as user-review-pending on private YouTube; user authorized category voices and private review. Never fabricate listening. Public release requires explicit version approval."
+      "instruction": "Target 20-40; verified tech option <= KRW500000. Original resolution gate and 1080x1920 no letterbox. Each narration must match visible action: thawing on a room-temperature counter, storage in a freezer, no unrelated beauty shot. Max two uses of identical source, never adjacent; inspect visual similarity too. Veo: candid photorealistic, bright diffused natural light, low contrast, no cinematic shadows or posing. 0.2s dissolves preserving spoken endings. No top-left branding. Persistent top-right [광고], affiliate disclosure in description first line and beside links; YouTube AI-use setting enabled for realistic generated scenes. No routine burned-in affiliate or AI captions. Keep [광고]; all captions use outlines, no background boxes. Label virtual-person endorsements or omit those scenes. Review frames, motion, captions and disclosure before private upload. If hearing is unavailable, honestly retain audio as user-review-pending on private YouTube; user authorized category voices and private review. Never fabricate listening. Public release requires explicit version approval."
     }
   ],
   "feedback": [
@@ -102,5 +102,15 @@
       "food": "Zephyr",
       "household": "Achird"
     }
+  },
+  "caption_policy": {
+    "font": "Do Hyeon",
+    "background_box": false,
+    "outline": true,
+    "routine_ai_overlay": false,
+    "routine_affiliate_overlay": false,
+    "ad_badge": true,
+    "disclosure_location": "description first line and affiliate links; YouTube AI-use setting",
+    "exception": "Label virtual-person endorsements or omit them; do not present generated performance as actual evidence."
   }
 }

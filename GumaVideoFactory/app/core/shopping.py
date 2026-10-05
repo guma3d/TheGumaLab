@@ -274,15 +274,14 @@ WrapStyle: 2
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Caption,{style['font']},38,&H00FFFFFF,&H00FFFFFF,&H00101010,&H80101010,-1,0,0,0,100,100,0,0,1,3,1,2,55,100,310,1
-Style: Ad,{style['font']},32,&H00FFFFFF,&H00FFFFFF,&H00202020,&H00202020,-1,0,0,0,100,100,0,0,3,8,0,9,48,65,100,1
-Style: Disclosure,{style['font']},22,&H00FFFFFF,&H00FFFFFF,&H00202020,&H00202020,0,0,0,0,100,100,0,0,3,5,0,2,45,80,150,1
+Style: Ad,{style['font']},32,&H00FFFFFF,&H00FFFFFF,&H00202020,&H00202020,-1,0,0,0,100,100,0,0,1,3,0,9,48,65,100,1
 Style: Headline,{style['font']},46,&H00FFFFFF,{color},&H00202020,&H00202020,-1,0,0,0,100,100,0,0,1,3,1,8,50,70,230,1
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 '''
     def clock(t):
         cs=round(t*100);return f'{cs//360000}:{cs//6000%60:02d}:{cs//100%60:02d}.{cs%100:02d}'
-    events=[f'Dialogue: 2,0:00:00.00,{clock(seconds)},Ad,,0,0,0,,[광고]',f'Dialogue: 2,0:00:00.00,{clock(seconds)},Disclosure,,0,0,0,,이 포스팅은 쿠팡 파트너스 활동의 일환으로,\\N이에 따른 일정액의 수수료를 제공받습니다.']
+    events=[f'Dialogue: 3,0:00:00.00,{clock(seconds)},Ad,,0,0,0,,[광고]']
     if headline:
         title=re.sub(r'[{}\\\r\n]',' ',headline)
         events.append(f'Dialogue: 1,0:00:00.00,{clock(seconds)},Headline,,0,0,0,,{title}')
