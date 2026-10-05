@@ -21,6 +21,14 @@ class ShoppingTests(unittest.TestCase):
         evidence['director_checks']['narration_visual_match']=False
         with self.assertRaises(ValueError):s.quality.validate_private_review(evidence)
 
+    def test_food_private_review_uses_version_voice(self):
+        evidence=dict(voice='Zephyr',user_selected_voice=True,visual_passed=True,
+            director_checks={k:True for k in s.quality.DIRECTOR_AXES},
+            audio_review='user_review_on_private_youtube',listened_to_audio=False)
+        s.quality.validate_private_review(evidence,expected_voice='Zephyr')
+        with self.assertRaises(ValueError):
+            s.quality.validate_private_review(dict(evidence,voice='Achird'),expected_voice='Zephyr')
+
     def test_repeated_sources_are_rejected(self):
         scene=lambda identity:dict(mode='official_image',source_sha256=identity)
         with self.assertRaises(ValueError):s.quality.validate_variety([scene('a'),scene('a')])

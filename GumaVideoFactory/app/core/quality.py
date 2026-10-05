@@ -18,10 +18,10 @@ def validate_variety(scenes):
         if a['mode']!='veo' and b['mode']!='veo' and a['source_sha256']==b['source_sha256']:
             raise ValueError('인접 컷에 같은 화면을 반복할 수 없습니다.')
 
-def validate_private_review(review):
+def validate_private_review(review, expected_voice='Achird'):
     # Private review is explicitly authorized; never label unobserved audio as listened.
-    if review.get('voice')!='Achird' or review.get('user_selected_voice') is not True:
-        raise ValueError('사용자가 선택한 Achird 음성이 필요합니다.')
+    if review.get('voice')!=expected_voice or review.get('user_selected_voice') is not True:
+        raise ValueError('이 영상 버전에 지정된 카테고리 음성이 필요합니다.')
     if any(review.get('director_checks',{}).get(k) is not True for k in DIRECTOR_AXES):
         raise ValueError('반복·대사 대응·자연광·전환·광고 검수가 필요합니다.')
     if review.get('visual_passed') is not True or review.get('unresolved_visual_issues'):

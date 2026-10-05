@@ -187,7 +187,7 @@ def enqueue(id,n,regenerate=False,reuse_video_version=None):
     previous=store.history(id,'Video')
     regenerate=regenerate or bool(previous and previous[0].get('preview_version')!=n)
     return store.reserve(id,'Video',regenerate,queued=True,preview_version=n,execution_mode='astra_shopping',
-        storyboard=read(folder/'storyboard.json'),product_url=purchase.affiliate_url,voice=DEFAULT_VOICE,voice_rate='natural-brisk',quality_revision='director-v2',reuse_video_version=reuse_video_version)[0]
+        storyboard=read(folder/'storyboard.json'),product_url=purchase.affiliate_url,voice=PRESETS[rec['category']]['voice'],voice_rate=PRESETS[rec['category']]['voice_rate'],quality_revision='director-v2',reuse_video_version=reuse_video_version)[0]
 
 
 async def render(id,n):
@@ -306,7 +306,7 @@ def publication(id,n,action,evidence):
         if len(evidence.get('notes',''))<10:raise ValueError('실제 확인 근거를 기록해주세요.')
         if action=='review_private':
             if data['state']!='quality_review':raise ValueError('검수 대기 영상만 비공개 리뷰 준비가 가능합니다.')
-            quality.validate_private_review(evidence)
+            quality.validate_private_review(evidence,expected_voice=store.get(id,'Video',n)['voice'])
             technical=read(folder/'technical_review.json')
             if technical.get('file_sha256')!=data['file_sha256'] or technical.get('passed') is not True or evidence.get('file_sha256')!=data['file_sha256']:
                 raise ValueError('기술 검수 파일 해시를 확인하세요.')
