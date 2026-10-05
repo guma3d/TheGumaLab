@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-04.12",
+  "revision": "2026-10-05.1",
   "rules": [
     {
       "id": "exact-product",
@@ -9,7 +9,7 @@
     {
       "id": "real-food",
       "category": "food",
-      "instruction": "Use authentic appetizing food photos/videos with recorded provenance and usage conditions. Preserve the identity of the promoted food or ingredient. Do not fabricate real food footage with 3D animation."
+      "instruction": "Use authentic appetizing food sources. Lead with a verified trend or review-count hook and real food macro; do not invent recent virality. Storage must show the exact product/pack entering a freezer, never unrelated ice packs. Reject altered packaging in generated results; use an explicit product-preserving diagram if exact action cannot be verified."
     },
     {
       "id": "immutable-versions",
@@ -34,7 +34,7 @@
     {
       "id": "selective-veo",
       "category": "all",
-      "instruction": "Regenerate suitable hook/context cuts with Veo; preserve official exact technical footage, real food and product identity. Inspect every result before private upload. Discard original audio and use user-selected Achird consistently in every video. Do not regenerate unsupported exact product shapes."
+      "instruction": "For food revisions use browser-operated Flow Veo with existing credits; no Veo API fallback. Preserve official exact food/product sources; validate reference-guided package actions frame by frame. Discard original audio and retain Achird. Never present invented shape or a method illustration as actual product footage."
     },
     {
       "id": "private-review",
@@ -44,7 +44,7 @@
     {
       "id": "category-style",
       "category": "all",
-      "instruction": "Follow categories.py: fixed Noto Sans CJK KR captions and user-selected Achird with warm cheerful natural brisk delivery voice, stable safe area. Tech: neutral technical explanations. Food: warm real food trend to ready-to-eat product or ingredient recipe; never guarantee identical taste. Household: practical problem, demonstration, verified benefit and limitations. Snapshot the category style in every storyboard."
+      "instruction": "Follow categories.py: food uses Pretendard, strawberry-accent readable captions and static product stills without zoompan jitter. Other categories retain their style. Achird stays warm, cheerful and naturally brisk. Keep captions out of product focal areas and retain ad/disclosure readability."
     },
     {
       "id": "weekly-novelty",

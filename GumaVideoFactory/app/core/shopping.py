@@ -106,6 +106,8 @@ def build(rec_path, board_path):
     if not rec.purchase_link or not rec.purchase_link.affiliate_url:
         raise ValueError('쿠팡 데이터와 실제 발급된 파트너스 링크를 먼저 확보하세요.')
     board=Board.model_validate(read(board_path))
+    if rec.category=='food' and any(s.mode=='veo' for s in board.scenes):
+        raise ValueError('음식 영상은 Flow 크레딧으로 생성·검수한 파일을 먼저 등록하세요. Veo API는 호출하지 않습니다.')
     required={rec.key_feature,*rec.supporting_features[:2]}
     if not required <= {f for s in board.scenes for f in s.covered_features}:
         raise ValueError('핵심 기능과 추가 기능 설명이 누락됐습니다.')
@@ -138,7 +140,7 @@ def build(rec_path, board_path):
                     background='#293638' if rec.category=='tech' else '#f5f5f5'
                     Image.alpha_composite(Image.new('RGBA',rgba.size,background),rgba).convert('RGB').save(image)
                 from app.core.ffmpeg_mixer import render_product_still
-                render_product_still(image,clip,'9:16',s.duration_seconds)
+                render_product_still(image,clip,'9:16',s.duration_seconds,motion=rec.category!='food')
             media.sheets(clip,[0,s.duration_seconds*.5,s.duration_seconds-.12],folder,f'check_{i:02d}')
             result['scenes'][i-1].update(scene_number=i,visual_mode=s.mode,purpose=s.role,
                 image_url=store.url(image),clip_url=store.url(clip),source_sha256=digest(copied),
@@ -232,7 +234,8 @@ async def render(id,n):
         # All runtime paths are controlled workspace paths; escape libavfilter delimiters.
         escaped=str(subtitles).replace('\\','/').replace(':',r'\:').replace("'",r"\'")
         framing=quality.generated_portrait_filter(raw) if scene['mode'] in ('veo','illustration_clip') else quality.portrait_filter('293638' if style['label']=='신형 테크' else 'f4eee8')
-        vf=framing+f",fps=30,tpad=stop_mode=clone:stop_duration={seconds},ass=filename='{escaped}'"
+        fonts=str(Path(__file__).resolve().parents[1]/'assets'/'fonts').replace('\\','/').replace(':',r'\:')
+        vf=framing+f",fps=30,tpad=stop_mode=clone:stop_duration={seconds},ass=filename='{escaped}':fontsdir='{fonts}'"
         await asyncio.to_thread(media.run,[media.get_ffmpeg_bin(),'-v','error','-i',str(raw),'-i',str(audio),'-map','0:v:0','-map','1:a:0','-vf',vf,'-af','apad','-t',str(seconds),'-c:v','libx264','-crf','18','-pix_fmt','yuv420p','-c:a','aac','-b:a','192k','-ar','48000','-ac','2',str(output)],240)
         segments.append(output)
         cut_quality=quality.inspect_output(output)
@@ -250,6 +253,9 @@ async def render(id,n):
 
 def write_captions(path,text,seconds,style,headline='',generated=False):
     """Short readable subtitles in the same safe area for every category episode."""
+    if style.get('caption_design') == 'food-editorial-v1':
+        from app.core.food_captions import write_food_captions
+        return write_food_captions(path,text,seconds,headline)
     clean=re.sub(r'[{}\\\r\n]',' ',text)
     chunks=[];line=''
     for word in clean.split():

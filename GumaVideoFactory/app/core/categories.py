@@ -13,3 +13,4 @@ PRESETS = {
 }
 for preset in PRESETS.values():
     preset.update(font='Noto Sans CJK KR', voice='Achird', voice_rate='natural-brisk', target_age='20-40', style_revision='category-v3')
+PRESETS['food'].update(font='Pretendard',caption_design='food-editorial-v1',still_motion='static',style_revision='food-v4')

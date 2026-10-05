@@ -8,7 +8,7 @@ import imageio_ffmpeg
 logger = logging.getLogger(__name__)
 
 
-def render_product_still(image_path: Path, output_path: Path, aspect_ratio: str, duration: int = 4) -> Path:
+def render_product_still(image_path: Path, output_path: Path, aspect_ratio: str, duration: int = 4, motion: bool = True) -> Path:
     """최종 실제 상품 이미지는 생성 모델로 변형하지 않고 원본을 영상화."""
     width, height = (1080, 1920) if aspect_ratio == "9:16" else (1920, 1080)
     from PIL import Image
@@ -17,9 +17,12 @@ def render_product_still(image_path: Path, output_path: Path, aspect_ratio: str,
         points=[rgb.getpixel(p) for p in [(0,0),(rgb.width-1,0),(0,rgb.height-1),(rgb.width-1,rgb.height-1)]]
         background=''.join(f'{max(32,round(sum(p[c] for p in points)/4)):02x}' for c in range(3))
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    framing = f"scale={int(width*.95)//2*2}:{int(height*.95)//2*2}:force_original_aspect_ratio=decrease:flags=lanczos,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:color=0x{background}"
+    if motion:
+        framing += f",zoompan=z='min(1.04,1+0.04*on/{max(1,int(duration*30))})':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d={max(1,int(duration*30))}:s={width}x{height}:fps=30"
     result = subprocess.run([
         get_ffmpeg_bin(), "-y", "-loop", "1", "-i", str(image_path), "-t", str(duration),
-        "-vf", f"scale={int(width*.95)//2*2}:{int(height*.95)//2*2}:force_original_aspect_ratio=decrease:flags=lanczos,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:color=0x{background},zoompan=z='min(1.04,1+0.04*on/{max(1,int(duration*30))})':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d={max(1,int(duration*30))}:s={width}x{height}:fps=30,setsar=1",
+        "-vf", framing + ",setsar=1",
         "-r", "30", "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", str(output_path),
     ], capture_output=True, text=True)
     if result.returncode:
