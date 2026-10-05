@@ -12,7 +12,7 @@ Recommendation 필드와 URL 검증은 recommendations.py를 따른다. purchase
 
 ## 제작 전 감독
 
-categories.py의 글꼴·색감·자막 위치·Achird 남성 음성(사용자 선택 2번)를 유지한다. 테크는 기술과 생활 문제, 음식은 최근 유행과 실제 질감, 생활용품은 불편과 쓰임을 연결한다. 음식은 검증된 후기·트렌드 후킹, Pretendard 자막, 떨림 없는 정지 컷. 보관은 실제 제품을 보여주며 얼음팩으로 대체 금지. 사용 경험·동일한 맛·인기 순위를 꾸미지 않는다.
+categories.py·Achird·카테고리 스타일 유지. 모든 음식은 [승인 콘티](docs/references/food-storyboard-approved-v1.png)처럼 후킹→재료·질감→개봉·준비→보관·즐기기→CTA로 구성한다. 단면 최대1컷, 각 컷 소재·행동·구도를 바꾼다. 제품별 검증된 과정만 적용하며 딸기·냉동을 강제하지 않는다. 밝은 저대비·Pretendard·떨림 없는 정지 컷. 시안은 방향 참고이며 실물·포장 대조 필수. 경험·맛·인기는 꾸미지 않는다.
 
 Board(author_model=gpt-6-astra)는 필요성→솔루션→관심 이유→제품 소개→고정댓글·채널 프로필 고정 CTA 순서6~8컷. Cut 구조는 shopping.py 참조. 첫 컷 hook, 짧은 headline과 대사, 컷2~6초. 인기 주장에는 원문 근거. 공식 실물 보존. 음식 수정은 Flow 크레딧으로 제작·다운로드 후 컷 원본 등록, Veo API 대체 금지. 생성 포장은 실물 대조 후 사용. Gemini 기획·3D 모델은 사용하지 않는다.
 

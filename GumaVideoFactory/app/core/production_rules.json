@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-05.1",
+  "revision": "2026-10-05.2",
   "rules": [
     {
       "id": "exact-product",
@@ -9,7 +9,7 @@
     {
       "id": "real-food",
       "category": "food",
-      "instruction": "Use authentic appetizing food sources. Lead with a verified trend or review-count hook and real food macro; do not invent recent virality. Storage must show the exact product/pack entering a freezer, never unrelated ice packs. Reject altered packaging in generated results; use an explicit product-preserving diagram if exact action cannot be verified."
+      "instruction": "All food follows the user-approved docs/references/food-storyboard-approved-v1.png direction: verified interest hook, varied ingredients/texture, unboxing/preparation, applicable storage/serving, CTA. Use 6-8 cuts with visibly different subjects, actions and compositions; at most one cross-section shot, never a sequence of similar food beauty shots. Adapt steps to each food, not mandatory strawberries or freezing. Match narration to visible actions and verified handling instructions. Show the actual product/pack during storage, never unrelated ice packs. Preserve exact food/packaging; generated storyboard is a concept reference, not verified product footage. Do not invent virality, ingredients or tasting."
     },
     {
       "id": "immutable-versions",
@@ -62,6 +62,12 @@
       "id": "shopping-v2",
       "scope": "all",
       "lesson": "Replace promotional excerpts with a need-led hook and evidence-based solution narrative. Remove inaccurate model stage; preserve actual product sources. Private upload precedes user public approval."
+    },
+    {
+      "id": "food-storyboard-approved-v1",
+      "scope": "food",
+      "lesson": "User approved the seven-cut strawberry-mochi storyboard on 2026-10-05 as the standard for ALL food products. Diversify the story through ingredients, hands, preparation and serving rather than repeated cross-sections. Keep bright soft realism, legible Pretendard captions, static stills and smooth transitions; adapt to verified product facts.",
+      "reference": "docs/references/food-storyboard-approved-v1.png"
     }
   ],
   "publishing": {

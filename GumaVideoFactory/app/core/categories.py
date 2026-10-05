@@ -5,12 +5,12 @@ PRESETS = {
         style='Clean neutral technical editorial; generated lifestyle uses bright diffused low-contrast daylight. Exact official product closeups, measured callouts, restrained transitions.',
         direction='생활 문제를 기술 원리와 연결하고 핵심 기술·추가 기능 2개·실사용 한계를 근거로 설명한다.'),
     'food': dict(label='트렌드 음식', accent='FFBE73',
-        style='Warm authentic food closeups, real textures and cooking steps. No synthetic food or invented tasting.',
-        direction='최근 음식 유행의 근거 → 쿠팡 완제품 또는 재료·조리법 → 즐기는 방법. 비교 근거 없이 동일한 맛·감동을 보장하지 않는다.'),
+        style='Bright, soft, low-contrast food editorial. Vary ingredients, texture, unboxing, preparation, storage and serving; at most one cross-section shot. Preserve exact food and packaging; no invented tasting.',
+        direction='검증된 관심 후킹 → 재료·질감 → 개봉·준비 → 제품별 보관·즐기는 장면 → CTA. 승인 콘티처럼 매 컷 소재·행동·구도를 바꾸고 단면은 최대 1컷. 제품별 적합한 과정만 사용하며 동일한 맛을 보장하지 않는다.'),
     'household': dict(label='생활용품', accent='87BFFF',
         style='Bright practical demonstration. Problem-before-use and verified result-after-use framing.',
         direction='생활 불편·계절 수요·신기한 쓰임 → 사용 시연 → 편리한 이유와 한계. 신제품·트렌드는 날짜와 근거를 검증한다.'),
 }
 for preset in PRESETS.values():
     preset.update(font='Noto Sans CJK KR', voice='Achird', voice_rate='natural-brisk', target_age='20-40', style_revision='category-v3')
-PRESETS['food'].update(font='Pretendard',caption_design='food-editorial-v1',still_motion='static',style_revision='food-v4')
+PRESETS['food'].update(font='Pretendard',caption_design='food-editorial-v1',still_motion='static',style_revision='food-v5',storyboard_reference='docs/references/food-storyboard-approved-v1.png')
