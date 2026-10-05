@@ -5,7 +5,7 @@ https://videofactory.guma3d.com/ · 홈서버 8085 · https://www.youtube.com/@G
 
 ## 문서 구조
 - [AGENTS.md](AGENTS.md): 에이전트 운영·권한·보존 원칙.
-- [RESEARCH.md](RESEARCH.md): 전체 공통 / 신형 테크 / 트렌드 푸드 / 생활용품 / 공통 2회 검수와 실행 절차. 제작 기준은 이 문서를 우선한다.
+- [RESEARCH.md](RESEARCH.md): 전체 공통(제작 전·후 2회 검수 포함) / 신형 테크 / 트렌드 푸드 / 생활용품 / 실행·보존. 제작 기준은 이 문서를 우선한다.
 - app/core/production_rules.json: 실행에 전달하는 규칙. categories.py: 카테고리 스타일·음성 설정.
 
 ## 서비스 흐름
