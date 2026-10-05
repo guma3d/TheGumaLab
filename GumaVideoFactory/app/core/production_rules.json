@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-05.4",
+  "revision": "2026-10-05.5",
   "rules": [
     {
       "id": "exact-product",
@@ -44,7 +44,7 @@
     {
       "id": "category-style",
       "category": "all",
-      "instruction": "Follow categories.py: food uses Do Hyeon, strawberry-accent readable captions and static product stills without zoompan jitter. Other categories retain their style. Food uses Zephyr, a bright friendly female voice; tech and household retain Achird. All are naturally brisk. Keep captions out of product focal areas and retain ad/disclosure readability."
+      "instruction": "Follow categories.py: food uses Maplestory, strawberry-accent readable captions and static product stills without zoompan jitter. Other categories retain their style. Food uses Zephyr, a bright friendly female voice; tech and household retain Achird. All are naturally brisk. Keep captions out of product focal areas and retain ad/disclosure readability."
     },
     {
       "id": "weekly-novelty",
@@ -104,7 +104,7 @@
     }
   },
   "caption_policy": {
-    "font": "Do Hyeon",
+    "font": "Maplestory",
     "background_box": false,
     "outline": true,
     "routine_ai_overlay": false,

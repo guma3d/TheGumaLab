@@ -26,9 +26,9 @@ PlayResY: 1920
 WrapStyle: 2
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Caption,Do Hyeon,57,&H00322528,&H00322528,&H00FFFFFF,&H00FFFFFF,-1,0,0,0,100,100,0,0,1,4,0,2,90,130,460,1
-Style: Headline,Do Hyeon,72,&H00623BD5,&H00623BD5,&H00FFFFFF,&H00FFFFFF,-1,0,0,0,100,100,0,0,1,5,0,8,90,110,290,1
-Style: Ad,Do Hyeon,42,&H00FFFFFF,&H00FFFFFF,&H00322528,&H00322528,-1,0,0,0,100,100,0,0,1,3,0,9,75,95,150,1
+Style: Caption,Maplestory,57,&H00322528,&H00322528,&H00FFFFFF,&H00FFFFFF,-1,0,0,0,100,100,0,0,1,4,0,2,90,130,460,1
+Style: Headline,Maplestory,72,&H00623BD5,&H00623BD5,&H00FFFFFF,&H00FFFFFF,-1,0,0,0,100,100,0,0,1,5,0,8,90,110,290,1
+Style: Ad,Maplestory,42,&H00FFFFFF,&H00FFFFFF,&H00322528,&H00322528,-1,0,0,0,100,100,0,0,1,3,0,9,75,95,150,1
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 '''

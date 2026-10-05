@@ -12,5 +12,5 @@ PRESETS = {
         direction='생활 불편·계절 수요·신기한 쓰임 → 사용 시연 → 편리한 이유와 한계. 신제품·트렌드는 날짜와 근거를 검증한다.'),
 }
 for preset in PRESETS.values():
-    preset.update(font='Do Hyeon', voice='Achird', voice_rate='natural-brisk', target_age='20-40', style_revision='category-v4')
-PRESETS['food'].update(voice='Zephyr',voice_direction='bright-friendly-female',font='Do Hyeon',caption_design='food-outline-v2',still_motion='static',style_revision='food-v7',storyboard_reference='docs/references/food-storyboard-approved-v1.png')
+    preset.update(font='Maplestory', voice='Achird', voice_rate='natural-brisk', target_age='20-40', style_revision='category-v5')
+PRESETS['food'].update(voice='Zephyr',voice_direction='bright-friendly-female',font='Maplestory',caption_design='food-outline-v2',still_motion='static',style_revision='food-v8',storyboard_reference='docs/references/food-storyboard-approved-v1.png')
