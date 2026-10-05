@@ -23,26 +23,26 @@ DISCLOSURE = '이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이�
 
 
 def join_smooth(segments, output):
-    """Short dissolves overlap the trailing silence, never remove spoken endings."""
-    current=segments[0]
-    for i,next_clip in enumerate(segments[1:],1):
-        target=output.parent/f'transition_{i:02d}.mp4'
-        offset=round((media.duration(current)-.2)*30)/30
-        graph=(f'[0:v]setpts=PTS-STARTPTS,fps=30,settb=1/30[v0];'
-               f'[1:v]setpts=PTS-STARTPTS,fps=30,settb=1/30[v1];'
-               f'[v0][v1]xfade=transition=fade:duration=0.2:offset={offset}[v]')
-        media.run([media.get_ffmpeg_bin(),'-v','error','-filter_complex_threads','1','-i',str(current),'-i',str(next_clip),
-            '-filter_complex',graph,'-map','[v]','-an','-r','30','-c:v','libx264','-crf','16','-preset','fast',
-            '-pix_fmt','yuv420p',str(target)],600)
-        current=target
-    args=[media.get_ffmpeg_bin(),'-v','error','-i',str(current)]
-    filters=[]
-    for i,segment in enumerate(segments,1):
+    """Encode all dissolves once; overlap trailing silence without clipping speech."""
+    if not segments:
+        raise ValueError('합성할 컷이 없습니다.')
+    args=[media.get_ffmpeg_bin(),'-v','error','-y','-filter_complex_threads','1']
+    for segment in segments:
         args+=['-i',str(segment)]
-        duration=round(media.duration(segment)*30)/30-(.2 if i<len(segments) else 0)
+    durations=[round(media.duration(segment)*30)/30 for segment in segments]
+    filters=[f'[{i}:v]setpts=PTS-STARTPTS,fps=30,settb=1/30[v{i}]' for i in range(len(segments))]
+    current='v0';elapsed=durations[0]
+    for i in range(1,len(segments)):
+        offset=round((elapsed-.2)*30)/30
+        filters.append(f'[{current}][v{i}]xfade=transition=fade:duration=0.2:offset={offset:.6f}[x{i}]')
+        current=f'x{i}';elapsed=offset+durations[i]
+    for i,duration in enumerate(durations):
+        duration-=.2 if i<len(segments)-1 else 0
         filters.append(f'[{i}:a]apad,atrim=duration={duration:.6f},asetpts=PTS-STARTPTS[a{i}]')
-    filters.append(''.join(f'[a{i}]' for i in range(1,len(segments)+1))+f'concat=n={len(segments)}:v=0:a=1[a]')
-    media.run(args+['-filter_complex',';'.join(filters),'-map','0:v','-map','[a]','-c:v','copy','-c:a','aac','-b:a','192k','-movflags','+faststart',str(output)],600)
+    filters.append(''.join(f'[a{i}]' for i in range(len(segments)))+f'concat=n={len(segments)}:v=0:a=1[a]')
+    media.run(args+['-filter_complex',';'.join(filters),'-map',f'[{current}]','-map','[a]',
+                   '-c:v','libx264','-crf','16','-preset','fast','-pix_fmt','yuv420p',
+                   '-c:a','aac','-b:a','192k','-movflags','+faststart',str(output)],600)
 
 
 
