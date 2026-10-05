@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-05.11",
+  "revision": "2026-10-05.12",
   "rules": [
     {
       "id": "exact-product",
@@ -59,7 +59,7 @@
     {
       "id": "required-bgm",
       "category": "all",
-      "instruction": "Always use verified BGM in all categories. Specify bgm_track in the storyboard based on scene mood, not a category restriction. Choose from the five verified Kevin MacLeod tracks; missing source or attribution blocks completion. Keep speech clear with low music volume, sidechain ducking and start/end fades; inspect clipping and actual listening honestly. Preserve video stream without recompression for music-only revisions. Automatically include CC BY 4.0 credit and edits in the YouTube description."
+      "instruction": "Always use verified BGM in all categories. Specify bgm_track in the storyboard based on scene mood, not a category restriction. Choose from the five verified Kevin MacLeod tracks; missing source or attribution blocks completion. Keep music perceptibly present during speech while preserving narration clarity; do not treat barely audible music as acceptable. Use moderate sidechain ducking and smooth start/end fades, compare music levels per track, and review speech clarity and pumping by actual listening. Technical peak checks do not prove audibility or listening; when hearing is unavailable, retain these as user web-review pending. Default music target is -25 LUFS, ducking ratio 3, threshold 0.06, attack 30 ms and release 350 ms; adjust only with recorded evidence. Preserve video stream without recompression for music-only revisions. Automatically include CC BY 4.0 credit and edits in the YouTube description."
     }
   ],
   "feedback": [
@@ -73,6 +73,11 @@
       "scope": "food",
       "lesson": "User approved the seven-cut strawberry-mochi storyboard on 2026-10-05 as the standard for ALL food products. Diversify the story through ingredients, hands, preparation and serving rather than repeated cross-sections. Keep bright soft realism, legible Maplestory Bold captions, static stills and smooth transitions; adapt to verified product facts. Food Video v0010 is the current reference, rated about 80% of the user target, not final perfection.",
       "reference": "docs/references/food-storyboard-approved-v1.png"
+    },
+    {
+      "id": "audible-bgm-20261005",
+      "scope": "all",
+      "lesson": "User found both food tracks barely audible. Remix from narration-only source, raise music target 5 LU and reduce excessive ducking. Never stack music mixes or claim actual hearing from peak measurements."
     }
   ],
   "publishing": {

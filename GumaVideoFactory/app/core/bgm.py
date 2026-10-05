@@ -34,9 +34,9 @@ def mix(source, output, board):
     graph = (
         '[0:a]aresample=48000,aformat=channel_layouts=stereo,asplit=2[voice][key];'
         f'[1:a]aresample=48000,aformat=channel_layouts=stereo,atrim=duration={seconds},'
-        'asetpts=PTS-STARTPTS,loudnorm=I=-30:TP=-9:LRA=7,aresample=48000,'
+        'asetpts=PTS-STARTPTS,loudnorm=I=-25:TP=-9:LRA=7,aresample=48000,'
         f'afade=t=in:d={fade},afade=t=out:st={seconds-fade}:d={fade}[music];'
-        '[music][key]sidechaincompress=threshold=0.025:ratio=8:attack=15:release=250[duck];'
+        '[music][key]sidechaincompress=threshold=0.06:ratio=3:attack=30:release=350[duck];'
         '[voice][duck]amix=inputs=2:duration=first:normalize=0,'
         'alimiter=limit=0.89:level=false:latency=true[a]'
     )
@@ -60,7 +60,11 @@ def mix(source, output, board):
         raise ValueError('오디오 클리핑 검사를 통과하지 못했습니다.')
     return dict(track=track, video_stream_sha256=after, video_stream_unchanged=True,
         peak_dbfs=max(peaks), clipping_passed=True, ducking=True, fade_seconds=fade,
-        listened_to_audio=False, audio_review='user_review_on_web')
+        music_target_lufs=-25, sidechain_threshold=0.06, sidechain_ratio=3,
+        sidechain_attack_ms=30, sidechain_release_ms=350,
+        mix_revision='audible-bgm-v2',
+        listened_to_audio=False, audio_review='user_review_on_web',
+        speech_clarity_review='user_review_pending', pumping_review='user_review_pending')
 
 
 def credit(description, review):
