@@ -8,6 +8,15 @@ from app.core.product_selection import selection_policy
 
 
 class SharedRulesTests(unittest.TestCase):
+    def test_all_new_video_paths_share_food_voice(self):
+        from app.config import DEFAULT_VOICE
+        from app.core.categories import PRESETS
+        from app.core import shopping, tts_engine
+        self.assertEqual(DEFAULT_VOICE,'Zephyr')
+        self.assertEqual({p['voice'] for p in PRESETS.values()},{'Zephyr'})
+        self.assertEqual(shopping.DEFAULT_VOICE,tts_engine.FOOD_VOICE)
+        self.assertEqual(tts_engine.SHOPPING_STYLE,tts_engine.FOOD_STYLE)
+
     def test_tech_context_is_general_and_food_keeps_real_media(self):
         tech = snapshot('tech')
         food = snapshot('food')

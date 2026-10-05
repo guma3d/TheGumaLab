@@ -13,7 +13,7 @@ HOST = os.getenv("HOST", "0.0.0.0")
 PLANNER_MODEL = os.getenv("PLANNER_MODEL", "gemini-3.8-flash")
 VEO_MODEL = os.getenv("VEO_MODEL", "veo-3.1-fast-generate-preview")
 IMAGE_MODEL = os.getenv("IMAGE_MODEL", "gemini-2.5-flash-image")
-DEFAULT_VOICE = os.getenv("DEFAULT_VOICE", "ko-KR-SunHiNeural")
+DEFAULT_VOICE = "Zephyr"  # Shared user-approved Food voice for all new videos.
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 STORAGE_DIR = BASE_DIR / "storage"

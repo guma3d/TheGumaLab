@@ -1,11 +1,26 @@
 """Verified music library, narration-first mixing and lossless video preservation."""
 import hashlib
 import json
+import math
+import secrets
 import re
 import subprocess
 from pathlib import Path
 from app.config import STORAGE_DIR
 from app.core import official_clips as media
+
+TRACK_TITLES = ('Life of Riley', 'Carefree', 'Monkeys Spinning Monkeys', 'Wallpaper', 'Fluffing a Duck')
+MUSIC_LUFS = -25.0
+VOICE_LUFS = -16.0
+
+
+def assign_random(board):
+    """Draw once per new video; persist the result for retries and credits."""
+    for title in TRACK_TITLES:
+        select({'bgm_track': title})
+    board['bgm_track'] = secrets.choice(TRACK_TITLES)
+    board['bgm_selection'] = 'random-five-v1'
+    return select(board)
 
 
 def select(board):
@@ -13,7 +28,9 @@ def select(board):
     tracks = json.loads((library / 'manifest.json').read_text(encoding='utf-8-sig'))
     title = board.get('bgm_track')
     if not title:
-        raise ValueError('콘티에 영상 분위기에 맞는 bgm_track을 지정하세요. 무음 완료는 허용하지 않습니다.')
+        return assign_random(board)
+    if title not in TRACK_TITLES:
+        raise ValueError('검증된 BGM 목록에 없는 곡입니다.')
     track = next((t for t in tracks if t['title'] == title), None)
     if not track:
         raise ValueError('검증된 BGM 목록에 없는 곡입니다.')
@@ -27,18 +44,51 @@ def select(board):
     return path, track
 
 
+def measure_audio(path, seconds, *, loop=False, gain_db=0.0):
+    """Measure the exact stereo segment; loudnorm is analysis only, never the mix."""
+    args = [media.get_ffmpeg_bin(), '-hide_banner', '-nostats']
+    if loop:
+        args += ['-stream_loop', '-1']
+    args += ['-i', str(path), '-vn', '-af',
+        f'aresample=48000,aformat=channel_layouts=stereo,atrim=duration={seconds},'
+        f'asetpts=PTS-STARTPTS,volume={gain_db}dB,'
+        'loudnorm=I=-16:TP=-1:LRA=11:print_format=json',
+        '-t', str(seconds), '-f', 'null', '-']
+    result = subprocess.run(args, capture_output=True, text=True, check=True)
+    data = json.JSONDecoder().raw_decode(result.stderr[result.stderr.rfind('{'):])[0]
+    measured = dict(integrated_lufs=float(data['input_i']), true_peak_dbfs=float(data['input_tp']))
+    if not all(math.isfinite(v) for v in measured.values()):
+        raise ValueError('음량을 측정할 수 없는 무음 또는 손상된 소스입니다.')
+    return measured
+
+
 def mix(source, output, board):
     path, track = select(board)
+    track = dict(track)
+    track['attribution'] = track.get('attribution', '').replace('·페이드', '')
     seconds = media.duration(source)
-    fade = min(1.0, seconds / 4)
+    original_music = measure_audio(path, seconds, loop=True)
+    music_gain = MUSIC_LUFS - original_music['integrated_lufs']
+    music_level = measure_audio(path, seconds, loop=True, gain_db=music_gain)
+    if abs(music_level['integrated_lufs'] - MUSIC_LUFS) > .3:
+        raise ValueError('BGM 구간 음량이 공통 기준과 다릅니다.')
+    original_voice = measure_audio(source, seconds)
+    # Reserve additive peak headroom by changing narration gain once, not music
+    # in response to speech. No limiter, compressor, fade or dynamic loudnorm.
+    remaining_peak = 10 ** (-1 / 20) - 10 ** (music_level['true_peak_dbfs'] / 20)
+    if remaining_peak <= 0:
+        raise ValueError('음악 피크에 안전한 믹싱 여유가 없습니다.')
+    voice_peak_ceiling = min(-5.0, 20 * math.log10(remaining_peak))
+    voice_gain = min(VOICE_LUFS - original_voice['integrated_lufs'],
+        voice_peak_ceiling - original_voice['true_peak_dbfs'])
+    voice_level = measure_audio(source, seconds, gain_db=voice_gain)
+    if voice_level['integrated_lufs'] - music_level['integrated_lufs'] < 6:
+        raise ValueError('대사와 BGM 음량 차이가 부족합니다. 음성 원본을 검수하세요.')
     graph = (
-        '[0:a]aresample=48000,aformat=channel_layouts=stereo,asplit=2[voice][key];'
+        f'[0:a]aresample=48000,aformat=channel_layouts=stereo,volume={voice_gain}dB[voice];'
         f'[1:a]aresample=48000,aformat=channel_layouts=stereo,atrim=duration={seconds},'
-        'asetpts=PTS-STARTPTS,loudnorm=I=-25:TP=-9:LRA=7,aresample=48000,'
-        f'afade=t=in:d={fade},afade=t=out:st={seconds-fade}:d={fade}[music];'
-        '[music][key]sidechaincompress=threshold=0.06:ratio=3:attack=30:release=350[duck];'
-        '[voice][duck]amix=inputs=2:duration=first:normalize=0,'
-        'alimiter=limit=0.89:level=false:latency=true[a]'
+        f'asetpts=PTS-STARTPTS,volume={music_gain}dB[music];'
+        '[voice][music]amix=inputs=2:duration=first:normalize=0[a]'
     )
     media.run([media.get_ffmpeg_bin(), '-v', 'error', '-y', '-i', str(source),
         '-stream_loop', '-1', '-i', str(path), '-filter_complex', graph,
@@ -58,11 +108,15 @@ def mix(source, output, board):
     peaks = [float(x) for x in re.findall(r'Peak level dB: ([-\d.]+)', result.stderr)]
     if not peaks or max(peaks) >= 0:
         raise ValueError('오디오 클리핑 검사를 통과하지 못했습니다.')
+    final_level = measure_audio(output, seconds)
+    if final_level['true_peak_dbfs'] >= 0:
+        raise ValueError('최종 오디오 true-peak 검사를 통과하지 못했습니다.')
     return dict(track=track, video_stream_sha256=after, video_stream_unchanged=True,
-        peak_dbfs=max(peaks), clipping_passed=True, ducking=True, fade_seconds=fade,
-        music_target_lufs=-25, sidechain_threshold=0.06, sidechain_ratio=3,
-        sidechain_attack_ms=30, sidechain_release_ms=350,
-        mix_revision='audible-bgm-v2',
+        peak_dbfs=max(peaks), clipping_passed=True, ducking=False, fade_seconds=0,
+        music_target_lufs=MUSIC_LUFS, music_gain_db=music_gain,
+        voice_gain_db=voice_gain, music_measurement=music_level, voice_measurement=voice_level,
+        final_measurement=final_level, music_gain_mode='constant',
+        mix_revision='constant-normalized-bgm-v3',
         listened_to_audio=False, audio_review='user_review_on_web',
         speech_clarity_review='user_review_pending', pumping_review='user_review_pending')
 

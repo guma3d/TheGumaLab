@@ -18,7 +18,7 @@ def validate_variety(scenes):
         if a['mode']!='veo' and b['mode']!='veo' and a['source_sha256']==b['source_sha256']:
             raise ValueError('인접 컷에 같은 화면을 반복할 수 없습니다.')
 
-def validate_private_review(review, expected_voice='Achird'):
+def validate_private_review(review, expected_voice='Zephyr'):
     # Web review is the default; legacy private-review evidence remains readable.
     if review.get('voice')!=expected_voice or review.get('user_selected_voice') is not True:
         raise ValueError('이 영상 버전에 지정된 카테고리 음성이 필요합니다.')

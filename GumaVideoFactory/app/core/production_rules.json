@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-05.12",
+  "revision": "2026-10-06.1",
   "rules": [
     {
       "id": "exact-product",
@@ -19,7 +19,7 @@
     {
       "id": "clear-next-step",
       "category": "all",
-      "instruction": "Durable FIFO video queue with progress and no automatic retry of interrupted paid requests. Titles open detail. User approval is required for PUBLIC publication only, after web version review."
+      "instruction": "Durable FIFO video queue with progress and no automatic retry of interrupted paid requests. Titles open detail. Preserve every version on the web; require the human exact-version request before any YouTube upload and separate approval for public release."
     },
     {
       "id": "coupang-purchase",
@@ -44,7 +44,7 @@
     {
       "id": "category-style",
       "category": "all",
-      "instruction": "Follow categories.py: ALL categories use Maplestory Bold with outlines and no background boxes; food uses, strawberry-accent readable captions and static product stills without zoompan jitter. Other categories retain their style. Food uses Zephyr, a bright friendly female voice; tech and household retain Achird. All are naturally brisk. Keep captions out of product focal areas and retain ad/disclosure readability."
+      "instruction": "Follow categories.py: ALL categories use Maplestory Bold with outlines and no background boxes; food uses, strawberry-accent readable captions and static product stills without zoompan jitter. Other categories retain their style. All new videos across every category use the user-approved Food Zephyr voice and the same bright, friendly female speaking style. All are naturally brisk. Keep captions out of product focal areas and retain ad/disclosure readability."
     },
     {
       "id": "weekly-novelty",
@@ -59,14 +59,14 @@
     {
       "id": "required-bgm",
       "category": "all",
-      "instruction": "Always use verified BGM in all categories. Specify bgm_track in the storyboard based on scene mood, not a category restriction. Choose from the five verified Kevin MacLeod tracks; missing source or attribution blocks completion. Keep music perceptibly present during speech while preserving narration clarity; do not treat barely audible music as acceptable. Use moderate sidechain ducking and smooth start/end fades, compare music levels per track, and review speech clarity and pumping by actual listening. Technical peak checks do not prove audibility or listening; when hearing is unavailable, retain these as user web-review pending. Default music target is -25 LUFS, ducking ratio 3, threshold 0.06, attack 30 ms and release 350 ms; adjust only with recorded evidence. Preserve video stream without recompression for music-only revisions. Automatically include CC BY 4.0 credit and edits in the YouTube description."
+      "instruction": "For each new video randomly select one of the five verified Kevin MacLeod tracks and persist the selection for retries. Measure the actual used stereo music segment and apply one constant gain to -25 LUFS (tolerance 0.3 LU). No speech-triggered ducking, sidechain, automatic attenuation or fades; preserve the original musical dynamics. Aim narration at -16 LUFS with a fixed gain constrained by safe additive peak headroom and at least 6 LU above music. Verify music presence, speech clarity and perceived consistency by actual listening; measurements never count as listening. If hearing is unavailable, retain user web-review pending. Mix once from narration-only media, preserve the video stream without recompression for audio-only changes, verify source hashes and clipping, and include correct CC BY 4.0 credits."
     }
   ],
   "feedback": [
     {
       "id": "shopping-v2",
       "scope": "all",
-      "lesson": "Replace promotional excerpts with a need-led hook and evidence-based solution narrative. Remove inaccurate model stage; preserve actual product sources. Private upload precedes user public approval."
+      "lesson": "Replace promotional excerpts with a need-led hook and evidence-based solution narrative. Remove inaccurate model stage; preserve actual product sources. Web review precedes exact-version upload and public approvals."
     },
     {
       "id": "food-storyboard-approved-v1",
@@ -75,9 +75,9 @@
       "reference": "docs/references/food-storyboard-approved-v1.png"
     },
     {
-      "id": "audible-bgm-20261005",
+      "id": "constant-audio-20261006",
       "scope": "all",
-      "lesson": "User found both food tracks barely audible. Remix from narration-only source, raise music target 5 LU and reduce excessive ducking. Never stack music mixes or claim actual hearing from peak measurements."
+      "lesson": "Latest user feedback replaces ducking and category-specific voices: all new videos use Food Zephyr; music stays at a constant normalized gain, audible below speech; randomly draw from the verified five tracks and persist per version. Update current MD instructions and remove obsolete rules for every feedback."
     }
   ],
   "publishing": {
@@ -108,9 +108,9 @@
     "cta": "영상 속 제품 정보는 고정댓글이나 채널 프로필에서 확인하세요.",
     "pinned_comment": "Store product name, issued affiliate URL and disclosure; include profile product number only after actual registration. Private videos cannot have comments; keep pending until public, never claim posted. Shorts comment URLs are not clickable.",
     "voice_by_category": {
-      "tech": "Achird",
+      "tech": "Zephyr",
       "food": "Zephyr",
-      "household": "Achird"
+      "household": "Zephyr"
     }
   },
   "caption_policy": {

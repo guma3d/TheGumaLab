@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 from typing import Literal
 from pydantic import BaseModel, Field, model_validator
-DEFAULT_VOICE = "Achird"
+DEFAULT_VOICE = "Zephyr"
 from app.core import quality
 from app.core import bgm
 from app.core import versions as store
@@ -187,11 +187,14 @@ def enqueue(id,n,regenerate=False,reuse_video_version=None):
         raise ValueError('테크는 확인된 50만원 이하 옵션만 제작합니다.')
     if not read(folder/'storyboard.json').get('quality_revision'):
         raise ValueError('새 해상도·감독 검수 기준으로 콘티를 다시 준비하세요.')
-    bgm.select(read(folder/'storyboard.json'))
+    board=read(folder/'storyboard.json')
+    bgm.assign_random(board)
+    board.setdefault('category_style',dict(PRESETS[rec['category']])).update(
+        voice=PRESETS[rec['category']]['voice'],voice_direction='bright-friendly-female')
     previous=store.history(id,'Video')
     regenerate=regenerate or bool(previous and previous[0].get('preview_version')!=n)
     return store.reserve(id,'Video',regenerate,queued=True,preview_version=n,execution_mode='astra_shopping',
-        storyboard=read(folder/'storyboard.json'),product_url=purchase.affiliate_url,voice=PRESETS[rec['category']]['voice'],voice_rate=PRESETS[rec['category']]['voice_rate'],quality_revision='director-v2',reuse_video_version=reuse_video_version)[0]
+        storyboard=board,product_url=purchase.affiliate_url,voice=PRESETS[rec['category']]['voice'],voice_rate=PRESETS[rec['category']]['voice_rate'],quality_revision='director-v2',reuse_video_version=reuse_video_version)[0]
 
 
 async def render(id,n):

@@ -6,16 +6,18 @@ from app.config import DEFAULT_VOICE
 
 logger = logging.getLogger(__name__)
 
-SHOPPING_VOICE = 'Achird'
-SHOPPING_STYLE = 'Speak in natural native Korean, warm, cheerful, affectionate and approachable adult male shopping host. Smile in the voice, conversational not announcer-like, slightly brisk pace, short natural pauses, clear consonants. Read exactly the supplied words, no additions, no laughter, no music.'
-
 FOOD_VOICE = 'Zephyr'
 FOOD_STYLE = 'Speak in natural native Korean as a bright, friendly adult female food host. Warm smiling conversational voice, lively but gentle, slightly brisk pace, short natural pauses. Not shrill, breathy, theatrical or announcer-like. Read exactly the supplied words, no additions, no laughter, no music.'
+SHOPPING_VOICE = FOOD_VOICE
+SHOPPING_STYLE = FOOD_STYLE
+# Retain explicit legacy voice support for historical-version reproduction only.
+LEGACY_VOICE = 'Achird'
+LEGACY_STYLE = 'Speak in natural native Korean, warm, cheerful, affectionate and approachable adult male shopping host. Smile in the voice, conversational not announcer-like, slightly brisk pace, short natural pauses, clear consonants. Read exactly the supplied words, no additions, no laughter, no music.'
 
 def _shopping_speech(text, output_path, voice):
     import base64, json, urllib.request, wave, subprocess
     from app.config import GEMINI_API_KEY
-    payload={'contents':[{'role':'user','parts':[{'text':text,'speech_metadata':{'style':FOOD_STYLE if voice == FOOD_VOICE else SHOPPING_STYLE}}]}],
+    payload={'contents':[{'role':'user','parts':[{'text':text,'speech_metadata':{'style':LEGACY_STYLE if voice == LEGACY_VOICE else SHOPPING_STYLE}}]}],
              'generationConfig':{'responseModalities':['AUDIO'],'speechConfig':{'voiceConfig':{'voice':voice}}}}
     req=urllib.request.Request('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent',
         data=json.dumps(payload).encode(),headers={'Content-Type':'application/json','x-goog-api-key':GEMINI_API_KEY})
@@ -37,7 +39,7 @@ async def synthesize_speech(
 ) -> Path:
     """Edge-TTS를 사용하여 한국어 텍스트를 mp3 음성 파일로 생성합니다."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    if voice in (SHOPPING_VOICE, FOOD_VOICE):
+    if voice in (SHOPPING_VOICE, LEGACY_VOICE):
         return await asyncio.to_thread(_shopping_speech,text,output_path,voice)
     communicate = edge_tts.Communicate(text, voice, rate=rate)
     await communicate.save(str(output_path))
