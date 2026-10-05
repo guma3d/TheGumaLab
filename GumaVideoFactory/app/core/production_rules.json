@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-05.7",
+  "revision": "2026-10-05.8",
   "rules": [
     {
       "id": "exact-product",
@@ -112,6 +112,6 @@
     "ad_badge": true,
     "disclosure_location": "description first line and affiliate links; YouTube AI-use setting",
     "exception": "Label virtual-person endorsements or omit them; do not present generated performance as actual evidence.",
-    "food_color_continuity": "Match ingredient shots to the approved hero shot: bright natural strawberry reds, lifted shadows and soft contrast; reject dark brown-red fruit or harsh shadows."
+    "food_color_continuity": "Grade locally per food using representative before/after frames; gently improve midtone warmth and ingredient color while retaining bright diffuse low-contrast light. Protect actual purple/red surfaces, skin, white dishes and real packaging. Match all cuts, reject oversaturation, fake gloss and harsh contrast; never impose one fixed-strength filter on every product. Composite captions and the ad badge after grading so their colors stay unchanged."
   }
 }
