@@ -6,6 +6,13 @@ from app.core import quality
 
 
 class QualityTests(unittest.TestCase):
+    def test_audio_cannot_outlast_final_video(self):
+        import subprocess
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'truncated.mp4'
+            subprocess.run(['ffmpeg','-v','error','-f','lavfi','-i','color=white:s=1080x1920:r=30:d=0.5','-f','lavfi','-i','sine=frequency=440:duration=1.0','-c:v','libx264','-preset','ultrafast','-c:a','aac',str(path)],check=True)
+            with self.assertRaisesRegex(ValueError,'스트림 길이'):quality.inspect_output(path)
+
     def test_thumbnail_is_not_a_high_resolution_source(self):
         with tempfile.TemporaryDirectory() as tmp:
             path=Path(tmp)/'source.jpg'

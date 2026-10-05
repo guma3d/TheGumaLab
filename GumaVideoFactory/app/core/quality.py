@@ -42,6 +42,8 @@ def inspect_output(path):
     if (video['width'],video['height'])!=(1080,1920) or abs(fps-30)>.05 or not audios:
         raise ValueError('최종 영상은 음성이 포함된 1080×1920·30fps여야 합니다.')
     duration=float(video.get('duration',0))
+    if duration and any(abs(float(a.get('duration',duration))-duration)>.2 for a in audios):
+        raise ValueError('영상·음성 스트림 길이가 다릅니다. 마지막 컷까지 영상이 이어지는지 확인하세요.')
     samples=[]
     for fraction in (.1,.3,.5,.7,.9):
         raw=subprocess.check_output(['ffmpeg','-v','error','-ss',str(duration*fraction),'-i',str(path),'-frames:v','1','-vf','scale=108:192','-f','image2pipe','-vcodec','png','-'])
