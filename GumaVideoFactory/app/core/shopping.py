@@ -253,7 +253,7 @@ async def render(id,n):
 
 def write_captions(path,text,seconds,style,headline='',generated=False):
     """Short readable subtitles in the same safe area for every category episode."""
-    if style.get('caption_design') == 'food-editorial-v1':
+    if style.get('caption_design') in ('food-editorial-v1', 'food-outline-v2'):
         from app.core.food_captions import write_food_captions
         return write_food_captions(path,text,seconds,headline,generated=generated)
     clean=re.sub(r'[{}\\\r\n]',' ',text)

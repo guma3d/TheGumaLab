@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-05.5",
+  "revision": "2026-10-05.6",
   "rules": [
     {
       "id": "exact-product",
@@ -111,6 +111,7 @@
     "routine_affiliate_overlay": false,
     "ad_badge": true,
     "disclosure_location": "description first line and affiliate links; YouTube AI-use setting",
-    "exception": "Label virtual-person endorsements or omit them; do not present generated performance as actual evidence."
+    "exception": "Label virtual-person endorsements or omit them; do not present generated performance as actual evidence.",
+    "food_color_continuity": "Match ingredient shots to the approved hero shot: bright natural strawberry reds, lifted shadows and soft contrast; reject dark brown-red fruit or harsh shadows."
   }
 }
