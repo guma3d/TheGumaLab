@@ -1,10 +1,10 @@
 {
-  "revision": "2026-10-06.5",
+  "revision": "2026-10-06.6",
   "rules": [
     {
       "id": "living-media-before-recommendation",
       "category": "household",
-      "instruction": "Before ANY Living recommendation, including conversational shortlists and web registration, actually acquire exact-product images OR videos and inspect resolution and perceived sharpness. For videos, play and inspect the actual working segment. Preserve original files, source URLs, exact-product match, usage basis and QA evidence; apply the existing recommendation readiness validator. Search hits or future acquisition promises do not qualify. Keep items without verified media in internal research only. Present acquired-media links or previews with recommendations."
+      "instruction": "User correction 2026-10-06: Living research recommendations require verified existence of exact-product images OR videos on original pages; downloading is NOT required. Record source links, product match, media type and observable resolution/quality, and show source links in recommendations. Search hits alone do not qualify. Distinguish availability from downloaded assets, reuse permission and completed motion QA. Existing local-file readiness validation still applies when preparing production and registering production-ready items."
     },
     {
       "id": "living-commerce-news-discovery",
