@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-06.2",
+  "revision": "2026-10-06.3",
   "rules": [
     {
       "id": "exact-product",
@@ -64,7 +64,7 @@
     {
       "id": "living-visible-results-and-motion",
       "category": "household",
-      "instruction": "Record exact-model evidence and visibility of contact, surface before/after and actual removal results for each candidate. Contact or unboxing alone is not efficacy evidence. When the human requests candidate selection, replace footage only after selection; never generate efficacy. Moving footage must cover the cut without cloned last-frame holds, loops or reversal. Adjust real source ranges, silence or adjacent-cut timing without cutting spoken endings. Review motion before and across every transition. Intentional official still images are exempt."
+      "instruction": "Record exact-model evidence and visibility of contact, surface before/after and actual removal results for each candidate. Contact or unboxing alone is not efficacy evidence. When the human requests candidate selection, replace footage only after selection; never generate efficacy. Moving footage must cover the cut without cloned last-frame holds, loops or reversal. Adjust real source ranges, silence or adjacent-cut timing without cutting spoken endings. Review motion before and across every transition. Intentional official still images are exempt. User-selected footage is acceptance of that visual, not proof of a visible model-number label or quantified efficacy. Match on-screen titles to the actual material shown."
     }
   ],
   "feedback": [
@@ -87,7 +87,7 @@
     {
       "id": "living-transition-20261006",
       "scope": "household",
-      "lesson": "Mijia v5 CUT4 had 2.9 seconds of source extended to 4.03 seconds with a frozen tail. Remove the hold in a new version, preserve speech, and inspect continuous motion into CUT5. Additional efficacy footage remains candidate-only until user selection."
+      "lesson": "Mijia v5 CUT4 had 2.9 seconds of source extended to 4.03 seconds with a frozen tail. Remove the hold in a new version, preserve speech, and inspect continuous motion into CUT5. The user subsequently selected candidate 1, white-fabric close-up, for CUT4 replacement based on v6. Use upright portrait footage and an accurate material-neutral title; selection does not establish quantified before/after efficacy."
     }
   ],
   "publishing": {
