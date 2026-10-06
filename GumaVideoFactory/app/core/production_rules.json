@@ -1,6 +1,11 @@
 {
-  "revision": "2026-10-06.2",
+  "revision": "2026-10-06.4",
   "rules": [
+    {
+      "id": "living-commerce-news-discovery",
+      "category": "household",
+      "instruction": "Discover Living items through verified commerce demand OR recent news. Record exact option, review count/rating and aggregation scope, original sales/buyer statement, period, scope, source URL and check time. Never infer sales from reviews or cumulative counts as growth. Prefer 500+ reviews and 4.3/5 as adjustable discovery heuristics, not mandatory cutoffs; inspect recent and low-rating complaints. News prefers 7 days and requires original publication/event dates within 30 days; do not count syndicated releases as independent evidence or attribute category trends to one SKU. Low-review news items may qualify with limited sales evidence disclosed. Combine season/problem relevance, design, exact-product sharp demonstration availability and novelty. New household imports require living_evidence; undated commerce pages must not receive invented publication dates."
+    },
     {
       "id": "exact-product",
       "category": "tech",

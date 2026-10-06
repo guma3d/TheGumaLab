@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from app.config import RECOMMENDATIONS_DIR
 from app.core.categories import PRESETS, SLOT_CATEGORIES
 from app.core.source_media import MediaSource
+from app.core.recommendation_readiness import RecommendationReadiness, validate_readiness
 
 KST = timezone(timedelta(hours=9))
 
@@ -117,6 +118,26 @@ class FoodTrend(BaseModel):
     stock_evidence: list[Source] = Field(default_factory=list, max_length=5)
 
 
+class LivingEvidence(BaseModel):
+    route: Literal['commerce', 'news']
+    checked_at: datetime
+    sources: list[Source] = Field(min_length=1, max_length=5)
+    review_count: int | None = Field(default=None, ge=0)
+    rating: float | None = Field(default=None, ge=0, le=5)
+    review_scope: str = ''
+    review_findings: str = Field(min_length=10, max_length=2000)
+    sales_statement: str = ''
+    sales_period: str = ''
+    sales_scope: str = ''
+    event_date: date | None = None
+    selection_reason: str = Field(min_length=20, max_length=2000)
+
+    @field_validator('checked_at')
+    @classmethod
+    def recent_check(cls, value):
+        return PurchaseLink.recent_check(value)
+
+
 class Recommendation(BaseModel):
     category: str
     title: str = Field(min_length=1, max_length=200)
@@ -138,7 +159,9 @@ class Recommendation(BaseModel):
     topic_key: str = Field(default='', max_length=100)
     problem_key: str = Field(default='', max_length=100)
     novelty_review: dict = Field(default_factory=dict)
+    readiness: RecommendationReadiness | None = None
     food_trend: FoodTrend | None = None  # Optional for historical records; required on new food imports.
+    living_evidence: LivingEvidence | None = None  # Historical records remain readable.
 
     @model_validator(mode='after')
     def technical_source(self):
@@ -177,6 +200,9 @@ class DailyBatch(BaseModel):
         if len({i.stable_id() for i in self.items}) != len(self.items):
             raise ValueError("중복 아이템은 사용할 수 없습니다.")
         for item in self.items:
+            if item.category == 'household':
+                from app.core.living_research import validate_living_evidence
+                validate_living_evidence(item.living_evidence, now_kst().date())
             if item.category == 'food':
                 from app.core.food_research import validate_food_trend
                 validate_food_trend(item.food_trend, now_kst().date())
@@ -189,7 +215,7 @@ class DailyBatch(BaseModel):
                 raise ValueError("테크 추천에는 검증된 추가 주요 기능이 2개 이상 필요합니다.")
             if item.category=='tech' and (item.purchase_link.price_krw is None or item.purchase_link.price_krw>500000 or len(item.purchase_link.price_evidence)<10):
                 raise ValueError('테크 추천은 확인된 쿠팡 옵션 가격 50만원 이하만 허용합니다.')
-            if not any(s.published_date and (now_kst().date() - datetime.strptime(s.published_date, "%Y-%m-%d").date()).days <= 30 for s in item.sources):
+            if item.category != 'household' and not any(s.published_date and (now_kst().date() - datetime.strptime(s.published_date, "%Y-%m-%d").date()).days <= 30 for s in item.sources):
                 raise ValueError("아이템마다 최근 30일 이내 출처가 하나 이상 필요합니다.")
         return self
 
@@ -204,6 +230,9 @@ def load_daily(date=None):
 
 
 def save_batch(batch: DailyBatch):
+    # Validate before any history/list write; old saved records stay readable.
+    for item in batch.items:
+        validate_readiness(item, now_kst())
     old = load_daily(batch.date)
     if old.get("researched_at") and datetime.fromisoformat(old["researched_at"]) >= batch.researched_at:
         raise ValueError("이전 조사 결과로 최신 목록을 덮어쓸 수 없습니다.")

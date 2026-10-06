@@ -6,6 +6,12 @@ from app.core.categories import PRESETS
 from app.core.source_media import download_media, download_youtube_cc
 
 if __name__ == "__main__":
+    if sys.argv[1:] == ['--living-search-plan']:
+        import json
+        from app.core.living_research import search_plan
+        from app.core.recommendations import now_kst
+        print(json.dumps(search_plan(now_kst().date()), ensure_ascii=False, indent=2))
+        raise SystemExit(0)
     if sys.argv[1:] == ['--food-search-plan']:
         import json
         from app.core.food_research import search_plan
