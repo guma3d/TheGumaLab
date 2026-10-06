@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-06.3",
+  "revision": "2026-10-06.2",
   "rules": [
     {
       "id": "exact-product",
@@ -65,6 +65,11 @@
       "id": "living-visible-results-and-motion",
       "category": "household",
       "instruction": "Record exact-model evidence and visibility of contact, surface before/after and actual removal results for each candidate. Contact or unboxing alone is not efficacy evidence. When the human requests candidate selection, replace footage only after selection; never generate efficacy. Moving footage must cover the cut without cloned last-frame holds, loops or reversal. Adjust real source ranges, silence or adjacent-cut timing without cutting spoken endings. Review motion before and across every transition. Intentional official still images are exempt. User-selected footage is acceptance of that visual, not proof of a visible model-number label or quantified efficacy. Match on-screen titles to the actual material shown."
+    },
+    {
+      "id": "food-news-discovery",
+      "category": "food",
+      "instruction": "Before food research run recommendation_import.py --food-search-plan, then perform actual web searches across recent broadcast food coverage, overseas local food trends, retail sales/stock news and recipes. Prefer 7 days, maximum 30; distinguish publication date from event date. Verify broadcaster episode/air date, country/local original reporting, and any stock claim with seller, option, check time and source. Broadcast exposure alone is not evidence of popularity; a single sold-out listing is not a shortage craze. Save food_trend evidence and connect via same_product, related_product or recipe_ingredient with verified recipe rationale. Recommend only after exact Coupang official seller/Rocket/issued affiliate checks. Never claim related items are the featured product or taste identical."
     }
   ],
   "feedback": [

@@ -5,7 +5,7 @@ import os
 import uuid
 import re
 import unicodedata
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from urllib.parse import urlparse
 from typing import Literal
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -104,6 +104,19 @@ class PurchaseLink(BaseModel):
         return value
 
 
+class FoodTrend(BaseModel):
+    route: Literal['broadcast', 'overseas', 'retail', 'recipe']
+    topic: str = Field(min_length=2, max_length=300)
+    country: str = Field(min_length=2, max_length=100)
+    program: str = Field(default='', max_length=300)
+    event_date: date
+    evidence: list[Source] = Field(min_length=1, max_length=5)
+    connection: Literal['same_product', 'related_product', 'recipe_ingredient']
+    connection_evidence: str = Field(min_length=20, max_length=2000)
+    stock_claim: str = Field(default='', max_length=1000)
+    stock_evidence: list[Source] = Field(default_factory=list, max_length=5)
+
+
 class Recommendation(BaseModel):
     category: str
     title: str = Field(min_length=1, max_length=200)
@@ -125,6 +138,7 @@ class Recommendation(BaseModel):
     topic_key: str = Field(default='', max_length=100)
     problem_key: str = Field(default='', max_length=100)
     novelty_review: dict = Field(default_factory=dict)
+    food_trend: FoodTrend | None = None  # Optional for historical records; required on new food imports.
 
     @model_validator(mode='after')
     def technical_source(self):
@@ -163,6 +177,9 @@ class DailyBatch(BaseModel):
         if len({i.stable_id() for i in self.items}) != len(self.items):
             raise ValueError("중복 아이템은 사용할 수 없습니다.")
         for item in self.items:
+            if item.category == 'food':
+                from app.core.food_research import validate_food_trend
+                validate_food_trend(item.food_trend, now_kst().date())
             if item.category != SLOT_CATEGORIES[self.slot]:
                 raise ValueError('09시 테크·15시 음식·21시 생활용품으로 배정합니다.')
             validate_novelty(item)
