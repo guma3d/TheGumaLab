@@ -1,6 +1,11 @@
 {
-  "revision": "2026-10-06.8",
+  "revision": "2026-10-07.1",
   "rules": [
+    {
+      "id": "food-package-shape-flavor-fidelity",
+      "category": "food",
+      "instruction": "Compare actual references with every used moving-food segment before and after processing. Reject local package inpainting that adds noise, smearing, flicker or false print; prefer a verified original segment or exact real asset, but do not accept inaccurate packaging merely because it is unprocessed. Distinguish generated originals from real footage and post-opening views from opening actions. Check food width/height, thickness and size against plate/tray/hand references; never impose flat pancake or inflated sphere shapes. Other-flavor narration must show the exact flavor's sourced real package with verified resolution and preserved print/shape. Reject generated cutouts that alter typography/barcodes. Separate that flavor from the main-product CTA/link in time. Record these checks in preflight and final motion QA; preserve older versions."
+    },
     {
       "id": "living-xiaohongshu-required-search",
       "category": "household",
@@ -88,6 +93,11 @@
     }
   ],
   "feedback": [
+    {
+      "id": "food-sesame-cuts-03-05-08-20261006",
+      "scope": "food",
+      "lesson": "User rejected noisy foil restoration in CUT03, oversized flat mochi in CUT05 and missing corn-cream-cheese product imagery in CUT08. Use accurate clean original material, reference-sized round food and a real exact-flavor cutout during its own narration. Review full motion and original-versus-processed packaging, not just stills."
+    },
     {
       "id": "shopping-v2",
       "scope": "all",
