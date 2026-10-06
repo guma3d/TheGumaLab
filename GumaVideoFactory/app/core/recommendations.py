@@ -118,6 +118,19 @@ class FoodTrend(BaseModel):
     stock_evidence: list[Source] = Field(default_factory=list, max_length=5)
 
 
+class LivingMediaEvidence(Source):
+    kind: Literal['image', 'video']
+    exact_product_match: str = Field(min_length=10)
+    acquisition_verified: bool = False
+    acquisition_method: str = ''
+    acquisition_evidence: str = ''
+    width: int = Field(gt=0)
+    height: int = Field(gt=0)
+    visually_reviewed: bool = False
+    real_action_reviewed: bool = False
+    action_segment: str = ''
+
+
 class LivingEvidence(BaseModel):
     route: Literal['commerce', 'news']
     checked_at: datetime
@@ -131,6 +144,8 @@ class LivingEvidence(BaseModel):
     sales_scope: str = ''
     event_date: date | None = None
     selection_reason: str = Field(min_length=20, max_length=2000)
+    media: list[LivingMediaEvidence] = Field(default_factory=list)
+    requires_real_action: bool = True
 
     @field_validator('checked_at')
     @classmethod

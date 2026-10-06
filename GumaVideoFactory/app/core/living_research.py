@@ -15,8 +15,9 @@ def search_plan(today=None):
         'news_preferred_days': 7, 'news_maximum_days': 30,
         'recommendation_gate': {
             'applies_to': ['research_recommendations'],
-            'required_order': ['verify_exact_product_media_exists', 'record_source_and_quality', 'recommend'],
+            'required_order': ['verify_exact_product_media_acquisition', 'review_quality_and_required_action', 'recommend'],
             'download_required': False,
+            'acquisition_verification_required': True,
             'production_readiness_validator': 'app.core.recommendation_readiness.validate_readiness',
             'unverified_items': 'internal_research_only',
         },
@@ -26,9 +27,9 @@ def search_plan(today=None):
             '리뷰 500개·평점 4.3 이상은 탐색 우선값이며 카테고리별 비교와 최근/낮은 평점 후기 내용도 확인한다.',
             '뉴스는 원문 게시일과 사건일을 구분하고 재배포 보도자료를 독립 근거로 중복 집계하지 않는다.',
             '리뷰가 적은 신제품도 최근 뉴스 근거로 검토하되 판매 검증 부족을 표시한다.',
-            '생활 문제·계절성·디자인·기존 소재 중복을 평가하고, 동일 제품 이미지 또는 영상의 존재를 원문에서 확인한다. 추천 단계 다운로드는 필수가 아니다.',
-            '출처 링크·동일 제품 판단·확인 가능한 해상도와 육안 화질을 기록한다. 자료 존재와 다운로드·사용 허가·작동 구간 검수 완료를 구분한다.',
-            '자료 존재 미확인 제품은 내부 조사 대상으로만 유지한다. 추천에 자료 링크를 제시하고, 제작 준비·웹 제작 등록 때 기존 readiness 원본 확보·검수를 적용한다.',
+            '동일 제품 자료의 실제 확보 경로와 근거를 검증해야 추천한다. 사전 일괄 다운로드는 필수가 아니지만 검색 결과·재생 가능·썸네일만으로 확보 가능이라 판단하지 않는다.',
+            '출처·동일 제품 판단·확보 방법/검증 근거·해상도·육안 화질을 기록한다. 짧은 변 720px 이상, 1080p 우선. 작동 시연이 필요한 제품은 선명한 실제 작동 영상과 구간까지 검수한다.',
+            '확보 경로 미검증·저화질·필수 작동 장면 미확인 제품은 추천에서 제외한다. 사용 허가와 확보 여부는 구분하고 제작 등록 때 기존 readiness 원본 확보·검수도 적용한다.',
         ],
     }
 
@@ -36,6 +37,15 @@ def search_plan(today=None):
 def validate_living_evidence(evidence, today):
     if evidence is None:
         raise ValueError('생활 신규 추천은 living_evidence 판매·리뷰 또는 뉴스 근거가 필요합니다.')
+    usable = [m for m in evidence.media if m.acquisition_verified
+              and len(m.acquisition_method.strip()) >= 5
+              and len(m.acquisition_evidence.strip()) >= 10
+              and m.visually_reviewed and min(m.width, m.height) >= 720]
+    if not usable:
+        raise ValueError('생활 추천은 동일 제품의 고화질 자료 확보 경로와 검증 근거가 필요합니다. 존재·재생 확인만으로 추천할 수 없습니다.')
+    if evidence.requires_real_action and not any(
+            m.kind == 'video' and m.real_action_reviewed and m.action_segment.strip() for m in usable):
+        raise ValueError('실사용 시연 제품은 확보 가능한 고화질 실제 작동 영상과 검수 구간이 필요합니다.')
     if not 0 <= (today - evidence.checked_at.date()).days <= 1:
         raise ValueError('생활 지표는 최근 24시간 내 확인한 구매 정보와 함께 재확인해야 합니다.')
     if evidence.route == 'commerce':
