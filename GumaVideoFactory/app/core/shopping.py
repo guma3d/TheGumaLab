@@ -23,6 +23,15 @@ ROLES = ('need', 'solution', 'reason', 'product', 'cta')
 DISCLOSURE = '이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.'
 
 
+def motion_padding(mode, available, required):
+    """Only intentional still images may hold; moving footage must cover the cut."""
+    if mode in ('official_image', 'explanatory_image'):
+        return f',tpad=stop_mode=clone:stop_duration={required}'
+    if required > available + 1 / 30:
+        raise ValueError('실사용 영상 길이가 부족합니다. 정지 연장 없이 소스 구간·대사·인접 컷 타이밍을 조정하세요.')
+    return ''
+
+
 def join_smooth(segments, output):
     """Encode all dissolves once; overlap trailing silence without clipping speech."""
     if not segments:
@@ -243,7 +252,8 @@ async def render(id,n):
         escaped=str(subtitles).replace('\\','/').replace(':',r'\:').replace("'",r"\'")
         framing=quality.generated_portrait_filter(raw) if scene['mode'] in ('veo','illustration_clip') else quality.portrait_filter('293638' if style['label']=='신형 테크' else 'f4eee8')
         fonts=str(Path(__file__).resolve().parents[1]/'assets'/'fonts').replace('\\','/').replace(':',r'\:')
-        vf=framing+f",fps=30,tpad=stop_mode=clone:stop_duration={seconds},ass=filename='{escaped}':fontsdir='{fonts}'"
+        padding=motion_padding(scene['mode'],media.duration(raw),seconds)
+        vf=framing+f",fps=30{padding},ass=filename='{escaped}':fontsdir='{fonts}'"
         await asyncio.to_thread(media.run,[media.get_ffmpeg_bin(),'-v','error','-i',str(raw),'-i',str(audio),'-map','0:v:0','-map','1:a:0','-vf',vf,'-af','apad','-t',str(seconds),'-c:v','libx264','-crf','18','-pix_fmt','yuv420p','-c:a','aac','-b:a','192k','-ar','48000','-ac','2',str(output)],240)
         segments.append(output)
         cut_quality=quality.inspect_output(output)

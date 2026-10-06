@@ -11,6 +11,12 @@ from app.studio import request_publish, StageRequest
 
 
 class ShoppingTests(unittest.TestCase):
+    def test_short_motion_cannot_be_frozen_to_cover_narration(self):
+        with self.assertRaises(ValueError):
+            s.motion_padding('official_clip', 2.9, 4.03)
+        self.assertEqual(s.motion_padding('official_clip', 3.4, 3.4), '')
+        self.assertIn('tpad', s.motion_padding('official_image', 2.9, 4.03))
+
     def test_private_review_does_not_invent_audio_verification(self):
         evidence=dict(voice='Zephyr',user_selected_voice=True,visual_passed=True,
             director_checks={k:True for k in s.quality.DIRECTOR_AXES},

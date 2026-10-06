@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-06.1",
+  "revision": "2026-10-06.2",
   "rules": [
     {
       "id": "exact-product",
@@ -60,6 +60,11 @@
       "id": "required-bgm",
       "category": "all",
       "instruction": "For each new video randomly select one of the five verified Kevin MacLeod tracks and persist the selection for retries. Measure the actual used stereo music segment and apply one constant gain to -25 LUFS (tolerance 0.3 LU). No speech-triggered ducking, sidechain, automatic attenuation or fades; preserve the original musical dynamics. Aim narration at -16 LUFS with a fixed gain constrained by safe additive peak headroom and at least 6 LU above music. Verify music presence, speech clarity and perceived consistency by actual listening; measurements never count as listening. If hearing is unavailable, retain user web-review pending. Mix once from narration-only media, preserve the video stream without recompression for audio-only changes, verify source hashes and clipping, and include correct CC BY 4.0 credits."
+    },
+    {
+      "id": "living-visible-results-and-motion",
+      "category": "household",
+      "instruction": "Record exact-model evidence and visibility of contact, surface before/after and actual removal results for each candidate. Contact or unboxing alone is not efficacy evidence. When the human requests candidate selection, replace footage only after selection; never generate efficacy. Moving footage must cover the cut without cloned last-frame holds, loops or reversal. Adjust real source ranges, silence or adjacent-cut timing without cutting spoken endings. Review motion before and across every transition. Intentional official still images are exempt."
     }
   ],
   "feedback": [
@@ -78,6 +83,11 @@
       "id": "constant-audio-20261006",
       "scope": "all",
       "lesson": "Latest user feedback replaces ducking and category-specific voices: all new videos use Food Zephyr; music stays at a constant normalized gain, audible below speech; randomly draw from the verified five tracks and persist per version. Update current MD instructions and remove obsolete rules for every feedback."
+    },
+    {
+      "id": "living-transition-20261006",
+      "scope": "household",
+      "lesson": "Mijia v5 CUT4 had 2.9 seconds of source extended to 4.03 seconds with a frozen tail. Remove the hold in a new version, preserve speech, and inspect continuous motion into CUT5. Additional efficacy footage remains candidate-only until user selection."
     }
   ],
   "publishing": {
