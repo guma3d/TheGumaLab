@@ -1,6 +1,11 @@
 {
-  "revision": "2026-10-06.7",
+  "revision": "2026-10-06.8",
   "rules": [
+    {
+      "id": "living-xiaohongshu-required-search",
+      "category": "household",
+      "instruction": "Every Living recommendation must include an actual Xiaohongshu/rednote search using exact brand/model Chinese or English terms. Record query, search/post URL, exact-product video findings, quality and acquisition outcome in living_evidence.xiaohongshu_searches. Other sites supplement but never replace this research step. Distinguish search hits from verified usable videos; prioritize products with varied exact-product real-use footage. Existing acquisition, visual quality and action review gates still apply."
+    },
     {
       "id": "living-media-before-recommendation",
       "category": "household",

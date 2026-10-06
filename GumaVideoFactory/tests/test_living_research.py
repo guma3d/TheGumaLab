@@ -14,6 +14,8 @@ class LivingResearchTests(unittest.TestCase):
             exact_product_match='동일 브랜드 모델과 크기 옵션 표시 확인', acquisition_verified=True,
             acquisition_method='공식 원본 다운로드', acquisition_evidence='원본 저장 기능과 실제 파일 응답을 검증함',
             width=1080, height=1920, visually_reviewed=True, real_action_reviewed=True, action_segment='00:03-00:12')]
+        data['xiaohongshu_searches'] = [dict(query='브랜드 모델', url='https://www.rednote.com/search_result?keyword=test',
+            findings='동일 모델 실사용 영상을 검색하고 확보 경로와 화질을 대조 확인했다.')]
         data.update(changes)
         return LivingEvidence(**data)
 
@@ -57,3 +59,11 @@ class LivingResearchTests(unittest.TestCase):
         item.media[0].kind = 'image'
         item.media[0].real_action_reviewed = False
         validate_living_evidence(item, now_kst().date())
+
+    def test_xiaohongshu_search_cannot_be_replaced_by_other_sites(self):
+        with self.assertRaises(ValueError):
+            validate_living_evidence(self.record(xiaohongshu_searches=[]), now_kst().date())
+        with self.assertRaises(ValueError):
+            self.record(xiaohongshu_searches=[dict(query='브랜드 모델', url='https://example.com/rednote.com',
+                findings='다른 사이트의 자료를 샤오홍슈 조사 결과로 등록하면 안 된다.')])
+        self.assertTrue(search_plan()['recommendation_gate']['xiaohongshu_search_required'])

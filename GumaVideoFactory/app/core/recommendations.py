@@ -8,7 +8,7 @@ import unicodedata
 from datetime import date, datetime, timedelta, timezone
 from urllib.parse import urlparse
 from typing import Literal
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, HttpUrl, field_validator, model_validator
 from app.config import RECOMMENDATIONS_DIR
 from app.core.categories import PRESETS, SLOT_CATEGORIES
 from app.core.source_media import MediaSource
@@ -131,6 +131,21 @@ class LivingMediaEvidence(Source):
     action_segment: str = ''
 
 
+class LivingXiaohongshuSearch(BaseModel):
+    query: str = Field(min_length=2)
+    url: HttpUrl
+    findings: str = Field(min_length=20)
+
+    @field_validator('url')
+    @classmethod
+    def xiaohongshu_host(cls, value):
+        host = (value.host or '').lower()
+        if not any(host == domain or host.endswith('.' + domain)
+                   for domain in ('xiaohongshu.com', 'rednote.com')):
+            raise ValueError('샤오홍슈/rednote 검색 또는 게시물 출처가 필요합니다.')
+        return value
+
+
 class LivingEvidence(BaseModel):
     route: Literal['commerce', 'news']
     checked_at: datetime
@@ -146,6 +161,7 @@ class LivingEvidence(BaseModel):
     selection_reason: str = Field(min_length=20, max_length=2000)
     media: list[LivingMediaEvidence] = Field(default_factory=list)
     requires_real_action: bool = True
+    xiaohongshu_searches: list[LivingXiaohongshuSearch] = Field(default_factory=list)
 
     @field_validator('checked_at')
     @classmethod

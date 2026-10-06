@@ -15,13 +15,15 @@ def search_plan(today=None):
         'news_preferred_days': 7, 'news_maximum_days': 30,
         'recommendation_gate': {
             'applies_to': ['research_recommendations'],
-            'required_order': ['verify_exact_product_media_acquisition', 'review_quality_and_required_action', 'recommend'],
+            'required_order': ['search_xiaohongshu_exact_product', 'verify_exact_product_media_acquisition', 'review_quality_and_required_action', 'recommend'],
+            'xiaohongshu_search_required': True,
             'download_required': False,
             'acquisition_verification_required': True,
             'production_readiness_validator': 'app.core.recommendation_readiness.validate_readiness',
             'unverified_items': 'internal_research_only',
         },
         'follow_up': [
+            '샤오홍슈/rednote에서 브랜드·모델의 중국어/영문명으로 반드시 검색하고 검색어·출처·동일 제품 영상 유무·화질·확보 가능 여부를 기록한다. 검색 결과 수와 검증된 사용 가능 영상 수를 구분하며 다른 사이트만 조사해 대체하지 않는다.',
             '정확한 옵션의 가격·판매처·로켓배송·파트너스 링크를 확인한다.',
             '판매량/구매자 수는 표시 문구·기간·범위·확인 시각을 보존한다. 리뷰 수로 판매량을 추정하지 않는다.',
             '리뷰 500개·평점 4.3 이상은 탐색 우선값이며 카테고리별 비교와 최근/낮은 평점 후기 내용도 확인한다.',
@@ -37,6 +39,8 @@ def search_plan(today=None):
 def validate_living_evidence(evidence, today):
     if evidence is None:
         raise ValueError('생활 신규 추천은 living_evidence 판매·리뷰 또는 뉴스 근거가 필요합니다.')
+    if not evidence.xiaohongshu_searches:
+        raise ValueError('생활 추천 전 샤오홍슈 검색어·출처·영상 검토 결과를 기록해야 합니다.')
     usable = [m for m in evidence.media if m.acquisition_verified
               and len(m.acquisition_method.strip()) >= 5
               and len(m.acquisition_evidence.strip()) >= 10
