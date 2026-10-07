@@ -371,7 +371,9 @@ function projectPage(id, tab = "board") {
     [label, st] = status(p),
     spent = totalCost(id);
   const content =
-    tab === "videos"
+    tab === "images"
+      ? `<div class="notice">장면 이미지로 흐름을 확인하는 콘티입니다. 각 이미지를 선택하면 크게 볼 수 있어요.</div><div class="storyboard-image-grid">${p.cuts.map((c,i) => { const asset = c.asset_id ? find("assets",c.asset_id) : null; return `<article class="panel storyboard-image-card"><div class="row between"><strong>CUT ${String(i+1).padStart(2,"0")}</strong><span class="badge">${c.seconds}초</span></div>${asset?.kind === "image" ? `<a href="#asset/${encodeURIComponent(asset.id)}"><img src="${assetURL(asset.id)}" alt="${e(c.title)}" loading="lazy"></a>` : '<p class="muted">장면 이미지 준비 중</p>'}<h2>${e(c.title)}</h2><p class="preserve">${e(c.visual)}</p></article>`; }).join("")}</div>`
+      : tab === "videos"
       ? videosPanel(p)
       : tab === "history"
         ? '<div id="history-list" class="panel loading">콘티 기록을 불러오는 중이에요…</div>'
@@ -389,6 +391,7 @@ function projectPage(id, tab = "board") {
           : `<div class="notice">콘티를 저장하면 새 버전이 남아요. 변경한 콘티는 다시 제작 승인해야 해요.</div><form id="board-form" data-id="${id}"><div id="cuts">${p.cuts.map(cutEditor).join("")}</div>${p.cuts.length ? "" : empty("아직 콘티가 없어요", "이야기 틀을 불러오거나 컷을 직접 추가할 수 있어요.")}<div class="row wrap">${button("컷 추가", "add-cut", id, "small", "plus")}${!p.cuts.length ? button("5컷 이야기 틀 불러오기", "template", id, "small", "layers") : ""}</div><div class="form-error" role="alert"></div><div class="sticky-actions"><small id="board-status">${p.approved_at ? "현재 콘티 제작 승인됨" : "저장 후 제작 승인해주세요"}</small><div class="row"><button class="btn primary" type="submit">콘티 저장</button>${button("제작 승인", "approve", id, "", "check")}</div></div></form>`;
   return `<div class="detail-head"><a class="back" href="#projects">${icon("arrow")} 프로젝트 목록</a>${heading(p.title, p.concept || "우리 가족의 새로운 이야기", `<div class="row">${badge(label, st)}${button("설정", "edit-project", id, "", "edit")}<a class="btn" href="api/projects/${id}/export">${icon("download")}기획 내보내기</a></div>`, "PROJECT WORKSPACE")}</div><div class="status-line"><span class="on">01 기획</span><b>→</b><span class="${p.cuts.length ? "on" : ""}">02 콘티</span><b>→</b><span class="${p.approved_at ? "on" : ""}">03 제작</span><b>→</b><span class="${videoList(id).length ? "on" : ""}">04 검수</span><b>→</b><span class="${st === "approved" ? "on" : ""}">05 검수 완료</span></div><div class="tabs">${[
     ["board", "스토리보드"],
+    ["images", "이미지 콘티"],
     ["videos", "영상 · 검수"],
     ["costs", "제작비"],
     ["history", "콘티 기록"],

@@ -31,3 +31,15 @@ assert.doesNotMatch(vm.runInContext('assetsPage()',context),/api\/assets\/old\/f
 assert.match(vm.runInContext("animal('rabbit')",context), /api\/assets\/portrait\/file/);
 assert.match(vm.runInContext('familyCard(state.characters[0])',context), /#assets\/rabbit\/video/);
 console.log('Gallery filters, archived assets, search, profile and family links passed.');
+vm.runInContext(`state.costs=[]; state.videos=[]; state.products=[]; state.jobs=[];
+state.projects=[{id:'board',title:'이미지 콘티',category:'food',concept:'35초 무대사',revision:1,
+  character_ids:['rabbit'],product_id:'',approved_at:null,archived:false,budget:0,attempt_limit:3,
+  cuts:[{title:'<첫 장면>',seconds:4,visual:'문을 여는 장면',asset_id:'portrait'},
+        {title:'준비 중',seconds:6,visual:'두 번째 장면',asset_id:''}]}]`,context);
+html=vm.runInContext("projectPage('board','images')",context);
+assert.match(html,/storyboard-image-grid/);
+assert.match(html,/api\/assets\/portrait\/file/);
+assert.match(html,/&lt;첫 장면&gt;/);
+assert.match(html,/장면 이미지 준비 중/);
+assert.match(html,/#project\/board\/images/);
+console.log('Storyboard image page, linked images and pending image fallback passed.');
