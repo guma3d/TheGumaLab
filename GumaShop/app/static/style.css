@@ -1817,3 +1817,5 @@ dialog::backdrop {
     margin-bottom: 4px;
   }
 }
+.version-panel .field { flex: 1; min-width: 180px; max-width: 100%; }
+.version-panel select { width: 100%; }

@@ -43,3 +43,15 @@ assert.match(html,/&lt;첫 장면&gt;/);
 assert.match(html,/장면 이미지 준비 중/);
 assert.match(html,/#project\/board\/images/);
 console.log('Storyboard image page, linked images and pending image fallback passed.');
+vm.runInContext(`state.assets.push({id:'oldimage',kind:'image',archived:true}); state.storyboards=[{id:'old-board',project_id:'board',number:1,label:'<초안>',note:'이전 화면',created_at:'2026-10-08',
+storyboard:{...state.projects[0],cuts:[{title:'이전 컷',seconds:4,visual:'이전 설명',asset_id:'oldimage'}]}}]`,context);
+html=vm.runInContext("projectPage('board','images','old-board')",context);
+assert.match(html,/api\/assets\/oldimage\/file/);
+assert.doesNotMatch(html,/&lt;첫 장면&gt;/);
+assert.match(html,/&lt;초안&gt;/);
+assert.match(html,/이전 설명/);
+html=vm.runInContext("projectPage('board','versions')",context);
+assert.match(html,/#project\/board\/images\/old-board/);
+assert.match(html,/버전 관리/);
+assert.match(vm.runInContext("projectPage('board','images','missing')",context),/버전을 찾을 수 없어요/);
+console.log('Immutable version routes, archived images, labels and missing version fallback passed.');

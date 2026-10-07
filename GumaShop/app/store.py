@@ -1,5 +1,6 @@
 """Transactional JSON records with optimistic locking and immutable snapshots."""
 import json
+import re
 import sqlite3
 import uuid
 from contextlib import contextmanager
@@ -55,7 +56,7 @@ class Store:
             raise HTTPException(404, '항목을 찾을 수 없습니다.')
         return json.loads(row['data'])
 
-    def save(self, kind, data, key=None, revision=None):
+    def save(self, kind, data, key=None, revision=None, storyboard_label=None, storyboard_note=''):
         key = key or uuid.uuid4().hex
         with self.connect() as db:
             db.execute('BEGIN IMMEDIATE')
@@ -69,7 +70,60 @@ class Store:
             encoded = json.dumps(value, ensure_ascii=False)
             db.execute('INSERT OR REPLACE INTO records VALUES (?,?,?)', (kind, key, encoded))
             db.execute('INSERT INTO history VALUES (?,?,?,?)', (kind, key, value['revision'], encoded))
+            if storyboard_label is not None:
+                self._snapshot(db, value, storyboard_label, storyboard_note)
         return value
+
+    def _snapshot(self, db, project, label, note):
+        versions = [json.loads(r['data']) for r in db.execute(
+            "SELECT data FROM records WHERE kind='storyboards'").fetchall()]
+        number = max((v['number'] for v in versions if v['project_id'] == project['id']), default=0) + 1
+        key = uuid.uuid4().hex
+        stamp = now()
+        value = dict(id=key, revision=1, project_id=project['id'], number=number,
+                     label=label or '콘티 수정', note=note, project_revision=project['revision'],
+                     storyboard=project, created_at=stamp, updated_at=stamp)
+        encoded = json.dumps(value, ensure_ascii=False)
+        db.execute('INSERT INTO records VALUES (?,?,?)', ('storyboards', key, encoded))
+        db.execute('INSERT INTO history VALUES (?,?,?,?)', ('storyboards', key, 1, encoded))
+        return value
+
+    def publish_storyboard(self, key, revision, label, note):
+        with self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            row = db.execute("SELECT data FROM records WHERE kind='projects' AND id=?", (key,)).fetchone()
+            if not row:
+                raise HTTPException(404, '프로젝트를 찾을 수 없습니다.')
+            project = json.loads(row['data'])
+            if project['revision'] != revision:
+                raise HTTPException(409, '콘티가 변경됐습니다. 새로고침 후 등록해주세요.')
+            if not project['cuts']:
+                raise HTTPException(400, '컷을 작성한 후 버전을 등록해주세요.')
+            return self._snapshot(db, project, label, note)
+
+    def migrate_storyboards(self):
+        """Preserve legacy image editions once; normal record revisions remain separate."""
+        with self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            registered = {json.loads(r['data'])['project_id'] for r in db.execute(
+                "SELECT data FROM records WHERE kind='storyboards'").fetchall()}
+            for row in db.execute("SELECT data FROM records WHERE kind='projects'").fetchall():
+                project = json.loads(row['data'])
+                if project['id'] in registered or not project['cuts']:
+                    continue
+                editions = {}
+                for h in db.execute("SELECT data FROM history WHERE kind='projects' AND id=? ORDER BY revision",
+                                    (project['id'],)).fetchall():
+                    snapshot = json.loads(h['data'])
+                    tags = {m.group(1) for c in snapshot.get('cuts', [])
+                            if (m := re.search(r'^storyboard-.+-v(\d+)-\d+$', c.get('asset_id', '')))}
+                    if len(tags) == 1 and all(c.get('asset_id') for c in snapshot['cuts']):
+                        editions[int(next(iter(tags)))] = snapshot
+                for number, snapshot in sorted(editions.items()):
+                    label = '샷 구성 수정본' if snapshot['cuts'] == project['cuts'] else f'이전 콘티 v{number}'
+                    self._snapshot(db, snapshot, label, snapshot.get('concept') or '기존 이미지와 콘티 기록에서 보존한 버전')
+                if not editions or list(sorted(editions.items()))[-1][1]['cuts'] != project['cuts']:
+                    self._snapshot(db, project, '현재 콘티', '버전 관리 시작 시 보존한 콘티')
 
     def history(self, kind, key):
         self.get(kind, key)

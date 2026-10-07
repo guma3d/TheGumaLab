@@ -122,7 +122,7 @@ function familyCard(c, detailed = false) {
 }
 function projectCard(p) {
   const [label, st] = status(p);
-  return `<a class="project-card" href="#project/${e(p.id)}"><div class="row between">${catBadge(p.category)}${badge(label, st)}</div><h3>${e(p.title)}</h3><p>${e(p.concept.slice(0, 85) || "가족의 새로운 이야기를 시작해보세요.")}</p><div class="row tiny muted"><span>${p.cuts.length}컷 · ${p.cuts.reduce((s, c) => s + c.seconds, 0)}초</span><span>콘티 v${p.revision}</span></div><div class="project-bottom"><div class="mini-family">${p.character_ids.map(animal).join("")}</div><span class="tiny muted">${money(totalCost(p.id))} ${p.budget ? "/ " + money(p.budget) : ""}</span></div></a>`;
+  return `<a class="project-card" href="#project/${e(p.id)}"><div class="row between">${catBadge(p.category)}${badge(label, st)}</div><h3>${e(p.title)}</h3><p>${e(p.concept.slice(0, 85) || "가족의 새로운 이야기를 시작해보세요.")}</p><div class="row tiny muted"><span>${p.cuts.length}컷 · ${p.cuts.reduce((s, c) => s + c.seconds, 0)}초</span><span>콘티 v${storyboardVersions(p.id)[0]?.number || 1}</span></div><div class="project-bottom"><div class="mini-family">${p.character_ids.map(animal).join("")}</div><span class="tiny muted">${money(totalCost(p.id))} ${p.budget ? "/ " + money(p.budget) : ""}</span></div></a>`;
 }
 function dashboard() {
   const projects = live(state.projects),
@@ -360,8 +360,17 @@ function cutEditor(c, i) {
       "",
     )}</select></label><label class="field wide">장면 프롬프트<textarea name="prompt" maxlength="5000" placeholder="외형, 조명, 카메라, 동작과 유지할 기준">${e(c.prompt)}</textarea></label></div></article>`;
 }
-function projectPage(id, tab = "board") {
-  const p = find("projects", id);
+const storyboardVersions = (id) => (state.storyboards || []).filter(v => v.project_id === id).sort((a,b) => b.number-a.number);
+function versionPanel(id, selected) {
+  const versions = storyboardVersions(id);
+  return `<section class="panel version-panel"><div class="row between wrap"><label class="field">콘티 버전<select id="storyboard-version" data-project="${e(id)}"><option value="">현재 콘티</option>${versions.map(v=>`<option value="${e(v.id)}" ${selected?.id===v.id?'selected':''}>v${v.number} · ${e(v.label)}</option>`).join('')}</select></label>${button("현재 콘티를 새 버전으로 등록", "publish-storyboard", id, "small")}</div>${selected?`<p><strong>v${selected.number} · ${e(selected.label)}</strong> · ${date(selected.created_at)}</p><p class="preserve">${e(selected.note)}</p><small>보존된 버전입니다. 수정은 스토리보드 탭의 현재 콘티에서 진행하세요.</small>`:'<p>현재 편집 중인 콘티입니다. 저장된 버전을 선택하면 당시 이미지와 설명을 함께 볼 수 있어요.</p>'}</section>`;
+}
+function projectPage(id, tab = "board", versionId = "") {
+  const current = find("projects", id);
+  const versions = storyboardVersions(id);
+  const selected = versionId ? versions.find(v => v.id === versionId) : null;
+  if (versionId && !selected) return empty("콘티 버전을 찾을 수 없어요", "버전 목록에서 다시 선택해주세요.");
+  const p = tab === "images" && selected ? selected.storyboard : current;
   if (!p)
     return empty(
       "프로젝트를 찾을 수 없어요",
@@ -372,7 +381,9 @@ function projectPage(id, tab = "board") {
     spent = totalCost(id);
   const content =
     tab === "images"
-      ? `<div class="notice">장면 이미지로 흐름을 확인하는 콘티입니다. 각 이미지를 선택하면 크게 볼 수 있어요.</div><div class="storyboard-image-grid">${p.cuts.map((c,i) => { const asset = c.asset_id ? find("assets",c.asset_id) : null; return `<article class="panel storyboard-image-card"><div class="row between"><strong>CUT ${String(i+1).padStart(2,"0")}</strong><span class="badge">${c.seconds}초</span></div>${asset?.kind === "image" ? `<a href="#asset/${encodeURIComponent(asset.id)}"><img src="${assetURL(asset.id)}" alt="${e(c.title)}" loading="lazy"></a>` : '<p class="muted">장면 이미지 준비 중</p>'}<h2>${e(c.title)}</h2><p class="preserve">${e(c.visual)}</p></article>`; }).join("")}</div>`
+      ? versionPanel(id, selected)+`<div class="notice">장면 이미지로 흐름을 확인하는 콘티입니다. 각 이미지를 선택하면 크게 볼 수 있어요.</div><div class="storyboard-image-grid">${p.cuts.map((c,i) => { const asset = c.asset_id ? find("assets",c.asset_id) : null; return `<article class="panel storyboard-image-card"><div class="row between"><strong>CUT ${String(i+1).padStart(2,"0")}</strong><span class="badge">${c.seconds}초</span></div>${asset?.kind === "image" ? `<a href="#asset/${encodeURIComponent(asset.id)}"><img src="${assetURL(asset.id)}" alt="${e(c.title)}" loading="lazy"></a>` : '<p class="muted">장면 이미지 준비 중</p>'}<h2>${e(c.title)}</h2><p class="preserve">${e(c.visual)}</p></article>`; }).join("")}</div>`
+      : tab === "versions"
+        ? `<section class="panel"><div class="section-head"><h2>콘티 버전 관리</h2>${button("새 버전 등록", "publish-storyboard", id, "small primary")}</div>${versions.map((v,i)=>`<article class="history-row"><div><h3>v${v.number} · ${e(v.label)} ${i===0?'<span class="badge">최신</span>':''}</h3><p>${date(v.created_at)} · ${v.storyboard.cuts.length}컷 · ${v.storyboard.cuts.reduce((s,c)=>s+c.seconds,0)}초</p><p class="preserve">${e(v.note)}</p></div><a class="btn small" href="#project/${e(id)}/images/${e(v.id)}">이미지 콘티 보기</a></article>`).join('')||empty("등록된 버전이 없어요","현재 콘티를 새 버전으로 등록해주세요.")}</section>`
       : tab === "videos"
       ? videosPanel(p)
       : tab === "history"
@@ -388,13 +399,14 @@ function projectPage(id, tab = "board") {
                 "유료 제작을 진행했다면 실제 사용한 비용을 기록해주세요.",
               )
             }</section>`
-          : `<div class="notice">콘티를 저장하면 새 버전이 남아요. 변경한 콘티는 다시 제작 승인해야 해요.</div><form id="board-form" data-id="${id}"><div id="cuts">${p.cuts.map(cutEditor).join("")}</div>${p.cuts.length ? "" : empty("아직 콘티가 없어요", "이야기 틀을 불러오거나 컷을 직접 추가할 수 있어요.")}<div class="row wrap">${button("컷 추가", "add-cut", id, "small", "plus")}${!p.cuts.length ? button("5컷 이야기 틀 불러오기", "template", id, "small", "layers") : ""}</div><div class="form-error" role="alert"></div><div class="sticky-actions"><small id="board-status">${p.approved_at ? "현재 콘티 제작 승인됨" : "저장 후 제작 승인해주세요"}</small><div class="row"><button class="btn primary" type="submit">콘티 저장</button>${button("제작 승인", "approve", id, "", "check")}</div></div></form>`;
+          : `<div class="notice">화면 설명·이미지·기획을 변경해 저장하면 새 콘티 버전으로 보존됩니다. 이전 버전은 버전 관리에서 볼 수 있어요.</div><form id="board-form" data-id="${id}"><section class="panel"><label class="field">새 버전 이름<input name="version_label" maxlength="100" value="콘티 수정" required></label><label class="field">변경 내용<textarea name="version_note" maxlength="2000" placeholder="이전 버전에서 달라진 내용을 기록해주세요."></textarea></label></section><div id="cuts">${p.cuts.map(cutEditor).join("")}</div>${p.cuts.length ? "" : empty("아직 콘티가 없어요", "이야기 틀을 불러오거나 컷을 직접 추가할 수 있어요.")}<div class="row wrap">${button("컷 추가", "add-cut", id, "small", "plus")}${!p.cuts.length ? button("5컷 이야기 틀 불러오기", "template", id, "small", "layers") : ""}</div><div class="form-error" role="alert"></div><div class="sticky-actions"><small id="board-status">${p.approved_at ? "현재 콘티 제작 승인됨" : "저장 후 제작 승인해주세요"}</small><div class="row"><button class="btn primary" type="submit">콘티 저장</button>${button("제작 승인", "approve", id, "", "check")}</div></div></form>`;
   return `<div class="detail-head"><a class="back" href="#projects">${icon("arrow")} 프로젝트 목록</a>${heading(p.title, p.concept || "우리 가족의 새로운 이야기", `<div class="row">${badge(label, st)}${button("설정", "edit-project", id, "", "edit")}<a class="btn" href="api/projects/${id}/export">${icon("download")}기획 내보내기</a></div>`, "PROJECT WORKSPACE")}</div><div class="status-line"><span class="on">01 기획</span><b>→</b><span class="${p.cuts.length ? "on" : ""}">02 콘티</span><b>→</b><span class="${p.approved_at ? "on" : ""}">03 제작</span><b>→</b><span class="${videoList(id).length ? "on" : ""}">04 검수</span><b>→</b><span class="${st === "approved" ? "on" : ""}">05 검수 완료</span></div><div class="tabs">${[
     ["board", "스토리보드"],
     ["images", "이미지 콘티"],
+    ["versions", "버전 관리"],
     ["videos", "영상 · 검수"],
     ["costs", "제작비"],
-    ["history", "콘티 기록"],
+    ["history", "저장 기록"],
   ]
     .map(
       ([k, v]) =>
@@ -654,7 +666,7 @@ function videoModal(id) {
   }
   modal(
     "새 영상 버전 등록",
-    `<div class="notice">${e(p.title)} · 콘티 v${p.revision}에 연결돼요.<br>기존 영상은 보존하고 새 버전으로 등록해요.</div><form>${field("영상 파일", "file", "", "file", 'required accept="video/mp4,video/webm,video/quicktime"')}${area("버전 메모", "note", "", 4000)}${actions("영상 등록", "최대 150MB · 브라우저 재생은 MP4(H.264/AAC)를 권장해요.")}</form>`,
+    `<div class="notice">${e(p.title)} · 저장 기록 #${p.revision}에 연결돼요.<br>기존 영상은 보존하고 새 버전으로 등록해요.</div><form>${field("영상 파일", "file", "", "file", 'required accept="video/mp4,video/webm,video/quicktime"')}${area("버전 메모", "note", "", 4000)}${actions("영상 등록", "최대 150MB · 브라우저 재생은 MP4(H.264/AAC)를 권장해요.")}</form>`,
     async (fd) => {
       fd.set("revision", p.revision);
       await api("api/projects/" + id + "/videos", { method: "POST", body: fd });
@@ -748,7 +760,7 @@ const projectPayload = (p) =>
   );
 async function render() {
   const sequence = ++renderSequence;
-  const [page = "dashboard", id, tab] = location.hash.slice(1).split("/");
+  const [page = "dashboard", id, tab, versionId] = location.hash.slice(1).split("/");
   const key =
     page === "project" ? "projects" : page === "asset" ? "assets" : page;
   if (routeKey !== key) {
@@ -802,7 +814,7 @@ async function render() {
   } else {
     $("#main").innerHTML =
       page === "project"
-        ? projectPage(id, tab)
+        ? projectPage(id, tab, versionId)
         : page === "asset"
           ? assetPage(id)
           : (views[page] || dashboard)();
@@ -818,7 +830,7 @@ async function render() {
           items
             .map(
               (p) =>
-                `<div class="history-row"><div><h3>콘티 v${p.revision} · ${e(p.title)}</h3><p>${date(p.updated_at)} · ${p.cuts.length}컷 · ${p.approved_at ? "제작 승인됨" : "작성 중"}</p></div>${button("콘티 보기", "history", p.id + ":" + p.revision, "small")}</div>`,
+                `<div class="history-row"><div><h3>저장 기록 #${p.revision} · ${e(p.title)}</h3><p>${date(p.updated_at)} · ${p.cuts.length}컷 · ${p.approved_at ? "제작 승인됨" : "작성 중"}</p></div>${button("기록 보기", "history", p.id + ":" + p.revision, "small")}</div>`,
             )
             .join("");
       } catch (err) {
@@ -828,6 +840,10 @@ async function render() {
     }
   }
   const board = $("#board-form");
+  const versionSelect = $("#storyboard-version");
+  if (versionSelect) versionSelect.addEventListener("change",()=>{
+    location.hash = `project/${versionSelect.dataset.project}/images${versionSelect.value?'/'+versionSelect.value:''}`;
+  });
   if (board) {
     board.addEventListener("input", markDirty);
     board.addEventListener("change", markDirty);
@@ -840,7 +856,7 @@ async function render() {
         const p = find("projects", board.dataset.id);
         await send(
           "api/projects/" + p.id,
-          { ...projectPayload(p), cuts: readCuts() },
+          { ...projectPayload(p), cuts: readCuts(), version_label: board.elements.version_label.value, version_note: board.elements.version_note.value },
           "PUT",
         );
         dirty = false;
@@ -996,7 +1012,7 @@ const handlers = {
     }
     modal(
       "현재 콘티 제작 승인",
-      `<form><div class="notice">${e(p.title)} · 콘티 v${p.revision}<br>${p.cuts.length}컷 · ${p.cuts.reduce((s, c) => s + c.seconds, 0)}초</div><p class="subtitle">상품 정보와 컷별 화면을 확인했다면 승인해주세요. 승인은 기록만 남기며 유료 생성은 실행하지 않아요.</p>${actions("이 콘티 제작 승인")}</form>`,
+      `<form><div class="notice">${e(p.title)} · 저장 기록 #${p.revision}<br>${p.cuts.length}컷 · ${p.cuts.reduce((s, c) => s + c.seconds, 0)}초</div><p class="subtitle">상품 정보와 컷별 화면을 확인했다면 승인해주세요. 승인은 기록만 남기며 유료 생성은 실행하지 않아요.</p>${actions("이 콘티 제작 승인")}</form>`,
       async () => {
         await send("api/projects/" + id + "/approve", { revision: p.revision });
         await reload("콘티를 제작 승인했어요.");
@@ -1013,9 +1029,17 @@ const handlers = {
     const list = await api("api/projects/" + key + "/history"),
       p = list.find((p) => p.revision === Number(revision));
     modal(
-      "콘티 v" + revision,
+      "저장 기록 #" + revision,
       `<p class="subtitle">${date(p.updated_at)} · 이전 버전 읽기 전용</p>${p.cuts.map((c, i) => `<section class="panel"><h3>CUT ${i + 1} · ${e(c.title)} · ${c.seconds}초</h3><p class="tiny preserve">${e(c.visual)}</p><p class="tiny preserve">대사 · ${e(c.narration || "미작성")}</p><p class="tiny preserve">프롬프트 · ${e(c.prompt || "미작성")}</p></section>`).join("") || empty("작성된 컷이 없어요", "이 버전은 기획 단계의 기록이에요.")}`,
     );
+  },
+  "publish-storyboard": async (id) => {
+    const p = find("projects", id);
+    modal("새 콘티 버전 등록", `<form>${field("버전 이름", "label", "새 콘티", "text", 'required maxlength="100"')}${area("변경 내용", "note", "", 2000)}<p>현재 콘티의 이미지와 설명을 보존합니다. 이전 버전도 계속 볼 수 있어요.</p>${actions("버전 등록")}</form>`, async (data) => {
+      const result = await send(`api/projects/${id}/storyboards`, {revision:p.revision,label:data.get("label"),note:data.get("note")});
+      location.hash = `project/${id}/images/${result.id}`;
+      await reload(`콘티 v${result.number}을 등록했어요.`);
+    });
   },
 };
 document.addEventListener("click", async (event) => {

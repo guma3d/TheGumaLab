@@ -83,10 +83,17 @@ class Project(Model):
     attempt_limit: int = Field(default=3, ge=1, le=50)
     cuts: list[Cut] = Field(default_factory=list, max_length=20)
     archived: bool = False
+    version_label: str = Field(default='콘티 수정', min_length=1, max_length=100)
+    version_note: str = Field(default='', max_length=2000)
 
 
 class Approval(Model):
     revision: int = Field(ge=1)
+
+
+class StoryboardVersion(Approval):
+    label: str = Field(default='새 콘티', min_length=1, max_length=100)
+    note: str = Field(default='', max_length=2000)
 
 
 class Review(Approval):
@@ -115,6 +122,7 @@ def create_app(storage=None, dev=None, legacy=None):
     app = FastAPI(title='GumaShop Studio', docs_url=None, redoc_url=None, openapi_url=None)
     store = Store(storage or os.getenv('GUMASHOP_STORAGE', 'storage'))
     seed(store)
+    store.migrate_storyboards()
     app.state.store = store
     render_lock = threading.Lock()
     for job in store.all('jobs'):
@@ -172,7 +180,7 @@ def create_app(storage=None, dev=None, legacy=None):
 
     @app.get('/api/state')
     def state():
-        return {**{key: store.all(key) for key in ('products', 'projects', 'assets', 'videos', 'costs', 'feedback', 'jobs')},
+        return {**{key: store.all(key) for key in ('products', 'projects', 'assets', 'videos', 'costs', 'feedback', 'jobs', 'storyboards')},
                 'characters': [store.get('characters', key) for key in ('tiger', 'rabbit', 'pig', 'cat')],
                 'asset_audit': next(iter(store.all('asset_audits')), None),
                 'categories': CATEGORIES, 'legacy_available': (legacy_root / 'products').is_dir(),
@@ -214,14 +222,28 @@ def create_app(storage=None, dev=None, legacy=None):
     @app.post('/api/projects')
     def create_project(req: Project):
         validate_project(req)
-        return store.save('projects', dict(req.model_dump(exclude={'revision'}), approved_at=None, approved_revision=None))
+        return store.save('projects', dict(req.model_dump(exclude={'revision', 'version_label', 'version_note'}), approved_at=None, approved_revision=None),
+                          storyboard_label=req.version_label if req.cuts else None, storyboard_note=req.version_note)
 
     @app.put('/api/projects/{key}')
     def update_project(key: str, req: Project):
         old = store.get('projects', key)
+        if req.revision != old['revision']:
+            raise HTTPException(409, '다른 창에서 변경됐습니다. 새로고침 후 다시 저장해주세요.')
         validate_project(req)
-        return store.save('projects', {**old, **req.model_dump(exclude={'revision'}), 'approved_at': None,
-                                      'approved_revision': None}, key, req.revision)
+        changed = req.cuts and (old['cuts'] != [c.model_dump() for c in req.cuts] or old['concept'] != req.concept)
+        return store.save('projects', {**old, **req.model_dump(exclude={'revision', 'version_label', 'version_note'}), 'approved_at': None,
+                                      'approved_revision': None}, key, req.revision,
+                          storyboard_label=req.version_label if changed else None, storyboard_note=req.version_note)
+
+    @app.get('/api/projects/{key}/storyboards')
+    def storyboard_versions(key: str):
+        store.get('projects', key)
+        return sorted((v for v in store.all('storyboards') if v['project_id'] == key), key=lambda v: v['number'], reverse=True)
+
+    @app.post('/api/projects/{key}/storyboards')
+    def publish_storyboard(key: str, req: StoryboardVersion):
+        return store.publish_storyboard(key, req.revision, req.label, req.note)
 
     @app.get('/api/projects/{key}/history')
     def history(key: str):
@@ -251,6 +273,7 @@ def create_app(storage=None, dev=None, legacy=None):
                    'product': store.get('products', project['product_id']) if project['product_id'] else None,
                    'characters': characters, 'assets': [store.get('assets', k) for k in sorted(asset_ids)],
                    'history': store.history('projects', key),
+                   'storyboards': storyboard_versions(key),
                    **{k: [i for i in store.all(k) if i['project_id'] == key] for k in ('videos', 'costs', 'feedback')},
                    'note': '미디어는 포함되지 않습니다. 각 자산은 작업실에서 별도로 다운로드하세요.'}
         return JSONResponse(payload, headers={'Content-Disposition': f'attachment; filename="gumashop-{key}.json"'})

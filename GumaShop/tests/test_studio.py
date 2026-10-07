@@ -73,6 +73,50 @@ def test_versions_conflict_and_approval_reset(client):
     assert 'attachment' in export.headers['content-disposition']
 
 
+def test_storyboard_snapshots_preserve_images_and_conflicts(client):
+    p = project(client)
+    data = io.BytesIO()
+    Image.new('RGB', (12, 12), 'green').save(data, 'PNG')
+    asset = client.post('/api/assets', data={'title': '이전 컷'},
+                        files={'file': ('old.png', data.getvalue(), 'image/png')}).json()
+    p = client.put('/api/projects/' + p['id'], json={**payload(p), 'version_label': '이미지 초안',
+        'cuts': [{**p['cuts'][0], 'asset_id': asset['id']}]}).json()
+    saved = client.get('/api/projects/' + p['id'] + '/storyboards').json()
+    assert len(saved) == 2 and saved[0]['label'] == '이미지 초안'
+    old_version = saved[0]
+    approved = approve(client, p)
+    assert len(client.get('/api/projects/' + p['id'] + '/storyboards').json()) == 2
+    new = client.put('/api/projects/' + p['id'], json={**payload(approved), 'version_label': '새 구도',
+        'version_note': '탑뷰 변경', 'cuts': [{**p['cuts'][0], 'title': '탑뷰', 'asset_id': ''}]}).json()
+    assert client.post('/api/assets/' + asset['id'] + '/archive', json={'revision': 1}).status_code == 200
+    assert client.get('/api/assets/' + asset['id'] + '/file').content == data.getvalue()
+    versions = client.get('/api/projects/' + p['id'] + '/storyboards').json()
+    assert versions[0]['number'] == 3 and versions[0]['note'] == '탑뷰 변경'
+    assert versions[1] == old_version
+    assert client.put('/api/projects/' + p['id'], json=payload(p)).status_code == 409
+    assert client.post('/api/projects/' + p['id'] + '/storyboards', json={'revision': p['revision'], 'label': '충돌'}).status_code == 409
+    assert len(client.get('/api/projects/' + p['id'] + '/storyboards').json()) == 3
+    result = client.post('/api/projects/' + p['id'] + '/storyboards', json={'revision': new['revision'], 'label': '등록본'}).json()
+    assert result['number'] == 4
+    assert result['storyboard']['cuts'][0]['title'] == '탑뷰'
+    assert client.get('/api/projects/' + p['id'] + '/export').json()['storyboards'][0]['id'] == result['id']
+
+
+def test_storyboard_legacy_migration_is_idempotent(tmp_path):
+    from app.store import Store
+    root = tmp_path / 'legacy-studio'
+    store = Store(root)
+    p = store.save('projects', dict(title='이전 콘티', cuts=[{'title': '원래 컷', 'asset_id': 'storyboard-demo-v1-01'}]), 'demo')
+    store.save('projects', dict(p, cuts=[{'title': '새 컷', 'asset_id': 'storyboard-demo-v2-01'}]), p['id'], p['revision'])
+    store.migrate_storyboards()
+    versions = sorted(store.all('storyboards'), key=lambda v:v['number'])
+    assert len(versions) == 2
+    assert versions[0]['storyboard']['cuts'][0]['title'] == '원래 컷'
+    assert versions[1]['storyboard']['cuts'][0]['title'] == '새 컷'
+    store.migrate_storyboards()
+    assert len(Store(root).all('storyboards')) == 2
+
+
 def test_validation_and_csrf(client):
     assert client.post('/api/products', json={'title': ' ', 'category': 'food'}).status_code == 422
     assert client.post('/api/products', json={'title': 'x', 'category': 'food', 'url': 'javascript:alert(1)'}).status_code == 422
