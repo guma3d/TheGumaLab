@@ -24,7 +24,7 @@ const labels = {
   dashboard: "스튜디오 홈",
   projects: "영상 프로젝트",
   characters: "우리 가족",
-  assets: "자산 라이브러리",
+  assets: "이미지·영상 자산",
   products: "상품 보관함",
   costs: "제작비 관리",
   legacy: "VideoFactory 아카이브",
@@ -87,6 +87,9 @@ function status(p) {
     : [p.cuts.length ? "콘티 작성" : "아이디어", "draft"];
 }
 function animal(id) {
+  const character = state?.characters.find((c) => c.id === id);
+  if (character?.reference_id)
+    return `<img class="animal profile-illustration" src="${assetURL(character.reference_id)}" alt="${e(character.name)} 일러스트" loading="lazy">`;
   const colors = {
     tiger: ["#efb96e", "#ca8e53", "#597660"],
     rabbit: ["#f8f4e9", "#dfd9c9", "#a5b694"],
@@ -115,7 +118,7 @@ function stats(items) {
 }
 function familyCard(c, detailed = false) {
   const assets = live(state.assets).filter((a) => a.character_id === c.id);
-  return `<article class="character-card"><a class="character-art ${e(c.color)}" href="#characters/${e(c.id)}">${catBadge(c.categories[0])}${c.reference_id ? `<img src="${assetURL(c.reference_id)}" alt="${e(c.name)} 기준 이미지">` : animal(c.id)}</a><div class="character-info"><h3><a href="#characters/${e(c.id)}">${e(c.name)}</a></h3><p>${e(c.role)}</p>${detailed ? `<p>${e(c.personality)}</p><p class="tiny">${e(c.room)} · 목소리 ${e(c.voice)}</p>${button("캐릭터 설정", "character", c.id, "small", "edit")}` : ""}<div class="meta"><span>자산 ${assets.length}개</span><span>${c.reference_id ? "기준 이미지 등록됨" : "디자인 준비 중"} ↗</span></div></div></article>`;
+  return `<article class="character-card"><a class="character-art ${e(c.color)}" href="#characters/${e(c.id)}">${catBadge(c.categories[0])}${c.reference_id ? `<img src="${assetURL(c.reference_id)}" alt="${e(c.name)} 기준 이미지">` : animal(c.id)}</a><div class="character-info"><h3><a href="#characters/${e(c.id)}">${e(c.name)}</a></h3><p>${e(c.role)}</p>${detailed ? `<p>${e(c.personality)}</p><p class="tiny">${e(c.room)} · 목소리 ${e(c.voice)}</p>${button("캐릭터 설정", "character", c.id, "small", "edit")}` : ""}<div class="row wrap family-assets"><a class="btn small" href="#assets/${e(c.id)}/image">일러스트 ${assets.filter((a) => a.kind === "image").length}</a><a class="btn small" href="#assets/${e(c.id)}/video">영상 ${assets.filter((a) => a.kind === "video").length}</a></div></div></article>`;
 }
 function projectCard(p) {
   const [label, st] = status(p);
@@ -129,10 +132,11 @@ function dashboard() {
     heading(
       "오늘도, 우리 가족답게.",
       "작은 아이디어를 우리 가족만의 이야기로 만들어보세요.",
-      button("새 프로젝트", "new-project", "", "primary", "plus"),
+      '<a class="btn primary" href="#assets">이미지·영상 확인</a>',
       "YOUR FAMILY, YOUR STORY",
     ) +
-    `<section class="hero"><div class="hero-copy"><p class="eyebrow">MEET THE GUMA FAMILY</p><h2>작은 가족의 이야기,<br>갖고 싶은 일상이 되다.</h2><p>네 가지 개성, 하나의 세계.<br>우리 가족이 발견한 좋은 것들을 전해요.</p><a href="#characters" class="text-link">우리 가족 만나기 ${icon("arrow")}</a></div><div class="hero-art">${["tiger", "rabbit", "pig", "cat"].map(animal).join("")}<span class="art-caption">캐릭터 콘셉트 일러스트 · 최종 디자인 미확정</span></div></section>` +
+    `<section class="hero"><div class="hero-copy"><p class="eyebrow">MEET THE GUMA FAMILY</p><h2>작은 가족의 이야기,<br>갖고 싶은 일상이 되다.</h2><p>네 가지 개성, 하나의 세계.<br>우리 가족이 발견한 좋은 것들을 전해요.</p><a href="#characters" class="text-link">우리 가족 만나기 ${icon("arrow")}</a></div><div class="hero-art">${["tiger", "rabbit", "pig", "cat"].map(animal).join("")}<span class="art-caption">우리 가족 캐릭터 일러스트</span></div></section>` +
+    `<section class="asset-shortcuts" aria-label="생성 자산 바로가기"><a href="#assets/all/image">${icon("image")}<strong>생성 일러스트</strong><span>${assets.filter((a) => a.kind === "image").length}장 보기 →</span></a><a href="#assets/all/video">${icon("film")}<strong>샘플 영상</strong><span>${assets.filter((a) => a.kind === "video").length}편 재생 →</span></a></section>` +
     stats([
       ["진행 중인 프로젝트", active.length, "개", "film"],
       ["함께하는 가족", state.characters.length, "명", "family"],
@@ -245,24 +249,29 @@ function productsPage() {
 function charactersPage() {
   return (
     heading("우리 가족", "각자의 개성과 취향이 모여, 하나의 세계를 만들어요.") +
-    `<div class="notice">현재 일러스트는 캐릭터를 구분하기 위한 임시 표현이에요. 실제 디자인을 확정하면 기준 이미지와 외형 설정을 등록해주세요.</div><div class="character-detail-grid">${state.characters.map((c) => familyCard(c, true)).join("")}</div>`
+    `<div class="notice">프로필은 생성된 가족 일러스트를 사용해요. 각 가족의 일러스트와 샘플 영상은 아래 버튼에서 확인할 수 있어요.</div><div class="character-detail-grid">${state.characters.map((c) => familyCard(c, true)).join("")}</div>`
   );
 }
 function assetsPage() {
+  const [, selected = "all", media = "all"] = location.hash.slice(1).split("/");
+  const characterFilter = ["all", "archive", ...state.characters.map((c) => c.id)].includes(selected) ? selected : "all";
+  const mediaFilter = ["image", "video"].includes(media) ? media : "all";
   let list = state.assets
     .filter((a) =>
-      filter === "archive"
+      characterFilter === "archive"
         ? a.archived
-        : !a.archived && (filter === "all" || a.character_id === filter),
+        : !a.archived && (characterFilter === "all" || a.character_id === characterFilter),
     )
+    .filter((a) => mediaFilter === "all" || a.kind === mediaFilter)
     .filter((a) => a.title.toLowerCase().includes(query.toLowerCase()));
   return (
     heading(
-      "자산 라이브러리",
-      "한 번 만든 장면이 다음 이야기의 시작이 돼요.",
+      "이미지·영상 자산",
+      `생성된 일러스트와 샘플 영상을 확인하고 내려받으세요. 현재 ${list.length}개`,
       button("자산 올리기", "asset", "", "primary", "upload"),
     ) +
-    `<div class="toolbar"><div class="tabs">${[["all", "전체"], ...state.characters.map((c) => [c.id, c.name]), ["archive", "보관됨"]].map(([id, label]) => `<button class="tab ${filter === id ? "active" : ""}" data-act="filter" data-id="${id}">${e(label)}</button>`).join("")}</div><input id="search" class="search" type="search" aria-label="자산 검색" placeholder="자산 이름 검색" value="${e(query)}"></div><div class="asset-grid">${list.map((a) => `<article class="asset-card"><div class="asset-preview">${a.kind === "image" ? `<a class="asset-open" href="#asset/${encodeURIComponent(a.id)}" aria-label="${e(a.title)} 크게 보기"><img src="${assetURL(a.id)}" alt="${e(a.title)}" loading="lazy"></a>` : `<video src="${assetURL(a.id)}" controls preload="metadata"></video>`}</div><div class="asset-content"><h3><a href="#asset/${encodeURIComponent(a.id)}">${e(a.title)}</a></h3><p>${e(a.character_id ? find("characters", a.character_id)?.name : "공용 자산")} · ${e(a.space || "공간 미지정")}<br>${e(a.action || "행동 미지정")} · ${(a.bytes / 1048576).toFixed(1)}MB</p><div class="row"><a class="btn small" href="${assetURL(a.id)}?download=true">다운로드</a>${button(a.archived ? "복원" : "보관", "archive-asset", a.id, "small")}</div>${a.source ? `<a class="text-link tiny" href="${e(a.source)}" target="_blank" rel="noopener noreferrer">출처 보기 ↗</a>` : ""}</div></article>`).join("")}</div>` +
+    (state.asset_audit ? `<div class="notice"><strong>최근 제작 점검 · ${e(state.asset_audit.checked_on)}</strong><p>${e(state.asset_audit.summary)}</p>${state.asset_audit.missing?.length ? `<p>미완료: ${state.asset_audit.missing.map(e).join(", ")}</p>` : ""}<p>${e(state.asset_audit.review_note)}</p></div>` : "") +
+    `<div class="toolbar"><div class="tabs" aria-label="가족 필터">${[["all", "전체"], ...state.characters.map((c) => [c.id, c.name]), ["archive", "보관됨"]].map(([id, label]) => `<a class="tab ${characterFilter === id ? "active" : ""}" href="#assets/${id}/${mediaFilter}" ${characterFilter === id ? 'aria-current="true"' : ""}>${e(label)}</a>`).join("")}</div><input id="search" class="search" type="search" aria-label="자산 검색" placeholder="자산 이름 검색" value="${e(query)}"></div><div class="tabs media-tabs" aria-label="자산 종류">${[["all", "전체 자산"], ["image", "일러스트"], ["video", "영상"]].map(([id,label]) => `<a class="tab ${mediaFilter === id ? "active" : ""}" href="#assets/${characterFilter}/${id}" ${mediaFilter === id ? 'aria-current="true"' : ""}>${label}</a>`).join("")}</div><div class="asset-grid">${list.map((a) => `<article class="asset-card"><div class="asset-preview">${a.kind === "image" ? `<a class="asset-open" href="#asset/${encodeURIComponent(a.id)}" aria-label="${e(a.title)} 크게 보기"><img src="${assetURL(a.id)}" alt="${e(a.title)}" loading="lazy"></a>` : `<video src="${assetURL(a.id)}" controls playsinline preload="metadata"></video>`}</div><div class="asset-content"><h3><a href="#asset/${encodeURIComponent(a.id)}">${e(a.title)}</a></h3><p>${e(a.character_id ? find("characters", a.character_id)?.name : "공용 자산")} · ${e(a.space || "공간 미지정")}<br>${e(a.action || "행동 미지정")} · ${(a.bytes / 1048576).toFixed(1)}MB</p><div class="row"><a class="btn small" href="${assetURL(a.id)}?download=true">다운로드</a>${button(a.archived ? "복원" : "보관", "archive-asset", a.id, "small")}</div>${a.source ? `<a class="text-link tiny" href="${e(a.source)}" target="_blank" rel="noopener noreferrer">출처 보기 ↗</a>` : ""}</div></article>`).join("")}</div>` +
     (!list.length
       ? empty(
           "가족의 첫 장면을 모아보세요",

@@ -472,6 +472,34 @@ h3 {
   filter: drop-shadow(0 7px 4px #4650270b);
   align-self: center;
 }
+.hero-art .profile-illustration {
+  width: 24%;
+  min-width: 0;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 12px;
+}
+.asset-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 22px 0;
+}
+.asset-shortcuts a {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+.asset-shortcuts svg { width: 22px; height: 22px; }
+.asset-shortcuts span { font-size: 12px; color: #526747; }
+.family-assets { margin-top: 12px; }
+.media-tabs { margin-bottom: 20px; }
+.mini-family .profile-illustration { object-fit: cover; border-radius: 50%; }
 .hero-art .animal:nth-child(2) {
   transform: translateY(-12px);
 }
@@ -1483,11 +1511,12 @@ dialog::backdrop {
     margin-top: 35px;
   }
   .sidebar nav a {
-    font-size: 0;
+    font-size: 10px;
+    flex-direction: column;
     justify-content: center;
     padding: 13px 0;
     margin: 6px 0;
-    gap: 0;
+    gap: 4px;
   }
   .sidebar nav a svg {
     width: 22px;
@@ -1550,9 +1579,9 @@ dialog::backdrop {
   }
   .sidebar {
     width: 100%;
-    height: 59px;
+    height: calc(68px + env(safe-area-inset-bottom));
     inset: auto 0 0;
-    padding: 0 5px;
+    padding: 0 5px env(safe-area-inset-bottom);
     border-top: 1px solid var(--line);
     border-right: 0;
     flex-direction: row;
@@ -1570,7 +1599,7 @@ dialog::backdrop {
   }
   .sidebar nav a {
     margin: 4px 0;
-    padding: 8px 10px;
+    padding: 6px 4px;
   }
   .sidebar nav a svg {
     width: 21px;

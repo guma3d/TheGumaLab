@@ -174,6 +174,7 @@ def create_app(storage=None, dev=None, legacy=None):
     def state():
         return {**{key: store.all(key) for key in ('products', 'projects', 'assets', 'videos', 'costs', 'feedback', 'jobs')},
                 'characters': [store.get('characters', key) for key in ('tiger', 'rabbit', 'pig', 'cat')],
+                'asset_audit': next(iter(store.all('asset_audits')), None),
                 'categories': CATEGORIES, 'legacy_available': (legacy_root / 'products').is_dir(),
                 'generation_connected': False, 'publishing_connected': False}
 
