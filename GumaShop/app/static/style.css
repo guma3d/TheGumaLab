@@ -892,6 +892,43 @@ h3 {
   place-items: center;
   overflow: hidden;
 }
+.asset-open {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+.asset-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.asset-stage {
+  background: #f0f2eb;
+  border-radius: 18px;
+  overflow: hidden;
+  text-align: center;
+}
+.asset-stage img,
+.asset-stage video {
+  display: block;
+  width: 100%;
+  max-height: 78vh;
+  object-fit: contain;
+}
+.asset-stage a {
+  display: block;
+  cursor: zoom-in;
+}
+.asset-neighbors {
+  margin-top: 24px;
+}
+@media (max-width: 760px) {
+  .asset-detail {
+    grid-template-columns: 1fr;
+  }
+}
 .asset-preview img,
 .asset-preview video {
   height: 100%;

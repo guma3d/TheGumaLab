@@ -262,7 +262,7 @@ function assetsPage() {
       "한 번 만든 장면이 다음 이야기의 시작이 돼요.",
       button("자산 올리기", "asset", "", "primary", "upload"),
     ) +
-    `<div class="toolbar"><div class="tabs">${[["all", "전체"], ...state.characters.map((c) => [c.id, c.name]), ["archive", "보관됨"]].map(([id, label]) => `<button class="tab ${filter === id ? "active" : ""}" data-act="filter" data-id="${id}">${e(label)}</button>`).join("")}</div><input id="search" class="search" type="search" aria-label="자산 검색" placeholder="자산 이름 검색" value="${e(query)}"></div><div class="asset-grid">${list.map((a) => `<article class="asset-card"><div class="asset-preview">${a.kind === "image" ? `<img src="${assetURL(a.id)}" alt="${e(a.title)}" loading="lazy">` : `<video src="${assetURL(a.id)}" controls preload="metadata"></video>`}</div><div class="asset-content"><h3>${e(a.title)}</h3><p>${e(a.character_id ? find("characters", a.character_id)?.name : "공용 자산")} · ${e(a.space || "공간 미지정")}<br>${e(a.action || "행동 미지정")} · ${(a.bytes / 1048576).toFixed(1)}MB</p><div class="row"><a class="btn small" href="${assetURL(a.id)}?download=true">다운로드</a>${button(a.archived ? "복원" : "보관", "archive-asset", a.id, "small")}</div>${a.source ? `<a class="text-link tiny" href="${e(a.source)}" target="_blank" rel="noopener noreferrer">출처 보기 ↗</a>` : ""}</div></article>`).join("")}</div>` +
+    `<div class="toolbar"><div class="tabs">${[["all", "전체"], ...state.characters.map((c) => [c.id, c.name]), ["archive", "보관됨"]].map(([id, label]) => `<button class="tab ${filter === id ? "active" : ""}" data-act="filter" data-id="${id}">${e(label)}</button>`).join("")}</div><input id="search" class="search" type="search" aria-label="자산 검색" placeholder="자산 이름 검색" value="${e(query)}"></div><div class="asset-grid">${list.map((a) => `<article class="asset-card"><div class="asset-preview">${a.kind === "image" ? `<a class="asset-open" href="#asset/${encodeURIComponent(a.id)}" aria-label="${e(a.title)} 크게 보기"><img src="${assetURL(a.id)}" alt="${e(a.title)}" loading="lazy"></a>` : `<video src="${assetURL(a.id)}" controls preload="metadata"></video>`}</div><div class="asset-content"><h3><a href="#asset/${encodeURIComponent(a.id)}">${e(a.title)}</a></h3><p>${e(a.character_id ? find("characters", a.character_id)?.name : "공용 자산")} · ${e(a.space || "공간 미지정")}<br>${e(a.action || "행동 미지정")} · ${(a.bytes / 1048576).toFixed(1)}MB</p><div class="row"><a class="btn small" href="${assetURL(a.id)}?download=true">다운로드</a>${button(a.archived ? "복원" : "보관", "archive-asset", a.id, "small")}</div>${a.source ? `<a class="text-link tiny" href="${e(a.source)}" target="_blank" rel="noopener noreferrer">출처 보기 ↗</a>` : ""}</div></article>`).join("")}</div>` +
     (!list.length
       ? empty(
           "가족의 첫 장면을 모아보세요",
@@ -271,6 +271,33 @@ function assetsPage() {
           "image",
         )
       : "")
+  );
+}
+function assetPage(id) {
+  const a = find("assets", id);
+  if (!a)
+    return heading(
+      "자산을 찾을 수 없어요",
+      "목록에서 다시 선택해주세요.",
+      '<a class="btn" href="#assets">자산 목록</a>',
+    );
+  const siblings = state.assets.filter(
+    (x) => !x.archived && x.character_id === a.character_id,
+  );
+  const index = siblings.findIndex((x) => x.id === id);
+  const neighbor = (offset, label) => {
+    const next = siblings[index + offset];
+    return index >= 0 && next
+      ? `<a class="btn small" href="#asset/${encodeURIComponent(next.id)}">${label}</a>`
+      : "";
+  };
+  return (
+    heading(
+      a.title,
+      `${a.character_id ? find("characters", a.character_id)?.name || "캐릭터" : "공용 자산"} · ${a.space || "공간 미지정"}`,
+      '<a class="btn" href="#assets">자산 목록</a>',
+    ) +
+    `<div class="asset-detail"><div class="asset-stage">${a.kind === "image" ? `<a href="${assetURL(a.id)}" target="_blank" rel="noopener" aria-label="원본 이미지 새 창에서 보기"><img src="${assetURL(a.id)}" alt="${e(a.title)}"></a>` : `<video src="${assetURL(a.id)}" controls playsinline preload="metadata"></video>`}</div><aside class="panel"><h2>장면 정보</h2><p>${e(a.action || "행동 미지정")}</p>${a.approval_status === "candidate" ? '<p class="notice">검토용 시안이에요. 영상에 사용하기 전에 얼굴·무늬·의상·손을 확인해주세요.</p>' : ""}${a.review_note ? `<p>${e(a.review_note)}</p>` : ""}<p>${(a.bytes / 1048576).toFixed(1)} MB${a.duration ? ` · ${Number(a.duration).toFixed(1)}초` : ""}</p><div class="row wrap"><a class="btn primary" href="${assetURL(a.id)}?download=true">다운로드</a><a class="btn" href="${assetURL(a.id)}" target="_blank" rel="noopener">원본 보기 ↗</a></div><div class="row wrap asset-neighbors">${neighbor(-1, "← 이전")}${neighbor(1, "다음 →")}</div></aside></div>`
   );
 }
 function costsPage() {
@@ -710,7 +737,8 @@ const projectPayload = (p) =>
 async function render() {
   const sequence = ++renderSequence;
   const [page = "dashboard", id, tab] = location.hash.slice(1).split("/");
-  const key = page === "project" ? "projects" : page;
+  const key =
+    page === "project" ? "projects" : page === "asset" ? "assets" : page;
   if (routeKey !== key) {
     filter = "all";
     query = "";
@@ -761,7 +789,11 @@ async function render() {
     }
   } else {
     $("#main").innerHTML =
-      page === "project" ? projectPage(id, tab) : (views[page] || dashboard)();
+      page === "project"
+        ? projectPage(id, tab)
+        : page === "asset"
+          ? assetPage(id)
+          : (views[page] || dashboard)();
     if (page === "characters" && id && find("characters", id))
       characterModal(id);
     if (page === "project" && tab === "history" && $("#history-list")) {

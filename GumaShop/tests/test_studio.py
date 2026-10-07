@@ -1,5 +1,6 @@
 import io
 import json
+import re
 import subprocess
 
 import pytest
@@ -165,7 +166,7 @@ def test_video_review_feedback_and_stale_board(client, tmp_path):
 
 def test_proxy_prefix(client):
     response = client.get('/', headers={'x-forwarded-prefix': '/gumashop'})
-    assert '<base href="/gumashop/">' in response.text
+    assert re.search(r'<base\s+href="/gumashop/"\s*/?>', response.text)
     assert "object-src 'none'" in response.headers['content-security-policy']
 
 
