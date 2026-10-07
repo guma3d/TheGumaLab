@@ -1,0 +1,14 @@
+services:
+  gumashop:
+    build: .
+    container_name: GumaShop_app
+    ports:
+      - "8086:8086"
+    volumes:
+      - ./storage:/app/storage
+      - ../GumaVideoFactory/storage:/legacy:ro
+    environment:
+      GUMASHOP_AUTH_URL: http://host.docker.internal:8081/auth
+      GUMASHOP_LEGACY: /legacy
+      TZ: Asia/Seoul
+    restart: unless-stopped

@@ -1,0 +1,104 @@
+# GumaShop Studio 운영 문서
+
+## 접속과 구성
+
+- 접속: https://home.guma3d.com/gumashop/
+- 홈서버 포털의 GumaShop 카드에서도 열 수 있다.
+- 컨테이너: `GumaShop_app`, 포트 `8086`.
+- FastAPI, SQLite, 서버 보관 미디어, HTML/CSS/JavaScript로 구성한다.
+- 전용 도메인 `gumashop.guma3d.com`의 Nginx 경로는 준비되어 있다. DNS와 Cloudflare Tunnel 공개 호스트 등록은 별도 상태이며, 현재 안내 주소는 기존 홈 도메인의 `/gumashop/`이다.
+
+## 구현된 기능
+
+1. 스튜디오 홈: 프로젝트, 캐릭터, 자산, 기록한 비용 집계.
+2. 우리 가족: 네 캐릭터의 이름, 역할, 성격, 외형, 공간, 목소리, 제작 기준과 기준 이미지 편집.
+3. 자산 라이브러리: PNG/JPEG/WebP 이미지와 MP4/WebM/MOV 영상 업로드, 캐릭터·공간·행동·출처 기록, 검색, 다운로드, 보관·복원.
+4. 상품 보관함: 카테고리, 특징, 주의사항, 상품·출처 링크를 등록·편집·검색·보관·복원.
+5. 영상 프로젝트: 출연 가족과 상품 연결, 예산·시도 한도, 프로젝트 보관 상태 설정.
+6. 스토리보드: 5컷 이야기 틀, 최대 20컷의 화면·대사·프롬프트·길이·제작 방식·자산 편집과 순서 변경.
+7. 콘티 기록: 저장할 때마다 새 리비전 보존, 제작 승인, 이전 기록 읽기, JSON 기획 패키지 내보내기.
+8. 콘티 프리뷰: 승인된 모든 컷에 연결한 이미지·영상을 720×1280, 24fps 무음 영상으로 조합. 최대 180초. 짧은 영상 자산은 필요한 길이만큼 반복한다. 원본 비율을 보존하고 여백을 넣는다.
+9. 영상·검수: 승인 콘티에 외부 제작 영상을 새 버전으로 등록, 재생·다운로드, 캐릭터/상품/표현 검수, 영상별 컷 피드백.
+10. 제작비 관리: 원화 실제 비용, 시도 횟수, 컷, 메모 기록. 입력 오류는 취소·복원하며 원래 기록을 보존한다.
+11. VideoFactory 아카이브: 기존 상품 목록과 원본 작업실 링크, 상품 정보 가져오기. 안정적인 식별자로 중복 가져오기를 방지한다.
+
+## 명확한 기능 경계
+
+- 캐릭터 일러스트와 초기 설정은 콘셉트 초안이다. 최종 캐릭터 이미지를 의미하지 않는다.
+- 초기 프로젝트·상품·미디어·비용은 비어 있으며 가짜 완성 영상이나 비용을 넣지 않는다.
+- 이야기 틀은 편집용 기본 구조이며 AI가 조사한 콘티가 아니다.
+- 콘티 프리뷰는 로컬 FFmpeg 조합이다. AI 동작 생성, 내레이션, 자막, 배경음은 포함하지 않는다.
+- 외부 AI 모델 생성 및 YouTube 업로드·공개는 연결하지 않았다. 제작 승인이나 검수 완료로 유료 호출·게시가 발생하지 않는다.
+- 비용은 수동 원화 기록이다. 실제 서비스 청구액이나 크레딧을 자동 조회하지 않는다. 횟수를 입력 금액에 다시 곱하지 않는다.
+- JSON 내보내기는 메타데이터·콘티 기록을 담는다. 미디어 파일은 각 항목에서 별도로 다운로드한다.
+- 기존 VideoFactory의 영상, 승인, 작업 큐는 수정하지 않는다. 기존 상품 정보만 새 작업실에 복사하고 이후에는 독립적으로 편집한다.
+
+## 버전과 검수
+
+- SQLite 트랜잭션과 리비전 번호를 사용해 다른 창에서 수정한 내용을 덮어쓰지 못하도록 한다.
+- 프로젝트 설정 또는 콘티를 수정하면 새 리비전을 저장하고 현재 제작 승인을 해제한다.
+- 제작 승인 시 상품과 캐릭터 설정을 스냅샷으로 남긴다. 영상에는 승인 콘티 전체를 보존한다.
+- 검수가 끝난 영상 버전은 다시 덮어쓰지 않고 수정본을 새 영상으로 올린다.
+- 다른 콘티의 영상을 현재 콘티의 완성본으로 승인할 수 없다.
+- 사용 중인 기준 이미지와 컷 자산은 연결을 해제하기 전에는 보관할 수 없다.
+- 컷별 제작 시도 한도는 비용 기록에 근거한 안내다. 외부 서비스 호출을 강제로 제한하지는 않는다.
+
+## 보관과 백업
+
+- `storage/studio.sqlite3`: 레코드와 변경 이력. WAL 모드를 사용한다.
+- `storage/media/`: UUID 파일명으로 보존하는 미디어 원본 및 생성 프리뷰.
+- 데이터와 미디어는 Git에 커밋하지 않고 Compose 볼륨으로 보존한다.
+- DB 백업은 Python `sqlite3.Connection.backup` 또는 서비스 정지 상태에서 수행한다. 실행 중 DB 파일 하나만 복사하면 WAL의 변경분이 빠질 수 있다.
+- 복원할 때 DB와 `media/`를 함께 보존한다. 운영 파일 삭제와 초기화 기능은 제공하지 않는다.
+- 프리뷰 작업은 단일 프로세스에서 한 번에 하나만 실행한다. 재시작으로 남은 queued/running 작업은 실패로 복구하고 사용자가 다시 실행한다.
+
+## 실행·배포
+
+```powershell
+cd D:\TheGumaLab\GumaShop
+docker compose up -d --build
+docker compose ps
+```
+
+`main` push 시 공통 GitHub Actions가 GumaShop을 선택적으로 빌드·배포한다. Nginx 변경은 공통 배포 스크립트에서 검증 후 reload한다.
+
+### 환경 설정
+
+Compose에는 비밀값을 복사하지 않는다. 다음 환경변수를 사용한다.
+
+| 변수 | 기본/운영 값 | 용도 |
+|---|---|---|
+| `GUMASHOP_STORAGE` | `storage` | SQLite와 미디어 저장 위치 |
+| `GUMASHOP_LEGACY` | `/legacy` (Compose) | 기존 VideoFactory storage 읽기 전용 마운트 |
+| `GUMASHOP_AUTH_URL` | `http://host.docker.internal:8081/auth` | 기존 SSO 검증 서버 |
+| `GUMASHOP_DEV` | 미설정 | `1`이면 개발용 인증 생략. 공개 서버에서는 금지 |
+
+`.env.example`은 변수 참고 자료다. 로컬 실행 시 셸 환경변수를 설정하거나 Uvicorn의 `--env-file`을 명시한다.
+
+### 로컬 개발
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python -m pip install -r requirements.txt
+$env:GUMASHOP_DEV = '1'
+$env:GUMASHOP_STORAGE = 'storage/dev'
+.\.venv\Scripts\python -m uvicorn app.main:app --host 127.0.0.1 --port 18086 --reload
+```
+
+### 테스트
+
+```powershell
+docker build -t gumashop-studio:latest .
+docker run --rm -e GUMASHOP_STORAGE=/tmp/gumashop-tests -v D:/TheGumaLab/GumaShop/app:/app/app:ro -v D:/TheGumaLab/GumaShop/tests:/app/tests:ro gumashop-studio:latest python -m pytest tests -q -p no:cacheprovider
+node --check app/static/app.js
+```
+
+임시 DB로 영속성, 충돌 방지, 승인 무효화, 미디어 검증, 읽기 전용 가져오기, 비용 취소, 영상 검수, 프리뷰 렌더링, 인증과 CSRF 방어를 검증한다.
+
+## 접근 보호
+
+- 미디어와 API를 포함해 앱 자체가 기존 `/auth`에 SSO 쿠키를 검증한다. 인증 서버 장애 시 접근을 허용하지 않는다.
+- 포트에 직접 접근해도 운영 인증 검사가 적용된다. `/health`만 최소 상태를 공개한다.
+- 변경 요청은 전용 헤더와 같은 출처 조건을 확인한다. 외부 URL은 HTTP(S) 링크만 저장하며 서버에서 임의로 가져오지 않는다.
+- 업로드는 실제 이미지·영상인지 검사하고 최대 150MB로 제한한다. HTML/SVG 파일은 업로드받지 않는다.
+- 기존 프로젝트와 공유하는 인증키·API 키·쿠키를 출력하거나 Git에 저장하지 않는다.

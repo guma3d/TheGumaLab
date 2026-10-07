@@ -41,6 +41,7 @@ on:
           - GumaImageAnalyzer
           - GumaServerStatus
           - GumaTube
+          - GumaShop
           - GumaTutorDoc
           - GumaSpending
           - GumaEnglish
