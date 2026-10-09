@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-09.4",
+  "revision": "2026-10-09.5",
   "rules": [
     {
       "id": "product-first-ad-disclosure",
@@ -9,7 +9,7 @@
     {
       "id": "food-package-shape-flavor-fidelity",
       "category": "food",
-      "instruction": "Compare actual references with every used moving-food segment before and after processing. Reject local package inpainting that adds noise, smearing, flicker or false print; prefer a verified original segment or exact real asset, but do not accept inaccurate packaging merely because it is unprocessed. Distinguish generated originals from real footage and post-opening views from opening actions. Check food width/height, thickness and size against plate/tray/hand references; never impose flat pancake or inflated sphere shapes. Other-flavor narration must show the exact flavor's sourced real package with verified resolution and preserved print/shape. Reject generated cutouts that alter typography/barcodes. Separate that flavor from the main-product CTA/link in time. Record these checks in preflight and final motion QA; preserve older versions."
+      "instruction": "Compare actual references with every used moving-food segment before and after processing. Reject local package inpainting that adds noise, smearing, flicker or false print; prefer a verified original segment or exact real asset, but do not accept inaccurate packaging merely because it is unprocessed. Distinguish generated originals from real footage and post-opening views from opening actions. Check food width/height, thickness and size against plate/tray/hand references; never impose flat pancake or inflated sphere shapes. Other-flavor narration must show the exact flavor's sourced real package with verified resolution and preserved print/shape. Reject generated cutouts that alter typography/barcodes. Separate that flavor from the main-product CTA/link in time. Record these checks in preflight and final motion QA; preserve older versions. Reject noisy or inaccurate package covers including tracked overlays in the opening shot. Prefer acquired, verified exact-product footage; if no suitable footage is acquired, use a static original product image checked against manufacturer references. Do not reconstruct packaging typography or characters."
     },
     {
       "id": "living-xiaohongshu-required-search",
@@ -84,7 +84,7 @@
     {
       "id": "required-bgm",
       "category": "all",
-      "instruction": "For each new video randomly select one of the five verified attribution-free Mixkit tracks (Raising Me Higher, Curiosity, I'm Fine, Break Away, The King) and persist the selection for retries. Measure the actual used stereo music segment and apply one constant gain to -25 LUFS (tolerance 0.3 LU). No speech-triggered ducking, sidechain, automatic attenuation or fades; preserve the original musical dynamics. Aim narration at -16 LUFS with a fixed gain constrained by safe additive peak headroom and at least 6 LU above music. Verify music presence, speech clarity and perceived consistency by actual listening; measurements never count as listening. If hearing is unavailable, retain user web-review pending. Mix once from narration-only media, preserve the video stream without recompression for audio-only changes, verify source hashes and clipping, and retain internal source/license evidence. Current Mixkit Stock Music Free License tracks allow commercial YouTube use without attribution; omit public BGM credits for them. Preserve required CC BY credits on historical legacy tracks."
+      "instruction": "For each new video randomly select one of the original five verified Kevin MacLeod tracks (Life of Riley, Carefree, Monkeys Spinning Monkeys, Wallpaper, Fluffing a Duck) and persist the selection for retries. Measure the actual used stereo music segment and apply one constant gain to -25 LUFS (tolerance 0.3 LU). No speech-triggered ducking, sidechain, automatic attenuation or fades; preserve the original musical dynamics. Aim narration at -16 LUFS with a fixed gain constrained by safe additive peak headroom and at least 6 LU above music. Verify music presence, speech clarity and perceived consistency by actual listening; measurements never count as listening. If hearing is unavailable, retain user web-review pending. Mix once from narration-only media, preserve the video stream without recompression for audio-only changes, verify source hashes and clipping, and retain internal source/license evidence. Latest 2026-10-09 user preference restores the original Kevin MacLeod pool. Put one concise BGM credit line near the bottom of the description, immediately before the final affiliate disclosure: title, Kevin MacLeod (incompetech.com), CC BY 4.0 license URL, and excerpt/volume changes. Preserve old versions and their original license records."
     },
     {
       "id": "living-visible-results-and-motion",
@@ -128,6 +128,11 @@
       "id": "no-credit-bgm-product-bullets-20261009",
       "scope": "all",
       "lesson": "User explicitly selected replacing music with attribution-free tracks and private reupload of all four videos. Remove title [광고] prefix; product bullets; exact affiliate sentence as final description line. Omit unnecessary production boilerplate. Keep in-video ad badge and Studio disclosures. Preserve old local versions. No paid generation needed."
+    },
+    {
+      "id": "restore-original-music-clean-sesame-cover-20261009",
+      "scope": "all; sesame CUT01",
+      "lesson": "User prefers the original five tracks randomized with concise bottom credits. Replace noisy inaccurate sesame opening packaging with verified normal footage or a static exact-product source image. Web/local revisions only; no upload authorization."
     }
   ],
   "publishing": {

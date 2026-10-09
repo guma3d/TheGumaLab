@@ -9,8 +9,8 @@ from pathlib import Path
 from app.config import STORAGE_DIR
 from app.core import official_clips as media
 
-TRACK_TITLES = ('Raising Me Higher', 'Curiosity', "I'm Fine", 'Break Away', 'The King')
-LEGACY_TRACK_TITLES = ('Life of Riley', 'Carefree', 'Monkeys Spinning Monkeys', 'Wallpaper', 'Fluffing a Duck')
+TRACK_TITLES = ('Life of Riley', 'Carefree', 'Monkeys Spinning Monkeys', 'Wallpaper', 'Fluffing a Duck')
+LEGACY_TRACK_TITLES = ('Raising Me Higher', 'Curiosity', "I'm Fine", 'Break Away', 'The King')
 MIXKIT_LICENSE = 'Mixkit Stock Music Free License'
 MUSIC_LUFS = -25.0
 VOICE_LUFS = -16.0
@@ -21,7 +21,7 @@ def assign_random(board):
     for title in TRACK_TITLES:
         select({'bgm_track': title})
     board['bgm_track'] = secrets.choice(TRACK_TITLES)
-    board['bgm_selection'] = 'random-five-no-attribution-v2'
+    board['bgm_selection'] = 'random-five-kevin-compact-credit-v3'
     return select(board)
 
 
@@ -83,7 +83,11 @@ def measure_audio(path, seconds, *, loop=False, gain_db=0.0):
 def mix(source, output, board):
     path, track = select(board)
     track = dict(track)
-    track['attribution'] = track.get('attribution', '').replace('·페이드', '')
+    if track.get('license') == 'CC BY 4.0' and track.get('artist') == 'Kevin MacLeod':
+        track['attribution'] = (f"{track['title']} — Kevin MacLeod (incompetech.com) · "
+            'CC BY 4.0 https://creativecommons.org/licenses/by/4.0/ · 발췌·음량 조정')
+    else:
+        track['attribution'] = track.get('attribution', '').replace('·페이드', '')
     seconds = media.duration(source)
     original_music = measure_audio(path, seconds, loop=True)
     music_gain = MUSIC_LUFS - original_music['integrated_lufs']

@@ -21,13 +21,13 @@ class MusicTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'해시'):bgm.select({'bgm_track':'Life of Riley'})
 
     def test_random_selection_is_persisted_and_retries_keep_it(self):
-        with tempfile.TemporaryDirectory() as temp, patch.object(bgm,'STORAGE_DIR',Path(temp)), patch.object(bgm.secrets,'choice',return_value='Curiosity') as choice:
+        with tempfile.TemporaryDirectory() as temp, patch.object(bgm,'STORAGE_DIR',Path(temp)), patch.object(bgm.secrets,'choice',return_value='Carefree') as choice:
             folder=Path(temp)/'audio/bgm';folder.mkdir(parents=True)
             source=folder/'fixture.wav';source.write_bytes(b'fixture')
-            manifest=[dict(title=title,filename=source.name,sha256=hashlib.sha256(source.read_bytes()).hexdigest(),license=bgm.MIXKIT_LICENSE,attribution_required=False,license_url='https://mixkit.co/license/#musicFree',attribution_policy_url='https://mixkit.co/free-stock-music/',license_checked_at='2026-10-09') for title in bgm.TRACK_TITLES]
+            manifest=[dict(title=title,filename=source.name,sha256=hashlib.sha256(source.read_bytes()).hexdigest(),license='CC BY 4.0',attribution='fixture credit') for title in bgm.TRACK_TITLES]
             (folder/'manifest.json').write_text(json.dumps(manifest),encoding='utf-8')
             board={};bgm.select(board);bgm.select(board)
-            self.assertEqual(board['bgm_track'],'Curiosity')
+            self.assertEqual(board['bgm_track'],'Carefree')
             choice.assert_called_once_with(bgm.TRACK_TITLES)
 
     def test_actual_music_level_is_constant_during_speech_and_silence(self):
