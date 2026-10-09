@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-09.3",
+  "revision": "2026-10-09.4",
   "rules": [
     {
       "id": "product-first-ad-disclosure",
@@ -64,7 +64,7 @@
     {
       "id": "web-version-review",
       "category": "all",
-      "instruction": "Preserve original assets, every revision and final video locally in the project storage on D:\\TheGumaLab. Manage and review all versions through https://videofactory.guma3d.com and notify the user with exact version links. Never automatically upload to YouTube, even when the final version is complete. Upload only when the human requests that exact version; upload permission does not imply public release permission."
+      "instruction": "Preserve original assets, every revision and final video locally in the project storage on D:\\TheGumaLab. Manage and review all versions through https://videofactory.guma3d.com and notify the user with exact version links. Never automatically upload to YouTube, even privately or unlisted. Every upload or reupload requires the human's explicit request for the specific video version and visibility. Production, editing, feedback and web-storage approval do not authorize upload. Never carry approval from an older version into a revision or reuse an already fulfilled upload request. Default completion is local and web storage with reviewable results. Upload permission does not imply public release permission."
     },
     {
       "id": "category-style",
