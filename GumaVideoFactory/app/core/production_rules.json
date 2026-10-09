@@ -1,6 +1,11 @@
 {
-  "revision": "2026-10-09.15",
+  "revision": "2026-10-10.1",
   "rules": [
+    {
+      "id": "preserve-published-video-and-subscription-distribution",
+      "category": "all",
+      "instruction": "User confirmed 2026-10-10: preserve existing published video IDs, URLs and accumulated performance. Apply requested title, description and thumbnail edits to the existing upload whenever Studio supports them. Do not delete/reupload or toggle visibility to chase low views. Media replacement still requires explicit approval for the exact version after explaining that a new upload has a new URL and does not inherit the old video's views. For new uploads intended for eventual public release, keep Publish to subscriptions feed and notify subscribers checked when the control is available, including initial private staging, and verify before first public release. This setting is not public-release permission. Do not default it off merely because the upload is initially private; any deliberate exception needs a user request and recorded reason. An already-published disabled control is reported as unavailable, never bypassed or fixed by reuploading. Keep current public Mijia 0Wa-VX-mTco and sweet-potato bread IQkkmVqJn6w unchanged while observing for 48–72 hours from 2026-10-09 20:59 KST. Compare actual feed traffic/exposure and viewer engagement with sample size and reporting delays; do not claim guaranteed recovery or an unverified reupload penalty. Preserve prior upload records as history."
+    },
     {
       "id": "tech-affiliate-market-fit-existing-media",
       "category": "tech",
