@@ -30,8 +30,7 @@ https://videofactory.guma3d.com/ · 홈서버 8085 · https://www.youtube.com/@G
 - 저장한 수정본: 고구마빵 Video v9, 보풀제거기 v8, 찹쌀떡 v14, 흑임자인절미 v3. 화면·파일 디코딩·고정 음량 검사를 마쳤으며 실제 청취는 웹 사용자 검토 대기다.
 - 2026-10-09 사용자 별도 요청으로 위 4편을 YouTube 비공개로 업로드했다. 설정·실제 URL·검증 결과는 `storage/handoffs/private-upload-20261009/`에 보존한다. 해당 버전의 비공개 업로드 승인만 유효하며 공개·자동 업로드 승인이 아니다. 채널 프로필의 `상품 모음` 외부 링크는 미등록 상태이므로 공개 전에 연결·검증하고 고정댓글은 공개 후 등록한다.
 
-## 실행·설정
-현재 최신 수정본(2026-10-09, 출처 표기 없는 BGM):
+## 현재 최신 수정본 — 2026-10-09 출처 표기 없는 BGM
 
 | 제품 | Video | YouTube 비공개 |
 |---|---|---|
@@ -46,6 +45,7 @@ https://videofactory.guma3d.com/ · 홈서버 8085 · https://www.youtube.com/@G
 - 유료 생성 API·Veo 크레딧 사용 0회. 영상 스트림·기존 Zephyr 음성 원본 보존, 고정 BGM -25 LUFS·클리핑 검수 통과. 청취는 사용자 웹 리뷰 대기다. 관련 테스트 12개 통과; 확장 실행의 기존 추천 시간대 fixture 1건은 추천 준비 근거 검사에서 실패했다.
 - 변경 커밋 `530a259`의 Actions는 `Detect changed projects and deploy`에서 실패하여 빈 제작 큐를 확인한 뒤 HomeServer 컨테이너를 직접 재시작했다. 웹 API의 최신 버전·비공개 상태 및 파일 응답을 확인했다.
 
+## 실행·설정
 ```powershell
 cd D:\TheGumaLab\GumaVideoFactory
 docker compose up -d --build
