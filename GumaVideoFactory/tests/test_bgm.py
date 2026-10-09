@@ -37,8 +37,11 @@ class MusicTests(unittest.TestCase):
             bgm.media.run([ff,'-v','error','-f','lavfi','-i','sine=frequency=440:duration=6','-ar','48000','-ac','2',str(music)])
             bgm.media.run([ff,'-v','error','-f','lavfi','-i','color=s=64x96:r=30:d=6','-f','lavfi','-i','sine=frequency=997:duration=6',
                 '-af',"volume=if(between(t\\,2\\,4)\\,0\\,1):eval=frame",'-c:v','libx264','-c:a','aac','-ar','48000','-ac','2',str(source)])
-            with patch.object(bgm,'select',return_value=(music,dict(title='fixture'))):
+            track=dict(title='Carefree',artist='Kevin MacLeod',license='CC BY 4.0',attribution='Original verbose attribution')
+            with patch.object(bgm,'select',return_value=(music,track)):
                 report=bgm.mix(source,out,{'bgm_track':'fixture'})
+            self.assertEqual(track['attribution'],'Original verbose attribution')
+            self.assertEqual(report['track']['attribution'],'Carefree — Kevin MacLeod (incompetech.com) · CC BY 4.0 https://creativecommons.org/licenses/by/4.0/ · 발췌·음량 조정')
             def band_rms(start):
                 r=subprocess.run([ff,'-hide_banner','-ss',str(start),'-i',str(out),'-t','1','-vn','-af',
                     'bandpass=f=440:w=10,astats=metadata=0:reset=0','-f','null','-'],capture_output=True,text=True,check=True)
