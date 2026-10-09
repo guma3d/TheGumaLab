@@ -182,7 +182,7 @@
   "public_catalog_style": {
     "scope": "Public product collection website only; not video captions or category styling.",
     "theme": "Warm yellow #ffd43b, cream #fffdf7, dark brown readable text; rounded image cards and prominent yellow purchase buttons.",
-    "images": "Use actual published video thumbnails tied to the exact public video ID; do not invent product imagery.",
+    "images": "Prefer verified exact-product representative photos from the product page, fitting the full product within the card. If unavailable, use a thumbnail of the exact published video; never invent product imagery.",
     "preserve": "Only explicitly approved public products, original affiliate links and disclosure beside purchase buttons. Responsive one-column mobile layout."
   }
 }

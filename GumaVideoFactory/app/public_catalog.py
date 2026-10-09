@@ -40,10 +40,15 @@ def public_products():
         video_id = upload['url'].split('=')[-1]
         if thumbnail_parts.scheme != 'https' or thumbnail_parts.netloc != 'i.ytimg.com' or not thumbnail_parts.path.startswith(f'/vi/{video_id}/'):
             thumbnail = ''
+        product_image = item.get('product_image_url', '')
+        image_parts = urlparse(product_image)
+        if image_parts.scheme != 'https' or image_parts.netloc != 'thumbnail.coupangcdn.com':
+            product_image = ''
         # Explicit fields only: never expose production metadata or local paths.
         visible.append(dict(number=item['number'], name=item['name'], category=item['category'],
                             summary=item['summary'], details=item['details'], purchase_url=purchase,
-                            video_url=upload['url'], thumbnail_url=thumbnail))
+                            video_url=upload['url'], thumbnail_url=product_image or thumbnail,
+                            is_product_photo=bool(product_image)))
     return sorted(visible, key=lambda item: item['number'])
 
 
