@@ -38,3 +38,15 @@ def register(idea_id, video_version, source, provenance):
         store.write_json(folder/'metadata.json',value)
         store.update(idea_id,'Video',video_version,thumbnail_url=value['image_url'],thumbnail_version=number)
         return value
+
+
+def validate_for_video(idea_id,video_version):
+    """Only a reviewed generated cover belonging to this exact video passes."""
+    video=store.get(idea_id,'Video',video_version)
+    cover=next((c for c in history(idea_id) if c['number']==video.get('thumbnail_version') and c['video_version']==video_version),None)
+    if not cover or cover.get('provenance',{}).get('source_kind')!='ai_generated' or cover['provenance'].get('reviewed') is not True:
+        raise ValueError('이 영상 버전의 이미지 생성 도구 썸네일 제작·검수가 필요합니다.')
+    path=store.STORAGE_DIR/cover['image_url'].removeprefix('/storage/')
+    if not path.is_file() or digest(path)!=cover['file_sha256'] or video.get('thumbnail_url')!=cover['image_url']:
+        raise ValueError('썸네일 파일과 버전·해시를 확인하세요.')
+    return cover

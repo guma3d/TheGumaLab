@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-09.9",
+  "revision": "2026-10-09.10",
   "rules": [
     {
       "id": "product-first-ad-disclosure",
@@ -188,15 +188,15 @@
     "disclosure_location": "Exact full affiliate disclosure as the last description line after product bullets, links and hashtags; also beside product website purchase links/buttons and with affiliate links in comments. Preserve paid-promotion and applicable YouTube AI settings. No routine production or voice-model prose. Title has no [광고] prefix; video retains the legible [광고] badge.",
     "exception": "Omit virtual-person endorsements requiring extra on-screen disclosure; do not present generated performance as actual evidence.",
     "food_color_continuity": "Grade locally per food using representative before/after frames; gently improve midtone warmth and ingredient color while retaining bright diffuse low-contrast light. Protect actual purple/red surfaces, skin, white dishes and real packaging. Match all cuts, reject oversaturation, fake gloss and harsh contrast; never impose one fixed-strength filter on every product. Composite captions and the ad badge after grading so their colors stay unchanged. Avoid per-frame hard color thresholds. Review every cut and transition in motion for amplified source noise, flicker and denoise trails; one still image is insufficient.",
-    "food_approved_pop_style": {
-      "id": "food-pop-outline-v3",
-      "scope": "Opt-in for pizza-seolgi approved storyboards v0001/v0002; preserve older versions and other category styles",
-      "font": "Maplestory Bold; exact generated storyboard font unidentified",
-      "text": "Short 2-3 lines, white body, orange/yellow final keyword; thick black inner and white outer outlines; no box",
-      "motion": "Single 150ms scale 88% to 100%, then fixed; no repeated bounce or jitter",
-      "source": "Use real footage actions, not invented props from concept art"
-    },
-    "placement": "Choose upper/lower empty space per cut after start/middle/end frame inspection; keep text fixed within the cut and style consistent. Do not mechanically alternate or occlude product, hands, print, ad badge or platform UI. Preserve old versions."
+    "placement": "Choose upper/lower empty space per cut after start/middle/end frame inspection; keep text fixed within the cut and style consistent. Do not mechanically alternate or occlude product, hands, print, ad badge or platform UI. Preserve old versions.",
+    "common_pop_style": {
+      "id": "common-pop-outline-v4",
+      "scope": "Required default for all new Food, Tech, Living productions and requested revisions; preserve historical versions",
+      "font": "Maplestory Bold",
+      "text": "Short 1-3 lines; white body with orange/yellow or approved accent keywords; thick black inner and white outer outlines, no box",
+      "motion": "One short 150ms scale pop, then stable; no repeated bounce",
+      "placement": "Use inspected upper/lower empty space per cut. Protect product identity, hands, printed labels, ad and UI; stable within cut."
+    }
   },
   "public_catalog_style": {
     "scope": "Public product collection website only; not video captions or category styling.",
@@ -205,9 +205,9 @@
     "preserve": "Only explicitly approved public products, original affiliate links and disclosure beside purchase buttons. Responsive one-column mobile layout."
   },
   "thumbnail_policy": {
-    "scope": "User-requested pizza-seolgi standalone cover test; do not automatically expand to all videos",
-    "source": "AI-generated photorealistic cover grounded in exact product photo; record generation provenance, prompt, hashes and visual QA internally",
-    "storage": "Append-only Thumbnail/vNNNN files linked to an exact Video version; web poster and private studio library only. Preserve historical images and video bytes. Never insert as a video cut or extract a video frame instead.",
-    "publication": "Web cover application is not YouTube upload/publication approval. Check account UI support if a later upload request includes thumbnail application."
+    "scope": "Mandatory for all Food, Tech, Living videos, user confirmed 2026-10-09",
+    "source": "Use image generation tool with exact-product photo references. Standalone photorealistic cover, never extracted video frame or a new in-video cut. Verify identity, shape, ingredients/functions and text; retain prompt and generated provenance.",
+    "storage": "Append-only Thumbnail/vNNNN files associated with exact Video version. Hash-verified generated cover required before new web_review and any upload/public authorization. Preserve historical versions.",
+    "publication": "Apply uploaded custom image through actual YouTube UI and verify saved result. If unavailable, record concrete limitation, preserve prepared image and never claim applied. Upload/publication still require scoped explicit user request."
   }
 }

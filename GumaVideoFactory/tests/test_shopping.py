@@ -179,6 +179,11 @@ class ShoppingTests(unittest.TestCase):
             duplicate=asyncio.run(cut_feedback(id,1,2,CutFeedback(narration='수정 대사',feedback='두 번째 컷 교체')))
             self.assertEqual(request['id'],duplicate['id'])
             evidence=dict(notes='Synthetic test evidence only')
+            from app.core import thumbnails
+            with self.assertRaisesRegex(ValueError,'썸네일'):thumbnails.validate_for_video(id,1)
+            cover=root/'cover.png';Image.new('RGB',(720,1280),'orange').save(cover)
+            thumbnails.register(id,1,cover,dict(source_kind='ai_generated',reviewed=True,notes='Synthetic test fixture, no actual generator call'))
+            thumbnails.validate_for_video(id,1)
             with self.assertRaises(ValueError):s.publication(id,1,'public',dict(evidence,visibility='public',url='https://www.youtube.com/watch?v=12345678901'))
             s.publication(id,1,'review',dict(evidence,audio_visual_passed=True,listened_to_audio=True,scores={k:8 for k in s.quality.REVIEW_AXES},file_sha256=s.digest(vf/'final.mp4')))
             self.assertEqual(s.read(vf/'upload.json')['state'],'web_review')

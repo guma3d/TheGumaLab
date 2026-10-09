@@ -114,6 +114,9 @@ async def request_publish(idea_id:str,number:int,req:StageRequest):
     find(idea_id)
     if store.read(idea_id).get('archived'):raise HTTPException(409,'제외된 아이템은 공개할 수 없습니다.')
     if not req.approved:raise HTTPException(400,'완성 영상을 확인하고 공개를 승인해주세요.')
+    from app.core.thumbnails import validate_for_video
+    try:validate_for_video(idea_id,number)
+    except ValueError as error:raise HTTPException(409,str(error))
     path=store.version_dir(idea_id,'Video',number)/'upload.json'
     with store.LOCK:
         if not path.exists():raise HTTPException(409,'웹 검토본을 먼저 저장해주세요.')

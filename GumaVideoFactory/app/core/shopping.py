@@ -97,7 +97,7 @@ class Board(BaseModel):
     scenes: list[Cut] = Field(min_length=6,max_length=9)
     additional_cut_approval: str = ''
     bgm_track: str = ''
-    caption_design: Literal['', 'food-pop-outline-v3'] = ''
+    caption_design: Literal['', 'food-pop-outline-v3', 'common-pop-outline-v4'] = 'common-pop-outline-v4'
 
     @model_validator(mode='after')
     def funnel(self):
@@ -307,7 +307,7 @@ def spoken_duration_limit(scene):
 
 def write_captions(path,text,seconds,style,headline='',generated=False,caption_position=None,caption_center_y=None):
     """Keep the approved style while placing each cut in its inspected empty area."""
-    if style.get('caption_design') == 'food-pop-outline-v3':
+    if style.get('caption_design') in ('food-pop-outline-v3','common-pop-outline-v4'):
         from app.core.food_captions import write_food_pop_captions
         return write_food_pop_captions(path, headline or text, seconds,caption_position or 'lower',caption_center_y)
     if style.get('caption_design') in ('food-editorial-v1', 'food-outline-v2'):
@@ -369,6 +369,9 @@ def publication(id,n,action,evidence):
             raise ValueError('현재 영상의 BGM 검수·크레딧이 필요합니다.')
         if len(evidence.get('notes',''))<10:raise ValueError('실제 확인 근거를 기록해주세요.')
         if action in ('review_web','review_private'):
+            if store.get(id,'Video',n).get('storyboard',{}).get('category_style',{}).get('thumbnail_required'):
+                from app.core.thumbnails import validate_for_video
+                validate_for_video(id,n)
             if data['state']!='quality_review':raise ValueError('검수 대기 영상만 비공개 리뷰 준비가 가능합니다.')
             quality.validate_private_review(evidence,expected_voice=store.get(id,'Video',n)['voice'])
             technical=read(folder/'technical_review.json')
@@ -376,6 +379,9 @@ def publication(id,n,action,evidence):
                 raise ValueError('기술 검수 파일 해시를 확인하세요.')
             data.update(state='web_review',audio_review='user_review_on_web')
         elif action=='review':
+            if store.get(id,'Video',n).get('storyboard',{}).get('category_style',{}).get('thumbnail_required'):
+                from app.core.thumbnails import validate_for_video
+                validate_for_video(id,n)
             if store.get(id,'Video',n).get('quality_revision'):
                 quality.validate_editorial(evidence)
                 if evidence.get('file_sha256')!=data['file_sha256']:
@@ -386,6 +392,8 @@ def publication(id,n,action,evidence):
             if data['state']!='quality_review' or evidence.get('audio_visual_passed') is not True:raise ValueError('실제 음성·화면 검수가 필요합니다.')
             data['state']='web_review'
         elif action=='authorize_upload':
+            from app.core.thumbnails import validate_for_video
+            validate_for_video(id,n)
             if data['state']!='web_review' or evidence.get('user_approved') is not True or evidence.get('file_sha256')!=data['file_sha256']:
                 raise ValueError('이 버전의 별도 YouTube 업로드 지시와 해시가 필요합니다.')
             data.update(state='upload_requested',upload_approved_at=now_kst().isoformat())
