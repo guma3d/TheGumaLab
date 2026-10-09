@@ -58,7 +58,7 @@ def join_smooth(segments, output):
 
 class Cut(BaseModel):
     role: Literal['need','solution','reason','product','cta']
-    mode: Literal['official_clip','official_image','veo','illustration_clip','explanatory_image']
+    mode: Literal['official_clip','acquired_clip','official_image','veo','illustration_clip','explanatory_image']
     source_file: str
     source_url: str
     evidence: str = Field(min_length=10)
@@ -91,6 +91,7 @@ class Board(BaseModel):
     cta_destination: Literal['channel_profile'] = 'channel_profile'
     scenes: list[Cut] = Field(min_length=6,max_length=8)
     bgm_track: str = ''
+    caption_design: Literal['', 'food-pop-outline-v3'] = ''
 
     @model_validator(mode='after')
     def funnel(self):
@@ -132,6 +133,8 @@ def build(rec_path, board_path):
         result=board.model_dump();result['pipeline']='shopping_v2';result['needs_3d']=False
         result['quality_revision']='director-v2'
         result['category_style']=dict(PRESETS[rec.category])
+        if board.caption_design:
+            result['category_style']['caption_design']=board.caption_design
         store.write_json(folder/'recommendation.json',rec.model_dump(mode='json'))
         store.write_json(folder/'production_rules.json',snapshot(rec.category))
         for i,s in enumerate(board.scenes,1):
@@ -277,6 +280,9 @@ async def render(id,n):
 
 def write_captions(path,text,seconds,style,headline='',generated=False):
     """Short readable subtitles in the same safe area for every category episode."""
+    if style.get('caption_design') == 'food-pop-outline-v3':
+        from app.core.food_captions import write_food_pop_captions
+        return write_food_pop_captions(path, headline or text, seconds)
     if style.get('caption_design') in ('food-editorial-v1', 'food-outline-v2'):
         from app.core.food_captions import write_food_captions
         return write_food_captions(path,text,seconds,headline,generated=generated)
