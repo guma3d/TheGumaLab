@@ -5,11 +5,11 @@
 <section class="panel"><select id="versions" aria-label="버전" onchange="selected[stage]=Number(this.value);render()"></select><div id="content"></div></section>
 <details><summary>기능·출처</summary><p>{{idea.recommendation.key_feature}}</p><p>{{idea.recommendation.cautions}}</p>{% for s in idea.recommendation.sources %}<p><a href="{{s.url}}" target="_blank" rel="noopener">{{s.title}}</a></p>{% endfor %}</details>
 {% endblock %}{% block scripts %}<script>
-let data={{idea|tojson}},stage=location.hash==='#Video'?'Video':'Preview',selected={},busy=false;
+let data={{idea|tojson}},stage=location.hash==='#Video'?'Video':'Preview',selected={Video:Number(new URLSearchParams(location.search).get('video'))||undefined},busy=false;
 function tab(s){stage=s;location.hash=s;render()}
 function render(){
  document.getElementById('flow').textContent=data.workflow?.message||'예약 준비';
- const rows=data.versions[stage]||[];if(!selected[stage])selected[stage]=rows[0]?.number;
+ const rows=data.versions[stage]||[];if(!rows.some(v=>v.number===selected[stage]))selected[stage]=rows[0]?.number;
  const v=rows.find(v=>v.number===selected[stage]);
  document.getElementById('versions').innerHTML=rows.map(v=>`<option value="${v.number}" ${v.number===selected[stage]?'selected':''}>v${v.number} · ${esc(v.status)}</option>`).join('')||'<option>준비 중</option>';
  let h=v?`<p role="status">${esc(stage==='Preview'&&v.storyboard?.pipeline!=='shopping_v2'?'이전 제작 방식 보관본':v.message)}</p>`:'<p>예약 작업에서 자동으로 준비합니다.</p>';
@@ -22,7 +22,9 @@ function render(){
  if(v&&stage==='Video'&&v.output_url){
   h+=v.quality_revision?'<p class="badge">1080 세로 · 제작 전/후 감독 검수</p>':'<p class="notice">이전 품질 기준의 보관본</p>';
   if(v.publication_state==='quality_review')h+='<p class="notice">웹 검토본 · 화면·음성 검수 대기</p>';
-  h+=`<video controls playsinline preload="metadata" src="${esc(safeLink(v.output_url))}"></video><p><a href="${esc(safeLink(v.output_url))}" download>영상 다운로드</a></p>`;
+  h+=`<video controls playsinline preload="metadata" ${v.thumbnail_url?`poster="${esc(safeLink(v.thumbnail_url))}"`:''} src="${esc(safeLink(v.output_url))}"></video><p><a href="${esc(safeLink(v.output_url))}" download>영상 다운로드</a></p>`;
+  const covers=(data.thumbnails||[]).filter(t=>t.video_version===v.number);
+  if(covers.length)h+=`<details><summary>별도 썸네일 · 현재 v${esc(v.thumbnail_version)}</summary><div class="thumbs">`+covers.map(t=>`<a href="${esc(safeLink(t.image_url))}" target="_blank" rel="noopener"><img src="${esc(safeLink(t.image_url))}" alt="썸네일 v${t.number}" loading="lazy"><span>v${t.number} · 원본 보기</span></a>`).join('')+'</div><p class="muted">영상에 삽입되지 않는 커버 이미지입니다.</p></details>';
   if(v.cuts?.length)h+='<h2>컷별 영상·대사</h2><p>아이템 이름 · 영상 버전 · CUT 번호로 피드백해주세요. 수정은 새 버전에 반영됩니다.</p><div class="grid">'+v.cuts.map(c=>`<article class="card" id="cut-${c.number}"><strong>CUT ${c.number}</strong><video controls playsinline preload="metadata" src="${esc(safeLink(c.video_url))}"></video><label>대사<textarea id="narration-${c.number}" rows="3" maxlength="1000">${esc(c.narration_ko)}</textarea></label><label>수정 요청<textarea id="feedback-${c.number}" rows="2" maxlength="3000" placeholder="이 컷에서 바꿀 내용을 입력하세요"></textarea></label><button onclick="saveCut(${c.number})">이 컷 수정 요청</button><p id="saved-${c.number}"></p></article>`).join('')+'</div>';
   if(v.youtube_url)h+=`<p><a href="${esc(safeLink(v.youtube_url))}" target="_blank" rel="noopener">YouTube에서 리뷰</a></p>`;
   if(v.pinned_comment)h+=`<details><summary>공개 후 고정할 댓글 · 게시 대기</summary><p>비공개 영상에서는 댓글을 게시하지 않습니다.</p><textarea readonly rows="6">${esc(v.pinned_comment)}</textarea></details>`;

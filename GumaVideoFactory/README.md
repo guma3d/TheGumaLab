@@ -40,7 +40,18 @@ https://videofactory.guma3d.com/ · 홈서버 8085 · https://www.youtube.com/@G
 - 최종 BGM은 Carefree. 고정 음악 -25.01 LUFS, 음성 -16.60 LUFS, 최종 true peak -2.82 dBFS. ducking·페이드 없음. 제작 전 전 컷/원본 검수, 제작 후 전 컷/전환 연속 프레임·전체 디코딩·검은 화면/정지·클리핑 검사 완료. 검출된 정지는 의도된 첫 상품 사진뿐이다. 실제 청취·발음은 사용자 웹 리뷰 대기이며 들었다고 기록하지 않는다. TTS 최초 8회, 수정본 추가 0회, Veo 0회, YouTube 업로드 0회.
 - 승인 해시·원본·스크립트·제작 전후 검수·최종 URL/해시/상태는 `storage/handoffs/food-pizza-seolgi-9719378135/`의 `approval-v0001.json`, `production-v0001/preflight-review.json`, `production-v0002/final-review.json`, `completion.json`, `main-state.json`에 보존한다. 관련 shopping 테스트 9개 통과; 기존 `test_slot_accumulation_and_affiliate`의 readiness fixture 오류 1건은 별도로 기록했다. 실제 자막 렌더와 최종 미디어 검증은 통과했다.
 
+### 피자설기 최신 수정본 — Preview v2 / Video v3
+
+- 기존 Video v2의 8컷 소스·대사·순서를 모두 보존하고, 첫 컷에 피자설기 화제성과 수라당 로켓프레시 소개를 추가했다. 총 9컷·34.67초. [정확한 v3 웹 리뷰](https://videofactory.guma3d.com/ideas/e9d3b5997cf329dd?video=3#Video), [Video v3 파일](https://videofactory.guma3d.com/storage/products/e9d3b5997cf329dd/Video/v0003/final.mp4). Video v1/v2와 Preview v1은 보존한다.
+- 자막 폰트·색·외곽선·등장 효과를 유지하고 위치는 각 컷의 주요 동작·인쇄를 피한 상하 영역으로 조정했다. 시작·중간·끝 27프레임 및 모든 최종 전환의 연속 프레임을 확인했다. 재료가 화면 전체인 매크로 컷에서는 반복 재료 바탕과 일부 겹치므로 주요 동작과 제품 식별을 우선 보호했다.
+- 기존 음성 8개와 원본 장면 8개는 해시 일치로 보존, 새 첫 컷 TTS 1회, Veo 0회. Carefree 유지, BGM -25.00 LUFS·음성 -16.62 LUFS·true peak -2.84 dBFS, ducking/fade 없음. 전체 디코딩과 검은 화면 검사 통과, 정지 검출은 첫 두 의도된 상품 사진뿐. 실제 청취·발음은 사용자 웹 리뷰 대기다.
+- 피자설기 종류의 SNS 화제성은 2026-09-15 아주경제 원문, 수라당의 정확한 옵션·로켓프레시는 2026-10-09 상품 페이지 재확인으로 구분했다. 다른 떡집의 오픈런을 수라당 실적으로 바꾸지 않았고 즉시/오늘 배송을 보장하지 않는다.
+- 사용자 요청으로 별도 AI 생성 커버를 테스트 적용했다. [썸네일 v1](https://videofactory.guma3d.com/storage/products/e9d3b5997cf329dd/Thumbnail/v0001/cover.png)은 실제 상품 사진을 참고한 생성 이미지이며 실제 촬영 사진이 아니다. 영상에 삽입하지 않고 웹 플레이어 poster·제작 보관함에 사용한다. `Thumbnail/v0001/metadata.json`에 출처·검수·연결 Video 버전·해시를 기록하고 새 썸네일은 새 번호로 보존한다. 과거 Video 버전에 소급 적용하지 않는다.
+- 승인/검수/보존 해시와 최종 링크 기준은 `storage/handoffs/food-pizza-seolgi-9719378135/completion-v0002.json`, `revision-board-v0002/preflight-review.json`, `production-v0003/final-review.json`이다. 과거 `completion.json`은 v2 이력이다. 이번 영상·썸네일은 로컬·웹 검토용이며 YouTube 업로드·공개 0회, 관련 승인도 없다. YouTube 썸네일 등록 가능 여부는 향후 업로드 승인 후 해당 계정 실제 UI에서 확인한다.
+
 ## 기존 4편 최종본 — 2026-10-09 공개 2편·비공개 2편
+
+아래 표는 해당 날짜 Studio에서 확인한 게시 상태다. 이전 버전 기록이나 새 웹 검토본을 현재 YouTube 게시 상태로 혼동하지 않는다.
 
 | 제품 | Video | BGM | 상태 |
 |---|---|---|---|

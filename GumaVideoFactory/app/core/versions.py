@@ -94,6 +94,8 @@ def update(idea_id, stage, number, **fields):
 
 def snapshot(idea_id):
     idea = read(idea_id)
+    from app.core.thumbnails import history as thumbnail_history
+    idea['thumbnails'] = thumbnail_history(idea_id)
     idea['versions'] = {s: history(idea_id, s) for s in STAGES}
     for stage, rows in idea['versions'].items():
         for value in rows:
@@ -169,7 +171,7 @@ def workflow(idea):
     buttons=[]
     for stage,v in latest.items():
         buttons.append(dict(stage=stage,label='컷씬' if stage=='Preview' else '영상',state=v.get('publication_state',v['status']) if v else '예약 준비',number=v['number'] if v else None,status=v['status'] if v else 'empty',progress_message=('이전 제작 방식 보관본' if stage=='Preview' and v and not ready else v.get('message','')) if v else '',primary=stage=='Video',disabled=stage!='Video' or not ready or running or bool(v and v['status']=='ready'),regen_disabled=stage!='Video' or not ready or running,existing=bool(v)))
-    return dict(id=idea['id'],message=message,buttons=buttons,running=running,approved=False,needs_3d=False)
+    return dict(id=idea['id'],message=message,buttons=buttons,running=running,approved=False,needs_3d=False,thumbnail_url=video.get('thumbnail_url','') if video else '')
 
 
 clip_workflow=workflow

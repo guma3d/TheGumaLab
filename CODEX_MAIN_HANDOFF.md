@@ -1,4 +1,4 @@
-# Main 이어받기 — 2026-10-08
+# Main 이어받기 — 2026-10-09
 
 이 파일은 큰 이미지 이력을 복제하지 않고 Main 업무를 이어받기 위한 요약이다. 원본 대화와 제작 파일은 보존한다. 시점이 지난 상태는 실제 파일·웹에서 다시 확인한다.
 
@@ -16,15 +16,31 @@
 - 모든 신규 영상은 Food 승인 Zephyr 음성. 검증한 5곡 중 1곡을 무작위 선택하고 재시도에서는 같은 곡을 유지한다. BGM -25 LUFS 고정 음량, 대사 연동 감쇠·페이드 없음. 상세 수치는 RESEARCH.md를 따른다.
 - 피드백은 관련 최신 MD와 실행 규칙에 반영하고 오래된 규칙을 정리한다. 버전별 과거 원본·검수 이력은 보존한다.
 
-## 최근 확인한 결과
+## 최근 확인한 결과 — 현재 상태와 이력을 구분
 
-- 2026-10-08 이 대화에서 GumaShop 채널 `UCRtAVFQFmJCcpvLeuyq03Kg`의 YouTube Studio → Settings → Channel → Feature eligibility를 직접 확인했다. Advanced features가 Pending에서 **Enabled**로 바뀌었다. Standard/Intermediate도 Enabled였다.
-- 흑임자인절미찰떡아이스 아이템 `dadc1759bf7912ef`: Video v0002, Preview v0003 웹 검토본 완료. 사용자 최종 공개 승인 없음. 새로운 요청 없이 재제작·업로드하지 않는다.
-- 검토 링크: https://videofactory.guma3d.com/ideas/dadc1759bf7912ef#Video
-- 파일: `D:\TheGumaLab\GumaVideoFactory\storage\products\dadc1759bf7912ef\Video\v0002\final.mp4`
-- SHA256: `e98fd07d47ec527399bba4a0c5b95c83455e9f0066134356b24b8387510f90d1`, 41초, 1080×1920, 30fps. 웹 전체 재생 확인. 실제 음성 청취는 사용자 웹 리뷰 대기이며 수치 검사로 청취 완료라고 주장하지 않는다.
-- 변경: CUT03은 생성 원본의 개봉 후 구간 사용, CUT05는 둥근 모찌 형태 수정, CUT08은 사용자 승인에 따른 실제 패키지 외곽 마스크. 원본 v0001 보존.
-- 상세 근거: `GumaVideoFactory/storage/handoffs/food-black-sesame-9719137731/production-v0005/README.md`, `resume-status.json`, `web-delivery-v2.json`. 완료 기록을 덮는 과거 checkpoint/prepare 스크립트는 다시 실행하지 않는다.
+- 아래 공개·비공개 상태는 2026-10-09 Studio 확인 기록 기준이다. 현재 상태를 다시 물으면 실제 채널과 대조한다. 과거의 빈 채널·삭제 대기·흑임자 v2 검토 상태는 현재 상태가 아니다.
+- 채널 `UCRtAVFQFmJCcpvLeuyq03Kg` / `@GumaShop86`: Standard·Intermediate·Advanced 기능 사용 가능. 고급 기능은 2026-10-08 Studio에서 Enabled 확인.
+- 공개: 고구마빵(`372a4996226cf3a5`) Video v11 → https://www.youtube.com/watch?v=T0eKHI5ieXA, 미지아 보풀제거기 2(`57ab7c7af6717633`) v10 → https://www.youtube.com/watch?v=uSQqUUQ1GCc.
+- 비공개: 딸기쏙우유 찹쌀떡(`67e70b2aebfc411e`) v16 → https://www.youtube.com/watch?v=5qAtgvCnDZE, 흑임자인절미(`dadc1759bf7912ef`) Video v5 / Preview v5 → https://www.youtube.com/watch?v=bBdkw1fdikM. 나머지 두 편 공개 및 차기 버전 업로드 승인은 없다.
+- 상품 모음: https://videofactory.guma3d.com/products. 따뜻한 노란색·크림 테마, 실제 제품 사진, 모바일 한 열 카드. 승인된 공개 상품 01 고구마빵·02 미지아만 노출한다. 비공개/웹 검토 제품은 자동 추가하지 않는다.
+- 사용자가 직접 수정한 제목·설명이 게시 문구 기준이다. 제목 앞 [광고]를 붙이지 않고 설명은 글머리, BGM 출처는 간결한 하단 한 줄, 정확한 쿠팡 수수료 고지는 마지막 줄. 기존 음원은 출처 표시 조건을 준수한다.
+- 찰떡아이스 첫 장면은 정확한 공식 제품 표지 원본 이미지로 교체했다. 노이즈가 있는 생성 포장 합성을 재사용하지 않는다. 기존 로컬 버전·승인·검수 이력은 보존한다.
+- 근거: `GumaVideoFactory/storage/handoffs/restored-private-upload-20261009/`, `public-two-20261009/`, `yellow-catalog-20261009/`, `user-metadata-20261009/`, `music-credit-fix-20261009/`. 제품별 최종 버전/BGM 표는 README가 기준이다.
+
+## 파트너스 확인 범위와 후속 작업
+
+- 공개 두 상품의 링크 도착 상품·옵션과 공통 추적 ID `AF4083845`를 확인했다. 계정 소유자와 추적 ID의 일치, 계정 승인·등록 매체, 실제 클릭·주문·수익은 로그인 전이므로 미확인이다. 링크 이동 성공을 수익 발생/정산 보장으로 기록하지 않는다.
+- 홈서버 브라우저 로그인 후 계정/등록 매체와 조회 기간별 리포트를 확인한다. 휴대폰의 별도 브라우저 로그인은 홈서버로 자동 공유되지 않는다. 모바일 Codex 로그인 화면 직접 조작 지원은 미검증이다. 비밀번호·인증번호·쿠키를 기록하거나 전달받지 않는다.
+- 실적 자동 수집·대시보드 연동은 구현하지 않았다. 신규 자동 조회/공개를 완료된 것처럼 공유하지 않는다.
+
+## 추가 제작 — 피자설기
+
+- 아이템 `e9d3b5997cf329dd`, 웹 리뷰 https://videofactory.guma3d.com/ideas/e9d3b5997cf329dd#Video.
+- 기존 완료본 Preview v1 / Video v2(28.33초, 8컷, Carefree, Zephyr)를 보존했다. 제3자 푸드킹덤 촬영의 재사용 허가는 미확인이다. YouTube 업로드·공개 승인은 없다.
+- 최신 승인 board-v0002: 기존 8컷의 소스·대사·순서는 그대로 두고 첫 컷에 피자설기 화제성+수라당 로켓프레시 소개 추가, 컷별 빈 공간을 이용한 상하 자막 위치 조정. Preview v2 / Video v3(34.67초) 제작·화면/기술 검수 완료. 정확한 웹 링크는 https://videofactory.guma3d.com/ideas/e9d3b5997cf329dd?video=3#Video. 별도 AI 생성 Thumbnail v1을 웹 커버로 연결했고 영상에는 삽입하지 않았다.
+- 상태·해시·검수·링크 기준: `GumaVideoFactory/storage/handoffs/food-pizza-seolgi-9719378135/main-state.json`, 최신 완료 `completion-v0002.json`. 과거 `completion.json`은 Video v2 이력이다. 원본 승인 해시와 최신 사용자 기존 컷 보존 지시를 대조한다.
+- 자막의 폰트·색·크기 체계는 통일하고 위치는 컷별 주요 제품·동작·포장 인쇄를 피한다. 컷 안에서는 고정한다. 기존 영상·음성은 재생성하지 않으며 수정 버전 BGM은 Carefree를 유지한다. 새 첫 컷 음성만 생성한다.
+- 실제 청취를 수행하지 않았으면 사용자 웹 음성 리뷰 대기로 남긴다. 기술 검사·브라우저 전체 재생은 실제 청취 검수와 구분한다.
 
 ## 모바일 로딩 진단과 이어갈 일
 

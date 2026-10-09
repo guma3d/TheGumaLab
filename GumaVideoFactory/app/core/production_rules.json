@@ -203,5 +203,11 @@
     "theme": "Warm yellow #ffd43b, cream #fffdf7, dark brown readable text; rounded image cards and prominent yellow purchase buttons.",
     "images": "Prefer verified exact-product representative photos from the product page, fitting the full product within the card. If unavailable, use a thumbnail of the exact published video; never invent product imagery.",
     "preserve": "Only explicitly approved public products, original affiliate links and disclosure beside purchase buttons. Responsive one-column mobile layout."
+  },
+  "thumbnail_policy": {
+    "scope": "User-requested pizza-seolgi standalone cover test; do not automatically expand to all videos",
+    "source": "AI-generated photorealistic cover grounded in exact product photo; record generation provenance, prompt, hashes and visual QA internally",
+    "storage": "Append-only Thumbnail/vNNNN files linked to an exact Video version; web poster and private studio library only. Preserve historical images and video bytes. Never insert as a video cut or extract a video frame instead.",
+    "publication": "Web cover application is not YouTube upload/publication approval. Check account UI support if a later upload request includes thumbnail application."
   }
 }
