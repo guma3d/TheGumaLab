@@ -13,6 +13,7 @@ from app.core import versions as store
 from app.core import official_clips as media
 from app.core.prepared_packages import digest, read, verify_package
 from app.core.production_rules import snapshot
+from app.core.tech_research import validate_tech_evidence
 from app.core.recommendations import Recommendation, now_kst
 from app.core.recommendations import validate_novelty
 from app.core.categories import PRESETS
@@ -122,6 +123,7 @@ class Board(BaseModel):
 def build(rec_path, board_path):
     """Input media must already be acquired and inspected by Codex; never fetch arbitrary URLs."""
     rec=Recommendation.model_validate(read(rec_path))
+    validate_tech_evidence(rec)
     if rec.category=='tech' and (not rec.purchase_link or rec.purchase_link.price_krw is None or rec.purchase_link.price_krw>500000 or len(rec.purchase_link.price_evidence)<10):
         raise ValueError('테크는 실제 확인한 50만원 이하 쿠팡 옵션 가격과 근거가 필요합니다.')
     validate_novelty(rec)

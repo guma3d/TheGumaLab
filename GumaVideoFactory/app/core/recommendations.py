@@ -193,6 +193,7 @@ class Recommendation(BaseModel):
     readiness: RecommendationReadiness | None = None
     food_trend: FoodTrend | None = None  # Optional for historical records; required on new food imports.
     living_evidence: LivingEvidence | None = None  # Historical records remain readable.
+    tech_evidence: dict = Field(default_factory=dict)  # Required at new import/build, not historical reads.
 
     @model_validator(mode='after')
     def technical_source(self):
@@ -263,6 +264,8 @@ def load_daily(date=None):
 def save_batch(batch: DailyBatch):
     # Validate before any history/list write; old saved records stay readable.
     for item in batch.items:
+        from app.core.tech_research import validate_tech_evidence
+        validate_tech_evidence(item)
         validate_readiness(item, now_kst())
     old = load_daily(batch.date)
     if old.get("researched_at") and datetime.fromisoformat(old["researched_at"]) >= batch.researched_at:
