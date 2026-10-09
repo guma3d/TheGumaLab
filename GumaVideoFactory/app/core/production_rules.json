@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-09.1",
+  "revision": "2026-10-09.2",
   "rules": [
     {
       "id": "product-first-ad-disclosure",
@@ -54,7 +54,7 @@
     {
       "id": "shopping-funnel",
       "category": "all",
-      "instruction": "At 09:00, 15:00 and 21:00 KST each prepare one new item and save one completed video locally for web version review; three per day across categories. GPT-6 Astra directly researches trends and authors 6-8 cuts after verified Coupang data and affiliate links. No Gemini planning. Official video OR images required. Need -> solution -> evidenced popularity/interest reasons -> product features -> fixed Korean pinned-comment/channel-profile CTA. Never invent popularity. No 3D model creation. The first cut must strongly hook with verified interest/review counts or a current trend connected to a concrete use case. Record date and scope; never recast cumulative reviews as recent growth. Pokemon-card/food pairing is an example only when trend and real product are verified."
+      "instruction": "At 09:00, 15:00 and 21:00 KST each prepare one new item and save one completed video locally for web version review; three per day across categories. GPT-6 Astra directly researches trends and authors 6-8 cuts after verified Coupang data and affiliate links. No Gemini planning. Official video OR images required. Need -> solution -> evidenced popularity/interest reasons -> product features -> one brief Korean CTA explicitly asking viewers to click the channel profile 상품 모음 link. Never invent popularity. No 3D model creation. The first cut must strongly hook with verified interest/review counts or a current trend connected to a concrete use case. Record date and scope; never recast cumulative reviews as recent growth. Pokemon-card/food pairing is an example only when trend and real product are verified."
     },
     {
       "id": "selective-veo",
@@ -150,8 +150,8 @@
     "schedule": "09:00 tech, 15:00 food, 21:00 household Asia/Seoul; one per category daily",
     "workspace": "Store original assets, edits and final videos locally under project storage/products/<id>/Preview/vNNNN and Video/vNNNN. Manage every version and final output through the webservice with playback/download and version links. Missing YouTube upload is not a production blocker. Never auto-upload a completed final version.",
     "voice_rate": "natural-brisk",
-    "cta": "영상 속 제품 정보는 고정댓글이나 채널 프로필에서 확인하세요.",
-    "pinned_comment": "Store product name, issued affiliate URL and disclosure; include profile product number only after actual registration. Private videos cannot have comments; keep pending until public, never claim posted. Shorts comment URLs are not clickable.",
+    "cta": "궁금하다면, 채널 프로필의 상품 모음 링크를 눌러보세요.",
+    "pinned_comment": "Name the exact product and direct viewers to channel profile -> 상품 모음 -> matching product. Include disclosure with affiliate URLs. Add profile product number only after actual registration. Keep comments pending until public; never claim posted. Shorts comment URLs are not clickable. Verify actual profile link label and landing page before publication.",
     "voice_by_category": {
       "tech": "Zephyr",
       "food": "Zephyr",
