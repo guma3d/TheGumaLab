@@ -1,6 +1,11 @@
 {
-  "revision": "2026-10-09.10",
+  "revision": "2026-10-09.11",
   "rules": [
+    {
+      "id": "description-ad-and-relevant-hashtags",
+      "category": "all",
+      "instruction": "Every video description must include #광고 plus at least five distinct relevant hashtags (six or more total). Choose product, category, use and topic tags from verified video content. Seasonal tags such as #가을 require actual context. Do not apply snack/appliance/knitwear/ice-cream tags indiscriminately or invent product claims. Preserve existing user tags, deduplicate, place tags before the BGM credit and keep the exact affiliate disclosure as the final line. Verify actual Studio saved descriptions. Description-only changes preserve title, visibility and media. Applies to existing posted videos and all future descriptions."
+    },
     {
       "id": "product-first-ad-disclosure",
       "category": "all",

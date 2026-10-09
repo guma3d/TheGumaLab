@@ -8,7 +8,35 @@ def title(text):
     return re.sub(r'^(?:\s*\[광고\]\s*)+', '', text).strip()
 
 
-def description(bullets, product_url, music_review, hashtags=''):
+def description_hashtags(text, supplied=''):
+    """Keep author tags and add relevant defaults: ad plus at least five tags."""
+    if not isinstance(supplied, str):
+        supplied = ' '.join(supplied or [])
+    tags = ['광고']
+    tags.extend(re.findall(r'#(\w+)', supplied))
+    for terms, related in (
+        (('고구마빵',), ('고구마빵', '간식', '디저트')),
+        (('딸기쏙우유',), ('딸기쏙우유', '찹쌀떡', '간식', '디저트')),
+        (('찰떡아이스',), ('찰떡아이스', '아이스크림', '간식')),
+        (('흑임자',), ('흑임자',)),
+        (('피자설기',), ('피자설기', '떡', '간식', '디저트')),
+        (('보풀제거기',), ('보풀제거기', '가전', '의류관리')),
+        (('니트',), ('니트',)),
+        (('가습기',), ('가습기', '가전', '생활용품')),
+        (('가을',), ('가을',)),
+    ):
+        if any(term in text for term in terms):
+            tags.extend(related)
+    tags = list(dict.fromkeys(tags))
+    for tag in ('쇼츠', '쇼핑쇼츠', '상품소개', '제품정보', '쇼핑정보'):
+        if len(tags) >= 6:
+            break
+        if tag not in tags:
+            tags.append(tag)
+    return ' '.join('#' + tag for tag in tags)
+
+
+def description(bullets, product_url, music_review, hashtags='', *, context=''):
     from app.core import bgm
     if isinstance(bullets, str):
         bullets = re.split(r'\n+|(?<=[.!?])\s+', bullets)
@@ -25,6 +53,5 @@ def description(bullets, product_url, music_review, hashtags=''):
     if not lines:
         raise ValueError('검증된 상품 설명을 작성해주세요.')
     body = '\n'.join(lines) + '\n\n상품 정보: ' + product_url
-    if hashtags.strip():
-        body += '\n\n' + hashtags.strip()
+    body += '\n\n' + description_hashtags(context + '\n' + '\n'.join(lines), hashtags)
     return bgm.credit(body, music_review).rstrip() + '\n\n' + DISCLOSURE

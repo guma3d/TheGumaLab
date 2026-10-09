@@ -21,6 +21,24 @@ class MetadataTests(unittest.TestCase):
         with self.assertRaises(ValueError):meta.description(['상품.'],'url',self.review)
         self.assertFalse(bgm.has_required_credit('',self.review))
 
+    def test_description_always_has_ad_and_five_distinct_tags(self):
+        text=meta.description(['새 제품의 사용법.'],'url',self.review)
+        tags=next(line for line in text.splitlines() if line.startswith('#')).split()
+        self.assertIn('#광고',tags)
+        self.assertGreaterEqual(len(set(tags)-{'#광고'}),5)
+        self.assertEqual(text.splitlines()[-1],meta.DISCLOSURE)
+
+    def test_product_tags_preserve_author_tags_without_unrelated_defaults(self):
+        text=meta.description(['니트 보풀 관리.'],'url',self.review,
+            '#미지아 #미지아 #광고',context='미지아 보풀제거기 2')
+        tags=next(line for line in text.splitlines() if line.startswith('#')).split()
+        self.assertEqual(tags.count('#광고'),1)
+        self.assertEqual(tags.count('#미지아'),1)
+        self.assertIn('#가전',tags)
+        self.assertIn('#니트',tags)
+        self.assertNotIn('#간식',tags)
+        self.assertNotIn('#가을',tags)
+
     def test_legacy_credit_before_disclosure(self):
         report={'track':dict(license='CC BY 4.0',attribution='Artist / CC BY 4.0')}
         text=meta.description(['상품.'],'url',report)

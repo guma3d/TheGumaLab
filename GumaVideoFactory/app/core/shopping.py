@@ -286,7 +286,7 @@ async def render(id,n):
     store.write_json(folder/'technical_review.json',dict(technical,file_sha256=digest(output)))
     store.write_json(folder/'sources.json',dict(product_url=v['product_url'],scenes=board['scenes'],voice=v['voice']))
     store.write_json(folder/'upload.json',dict(state='quality_review',privacy='private',channel='https://www.youtube.com/@GumaShop86',
-        pinned_comment=DISCLOSURE+'\n영상 속 제품: '+store.read(id)['title']+'\n상품 주소: '+v['product_url'],comment_state='pending_publication',title=upload_metadata.title(board['title']),description=upload_metadata.description(board.get('description_bullets') or board['summary'],v['product_url'],music_review),file_sha256=digest(output)))
+        pinned_comment=DISCLOSURE+'\n영상 속 제품: '+store.read(id)['title']+'\n상품 주소: '+v['product_url'],comment_state='pending_publication',title=upload_metadata.title(board['title']),description=upload_metadata.description(board.get('description_bullets') or board['summary'],v['product_url'],music_review,board.get('hashtags',''),context=board['title']),file_sha256=digest(output)))
     return store.update(id,'Video',n,status='ready',cuts=cut_outputs,output_url=store.url(output),sources_url=store.url(folder/'sources.json'),message='영상 완성 · 웹에서 버전별 검토 · YouTube 자동 업로드 없음',publication_state='quality_review',review_destination='web')
 
 
