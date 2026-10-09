@@ -9,7 +9,9 @@ from pathlib import Path
 from app.config import STORAGE_DIR
 from app.core import official_clips as media
 
-TRACK_TITLES = ('Life of Riley', 'Carefree', 'Monkeys Spinning Monkeys', 'Wallpaper', 'Fluffing a Duck')
+TRACK_TITLES = ('Raising Me Higher', 'Curiosity', "I'm Fine", 'Break Away', 'The King')
+LEGACY_TRACK_TITLES = ('Life of Riley', 'Carefree', 'Monkeys Spinning Monkeys', 'Wallpaper', 'Fluffing a Duck')
+MIXKIT_LICENSE = 'Mixkit Stock Music Free License'
 MUSIC_LUFS = -25.0
 VOICE_LUFS = -16.0
 
@@ -19,7 +21,7 @@ def assign_random(board):
     for title in TRACK_TITLES:
         select({'bgm_track': title})
     board['bgm_track'] = secrets.choice(TRACK_TITLES)
-    board['bgm_selection'] = 'random-five-v1'
+    board['bgm_selection'] = 'random-five-no-attribution-v2'
     return select(board)
 
 
@@ -29,7 +31,7 @@ def select(board):
     title = board.get('bgm_track')
     if not title:
         return assign_random(board)
-    if title not in TRACK_TITLES:
+    if title not in TRACK_TITLES + LEGACY_TRACK_TITLES:
         raise ValueError('검증된 BGM 목록에 없는 곡입니다.')
     track = next((t for t in tracks if t['title'] == title), None)
     if not track:
@@ -39,9 +41,25 @@ def select(board):
         raise ValueError('BGM 원본이 없습니다.')
     if hashlib.sha256(path.read_bytes()).hexdigest().lower() != track['sha256'].lower():
         raise ValueError('BGM 원본 해시가 다릅니다.')
-    if track.get('license') != 'CC BY 4.0' or not track.get('attribution'):
+    if not valid_license(track):
         raise ValueError('BGM 이용 근거와 크레딧이 필요합니다.')
     return path, track
+
+
+def valid_license(track):
+    if track.get('license') == 'CC BY 4.0':
+        return bool(track.get('attribution'))
+    return (track.get('license') == MIXKIT_LICENSE
+        and track.get('attribution_required') is False
+        and track.get('license_url') == 'https://mixkit.co/license/#musicFree'
+        and track.get('attribution_policy_url') == 'https://mixkit.co/free-stock-music/'
+        and bool(track.get('license_checked_at')))
+
+
+def has_required_credit(description, review):
+    track = review['track']
+    return valid_license(track) and (track.get('license') == MIXKIT_LICENSE
+        or track['attribution'] in description)
 
 
 def measure_audio(path, seconds, *, loop=False, gain_db=0.0):
@@ -122,5 +140,9 @@ def mix(source, output, board):
 
 
 def credit(description, review):
+    if not valid_license(review['track']):
+        raise ValueError('BGM 이용 근거와 크레딧이 필요합니다.')
+    if review['track']['license'] == MIXKIT_LICENSE:
+        return description
     text = review['track']['attribution']
     return description if text in description else description + '\n\nBGM: ' + text

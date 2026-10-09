@@ -8,7 +8,7 @@ from typing import Literal
 from pydantic import BaseModel, Field, model_validator
 DEFAULT_VOICE = "Zephyr"
 from app.core import quality
-from app.core import bgm
+from app.core import bgm, upload_metadata
 from app.core import versions as store
 from app.core import official_clips as media
 from app.core.prepared_packages import digest, read, verify_package
@@ -269,7 +269,7 @@ async def render(id,n):
     store.write_json(folder/'technical_review.json',dict(technical,file_sha256=digest(output)))
     store.write_json(folder/'sources.json',dict(product_url=v['product_url'],scenes=board['scenes'],voice=v['voice']))
     store.write_json(folder/'upload.json',dict(state='quality_review',privacy='private',channel='https://www.youtube.com/@GumaShop86',
-        pinned_comment=DISCLOSURE+'\n영상 속 제품: '+store.read(id)['title']+'\n상품 주소: '+v['product_url'],comment_state='pending_publication',title=board['title'],description=bgm.credit(DISCLOSURE+'\n\n'+board['summary']+'\n상품은 채널 프로필 링크에서 확인하세요.\n'+v['product_url'],music_review),file_sha256=digest(output)))
+        pinned_comment=DISCLOSURE+'\n영상 속 제품: '+store.read(id)['title']+'\n상품 주소: '+v['product_url'],comment_state='pending_publication',title=upload_metadata.title(board['title']),description=upload_metadata.description(board.get('description_bullets') or board['summary'],v['product_url'],music_review),file_sha256=digest(output)))
     return store.update(id,'Video',n,status='ready',cuts=cut_outputs,output_url=store.url(output),sources_url=store.url(folder/'sources.json'),message='영상 완성 · 웹에서 버전별 검토 · YouTube 자동 업로드 없음',publication_state='quality_review',review_destination='web')
 
 
@@ -327,7 +327,7 @@ def publication(id,n,action,evidence):
         music_path=folder/'bgm_review.json'
         if not music_path.is_file():raise ValueError('BGM 추가와 음량 검수를 먼저 완료하세요.')
         music=read(music_path)
-        if music.get('file_sha256')!=data['file_sha256'] or not music.get('clipping_passed') or music['track']['attribution'] not in data['description']:
+        if music.get('file_sha256')!=data['file_sha256'] or not music.get('clipping_passed') or not bgm.has_required_credit(data['description'],music):
             raise ValueError('현재 영상의 BGM 검수·크레딧이 필요합니다.')
         if len(evidence.get('notes',''))<10:raise ValueError('실제 확인 근거를 기록해주세요.')
         if action in ('review_web','review_private'):
