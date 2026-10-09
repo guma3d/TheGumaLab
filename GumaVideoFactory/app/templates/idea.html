@@ -16,7 +16,7 @@ function render(){
  if(v&&stage==='Preview'&&v.storyboard){
   const modern=v.storyboard.pipeline==='shopping_v2';
   if(!modern)h+='<p class="notice">이전 제작 방식의 보관본입니다. 새 흐름으로 다시 준비해야 합니다.</p>';
-  h+=`<h2>${esc(v.storyboard.title)}</h2><p>${esc(v.storyboard.summary)}</p><div class="grid">`+v.storyboard.scenes.map((s,i)=>`<article class="card"><span class="badge">CUT ${i+1} · ${esc(s.role||s.purpose)}</span>${s.clip_url?`<video controls muted playsinline preload="metadata" poster="${esc(safeLink(s.image_url))}" src="${esc(safeLink(s.clip_url))}"></video>`:`<img src="${esc(safeLink(s.image_url))}" alt="컷 ${i+1}">`}<p>${esc(s.narration_ko)}</p><small>${s.mode==='veo'?'Veo 재제작 예정 · 현재는 참고 화면':s.mode==='illustration_clip'?'AI 생활 예시 · 실제 제품 시연 아님':s.mode==='explanatory_image'?'설명 도해 · 실제 형상 아님':'공식 자료 보존'}</small>${s.hook?`<p>후킹: ${esc(s.hook)}</p>`:''}</article>`).join('')+'</div>';
+  h+=`<h2>${esc(v.storyboard.title)}</h2><p>${esc(v.storyboard.summary)}</p><div class="grid">`+v.storyboard.scenes.map((s,i)=>`<article class="card"><span class="badge">CUT ${i+1} · ${esc(s.role||s.purpose)}</span>${s.clip_url?`<video controls muted playsinline preload="metadata" poster="${esc(safeLink(s.image_url))}" src="${esc(safeLink(s.clip_url))}"></video>`:`<img src="${esc(safeLink(s.image_url))}" alt="컷 ${i+1}">`}<p>${esc(s.narration_ko)}</p><small>${s.mode==='veo'?'Veo 재제작 예정 · 현재는 참고 화면':s.mode==='illustration_clip'?'AI 생활 예시 · 실제 제품 시연 아님':s.mode==='explanatory_image'?'설명 도해 · 실제 형상 아님':s.mode==='acquired_clip'?'확보한 실제 촬영 · 재사용 허가 별도 확인':'공식 자료 보존'}</small>${s.hook?`<p>후킹: ${esc(s.hook)}</p>`:''}</article>`).join('')+'</div>';
   if(modern&&v.package_ready)h+='<button onclick="makeVideo()">영상 제작 · 새 버전</button>';
  }
  if(v&&stage==='Video'&&v.output_url){

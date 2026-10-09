@@ -70,12 +70,12 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     events=[f'Dialogue: 3,0:00:00.00,{end},Ad,,0,0,0,,[광고]']
     for i,line in enumerate(chunks):
         emphasis=i==len(chunks)-1
-        size=min(118 if emphasis else 90, int(840/max(len(line),1)))
-        y=1400+(i-(len(chunks)-1)/2)*128
+        size=min(180 if emphasis else 138, int(960/max(len(line),1)))
+        y=1375+(i-(len(chunks)-1)/2)*166
         fill='&H004ECCFF&' if emphasis else '&H00FFFFFF&'
         if emphasis and '소스' in line: fill='&H00367CFF&'
-        common=rf'\an5\pos(520,{y:g})\frz-3\fs{size}\fscx88\fscy88\t(0,150,\fscx100\fscy100)'
-        for layer,outline,color in ((0,16,'&H00FFFFFF&'),(1,11,'&H00171012&')):
+        common=rf'\an5\pos(520,{y:g})\frz-3\fs{size}\fscx88\fscy88\t(150,300,\fscx100\fscy100)'
+        for layer,outline,color in ((0,21,'&H00FFFFFF&'),(1,14,'&H00171012&')):
             tags='{'+common+rf'\bord{outline}\3c{color}\1c{fill}'+'}'
             events.append(f'Dialogue: {layer},0:00:00.00,{end},Pop,,0,0,0,,{tags}{line}')
     path.write_text(header+'\n'.join(events)+'\n',encoding='utf-8')
