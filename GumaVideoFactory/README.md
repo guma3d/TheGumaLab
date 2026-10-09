@@ -31,19 +31,20 @@ https://videofactory.guma3d.com/ · 홈서버 8085 · https://www.youtube.com/@G
 - 저장한 수정본: 고구마빵 Video v9, 보풀제거기 v8, 찹쌀떡 v14, 흑임자인절미 v3. 화면·파일 디코딩·고정 음량 검사를 마쳤으며 실제 청취는 웹 사용자 검토 대기다.
 - 2026-10-09 사용자 별도 요청으로 위 4편을 YouTube 비공개로 업로드했다. 설정·실제 URL·검증 결과는 `storage/handoffs/private-upload-20261009/`에 보존한다. 해당 버전의 비공개 업로드 승인만 유효하며 공개·자동 업로드 승인이 아니다. 채널 프로필의 `상품 모음` 외부 링크는 미등록 상태이므로 공개 전에 연결·검증하고 고정댓글은 공개 후 등록한다.
 
-## 현재 웹 수정본 — 2026-10-09 기존 BGM 복귀·첫 컷 교체
+## 현재 수정본 — 2026-10-09 기존 BGM 복귀·첫 컷 교체 및 요청된 비공개 등록
 
 | 제품 | Video | BGM | 상태 |
 |---|---|---|---|
-| 고구마빵 | v11 | Monkeys Spinning Monkeys | 웹 검토·업로드 미승인 |
-| 미지아 보풀제거기 2 | v10 | Life of Riley | 웹 검토·업로드 미승인 |
-| 딸기쏙우유 찹쌀떡 | v16 | Monkeys Spinning Monkeys | 웹 검토·업로드 미승인 |
-| 흑임자인절미 | v5 / Preview v5 | Monkeys Spinning Monkeys | 웹 검토·업로드 미승인 |
+| 고구마빵 | v11 | Monkeys Spinning Monkeys | [비공개 등록](https://www.youtube.com/watch?v=T0eKHI5ieXA) |
+| 미지아 보풀제거기 2 | v10 | Life of Riley | [비공개 등록](https://www.youtube.com/watch?v=uSQqUUQ1GCc) |
+| 딸기쏙우유 찹쌀떡 | v16 | Monkeys Spinning Monkeys | [비공개 등록](https://www.youtube.com/watch?v=5qAtgvCnDZE) |
+| 흑임자인절미 | v5 / Preview v5 | Monkeys Spinning Monkeys | [비공개 등록](https://www.youtube.com/watch?v=bBdkw1fdikM) |
 
 - 최신 선호에 따라 기존 Kevin MacLeod 5곡 무작위 선택으로 복귀했다. 설명 하단에 곡명·작곡가·출처·CC BY 4.0 링크·발췌/음량 조정을 한 줄로 쓰며, 수수료 고지 원문은 마지막 줄이다.
 - 찰떡아이스 CUT01의 부정확하고 노이즈가 심한 생성 포장 합성을 제외했다. 적합한 제품 영상은 확보하지 못하여 공식 스위트몰의 정확한 제품 표지 이미지를 고정 화면으로 사용한다. 1720px 원본을 축소 배치하고 글자·캐릭터를 재생성하지 않았다. 나머지 컷·기존 Zephyr 음성 원본 해시를 보존했다.
 - 요청·공식 자료·검수·새 버전 해시는 `storage/handoffs/restore-bgm-sesame-cover-20261009/`에 저장했다. 네 편 모두 기술 검수·디코딩·고정 BGM 음량 검사 통과, 관련 테스트 11개 통과. 실제 청취는 사용자 웹 리뷰 대기다.
-- 이번 수정에는 YouTube 업로드·공개 승인이 없다. 유료 생성·Veo 사용 0회, YouTube 업로드·삭제 0회. 이전 4편 영구 삭제는 직전 대화의 실행 시점 확인이 아직 없어 대기하며 삭제 대화상자를 취소했다.
+- 수정 완료 후 사용자가 최신 버전을 확인하고 “좋아 이제 4개 다시 등록해”라고 별도로 요청하여 위 정확한 네 버전만 비공개 등록했다. 공개·차기 버전 업로드 승인은 없다. 실제 Studio에서 제목·설명·상품 링크·간결한 BGM 출처·수수료 고지 마지막 줄, 유료 프로모션/AI 사용, 아동용 아님, 한국어, HD 완료를 확인했다. 자동 챕터·장소·개념과 구독자 알림은 끄고 Howto & Style·표준 라이선스·오디오만 리믹스 설정을 저장했다.
+- 등록 시작 시 Studio 동영상·Shorts 목록은 모두 비어 있었으며 완료 후 최신 비공개 4편만 확인했다. 이번 작업의 삭제는 0회이며 이전 삭제 대기 상태는 현재 목록 기준으로 해소됐다. 과거 업로드 URL은 이력으로만 보존한다. 승인·파일 해시·저장 설정·Studio 증빙은 `storage/handoffs/restored-private-upload-20261009/`에 보존한다. 유료 생성·Veo 사용 0회. 공개 전 프로필 상품 모음 연결 및 공개 후 고정댓글 작업은 여전히 필요하다.
 
 ## 이전 비공개 업로드 — 2026-10-09 Mixkit BGM
 
