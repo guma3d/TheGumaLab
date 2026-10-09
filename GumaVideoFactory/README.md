@@ -58,18 +58,25 @@ https://videofactory.guma3d.com/ · 홈서버 8085 · https://www.youtube.com/@G
 |---|---|---|---|
 | 고구마빵 | v13 / Thumbnail v2 | Monkeys Spinning Monkeys | [공개](https://www.youtube.com/watch?v=IQkkmVqJn6w) |
 | 미지아 보풀제거기 2 | v11 / Thumbnail v1 | Life of Riley | [공개](https://www.youtube.com/watch?v=0Wa-VX-mTco) |
-| 딸기쏙우유 찹쌀떡 | v16 | Monkeys Spinning Monkeys | [비공개 등록](https://www.youtube.com/watch?v=5qAtgvCnDZE) |
-| 흑임자인절미 | v5 / Preview v5 | Monkeys Spinning Monkeys | [비공개 등록](https://www.youtube.com/watch?v=bBdkw1fdikM) |
+| 딸기쏙우유 찹쌀떡 | v17 / Preview v10 / Thumbnail v1 | Monkeys Spinning Monkeys | [비공개 등록](https://www.youtube.com/watch?v=yqG4SXzqpCA) |
+| 흑임자인절미 | v6 / Preview v6 / Thumbnail v1 | Monkeys Spinning Monkeys | [비공개 등록](https://www.youtube.com/watch?v=fKpQ14VtPMY) |
 
 - 최신 선호에 따라 기존 Kevin MacLeod 5곡 무작위 선택으로 복귀했다. 설명 하단에 곡명·작곡가·출처·CC BY 4.0 링크·발췌/음량 조정을 한 줄로 쓰며, 수수료 고지 원문은 마지막 줄이다.
 - 찰떡아이스 CUT01의 부정확하고 노이즈가 심한 생성 포장 합성을 제외했다. 적합한 제품 영상은 확보하지 못하여 공식 스위트몰의 정확한 제품 표지 이미지를 고정 화면으로 사용한다. 1720px 원본을 축소 배치하고 글자·캐릭터를 재생성하지 않았다. 나머지 컷·기존 Zephyr 음성 원본 해시를 보존했다.
 - 요청·공식 자료·검수·새 버전 해시는 `storage/handoffs/restore-bgm-sesame-cover-20261009/`에 저장했다. 네 편 모두 기술 검수·디코딩·고정 BGM 음량 검사 통과, 관련 테스트 11개 통과. 이후 사용자가 “이번엔 좋아”라고 피드백하고 재등록을 요청했다. 이는 사용자 검토 결과이며 에이전트의 실제 청취 완료를 뜻하지 않는다.
-- 최초 재등록은 사용자 “좋아 이제 4개 다시 등록해” 지시로 고구마빵 v11·미지아 v10·찹쌀떡 v16·흑임자인절미 v5를 비공개 업로드한 이력이다. 이후 고구마빵·미지아만 공개했고, 별도 팝 자막·썸네일 교체 요청으로 위 최신 공개 버전으로 교체했다. 나머지 두 편의 공개나 후속 버전 업로드 승인은 없다. 실제 Studio에서 제목·설명·상품 링크·간결한 BGM 출처·수수료 고지 마지막 줄, 유료 프로모션/AI 사용, 아동용 아님, 한국어, HD 완료를 확인했다. 자동 챕터·장소·개념과 구독자 알림은 끄고 Howto & Style·표준 라이선스·오디오만 리믹스 설정을 저장했다.
+- 최초 재등록은 사용자 “좋아 이제 4개 다시 등록해” 지시로 고구마빵 v11·미지아 v10·찹쌀떡 v16·흑임자인절미 v5를 비공개 업로드한 이력이다. 이후 고구마빵·미지아만 공개했고, 별도 팝 자막·썸네일 교체 요청으로 위 최신 공개 버전으로 교체했다. 찹쌀떡·찰떡아이스도 후속 직접 요청으로 아래 최신 비공개 수정본으로 교체했다. 공개 승인은 없다. 실제 Studio에서 제목·설명·상품 링크·간결한 BGM 출처·수수료 고지 마지막 줄, 유료 프로모션/AI 사용, 아동용 아님, 한국어, HD 완료를 확인했다. 자동 챕터·장소·개념과 구독자 알림은 끄고 Howto & Style·표준 라이선스·오디오만 리믹스 설정을 저장했다.
 - 등록 시작 시 Studio 동영상·Shorts 목록은 모두 비어 있었으며 완료 당시 최신 비공개 4편만 확인했다. 삭제는 0회이며 이전 삭제 대기 상태는 당시 목록 기준으로 해소됐다. 과거 업로드 URL은 이력으로만 보존한다. 승인·파일 해시·저장 설정·Studio 증빙은 `storage/handoffs/restored-private-upload-20261009/`에 보존한다. 유료 생성·Veo 사용 0회.
+
+### 찰떡아이스·딸기떡 비공개 교체 완료 — 2026-10-09
+
+- Food에서 사용자가 두 편의 최신 자막·썸네일 적용, 비공개 교체와 이전 영상 삭제를 직접 요청했다. 승인 원문과 실제 사용자 메시지 ID는 `storage/handoffs/private-pop-thumbnails-20261009/approval.json`에 보존한다. 이번 정확한 수정본에 한한 비공개 업로드 승인으로, 공개나 다음 버전의 자동 업로드 승인이 아니다.
+- 흑임자인절미 Preview v6 / Video v6(41초), 딸기쏙우유 Preview v10 / Video v17(28.97초)에 `common-pop-outline-v4`를 적용했다. 컷별 시작·중간·끝 및 최종 전환 프레임을 검수해 손·스푼·포장·제품을 피하도록 자막 위치를 조정했다. 기존 대사·컷 순서·MP3와 최종 AAC 스트림 해시를 보존했다. 찰떡아이스 마지막 컷은 기존 제품 이미지·크기·좌표·시간을 보존하며 텍스트 그래픽만 교체했고, 다른 맛과 본 제품 CTA를 시간적으로 분리했다.
+- 실제 상품 기준 사진을 참고한 별도 생성 Thumbnail v1을 각각 로컬·웹·YouTube에 등록했다. 영상에는 삽입하지 않았다. 제작 전후 화면 검수·전체 디코딩·1080×1920/30fps 검사와 웹 끝까지 재생을 통과했다. 실제 청취를 새로 수행했다고 기록하지 않는다. 추가 TTS·Veo 0회, 내장 이미지 생성 도구 2회. 프롬프트·소스 해시·검수·실제 저장 증빙은 같은 인계 폴더에 보존한다.
+- 새 비공개 두 편의 HD·커버·제목/설명 일치·설정 저장을 확인한 뒤 이전 `bBdkw1fdikM`·`5qAtgvCnDZE`를 삭제했다. 이전 공개본 `T0eKHI5ieXA`·`uSQqUUQ1GCc`도 사용자 요청으로 삭제된 상태다. 로컬 모든 버전과 삭제 전 게시 메타데이터는 보존한다. 최종 Studio 목록은 공개 2개·비공개 3개, 총 5개다. 최신 결과 기준은 `storage/handoffs/private-pop-thumbnails-20261009/completion.json`이다.
 
 ### 상품 모음 및 두 편 공개 — 2026-10-09
 
-- 최초에는 기존 고구마빵 v11·미지아 v10의 가시성만 공개로 바꿨다. 이후 사용자가 두 공개 영상에도 공통 팝 자막과 생성 썸네일을 적용해 교체하도록 요청했다. 현재는 고구마빵 v13(`IQkkmVqJn6w`)·미지아 v11(`0Wa-VX-mTco`)이 공개이고, 이전 `T0eKHI5ieXA`·`uSQqUUQ1GCc`는 비공개로 보존한다. 찹쌀떡 v16·찰떡아이스 v5 및 피자설기 v3는 비공개다.
+- 최초에는 기존 고구마빵 v11·미지아 v10의 가시성만 공개로 바꿨다. 이후 사용자가 두 공개 영상에도 공통 팝 자막과 생성 썸네일을 적용해 교체하도록 요청했다. 현재는 고구마빵 v13(`IQkkmVqJn6w`)·미지아 v11(`0Wa-VX-mTco`)이 공개이고, 이전 `T0eKHI5ieXA`·`uSQqUUQ1GCc`는 후속 사용자 요청으로 YouTube에서 삭제했다. 찹쌀떡 v17·찰떡아이스 v6 및 피자설기 v3는 비공개다.
 - 두 교체본은 기존 장면·순서와 최종 AAC 오디오 스트림 해시를 보존했다. 컷별 빈 공간의 팝 자막과 Food가 이미지 생성 도구로 만든 별도 커버만 새 버전으로 적용했다. 고구마빵 v12는 CUT5 문구 검수 중간본으로 웹 보존하며 업로드하지 않았다. 최종 두 편의 전체 디코딩·컷/전환 화면·브라우저 끝까지 재생·Studio 썸네일/설정/HD/공개 저장을 확인한 뒤 이전본을 비공개로 전환했다. TTS·Veo 추가 사용 0회. 사용자 편집 제목·설명과 상품 번호 01/02, 구매 링크·실제 상품 사진은 유지했다.
 - 채널 프로필의 `상품 모음` 링크: https://videofactory.guma3d.com/products. 로그인 없이 접근 가능한 모바일 상품 목록으로 01 고구마빵, 02 미지아 보풀제거기 2를 연결했다. 실제 구매 링크 도착 상품·옵션을 확인하고 구매 버튼 옆 수수료 고지를 표시한다.
 - 상품 모음의 디자인은 노란색·크림 배경·진한 글자와 둥근 카드다. 실제 구매 링크에서 확인한 대표 상품 사진을 전체가 보이도록 배치한다. `thumbnail.coupangcdn.com` 상품 사진 또는 영상 ID가 일치하는 `i.ytimg.com` 썸네일 주소만 허용한다. 모바일은 한 열로 배치한다. 2026-10-09 사용자 디자인 피드백이며 영상 제작 색상과 구분한다. 사진 출처·검증 화면은 `storage/handoffs/yellow-catalog-20261009/`에 보존한다.
@@ -108,9 +115,9 @@ https://videofactory.guma3d.com/ · 홈서버 8085 · https://www.youtube.com/@G
 
 ## 실행·설정
 
-- 세션 공유는 Food·Tech·Living을 대상으로 현재 최종 버전·실제 게시 상태·승인 경계·파트너스 미확인 범위를 전달한다. 큰 원본 대신 이 README·RESEARCH·루트 CODEX_MAIN_HANDOFF와 `storage/handoffs/common-pop-thumbnails-20261009/completion.json`을 기준으로 이어간다. 현재 채널은 공개 2개·비공개 최신본 3개·비공개 이전 공개본 2개다. 완료 공유 수신 결과는 같은 폴더의 `session-share.json`에 기록한다.
+- 세션 공유는 Food·Tech·Living을 대상으로 현재 최종 버전·실제 게시 상태·승인 경계·파트너스 미확인 범위를 전달한다. 큰 원본 대신 이 README·RESEARCH·루트 CODEX_MAIN_HANDOFF와 `storage/handoffs/private-pop-thumbnails-20261009/completion.json`을 기준으로 이어간다. 현재 채널은 공개 2개·비공개 최신본 3개이며 이전 교체본은 삭제됐다. 완료 공유 전송 결과는 같은 폴더의 `session-share.json`에 기록한다.
 - 최신 피자설기 v3의 웹 전체 재생(34.67초 종료·오류 없음), 별도 썸네일 표시, 구버전 v2에 썸네일 소급 미적용, 제작 보관함 커버를 확인했다. 증빙: `storage/handoffs/food-pizza-seolgi-9719378135/production-v0003/web-verification.json`.
-- 공통 자막·썸네일 정책과 검수 조건은 `3617157`로 저장했다. 관련 shopping 테스트 12개 통과(기존 추천 readiness fixture 1건은 제외). 해당 자동 배포도 `Detect changed projects and deploy` 단계에서 실패하여 빈 제작 큐 확인 후 HomeServer 컨테이너를 직접 재시작했다. 실제 세 카테고리 기본값과 외부 상품 목록 HTTP 200을 확인했다. 두 교체본 전체 웹 재생, Studio 공개 2개/비공개 5개, 상품 모음 새 영상 링크를 실제 브라우저에서 검증했다. 이를 GitHub Actions 성공으로 기록하지 않는다.
+- 공통 자막·썸네일 정책과 검수 조건은 `3617157`로 저장했다. 관련 shopping 테스트 12개 통과(기존 추천 readiness fixture 1건은 제외). 해당 자동 배포도 `Detect changed projects and deploy` 단계에서 실패하여 빈 제작 큐 확인 후 HomeServer 컨테이너를 직접 재시작했다. 실제 세 카테고리 기본값과 외부 상품 목록 HTTP 200을 확인했다. 두 교체본 전체 웹 재생과 상품 모음 새 영상 링크를 실제 브라우저에서 검증했다. 당시 Studio 공개 2개/비공개 5개였으며 이후 교체본 삭제를 반영한 현재 수는 위 최신 완료 기록을 따른다. 이를 GitHub Actions 성공으로 기록하지 않는다.
 
 ```powershell
 cd D:\TheGumaLab\GumaVideoFactory

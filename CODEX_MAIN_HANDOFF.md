@@ -21,12 +21,12 @@
 
 - 아래 공개·비공개 상태는 2026-10-09 Studio 확인 기록 기준이다. 현재 상태를 다시 물으면 실제 채널과 대조한다. 과거의 빈 채널·삭제 대기·흑임자 v2 검토 상태는 현재 상태가 아니다.
 - 채널 `UCRtAVFQFmJCcpvLeuyq03Kg` / `@GumaShop86`: Standard·Intermediate·Advanced 기능 사용 가능. 고급 기능은 2026-10-08 Studio에서 Enabled 확인.
-- 공개: 고구마빵(`372a4996226cf3a5`) Video v13 / Thumbnail v2 → https://www.youtube.com/watch?v=IQkkmVqJn6w, 미지아 보풀제거기 2(`57ab7c7af6717633`) Video v11 / Thumbnail v1 → https://www.youtube.com/watch?v=0Wa-VX-mTco. 사용자 별도 교체 요청에 따라 팝 자막·생성 썸네일을 적용하고 기존 AAC 오디오 스트림·장면·제목·설명을 보존했다. 새 공개본 검증 후 이전 `T0eKHI5ieXA`·`uSQqUUQ1GCc`는 비공개로 보존했다.
-- 비공개 최신본: 딸기쏙우유 찹쌀떡(`67e70b2aebfc411e`) v16 → https://www.youtube.com/watch?v=5qAtgvCnDZE, 흑임자인절미(`dadc1759bf7912ef`) Video v5 / Preview v5 → https://www.youtube.com/watch?v=bBdkw1fdikM, 피자설기 v3 → https://www.youtube.com/watch?v=yypR1nJVmic. 이 세 편의 공개 및 후속 버전 업로드 승인은 없다. 이전 공개 보관본 2개를 포함하면 현재 채널은 공개 2개·비공개 5개다.
+- 공개: 고구마빵(`372a4996226cf3a5`) Video v13 / Thumbnail v2 → https://www.youtube.com/watch?v=IQkkmVqJn6w, 미지아 보풀제거기 2(`57ab7c7af6717633`) Video v11 / Thumbnail v1 → https://www.youtube.com/watch?v=0Wa-VX-mTco. 사용자 별도 교체 요청에 따라 팝 자막·생성 썸네일을 적용하고 기존 AAC 오디오 스트림·장면·제목·설명을 보존했다. 이전 `T0eKHI5ieXA`·`uSQqUUQ1GCc`는 후속 사용자 요청으로 YouTube에서 삭제했고 로컬 버전은 보존한다.
+- 비공개 최신본: 딸기쏙우유 찹쌀떡(`67e70b2aebfc411e`) Video v17 / Preview v10 / Thumbnail v1 → https://www.youtube.com/watch?v=yqG4SXzqpCA, 흑임자인절미(`dadc1759bf7912ef`) Video v6 / Preview v6 / Thumbnail v1 → https://www.youtube.com/watch?v=fKpQ14VtPMY, 피자설기 v3 → https://www.youtube.com/watch?v=yypR1nJVmic. 찰떡아이스·딸기떡은 Food의 직접 사용자 요청으로 팝 자막·별도 생성 커버를 적용해 비공개 교체했고, 새 업로드 검증 뒤 이전 `bBdkw1fdikM`·`5qAtgvCnDZE`를 삭제했다. 기존 최종 AAC와 사용자 제목·설명은 보존했다. 이 세 편의 공개 승인은 없다. 현재 채널은 공개 2개·비공개 3개, 총 5개다. 다음 버전은 별도 업로드 요청이 필요하다.
 - 상품 모음: https://videofactory.guma3d.com/products. 따뜻한 노란색·크림 테마, 실제 제품 사진, 모바일 한 열 카드. 승인된 공개 상품 01 고구마빵·02 미지아만 노출한다. 비공개/웹 검토 제품은 자동 추가하지 않는다.
 - 사용자가 직접 수정한 제목·설명이 게시 문구 기준이다. 제목 앞 [광고]를 붙이지 않고 설명은 글머리, BGM 출처는 간결한 하단 한 줄, 정확한 쿠팡 수수료 고지는 마지막 줄. 기존 음원은 출처 표시 조건을 준수한다.
 - 찰떡아이스 첫 장면은 정확한 공식 제품 표지 원본 이미지로 교체했다. 노이즈가 있는 생성 포장 합성을 재사용하지 않는다. 기존 로컬 버전·승인·검수 이력은 보존한다.
-- 최신 근거: `GumaVideoFactory/storage/handoffs/common-pop-thumbnails-20261009/completion.json`. 이전 단계는 `restored-private-upload-20261009/`, `public-two-20261009/`, `yellow-catalog-20261009/`, `user-metadata-20261009/`, `music-credit-fix-20261009/`에 보존한다. 제품별 최종 버전/BGM 표는 README가 기준이다.
+- 최신 근거: `GumaVideoFactory/storage/handoffs/private-pop-thumbnails-20261009/completion.json` 및 같은 폴더 `studio-final.txt/png`, `web-verification.json`, 제품별 검수·커버 프롬프트. 이전 공개본 교체·삭제는 `common-pop-thumbnails-20261009/completion.json`, `youtube-cleanup.json`이며 과거 승인·검수 기록은 수정하지 않는다. 제품별 최종 버전/BGM 표는 README가 기준이다.
 
 ## 파트너스 확인 범위와 후속 작업
 
