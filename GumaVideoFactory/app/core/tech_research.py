@@ -6,19 +6,31 @@ def validate_tech_evidence(item):
     if data.get('category') != 'tech':
         return
     evidence = data.get('tech_evidence') or {}
+    purchase = data.get('purchase_link') or {}
+    if not purchase.get('affiliate_url') or not purchase.get('affiliate_evidence'):
+        raise ValueError('테크 선정 필수 조건: 동일 제품·옵션의 실제 발급 파트너스 링크와 근거가 필요합니다.')
+    fit = evidence.get('market_fit') or {}
+    if fit.get('basis') not in ('popularity', 'season', 'trend', 'current_event') or any(
+        not str(fit.get(key) or '').strip() for key in ('reason', 'source_url', 'checked_at')
+    ):
+        raise ValueError('테크는 인기 또는 현재 계절·트렌드·화제성의 확인 근거가 필요합니다.')
     videos = evidence.get('videos') or []
-    if not videos:
-        raise ValueError('테크 선정 1순위: 기술을 설명하는 기존 영상의 실제 확보·재생 검수 근거가 필요합니다.')
-    for video in videos:
+    images = evidence.get('images') or []
+    if not (videos or images):
+        raise ValueError('테크 제작 등록에는 기술 설명 기존 영상 또는 이미지의 실제 확보·검수 근거가 필요합니다.')
+    for video in videos + images:
         if video.get('source_type') not in ('manufacturer_official', 'third_party'):
             raise ValueError('테크 영상의 제조사 공식/제3자 출처를 구분하세요.')
         if video['source_type'] == 'third_party' and video.get('creator_country') != 'CN':
             raise ValueError('제3자 테크 영상은 중국 제작 자료만 허용합니다. 게시 사이트 국가로 대체하지 마세요.')
         for field in ('source_url', 'publisher_evidence', 'local_path', 'sha256',
-                      'technical_content', 'used_range', 'playback_review', 'reuse_permission_evidence'):
+                      'technical_content', 'reuse_permission_evidence'):
             if not str(video.get(field) or '').strip():
                 raise ValueError(f'테크 확보 영상 근거 누락: {field}')
+        required = ('used_range', 'playback_review') if video in videos else ('visual_review',)
+        if any(not str(video.get(field) or '').strip() for field in required):
+            raise ValueError('테크 자료의 실제 구간 재생 또는 이미지 시각 검수 근거가 필요합니다.')
     if not evidence.get('official_search_evidence'):
         raise ValueError('제조사 공식 기술 영상 우선 조사 근거가 필요합니다.')
-    if not any(v['source_type'] == 'manufacturer_official' for v in videos) and not evidence.get('official_unavailable_reason'):
+    if not any(v['source_type'] == 'manufacturer_official' for v in videos + images) and not evidence.get('official_unavailable_reason'):
         raise ValueError('중국 제3자 영상 선택에는 적합한 공식 영상 미확보 사유가 필요합니다.')

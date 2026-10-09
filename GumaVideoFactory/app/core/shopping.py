@@ -130,6 +130,8 @@ def build(rec_path, board_path):
     if not rec.purchase_link or not rec.purchase_link.affiliate_url:
         raise ValueError('쿠팡 데이터와 실제 발급된 파트너스 링크를 먼저 확보하세요.')
     board=Board.model_validate(read(board_path))
+    if rec.category == 'tech' and any(s.mode == 'veo' for s in board.scenes) and not rec.tech_evidence.get('paid_generation_user_request'):
+        raise ValueError('테크는 기존 설명 자료를 우선 사용합니다. 유료 영상 생성에는 별도 사용자 요청 근거가 필요합니다.')
     bgm.select(board.model_dump())
     if rec.category=='food' and any(s.mode=='veo' for s in board.scenes):
         raise ValueError('음식 영상은 Flow 크레딧으로 생성·검수한 파일을 먼저 등록하세요. Veo API는 호출하지 않습니다.')
