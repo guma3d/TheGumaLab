@@ -20,7 +20,7 @@ function render(){
   if(modern&&v.package_ready)h+='<button onclick="makeVideo()">영상 제작 · 새 버전</button>';
  }
  if(v&&stage==='Video'&&v.output_url){
-  h+=v.quality_revision?'<p class="badge">1080 세로 · 제작 전/후 감독 검수</p>':'<p class="notice">이전 품질 기준의 보관본</p>';
+  h+=v.content_review_status==='rejected'?'<p class="notice">콘텐츠 수정 요청 · 기술 검사 통과와 별개로 재제작 필요</p>':v.quality_revision?'<p class="badge">1080 세로 · 제작 전/후 감독 검수</p>':'<p class="notice">이전 품질 기준의 보관본</p>';
   if(v.publication_state==='quality_review')h+='<p class="notice">웹 검토본 · 화면·음성 검수 대기</p>';
   h+=`<video controls playsinline preload="metadata" ${v.thumbnail_url?`poster="${esc(safeLink(v.thumbnail_url))}"`:''} src="${esc(safeLink(v.output_url))}"></video><p><a href="${esc(safeLink(v.output_url))}" download>영상 다운로드</a></p>`;
   const covers=(data.thumbnails||[]).filter(t=>t.video_version===v.number);
