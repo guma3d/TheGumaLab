@@ -52,6 +52,8 @@ https://videofactory.guma3d.com/ · 홈서버 8085 · https://www.youtube.com/@G
 
 ## 누룽지팝 최종본 — 2026-10-09 사용자 검토 수용·비공개 등록
 
+- 2026-10-10 후속 사용자 요청으로 기존 비공개 4편(딸기떡 `yqG4SXzqpCA`, 찰떡아이스 `fKpQ14VtPMY`, 피자설기 `yypR1nJVmic`, 누룽지팝 `in626m-2X8Y`)의 구독 피드 게시·구독자 알림을 모두 ON으로 변경하고 저장을 확인했다. 네 편은 Private 유지, 기존 URL·영상 보존, 재업로드·삭제·공개 변경 0회. 각 `upload.json`에 관찰 상태를 반영했으며 실제 저장 증빙은 `storage/handoffs/private-notifications-20261010/`에 있다. 아래 최초 업로드의 OFF 기록은 과거 이력이다.
+
 > 2026-10-10 최신 게시 원칙: 아래의 구독자 알림 OFF는 당시 실제 저장 이력이다. 앞으로 새 공개 예정 업로드는 최초 비공개 단계에서도 구독 피드·알림 ON을 기본으로 하고 첫 공개 전에 확인한다. 제목·설명·썸네일은 기존 영상에서 수정하며 조회수만을 이유로 삭제·재업로드하지 않는다. 고구마빵 `IQkkmVqJn6w`와 미지아 `0Wa-VX-mTco`는 현재 공개 상태를 유지한다. 10월 10일 07:25 KST 관찰에서 목록 조회수는 3/4, 분석은 각 1로 집계가 달랐다. 연령/국가 제한과 알림은 없었고 구독 피드·알림 OFF 항목은 비활성화였다. 원본 지표와 설정은 `storage/handoffs/reupload-diagnosis-20261010/observations.json`에 보존했다. 공개 후 약 60시간인 10월 12일 09시 KST에 읽기 전용 재점검한다.
 
 - 농심 누룽지팝 달콤한맛 142g×2개, 아이디어 `12681a1f9b25c2e8`. 승인 콘티 v2 → Preview v1 / Video v1 / Thumbnail v1, 8컷·31.97초·1080×1920. [웹 버전](https://videofactory.guma3d.com/ideas/12681a1f9b25c2e8?video=1#Video), [YouTube 비공개](https://www.youtube.com/watch?v=in626m-2X8Y). 원본은 `storage/products/12681a1f9b25c2e8/Video/v0001/final.mp4`, SHA256 `ce634cbb69e17cfd10bb009d5612b9c78bee190c6af27f46e146ec7f4fbd9874`.

@@ -11,6 +11,8 @@
 
 ## 지속되는 사용자 승인 원칙
 
+- 2026-10-10 비공개 4편의 구독 피드·알림 ON 변경/저장 완료: `yqG4SXzqpCA`, `fKpQ14VtPMY`, `yypR1nJVmic`, `in626m-2X8Y`. 전부 비공개 유지, 공개 승인 없음. 실제 증빙과 상태는 `GumaVideoFactory/storage/handoffs/private-notifications-20261010/completion.json` 및 각 Video의 `upload.json`. 기존 공개 2편의 비활성화된 OFF 설정과 구분한다.
+
 - 2026-10-10 최신 승인: 새 공개 예정 영상은 구독 피드·알림 ON(최초 비공개 단계부터 확인), 제목·설명·썸네일은 기존 YouTube 영상에서 수정한다. 공개 승인은 별개며 낮은 조회수 때문에 삭제·재업로드하지 않는다. 두 공개 영상 `0Wa-VX-mTco`/`IQkkmVqJn6w`는 유지, 공개 후 약 60시간인 10월 12일 09시 KST에 재점검한다. 기준 데이터는 `GumaVideoFactory/storage/handoffs/reupload-diagnosis-20261010/observations.json`. 기존 알림 OFF 기록은 과거 이력이며 새 업로드 기본값이 아니다.
 
 - 원본·수정본·최종본 모두 프로젝트 storage에 로컬 보존하고 웹에서 버전별 검토한다.
