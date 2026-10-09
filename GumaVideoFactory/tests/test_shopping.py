@@ -41,6 +41,13 @@ class ShoppingTests(unittest.TestCase):
             self.assertNotEqual(upper,path.read_text())
             self.assertIn('[광고]',upper)
             with self.assertRaisesRegex(ValueError,'안전 영역'):write_food_pop_captions(path,'첫 줄\n다음 줄',4,'upper',300)
+            for design in ('food-outline-v2', 'generic'):
+                style=dict(caption_design=design,accent='ffcc00',font='Maplestory')
+                s.write_captions(path,'기존 스타일 대사',4,style,'제목',caption_position='upper')
+                upper=path.read_text()
+                s.write_captions(path,'기존 스타일 대사',4,style,'제목',caption_position='lower')
+                self.assertNotEqual(upper,path.read_text())
+                self.assertIn('[광고]',upper)
 
     def test_short_motion_cannot_be_frozen_to_cover_narration(self):
         with self.assertRaises(ValueError):

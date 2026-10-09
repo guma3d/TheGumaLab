@@ -14,7 +14,7 @@ def _chunks(text, limit):
     return lines or [' ']
 
 
-def write_food_captions(path,text,seconds,headline,generated=False):
+def write_food_captions(path,text,seconds,headline,generated=False,caption_position=None,caption_center_y=None):
     def clock(t):
         cs=round(t*100)
         return f'{cs//360000}:{cs//6000%60:02d}:{cs//100%60:02d}.{cs%100:02d}'
@@ -33,13 +33,16 @@ Style: Ad,Maplestory,42,&H00FFFFFF,&H00FFFFFF,&H00322528,&H00322528,-1,0,0,0,100
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 '''
     lines=[f'Dialogue: 3,0:00:00.00,{end},Ad,,0,0,0,,[광고]']
+    center=caption_center_y if caption_center_y is not None else (570 if caption_position=='upper' else 1375)
+    headline_position=rf'{{\an5\pos(520,{center-100:g})}}' if caption_position else ''
+    body_position=rf'{{\an5\pos(520,{center+100:g})}}' if caption_position else ''
     if headline:
         title=r'\N'.join(_chunks(headline,14))
-        lines.append(f'Dialogue: 2,0:00:00.00,{end},Headline,,0,0,0,,{title}')
+        lines.append(f'Dialogue: 2,0:00:00.00,{end},Headline,,0,0,0,,{headline_position}{title}')
     chunks=_chunks(text,16);total=sum(map(len,chunks));at=0
     for chunk in chunks:
         until=at+seconds*len(chunk)/total
-        lines.append(f'Dialogue: 1,{clock(at)},{clock(until)},Caption,,0,0,0,,{chunk}')
+        lines.append(f'Dialogue: 1,{clock(at)},{clock(until)},Caption,,0,0,0,,{body_position}{chunk}')
         at=until
     path.write_text(header+'\n'.join(lines)+'\n',encoding='utf-8')
 

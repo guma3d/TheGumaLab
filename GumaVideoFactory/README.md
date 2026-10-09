@@ -105,6 +105,11 @@ https://videofactory.guma3d.com/ · 홈서버 8085 · https://www.youtube.com/@G
 - 변경 커밋 `530a259`의 Actions는 `Detect changed projects and deploy`에서 실패하여 빈 제작 큐를 확인한 뒤 HomeServer 컨테이너를 직접 재시작했다. 웹 API의 최신 버전·비공개 상태 및 파일 응답을 확인했다.
 
 ## 실행·설정
+
+- 2026-10-09 최종 동기화: Food·Tech·Living에 최신 제작 결과, 기존 공개 2편/비공개 2편, 승인 경계, 파트너스 미확인 범위를 재공유했다. 큰 원본 대신 이 README·RESEARCH·루트 CODEX_MAIN_HANDOFF와 버전별 완료 파일을 기준으로 이어간다.
+- 최신 피자설기 v3의 웹 전체 재생(34.67초 종료·오류 없음), 별도 썸네일 표시, 구버전 v2에 썸네일 소급 미적용, 제작 보관함 커버를 확인했다. 증빙: `storage/handoffs/food-pizza-seolgi-9719378135/production-v0003/web-verification.json`.
+- 자동 배포 `99218ff`/`c9dcaf2` 실행은 기존 `Detect changed projects and deploy` 단계에서 실패했다. 제작 큐가 비어 있음을 확인하고 HomeServer 컨테이너를 직접 재시작해 웹 반영을 검증했다. 이를 GitHub Actions 성공으로 기록하지 않는다.
+
 ```powershell
 cd D:\TheGumaLab\GumaVideoFactory
 docker compose up -d --build

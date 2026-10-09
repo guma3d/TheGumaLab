@@ -264,7 +264,7 @@ async def render(id,n):
         output=folder/f'cut_{i:02d}.mp4'
         style=board.get('category_style',PRESETS['tech'])
         subtitles=folder/f'captions_{i:02d}.ass'
-        write_captions(subtitles,scene['narration_ko'],seconds,style,scene.get('headline',''),scene['mode'] in ('veo','illustration_clip','explanatory_image'),scene.get('caption_position','lower'),scene.get('caption_center_y'))
+        write_captions(subtitles,scene['narration_ko'],seconds,style,scene.get('headline',''),scene['mode'] in ('veo','illustration_clip','explanatory_image'),scene.get('caption_position'),scene.get('caption_center_y'))
         # All runtime paths are controlled workspace paths; escape libavfilter delimiters.
         escaped=str(subtitles).replace('\\','/').replace(':',r'\:').replace("'",r"\'")
         framing=quality.generated_portrait_filter(raw) if scene['mode'] in ('veo','illustration_clip') else quality.portrait_filter('293638' if style['label']=='신형 테크' else 'f4eee8')
@@ -305,14 +305,14 @@ def spoken_duration_limit(scene):
     return 9 if scene['role']=='cta' or scene.get('timing_approval','').strip() else 6.5
 
 
-def write_captions(path,text,seconds,style,headline='',generated=False,caption_position='lower',caption_center_y=None):
+def write_captions(path,text,seconds,style,headline='',generated=False,caption_position=None,caption_center_y=None):
     """Keep the approved style while placing each cut in its inspected empty area."""
     if style.get('caption_design') == 'food-pop-outline-v3':
         from app.core.food_captions import write_food_pop_captions
-        return write_food_pop_captions(path, headline or text, seconds,caption_position,caption_center_y)
+        return write_food_pop_captions(path, headline or text, seconds,caption_position or 'lower',caption_center_y)
     if style.get('caption_design') in ('food-editorial-v1', 'food-outline-v2'):
         from app.core.food_captions import write_food_captions
-        return write_food_captions(path,text,seconds,headline,generated=generated)
+        return write_food_captions(path,text,seconds,headline,generated=generated,caption_position=caption_position,caption_center_y=caption_center_y)
     clean=re.sub(r'[{}\\\r\n]',' ',text)
     chunks=[];line=''
     for word in clean.split():
@@ -339,14 +339,17 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     def clock(t):
         cs=round(t*100);return f'{cs//360000}:{cs//6000%60:02d}:{cs//100%60:02d}.{cs%100:02d}'
     events=[f'Dialogue: 3,0:00:00.00,{clock(seconds)},Ad,,0,0,0,,[광고]']
+    center=(caption_center_y if caption_center_y is not None else (570 if caption_position=='upper' else 1375))*2/3
+    headline_position=rf'{{\an5\pos(340,{center-65:g})}}' if caption_position else ''
+    body_position=rf'{{\an5\pos(340,{center+65:g})}}' if caption_position else ''
     if headline:
         title=re.sub(r'[{}\\\r\n]',' ',headline)
-        events.append(f'Dialogue: 1,0:00:00.00,{clock(seconds)},Headline,,0,0,0,,{title}')
+        events.append(f'Dialogue: 1,0:00:00.00,{clock(seconds)},Headline,,0,0,0,,{headline_position}{title}')
 
     total=sum(map(len,chunks));elapsed=0
     for chunk in chunks:
         end=elapsed+seconds*len(chunk)/total
-        events.append(f'Dialogue: 0,{clock(elapsed)},{clock(end)},Caption,,0,0,0,,{chunk}')
+        events.append(f'Dialogue: 0,{clock(elapsed)},{clock(end)},Caption,,0,0,0,,{body_position}{chunk}')
         elapsed=end
     path.write_text(header+'\n'.join(events)+'\n',encoding='utf-8')
 
