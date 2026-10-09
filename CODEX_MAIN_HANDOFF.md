@@ -22,6 +22,13 @@
 - 피드백은 관련 최신 MD와 실행 규칙에 반영하고 오래된 규칙을 정리한다. 버전별 과거 원본·검수 이력은 보존한다.
 - 설명에는 `#광고` + 실제 제품/용도/주제 관련 태그 최소 5개(총 6개 이상)가 필수다. 중복·무관 태그는 제외하고 BGM 출처 앞, 수수료 고지는 마지막 줄에 둔다. 현재 등록 5편의 설명을 이 기준으로 수정·저장 확인 완료했으며 제목·가시성·영상은 유지했다. 증빙은 `storage/handoffs/description-hashtags-20261009/completion.json`이다.
 
+## 대추야자 최신 상태 — 웹 검토본 (2026-10-10)
+
+- Food의 직접 사용자 승인 “좋다! 영상제작 진행해”(`01a122ea-c11e-7e10-a541-3a0045b38944`)와 콘티 v0001 해시 확인 후 8컷·31.9초로 제작했다. 아이템 `3219f31dbcaf884c`, Preview v1 / Video v1 / Thumbnail v1. [정확한 웹 버전](https://videofactory.guma3d.com/ideas/3219f31dbcaf884c?video=1#Video).
+- 실제 KHALAS 원물·씨 제거 참고와 쿠팡 동일1kg1개·판매자쿠팡·로켓·제휴도착 확인. 7개 Flow 조리 컷 + 마지막 실제 포장 원본 사진. 단면 초안 2개 제외 후 참조 프레임으로 교정, 최종 단면은 1컷뿐. 땅콩버터·초콜릿·토핑은 별도 재료.
+- Zephyr 신규7개·공통CTA재사용, Wallpaper -25.01LUFS 고정·음성-16.53LUFS·피크-2.70dBTP. 전후 화면/기술 검사 완료, 실제 청취는 사용자 웹 검토 대기. Flow 원본720×1280을1.5배 출력한 제한을 별도 기록. 잔액9,598→9,508, Veo API0회. YouTube 업로드·공개·상품모음 추가 승인/실행 없음.
+- 자료·원본·승인·검수·정확한 해시는 `GumaVideoFactory/storage/handoffs/food-dates-2257525/`의 `completion.json`, `main-state.json`과 `production-v0001/`을 따른다. 실제 파일은 `storage/products/3219f31dbcaf884c/Video/v0001/final.mp4`.
+
 ## 누룽지팝 최신 상태 — 사용자 수용·비공개 등록 (2026-10-09)
 
 - Food의 직접 사용자 메시지 “이건 한번에 성공!! 유튜브에 비공개로 등록해” 확인 후 `12681a1f9b25c2e8`의 Video v1 / Thumbnail v1만 [YouTube 비공개](https://www.youtube.com/watch?v=in626m-2X8Y)로 등록했다. [웹 버전](https://videofactory.guma3d.com/ideas/12681a1f9b25c2e8?video=1#Video), 8컷·31.97초, 영상 해시 `ce634cbb69e17cfd10bb009d5612b9c78bee190c6af27f46e146ec7f4fbd9874`.
