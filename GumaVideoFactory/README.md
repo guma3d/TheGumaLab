@@ -50,6 +50,13 @@ https://videofactory.guma3d.com/ · 홈서버 8085 · https://www.youtube.com/@G
 - 당시 사용자 요청으로 별도 AI 생성 커버를 테스트 적용했다. 이후 같은 날 후속 지시로 모든 Food·Tech·Living의 필수 기준으로 확대했다. [썸네일 v1](https://videofactory.guma3d.com/storage/products/e9d3b5997cf329dd/Thumbnail/v0001/cover.png)은 실제 상품 사진을 참고한 생성 이미지이며 실제 촬영 사진이 아니다. 영상에 삽입하지 않고 웹 플레이어 poster·제작 보관함에 사용한다. `Thumbnail/v0001/metadata.json`에 출처·검수·연결 Video 버전·해시를 기록하고 새 썸네일은 새 번호로 보존한다. 과거 Video 버전에 소급 적용하지 않는다.
 - 제작 당시 검수는 `storage/handoffs/food-pizza-seolgi-9719378135/completion-v0002.json`, `revision-board-v0002/preflight-review.json`, `production-v0003/final-review.json`에 보존한다. 이후 사용자가 “매우 좋은데? 이거 유튜브에 비공개로 업로드해줘”라고 요청하여 Video v3 / Thumbnail v1을 [YouTube 비공개](https://www.youtube.com/watch?v=yypR1nJVmic)로 등록했다. 실제 Studio에서 별도 생성 썸네일·비공개·HD 완료·설명을 확인했다. 공개 승인은 없다. 현재 게시 상태는 `main-state.json`과 `storage/handoffs/common-pop-thumbnails-20261009/completion.json`을 따른다.
 
+## 누룽지팝 최종본 — 2026-10-09 사용자 검토 수용·비공개 등록
+
+- 농심 누룽지팝 달콤한맛 142g×2개, 아이디어 `12681a1f9b25c2e8`. 승인 콘티 v2 → Preview v1 / Video v1 / Thumbnail v1, 8컷·31.97초·1080×1920. [웹 버전](https://videofactory.guma3d.com/ideas/12681a1f9b25c2e8?video=1#Video), [YouTube 비공개](https://www.youtube.com/watch?v=in626m-2X8Y). 원본은 `storage/products/12681a1f9b25c2e8/Video/v0001/final.mp4`, SHA256 `ce634cbb69e17cfd10bb009d5612b9c78bee190c6af27f46e146ec7f4fbd9874`.
+- Food의 직접 사용자 메시지 “이건 한번에 성공!! 유튜브에 비공개로 등록해”를 확인해 해당 버전만 등록했다. Studio GumaShop에서 비공개·별도 생성 썸네일·HD 완료·저작권 검사 문제 없음, 정확한 제목/설명·상품 링크·#광고 포함 8개 해시태그·BGM 출처·마지막 줄 수수료 고지를 확인했다. 유료 프로모션/AI 사용, 아동용 아님, 한국어, Howto & Style, 표준 라이선스, 오디오만 리믹스이며 자동 챕터/장소/개념과 구독자 알림은 껐다. 공개 승인 및 상품 모음 추가는 없다. 등록된 영상은 총 6편(공개 2·비공개 4)이다.
+- 할리스 공식 메뉴 원본과 집에서 아이스크림에 올리는 활용 장면을 구분했다. Flow 원본은 720×1280으로 1.5배 출력이며, 첫 공식 포스터 700×1240은 공통 720px 기준보다 20px 작은 제한을 별도 검수 기록에 남겼다. 고해상도 가로 배너도 확보했지만 최종 첫 장면은 메뉴 가독성을 확인한 세로 원본이다. 일반 원본 기준의 변경으로 해석하지 않는다.
+- Life of Riley를 무작위 선정해 -25 LUFS 고정, Zephyr 음성 -16.22 LUFS, 최종 피크 -3.28 dBTP로 검수했다. 사용자 콘텐츠 수용과 에이전트의 실제 청취는 구분하며 에이전트가 들었다고 기록하지 않는다. 2개 옵션 일시품절 및 공식 사진 재사용 조건 미확인은 공개 전 재확인 항목이다. 승인·실제 저장 설정·화면 증빙·현재 상태는 `storage/handoffs/food-nurungjipop-8989223435/upload-completion-v0001.json`, `upload-approval-v0001.json`, `studio-proof.png`, `main-state.json`에 보존한다.
+
 ## 기존 4편 최종본 — 2026-10-09 공개 2편·비공개 2편
 
 아래 표는 해당 날짜 Studio에서 확인한 게시 상태다. 이전 버전 기록이나 새 웹 검토본을 현재 YouTube 게시 상태로 혼동하지 않는다.
