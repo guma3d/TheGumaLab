@@ -11,6 +11,37 @@ from app.studio import request_publish, StageRequest
 
 
 class ShoppingTests(unittest.TestCase):
+    def test_inserted_cut_reuses_original_voice_by_text_and_settings(self):
+        with tempfile.TemporaryDirectory() as temp:
+            folder=Path(temp);old_audio=folder/'audio_02.mp3';old_audio.write_bytes(b'original')
+            parent=dict(voice='Zephyr',voice_rate='natural-brisk',storyboard=dict(scenes=[dict(narration_ko='첫 컷'),dict(narration_ko='보존할 대사')]))
+            current=dict(voice='Zephyr',voice_rate='natural-brisk')
+            self.assertEqual(s.find_reusable_audio(parent,folder,dict(narration_ko='보존할 대사'),current),old_audio)
+            self.assertIsNone(s.find_reusable_audio(parent,folder,dict(narration_ko='새 대사'),current))
+            self.assertIsNone(s.find_reusable_audio(parent,folder,dict(narration_ko='보존할 대사'),dict(current,voice_rate='slow')))
+
+    def test_added_cut_and_long_hook_require_approval(self):
+        with tempfile.TemporaryDirectory() as temp:
+            _,board=self.fixture(Path(temp))
+            board['scenes']=board['scenes'][:1]*4+board['scenes'][1:]
+            with self.assertRaisesRegex(ValueError,'추가 컷 승인'):s.Board(**board)
+            board['additional_cut_approval']='User requested one additional hook cut'
+            board['scenes'][0]=dict(board['scenes'][0],duration_seconds=8)
+            with self.assertRaisesRegex(ValueError,'6초 초과'):s.Board(**board)
+            board['scenes'][0]['timing_approval']='Approved combined trend and delivery narration'
+            self.assertEqual(len(s.Board(**board).scenes),9)
+
+    def test_caption_safe_area_and_cut_positions(self):
+        from app.core.food_captions import write_food_pop_captions
+        with tempfile.TemporaryDirectory() as temp:
+            path=Path(temp)/'caption.ass'
+            write_food_pop_captions(path,'첫 줄\n다음 줄',4,'upper')
+            upper=path.read_text()
+            write_food_pop_captions(path,'첫 줄\n다음 줄',4,'lower')
+            self.assertNotEqual(upper,path.read_text())
+            self.assertIn('[광고]',upper)
+            with self.assertRaisesRegex(ValueError,'안전 영역'):write_food_pop_captions(path,'첫 줄\n다음 줄',4,'upper',300)
+
     def test_short_motion_cannot_be_frozen_to_cover_narration(self):
         with self.assertRaises(ValueError):
             s.motion_padding('official_clip', 2.9, 4.03)

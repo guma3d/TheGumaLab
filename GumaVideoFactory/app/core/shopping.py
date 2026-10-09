@@ -67,7 +67,10 @@ class Cut(BaseModel):
     headline: str = Field(default='',max_length=32)
     covered_features: list[str] = Field(default_factory=list)
     start_seconds: float = Field(default=0, ge=0, allow_inf_nan=False)
-    duration_seconds: float = Field(default=5, ge=2, le=6, allow_inf_nan=False)
+    duration_seconds: float = Field(default=5, ge=2, le=9, allow_inf_nan=False)
+    timing_approval: str = ''
+    caption_position: Literal['upper', 'lower'] = 'lower'
+    caption_center_y: float | None = Field(default=None, ge=390, le=1510, allow_inf_nan=False)
     veo_prompt: str = ''
     preserve_actual: bool = False
     square_crop: bool = False
@@ -76,6 +79,8 @@ class Cut(BaseModel):
     def validate_cut(self):
         from app.core.recommendations import Source
         Source.safe_url(self.source_url)
+        if self.duration_seconds > 6 and not self.timing_approval.strip():
+            raise ValueError('6초 초과 컷에는 사용자 승인 근거가 필요합니다.')
         if self.mode=='veo' and (len(self.veo_prompt.strip())<20 or self.preserve_actual):
             raise ValueError('Veo 컷에는 연출 프롬프트가 필요하며 실제 기술·음식 보존 컷은 생성하지 않습니다.')
         return self
@@ -89,12 +94,15 @@ class Board(BaseModel):
     popularity_claimed: bool = False
     popularity_source_url: str = ''
     cta_destination: Literal['channel_profile'] = 'channel_profile'
-    scenes: list[Cut] = Field(min_length=6,max_length=8)
+    scenes: list[Cut] = Field(min_length=6,max_length=9)
+    additional_cut_approval: str = ''
     bgm_track: str = ''
     caption_design: Literal['', 'food-pop-outline-v3'] = ''
 
     @model_validator(mode='after')
     def funnel(self):
+        if len(self.scenes)>8 and not self.additional_cut_approval.strip():
+            raise ValueError('8컷 초과 구성에는 사용자 추가 컷 승인 근거가 필요합니다.')
         if not self.author_model.strip() or 'gemini' in self.author_model.lower():
             raise ValueError('현재 세션의 실제 작성 주체를 기록하세요. Gemini 기획은 사용하지 않습니다.')
         roles=[s.role for s in self.scenes]
@@ -202,7 +210,12 @@ def enqueue(id,n,regenerate=False,reuse_video_version=None):
     if not read(folder/'storyboard.json').get('quality_revision'):
         raise ValueError('새 해상도·감독 검수 기준으로 콘티를 다시 준비하세요.')
     board=read(folder/'storyboard.json')
-    bgm.assign_random(board)
+    if reuse_video_version:
+        parent=store.get(id,'Video',reuse_video_version)
+        board['bgm_track']=parent['storyboard']['bgm_track']
+        bgm.select(board)
+    else:
+        bgm.assign_random(board)
     board.setdefault('category_style',dict(PRESETS[rec['category']])).update(
         voice=PRESETS[rec['category']]['voice'],voice_direction='bright-friendly-female')
     previous=store.history(id,'Video')
@@ -222,19 +235,18 @@ async def render(id,n):
         reused_audio=False
         if v.get('reuse_video_version'):
             parent=store.get(id,'Video',v['reuse_video_version'])
-            old=parent['storyboard']['scenes'][i-1]
-            source=store.version_dir(id,'Video',v['reuse_video_version'])/audio.name
-            if source.is_file() and parent.get('voice')==v['voice'] and old['narration_ko']==scene['narration_ko']:
+            source=find_reusable_audio(parent,store.version_dir(id,'Video',v['reuse_video_version']),scene,v)
+            if source:
                 shutil.copyfile(source,audio);reused_audio=True
         if not reused_audio:
             await synthesize_speech(scene['narration_ko'],audio,voice=v['voice'],rate=v.get('voice_rate','natural-brisk'))
-        if media.duration(audio)+.4>(9 if scene['role']=='cta' else 6.5):
+        if media.duration(audio)+.4>spoken_duration_limit(scene):
             raise ValueError(f'CUT {i}: 대사를 6초 안팎으로 간결하게 수정하세요.')
     for i,scene in enumerate(board['scenes'],1):
         store.update(id,'Video',n,message=f'{i}/{len(board["scenes"])} 컷·고정 음성 제작')
         audio=folder/f'audio_{i:02d}.mp3'
         seconds=media.duration(audio)+.4
-        if seconds>(9 if scene['role']=='cta' else 6.5):
+        if seconds>spoken_duration_limit(scene):
             raise ValueError(f'CUT {i}: 대사가 {seconds:.1f}초입니다. 6초 안팎으로 간결하게 수정하세요.')
         raw=preview/f'scene_{i:02d}.mp4'
         if scene['mode']=='veo':
@@ -242,7 +254,7 @@ async def render(id,n):
             reused=False
             if v.get('reuse_video_version'):
                 parent=store.get(id,'Video',v['reuse_video_version'])
-                old=parent['storyboard']['scenes'][i-1]
+                old=parent['storyboard']['scenes'][i-1] if i<=len(parent['storyboard']['scenes']) else {}
                 source=store.version_dir(id,'Video',v['reuse_video_version'])/raw.name
                 if source.is_file() and old.get('veo_prompt')==scene['veo_prompt'] and old.get('source_sha256')==scene.get('source_sha256'):
                     shutil.copyfile(source,raw);reused=True
@@ -252,7 +264,7 @@ async def render(id,n):
         output=folder/f'cut_{i:02d}.mp4'
         style=board.get('category_style',PRESETS['tech'])
         subtitles=folder/f'captions_{i:02d}.ass'
-        write_captions(subtitles,scene['narration_ko'],seconds,style,scene.get('headline',''),scene['mode'] in ('veo','illustration_clip','explanatory_image'))
+        write_captions(subtitles,scene['narration_ko'],seconds,style,scene.get('headline',''),scene['mode'] in ('veo','illustration_clip','explanatory_image'),scene.get('caption_position','lower'),scene.get('caption_center_y'))
         # All runtime paths are controlled workspace paths; escape libavfilter delimiters.
         escaped=str(subtitles).replace('\\','/').replace(':',r'\:').replace("'",r"\'")
         framing=quality.generated_portrait_filter(raw) if scene['mode'] in ('veo','illustration_clip') else quality.portrait_filter('293638' if style['label']=='신형 테크' else 'f4eee8')
@@ -278,11 +290,26 @@ async def render(id,n):
     return store.update(id,'Video',n,status='ready',cuts=cut_outputs,output_url=store.url(output),sources_url=store.url(folder/'sources.json'),message='영상 완성 · 웹에서 버전별 검토 · YouTube 자동 업로드 없음',publication_state='quality_review',review_destination='web')
 
 
-def write_captions(path,text,seconds,style,headline='',generated=False):
-    """Short readable subtitles in the same safe area for every category episode."""
+def find_reusable_audio(parent, folder, scene, current):
+    """An inserted cut must not invalidate unchanged narration later in the video."""
+    if parent.get('voice')!=current.get('voice') or parent.get('voice_rate')!=current.get('voice_rate'):
+        return None
+    for index,old in enumerate(parent['storyboard']['scenes'],1):
+        source=folder/f'audio_{index:02d}.mp3'
+        if old['narration_ko']==scene['narration_ko'] and source.is_file():
+            return source
+    return None
+
+
+def spoken_duration_limit(scene):
+    return 9 if scene['role']=='cta' or scene.get('timing_approval','').strip() else 6.5
+
+
+def write_captions(path,text,seconds,style,headline='',generated=False,caption_position='lower',caption_center_y=None):
+    """Keep the approved style while placing each cut in its inspected empty area."""
     if style.get('caption_design') == 'food-pop-outline-v3':
         from app.core.food_captions import write_food_pop_captions
-        return write_food_pop_captions(path, headline or text, seconds)
+        return write_food_pop_captions(path, headline or text, seconds,caption_position,caption_center_y)
     if style.get('caption_design') in ('food-editorial-v1', 'food-outline-v2'):
         from app.core.food_captions import write_food_captions
         return write_food_captions(path,text,seconds,headline,generated=generated)

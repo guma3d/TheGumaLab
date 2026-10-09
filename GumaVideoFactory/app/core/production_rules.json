@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-09.8",
+  "revision": "2026-10-09.9",
   "rules": [
     {
       "id": "product-first-ad-disclosure",
@@ -95,6 +95,11 @@
       "id": "food-news-discovery",
       "category": "food",
       "instruction": "Before food research run recommendation_import.py --food-search-plan, then perform actual web searches across recent broadcast food coverage, overseas local food trends, retail sales/stock news and recipes. Prefer 7 days, maximum 30; distinguish publication date from event date. Verify broadcaster episode/air date, country/local original reporting, and any stock claim with seller, option, check time and source. Broadcast exposure alone is not evidence of popularity; a single sold-out listing is not a shortage craze. Save food_trend evidence and connect via same_product, related_product or recipe_ingredient with verified recipe rationale. Recommend only after exact Coupang official seller/Rocket/issued affiliate checks. Never claim related items are the featured product or taste identical."
+    },
+    {
+      "id": "approved-inserted-cut-preservation",
+      "category": "all",
+      "instruction": "Default 6-8 cuts; one extra cut is allowed with explicit user approval recorded in additional_cut_approval. A longer approved narration requires timing_approval (maximum 9 seconds). When the user requests an inserted cut and preservation, retain all existing source clips, narration and order; match reused speech by exact narration, voice and rate even when cut indices change. Preserve parent BGM on revisions; choose randomly from the verified five for new production. Never treat this as upload approval."
     }
   ],
   "feedback": [
@@ -185,12 +190,13 @@
     "food_color_continuity": "Grade locally per food using representative before/after frames; gently improve midtone warmth and ingredient color while retaining bright diffuse low-contrast light. Protect actual purple/red surfaces, skin, white dishes and real packaging. Match all cuts, reject oversaturation, fake gloss and harsh contrast; never impose one fixed-strength filter on every product. Composite captions and the ad badge after grading so their colors stay unchanged. Avoid per-frame hard color thresholds. Review every cut and transition in motion for amplified source noise, flicker and denoise trails; one still image is insufficient.",
     "food_approved_pop_style": {
       "id": "food-pop-outline-v3",
-      "scope": "Opt-in for pizza-seolgi approved storyboard v0001; preserve older styles and other categories",
+      "scope": "Opt-in for pizza-seolgi approved storyboards v0001/v0002; preserve older versions and other category styles",
       "font": "Maplestory Bold; exact generated storyboard font unidentified",
       "text": "Short 2-3 lines, white body, orange/yellow final keyword; thick black inner and white outer outlines; no box",
       "motion": "Single 150ms scale 88% to 100%, then fixed; no repeated bounce or jitter",
       "source": "Use real footage actions, not invented props from concept art"
-    }
+    },
+    "placement": "Choose upper/lower empty space per cut after start/middle/end frame inspection; keep text fixed within the cut and style consistent. Do not mechanically alternate or occlude product, hands, print, ad badge or platform UI. Preserve old versions."
   },
   "public_catalog_style": {
     "scope": "Public product collection website only; not video captions or category styling.",

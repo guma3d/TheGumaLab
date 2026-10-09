@@ -44,7 +44,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     path.write_text(header+'\n'.join(lines)+'\n',encoding='utf-8')
 
 
-def write_food_pop_captions(path, headline, seconds):
+def write_food_pop_captions(path, headline, seconds, position='lower', center_y=None):
     """Two aligned outline layers; one 150ms entrance, then completely still."""
     def clock(t):
         cs=round(t*100)
@@ -53,6 +53,13 @@ def write_food_pop_captions(path, headline, seconds):
     chunks=clean.split('\n') if '\n' in clean else _chunks(clean, 9)
     if len(chunks)>3:
         raise ValueError('팝 자막은 승인된 짧은 2~3줄로 작성하세요.')
+    if position not in ('upper', 'lower'):
+        raise ValueError('자막 위치는 upper 또는 lower입니다.')
+    center_y = center_y if center_y is not None else (570 if position == 'upper' else 1375)
+    # Include line spacing, rotated glyphs and outlines; reserve ad/platform UI space.
+    half_height = (len(chunks)-1)*83+140
+    if not 250+half_height <= center_y <= 1720-half_height:
+        raise ValueError('자막 덩어리가 광고·플랫폼 안전 영역을 벗어납니다.')
     end=clock(seconds)
     header='''[Script Info]
 ScriptType: v4.00+
@@ -71,7 +78,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     for i,line in enumerate(chunks):
         emphasis=i==len(chunks)-1
         size=min(180 if emphasis else 138, int(960/max(len(line),1)))
-        y=1375+(i-(len(chunks)-1)/2)*166
+        y=center_y+(i-(len(chunks)-1)/2)*166
         fill='&H004ECCFF&' if emphasis else '&H00FFFFFF&'
         if emphasis and '소스' in line: fill='&H00367CFF&'
         common=rf'\an5\pos(520,{y:g})\frz-3\fs{size}\fscx88\fscy88\t(150,300,\fscx100\fscy100)'
