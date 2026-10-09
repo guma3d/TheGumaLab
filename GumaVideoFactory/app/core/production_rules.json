@@ -54,7 +54,7 @@
     {
       "id": "shopping-funnel",
       "category": "all",
-      "instruction": "At 09:00, 15:00 and 21:00 KST each prepare one new item and save one completed video locally for web version review; three per day across categories. GPT-6 Astra directly researches trends and authors 6-8 cuts after verified Coupang data and affiliate links. No Gemini planning. Official video OR images required. Need -> solution -> evidenced popularity/interest reasons -> product features -> one brief Korean CTA explicitly asking viewers to click the channel profile 상품 모음 link. Never invent popularity. No 3D model creation. The first cut must strongly hook with verified interest/review counts or a current trend connected to a concrete use case. Record date and scope; never recast cumulative reviews as recent growth. Pokemon-card/food pairing is an example only when trend and real product are verified."
+      "instruction": "At 09:00, 15:00 and 21:00 KST each prepare one new item and save one completed video locally for web version review; three per day across categories. The currently selected session model directly researches trends and authors 6-8 cuts after verified Coupang data and affiliate links. No Gemini planning. Official video OR images required. Need -> solution -> evidenced popularity/interest reasons -> product features -> one brief Korean CTA explicitly asking viewers to click the channel profile 상품 모음 link. Never invent popularity. No 3D model creation. The first cut must strongly hook with verified interest/review counts or a current trend connected to a concrete use case. Record date and scope; never recast cumulative reviews as recent growth. Pokemon-card/food pairing is an example only when trend and real product are verified."
     },
     {
       "id": "selective-veo",
@@ -156,7 +156,7 @@
       "auth": "Ask user only when login or verification is required; distinguish browser disconnection. Never bypass authentication.",
       "browser": "Use connected in-app browser first; use Chrome if required capabilities are unavailable. Verify each browser session independently."
     },
-    "planner_model": "gpt-6-astra",
+    "planner_model": "current_session_model",
     "schedule": "09:00 tech, 15:00 food, 21:00 household Asia/Seoul; one per category daily",
     "workspace": "Store original assets, edits and final videos locally under project storage/products/<id>/Preview/vNNNN and Video/vNNNN. Manage every version and final output through the webservice with playback/download and version links. Missing YouTube upload is not a production blocker. Never auto-upload a completed final version.",
     "voice_rate": "natural-brisk",

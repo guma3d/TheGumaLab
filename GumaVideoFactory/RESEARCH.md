@@ -67,7 +67,7 @@
 
 ## 5. 실행·보존
 `docker exec GumaVideoFactory_app python shopping_package.py`를 사용한다.
-1. `build 후보.json --file 콘티.json`: 검증한 Recommendation과 Astra Board로 새 Preview 생성. 원본·출처·컷 번호·대사·수정 근거 보존.
+1. `build 후보.json --file 콘티.json`: 검증한 Recommendation과 현재 세션 모델이 작성한 Board로 새 Preview 생성. 특정 모델 변경은 요구하지 않으며 실제 작성 주체·원본·출처·컷 번호·대사·수정 근거 보존.
 2. `seal ID --version N --file 검수.json`: 1차 검수의 reviewed_by, passed, board_sha256, 전 scenes 검수, preflight 전 항목, unresolved_issues=[] 기록. 스타일 일관성·중복·후킹 근거를 notes에도 명시한다.
 3. Main만 승인된 콘티 버전·해시를 확인하고 `enqueue ID --version N`: 검수한 소스와 공통 Zephyr 음성으로 제작. 재생성은 새 버전, 변경 없는 음성·소스 재사용. 음식은 Flow 결과 파일을 먼저 등록한다.
 4. 2차 검수 후 `review`에 실제 청취·시각 결과와 file_sha256 기록. 청취 불가 시 `review_web`와 audio_review=user_review_on_web 사용. 두 검수의 관찰 근거를 남긴다.

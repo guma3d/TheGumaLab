@@ -1,4 +1,4 @@
-"""Astra-authored shopping cuts; local previews, selective Veo, private publication."""
+"""Session-authored shopping cuts; local previews, selective Veo, private publication."""
 import asyncio
 import json
 import re
@@ -82,7 +82,7 @@ class Cut(BaseModel):
 
 
 class Board(BaseModel):
-    author_model: Literal['gpt-6-astra']
+    author_model: str = Field(min_length=1, max_length=100)
     title: str = Field(min_length=1,max_length=100)
     summary: str
     popularity_basis: str = Field(min_length=10)
@@ -94,6 +94,8 @@ class Board(BaseModel):
 
     @model_validator(mode='after')
     def funnel(self):
+        if not self.author_model.strip() or 'gemini' in self.author_model.lower():
+            raise ValueError('현재 세션의 실제 작성 주체를 기록하세요. Gemini 기획은 사용하지 않습니다.')
         roles=[s.role for s in self.scenes]
         if set(roles)!=set(ROLES) or roles!=sorted(roles,key=ROLES.index):
             raise ValueError('필요성 → 솔루션 → 관심 이유 → 제품 소개 → CTA 순서가 필요합니다.')
@@ -124,7 +126,7 @@ def build(rec_path, board_path):
     if not required <= {f for s in board.scenes for f in s.covered_features}:
         raise ValueError('핵심 기능과 추가 기능 설명이 누락됐습니다.')
     idea=store.create(rec.model_dump(mode='json'),now_kst().strftime('%Y-%m-%d'),approved=False)
-    value,_=store.reserve(idea['id'],'Preview',True,execution_mode='astra_shopping')
+    value,_=store.reserve(idea['id'],'Preview',True,execution_mode='session_shopping')
     n=value['number'];folder=store.version_dir(idea['id'],'Preview',n)
     try:
         result=board.model_dump();result['pipeline']='shopping_v2';result['needs_3d']=False
@@ -161,7 +163,7 @@ def build(rec_path, board_path):
         quality.validate_variety(result['scenes'])
         store.write_json(folder/'storyboard.json',result)
         value=store.update(idea['id'],'Preview',n,status='awaiting_review',storyboard=result,needs_3d=False,
-            message='Astra 컷씬 검수 대기',board_sha256=digest(folder/'storyboard.json'))
+            message='컷씬 검수 대기',board_sha256=digest(folder/'storyboard.json'))
         return dict(value,idea_id=idea['id'])
     except Exception:
         store.update(idea['id'],'Preview',n,status='failed',message='컷씬 준비 실패 · 새 버전으로 재시도')
@@ -171,8 +173,8 @@ def build(rec_path, board_path):
 def seal(id,n,review_path):
     folder=store.version_dir(id,'Preview',n);v=store.get(id,'Preview',n);r=read(review_path)
     if v['status']!='awaiting_review':raise ValueError('검수 대기 버전만 확정할 수 있습니다.')
-    if r.get('board_sha256')!=digest(folder/'storyboard.json') or r.get('reviewed_by')!='gpt-6-astra' or r.get('passed') is not True:
-        raise ValueError('Astra의 실제 컷씬 검수와 일치하는 해시가 필요합니다.')
+    if r.get('board_sha256')!=digest(folder/'storyboard.json') or not isinstance(r.get('reviewed_by'),str) or not r['reviewed_by'].strip() or r.get('passed') is not True:
+        raise ValueError('실제 검수 주체와 컷씬 검수에 일치하는 해시가 필요합니다.')
     checks=r.get('scenes',[])
     if len(checks)!=len(v['storyboard']['scenes']) or any(c.get('number')!=i or c.get('passed') is not True or not c.get('notes') for i,c in enumerate(checks,1)):
         raise ValueError('모든 컷의 실물·기능·후킹·원본 경계 검수가 필요합니다.')
@@ -180,7 +182,7 @@ def seal(id,n,review_path):
         quality.validate_preflight(r)
     store.write_json(folder/'visual_review.json',r)
     files={p.relative_to(store.directory(id)).as_posix():digest(p) for p in folder.iterdir() if p.name!='version.json' and p.is_file()}
-    store.write_json(folder/'package.json',dict(files=files,pipeline='shopping_v2',reviewed_by='gpt-6-astra',prepared_at=now_kst().isoformat()))
+    store.write_json(folder/'package.json',dict(files=files,pipeline='shopping_v2',reviewed_by=r['reviewed_by'],prepared_at=now_kst().isoformat()))
     return store.update(id,'Preview',n,status='ready',package_ready=True,message='컷씬 검수 완료 · 자동 영상 제작 준비')
 
 
@@ -202,7 +204,7 @@ def enqueue(id,n,regenerate=False,reuse_video_version=None):
         voice=PRESETS[rec['category']]['voice'],voice_direction='bright-friendly-female')
     previous=store.history(id,'Video')
     regenerate=regenerate or bool(previous and previous[0].get('preview_version')!=n)
-    return store.reserve(id,'Video',regenerate,queued=True,preview_version=n,execution_mode='astra_shopping',
+    return store.reserve(id,'Video',regenerate,queued=True,preview_version=n,execution_mode='session_shopping',
         storyboard=board,product_url=purchase.affiliate_url,voice=PRESETS[rec['category']]['voice'],voice_rate=PRESETS[rec['category']]['voice_rate'],quality_revision='director-v2',reuse_video_version=reuse_video_version)[0]
 
 

@@ -36,7 +36,7 @@ async def execute(idea_id, stage, number):
         store.write_json(store.version_dir(idea_id,stage,number)/'production_rules.json',rules)
         store.update(idea_id,stage,number,production_rules_revision=rules['revision'],production_rules_sha256=rules['sha256'])
         if stage == '3DModel': raise ValueError('3D 모델 기능은 제거되었습니다.')
-        elif stage == 'Preview': raise ValueError('컷씬은 Astra가 shopping_package.py로 준비합니다.')
+        elif stage == 'Preview': raise ValueError('컷씬은 현재 세션이 shopping_package.py로 준비합니다.')
         else: await video_job(idea_id, number)
     except Exception as error:
         logger.exception('Studio job failed: %s %s v%s', idea_id, stage, number)
@@ -245,7 +245,7 @@ def preview_job(idea_id, number):
 
 async def video_job(idea_id, number):
     idea=store.read(idea_id); version=store.get(idea_id,'Video',number)
-    if version.get('execution_mode')=='astra_shopping':
+    if version.get('execution_mode') in ('session_shopping','astra_shopping'):
         from app.core.shopping import render
         return await render(idea_id,number)
     folder=store.version_dir(idea_id,'Video',number)

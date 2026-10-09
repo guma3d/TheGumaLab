@@ -52,7 +52,7 @@ class ShoppingTests(unittest.TestCase):
         image=root/'image.png';Image.new('RGB',(1080,1920),'teal').save(image)
         today=now_kst().date().isoformat()
         rec=dict(category='tech',title='Test',subject='Test',product_identity='Test',hook='문제 해결',why_now='새 공식 자료',key_feature='main',supporting_features=['a','b'],facts=['main'],visual_concept='실제 자료',product_keyword='Test',sources=[dict(title='source',url='https://example.org',published_date=today)],official_images=[dict(title='image',url='https://example.org/image',published_date=today)],purchase_link=dict(url='https://www.coupang.com/vp/products/123',seller='fixture',price_krw=99000,price_evidence='Synthetic verified option price',official_evidence='synthetic official evidence',rocket_evidence='synthetic rocket evidence',option='fixture',checked_at=now_kst().isoformat(),affiliate_url='https://link.coupang.com/a/fixture',affiliate_evidence='synthetic issued link evidence'))
-        board=dict(author_model='gpt-6-astra',title='fixture',summary='test',popularity_basis='관심을 끄는 기능을 근거로 설명',scenes=[dict(role=role,mode='official_image',source_file=str(image),source_url='https://example.org/image',evidence='synthetic test image only',narration_ko='테스트입니다.',hook='문제가 있나요?' if i==0 else '',covered_features=['main','a','b'],duration_seconds=2) for i,role in enumerate(['need','solution','reason','product','product','cta'])])
+        board=dict(author_model='gpt-6-sol',title='fixture',summary='test',popularity_basis='관심을 끄는 기능을 근거로 설명',scenes=[dict(role=role,mode='official_image',source_file=str(image),source_url='https://example.org/image',evidence='synthetic test image only',narration_ko='테스트입니다.',hook='문제가 있나요?' if i==0 else '',covered_features=['main','a','b'],duration_seconds=2) for i,role in enumerate(['need','solution','reason','product','product','cta'])])
         for i,scene in enumerate(board['scenes']):
             unique=root/f'fixture_{i}.png';Image.new('RGB',(1080,1920),(20+i*20,100,120)).save(unique);scene['source_file']=str(unique)
         rec.update(topic_key='fixture-topic',problem_key='fixture-problem',novelty_review=dict(checked_at=now_kst().isoformat(),channel='https://www.youtube.com/@GumaShop86',studio_checked=True,notes='Synthetic empty Studio fixture',comparisons=[]))
@@ -117,7 +117,7 @@ class ShoppingTests(unittest.TestCase):
             store.write_json(root/'rec.json',rec);store.write_json(root/'board.json',b)
             result=s.build(root/'rec.json',root/'board.json');id=result['idea_id'];n=result['number']
             folder=store.version_dir(id,'Preview',n)
-            review=dict(preflight={k:True for k in s.quality.PREFLIGHT_AXES},reviewed_by='gpt-6-astra',passed=True,board_sha256=s.digest(folder/'storyboard.json'),scenes=[dict(number=i,passed=True,notes='Synthetic fixture verification') for i in range(1,7)])
+            review=dict(preflight={k:True for k in s.quality.PREFLIGHT_AXES},reviewed_by='codex',passed=True,board_sha256=s.digest(folder/'storyboard.json'),scenes=[dict(number=i,passed=True,notes='Synthetic fixture verification') for i in range(1,7)])
             store.write_json(root/'review.json',review);s.seal(id,n,root/'review.json')
             v=s.enqueue(id,n);self.assertEqual(v['voice'],'Zephyr')
             self.assertEqual([x['stage'] for x in store.workflow(store.read(id))['buttons']],['Preview','Video'])

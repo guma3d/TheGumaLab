@@ -128,7 +128,7 @@ def validate_board(board, seconds, rec):
 
 
 def create_preview(idea_id, number, report):
-    raise ValueError('Gemini 콘티 생성은 중단되었습니다. Astra의 shopping_package.py를 사용하세요.')
+    raise ValueError('Gemini 콘티 생성은 중단되었습니다. 현재 세션에서 shopping_package.py를 사용하세요.')
 
 
 def render_board(idea_id,number,board,path,meta,report,publish=True):

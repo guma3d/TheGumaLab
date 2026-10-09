@@ -103,7 +103,7 @@ async def get_idea(idea_id:str):
 @router.post('/api/ideas/{idea_id}/{stage}')
 async def start(idea_id:str,stage:Literal['3DModel','Preview','Video'],req:StageRequest,tasks:BackgroundTasks):
     idea=find(idea_id)
-    if stage!='Video':raise HTTPException(410,'3D 기능은 제거됐습니다. 컷씬은 매일 09시 Astra가 준비합니다.')
+    if stage!='Video':raise HTTPException(410,'3D 기능은 제거됐습니다. 컷씬은 카테고리 세션에서 준비합니다.')
     from app.core.shopping import enqueue
     try:return enqueue(idea_id,req.preview_version,req.regenerate)
     except (ValueError,FileNotFoundError,TypeError) as error:raise HTTPException(409,str(error))

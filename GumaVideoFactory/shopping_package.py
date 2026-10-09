@@ -1,4 +1,4 @@
-"""Codex/Astra operator CLI. Browser outcomes require actual UI inspection."""
+"""Codex operator CLI. Browser outcomes require actual UI inspection."""
 import argparse
 import json
 from app.core import shopping as s, versions as store
