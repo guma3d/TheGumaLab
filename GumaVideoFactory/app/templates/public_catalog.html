@@ -1,26 +1,29 @@
 <!doctype html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>상품 모음 · GumaShop</title>
-  <meta name="description" content="GumaShop 영상에서 만난 상품을 한곳에서 확인하세요.">
-  <style>
-    *{box-sizing:border-box}body{margin:0;background:#f7f5f0;color:#252b25;font-family:system-ui,-apple-system,"Malgun Gothic",sans-serif;line-height:1.65}main{max-width:880px;margin:auto;padding:48px 22px 32px}.brand{font-size:16px;font-weight:800;letter-spacing:-.5px;color:#32634c;text-decoration:none}.intro{padding:38px 0 26px}h1{font-size:clamp(32px,7vw,48px);letter-spacing:-2px;margin:0 0 10px;line-height:1.2}.intro p{margin:0;color:#657065}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}article{background:#fff;border:1px solid #e0e5dc;border-radius:22px;padding:26px;display:flex;flex-direction:column;scroll-margin-top:20px}.eyebrow{display:flex;justify-content:space-between;align-items:center;color:#617460;font-size:13px}.number{font-weight:800;color:#32634c}h2{font-size:25px;letter-spacing:-1px;line-height:1.35;margin:24px 0 12px}.summary{color:#566154;margin:0 0 14px}ul{padding-left:19px;margin:0 0 24px;font-size:14px;color:#566154}li+li{margin-top:5px}.actions{margin-top:auto;display:grid;gap:8px}.buy,.watch{display:block;padding:13px 12px;border-radius:12px;text-align:center;font-size:15px;font-weight:700;text-decoration:none}.buy{background:#285d43;color:white}.watch{color:#285d43;border:1px solid #dce5dd}.buy:hover{background:#17432d}a:focus-visible{outline:3px solid #b46d18;outline-offset:4px}.disclosure{font-size:12px;line-height:1.7;color:#687267;margin:18px 0 0}.foot{border-top:1px solid #dde2d8;padding-top:20px;margin-top:32px;color:#6c756b;font-size:13px}.empty{padding:32px;background:white;border-radius:20px;color:#566154}@media(max-width:600px){main{padding:28px 18px}.intro{padding:30px 0 24px}.grid{grid-template-columns:1fr}article{padding:23px}h2{margin-top:18px}}
-  </style>
-</head>
-<body><main>
-  <a class="brand" href="https://www.youtube.com/@GumaShop86">GumaShop ↗</a>
-  <header class="intro"><h1>영상 속 그 상품.</h1><p>궁금했던 상품, 여기서 찾아보세요.</p></header>
-  <section class="grid" aria-label="상품 모음">
-  {% for product in products %}
-    <article id="product-{{ product.number }}">
-      <div class="eyebrow"><span class="number">{{ '%02d'|format(product.number) }}</span><span>{{ product.category }}</span></div>
-      <h2>{{ product.name }}</h2><p class="summary">{{ product.summary }}</p>
-      <ul>{% for detail in product.details %}<li>{{ detail }}</li>{% endfor %}</ul>
-      <div class="actions"><a class="buy" href="{{ product.purchase_url }}" rel="sponsored noopener" target="_blank">쿠팡에서 상품 보기 ↗</a><a class="watch" href="{{ product.video_url }}" rel="noopener" target="_blank">소개 영상 보기</a></div>
-      <p class="disclosure">이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</p>
-    </article>
-  {% else %}<p class="empty">곧 영상 속 상품을 소개할게요.</p>{% endfor %}
-  </section>
-  <footer class="foot">가격·배송·판매 여부는 상품 페이지의 최신 정보를 확인해 주세요.</footer>
+<html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#ffd43b">
+<title>상품 모음 · GumaShop</title><meta name="description" content="GumaShop 영상에서 만난 상품을 한곳에서 확인하세요.">
+<style>
+:root{--ink:#302919;--muted:#766b56;--yellow:#ffd43b;--paper:#fffdf7;--line:#ece4d1}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:system-ui,-apple-system,"Malgun Gothic",sans-serif;line-height:1.65;-webkit-font-smoothing:antialiased}a{color:inherit}main{max-width:1000px;margin:auto;padding:28px 28px 32px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:26px}.brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;font-size:21px;font-weight:850;letter-spacing:-.9px}.brand-mark{display:grid;place-items:center;width:36px;height:36px;border-radius:12px;background:var(--yellow);font-size:23px;line-height:1}.channel-link{font-size:13px;text-decoration:none;color:var(--muted)}
+.intro{position:relative;overflow:hidden;background:var(--yellow);border-radius:28px;padding:40px 42px 36px;isolation:isolate}.intro:after{content:"";position:absolute;z-index:-1;width:265px;height:265px;border:1px solid #e9b92d;border-radius:50%;right:-60px;top:-60px}.kicker{font-size:11px;letter-spacing:2px;font-weight:800;margin:0 0 16px}.intro h1{font-size:clamp(32px,5.5vw,49px);letter-spacing:-2.5px;line-height:1.23;margin:0 0 18px;font-weight:850}.intro p:last-of-type{margin:0;color:#5a491c;font-size:15px}.hero-spark{position:absolute;right:60px;top:41px;font-size:152px;line-height:1;color:#f0b819;transform:rotate(-12deg);z-index:-1}.hero-note{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid #d3a726;border-radius:100px;font-size:11px;font-weight:650;margin-top:25px}.dot{width:6px;height:6px;border-radius:50%;background:#675019}
+.section-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:34px 0 16px}.section-heading h2{margin:0;font-size:18px;letter-spacing:-.5px}.count{font-size:12px;color:var(--muted)}.count strong{color:var(--ink);font-weight:800}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}.card{overflow:hidden;border:1px solid var(--line);border-radius:24px;background:white;display:flex;flex-direction:column;scroll-margin-top:24px;box-shadow:0 5px 18px #5b431105;transition:box-shadow .2s,border-color .2s}.card:hover{border-color:#dfc264;box-shadow:0 12px 30px #5b43110b}
+.visual{position:relative;height:235px;overflow:hidden;background:#f6edcf}.visual img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 47%}.visual-placeholder{height:100%;display:grid;place-items:center;font-size:76px;font-weight:800;color:#c49d28}.category{position:absolute;top:16px;left:16px;padding:5px 12px;border-radius:100px;background:#fffdf7f5;font-size:12px;font-weight:750;box-shadow:0 2px 8px #3029190d}.number{position:absolute;right:16px;top:16px;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--yellow);font-weight:800;font-size:12px}.visual-caption{position:absolute;bottom:12px;right:14px;background:#302919b8;color:white;border-radius:6px;padding:2px 7px;font-size:10px}
+.card-body{padding:25px 26px 22px;display:flex;flex-direction:column;flex:1}.card h3{font-size:25px;letter-spacing:-1px;line-height:1.35;margin:0 0 10px}.summary{font-size:14px;color:var(--muted);margin:0 0 18px}.details{list-style:none;padding:0;margin:0 0 23px;display:flex;flex-wrap:wrap;gap:7px}.details li{border-radius:7px;background:#f8f5ed;padding:5px 9px;font-size:12px;color:#6b604c}
+.actions{margin-top:auto;display:grid;gap:8px}.buy{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 17px;border-radius:12px;background:var(--yellow);text-decoration:none;font-size:15px;font-weight:800;transition:background .15s}.buy:hover{background:#f7c52a}.buy span:last-child{font-size:19px;line-height:1}.watch{display:flex;justify-content:center;align-items:center;gap:6px;padding:9px;text-decoration:none;font-size:12px;color:#74684e}.watch:hover{text-decoration:underline}.play{font-size:10px}.disclosure{border-top:1px solid #f0ebde;padding-top:15px;margin:11px 0 0;font-size:11px;line-height:1.75;color:#80745f}
+.foot{display:flex;justify-content:space-between;gap:22px;align-items:center;border-top:1px solid var(--line);padding-top:23px;margin-top:35px;font-size:11px;color:var(--muted)}.foot strong{font-size:13px;letter-spacing:-.3px;color:#766448;white-space:nowrap}.foot p{margin:0}.empty{grid-column:1/-1;padding:40px;background:#fff5cf;border-radius:20px;text-align:center;color:var(--muted)}a:focus-visible{outline:3px solid #6b4914;outline-offset:4px}
+@media(max-width:620px){main{padding:20px 18px 26px}.topbar{margin-bottom:20px}.brand{font-size:19px}.channel-link{font-size:12px}.intro{padding:29px 25px;border-radius:22px}.intro h1{letter-spacing:-1.8px;font-size:34px}.intro p:last-of-type{font-size:13px;max-width:230px}.hero-spark{right:-13px;top:100px;font-size:110px;opacity:.6}.hero-note{margin-top:20px}.section-heading{margin-top:28px}.grid{grid-template-columns:1fr;gap:20px}.visual{height:225px}.card-body{padding:23px 22px 20px}.card h3{font-size:24px}.foot{flex-direction:column;align-items:flex-start;gap:8px}}@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body><main>
+<nav class="topbar" aria-label="채널 바로가기"><a class="brand" href="https://www.youtube.com/@GumaShop86"><span class="brand-mark" aria-hidden="true">g.</span>GumaShop</a><a class="channel-link" href="https://www.youtube.com/@GumaShop86">유튜브 채널 ↗</a></nav>
+<header class="intro"><p class="kicker">GUMASHOP COLLECTION</p><h1>눈길 갔던 그 상품,<br>여기 있어요.</h1><p>영상에서 발견한 작은 즐거움을 만나보세요.</p><span class="hero-note"><span class="dot" aria-hidden="true"></span>영상 속 상품을 한곳에</span><span class="hero-spark" aria-hidden="true">✳</span></header>
+<div class="section-heading"><h2>상품 모음</h2><span class="count">총 <strong>{{ products|length }}</strong>개 상품</span></div>
+<section class="grid" aria-label="상품 모음">
+{% for product in products %}
+<article class="card" id="product-{{ product.number }}">
+<div class="visual">{% if product.thumbnail_url %}<img src="{{ product.thumbnail_url }}" alt="{{ product.name }} 소개 영상의 한 장면" width="480" height="360" decoding="async" {% if loop.index > 2 %}loading="lazy"{% endif %} referrerpolicy="no-referrer">{% else %}<div class="visual-placeholder" aria-hidden="true">{{ '%02d'|format(product.number) }}</div>{% endif %}<span class="category">{{ product.category }}</span><span class="number">{{ '%02d'|format(product.number) }}</span>{% if product.thumbnail_url %}<span class="visual-caption">소개 영상의 한 장면</span>{% endif %}</div>
+<div class="card-body"><h3>{{ product.name }}</h3><p class="summary">{{ product.summary }}</p><ul class="details">{% for detail in product.details %}<li>{{ detail }}</li>{% endfor %}</ul>
+<div class="actions"><a class="buy" href="{{ product.purchase_url }}" rel="sponsored noopener" target="_blank"><span>쿠팡에서 상품 보기</span><span aria-hidden="true">↗</span></a><a class="watch" href="{{ product.video_url }}" rel="noopener" target="_blank"><span class="play" aria-hidden="true">▶</span>소개 영상 다시 보기</a></div>
+<p class="disclosure">이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</p></div>
+</article>
+{% else %}<p class="empty">곧 영상 속 상품을 소개할게요.</p>{% endfor %}
+</section><footer class="foot"><strong>GumaShop · 작은 발견의 즐거움</strong><p>가격·배송·판매 여부는 상품 페이지에서 확인해 주세요.</p></footer>
 </main></body></html>

@@ -50,6 +50,7 @@ https://videofactory.guma3d.com/ · 홈서버 8085 · https://www.youtube.com/@G
 
 - 사용자의 별도 공개 요청으로 고구마빵 v11·미지아 v10만 공개했다. 찹쌀떡 v16·찰떡아이스 v5는 비공개다. 현재 상태는 Studio 영상 ID별로 확인했다. 제목·설명·기존 파일을 유지했으며 재업로드하지 않았다.
 - 채널 프로필의 `상품 모음` 링크: https://videofactory.guma3d.com/products. 로그인 없이 접근 가능한 모바일 상품 목록으로 01 고구마빵, 02 미지아 보풀제거기 2를 연결했다. 실제 구매 링크 도착 상품·옵션을 확인하고 구매 버튼 옆 수수료 고지를 표시한다.
+- 상품 모음의 디자인은 노란색·크림 배경·진한 글자와 둥근 카드다. 실제 공개 영상의 YouTube 썸네일을 사용하고 영상 ID가 일치하는 `i.ytimg.com` 주소만 허용한다. 모바일은 한 열로 배치한다. 2026-10-09 사용자 디자인 피드백이며 영상 제작 색상과 구분한다. 썸네일 출처·검증 화면은 `storage/handoffs/yellow-catalog-20261009/`에 보존한다.
 - `storage/public_catalog.json`은 승인된 상품·정확한 영상 버전·재사용하지 않는 번호를 보존한다. `app/public_catalog.py`는 해당 버전의 관찰된 상태가 `public`인 상품만 노출한다. Studio에서 직접 비공개로 바꾼 경우 로컬 관찰 상태도 동기화해야 하며 자동 YouTube 감시가 구현된 것은 아니다.
 - Nginx는 정확히 `/products`의 GET/HEAD만 비인증 접근을 허용한다. 기존 작업실·API·storage 인증은 유지한다. 공개 화면에는 선택한 상품 정보와 구매·영상 URL만 전달한다. 번호·승인 파일은 Git에서 제외되므로 storage 백업에 포함한다.
 - 증빙·승인·공개 결과: `storage/handoffs/public-two-20261009/`. 고정댓글은 이번 요청 범위에 포함하지 않아 게시하지 않았다. 공개 상태 분리 테스트 2개, Nginx 문법 검사, 비인증 상품 목록 200 및 작업실 API 인증 리디렉션을 확인했다. Actions 배포 단계 실패 후 제작 큐가 빈 것을 확인하고 HomeServer 서비스 재시작·Nginx reload로 반영했다.
