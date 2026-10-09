@@ -52,16 +52,16 @@ https://videofactory.guma3d.com/ · 홈서버 8085 · https://www.youtube.com/@G
 
 ## 누룽지팝 최종본 — 2026-10-09 사용자 검토 수용·비공개 등록
 
-- 2026-10-10 후속 사용자 요청으로 기존 비공개 4편(딸기떡 `yqG4SXzqpCA`, 찰떡아이스 `fKpQ14VtPMY`, 피자설기 `yypR1nJVmic`, 누룽지팝 `in626m-2X8Y`)의 구독 피드 게시·구독자 알림을 모두 ON으로 변경하고 저장을 확인했다. 네 편은 Private 유지, 기존 URL·영상 보존, 재업로드·삭제·공개 변경 0회. 각 `upload.json`에 관찰 상태를 반영했으며 실제 저장 증빙은 `storage/handoffs/private-notifications-20261010/`에 있다. 아래 최초 업로드의 OFF 기록은 과거 이력이다.
+- 2026-10-10 후속 사용자 요청으로 기존 비공개 4편(딸기떡 `yqG4SXzqpCA`, 찰떡아이스 `fKpQ14VtPMY`, 피자설기 `yypR1nJVmic`, 누룽지팝 `in626m-2X8Y`)의 구독 피드 게시·구독자 알림을 모두 ON으로 변경하고 저장을 확인했다. 알림 변경 당시 네 편은 Private 유지, 기존 URL·영상 보존, 재업로드·삭제·공개 변경 0회. 각 `upload.json`에 관찰 상태를 반영했으며 실제 저장 증빙은 `storage/handoffs/private-notifications-20261010/`에 있다. 아래 최초 업로드의 OFF 기록은 과거 이력이다.
 
 > 2026-10-10 최신 게시 원칙: 아래의 구독자 알림 OFF는 당시 실제 저장 이력이다. 앞으로 새 공개 예정 업로드는 최초 비공개 단계에서도 구독 피드·알림 ON을 기본으로 하고 첫 공개 전에 확인한다. 제목·설명·썸네일은 기존 영상에서 수정하며 조회수만을 이유로 삭제·재업로드하지 않는다. 고구마빵 `IQkkmVqJn6w`와 미지아 `0Wa-VX-mTco`는 현재 공개 상태를 유지한다. 10월 10일 07:25 KST 관찰에서 목록 조회수는 3/4, 분석은 각 1로 집계가 달랐다. 연령/국가 제한과 알림은 없었고 구독 피드·알림 OFF 항목은 비활성화였다. 원본 지표와 설정은 `storage/handoffs/reupload-diagnosis-20261010/observations.json`에 보존했다. 공개 후 약 60시간인 10월 12일 09시 KST에 읽기 전용 재점검한다.
 
 - 농심 누룽지팝 달콤한맛 142g×2개, 아이디어 `12681a1f9b25c2e8`. 승인 콘티 v2 → Preview v1 / Video v1 / Thumbnail v1, 8컷·31.97초·1080×1920. [웹 버전](https://videofactory.guma3d.com/ideas/12681a1f9b25c2e8?video=1#Video), [YouTube 비공개](https://www.youtube.com/watch?v=in626m-2X8Y). 원본은 `storage/products/12681a1f9b25c2e8/Video/v0001/final.mp4`, SHA256 `ce634cbb69e17cfd10bb009d5612b9c78bee190c6af27f46e146ec7f4fbd9874`.
-- Food의 직접 사용자 메시지 “이건 한번에 성공!! 유튜브에 비공개로 등록해”를 확인해 해당 버전만 등록했다. Studio GumaShop에서 비공개·별도 생성 썸네일·HD 완료·저작권 검사 문제 없음, 정확한 제목/설명·상품 링크·#광고 포함 8개 해시태그·BGM 출처·마지막 줄 수수료 고지를 확인했다. 유료 프로모션/AI 사용, 아동용 아님, 한국어, Howto & Style, 표준 라이선스, 오디오만 리믹스이며 자동 챕터/장소/개념과 구독자 알림은 껐다. 공개 승인 및 상품 모음 추가는 없다. 등록된 영상은 총 6편(공개 2·비공개 4)이다.
+- Food의 직접 사용자 메시지 “이건 한번에 성공!! 유튜브에 비공개로 등록해”를 확인해 해당 버전만 등록했다. Studio GumaShop에서 비공개·별도 생성 썸네일·HD 완료·저작권 검사 문제 없음, 정확한 제목/설명·상품 링크·#광고 포함 8개 해시태그·BGM 출처·마지막 줄 수수료 고지를 확인했다. 유료 프로모션/AI 사용, 아동용 아님, 한국어, Howto & Style, 표준 라이선스, 오디오만 리믹스이며 자동 챕터/장소/개념과 구독자 알림은 껐다. 공개 승인 및 상품 모음 추가는 없다. 당시 등록된 영상은 총 6편(공개 2·비공개 4)이었다. 현재는 아래 2026-10-10 공개 기록을 따른다.
 - 할리스 공식 메뉴 원본과 집에서 아이스크림에 올리는 활용 장면을 구분했다. Flow 원본은 720×1280으로 1.5배 출력이며, 첫 공식 포스터 700×1240은 공통 720px 기준보다 20px 작은 제한을 별도 검수 기록에 남겼다. 고해상도 가로 배너도 확보했지만 최종 첫 장면은 메뉴 가독성을 확인한 세로 원본이다. 일반 원본 기준의 변경으로 해석하지 않는다.
 - Life of Riley를 무작위 선정해 -25 LUFS 고정, Zephyr 음성 -16.22 LUFS, 최종 피크 -3.28 dBTP로 검수했다. 사용자 콘텐츠 수용과 에이전트의 실제 청취는 구분하며 에이전트가 들었다고 기록하지 않는다. 2개 옵션 일시품절 및 공식 사진 재사용 조건 미확인은 공개 전 재확인 항목이다. 승인·실제 저장 설정·화면 증빙·현재 상태는 `storage/handoffs/food-nurungjipop-8989223435/upload-completion-v0001.json`, `upload-approval-v0001.json`, `studio-proof.png`, `main-state.json`에 보존한다.
 
-## 기존 4편 최종본 — 2026-10-09 공개 2편·비공개 2편
+## 기존 4편 최종본 — 2026-10-10 네 편 공개
 
 아래 표는 해당 날짜 Studio에서 확인한 게시 상태다. 이전 버전 기록이나 새 웹 검토본을 현재 YouTube 게시 상태로 혼동하지 않는다.
 
@@ -69,13 +69,13 @@ https://videofactory.guma3d.com/ · 홈서버 8085 · https://www.youtube.com/@G
 |---|---|---|---|
 | 고구마빵 | v13 / Thumbnail v2 | Monkeys Spinning Monkeys | [공개](https://www.youtube.com/watch?v=IQkkmVqJn6w) |
 | 미지아 보풀제거기 2 | v11 / Thumbnail v1 | Life of Riley | [공개](https://www.youtube.com/watch?v=0Wa-VX-mTco) |
-| 딸기쏙우유 찹쌀떡 | v17 / Preview v10 / Thumbnail v1 | Monkeys Spinning Monkeys | [비공개 등록](https://www.youtube.com/watch?v=yqG4SXzqpCA) |
-| 흑임자인절미 | v6 / Preview v6 / Thumbnail v1 | Monkeys Spinning Monkeys | [비공개 등록](https://www.youtube.com/watch?v=fKpQ14VtPMY) |
+| 딸기쏙우유 찹쌀떡 | v17 / Preview v10 / Thumbnail v1 | Monkeys Spinning Monkeys | [공개](https://www.youtube.com/watch?v=yqG4SXzqpCA) |
+| 흑임자인절미 | v6 / Preview v6 / Thumbnail v1 | Monkeys Spinning Monkeys | [공개](https://www.youtube.com/watch?v=fKpQ14VtPMY) |
 
 - 최신 선호에 따라 기존 Kevin MacLeod 5곡 무작위 선택으로 복귀했다. 설명 하단에 곡명·작곡가·출처·CC BY 4.0 링크·발췌/음량 조정을 한 줄로 쓰며, 수수료 고지 원문은 마지막 줄이다.
 - 찰떡아이스 CUT01의 부정확하고 노이즈가 심한 생성 포장 합성을 제외했다. 적합한 제품 영상은 확보하지 못하여 공식 스위트몰의 정확한 제품 표지 이미지를 고정 화면으로 사용한다. 1720px 원본을 축소 배치하고 글자·캐릭터를 재생성하지 않았다. 나머지 컷·기존 Zephyr 음성 원본 해시를 보존했다.
 - 요청·공식 자료·검수·새 버전 해시는 `storage/handoffs/restore-bgm-sesame-cover-20261009/`에 저장했다. 네 편 모두 기술 검수·디코딩·고정 BGM 음량 검사 통과, 관련 테스트 11개 통과. 이후 사용자가 “이번엔 좋아”라고 피드백하고 재등록을 요청했다. 이는 사용자 검토 결과이며 에이전트의 실제 청취 완료를 뜻하지 않는다.
-- 최초 재등록은 사용자 “좋아 이제 4개 다시 등록해” 지시로 고구마빵 v11·미지아 v10·찹쌀떡 v16·흑임자인절미 v5를 비공개 업로드한 이력이다. 이후 고구마빵·미지아만 공개했고, 별도 팝 자막·썸네일 교체 요청으로 위 최신 공개 버전으로 교체했다. 찹쌀떡·찰떡아이스도 후속 직접 요청으로 아래 최신 비공개 수정본으로 교체했다. 공개 승인은 없다. 실제 Studio에서 제목·설명·상품 링크·간결한 BGM 출처·수수료 고지 마지막 줄, 유료 프로모션/AI 사용, 아동용 아님, 한국어, HD 완료를 확인했다. 자동 챕터·장소·개념과 구독자 알림은 끄고 Howto & Style·표준 라이선스·오디오만 리믹스 설정을 저장했다.
+- 최초 재등록은 사용자 “좋아 이제 4개 다시 등록해” 지시로 고구마빵 v11·미지아 v10·찹쌀떡 v16·흑임자인절미 v5를 비공개 업로드한 이력이다. 이후 고구마빵·미지아만 공개했고, 별도 팝 자막·썸네일 교체 요청으로 위 최신 공개 버전으로 교체했다. 찹쌀떡·찰떡아이스도 후속 직접 요청으로 아래 수정본으로 비공개 교체했다. 당시 공개 승인은 없었으며, 2026-10-10 별도 승인으로 공개했다. 실제 Studio에서 제목·설명·상품 링크·간결한 BGM 출처·수수료 고지 마지막 줄, 유료 프로모션/AI 사용, 아동용 아님, 한국어, HD 완료를 확인했다. 자동 챕터·장소·개념과 구독자 알림은 끄고 Howto & Style·표준 라이선스·오디오만 리믹스 설정을 저장했다.
 - 등록 시작 시 Studio 동영상·Shorts 목록은 모두 비어 있었으며 완료 당시 최신 비공개 4편만 확인했다. 삭제는 0회이며 이전 삭제 대기 상태는 당시 목록 기준으로 해소됐다. 과거 업로드 URL은 이력으로만 보존한다. 승인·파일 해시·저장 설정·Studio 증빙은 `storage/handoffs/restored-private-upload-20261009/`에 보존한다. 유료 생성·Veo 사용 0회.
 
 ### 찰떡아이스·딸기떡 비공개 교체 완료 — 2026-10-09
@@ -83,17 +83,24 @@ https://videofactory.guma3d.com/ · 홈서버 8085 · https://www.youtube.com/@G
 - Food에서 사용자가 두 편의 최신 자막·썸네일 적용, 비공개 교체와 이전 영상 삭제를 직접 요청했다. 승인 원문과 실제 사용자 메시지 ID는 `storage/handoffs/private-pop-thumbnails-20261009/approval.json`에 보존한다. 이번 정확한 수정본에 한한 비공개 업로드 승인으로, 공개나 다음 버전의 자동 업로드 승인이 아니다.
 - 흑임자인절미 Preview v6 / Video v6(41초), 딸기쏙우유 Preview v10 / Video v17(28.97초)에 `common-pop-outline-v4`를 적용했다. 컷별 시작·중간·끝 및 최종 전환 프레임을 검수해 손·스푼·포장·제품을 피하도록 자막 위치를 조정했다. 기존 대사·컷 순서·MP3와 최종 AAC 스트림 해시를 보존했다. 찰떡아이스 마지막 컷은 기존 제품 이미지·크기·좌표·시간을 보존하며 텍스트 그래픽만 교체했고, 다른 맛과 본 제품 CTA를 시간적으로 분리했다.
 - 실제 상품 기준 사진을 참고한 별도 생성 Thumbnail v1을 각각 로컬·웹·YouTube에 등록했다. 영상에는 삽입하지 않았다. 제작 전후 화면 검수·전체 디코딩·1080×1920/30fps 검사와 웹 끝까지 재생을 통과했다. 실제 청취를 새로 수행했다고 기록하지 않는다. 추가 TTS·Veo 0회, 내장 이미지 생성 도구 2회. 프롬프트·소스 해시·검수·실제 저장 증빙은 같은 인계 폴더에 보존한다.
-- 새 비공개 두 편의 HD·커버·제목/설명 일치·설정 저장을 확인한 뒤 이전 `bBdkw1fdikM`·`5qAtgvCnDZE`를 삭제했다. 이전 공개본 `T0eKHI5ieXA`·`uSQqUUQ1GCc`도 사용자 요청으로 삭제된 상태다. 로컬 모든 버전과 삭제 전 게시 메타데이터는 보존한다. 최종 Studio 목록은 공개 2개·비공개 3개, 총 5개다. 최신 결과 기준은 `storage/handoffs/private-pop-thumbnails-20261009/completion.json`이다.
+- 새 비공개 두 편의 HD·커버·제목/설명 일치·설정 저장을 확인한 뒤 이전 `bBdkw1fdikM`·`5qAtgvCnDZE`를 삭제했다. 이전 공개본 `T0eKHI5ieXA`·`uSQqUUQ1GCc`도 사용자 요청으로 삭제된 상태다. 로컬 모든 버전과 삭제 전 게시 메타데이터는 보존한다. 당시 최종 Studio 목록은 공개 2개·비공개 3개, 총 5개였다. 해당 교체 결과 기준은 `storage/handoffs/private-pop-thumbnails-20261009/completion.json`이다.
 
 ### 상품 모음 및 두 편 공개 — 2026-10-09
 
-- 최초에는 기존 고구마빵 v11·미지아 v10의 가시성만 공개로 바꿨다. 이후 사용자가 두 공개 영상에도 공통 팝 자막과 생성 썸네일을 적용해 교체하도록 요청했다. 현재는 고구마빵 v13(`IQkkmVqJn6w`)·미지아 v11(`0Wa-VX-mTco`)이 공개이고, 이전 `T0eKHI5ieXA`·`uSQqUUQ1GCc`는 후속 사용자 요청으로 YouTube에서 삭제했다. 찹쌀떡 v17·찰떡아이스 v6 및 피자설기 v3는 비공개다.
+- 최초에는 기존 고구마빵 v11·미지아 v10의 가시성만 공개로 바꿨다. 이후 사용자가 두 공개 영상에도 공통 팝 자막과 생성 썸네일을 적용해 교체하도록 요청했다. 현재는 고구마빵 v13(`IQkkmVqJn6w`)·미지아 v11(`0Wa-VX-mTco`)이 공개이고, 이전 `T0eKHI5ieXA`·`uSQqUUQ1GCc`는 후속 사용자 요청으로 YouTube에서 삭제했다. 당시 찹쌀떡 v17·찰떡아이스 v6 및 피자설기 v3는 비공개였으며, 현재는 아래 2026-10-10 기록을 따른다.
 - 두 교체본은 기존 장면·순서와 최종 AAC 오디오 스트림 해시를 보존했다. 컷별 빈 공간의 팝 자막과 Food가 이미지 생성 도구로 만든 별도 커버만 새 버전으로 적용했다. 고구마빵 v12는 CUT5 문구 검수 중간본으로 웹 보존하며 업로드하지 않았다. 최종 두 편의 전체 디코딩·컷/전환 화면·브라우저 끝까지 재생·Studio 썸네일/설정/HD/공개 저장을 확인한 뒤 이전본을 비공개로 전환했다. TTS·Veo 추가 사용 0회. 사용자 편집 제목·설명과 상품 번호 01/02, 구매 링크·실제 상품 사진은 유지했다.
 - 채널 프로필의 `상품 모음` 링크: https://videofactory.guma3d.com/products. 로그인 없이 접근 가능한 모바일 상품 목록으로 01 고구마빵, 02 미지아 보풀제거기 2를 연결했다. 실제 구매 링크 도착 상품·옵션을 확인하고 구매 버튼 옆 수수료 고지를 표시한다.
 - 상품 모음의 디자인은 노란색·크림 배경·진한 글자와 둥근 카드다. 실제 구매 링크에서 확인한 대표 상품 사진을 전체가 보이도록 배치한다. `thumbnail.coupangcdn.com` 상품 사진 또는 영상 ID가 일치하는 `i.ytimg.com` 썸네일 주소만 허용한다. 모바일은 한 열로 배치한다. 2026-10-09 사용자 디자인 피드백이며 영상 제작 색상과 구분한다. 사진 출처·검증 화면은 `storage/handoffs/yellow-catalog-20261009/`에 보존한다.
 - `storage/public_catalog.json`은 승인된 상품·정확한 영상 버전·재사용하지 않는 번호를 보존한다. `app/public_catalog.py`는 해당 버전의 관찰된 상태가 `public`인 상품만 노출한다. Studio에서 직접 비공개로 바꾼 경우 로컬 관찰 상태도 동기화해야 하며 자동 YouTube 감시가 구현된 것은 아니다.
 - Nginx는 정확히 `/products`의 GET/HEAD만 비인증 접근을 허용한다. 기존 작업실·API·storage 인증은 유지한다. 공개 화면에는 선택한 상품 정보와 구매·영상 URL만 전달한다. 번호·승인 파일은 Git에서 제외되므로 storage 백업에 포함한다.
 - 최초 공개 증빙은 `storage/handoffs/public-two-20261009/`, 최신 교체·썸네일·피자설기 비공개 등록·승인·해시·Studio 확인 결과는 `storage/handoffs/common-pop-thumbnails-20261009/completion.json`이다. 고정댓글은 게시하지 않았다. 상품 목록은 승인된 최신 공개 버전만 연결하며 실제 계정 보고서 확인 전에는 파트너스 실적을 확정하지 않는다.
+
+### 딸기떡·찰떡아이스 공개 및 상품모음 연결 — 2026-10-10
+
+- Food의 직접 사용자 메시지 “딸기떡과 찰떡아이스 공개로 바꾸로 프로필링크까지 연결해”(메시지 `01a122d1-353c-7f60-9537-aabc640da25b`) 확인 후 딸기떡 Video v17 / Thumbnail v1과 찰떡아이스 Video v6 / Thumbnail v1의 기존 URL을 Public으로 전환했다. 제목·설명·영상·썸네일은 보존했고 재업로드·삭제는 없었다. 두 편은 공개 전 구독 피드·알림 ON 저장 확인을 마쳤다.
+- 상품모음에 **03 쿠캣 딸기쏙우유 찹쌀떡(60g × 9개입)**, **04 찰떡아이스 우주떡집 흑임자인절미(90ml × 24개)**를 추가했다. 실제 상품 사진, 기존 발급 파트너스 링크 및 영상 링크를 사용했다. 프로필 → 상품모음 → 각 구매/영상 링크 이동과 이미지 표시를 브라우저에서 확인했다.
+- 채널은 총 6편: 공개 4편(고구마빵·미지아·딸기떡·찰떡아이스), 비공개 2편(피자설기·누룽지팝). 피자설기·누룽지팝의 공개 승인이나 상품모음 등록은 없다.
+- 승인·해시·변경 전 백업·Studio의 2/2 변경 성공과 6편 상태·프로필 및 상품모음 화면은 `storage/handoffs/public-food-two-20261010/`에 보존한다. 현재 상태의 기준은 `completion.json`과 각 Video의 `upload.json`이다. 새 링크 두 개도 도착 상품·옵션·추적 ID AF4083845를 확인했으며 실제 매출·정산은 계정 리포트 확인 전 미확인이다.
 
 ### 파트너스 연결·실적 확인 상태 — 2026-10-09
 
@@ -137,7 +144,7 @@ https://videofactory.guma3d.com/ · 홈서버 8085 · https://www.youtube.com/@G
 
 ## 실행·설정
 
-- 세션 공유는 Food·Tech·Living을 대상으로 현재 최종 버전·실제 게시 상태·승인 경계·파트너스 미확인 범위를 전달한다. 큰 원본 대신 이 README·RESEARCH·루트 CODEX_MAIN_HANDOFF와 `storage/handoffs/private-pop-thumbnails-20261009/completion.json`을 기준으로 이어간다. 현재 채널은 공개 2개·비공개 최신본 3개이며 이전 교체본은 삭제됐다. 완료 공유 전송 결과는 같은 폴더의 `session-share.json`에 기록한다.
+- 세션 공유는 Food·Tech·Living을 대상으로 현재 최종 버전·실제 게시 상태·승인 경계·파트너스 미확인 범위를 전달한다. 큰 원본 대신 이 README·RESEARCH·루트 CODEX_MAIN_HANDOFF와 `storage/handoffs/private-pop-thumbnails-20261009/completion.json`을 기준으로 이어간다. 현재 채널은 공개 4개·비공개 2개이며 최신 게시 근거는 `storage/handoffs/public-food-two-20261010/completion.json`이다. 이전 교체본은 삭제됐다. 완료 공유 전송 결과는 같은 폴더의 `session-share.json`에 기록한다.
 - 최신 피자설기 v3의 웹 전체 재생(34.67초 종료·오류 없음), 별도 썸네일 표시, 구버전 v2에 썸네일 소급 미적용, 제작 보관함 커버를 확인했다. 증빙: `storage/handoffs/food-pizza-seolgi-9719378135/production-v0003/web-verification.json`.
 - 공통 자막·썸네일 정책과 검수 조건은 `3617157`로 저장했다. 관련 shopping 테스트 12개 통과(기존 추천 readiness fixture 1건은 제외). 해당 자동 배포도 `Detect changed projects and deploy` 단계에서 실패하여 빈 제작 큐 확인 후 HomeServer 컨테이너를 직접 재시작했다. 실제 세 카테고리 기본값과 외부 상품 목록 HTTP 200을 확인했다. 두 교체본 전체 웹 재생과 상품 모음 새 영상 링크를 실제 브라우저에서 검증했다. 당시 Studio 공개 2개/비공개 5개였으며 이후 교체본 삭제를 반영한 현재 수는 위 최신 완료 기록을 따른다. 이를 GitHub Actions 성공으로 기록하지 않는다.
 

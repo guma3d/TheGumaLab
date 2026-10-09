@@ -1,4 +1,4 @@
-# Main 이어받기 — 2026-10-09
+# Main 이어받기 — 2026-10-10
 
 이 파일은 큰 이미지 이력을 복제하지 않고 Main 업무를 이어받기 위한 요약이다. 원본 대화와 제작 파일은 보존한다. 시점이 지난 상태는 실제 파일·웹에서 다시 확인한다.
 
@@ -11,7 +11,7 @@
 
 ## 지속되는 사용자 승인 원칙
 
-- 2026-10-10 비공개 4편의 구독 피드·알림 ON 변경/저장 완료: `yqG4SXzqpCA`, `fKpQ14VtPMY`, `yypR1nJVmic`, `in626m-2X8Y`. 전부 비공개 유지, 공개 승인 없음. 실제 증빙과 상태는 `GumaVideoFactory/storage/handoffs/private-notifications-20261010/completion.json` 및 각 Video의 `upload.json`. 기존 공개 2편의 비활성화된 OFF 설정과 구분한다.
+- 2026-10-10 비공개 4편의 구독 피드·알림 ON 변경/저장 완료: `yqG4SXzqpCA`, `fKpQ14VtPMY`, `yypR1nJVmic`, `in626m-2X8Y`. 알림 변경 당시 전부 비공개였으며, 이후 딸기떡·찰떡아이스만 별도 승인으로 공개했다. 실제 증빙과 상태는 `GumaVideoFactory/storage/handoffs/private-notifications-20261010/completion.json` 및 각 Video의 `upload.json`. 기존 공개 2편의 비활성화된 OFF 설정과 구분한다.
 
 - 2026-10-10 최신 승인: 새 공개 예정 영상은 구독 피드·알림 ON(최초 비공개 단계부터 확인), 제목·설명·썸네일은 기존 YouTube 영상에서 수정한다. 공개 승인은 별개며 낮은 조회수 때문에 삭제·재업로드하지 않는다. 두 공개 영상 `0Wa-VX-mTco`/`IQkkmVqJn6w`는 유지, 공개 후 약 60시간인 10월 12일 09시 KST에 재점검한다. 기준 데이터는 `GumaVideoFactory/storage/handoffs/reupload-diagnosis-20261010/observations.json`. 기존 알림 OFF 기록은 과거 이력이며 새 업로드 기본값이 아니다.
 
@@ -25,7 +25,7 @@
 ## 누룽지팝 최신 상태 — 사용자 수용·비공개 등록 (2026-10-09)
 
 - Food의 직접 사용자 메시지 “이건 한번에 성공!! 유튜브에 비공개로 등록해” 확인 후 `12681a1f9b25c2e8`의 Video v1 / Thumbnail v1만 [YouTube 비공개](https://www.youtube.com/watch?v=in626m-2X8Y)로 등록했다. [웹 버전](https://videofactory.guma3d.com/ideas/12681a1f9b25c2e8?video=1#Video), 8컷·31.97초, 영상 해시 `ce634cbb69e17cfd10bb009d5612b9c78bee190c6af27f46e146ec7f4fbd9874`.
-- 실제 Studio에서 비공개·커스텀 썸네일·HD·검사 문제 없음·설명과 설정 저장 확인. 공개·상품 모음 추가 승인 없음. 채널 등록 6편(공개 2·비공개 4). 현재 옵션 일시품절과 사진 재사용 조건은 공개 전 재확인. 사용자 콘텐츠 수용을 에이전트 실제 음성 청취로 기록하지 않는다. 원본 해상도 제한과 세부 검수는 README 및 `storage/handoffs/food-nurungjipop-8989223435/`의 `completion.json`, `upload-completion-v0001.json`, `main-state.json`을 따른다.
+- 실제 Studio에서 비공개·커스텀 썸네일·HD·검사 문제 없음·설명과 설정 저장 확인. 공개·상품 모음 추가 승인 없음. 당시 채널 등록 6편(공개 2·비공개 4), 현재는 공개 4·비공개 2. 현재 옵션 일시품절과 사진 재사용 조건은 공개 전 재확인. 사용자 콘텐츠 수용을 에이전트 실제 음성 청취로 기록하지 않는다. 원본 해상도 제한과 세부 검수는 README 및 `storage/handoffs/food-nurungjipop-8989223435/`의 `completion.json`, `upload-completion-v0001.json`, `main-state.json`을 따른다.
 
 ## 가습기 최신 상태 — 콘텐츠 품질 미수용·동작 소스 재확보 중 (2026-10-09)
 
@@ -40,18 +40,19 @@
 
 ## 최근 확인한 결과 — 현재 상태와 이력을 구분
 
-- 아래 공개·비공개 상태는 2026-10-09 Studio 확인 기록 기준이다. 현재 상태를 다시 물으면 실제 채널과 대조한다. 과거의 빈 채널·삭제 대기·흑임자 v2 검토 상태는 현재 상태가 아니다.
+- 아래 공개·비공개 상태는 2026-10-10 Studio 확인 기록 기준이다. 현재 상태를 다시 물으면 실제 채널과 대조한다. 과거의 빈 채널·삭제 대기·흑임자 v2 검토 상태는 현재 상태가 아니다.
 - 채널 `UCRtAVFQFmJCcpvLeuyq03Kg` / `@GumaShop86`: Standard·Intermediate·Advanced 기능 사용 가능. 고급 기능은 2026-10-08 Studio에서 Enabled 확인.
 - 공개: 고구마빵(`372a4996226cf3a5`) Video v13 / Thumbnail v2 → https://www.youtube.com/watch?v=IQkkmVqJn6w, 미지아 보풀제거기 2(`57ab7c7af6717633`) Video v11 / Thumbnail v1 → https://www.youtube.com/watch?v=0Wa-VX-mTco. 사용자 별도 교체 요청에 따라 팝 자막·생성 썸네일을 적용하고 기존 AAC 오디오 스트림·장면·제목·설명을 보존했다. 이전 `T0eKHI5ieXA`·`uSQqUUQ1GCc`는 후속 사용자 요청으로 YouTube에서 삭제했고 로컬 버전은 보존한다.
-- 비공개 최신본: 딸기쏙우유 찹쌀떡(`67e70b2aebfc411e`) Video v17 / Preview v10 / Thumbnail v1 → https://www.youtube.com/watch?v=yqG4SXzqpCA, 흑임자인절미(`dadc1759bf7912ef`) Video v6 / Preview v6 / Thumbnail v1 → https://www.youtube.com/watch?v=fKpQ14VtPMY, 피자설기 v3 → https://www.youtube.com/watch?v=yypR1nJVmic. 찰떡아이스·딸기떡은 Food의 직접 사용자 요청으로 팝 자막·별도 생성 커버를 적용해 비공개 교체했고, 새 업로드 검증 뒤 이전 `bBdkw1fdikM`·`5qAtgvCnDZE`를 삭제했다. 기존 최종 AAC와 사용자 제목·설명은 보존했다. 이 세 편의 공개 승인은 없다. 현재 채널은 공개 2개·비공개 3개, 총 5개다. 다음 버전은 별도 업로드 요청이 필요하다.
-- 상품 모음: https://videofactory.guma3d.com/products. 따뜻한 노란색·크림 테마, 실제 제품 사진, 모바일 한 열 카드. 승인된 공개 상품 01 고구마빵·02 미지아만 노출한다. 비공개/웹 검토 제품은 자동 추가하지 않는다.
+- 추가 공개(2026-10-10): 딸기쏙우유 찹쌀떡(`67e70b2aebfc411e`) Video v17 / Thumbnail v1 → https://www.youtube.com/watch?v=yqG4SXzqpCA, 찰떡아이스 흑임자인절미(`dadc1759bf7912ef`) Video v6 / Thumbnail v1 → https://www.youtube.com/watch?v=fKpQ14VtPMY. Food의 직접 사용자 메시지 `01a122d1-353c-7f60-9537-aabc640da25b`로 공개·프로필 연결 승인 확인 후 기존 URL을 Public으로 전환했다. 공개 전 구독 피드·알림 ON 저장 확인, 사용자 제목·설명·기존 영상 보존, 삭제·재업로드 0회.
+- 비공개: 피자설기 v3 → https://www.youtube.com/watch?v=yypR1nJVmic, 누룽지팝 v1 → https://www.youtube.com/watch?v=in626m-2X8Y. 이 두 편의 공개 승인은 없다. 현재 총 6편(공개 4·비공개 2). 다음 버전은 별도 업로드 요청이 필요하다.
+- 상품 모음: https://videofactory.guma3d.com/products. 따뜻한 노란색·크림 테마, 실제 제품 사진, 모바일 한 열 카드. 승인된 공개 상품 01 고구마빵·02 미지아·03 딸기떡(60g × 9개입)·04 찰떡아이스(90ml × 24개)를 노출한다. 비공개/웹 검토 제품은 자동 추가하지 않는다.
 - 사용자가 직접 수정한 제목·설명이 게시 문구 기준이다. 제목 앞 [광고]를 붙이지 않고 설명은 글머리, BGM 출처는 간결한 하단 한 줄, 정확한 쿠팡 수수료 고지는 마지막 줄. 기존 음원은 출처 표시 조건을 준수한다.
 - 찰떡아이스 첫 장면은 정확한 공식 제품 표지 원본 이미지로 교체했다. 노이즈가 있는 생성 포장 합성을 재사용하지 않는다. 기존 로컬 버전·승인·검수 이력은 보존한다.
-- 최신 근거: `GumaVideoFactory/storage/handoffs/private-pop-thumbnails-20261009/completion.json` 및 같은 폴더 `studio-final.txt/png`, `web-verification.json`, 제품별 검수·커버 프롬프트. 이전 공개본 교체·삭제는 `common-pop-thumbnails-20261009/completion.json`, `youtube-cleanup.json`이며 과거 승인·검수 기록은 수정하지 않는다. 제품별 최종 버전/BGM 표는 README가 기준이다.
+- 최신 공개·상품모음 근거: `GumaVideoFactory/storage/handoffs/public-food-two-20261010/completion.json`, `studio-verified.json`, `catalog.png`. 이전 교체 근거: `GumaVideoFactory/storage/handoffs/private-pop-thumbnails-20261009/completion.json` 및 같은 폴더 `studio-final.txt/png`, `web-verification.json`, 제품별 검수·커버 프롬프트. 이전 공개본 교체·삭제는 `common-pop-thumbnails-20261009/completion.json`, `youtube-cleanup.json`이며 과거 승인·검수 기록은 수정하지 않는다. 제품별 최종 버전/BGM 표는 README가 기준이다.
 
 ## 파트너스 확인 범위와 후속 작업
 
-- 공개 두 상품의 링크 도착 상품·옵션과 공통 추적 ID `AF4083845`를 확인했다. 계정 소유자와 추적 ID의 일치, 계정 승인·등록 매체, 실제 클릭·주문·수익은 로그인 전이므로 미확인이다. 링크 이동 성공을 수익 발생/정산 보장으로 기록하지 않는다.
+- 공개 네 상품의 링크 도착 상품·옵션과 공통 추적 ID `AF4083845`를 확인했다. 계정 소유자와 추적 ID의 일치, 계정 승인·등록 매체, 실제 클릭·주문·수익은 로그인 전이므로 미확인이다. 링크 이동 성공을 수익 발생/정산 보장으로 기록하지 않는다.
 - 홈서버 브라우저 로그인 후 계정/등록 매체와 조회 기간별 리포트를 확인한다. 휴대폰의 별도 브라우저 로그인은 홈서버로 자동 공유되지 않는다. 모바일 Codex 로그인 화면 직접 조작 지원은 미검증이다. 비밀번호·인증번호·쿠키를 기록하거나 전달받지 않는다.
 - 실적 자동 수집·대시보드 연동은 구현하지 않았다. 신규 자동 조회/공개를 완료된 것처럼 공유하지 않는다.
 
