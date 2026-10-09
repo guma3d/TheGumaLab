@@ -19,6 +19,7 @@ storage/product_images/*
 storage/recommendations/*
 storage/source_media/*
 storage/products/
+storage/public_catalog.json
 storage/verification/
 storage/research/
 .reset_archive/
