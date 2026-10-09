@@ -28,6 +28,7 @@ from app.core.categories import PRESETS
 from app.core.recommendations import load_daily, visible_daily, now_kst
 from app.core.source_media import MediaSource, store_media, media_preview, render_source_clip
 from app.studio import router as studio_router
+from app.public_catalog import router as public_catalog_router
 from app.core import versions as version_store
 from app.core.job_queue import Worker
 
@@ -36,6 +37,7 @@ logger = logging.getLogger("GumaVideoFactory")
 
 app = FastAPI(title="GumaVideoFactory", description="AI 숏폼 영상 제작 및 편집 스튜디오")
 app.include_router(studio_router)
+app.include_router(public_catalog_router)
 
 @app.on_event('startup')
 async def recover_studio_jobs():

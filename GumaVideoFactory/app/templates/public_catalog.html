@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>상품 모음 · GumaShop</title>
+  <meta name="description" content="GumaShop 영상에서 만난 상품을 한곳에서 확인하세요.">
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#f7f5f0;color:#252b25;font-family:system-ui,-apple-system,"Malgun Gothic",sans-serif;line-height:1.65}main{max-width:880px;margin:auto;padding:48px 22px 32px}.brand{font-size:16px;font-weight:800;letter-spacing:-.5px;color:#32634c;text-decoration:none}.intro{padding:38px 0 26px}h1{font-size:clamp(32px,7vw,48px);letter-spacing:-2px;margin:0 0 10px;line-height:1.2}.intro p{margin:0;color:#657065}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}article{background:#fff;border:1px solid #e0e5dc;border-radius:22px;padding:26px;display:flex;flex-direction:column;scroll-margin-top:20px}.eyebrow{display:flex;justify-content:space-between;align-items:center;color:#617460;font-size:13px}.number{font-weight:800;color:#32634c}h2{font-size:25px;letter-spacing:-1px;line-height:1.35;margin:24px 0 12px}.summary{color:#566154;margin:0 0 14px}ul{padding-left:19px;margin:0 0 24px;font-size:14px;color:#566154}li+li{margin-top:5px}.actions{margin-top:auto;display:grid;gap:8px}.buy,.watch{display:block;padding:13px 12px;border-radius:12px;text-align:center;font-size:15px;font-weight:700;text-decoration:none}.buy{background:#285d43;color:white}.watch{color:#285d43;border:1px solid #dce5dd}.buy:hover{background:#17432d}a:focus-visible{outline:3px solid #b46d18;outline-offset:4px}.disclosure{font-size:12px;line-height:1.7;color:#687267;margin:18px 0 0}.foot{border-top:1px solid #dde2d8;padding-top:20px;margin-top:32px;color:#6c756b;font-size:13px}.empty{padding:32px;background:white;border-radius:20px;color:#566154}@media(max-width:600px){main{padding:28px 18px}.intro{padding:30px 0 24px}.grid{grid-template-columns:1fr}article{padding:23px}h2{margin-top:18px}}
+  </style>
+</head>
+<body><main>
+  <a class="brand" href="https://www.youtube.com/@GumaShop86">GumaShop ↗</a>
+  <header class="intro"><h1>영상 속 그 상품.</h1><p>궁금했던 상품, 여기서 찾아보세요.</p></header>
+  <section class="grid" aria-label="상품 모음">
+  {% for product in products %}
+    <article id="product-{{ product.number }}">
+      <div class="eyebrow"><span class="number">{{ '%02d'|format(product.number) }}</span><span>{{ product.category }}</span></div>
+      <h2>{{ product.name }}</h2><p class="summary">{{ product.summary }}</p>
+      <ul>{% for detail in product.details %}<li>{{ detail }}</li>{% endfor %}</ul>
+      <div class="actions"><a class="buy" href="{{ product.purchase_url }}" rel="sponsored noopener" target="_blank">쿠팡에서 상품 보기 ↗</a><a class="watch" href="{{ product.video_url }}" rel="noopener" target="_blank">소개 영상 보기</a></div>
+      <p class="disclosure">이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</p>
+    </article>
+  {% else %}<p class="empty">곧 영상 속 상품을 소개할게요.</p>{% endfor %}
+  </section>
+  <footer class="foot">가격·배송·판매 여부는 상품 페이지의 최신 정보를 확인해 주세요.</footer>
+</main></body></html>
