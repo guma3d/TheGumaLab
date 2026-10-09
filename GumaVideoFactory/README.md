@@ -32,7 +32,15 @@ https://videofactory.guma3d.com/ · 홈서버 8085 · https://www.youtube.com/@G
 - 저장한 수정본: 고구마빵 Video v9, 보풀제거기 v8, 찹쌀떡 v14, 흑임자인절미 v3. 화면·파일 디코딩·고정 음량 검사를 마쳤으며 실제 청취는 웹 사용자 검토 대기다.
 - 2026-10-09 사용자 별도 요청으로 위 과거 버전 4편을 YouTube 비공개로 업로드했다. 설정·실제 URL·검증 결과는 `storage/handoffs/private-upload-20261009/`에 보존한다. 당시 해당 버전의 비공개 업로드 승인만 유효했으며 최신 버전의 승인·공개 상태는 아래 기록을 따른다.
 
-## 현재 최종본 — 2026-10-09 공개 2편·비공개 2편
+## 추가 제작 — 2026-10-09 피자설기 웹 검토본
+
+- Food에서 사용자가 승인한 이미지 콘티 v0001과 실제 제조 자료를 인계받아 수라당 콤비네이션 피자설기(`e9d3b5997cf329dd`) Preview v1 / Video v2를 제작했다. [웹 버전 리뷰](https://videofactory.guma3d.com/ideas/e9d3b5997cf329dd#Video), [정확한 Video v2](https://videofactory.guma3d.com/storage/products/e9d3b5997cf329dd/Video/v0002/final.mp4). 최초 Video v1도 보존한다. 이 추가 제작은 기존 4편의 공개 상태를 변경하지 않는다.
+- 8컷·28.33초·1080×1920·30fps. 첫 컷은 실제 상품 사진, 나머지는 푸드킹덤의 수라당 제조 원본에서 서로 다른 공정을 세로 편집했다. 666초 이후 다른 맛 챕터는 사용하지 않았다. 원본은 제3자 촬영이며 재사용 허가 미확인이다. `acquired_clip`으로 구분하고 웹에서도 공식 자료로 표시하지 않는다. 사용자 검토용 로컬·웹 저장 승인만 있으며 YouTube 업로드·공개 승인은 없다.
+- 승인 콘티의 역동적인 자막 인상을 Maple Bold·흰 글자·검정/흰 이중 외곽선·주황/노랑 강조·단발성 0.15초 스케일 팝으로 재현했다. 정확한 생성 콘티 폰트와 같다고 주장하지 않는다. v2에서 모바일 가독성을 위해 글자와 외곽선을 키웠으며 v1의 Zephyr 음성 8개를 해시 일치로 재사용했다.
+- 최종 BGM은 Carefree. 고정 음악 -25.01 LUFS, 음성 -16.60 LUFS, 최종 true peak -2.82 dBFS. ducking·페이드 없음. 제작 전 전 컷/원본 검수, 제작 후 전 컷/전환 연속 프레임·전체 디코딩·검은 화면/정지·클리핑 검사 완료. 검출된 정지는 의도된 첫 상품 사진뿐이다. 실제 청취·발음은 사용자 웹 리뷰 대기이며 들었다고 기록하지 않는다. TTS 최초 8회, 수정본 추가 0회, Veo 0회, YouTube 업로드 0회.
+- 승인 해시·원본·스크립트·제작 전후 검수·최종 URL/해시/상태는 `storage/handoffs/food-pizza-seolgi-9719378135/`의 `approval-v0001.json`, `production-v0001/preflight-review.json`, `production-v0002/final-review.json`, `completion.json`, `main-state.json`에 보존한다. 관련 shopping 테스트 9개 통과; 기존 `test_slot_accumulation_and_affiliate`의 readiness fixture 오류 1건은 별도로 기록했다. 실제 자막 렌더와 최종 미디어 검증은 통과했다.
+
+## 기존 4편 최종본 — 2026-10-09 공개 2편·비공개 2편
 
 | 제품 | Video | BGM | 상태 |
 |---|---|---|---|
