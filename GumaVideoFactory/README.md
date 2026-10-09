@@ -94,6 +94,8 @@ https://videofactory.guma3d.com/ · 홈서버 8085 · https://www.youtube.com/@G
 
 ### 가습기 웹 검토본 — 2026-10-09
 
+- **최신 사용자 검토: v2 콘텐츠 품질 미수용, 수정 요청 상태.** 실제 기능 동작보다 이미지 비중이 높은 구성이 거절됐다. 아래 렌더·기술·프레임 검사 통과는 제작 이력이며 사용자 품질 수용이 아니다. 기존 파일을 보존하고 `revision_requested`로 관리하며 공개 승인 버튼은 표시하지 않는다. Living에서 동일 제품의 급수·다이얼·분무·물통 분리/세척 영상과 공식 발행자 자료를 재조사 중이다. 소스 확보 전 반복 이미지 재렌더는 하지 않는다. 최신 근거: `storage/handoffs/living-dryness-20261009/content-feedback-v2.json` 및 `main-state.json`.
+
 - 사용자 승인 및 Living의 가을 주제 추가 지시에 따라 샤오미 가습기 2 라이트를 [Video v2](https://videofactory.guma3d.com/ideas/277d58f6dd54822d?video=2#Video)에 저장했다. 32.033초·7컷, Preview v2 / Thumbnail v1. Living의 썸네일 파일 초안 `thumbnail-v2.png`를 해당 영상에 연결하며 영상 내부에는 삽입하지 않는다.
 - 첫 대사·자막은 ‘쌀쌀하고 건조해진 가을, 샤오미 가습기로 방 안을 촉촉하게’로 수정하고 CUT2~7 영상·Zephyr 음성을 재사용했다. 기존 Video v1 보존. Fluffing a Duck -25 LUFS 고정, 대사 연동 감쇠·페이드 없음. 화면·전환·기술 검수 결과와 실제 청취 미실시/웹 음성 리뷰 대기를 구분해 기록한다.
 - 공식 사진·실제 720p 사용 구간·별도 생성 생활 장면의 출처와 검수는 `storage/handoffs/living-dryness-20261009/`에 있다. 최신 결과는 `completion-v2.json`, 실행 상태는 `main-state.json`이다. 최종 원본은 `storage/products/277d58f6dd54822d/Video/v0002/final.mp4`에 보존한다.

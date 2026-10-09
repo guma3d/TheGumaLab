@@ -1,6 +1,11 @@
 {
-  "revision": "2026-10-09.11",
+  "revision": "2026-10-09.12",
   "rules": [
+    {
+      "id": "living-functional-action-coverage",
+      "category": "household",
+      "instruction": "Functional narration requires clear continuous real-action footage of the exact model. Search diverse Xiaohongshu/rednote real-use videos and manufacturer footage with verified original publisher. Show the narrated filling, control, mist, disassembly or cleaning action for the spoken duration. Do not automatically replace missing/short action footage with static official photos, generated lifestyle stills, or a brief demonstration followed by beauty photos. Stills are for actual static information or context only. Before paid production and after rendering, record living_actions for every cut: classification and reason, observed action, exact-model match, original hash/source URL, source range, actual motion duration, original resolution/enlargement and playback review; verify the official publisher for official clips. Source shortages return to acquisition, not another image-heavy render. Distinguish technical/frame QA from user content acceptance. Preserve rejected versions and their historical evidence, mark latest state revision_requested and do not publish. Manual production uses the same quality.validate_living_actions gate as the standard flow."
+    },
     {
       "id": "description-ad-and-relevant-hashtags",
       "category": "all",
@@ -148,6 +153,11 @@
       "id": "pizza-seolgi-pop-caption-20261009",
       "scope": "food pizza-seolgi approved storyboard v0001",
       "lesson": "User approved dynamic rounded storyboard text for actual video production. Reproduce its visual impression with installed Maple Bold without claiming exact font identity. Source is third-party Food Kingdom footage with no verified reuse permission; local/web review approval only."
+    },
+    {
+      "id": "humidifier-static-heavy-rejected-20261009",
+      "scope": "household",
+      "lesson": "User rejected humidifier Video2 despite technical/frame checks: too few functional real-action scenes and excessive still images. Reacquire varied exact-model rednote and official footage; no static substitution for missing narrated actions."
     }
   ],
   "publishing": {

@@ -191,6 +191,8 @@ def seal(id,n,review_path):
         raise ValueError('모든 컷의 실물·기능·후킹·원본 경계 검수가 필요합니다.')
     if v['storyboard'].get('quality_revision'):
         quality.validate_preflight(r)
+    if store.read(id)['category']=='household':
+        quality.validate_living_actions(v['storyboard'],r)
     store.write_json(folder/'visual_review.json',r)
     files={p.relative_to(store.directory(id)).as_posix():digest(p) for p in folder.iterdir() if p.name!='version.json' and p.is_file()}
     store.write_json(folder/'package.json',dict(files=files,pipeline='shopping_v2',reviewed_by=r['reviewed_by'],prepared_at=now_kst().isoformat()))
@@ -210,6 +212,8 @@ def enqueue(id,n,regenerate=False,reuse_video_version=None):
     if not read(folder/'storyboard.json').get('quality_revision'):
         raise ValueError('새 해상도·감독 검수 기준으로 콘티를 다시 준비하세요.')
     board=read(folder/'storyboard.json')
+    if rec['category']=='household':
+        quality.validate_living_actions(board,read(folder/'visual_review.json'))
     if reuse_video_version:
         parent=store.get(id,'Video',reuse_video_version)
         board['bgm_track']=parent['storyboard']['bgm_track']
@@ -228,6 +232,9 @@ async def render(id,n):
     v=store.get(id,'Video',n);verify_package(id,v['preview_version'])
     folder=store.version_dir(id,'Video',n);preview=store.version_dir(id,'Preview',v['preview_version'])
     board=v['storyboard'];segments=[];cut_outputs=[]
+    living=store.read(id)['category']=='household'
+    action_review=read(preview/'visual_review.json') if living else None
+    if living:quality.validate_living_actions(board,action_review)
     bgm.select(board)
     # Validate every spoken duration before any paid Veo request.
     for i,scene in enumerate(board['scenes'],1):
@@ -242,6 +249,8 @@ async def render(id,n):
             await synthesize_speech(scene['narration_ko'],audio,voice=v['voice'],rate=v.get('voice_rate','natural-brisk'))
         if media.duration(audio)+.4>spoken_duration_limit(scene):
             raise ValueError(f'CUT {i}: 대사를 6초 안팎으로 간결하게 수정하세요.')
+    if living:
+        quality.validate_living_actions(board,action_review,[media.duration(folder/f'audio_{i:02d}.mp3')+.4 for i in range(1,len(board['scenes'])+1)])
     for i,scene in enumerate(board['scenes'],1):
         store.update(id,'Video',n,message=f'{i}/{len(board["scenes"])} 컷·고정 음성 제작')
         audio=folder/f'audio_{i:02d}.mp3'
@@ -368,6 +377,9 @@ def publication(id,n,action,evidence):
         if music.get('file_sha256')!=data['file_sha256'] or not music.get('clipping_passed') or not bgm.has_required_credit(data['description'],music):
             raise ValueError('현재 영상의 BGM 검수·크레딧이 필요합니다.')
         if len(evidence.get('notes',''))<10:raise ValueError('실제 확인 근거를 기록해주세요.')
+        if action in ('review_web','review_private','review') and store.read(id)['category']=='household':
+            video=store.get(id,'Video',n)
+            quality.validate_living_actions(video['storyboard'],evidence,[media.duration(folder/f'cut_{i:02d}.mp4') for i in range(1,len(video['storyboard']['scenes'])+1)])
         if action in ('review_web','review_private'):
             if store.get(id,'Video',n).get('storyboard',{}).get('category_style',{}).get('thumbnail_required'):
                 from app.core.thumbnails import validate_for_video

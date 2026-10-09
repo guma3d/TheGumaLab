@@ -2,12 +2,47 @@
 import json
 import subprocess
 import io
+import math
+import re
 from fractions import Fraction
 from PIL import Image, ImageOps
 
 REVIEW_AXES = ('source_fidelity', 'sharpness', 'vertical_composition', 'pacing', 'voice', 'audience_fit', 'hook')
 PREFLIGHT_AXES = ('source_fidelity','source_resolution','vertical_composition','script_pacing','audience_fit','hook')
 DIRECTOR_AXES = ('shot_variety','narration_visual_match','natural_bright_lighting','smooth_transitions','advertising_disclosure')
+
+def validate_living_actions(board, review, durations=None):
+    """A technical pass cannot substitute for evidence of the narrated action."""
+    scenes=board['scenes']; checks=review.get('living_actions',[])
+    if len(checks)!=len(scenes):
+        raise ValueError('Living은 모든 컷의 동작/정적 정보 구분과 실제 영상 검수가 필요합니다.')
+    action_count=0
+    for i,(scene,check) in enumerate(zip(scenes,checks),1):
+        if check.get('number')!=i or check.get('kind') not in ('action','static_information','context') or len(check.get('notes','').strip())<10:
+            raise ValueError(f'CUT {i}: 실제 보여줄 동작 또는 정지 화면을 쓰는 이유를 기록하세요.')
+        if check['kind']!='action':
+            if check.get('narrates_action') is not False:
+                raise ValueError(f'CUT {i}: 동작을 설명하는 대사를 정지 이미지로 대체할 수 없습니다.')
+            continue
+        action_count+=1
+        if scene.get('mode') not in ('official_clip','acquired_clip') or not all(check.get(k) is True for k in ('action_visible','model_match','playback_reviewed','continuous_motion')):
+            raise ValueError(f'CUT {i}: 같은 제품의 선명한 실제 동작 영상을 재생 검수하세요.')
+        if scene['mode']=='official_clip' and check.get('official_publisher_verified') is not True:
+            raise ValueError(f'CUT {i}: 공식 영상의 실제 발행자 확인이 필요합니다.')
+        values=[check.get(k) for k in ('source_start_seconds','source_end_seconds','motion_seconds','original_short_edge','enlargement')]
+        if any(type(v) not in (int,float) or not math.isfinite(v) for v in values):
+            raise ValueError(f'CUT {i}: 원본 구간·동작 길이·해상도·확대율을 기록하세요.')
+        start,end,motion,edge,scale=values
+        required=durations[i-1] if durations is not None else scene['duration_seconds']
+        if start<0 or end<=start or motion>end-start+1/30 or motion<required-.4-1/30:
+            raise ValueError(f'CUT {i}: 실제 동작 길이가 대사 구간보다 짧습니다. 사진·정지 연장으로 채우지 마세요.')
+        if edge<720 or not 0<scale<=1.5:
+            raise ValueError(f'CUT {i}: Living 원본 720px 이상·최대 1.5배 확대를 확인하세요.')
+        if not re.fullmatch(r'[a-fA-F0-9]{64}',check.get('original_sha256','')) or not check.get('source_url','').startswith('https://') or len(check.get('observed_action','').strip())<5:
+            raise ValueError(f'CUT {i}: 원본 해시·출처 URL·관찰한 실제 동작이 필요합니다.')
+    if not action_count:
+        raise ValueError('Living 기능 소개에는 실제 동작을 보여주는 컷이 필요합니다.')
+
 
 def validate_variety(scenes):
     from collections import Counter
