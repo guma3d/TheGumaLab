@@ -36,6 +36,8 @@ docker compose ps
 
 ImageGen 신규 결과는 `storage/assets/<unique-id>.png`와 `storage/imports/<unique-id>.json`으로 저장하면 다음 라이브러리 새로고침 때 등록된다. ID·파일명은 고유해야 하며 파일을 덮어쓰지 않는다. JSON에 id, file, title, character_id, kind, version, prompt, reference, tool, status를 남긴다.
 
+`python scripts/export_catalog.py`는 생성 프롬프트·원본 파일명·해시를 `reference-catalog.json`으로 내보낸다. 이 작은 카탈로그는 Git에 보존하고 실제 이미지·검토 데이터는 홈서버 저장소와 ZIP 백업에 보존한다. 카탈로그만으로 이미지 원본을 복원할 수는 없다.
+
 ## 검증
 
 ```powershell
@@ -43,3 +45,11 @@ docker compose run --rm -v D:/TheGumaLab/GumaStory/tests:/app/tests gumastory py
 ```
 
 SSO 차단, CSRF, 원본 보존과 버전 증가, 잘못된 업로드, 대본 동시 수정 충돌, 시간 구간 검증, 리소스 연결을 검사한다. 테스트 인증 우회는 테스트 함수 인자로만 제공하며 운영 환경변수로 활성화할 수 없다.
+
+## 초기 컬렉션 (2026-10-10)
+
+캐릭터별 15장(각도 6, 표정 4, 상황 5), 총 60개의 서로 다른 1672×941 PNG를 보관한다. 기존 스타일 연구 4장과 보관함의 이전 시안 9장까지 총 73개 리소스다. 새 이미지는 사용자 검토 전이며, 장보기 컷의 생성 가격표 등은 검토 메모를 확인한다.
+
+`python scripts/audit_references.py`로 수량·분류·해상도·중복 해시를 확인한다. 결과와 웹 검수 기록은 `storage/verification/`에 저장한다. 기능 테스트 9건 통과, 인증된 공개 주소에서 필터·원본 상세·대본 v2 저장과 v1 보존을 확인했다. 브라우저에서 확인한 폭은 750px이며, 390px 요청은 도구에서 적용되지 않아 실제 휴대폰 검수로 간주하지 않는다.
+
+홈서버 직접 빌드와 정상 컨테이너 상태는 확인했다. GitHub Actions 자동 배포는 실패했으며 상세 로그는 GitHub 인증이 없어 원인을 확정하지 못했다. 로컬 배포 성공과 자동 배포 성공을 구분한다.
