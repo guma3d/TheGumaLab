@@ -2,6 +2,10 @@
 
 이 파일은 큰 이미지 이력을 복제하지 않고 Main 업무를 이어받기 위한 요약이다. 원본 대화와 제작 파일은 보존한다. 시점이 지난 상태는 실제 파일·웹에서 다시 확인한다.
 
+## 현재 채널 브랜딩
+
+- 2026-10-10 사용자 요청으로 **구마의 딴짓 / @GumaDdanjit**으로 변경. 근육질 남성 팔뚝 프로필·노란 배너·취미 채널 소개를 적용. 고유 채널 ID와 기존 영상은 유지. 관련 자료는 `GumaVideoFactory/storage/branding/guma-ddanjit-v1/`, 현재 기준은 README.
+
 ## 최신 제작 전략 — 2026-10-10
 
 - 롱폼·이야기쇼츠를 추가하고 롱폼을 주력으로 제작한 뒤 핵심 구간을 쇼츠로 재편집한다. 기존 테크·음식·생활은 유지한다. 매일 쇼핑쇼츠 3편 목표는 폐기한다. 원본 버전·해시·구간을 파생본에 기록하고 각 영상의 업로드 승인도 분리한다. 상세 내용과 구현 범위는 GumaVideoFactory/RESEARCH.md의 장기 운영 방향을 따른다. 새 세션·자동 업로드는 요청하지 않았다.
@@ -53,7 +57,7 @@
 ## 최근 확인한 결과 — 현재 상태와 이력을 구분
 
 - 아래 공개·비공개 상태는 2026-10-10 Studio 확인 기록 기준이다. 현재 상태를 다시 물으면 실제 채널과 대조한다. 과거의 빈 채널·삭제 대기·흑임자 v2 검토 상태는 현재 상태가 아니다.
-- 채널 `UCRtAVFQFmJCcpvLeuyq03Kg` / `@GumaShop86`: Standard·Intermediate·Advanced 기능 사용 가능. 고급 기능은 2026-10-08 Studio에서 Enabled 확인.
+- 채널 `UCRtAVFQFmJCcpvLeuyq03Kg` / `@GumaDdanjit`: Standard·Intermediate·Advanced 기능 사용 가능. 고급 기능은 2026-10-08 Studio에서 Enabled 확인.
 - 공개: 고구마빵(`372a4996226cf3a5`) Video v13 / Thumbnail v2 → https://www.youtube.com/watch?v=IQkkmVqJn6w, 미지아 보풀제거기 2(`57ab7c7af6717633`) Video v11 / Thumbnail v1 → https://www.youtube.com/watch?v=0Wa-VX-mTco. 사용자 별도 교체 요청에 따라 팝 자막·생성 썸네일을 적용하고 기존 AAC 오디오 스트림·장면·제목·설명을 보존했다. 이전 `T0eKHI5ieXA`·`uSQqUUQ1GCc`는 후속 사용자 요청으로 YouTube에서 삭제했고 로컬 버전은 보존한다.
 - 추가 공개(2026-10-10): 딸기쏙우유 찹쌀떡(`67e70b2aebfc411e`) Video v17 / Thumbnail v1 → https://www.youtube.com/watch?v=yqG4SXzqpCA, 찰떡아이스 흑임자인절미(`dadc1759bf7912ef`) Video v6 / Thumbnail v1 → https://www.youtube.com/watch?v=fKpQ14VtPMY. Food의 직접 사용자 메시지 `01a122d1-353c-7f60-9537-aabc640da25b`로 공개·프로필 연결 승인 확인 후 기존 URL을 Public으로 전환했다. 공개 전 구독 피드·알림 ON 저장 확인, 사용자 제목·설명·기존 영상 보존, 삭제·재업로드 0회.
 - 비공개: 피자설기 v3 → https://www.youtube.com/watch?v=yypR1nJVmic, 누룽지팝 v1 → https://www.youtube.com/watch?v=in626m-2X8Y. 이 두 편의 공개 승인은 없다. 현재 총 6편(공개 4·비공개 2). 다음 버전은 별도 업로드 요청이 필요하다.

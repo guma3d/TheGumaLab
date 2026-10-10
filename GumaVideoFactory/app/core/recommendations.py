@@ -366,7 +366,8 @@ def validate_novelty(item):
         valid = checked.tzinfo and timedelta(0) <= now_kst()-checked <= timedelta(hours=24)
     except (KeyError, TypeError, ValueError):
         valid = False
-    if not valid or review.get('channel') != 'https://www.youtube.com/@GumaShop86' or review.get('studio_checked') is not True:
+    from app.core.channel_identity import CHANNEL_URL, CHANNEL_ID_URL
+    if not valid or review.get('channel') not in (CHANNEL_URL, CHANNEL_ID_URL) or review.get('studio_checked') is not True:
         raise ValueError('최근 24시간 내 Studio에서 최근 7일 업로드를 확인해야 합니다.')
     comparisons = review.get('comparisons', [])
     if len(review.get('notes','')) < 10 or any(c.get('similar') is not False or len(c.get('reason','')) < 10 or not c.get('url') for c in comparisons):

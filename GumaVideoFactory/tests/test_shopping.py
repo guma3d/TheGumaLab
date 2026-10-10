@@ -93,7 +93,7 @@ class ShoppingTests(unittest.TestCase):
         board=dict(author_model='gpt-6-sol',title='fixture',summary='test',popularity_basis='관심을 끄는 기능을 근거로 설명',scenes=[dict(role=role,mode='official_image',source_file=str(image),source_url='https://example.org/image',evidence='synthetic test image only',narration_ko='테스트입니다.',hook='문제가 있나요?' if i==0 else '',covered_features=['main','a','b'],duration_seconds=2) for i,role in enumerate(['need','solution','reason','product','product','cta'])])
         for i,scene in enumerate(board['scenes']):
             unique=root/f'fixture_{i}.png';Image.new('RGB',(1080,1920),(20+i*20,100,120)).save(unique);scene['source_file']=str(unique)
-        rec.update(topic_key='fixture-topic',problem_key='fixture-problem',novelty_review=dict(checked_at=now_kst().isoformat(),channel='https://www.youtube.com/@GumaShop86',studio_checked=True,notes='Synthetic empty Studio fixture',comparisons=[]))
+        rec.update(topic_key='fixture-topic',problem_key='fixture-problem',novelty_review=dict(checked_at=now_kst().isoformat(),channel='https://www.youtube.com/@GumaDdanjit',studio_checked=True,notes='Synthetic empty Studio fixture',comparisons=[]))
         board['bgm_track']='Carefree'
         return rec,board
 
@@ -192,7 +192,7 @@ class ShoppingTests(unittest.TestCase):
             s.publication(id,1,'authorize_upload',dict(evidence,user_approved=True,file_sha256=s.digest(vf/'final.mp4')))
             s.publication(id,1,'claim',evidence)
             with self.assertRaises(ValueError):s.publication(id,1,'claim',evidence)
-            s.publication(id,1,'private',dict(evidence,visibility='private',channel='https://www.youtube.com/@GumaShop86',url='https://www.youtube.com/watch?v=12345678901'))
+            s.publication(id,1,'private',dict(evidence,visibility='private',channel='https://www.youtube.com/@GumaDdanjit',url='https://www.youtube.com/watch?v=12345678901'))
             with self.assertRaises(Exception):asyncio.run(request_publish(id,1,StageRequest(approved=False)))
             asyncio.run(request_publish(id,1,StageRequest(approved=True)))
             s.publication(id,1,'public',dict(evidence,visibility='public',url='https://www.youtube.com/watch?v=12345678901'))
