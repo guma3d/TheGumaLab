@@ -13,7 +13,11 @@ spoken=''.join(x['text'] for x in timeline['paragraphs'])
 approved=''.join(s['narration'].replace('\n\n','') for s in script['scenes'])
 assert spoken==approved
 frames=[round((p['start']+p['duration']/2)*30) for p in timeline['paragraphs']]
-selection='+'.join(f'eq(n,{n})' for n in frames)
+def balanced_select(values):
+    if len(values)==1:return f'eq(n,{values[0]})'
+    middle=len(values)//2
+    return '('+balanced_select(values[:middle])+'+'+balanced_select(values[middle:])+')'
+selection=balanced_select(frames)
 folder=root/'encoded-review';folder.mkdir(exist_ok=True)
 command=['ffmpeg','-v','error','-y','-i',str(movie),'-vf',f"select='{selection}',scale=384:216,tile=5x4",'-fps_mode','vfr',str(folder/'sheet-%02d.jpg')]
 result=subprocess.run(command,capture_output=True,text=True,check=True)
