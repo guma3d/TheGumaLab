@@ -43,6 +43,13 @@ https://videofactory.guma3d.com/ · 홈서버 8085 · https://www.youtube.com/@G
 - Main만 브라우저 게시·번호 발급을 처리한다. 실제 YouTube 공개 상태와 상품 목록·링크를 정기 대조하고 불일치는 재처리한다. 직접 비공개 전환된 상품도 숨긴다. 로그인 장애·미완료를 성공으로 기록하지 않는다.
 - 이는 운영 계약이다. 세션 생성만으로 자동 인계·상품 동기화가 구현되지는 않는다. 기존 예약의 실행 세션·규칙을 Main이 점검하고 새 승인 흐름과 충돌하는 제작은 실행하지 않는다.
 
+## 대추야자 총평 수정본 — Video v2 웹 검토 (2026-10-10)
+
+- 사용자가 직접 작성한 장점(엄청 단맛, 피넛버터·초코의 복합적인 맛, 쓴 아메리카노와의 조화)과 단점(씨 빼기·초콜릿 굳히기가 너무 어려움)을 마지막 2컷 음성·자막으로 반영했다. 마지막 구매 CTA는 총평으로 교체했다. 앞의 6컷 영상·음성은 파일 해시 일치로 보존했다.
+- [Video v2 웹 리뷰](https://videofactory.guma3d.com/ideas/3219f31dbcaf884c?video=2#Video): Preview v2 / Video v2 / Thumbnail v2, 8컷·34.83초·1080×1920·30fps. 기존 화면·썸네일 재사용, Zephyr TTS 2회, 새 영상/이미지 생성 0회. Wallpaper 고정 -24.99 LUFS, 대사 -16.8 LUFS, 최종 true peak -3.8 dBTP. 대사 연동 감쇠·페이드 없음.
+- 전 컷·전환 프레임, 전체 디코딩·검은 화면·클리핑 검사 완료. 실제 음성 청취는 사용자 웹 검토 대기. 원본 Flow 720×1280의 기존 한계는 유지한다. 결과 SHA256 `871555ffd33475fc2d47b25816e4796fe3a29c4b33aada15331ccbf32a5be0b4`.
+- **YouTube의 기존 비공개 v1 `F3xkLiYXLKw`는 유지했다.** 사용자는 웹 수정만 요청했고 유튜브 업로드/수정은 하지 않았다. 기록은 `storage/handoffs/food-dates-2257525/production-v0002/`, 파일은 `storage/products/3219f31dbcaf884c/Video/v0002/final.mp4`.
+
 ## 대추야자 디저트 — 2026-10-10 사용자 수용·비공개 등록
 
 - Food의 직접 사용자 제작 승인(`01a122ea-c11e-7e10-a541-3a0045b38944`)과 승인 8컷 콘티 v0001 해시를 확인해 Date Crown KHALAS 1kg×1개를 제작했다. 아이템 `3219f31dbcaf884c`, Preview v1 / Video v1 / Thumbnail v1, 8컷·31.9초·1080×1920·30fps. [정확한 웹 버전](https://videofactory.guma3d.com/ideas/3219f31dbcaf884c?video=1#Video).
