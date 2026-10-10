@@ -35,7 +35,32 @@ def test_sso_is_required_for_ui_api_and_originals(tmp_path):
     assert client.get('/').status_code == 302
     assert client.get('/api/state').status_code == 401
     assert client.get('/media/test/original').status_code == 401
+    assert client.get('/watch/test').status_code == 302
+    assert client.get('/api/videos/test/captions').status_code == 401
     assert client.get('/health').json()['status'] == 'ok'
+
+
+def test_video_page_caption_safety_and_seekable_media(studio):
+    client, store = studio
+    (store.root/'assets'/'film.mp4').write_bytes(b'0123456789')
+    store.add_asset(dict(id='film',file='film.mp4',title='<script>film</script>',
+        script_id='promotion',script_version=1,video_version=1,duration_seconds=90,
+        captions_file='film.vtt',chapters=[dict(start=0,title='도입')]))
+    (store.root/'exports'/'film.vtt').write_text('WEBVTT\n\n00:00:00.000 --> 00:00:02.000\n안녕하세요.\n',encoding='utf-8')
+    page=client.get('/watch/film',headers={'X-Forwarded-Prefix':'/gumastory'})
+    assert page.status_code == 200
+    assert '<script>film</script>' not in page.text
+    assert '&lt;script&gt;film&lt;/script&gt;' in page.text
+    assert '/gumastory/media/film/original' in page.text
+    assert '/gumastory/scripts/promotion/1' in page.text
+    assert 'data-seek="0.00"' in page.text
+    assert '/watch/film' in client.get('/scripts/promotion/1').text
+    assert client.get('/api/videos/film/captions').headers['content-type'].startswith('text/vtt')
+    response=client.get('/media/film/original',headers={'Range':'bytes=2-5'})
+    assert response.status_code == 206 and response.content == b'2345'
+    store.update_asset('film',1,dict(captions_file='../private.vtt'))
+    assert client.get('/api/videos/film/captions').status_code == 404
+    assert client.get('/watch/missing').status_code == 404
 
 
 def test_mutation_requires_same_origin_header(studio):

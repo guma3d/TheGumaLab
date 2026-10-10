@@ -20,7 +20,7 @@ with tempfile.TemporaryDirectory(prefix='gumastory-backup-') as temporary:
         src.backup(dst)
     with zipfile.ZipFile(output, 'x', compression=zipfile.ZIP_STORED) as archive:
         archive.write(snapshot, 'gumastory.sqlite3')
-        for directory in ('assets', 'imports', 'exports', 'verification'):
+        for directory in ('assets', 'imports', 'exports', 'verification', 'productions'):
             for file in sorted((root/directory).rglob('*')):
                 if not file.is_file():
                     continue

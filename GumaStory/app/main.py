@@ -246,6 +246,9 @@ def create_app(storage=None, testing=False):
         version_links = ' · '.join(f'<a href="{prefix}/scripts/{e(script_id)}/{s["version"]}">v{s["version"]}</a>' for s in versions)
         rows = ''.join(f'<tr><td>{clock(s["start"])}–{clock(s["end"])}</td><td><a href="#scene-{i}">{e(s["title"])}</a></td></tr>' for i,s in enumerate(item['scenes'],1))
         sections = []
+        films = [a for a in store.assets() if a.get('media') == 'video' and a.get('script_id') == script_id and a.get('script_version') == version]
+        film_links = ''.join(f'<p class="note"><a href="{prefix}/watch/{quote(a["id"], safe="")}">▶ {e(a["title"])}</a></p>' for a in films)
+        sections.append(film_links)
         for i,s in enumerate(item['scenes'],1):
             narration = ''.join(f'<p>{e(p)}</p>' for p in s['narration'].split('\n\n') if p.strip())
             resources = []
@@ -262,6 +265,35 @@ def create_app(storage=None, testing=False):
             sections.append(f'<section id="scene-{i}"><p class="time">{clock(s["start"])}–{clock(s["end"])}</p><h2>{e(s["title"])}</h2><div class="narration">{narration or "<p>내레이션 작성 전</p>"}</div><details><summary>화면 연출 · 출처 · 연결 리소스</summary><h3>화면 연출</h3><p class="preserve">{e(s["visual"])}</p><h3>사실 확인 · 출처</h3><p class="preserve">{e(s["source"])}</p><h3>연결 리소스 · 클릭하면 원본</h3>{gallery}</details></section>')
         status = {'outline':'구성 초안','draft':'상세 대본 초안','review':'검토 중','approved':'승인'}.get(item['status'],item['status'])
         return f'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{e(item['title'])} · v{version} · GumaStory</title><link rel="stylesheet" href="{prefix}/static/reader.css"></head><body><main><nav><a href="{prefix}/">GumaStory</a><a href="{prefix}/?script={e(script_id)}&version={version}">이 버전 편집</a><a href="{prefix}/api/scripts/{e(script_id)}/{version}/export">대본 다운로드</a></nav><header><p class="time">SCRIPT · v{version} · {status}</p><h1>{e(item['title'])}</h1><p>{e(item['summary'])}</p><p class="note">{e(item['note'])}</p><p>버전 기록: {version_links}</p></header><h2>시간대별 구성</h2><p class="note">시간은 편집 목표입니다. 실제 길이는 TTS 낭독 후 확정합니다. 화면 연출과 출처는 낭독하지 않습니다.</p><table><thead><tr><th>목표 시간</th><th>내용</th></tr></thead><tbody>{rows}</tbody></table>{''.join(sections)}<footer>GumaStory · v{version} 보존본 · 수정은 새 버전으로 저장됩니다.</footer></main></body></html>'''
+
+    @app.get('/watch/{asset_id}', response_class=HTMLResponse)
+    def watch(request: Request, asset_id: str):
+        item = store.asset(asset_id)
+        if not item or item.get('media') != 'video':
+            raise HTTPException(404, '영상을 찾을 수 없습니다.')
+        prefix, e = request.state.prefix, escape
+        base = f'{prefix}/media/{quote(asset_id, safe="")}'
+        poster = item.get('poster_id')
+        poster_attr = f' poster="{prefix}/media/{quote(poster, safe="")}/original"' if poster and store.asset(poster) else ''
+        captions = f'<track kind="subtitles" srclang="ko" label="한국어" src="{prefix}/api/videos/{quote(asset_id, safe="")}/captions">' if item.get('captions_file') else ''
+        chapters = ''.join(f'<li><button type="button" data-seek="{float(c["start"]):.2f}">{int(c["start"])//60:02d}:{int(c["start"])%60:02d} · {e(c["title"])}</button></li>' for c in item.get('chapters', []))
+        audio_id = item.get('audio_id')
+        audio = f'<h2>내레이션만 듣기</h2><audio controls preload="none" src="{prefix}/media/{quote(audio_id, safe="")}/original"></audio>' if audio_id and store.asset(audio_id) else ''
+        script_id, version = item.get('script_id'), item.get('script_version')
+        script_link = f'<a href="{prefix}/scripts/{quote(script_id, safe="")}/{int(version)}">대본 v{int(version)}</a>' if script_id and version else ''
+        seconds = round(item.get('duration_seconds', 0))
+        return f'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{e(item['title'])} · GumaStory</title><link rel="stylesheet" href="{prefix}/static/reader.css"></head><body><main class="watch"><nav><a href="{prefix}/">GumaStory</a>{script_link}<a href="{base}/download">MP4 다운로드</a></nav><header><p class="time">VIDEO · v{int(item.get('video_version',1))} · {seconds//60}분 {seconds%60}초</p><h1>{e(item['title'])}</h1></header><video id="story-player" controls playsinline preload="metadata"{poster_attr} src="{base}/original">{captions}</video><p class="note preserve">{e(item.get('note',''))}</p><h2>구간 바로가기</h2><ol class="chapters">{chapters}</ol>{audio}<h2>자료와 제작 기록</h2><p class="preserve">{e(item.get('credits',''))}</p><footer>대본과 영상 버전은 각각 보존됩니다.</footer></main><script src="{prefix}/static/watch.js"></script></body></html>'''
+
+    @app.get('/api/videos/{asset_id}/captions')
+    def video_captions(asset_id: str):
+        item = store.asset(asset_id)
+        filename = item.get('captions_file', '') if item else ''
+        if not filename or Path(filename).name != filename or not filename.endswith('.vtt'):
+            raise HTTPException(404, '자막을 찾을 수 없습니다.')
+        path = store.root / 'exports' / filename
+        if not path.is_file():
+            raise HTTPException(404, '자막을 찾을 수 없습니다.')
+        return FileResponse(path, media_type='text/vtt')
 
     return app
 
