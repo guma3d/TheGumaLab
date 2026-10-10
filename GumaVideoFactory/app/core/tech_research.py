@@ -1,6 +1,24 @@
 """Evidence gate for newly selected technology products; historical records stay readable."""
 
 
+def validate_tech_visual_plan(category, board):
+    """Gate new production only; metadata supplements, never replaces visual review."""
+    if category != 'tech':
+        return
+    data = board.model_dump() if hasattr(board, 'model_dump') else board
+    if data.get('needs_3d') or data.get('veo_transition'):
+        raise ValueError('테크는 imagegen 고정 카메라 방식만 사용합니다. 3D·영상 생성 전환은 금지합니다.')
+    for scene in data.get('scenes', []):
+        visual = scene.get('tech_visual') or {}
+        if scene.get('mode', scene.get('visual_mode')) not in ('explanatory_image', 'illustration_clip'):
+            raise ValueError('테크 비주얼은 imagegen 이미지 또는 해당 이미지의 일반 편집 합성만 사용합니다.')
+        if visual.get('generator') != 'imagegen' or visual.get('camera') != 'fixed':
+            raise ValueError('테크는 imagegen·fixed 카메라 이력이 필요합니다.')
+        for field in ('reference_evidence', 'base_image', 'edit_lineage', 'consistency_review'):
+            if not str(visual.get(field) or '').strip():
+                raise ValueError(f'테크 고정 카메라 검수 근거 누락: {field}')
+
+
 def validate_tech_evidence(item):
     data = item.model_dump() if hasattr(item, 'model_dump') else item
     if data.get('category') != 'tech':

@@ -13,7 +13,7 @@ from app.core import versions as store
 from app.core import official_clips as media
 from app.core.prepared_packages import digest, read, verify_package
 from app.core.production_rules import snapshot
-from app.core.tech_research import validate_tech_evidence
+from app.core.tech_research import validate_tech_evidence, validate_tech_visual_plan
 from app.core.recommendations import Recommendation, now_kst
 from app.core.recommendations import validate_novelty
 from app.core.categories import PRESETS
@@ -75,6 +75,7 @@ class Cut(BaseModel):
     veo_prompt: str = ''
     preserve_actual: bool = False
     square_crop: bool = False
+    tech_visual: dict = Field(default_factory=dict)
 
     @model_validator(mode='after')
     def validate_cut(self):
@@ -133,8 +134,7 @@ def build(rec_path, board_path):
     if not rec.purchase_link or not rec.purchase_link.affiliate_url:
         raise ValueError('쿠팡 데이터와 실제 발급된 파트너스 링크를 먼저 확보하세요.')
     board=Board.model_validate(read(board_path))
-    if rec.category == 'tech' and any(s.mode == 'veo' for s in board.scenes) and not rec.tech_evidence.get('paid_generation_user_request'):
-        raise ValueError('테크는 기존 설명 자료를 우선 사용합니다. 유료 영상 생성에는 별도 사용자 요청 근거가 필요합니다.')
+    validate_tech_visual_plan(rec.category, board)
     bgm.select(board.model_dump())
     if rec.category=='food' and any(s.mode=='veo' for s in board.scenes):
         raise ValueError('음식 영상은 Flow 크레딧으로 생성·검수한 파일을 먼저 등록하세요. Veo API는 호출하지 않습니다.')
@@ -172,7 +172,7 @@ def build(rec_path, board_path):
                     background='#293638' if rec.category=='tech' else '#f5f5f5'
                     Image.alpha_composite(Image.new('RGBA',rgba.size,background),rgba).convert('RGB').save(image)
                 from app.core.ffmpeg_mixer import render_product_still
-                render_product_still(image,clip,'9:16',s.duration_seconds,motion=rec.category!='food')
+                render_product_still(image,clip,'9:16',s.duration_seconds,motion=rec.category not in ('food','tech'))
             media.sheets(clip,[0,s.duration_seconds*.5,s.duration_seconds-.12],folder,f'check_{i:02d}')
             result['scenes'][i-1].update(scene_number=i,visual_mode=s.mode,purpose=s.role,
                 image_url=store.url(image),clip_url=store.url(clip),source_sha256=digest(copied),
@@ -242,6 +242,7 @@ async def render(id,n):
     v=store.get(id,'Video',n);verify_package(id,v['preview_version'])
     folder=store.version_dir(id,'Video',n);preview=store.version_dir(id,'Preview',v['preview_version'])
     board=v['storyboard'];segments=[];cut_outputs=[]
+    validate_tech_visual_plan(store.read(id)['category'], board)
     living=store.read(id)['category']=='household'
     action_review=read(preview/'visual_review.json') if living else None
     if living:quality.validate_living_actions(board,action_review)

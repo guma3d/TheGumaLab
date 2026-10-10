@@ -1,6 +1,6 @@
 import unittest
 
-from app.core.tech_research import validate_tech_evidence
+from app.core.tech_research import validate_tech_evidence, validate_tech_visual_plan
 
 
 class TechSelectionTests(unittest.TestCase):
@@ -52,3 +52,40 @@ class TechSelectionTests(unittest.TestCase):
     def test_non_tech_selection_is_unchanged(self):
         validate_tech_evidence({'category': 'food'})
         validate_tech_evidence({'category': 'household'})
+
+
+class TechFixedCameraTests(unittest.TestCase):
+    def setUp(self):
+        self.scene = dict(mode='illustration_clip', tech_visual=dict(
+            generator='imagegen', camera='fixed', reference_evidence='official diagram',
+            base_image='base.png + hash', edit_lineage='base -> separated -> assembled',
+            consistency_review='parts, lighting and camera compared across all frames'))
+
+    def test_imagegen_still_and_composite_are_allowed(self):
+        for mode in ('illustration_clip', 'explanatory_image'):
+            self.scene['mode'] = mode
+            validate_tech_visual_plan('tech', {'scenes': [self.scene]})
+
+    def test_paid_generation_legacy_bypass_and_orbit_are_rejected(self):
+        self.scene['mode'] = 'veo'
+        with self.assertRaises(ValueError):
+            validate_tech_visual_plan('tech', {'paid_generation_user_request': 'old permission', 'scenes': [self.scene]})
+        self.scene['mode'] = 'illustration_clip'
+        self.scene['tech_visual']['camera'] = 'orbit'
+        with self.assertRaises(ValueError):
+            validate_tech_visual_plan('tech', {'scenes': [self.scene]})
+        self.scene['tech_visual']['camera'] = 'fixed'
+        with self.assertRaises(ValueError):
+            validate_tech_visual_plan('tech', {'needs_3d': True, 'scenes': [self.scene]})
+
+    def test_missing_lineage_is_not_accepted(self):
+        del self.scene['tech_visual']['edit_lineage']
+        with self.assertRaisesRegex(ValueError, 'edit_lineage'):
+            validate_tech_visual_plan('tech', {'scenes': [self.scene]})
+
+    def test_other_categories_keep_their_existing_paths(self):
+        from app.core.production_rules import snapshot
+        for category in ('food', 'household', 'longform', 'story_shorts'):
+            validate_tech_visual_plan(category, {'scenes': [{'mode': 'veo'}]})
+            self.assertNotIn('tech-imagegen-fixed-camera', [r['id'] for r in snapshot(category)['rules']])
+        self.assertIn('tech-imagegen-fixed-camera', [r['id'] for r in snapshot('tech')['rules']])

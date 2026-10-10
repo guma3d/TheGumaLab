@@ -51,6 +51,8 @@ def draft(id,n,board_path):
 
 def add_model(id,n,source,metadata):
     """Trusted local build or inspected public asset. No provider APIs."""
+    if store.read(id)['category']=='tech':
+        raise ValueError('테크는 imagegen 고정 카메라 방식으로 제작하며 Blender 모델을 추가하지 않습니다.')
     from app.core import blender_runner as blender
     preview=store.get(id,'Preview',n)
     if preview['status']!='awaiting_review':raise ValueError('준비 중인 프리뷰만 모델을 연결할 수 있습니다.')

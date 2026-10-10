@@ -248,6 +248,8 @@ async def video_job(idea_id, number):
     if version.get('execution_mode') in ('session_shopping','astra_shopping'):
         from app.core.shopping import render
         return await render(idea_id,number)
+    if idea['category']=='tech':
+        raise ValueError('테크는 imagegen 고정 카메라 콘티를 shopping_package.py로 새로 준비하세요. 기존 3D·Veo 제작 경로는 사용하지 않습니다.')
     folder=store.version_dir(idea_id,'Video',number)
     preview=store.get(idea_id,'Preview',version['preview_version'])
     preview_folder=store.version_dir(idea_id,'Preview',version['preview_version'])
