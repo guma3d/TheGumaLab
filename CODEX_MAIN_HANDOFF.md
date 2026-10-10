@@ -4,7 +4,7 @@
 
 ## 현재 채널 브랜딩
 
-- 2026-10-10 사용자 요청으로 **구마의 딴짓 / @GumaDdanjit**으로 변경. 근육질 남성 팔뚝 프로필·노란 배너·취미 채널 소개를 적용. 고유 채널 ID와 기존 영상은 유지. 관련 자료는 `GumaVideoFactory/storage/branding/guma-ddanjit-v1/`, 현재 기준은 README.
+- 2026-10-10 사용자 요청으로 **구마의 딴짓 / @GumaDdanjit**으로 변경. 근육질 남성 팔뚝 프로필·노란 배너·취미 채널 소개를 적용. 프로필 상품 모음 주소도 `https://videofactory.guma3d.com/GumaDdanjit`으로 저장하고 공개 채널에서 확인했다. 기존 `/products`도 유지한다. 고유 채널 ID와 기존 영상은 유지. 관련 자료는 `GumaVideoFactory/storage/branding/guma-ddanjit-v1/`, 현재 기준은 README.
 
 ## 최신 제작 전략 — 2026-10-10
 
@@ -68,7 +68,7 @@
 - 공개: 고구마빵(`372a4996226cf3a5`) Video v13 / Thumbnail v2 → https://www.youtube.com/watch?v=IQkkmVqJn6w, 미지아 보풀제거기 2(`57ab7c7af6717633`) Video v11 / Thumbnail v1 → https://www.youtube.com/watch?v=0Wa-VX-mTco. 사용자 별도 교체 요청에 따라 팝 자막·생성 썸네일을 적용하고 기존 AAC 오디오 스트림·장면·제목·설명을 보존했다. 이전 `T0eKHI5ieXA`·`uSQqUUQ1GCc`는 후속 사용자 요청으로 YouTube에서 삭제했고 로컬 버전은 보존한다.
 - 추가 공개(2026-10-10): 딸기쏙우유 찹쌀떡(`67e70b2aebfc411e`) Video v17 / Thumbnail v1 → https://www.youtube.com/watch?v=yqG4SXzqpCA, 찰떡아이스 흑임자인절미(`dadc1759bf7912ef`) Video v6 / Thumbnail v1 → https://www.youtube.com/watch?v=fKpQ14VtPMY. Food의 직접 사용자 메시지 `01a122d1-353c-7f60-9537-aabc640da25b`로 공개·프로필 연결 승인 확인 후 기존 URL을 Public으로 전환했다. 공개 전 구독 피드·알림 ON 저장 확인, 사용자 제목·설명·기존 영상 보존, 삭제·재업로드 0회.
 - 비공개: 피자설기 v3 → https://www.youtube.com/watch?v=yypR1nJVmic, 누룽지팝 v1 → https://www.youtube.com/watch?v=in626m-2X8Y. 이 두 편의 공개 승인은 없다. 현재 총 6편(공개 4·비공개 2). 다음 버전은 별도 업로드 요청이 필요하다.
-- 상품 모음: https://videofactory.guma3d.com/products. 상단의 큰 소개 배너를 제거하고 브랜드 아래 상품 모음 제목·개수와 카드를 바로 표시한다. 각 카드에도 연한 노란 배경·노란 구매 버튼·크림 영상 버튼 적용(2026-10-10). 작은 실제 제품 사진과 텍스트를 가로 배치, 모바일 한 열·데스크톱 두 열. 카드 높이는 이전의 절반 이하(390px: 606~625px → 237~259px), 버튼 최소 44px·고지 원문·모든 링크 보존. 검증: `storage/handoffs/compact-yellow-catalog-20261010/`. 승인된 공개 상품 01 고구마빵·02 미지아·03 딸기떡(60g × 9개입)·04 찰떡아이스(90ml × 24개)를 노출한다. 비공개/웹 검토 제품은 자동 추가하지 않는다.
+- 상품 모음: https://videofactory.guma3d.com/GumaDdanjit. 상단의 큰 소개 배너를 제거하고 브랜드 아래 상품 모음 제목·개수와 카드를 바로 표시한다. 각 카드에도 연한 노란 배경·노란 구매 버튼·크림 영상 버튼 적용(2026-10-10). 작은 실제 제품 사진과 텍스트를 가로 배치, 모바일 한 열·데스크톱 두 열. 카드 높이는 이전의 절반 이하(390px: 606~625px → 237~259px), 버튼 최소 44px·고지 원문·모든 링크 보존. 검증: `storage/handoffs/compact-yellow-catalog-20261010/`. 승인된 공개 상품 01 고구마빵·02 미지아·03 딸기떡(60g × 9개입)·04 찰떡아이스(90ml × 24개)를 노출한다. 비공개/웹 검토 제품은 자동 추가하지 않는다.
 - 사용자가 직접 수정한 제목·설명이 게시 문구 기준이다. 제목 앞 [광고]를 붙이지 않고 설명은 글머리, BGM 출처는 간결한 하단 한 줄, 정확한 쿠팡 수수료 고지는 마지막 줄. 기존 음원은 출처 표시 조건을 준수한다.
 - 찰떡아이스 첫 장면은 정확한 공식 제품 표지 원본 이미지로 교체했다. 노이즈가 있는 생성 포장 합성을 재사용하지 않는다. 기존 로컬 버전·승인·검수 이력은 보존한다.
 - 최신 공개·상품모음 근거: `GumaVideoFactory/storage/handoffs/public-food-two-20261010/completion.json`, `studio-verified.json`, `catalog.png`. 이전 교체 근거: `GumaVideoFactory/storage/handoffs/private-pop-thumbnails-20261009/completion.json` 및 같은 폴더 `studio-final.txt/png`, `web-verification.json`, 제품별 검수·커버 프롬프트. 이전 공개본 교체·삭제는 `common-pop-thumbnails-20261009/completion.json`, `youtube-cleanup.json`이며 과거 승인·검수 기록은 수정하지 않는다. 제품별 최종 버전/BGM 표는 README가 기준이다.

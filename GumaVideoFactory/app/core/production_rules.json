@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-10.5",
+  "revision": "2026-10-10.6",
   "rules": [
     {
       "id": "preserve-published-video-and-subscription-distribution",
@@ -191,6 +191,8 @@
     }
   ],
   "publishing": {
+    "public_catalog_url": "https://videofactory.guma3d.com/GumaDdanjit",
+    "public_catalog_legacy_url": "https://videofactory.guma3d.com/products",
     "youtube_channel_url": "https://www.youtube.com/@GumaDdanjit",
     "channel_confirmed_by": "user",
     "purchase_platform": "coupang",
