@@ -1,0 +1,76 @@
+{
+  "characters": [
+    {
+      "id": "adult-man",
+      "name": "성인 남성",
+      "age": "40세 전후",
+      "design": "Korean man about 40, stocky body, large rounded-square face, broad cheeks, large rounded nose, thick brows, black side-swept hair, dark rectangular glasses, cream rolled-sleeve shirt, mustard tie, navy trousers, brown shoes, gold watch",
+      "scenes": [
+        "밝은 회의실에서 이야기 듣기",
+        "밤 집에서 계획 정리",
+        "주말 시장에서 장보기",
+        "카페에서 책 읽기",
+        "공원에서 산책"
+      ],
+      "master_id": "adult-man-01",
+      "goal": 15
+    },
+    {
+      "id": "adult-woman",
+      "name": "성인 여성",
+      "age": "38세 전후",
+      "design": "Korean adult woman about 35-38, elegant slim fit feminine silhouette with defined waist and long legs, modern stylish professional, adult proportions about five heads tall while still clearly caricatured in the UP-inspired animated universe. Gracefully rounded oval face, expressive dark eyes, softly arched brows, small rounded nose, NO glasses. Sleek dark chestnut shoulder-length bob with soft side part, tiny gold stud earrings. Tailored muted teal blazer over a cream blouse, tailored navy knee-length pencil skirt, hem at the knees, professional office silhouette, mustard low-heel pumps, slim gold wristwatch. Confident friendly composed posture, polished contemporary office outfit, fully clothed, mature adult.",
+      "scenes": [
+        "회사에서 아이디어 발표",
+        "집에서 책과 메모 정리",
+        "동네 가게에서 장보기",
+        "기차 여행을 준비",
+        "공방에서 도자기 만들기"
+      ],
+      "master_id": "adult-woman-01-v3",
+      "goal": 15
+    },
+    {
+      "id": "boy",
+      "name": "남자 어린이",
+      "age": "10세 전후",
+      "design": "Korean boy about 10, unmistakable child age and proportions, large rounded-square head, soft round cheeks, small button nose, thick short black hair with two distinctive upward tufts, no glasses, mustard sweatshirt over a cream collar, teal knee-length shorts, navy socks and cream sneakers. Natural child build, expressive curiosity, fully clothed age-appropriate everyday appearance.",
+      "scenes": [
+        "교실에서 손들고 질문",
+        "집에서 블록 조립",
+        "도서관에서 책 고르기",
+        "공원에서 공놀이",
+        "박물관에서 전시 관찰"
+      ],
+      "master_id": "boy-01",
+      "goal": 15
+    },
+    {
+      "id": "girl",
+      "name": "여성 청소년",
+      "age": "고등학생 · 17세 전후",
+      "design": "Korean high-school girl about 17, clearly teenage face and natural teen body proportions, confident K-pop fan who loves edgy street fashion. Bright cherry-red dyed shoulder-length layered hair with side-swept fringe, dark expressive eyes, no glasses, small silver hoop earrings, simple layered silver necklaces and silver bracelets. Black leather biker jacket worn open over an oversized full-length cream graphic-free T-shirt covering waist and hips, opaque matte black leggings, chunky cream high-top sneakers, small black crossbody bag with silver hardware. Fully clothed age-appropriate nonsexual streetwear, no bare midriff, no cleavage, no heels. Original rounded appealing 3D animated character, expressive and assertive rather than demure.",
+      "scenes": [
+        "방에서 스트리트 패션 코디 고르기",
+        "거울 앞에서 빨간 머리 스타일 정리",
+        "음반 가게에서 케이팝 앨범 구경",
+        "카페에서 패션 아이디어 스케치",
+        "학교 동아리실에서 음악 발표 준비"
+      ],
+      "master_id": "girl-01-v3",
+      "goal": 15
+    }
+  ],
+  "style": {
+    "title": "따뜻한 3D 이야기",
+    "description": "큰 둥근 얼굴, 캐릭터별로 구분되는 체형, 크림·남색·겨자색, 부드러운 조명과 입체 재질. 딸은 빨간 머리와 검은 스트리트룩을 고유 색으로 사용합니다.",
+    "rules": [
+      "캐릭터마다 최신 기준 정면을 참조하고 얼굴·머리·체형을 유지",
+      "성인 여성: 안경 없이 날씬한 체형, 재킷과 스커트 오피스룩",
+      "여성 청소년: 고등학생, 빨간 머리·검은 가죽 재킷·레깅스·액세서리의 비성적인 스트리트 패션",
+      "각도·표정·손·소품을 개별 검토한 후 승인",
+      "새 수정본은 원본을 덮어쓰지 않고 별도 버전으로 보관",
+      "글자·수치·출처는 편집 단계에서 정확하게 추가"
+    ]
+  }
+}

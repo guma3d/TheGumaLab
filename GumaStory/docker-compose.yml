@@ -1,0 +1,12 @@
+services:
+  gumastory:
+    build: .
+    container_name: GumaStory_app
+    ports:
+      - "8087:8087"
+    volumes:
+      - ./storage:/app/storage
+    environment:
+      GUMASTORY_AUTH_URL: http://host.docker.internal:8081/auth
+      TZ: Asia/Seoul
+    restart: unless-stopped

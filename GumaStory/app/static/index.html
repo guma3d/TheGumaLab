@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f5f0e6"><title>GumaStory · 이야기 작업실</title><link rel="stylesheet" href="__PREFIX__/static/style.css"><script defer src="__PREFIX__/static/app.js"></script></head>
+<body data-prefix="__PREFIX__">
+<aside class="sidebar"><a class="brand" href="__PREFIX__/"><span class="brand-icon">G.</span><span>GumaStory<small>이야기를 만드는 곳</small></span></a>
+<nav aria-label="주 메뉴"><button data-view="library" class="active">◈ <span>리소스 라이브러리</span></button><button data-view="characters">☺ <span>캐릭터 가이드</span></button><button data-view="scripts">▤ <span>대본 작업실</span></button></nav>
+<div class="side-note"><span class="eyebrow">OUR VISUAL WORLD</span><p>같은 세계.<br>다양한 이야기.</p><div class="swatches"><i></i><i></i><i></i><i></i></div></div>
+<a class="home-link" href="https://home.guma3d.com/">↗ The Guma Lab</a></aside>
+<main><header class="topbar"><span>구마의 딴짓 <span class="divider">/</span> STORY STUDIO</span><div><button class="quiet" id="refresh">새로고침</button><span class="local-badge">● 홈서버 보관</span></div></header>
+<section id="content" aria-live="polite"><p class="loading">작업실을 불러오고 있습니다…</p></section></main>
+<dialog id="asset-dialog" aria-labelledby="asset-heading"><button class="dialog-close" data-close="asset-dialog" aria-label="닫기">×</button><div id="asset-content"></div></dialog>
+<dialog id="upload-dialog" aria-labelledby="upload-heading"><button class="dialog-close" data-close="upload-dialog" aria-label="닫기">×</button><h2 id="upload-heading">리소스 보관하기</h2><p class="muted">원본을 보존하고, 수정본은 별도 버전으로 추가합니다.</p><form id="upload-form"><label>제목<input name="title" required maxlength="160"></label><label>캐릭터<select name="character_id" id="upload-character"></select></label><label>분류<select name="kind"><option value="other">기타 자료</option><option value="angle">각도</option><option value="expression">표정</option><option value="scene">상황</option><option value="audio">음성</option><option value="video">영상</option></select></label><label>원본 리소스 ID (수정본일 때만)<input name="parent_id" maxlength="120" placeholder="원본 상세 화면에서 ID 확인"></label><label class="file-drop">파일 선택<input type="file" name="file" required accept=".png,.jpg,.jpeg,.webp,.mp3,.wav,.mp4"></label><p class="muted">PNG · JPG · WebP · MP3 · WAV · MP4 / 최대 250MB</p><button class="primary" type="submit">원본 보관</button><p id="upload-error" role="alert"></p></form></dialog>
+<div id="toast" role="status" hidden></div>
+</body></html>
