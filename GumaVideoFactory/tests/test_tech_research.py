@@ -58,7 +58,7 @@ class TechFixedCameraTests(unittest.TestCase):
     def setUp(self):
         self.scene = dict(mode='illustration_clip', tech_visual=dict(
             generator='imagegen', camera='fixed', reference_evidence='official diagram',
-            base_image='base.png + hash', edit_lineage='base -> separated -> assembled',
+            base_image='base.png + hash', composition='magnetic clamp macro side view', edit_lineage='base -> separated -> assembled',
             consistency_review='parts, lighting and camera compared across all frames'))
 
     def test_imagegen_still_and_composite_are_allowed(self):
@@ -89,3 +89,11 @@ class TechFixedCameraTests(unittest.TestCase):
             validate_tech_visual_plan(category, {'scenes': [{'mode': 'veo'}]})
             self.assertNotIn('tech-imagegen-fixed-camera', [r['id'] for r in snapshot(category)['rules']])
         self.assertIn('tech-imagegen-fixed-camera', [r['id'] for r in snapshot('tech')['rules']])
+
+    def test_repeated_composition_is_rejected_but_distinct_cuts_are_allowed(self):
+        import copy
+        second = copy.deepcopy(self.scene)
+        with self.assertRaisesRegex(ValueError, '동일 구도'):
+            validate_tech_visual_plan('tech', {'scenes': [self.scene, second]})
+        second['tech_visual']['composition'] = 'tripod low angle whole product'
+        validate_tech_visual_plan('tech', {'scenes': [self.scene, second]})
