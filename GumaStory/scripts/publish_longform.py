@@ -35,6 +35,7 @@ credits='\n'.join(['대본: promotion v5 · 사용자 제작 승인 2026-10-10',
     '국내·해외·연도·문항은 구분. 가상 계산과 업무 장면은 실제 통계·인터뷰가 아님.',
     'BGM: '+review['track']['attribution'],
     '음성: Zephyr · 화면: 기존 ImageGen 일러스트 + 직접 제작한 차트·표 · 자막: 메이플스토리 Bold',
+    '음성 모델 기록: '+', '.join(review.get('tts_models',[])),
     '기술 검증: 영상/음성 스트림, 클리핑, BGM 고정 음량, 데이터 출처, 버전·해시 보존. 실제 전편 청취 검수는 미완료.'])
 film=dict(shared,id='promotion-film-v1',file='promotion-film-v1.mp4',kind='video',title=script['title'],
     script_id='promotion',script_version=5,video_version=1,width=1920,height=1080,fps=30,duration_seconds=timeline['duration'],

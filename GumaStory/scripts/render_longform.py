@@ -107,5 +107,6 @@ else:
 print(json.dumps({'stage':'mix','music':board['bgm_track']}),flush=True)
 review=bgm.mix(silent,root/'final.mp4',board)
 review.update(duration=cursor,tempo=tempo,script_version=script['version'],script_sha256=digest(root/'script.json'),video_sha256=digest(root/'final.mp4'),caption_timing='paragraph-synchronous; intra-paragraph estimated',visual_review='all composition contact sheets and encoded samples',listened_to_audio=False)
+review['tts_models']=sorted({v['model'] for v in voices})
 (root/'production-review.json').write_text(json.dumps(review,ensure_ascii=False,indent=2),encoding='utf-8')
 print(json.dumps({'complete':True,'duration':cursor,'video_sha256':review['video_sha256']}),flush=True)
