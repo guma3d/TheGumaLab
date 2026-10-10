@@ -3,6 +3,7 @@ import os
 import re
 import subprocess
 import uuid
+from html import escape
 from pathlib import Path
 from typing import Literal
 from urllib.parse import quote, urlparse
@@ -102,7 +103,9 @@ def create_app(storage=None, testing=False):
             if not allowed:
                 if path.startswith('/api/') or path.startswith('/media/'):
                     return JSONResponse({'detail': '홈서버 로그인이 필요합니다.'}, 401)
-                target = 'https://home.guma3d.com/gumastory/' if prefix else 'https://gumastory.guma3d.com/'
+                target = ('https://home.guma3d.com' + prefix if prefix else 'https://gumastory.guma3d.com') + path
+                if request.url.query:
+                    target += '?' + request.url.query
                 return RedirectResponse('https://home.guma3d.com/login?redirect_url=' + quote(target, safe=''), 302)
         response = await call_next(request)
         response.headers['X-Content-Type-Options'] = 'nosniff'
@@ -230,6 +233,24 @@ def create_app(storage=None, testing=False):
         for scene in item['scenes']:
             lines.extend([f"\n## {scene['start']}–{scene['end']}초 · {scene['title']}", scene['narration'], '\n화면: '+scene['visual'], '\n출처: '+scene['source'], '\n리소스: '+', '.join(scene['asset_ids'])])
         return Response('\n\n'.join(lines), media_type='text/markdown; charset=utf-8', headers={'Content-Disposition': f'attachment; filename="{script_id}-v{version}.md"'})
+
+    @app.get('/scripts/{script_id}/{version}', response_class=HTMLResponse)
+    def read_script(request: Request, script_id: str, version: int):
+        item = next((s for s in store.scripts() if s['id'] == script_id and s['version'] == version), None)
+        if not item:
+            raise HTTPException(404, '대본 버전을 찾을 수 없습니다.')
+        prefix = request.state.prefix
+        e = escape
+        clock = lambda t: f'{t // 60:02d}:{t % 60:02d}'
+        versions = sorted((s for s in store.scripts() if s['id'] == script_id), key=lambda s: s['version'], reverse=True)
+        version_links = ' · '.join(f'<a href="{prefix}/scripts/{e(script_id)}/{s["version"]}">v{s["version"]}</a>' for s in versions)
+        rows = ''.join(f'<tr><td>{clock(s["start"])}–{clock(s["end"])}</td><td><a href="#scene-{i}">{e(s["title"])}</a></td></tr>' for i,s in enumerate(item['scenes'],1))
+        sections = []
+        for i,s in enumerate(item['scenes'],1):
+            narration = ''.join(f'<p>{e(p)}</p>' for p in s['narration'].split('\n\n') if p.strip())
+            sections.append(f'<section id="scene-{i}"><p class="time">{clock(s["start"])}–{clock(s["end"])}</p><h2>{e(s["title"])}</h2><div class="narration">{narration or "<p>내레이션 작성 전</p>"}</div><details><summary>화면 연출 · 출처 · 연결 리소스</summary><h3>화면 연출</h3><p class="preserve">{e(s["visual"])}</p><h3>사실 확인 · 출처</h3><p class="preserve">{e(s["source"])}</p><p>리소스: {e(", ".join(s["asset_ids"]))}</p></details></section>')
+        status = {'outline':'구성 초안','draft':'상세 대본 초안','review':'검토 중','approved':'승인'}.get(item['status'],item['status'])
+        return f'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{e(item['title'])} · v{version} · GumaStory</title><link rel="stylesheet" href="{prefix}/static/reader.css"></head><body><main><nav><a href="{prefix}/">GumaStory</a><a href="{prefix}/?script={e(script_id)}&version={version}">이 버전 편집</a><a href="{prefix}/api/scripts/{e(script_id)}/{version}/export">대본 다운로드</a></nav><header><p class="time">SCRIPT · v{version} · {status}</p><h1>{e(item['title'])}</h1><p>{e(item['summary'])}</p><p class="note">{e(item['note'])}</p><p>버전 기록: {version_links}</p></header><h2>시간대별 구성</h2><p class="note">시간은 편집 목표입니다. 실제 길이는 TTS 낭독 후 확정합니다. 화면 연출과 출처는 낭독하지 않습니다.</p><table><thead><tr><th>목표 시간</th><th>내용</th></tr></thead><tbody>{rows}</tbody></table>{''.join(sections)}<footer>GumaStory · v{version} 보존본 · 수정은 새 버전으로 저장됩니다.</footer></main></body></html>'''
 
     return app
 

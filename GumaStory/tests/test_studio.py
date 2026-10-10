@@ -83,6 +83,29 @@ def test_script_versions_are_immutable_and_stale_writes_fail(studio):
     assert '새로운 대본' in client.get('/api/scripts/promotion/2/export').text
 
 
+def test_reader_shows_exact_version_and_escapes_content(studio):
+    client, _ = studio
+    body = script_body(client)
+    body['scenes'][0]['narration'] = '<script>alert(1)</script>새 대본'
+    assert client.post('/api/scripts/promotion',headers=HEADERS,json=body).status_code == 200
+    page = client.get('/scripts/promotion/2',headers={'x-forwarded-prefix':'/gumastory'})
+    assert page.status_code == 200
+    assert '&lt;script&gt;alert(1)&lt;/script&gt;새 대본' in page.text
+    assert '<script>alert' not in page.text
+    assert '/gumastory/scripts/promotion/1' in page.text
+    assert '00:00–02:00' in page.text
+    assert '새 대본' not in client.get('/scripts/promotion/1').text
+    assert client.get('/scripts/promotion/999').status_code == 404
+
+
+def test_reader_login_preserves_version_link(tmp_path):
+    from urllib.parse import parse_qs, urlparse
+    client = TestClient(create_app(tmp_path),follow_redirects=False)
+    response = client.get('/scripts/promotion/3',headers={'x-forwarded-prefix':'/gumastory'})
+    assert response.status_code == 302
+    assert parse_qs(urlparse(response.headers['location']).query)['redirect_url'] == ['https://home.guma3d.com/gumastory/scripts/promotion/3']
+
+
 def test_overlapping_timeline_and_missing_assets_rejected(studio):
     client, _ = studio
     body = script_body(client)
