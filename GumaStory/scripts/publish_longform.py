@@ -9,6 +9,8 @@ timeline=json.loads((source/'timeline.json').read_text(encoding='utf-8'))
 script=json.loads((source/'script.json').read_text(encoding='utf-8'))
 assert script['id']=='promotion' and script['version']==5
 assert review['clipping_passed'] and review['video_stream_unchanged']
+assert review['technical_review']['approved_script_text_preserved']
+assert review['technical_review']['encoded_contact_sheets'] >= 6
 def sha(p):
     with p.open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
 def preserve(src,dst):
@@ -19,7 +21,8 @@ def preserve(src,dst):
 archive=storage/'productions'/'promotion-v1'
 for src in source.rglob('*'):
     if src.is_file():preserve(src,archive/src.relative_to(source))
-for src,name in [('final.mp4','promotion-film-v1.mp4'),('narration.mp3','promotion-narration-v1.mp3'),('frames/001.png','promotion-poster-v1.png')]:
+voice_source='narration-master.mp3' if (source/'narration-master.mp3').exists() else 'narration.mp3'
+for src,name in [('final.mp4','promotion-film-v1.mp4'),(voice_source,'promotion-narration-v1.mp3'),('frames/001.png','promotion-poster-v1.png')]:
     preserve(source/src,storage/'assets'/name)
 preserve(source/'captions.vtt',storage/'exports'/'promotion-film-v1.vtt')
 shared=dict(character_id='',version=1,status='review',tool='Gemini Zephyr TTS + FFmpeg/Pillow editing',reference='promotion script v5; production archive storage/productions/promotion-v1',prompt='사용자가 승인한 v5 원문. 기존 승인 캐릭터·차트, 문단별 TTS, 고정 화면 편집, 한국어 자막, 출처 표기. 원문과 원본 보존.',tags=['promotion','longform','video-v1','script-v5'])
