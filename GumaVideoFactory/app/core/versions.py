@@ -159,7 +159,7 @@ def workflow(idea):
     latest={stage:next(iter(history(idea['id'],stage)),None) for stage in ('Preview','Video')}
     preview=latest['Preview'];video=latest['Video']
     ready=bool(preview and preview.get('package_ready') and preview.get('storyboard',{}).get('pipeline')=='shopping_v2')
-    message='09·15·21시 · 1개씩 자동 제작'
+    message='기획·콘티 확정 후 제작 승인 대기'
     if preview and not ready:message='새 쇼핑쇼츠 기준으로 재준비 필요'
     if ready:message='컷씬 완료 · 영상 자동 제작 준비'
     if video:message=video.get('message',message)

@@ -123,6 +123,9 @@ class Board(BaseModel):
 def build(rec_path, board_path):
     """Input media must already be acquired and inspected by Codex; never fetch arbitrary URLs."""
     rec=Recommendation.model_validate(read(rec_path))
+    from app.core.categories import SHOPPING_CATEGORIES
+    if rec.category not in SHOPPING_CATEGORIES:
+        raise ValueError('롱폼·이야기쇼츠는 별도 콘티와 편집으로 준비합니다. 쇼핑쇼츠 제작기는 사용할 수 없습니다.')
     validate_tech_evidence(rec)
     if rec.category=='tech' and (not rec.purchase_link or rec.purchase_link.price_krw is None or rec.purchase_link.price_krw>500000 or len(rec.purchase_link.price_evidence)<10):
         raise ValueError('테크는 실제 확인한 50만원 이하 쿠팡 옵션 가격과 근거가 필요합니다.')
@@ -204,6 +207,9 @@ def seal(id,n,review_path):
 
 
 def enqueue(id,n,regenerate=False,reuse_video_version=None):
+    from app.core.categories import SHOPPING_CATEGORIES
+    if store.read(id).get('category') not in SHOPPING_CATEGORIES:
+        raise ValueError('롱폼·이야기쇼츠는 별도 콘티와 편집으로 준비합니다. 쇼핑쇼츠 제작기는 사용할 수 없습니다.')
     if store.read(id).get('archived'):
         raise ValueError('제외된 아이템은 새로 제작할 수 없습니다.')
     package=verify_package(id,n)

@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-10.1",
+  "revision": "2026-10-10.2",
   "rules": [
     {
       "id": "preserve-published-video-and-subscription-distribution",
@@ -23,7 +23,7 @@
     },
     {
       "id": "product-first-ad-disclosure",
-      "category": "all",
+      "category": "shopping",
       "instruction": "User confirmed 2026-10-09: earn interest through verified product appeal, practical uses and an engaging story; avoid repeated sales pressure, exaggerated praise and invented personal experience. The only routine disclosure inside video is the legible persistent top-right [광고] badge. Do not speak or burn in affiliate commission sentences or routine AI notices. Keep the full affiliate disclosure as the exact last line of the video description after links and hashtags and beside purchase links/buttons on the product website; also include it with affiliate links posted in comments. Preserve paid-promotion and applicable YouTube AI settings. Do not prefix titles with [광고]; the video retains its persistent badge. Write verified product features and handling instructions in readable bullet points. Omit routine non-tasting/AI-production/voice-model boilerplate, without claiming personal experience. Omit virtual-person endorsement scenes requiring extra on-screen disclosure. Preserve historical versions; render requested changes as new versions."
     },
     {
@@ -68,13 +68,13 @@
     },
     {
       "id": "coupang-purchase",
-      "category": "all",
+      "category": "shopping",
       "instruction": "Codex must find the exact product and option on Coupang before recommending. Verify official brand/authorized seller evidence and Rocket Delivery independently, recording seller, option, evidence and check time. Do not substitute Rocket Jikgu or seller Rocket, infer official status from delivery, or fabricate unavailable links. Keep reference URLs separate from purchase URLs. Affiliate links must be issued through the user account after enrollment, never invented. Recheck availability before publication."
     },
     {
       "id": "shopping-funnel",
-      "category": "all",
-      "instruction": "At 09:00, 15:00 and 21:00 KST each prepare one new item and save one completed video locally for web version review; three per day across categories. The currently selected session model directly researches trends and authors 6-8 cuts after verified Coupang data and affiliate links. No Gemini planning. Official video OR images required. Need -> solution -> evidenced popularity/interest reasons -> product features -> one brief Korean CTA explicitly asking viewers to click the channel profile 상품 모음 link. Never invent popularity. No 3D model creation. The first cut must strongly hook with verified interest/review counts or a current trend connected to a concrete use case. Record date and scope; never recast cumulative reviews as recent growth. Pokemon-card/food pairing is an example only when trend and real product are verified."
+      "category": "shopping",
+      "instruction": "Existing shopping categories remain available, but longform is now the production priority. Prepare only user-approved storyboards; no fixed daily production quota or automatic upload. The currently selected session model directly researches trends and authors 6-8 cuts after verified Coupang data and affiliate links. No Gemini planning. Official video OR images required. Need -> solution -> evidenced popularity/interest reasons -> product features -> one brief Korean CTA explicitly asking viewers to click the channel profile 상품 모음 link. Never invent popularity. No 3D model creation. The first cut must strongly hook with verified interest/review counts or a current trend connected to a concrete use case. Record date and scope; never recast cumulative reviews as recent growth. Pokemon-card/food pairing is an example only when trend and real product are verified."
     },
     {
       "id": "selective-veo",
@@ -93,12 +93,12 @@
     },
     {
       "id": "weekly-novelty",
-      "category": "all",
-      "instruction": "Before selection inspect actual YouTube Studio uploads for the last seven days, including private videos, and local upload events. Record topic_key, problem_key, and per-video novelty comparisons. Reject similar subject/problem even for different products. One tech at 09:00, food at 15:00, household at 21:00 KST."
+      "category": "shopping",
+      "instruction": "Before selection inspect actual YouTube Studio uploads for the last seven days, including private videos, and local upload events. Record topic_key, problem_key, and per-video novelty comparisons. Reject similar subject/problem even for different products."
     },
     {
       "id": "director-quality",
-      "category": "all",
+      "category": "shopping",
       "instruction": "Target 20-40; verified tech option <= KRW500000. Original resolution gate and 1080x1920 no letterbox. Each narration must match visible action: thawing on a room-temperature counter, storage in a freezer, no unrelated beauty shot. No duplicated or visually overlapping image cuts, including crop/zoom/mirror variants. Different segments of one source video must show genuinely different subjects/actions/compositions. Perform two documented editorial reviews: before production and after final rendering; both check every cut for whole-video style continuity, distinct visuals and a strong evidence-backed opening hook. Veo: candid photorealistic, bright diffused natural light, low contrast, no cinematic shadows or posing. 0.2s dissolves preserving spoken endings. No top-left branding. Persistent top-right [광고], affiliate disclosure in description last line and beside links; YouTube AI-use setting enabled for realistic generated scenes. No routine burned-in affiliate or AI captions. Keep [광고]; all captions use outlines, no background boxes. Omit virtual-person endorsements requiring extra on-screen disclosure. Review frames, motion, captions and disclosure before web review. If hearing is unavailable, honestly retain audio as user-review-pending on the web; user authorized category voices and web review. Never fabricate listening. Public release requires explicit version approval."
     },
     {
@@ -118,8 +118,23 @@
     },
     {
       "id": "approved-inserted-cut-preservation",
-      "category": "all",
+      "category": "shopping",
       "instruction": "Default 6-8 cuts; one extra cut is allowed with explicit user approval recorded in additional_cut_approval. A longer approved narration requires timing_approval (maximum 9 seconds). When the user requests an inserted cut and preservation, retain all existing source clips, narration and order; match reused speech by exact narration, voice and rate even when cut indices change. Preserve parent BGM on revisions; choose randomly from the verified five for new production. Never treat this as upload approval."
+    },
+    {
+      "id": "longform-first-strategy",
+      "category": "all",
+      "instruction": "User strategy 2026-10-10: prioritize sustainable long-term operation. Main categories include longform and story_shorts alongside tech, food and household. Develop an original longform story first, then edit useful self-contained story shorts from it. Do not create unrelated shorts just to fill quotas. Main coordinates the new categories; no new session or recurring production is implied. Preserve local originals and all web versions. Exact-version upload requests and separate public-release approval still apply."
+    },
+    {
+      "id": "longform-editorial",
+      "category": "longform",
+      "instruction": "Plan a complete original story with an opening promise, development and satisfying conclusion, using chapters and a sustainable production scope. Default 16:9 1920x1080, with length agreed in the storyboard rather than padded for duration. Research actual factual claims, distinguish fact from fiction, and retain source rights evidence. Learn hooks/pacing from popular work without copying scripts or footage. Identify candidate short segments during planning. Review every chapter, speech, captions, audio and final render before web review. Retain the shared Zephyr voice and fixed-level verified BGM policy. The shopping-only 6-8-cut template and product CTA are not this format."
+    },
+    {
+      "id": "story-shorts-from-longform",
+      "category": "story_shorts",
+      "instruction": "Derive from a recorded longform idea ID and exact Video version. Preserve source ranges in seconds, source file SHA256 and editing notes alongside each new short version. Default 9:16 1080x1920; reframe the subject and rebuild captions for mobile instead of blindly cropping. Each short needs its own hook, enough context and a payoff; never distort the source meaning or simply cut off the ending. Choose the number and length based on useful scenes, not a mandatory quota. Record intentional topic overlap with the parent. After explicit publication approval, connect the available parent via YouTube related video and verify the actual destination. A longform upload request does not authorize its shorts. Review each short independently."
     }
   ],
   "feedback": [
@@ -192,7 +207,7 @@
       "browser": "Use connected in-app browser first; use Chrome if required capabilities are unavailable. Verify each browser session independently."
     },
     "planner_model": "current_session_model",
-    "schedule": "09:00 tech, 15:00 food, 21:00 household Asia/Seoul; one per category daily",
+    "schedule": "Longform first, then derived story shorts; cadence and exact versions require user agreement. Historical shopping slots are import identifiers, not automatic production commitments.",
     "workspace": "Store original assets, edits and final videos locally under project storage/products/<id>/Preview/vNNNN and Video/vNNNN. Manage every version and final output through the webservice with playback/download and version links. Missing YouTube upload is not a production blocker. Never auto-upload a completed final version.",
     "voice_rate": "natural-brisk",
     "cta": "궁금하다면, 채널 프로필의 상품 모음 링크를 눌러보세요.",
@@ -200,8 +215,13 @@
     "voice_by_category": {
       "tech": "Zephyr",
       "food": "Zephyr",
-      "household": "Zephyr"
-    }
+      "household": "Zephyr",
+      "longform": "Zephyr",
+      "story_shorts": "Zephyr"
+    },
+    "primary_category": "longform",
+    "derived_category": "story_shorts",
+    "cta_scope": "The product CTA and pinned-comment template apply to shopping content. Narrative videos use a context-appropriate ending and may point to the related longform."
   },
   "caption_policy": {
     "font": "Maplestory",

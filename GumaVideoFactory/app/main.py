@@ -129,7 +129,7 @@ def list_all_projects() -> List[dict]:
     return projects
 
 @app.get("/", response_class=HTMLResponse)
-async def index_page(request: Request, category: str = "tech", date: Optional[str] = None, page: int = 1):
+async def index_page(request: Request, category: str = "longform", date: Optional[str] = None, page: int = 1):
     if category not in PRESETS:
         raise HTTPException(status_code=404, detail="등록되지 않은 카테고리입니다.")
     projects = [p for p in list_all_projects() if p.get("category", "tech") == category]

@@ -106,12 +106,12 @@ class StudioTests(unittest.TestCase):
 
     def test_detail_and_listing_are_separate(self):
         with TestClient(main.app) as client:
-            page=client.get('/').text
+            page=client.get('/?category=tech').text
             self.assertIn('/ideas/'+self.id,page)
-            self.assertNotIn('id="version-picker"',page)
+            self.assertNotIn('id="versions"',page)
             detail=client.get('/ideas/'+self.id)
             self.assertEqual(detail.status_code,200)
-            self.assertIn('id="version-picker"',detail.text)
+            self.assertIn('id="versions"',detail.text)
             self.assertEqual(client.get('/api/ideas/invalid').status_code,404)
 
     def test_fetch_blocks_internal_dns_and_blueprint_invalid_geometry(self):

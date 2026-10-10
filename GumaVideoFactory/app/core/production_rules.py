@@ -2,13 +2,17 @@
 import json
 import hashlib
 from pathlib import Path
+from app.core.categories import SHOPPING_CATEGORIES
 
 RULES_PATH = Path(__file__).with_name('production_rules.json')
 
 
 def snapshot(category):
     data = json.loads(RULES_PATH.read_text(encoding='utf-8'))
-    rules = [r for r in data['rules'] if r['category'] in ('all', category)]
+    scopes = {'all', category}
+    if category in SHOPPING_CATEGORIES:
+        scopes.add('shopping')
+    rules = [r for r in data['rules'] if r['category'] in scopes]
     return dict(revision=data['revision'], category=category, rules=rules,
         sha256=hashlib.sha256(RULES_PATH.read_bytes()).hexdigest())
 

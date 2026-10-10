@@ -1,6 +1,13 @@
 """Category identities shared by research, UI and final rendering."""
 SLOT_CATEGORIES = {'09:00': 'tech', '15:00': 'food', '21:00': 'household'}
+SHOPPING_CATEGORIES = frozenset(SLOT_CATEGORIES.values())
 PRESETS = {
+    'longform': dict(label='롱폼', accent='FFD45C', aspect_ratio='16:9',
+        style='Original narrative with chapter-based pacing and verified or clearly fictional storytelling.',
+        direction='주력 제작 · 하나의 이야기를 도입–전개–결말까지 완성하고 핵심 장면을 이야기쇼츠로 편집합니다.'),
+    'story_shorts': dict(label='이야기쇼츠', accent='C7A2FF', aspect_ratio='9:16',
+        style='Standalone short narrative adapted from a specific longform version; reframe and recaption for mobile.',
+        direction='롱폼에서 파생 · 원본 버전과 사용 구간을 기록하고, 짧은 영상만 봐도 이해되는 이야기로 재편집합니다.'),
     'tech': dict(label='신형 테크', accent='37DEB4',
         style='Clean neutral technical editorial; generated lifestyle uses bright diffused low-contrast daylight. Exact official product closeups, measured callouts, restrained transitions.',
         direction='생활 문제를 기술 원리와 연결하고 핵심 기술·추가 기능 2개·실사용 한계를 근거로 설명한다.'),
@@ -13,4 +20,5 @@ PRESETS = {
 }
 for preset in PRESETS.values():
     preset.update(font='Maplestory', voice='Zephyr', voice_direction='bright-friendly-female', voice_rate='natural-brisk', target_age='20-40', style_revision='category-v7',caption_design='common-pop-outline-v4',thumbnail_required=True)
+    preset.setdefault('aspect_ratio', '9:16')
 PRESETS['food'].update(still_motion='static',storyboard_reference='docs/references/food-storyboard-approved-v1.png')
