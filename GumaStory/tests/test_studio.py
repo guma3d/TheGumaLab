@@ -85,13 +85,19 @@ def test_script_versions_are_immutable_and_stale_writes_fail(studio):
 
 def test_reader_shows_exact_version_and_escapes_content(studio):
     client, _ = studio
+    asset = upload(client, title='<script>chart</script>').json()
     body = script_body(client)
     body['scenes'][0]['narration'] = '<script>alert(1)</script>새 대본'
+    body['scenes'][0]['asset_ids'] = [asset['id']]
     assert client.post('/api/scripts/promotion',headers=HEADERS,json=body).status_code == 200
     page = client.get('/scripts/promotion/2',headers={'x-forwarded-prefix':'/gumastory'})
     assert page.status_code == 200
     assert '&lt;script&gt;alert(1)&lt;/script&gt;새 대본' in page.text
     assert '<script>alert' not in page.text
+    assert '<script>chart' not in page.text
+    assert '&lt;script&gt;chart&lt;/script&gt;' in page.text
+    assert f'/gumastory/media/{asset["id"]}/original' in page.text
+    assert f'/gumastory/media/{asset["id"]}/thumb' in page.text
     assert '/gumastory/scripts/promotion/1' in page.text
     assert '00:00–02:00' in page.text
     assert '새 대본' not in client.get('/scripts/promotion/1').text

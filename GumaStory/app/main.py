@@ -248,7 +248,18 @@ def create_app(storage=None, testing=False):
         sections = []
         for i,s in enumerate(item['scenes'],1):
             narration = ''.join(f'<p>{e(p)}</p>' for p in s['narration'].split('\n\n') if p.strip())
-            sections.append(f'<section id="scene-{i}"><p class="time">{clock(s["start"])}–{clock(s["end"])}</p><h2>{e(s["title"])}</h2><div class="narration">{narration or "<p>내레이션 작성 전</p>"}</div><details><summary>화면 연출 · 출처 · 연결 리소스</summary><h3>화면 연출</h3><p class="preserve">{e(s["visual"])}</p><h3>사실 확인 · 출처</h3><p class="preserve">{e(s["source"])}</p><p>리소스: {e(", ".join(s["asset_ids"]))}</p></details></section>')
+            resources = []
+            for asset_id in s['asset_ids']:
+                asset = store.asset(asset_id)
+                if not asset:
+                    resources.append(f'<span>{e(asset_id)} (리소스 없음)</span>')
+                    continue
+                media_url = f'{prefix}/media/{quote(asset_id, safe="")}'
+                label = e(asset.get('title', asset_id))
+                preview = f'<img src="{media_url}/thumb" alt="{label}" loading="lazy">' if asset.get('media') == 'image' else ''
+                resources.append(f'<a href="{media_url}/original" target="_blank" rel="noopener">{preview}<span>{label}</span></a>')
+            gallery = '<div class="resources">' + ''.join(resources) + '</div>'
+            sections.append(f'<section id="scene-{i}"><p class="time">{clock(s["start"])}–{clock(s["end"])}</p><h2>{e(s["title"])}</h2><div class="narration">{narration or "<p>내레이션 작성 전</p>"}</div><details><summary>화면 연출 · 출처 · 연결 리소스</summary><h3>화면 연출</h3><p class="preserve">{e(s["visual"])}</p><h3>사실 확인 · 출처</h3><p class="preserve">{e(s["source"])}</p><h3>연결 리소스 · 클릭하면 원본</h3>{gallery}</details></section>')
         status = {'outline':'구성 초안','draft':'상세 대본 초안','review':'검토 중','approved':'승인'}.get(item['status'],item['status'])
         return f'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{e(item['title'])} · v{version} · GumaStory</title><link rel="stylesheet" href="{prefix}/static/reader.css"></head><body><main><nav><a href="{prefix}/">GumaStory</a><a href="{prefix}/?script={e(script_id)}&version={version}">이 버전 편집</a><a href="{prefix}/api/scripts/{e(script_id)}/{version}/export">대본 다운로드</a></nav><header><p class="time">SCRIPT · v{version} · {status}</p><h1>{e(item['title'])}</h1><p>{e(item['summary'])}</p><p class="note">{e(item['note'])}</p><p>버전 기록: {version_links}</p></header><h2>시간대별 구성</h2><p class="note">시간은 편집 목표입니다. 실제 길이는 TTS 낭독 후 확정합니다. 화면 연출과 출처는 낭독하지 않습니다.</p><table><thead><tr><th>목표 시간</th><th>내용</th></tr></thead><tbody>{rows}</tbody></table>{''.join(sections)}<footer>GumaStory · v{version} 보존본 · 수정은 새 버전으로 저장됩니다.</footer></main></body></html>'''
 
