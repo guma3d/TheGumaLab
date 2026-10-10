@@ -4,6 +4,7 @@ import json
 import sqlite3
 import tempfile
 import zipfile
+from contextlib import closing
 from datetime import datetime
 from pathlib import Path
 
@@ -15,7 +16,7 @@ output = destination / f'GumaStory-{stamp}.zip'
 manifest = []
 with tempfile.TemporaryDirectory(prefix='gumastory-backup-') as temporary:
     snapshot = Path(temporary) / 'gumastory.sqlite3'
-    with sqlite3.connect(root/'gumastory.sqlite3') as src, sqlite3.connect(snapshot) as dst:
+    with closing(sqlite3.connect(root/'gumastory.sqlite3')) as src, closing(sqlite3.connect(snapshot)) as dst:
         src.backup(dst)
     with zipfile.ZipFile(output, 'x', compression=zipfile.ZIP_STORED) as archive:
         archive.write(snapshot, 'gumastory.sqlite3')
