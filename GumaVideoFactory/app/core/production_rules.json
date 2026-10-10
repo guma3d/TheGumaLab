@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-10.3",
+  "revision": "2026-10-10.4",
   "rules": [
     {
       "id": "preserve-published-video-and-subscription-distribution",
@@ -74,7 +74,7 @@
     {
       "id": "shopping-funnel",
       "category": "shopping",
-      "instruction": "Existing shopping categories remain available, but longform is now the production priority. Prepare only user-approved storyboards; no fixed daily production quota or automatic upload. The currently selected session model directly researches trends and authors 6-8 cuts after verified Coupang data and affiliate links. No Gemini planning. Official video OR images required. Need -> solution -> evidenced popularity/interest reasons -> product features -> one brief Korean CTA explicitly asking viewers to click the channel profile 상품 모음 link. Never invent popularity. No 3D model creation. The first cut must strongly hook with verified interest/review counts or a current trend connected to a concrete use case. Record date and scope; never recast cumulative reviews as recent growth. Pokemon-card/food pairing is an example only when trend and real product are verified."
+      "instruction": "Existing shopping categories remain available, but longform is now the production priority. Prepare only user-approved storyboards; no fixed daily production quota or automatic upload. The currently selected session model directly researches trends and authors 6-8 cuts after verified Coupang data and affiliate links. No Gemini planning. Official video OR images required. Need -> solution -> evidenced popularity/interest reasons -> product features -> a brief evidence-based advantage and limitation -> optional short product-link CTA. The balanced conclusion takes priority over a mandatory sales line. Never invent popularity. No 3D model creation. The first cut must strongly hook with verified interest/review counts or a current trend connected to a concrete use case. Record date and scope; never recast cumulative reviews as recent growth. Pokemon-card/food pairing is an example only when trend and real product are verified."
     },
     {
       "id": "selective-veo",
@@ -135,6 +135,11 @@
       "id": "story-shorts-from-longform",
       "category": "story_shorts",
       "instruction": "Derive from a recorded longform idea ID and exact Video version. Preserve source ranges in seconds, source file SHA256 and editing notes alongside each new short version. Default 9:16 1080x1920; reframe the subject and rebuild captions for mobile instead of blindly cropping. Each short needs its own hook, enough context and a payoff; never distort the source meaning or simply cut off the ending. Choose the number and length based on useful scenes, not a mandatory quota. Record intentional topic overlap with the parent. After explicit publication approval, connect the available parent via YouTube related video and verify the actual destination. A longform upload request does not authorize its shorts. Review each short independently."
+    },
+    {
+      "id": "honest-balanced-ending",
+      "category": "shopping",
+      "instruction": "상품 소개 영상의 마무리는 확인된 장점과 아쉬운 점을 짧게 짚는 솔직한 총평을 기본으로 한다(2026-10-10 사용자 피드백). 실제 시식·사용 감상은 사용자가 알려준 경험만 반영하고, 제품 정보·영상으로 확인한 특징과 구분한다. 솔직해 보이려고 단점을 만들거나 장점을 단점처럼 포장하지 않는다. 근거 없는 부분은 생략하거나 기획 단계에서 확인한다. 필요하면 어떤 취향·상황에 맞는지 덧붙이고 구매 CTA는 선택적으로 짧게 쓴다. 이 방향의 수용은 특정 대사·음성 생성·업로드 승인이 아니다."
     }
   ],
   "feedback": [
@@ -221,7 +226,7 @@
     },
     "primary_category": "longform",
     "derived_category": "story_shorts",
-    "cta_scope": "The product CTA and pinned-comment template apply to shopping content. Narrative videos use a context-appropriate ending and may point to the related longform.",
+    "cta_scope": "Optional after the evidence-based balanced conclusion for shopping content, never a mandatory final sentence. Narrative videos use a context-appropriate ending and may point to the related longform.",
     "channel_id": "UCRtAVFQFmJCcpvLeuyq03Kg",
     "channel_name": "구마의 딴짓"
   },
