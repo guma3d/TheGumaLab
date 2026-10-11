@@ -41,6 +41,7 @@ for i,chart in enumerate(charts,1):
     record(dict(common,id=aid,file=aid+'.png',kind='other',title=f'승진 v3 · 차트 {i}',tool='Pillow data-native chart',reference='promotion-v4 verified chart data',prompt='검증된 수치 유지, 진행 번호·제작 안내문구 제거. 상세 출처는 웹 보존.',note=json.dumps(chart,ensure_ascii=False),provenance=chart))
 parent=json.loads((storage/'imports/promotion-film-v2.json').read_text())
 source_credits=parent['credits'].split('원 대본의 자료·음원 출처:',1)[-1]
+source_credits='\n'.join(line for line in source_credits.splitlines() if not line.strip().startswith('BGM:'))
 credits='\n'.join([
  f'대본 promotion v{script["version"]} · 영상 v3 · 부모 영상 promotion-film-v2',
  '2026-10-11 사용자 피드백: 가상 장면 대사를 자연스러운 질문·예시 조건으로 수정. 진행 번호·가상/설명용/편집자 화면 안내 제거.',
