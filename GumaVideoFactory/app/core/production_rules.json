@@ -1,6 +1,11 @@
 {
-  "revision": "2026-10-10.8-tech-cut-variety",
+  "revision": "2026-10-11.1-food-experience-ending",
   "rules": [
+    {
+      "id": "food-user-experience-and-ending",
+      "category": "food",
+      "instruction": "확인된 관심 계기 → 구체적인 조합·맛의 궁금증 → 준비·즐기기 → 사용자 제공 총평 → 요청된 CTA 순으로 구성한다. 1인칭 시식·제작·방문 경험과 시점은 사용자가 제공한 사실만 사용한다. 평가 강도와 호불호를 보존한다. 요청된 CTA는 채널 프로필의 상품 모음으로 안내한다. 수정 시 최신 도입과 변경 없는 컷·음성·BGM은 재사용하고 정확한 부모 버전과 해시를 기록한다. 긴 엔딩은 실제 연속 소스 길이와 자연스러운 음성에 맞춰 편집하며 움직이는 장면을 정지로 늘리지 않는다. 의도된 기존 제품 정지 사진은 정지 소스로 기록하고 순차 자막을 검수한다. 제작 전후 검수와 정확 버전 썸네일 연결, 실제 미청취 음성의 웹 사용자 검토 대기를 유지한다. 웹 수정 승인은 YouTube 업로드·삭제·공개·상품모음 변경 승인이 아니다."
+    },
     {
       "id": "preserve-published-video-and-subscription-distribution",
       "category": "all",
