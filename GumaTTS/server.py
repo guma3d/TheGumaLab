@@ -102,7 +102,9 @@ class Store:
     def create(self, job):
         data = job.model_dump()
         audio_fields = {k:data[k] for k in ('text', 'model', 'voice', 'style', 'seed')}
-        audio_fields['engine_version'] = 1
+        # Do not reuse an older ready job whose one-pass loudnorm could mute
+        # a short utterance. Historical jobs remain readable and immutable.
+        audio_fields['engine_version'] = 2
         if data['model'] == DESIGN_MODEL:
             from voice_profiles import design_instruction
             audio_fields['design_instruction'] = design_instruction(data['voice'], data['style'])

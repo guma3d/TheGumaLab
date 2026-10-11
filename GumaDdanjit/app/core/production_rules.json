@@ -1,6 +1,11 @@
 {
-  "revision": "2026-10-11.4-approved-format-voices",
+  "revision": "2026-10-11.5-per-cut-audio-gate",
   "rules": [
+    {
+      "id": "per-cut-audio-audit",
+      "category": "all",
+      "instruction": "음성 변경 후 모든 컷의 원본 WAV, 보정 음성, 컷 영상, 최종 타임라인을 전수 검사한다. 전체 평균 음량이나 해시 일치만으로 통과시키지 않는다. 무음·과도한 감쇠·대사 잘림과 BGM 대비를 검사하고 실제 청취 여부는 별도로 기록한다."
+    },
     {
       "id": "central-tts-service",
       "category": "all",

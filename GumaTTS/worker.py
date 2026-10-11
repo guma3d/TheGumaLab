@@ -11,6 +11,7 @@ import urllib.request
 import wave
 from pathlib import Path
 from voice_profiles import DESIGN_MODEL, DESIGN_REPO, design_instruction
+from audio_processing import normalize_speech
 
 def local_generation(request):
     """Select the correct checkpoint and API without loading a GPU model."""
@@ -62,11 +63,11 @@ def run(folder):
                 f.setnchannels(1); f.setsampwidth(2); f.setframerate(24000); f.writeframes(raw)
         info.update(provider='gemini', model_repo=model, api_charge='depends_on_project_billing', generation_seconds=round(time.monotonic()-started,2))
     out = folder / 'audio.mp3'
-    subprocess.run(['ffmpeg','-v','error','-y','-i',str(original),'-af','loudnorm=I=-16:TP=-1.5:LRA=7','-ar','48000','-b:a','192k',str(out)], check=True, capture_output=True)
+    normalization = normalize_speech(original, out)
     duration = float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','default=nw=1:nk=1',str(out)]))
     if not 0.3 < duration < 360: raise RuntimeError('음성 길이가 검수 범위를 벗어났습니다.')
     subprocess.run(['ffmpeg','-v','error','-i',str(out),'-f','null','-'],check=True,capture_output=True)
-    info.update(duration=duration, elapsed_seconds=round(time.monotonic()-started,2), real_time_factor=round(info['generation_seconds']/duration,2), text_sha256=hashlib.sha256(request['text'].encode()).hexdigest(), audio_sha256=hashlib.sha256(out.read_bytes()).hexdigest(), original_sha256=hashlib.sha256(original.read_bytes()).hexdigest(), technical_decode='passed', normalization='loudnorm I=-16 TP=-1.5 LRA=7')
+    info.update(duration=duration, elapsed_seconds=round(time.monotonic()-started,2), real_time_factor=round(info['generation_seconds']/duration,2), text_sha256=hashlib.sha256(request['text'].encode()).hexdigest(), audio_sha256=hashlib.sha256(out.read_bytes()).hexdigest(), original_sha256=hashlib.sha256(original.read_bytes()).hexdigest(), technical_decode='passed', normalization=normalization)
     (folder / 'result.json').write_text(json.dumps(info, ensure_ascii=False, indent=2), encoding='utf-8')
 
 if __name__ == '__main__':

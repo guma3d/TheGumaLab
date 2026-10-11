@@ -41,6 +41,12 @@ def join_smooth(segments, output):
     for segment in segments:
         args+=['-i',str(segment)]
     durations=[round(media.duration(segment)*30)/30 for segment in segments]
+    # Whole-video loudness can hide a nearly silent short cut. Reject it before
+    # joining; the TTS original must be repaired rather than hidden under BGM.
+    for index, (segment, duration) in enumerate(zip(segments, durations), 1):
+        level = bgm.measure_audio(segment, duration)
+        if level['integrated_lufs'] < -24:
+            raise ValueError(f'CUT {index}: 대사 음량이 너무 작습니다. TTS 원본과 보정 결과를 확인하세요.')
     filters=[f'[{i}:v]setpts=PTS-STARTPTS,fps=30,settb=1/30[v{i}]' for i in range(len(segments))]
     current='v0';elapsed=durations[0]
     for i in range(1,len(segments)):
