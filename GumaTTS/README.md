@@ -60,3 +60,8 @@ SSO/CSRF, 외부 API 명시 선택, 원본 덮어쓰기 방지, 중복 요청, �
 사용자는 기존 1.7B 시험 음성을 긍정적으로 평가했으며, 더 자연스러운 한국어 말투를 직접 고르기 위해 남성 5종·여성 5종 비교를 요청했다. `Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign`을 추가하고 `/gumatts/#voices`에서 동일 원고·동일 loudnorm 기준의 후보를 비교한다. M1–M5/F1–F5 설계 문구는 `voice_profiles.py`, 비교 작업 목록은 `storage/voice-comparison-20261011.json`에 보존한다. 지정한 성별·톤은 설계 목표이며 실제 자연스러움을 청취 승인한 것으로 간주하지 않는다.
 
 API 모델 `qwen-design-1.7b`는 voice=M1–M5 또는 F1–F5를 사용한다. VoiceDesign은 `generate_voice_design`을 호출하며 CustomVoice의 Sohee와 구분한다. 전체 설계 지시·시드·모델 revision을 결과에 보존한다. 후보 표시 버튼은 해당 샘플의 청취 메모에만 저장하고 채널 기본 음성을 바꾸지 않는다. 같은 설명만으로 모든 원고에서 음색이 완전히 고정된다고 보장하지 않는다. 최종 선택 후 장문·문단 간 일관성을 별도 검증한다. 기존 Sohee/Zephyr와 결과물은 보존한다.
+
+
+검증 결과: 비교본 10개 모두 생성 완료(17.472–22.680초), 생성 시간 22.32–31.48초, GPU 최대 할당 4508–4662MB. 모든 최종 비교본의 자동 전사가 문장부호·공백 제외 원고와 일치했고 MP3 디코드 및 원본 결과 해시를 검증했다. F5 v1은 한 구절의 전사 차이가 있어 원본을 보존하고 seed 43의 v2로 재생성해 재검증했다(나머지 seed 42). 자동 전사는 실제 청취 승인이 아니다. 원본 목록 `storage/voice-comparison-20261011-v1.json`, 최종 목록 `storage/voice-comparison-20261011.json`, 검사 요약 `storage/verification/voice-design-summary.json`.
+
+서비스 테스트 9건과 브라우저 남성 M1·여성 F1의 끝까지 재생을 확인했다. 외부 TTS API 호출 없이 로컬 생성했다. 코드 04877cb의 GitHub Actions는 실패했고, HomeServer Compose 빌드·배포와 인증된 웹 비교 화면에서 동작을 확인했다. 최종 후보 선택은 사용자에게 맡긴다.
