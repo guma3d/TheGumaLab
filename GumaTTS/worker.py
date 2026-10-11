@@ -32,7 +32,7 @@ def run(folder):
         if size == '1.7B': kwargs['instruct'] = request['style']
         with torch.inference_mode(): wavs, sr = model.generate_custom_voice(**kwargs)
         sf.write(str(original), wavs[0], sr, subtype='PCM_16')
-        info.update(provider='local', model_repo=repo, load_seconds=round(loaded-started,2), generation_seconds=round(time.monotonic()-loaded,2), gpu_peak_mb=round(torch.cuda.max_memory_allocated()/1024**2), gpu=torch.cuda.get_device_name(0), style_applied=size=='1.7B', api_charge=False)
+        info.update(provider='local', model_repo=repo, model_revision=getattr(model.model.config, '_commit_hash', None), load_seconds=round(loaded-started,2), generation_seconds=round(time.monotonic()-loaded,2), gpu_peak_mb=round(torch.cuda.max_memory_allocated()/1024**2), gpu=torch.cuda.get_device_name(0), style_applied=size=='1.7B', api_charge=False)
     else:
         if not request.get('allow_cloud'): raise RuntimeError('외부 API 사용이 허용되지 않았습니다.')
         model = {'gemini-flash':'gemini-3.8-flash-tts', 'gemini-lite':'gemini-3.8-flash-lite-tts'}[request['model']]

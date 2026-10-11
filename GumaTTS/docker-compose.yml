@@ -16,6 +16,7 @@ services:
       GUMATTS_AUTH_URL: http://host.docker.internal:8081/auth
       TZ: Asia/Seoul
       HF_HUB_DISABLE_TELEMETRY: '1'
+      HF_HUB_DISABLE_XET: '1'
     deploy:
       resources:
         reservations:
