@@ -1,0 +1,297 @@
+{
+  "revision": "2026-10-11.4-approved-format-voices",
+  "rules": [
+    {
+      "id": "central-tts-service",
+      "category": "all",
+      "instruction": "모든 신규 영상 음성은 GumaTTS 공통 웹서비스/API에서 생성하고 원본 WAV, 편집용 MP3, 모델·목소리·원고·해시·작업 ID·청취 검수 상태를 보존한다. 영상 제작기에서 외부 TTS를 직접 호출하거나 로컬 모델을 별도로 로드하지 않는다. 2026-10-11 사용자 확정: 모든 신규 영상 음성은 GumaTTS의 Qwen3-TTS 1.7B VoiceDesign으로 제작한다. 모든 쇼츠(쇼핑·이야기쇼츠 포함)는 여성 F4(생기 있는 이야기꾼), Story·롱폼은 남성 M5(솔직한 현실 친구)를 사용한다. 롱폼에서 파생한 쇼츠도 F4로 새로 녹음하며 M5 음성을 그대로 재사용하지 않는다. 더 좋은 대안을 사용자가 채택하기 전까지 유지한다. 기존 음성·영상·과거 제작 기록은 보존하고 새 음성은 새 버전으로 저장한다. 모델 선택 승인은 개별 결과물 검수·YouTube 업로드 승인을 대신하지 않는다. 실패 시 외부 유료 모델 자동 대체 금지. 수정한 원고는 새 음성 버전으로 생성하고 변경 없는 파일은 재사용한다."
+    },
+    {
+      "id": "tech-camera-preview-consistency",
+      "category": "tech",
+      "instruction": "촬영기기 화면 속 인물·옷·포즈·좌우 배치·촬영 배경이 실제 앞 장면과 카메라 방향에 일치해야 한다. 참조 편집 후 화면 내부와 외부 제품·장면을 함께 대조한다. 확인 전인 기술확장 대사·새 컷은 최종 렌더에 넣지 않는다."
+    },
+    {
+      "id": "food-user-experience-and-ending",
+      "category": "food",
+      "instruction": "확인된 관심 계기 → 구체적인 조합·맛의 궁금증 → 준비·즐기기 → 사용자 제공 총평 → 요청된 CTA 순으로 구성한다. 1인칭 시식·제작·방문 경험과 시점은 사용자가 제공한 사실만 사용한다. 평가 강도와 호불호를 보존한다. 요청된 CTA는 채널 프로필의 상품 모음으로 안내한다. 수정 시 최신 도입과 변경 없는 컷·음성·BGM은 재사용하고 정확한 부모 버전과 해시를 기록한다. 긴 엔딩은 실제 연속 소스 길이와 자연스러운 음성에 맞춰 편집하며 움직이는 장면을 정지로 늘리지 않는다. 의도된 기존 제품 정지 사진은 정지 소스로 기록하고 순차 자막을 검수한다. 제작 전후 검수와 정확 버전 썸네일 연결, 실제 미청취 음성의 웹 사용자 검토 대기를 유지한다. 웹 수정 승인은 YouTube 업로드·삭제·공개·상품모음 변경 승인이 아니다."
+    },
+    {
+      "id": "preserve-published-video-and-subscription-distribution",
+      "category": "all",
+      "instruction": "User confirmed 2026-10-10: preserve existing published video IDs, URLs and accumulated performance. Apply requested title, description and thumbnail edits to the existing upload whenever Studio supports them. Do not delete/reupload or toggle visibility to chase low views. Media replacement still requires explicit approval for the exact version after explaining that a new upload has a new URL and does not inherit the old video's views. For new uploads intended for eventual public release, keep Publish to subscriptions feed and notify subscribers checked when the control is available, including initial private staging, and verify before first public release. This setting is not public-release permission. Do not default it off merely because the upload is initially private; any deliberate exception needs a user request and recorded reason. An already-published disabled control is reported as unavailable, never bypassed or fixed by reuploading. Keep current public Mijia 0Wa-VX-mTco and sweet-potato bread IQkkmVqJn6w unchanged while observing for 48–72 hours from 2026-10-09 20:59 KST. Compare actual feed traffic/exposure and viewer engagement with sample size and reporting delays; do not claim guaranteed recovery or an unverified reupload penalty. Preserve prior upload records as history."
+    },
+    {
+      "id": "tech-affiliate-market-fit-existing-media",
+      "category": "tech",
+      "instruction": "테크 선정 순서는 실제 발급된 동일 옵션 파트너스 링크 → 인기·계절·트렌드·화제 적합성 → 기술 설명을 검증할 원본 자료 확보다. 약 30개 후보에서 옵션·국내 로켓배송·가격·기술 자료를 확인해 5개로 좁힌다. 공식 영상·도해·제품 사진을 우선 수집하는 목적은 제품 검증과 imagegen 참조 확보이며, 기존 영상 자체를 최종 컷에 쓰는 것을 필수로 하지 않는다. 공식 자료 미확보 시 중국 제작 제3자 기술 자료의 원제작자·동일 모델·제작 국가를 확인하고 기존 출처·사용권 검증을 유지한다. 정면 사진만으로 보이지 않는 구조를 추정하지 않는다. tech_evidence에 market_fit(basis/reason/source_url/checked_at), 공식 조사/미확보 사유, 원본 경로·해시·발행자·기술 내용·시각/구간 검수·재사용 권한 근거를 보존한다. 참고 자료 확보를 재사용 허가로 간주하지 않는다. 기존 영상 우선 편집 및 자체 테크 설명 생성 제외 규칙은 이번 imagegen 고정 카메라 방식으로 대체한다."
+    },
+    {
+      "id": "living-functional-action-coverage",
+      "category": "household",
+      "instruction": "Functional narration requires clear continuous real-action footage of the exact model. Search diverse Xiaohongshu/rednote real-use videos and manufacturer footage with verified original publisher. Show the narrated filling, control, mist, disassembly or cleaning action for the spoken duration. Do not automatically replace missing/short action footage with static official photos, generated lifestyle stills, or a brief demonstration followed by beauty photos. Stills are for actual static information or context only. Before paid production and after rendering, record living_actions for every cut: classification and reason, observed action, exact-model match, original hash/source URL, source range, actual motion duration, original resolution/enlargement and playback review; verify the official publisher for official clips. Source shortages return to acquisition, not another image-heavy render. Distinguish technical/frame QA from user content acceptance. Preserve rejected versions and their historical evidence, mark latest state revision_requested and do not publish. Manual production uses the same quality.validate_living_actions gate as the standard flow. Latest user feedback: collect broadly BEFORE editing, across multiple rednote creators, viewpoints and actions plus verified manufacturer footage. Compare multiple candidates per functional cut and record rejection/selection reasons. Distinguish search hits, unique acquired originals, playback-reviewed assets and selected segments. Detect reuploads/reencodes of the same original. Select by exact model, sharpness, action readability, duration, subtitle avoidance, vertical framing and bright warm continuity; counts alone never pass content QA. Continue collecting when actions are missing."
+    },
+    {
+      "id": "description-ad-and-relevant-hashtags",
+      "category": "all",
+      "instruction": "Every video description must include #광고 plus at least five distinct relevant hashtags (six or more total). Choose product, category, use and topic tags from verified video content. Seasonal tags such as #가을 require actual context. Do not apply snack/appliance/knitwear/ice-cream tags indiscriminately or invent product claims. Preserve existing user tags, deduplicate, place tags before the BGM credit and keep the exact affiliate disclosure as the final line. Verify actual Studio saved descriptions. Description-only changes preserve title, visibility and media. Applies to existing posted videos and all future descriptions."
+    },
+    {
+      "id": "product-first-ad-disclosure",
+      "category": "shopping",
+      "instruction": "User confirmed 2026-10-09: earn interest through verified product appeal, practical uses and an engaging story; avoid repeated sales pressure, exaggerated praise and invented personal experience. The only routine disclosure inside video is the legible persistent top-right [광고] badge. Do not speak or burn in affiliate commission sentences or routine AI notices. Keep the full affiliate disclosure as the exact last line of the video description after links and hashtags and beside purchase links/buttons on the product website; also include it with affiliate links posted in comments. Preserve paid-promotion and applicable YouTube AI settings. Do not prefix titles with [광고]; the video retains its persistent badge. Write verified product features and handling instructions in readable bullet points. Omit routine non-tasting/AI-production/voice-model boilerplate, without claiming personal experience. Omit virtual-person endorsement scenes requiring extra on-screen disclosure. Preserve historical versions; render requested changes as new versions."
+    },
+    {
+      "id": "food-package-shape-flavor-fidelity",
+      "category": "food",
+      "instruction": "Compare actual references with every used moving-food segment before and after processing. Reject local package inpainting that adds noise, smearing, flicker or false print; prefer a verified original segment or exact real asset, but do not accept inaccurate packaging merely because it is unprocessed. Distinguish generated originals from real footage and post-opening views from opening actions. Check food width/height, thickness and size against plate/tray/hand references; never impose flat pancake or inflated sphere shapes. Other-flavor narration must show the exact flavor's sourced real package with verified resolution and preserved print/shape. Reject generated cutouts that alter typography/barcodes. Separate that flavor from the main-product CTA/link in time. Record these checks in preflight and final motion QA; preserve older versions. Reject noisy or inaccurate package covers including tracked overlays in the opening shot. Prefer acquired, verified exact-product footage; if no suitable footage is acquired, use a static original product image checked against manufacturer references. Do not reconstruct packaging typography or characters."
+    },
+    {
+      "id": "living-xiaohongshu-required-search",
+      "category": "household",
+      "instruction": "Every Living recommendation must include an actual Xiaohongshu/rednote search using exact brand/model Chinese or English terms. Record query, search/post URL, exact-product video findings, quality and acquisition outcome in living_evidence.xiaohongshu_searches. Other sites supplement but never replace this research step. Distinguish search hits from verified usable videos; prioritize products with varied exact-product real-use footage. Existing acquisition, visual quality and action review gates still apply."
+    },
+    {
+      "id": "living-media-before-recommendation",
+      "category": "household",
+      "instruction": "Living recommends only exact-product resources with a verified acquisition route and evidence, adequate resolution and visual quality. Bulk downloading before recommendation is optional; existence, search hits, thumbnails or playback alone never prove acquirability. Record source, exact model/option match, acquisition method and verification evidence, dimensions and visual review. Require short edge >=720px, prefer 1080p. Products whose value needs an action demonstration require verified real-action video and reviewed segment. Exclude candidates with failed acquisition and no verified alternative, low quality or missing required action. Distinguish acquisition from reuse permission. Existing local-file readiness QA remains mandatory before production registration."
+    },
+    {
+      "id": "living-commerce-news-discovery",
+      "category": "household",
+      "instruction": "Discover Living items through verified commerce demand OR recent news. Record exact option, review count/rating and aggregation scope, original sales/buyer statement, period, scope, source URL and check time. Never infer sales from reviews or cumulative counts as growth. Prefer 500+ reviews and 4.3/5 as adjustable discovery heuristics, not mandatory cutoffs; inspect recent and low-rating complaints. News prefers 7 days and requires original publication/event dates within 30 days; do not count syndicated releases as independent evidence or attribute category trends to one SKU. Low-review news items may qualify with limited sales evidence disclosed. Combine season/problem relevance, design, exact-product sharp demonstration availability and novelty. New household imports require living_evidence; undated commerce pages must not receive invented publication dates."
+    },
+    {
+      "id": "exact-product",
+      "category": "tech",
+      "instruction": "Match the exact product generation, variant, color and visible parts against actual reference photos. Never substitute another product or claim an unverified reconstruction is exact."
+    },
+    {
+      "id": "real-food",
+      "category": "food",
+      "instruction": "All food follows the user-approved docs/references/food-storyboard-approved-v1.png direction: verified interest hook, varied ingredients/texture, unboxing/preparation, applicable storage/serving, CTA. Use 6-8 cuts with visibly different subjects, actions and compositions; at most one cross-section shot, never a sequence of similar food beauty shots. Adapt steps to each food, not mandatory strawberries or freezing. Match narration to visible actions and verified handling instructions. Show the actual product/pack during storage, never unrelated ice packs. Preserve exact food/packaging; generated storyboard is a concept reference, not verified product footage. Do not invent virality, ingredients or tasting."
+    },
+    {
+      "id": "immutable-versions",
+      "category": "all",
+      "instruction": "Every regeneration creates a new immutable Preview or Video version. Preserve previous assets, provenance and publication records."
+    },
+    {
+      "id": "clear-next-step",
+      "category": "all",
+      "instruction": "Durable FIFO video queue with progress and no automatic retry of interrupted paid requests. Titles open detail. Preserve every version on the web; require the human exact-version request before any YouTube upload and separate approval for public release."
+    },
+    {
+      "id": "coupang-purchase",
+      "category": "shopping",
+      "instruction": "Codex must find the exact product and option on Coupang before recommending. Verify official brand/authorized seller evidence and Rocket Delivery independently, recording seller, option, evidence and check time. Do not substitute Rocket Jikgu or seller Rocket, infer official status from delivery, or fabricate unavailable links. Keep reference URLs separate from purchase URLs. Affiliate links must be issued through the user account after enrollment, never invented. Recheck availability before publication."
+    },
+    {
+      "id": "shopping-funnel",
+      "category": "shopping",
+      "instruction": "Existing shopping categories remain available, but longform is now the production priority. Prepare only user-approved storyboards; no fixed daily production quota or automatic upload. The currently selected session model directly researches trends and authors 6-8 cuts after verified Coupang data and affiliate links. No Gemini planning. Official video OR images required. Need -> solution -> evidenced popularity/interest reasons -> product features -> a brief evidence-based advantage and limitation -> optional short product-link CTA. The balanced conclusion takes priority over a mandatory sales line. Never invent popularity. No 3D model creation. The first cut must strongly hook with verified interest/review counts or a current trend connected to a concrete use case. Record date and scope; never recast cumulative reviews as recent growth. Pokemon-card/food pairing is an example only when trend and real product are verified."
+    },
+    {
+      "id": "selective-veo",
+      "category": "all",
+      "instruction": "For food revisions use browser-operated Flow Veo with existing credits; no Veo API fallback. Preserve official exact food/product sources; validate reference-guided package actions frame by frame. Discard original audio and retain the category voice. Never present invented shape or a method illustration as actual product footage."
+    },
+    {
+      "id": "web-version-review",
+      "category": "all",
+      "instruction": "Preserve original assets, every revision and final video locally in the project storage on D:\\TheGumaLab. Manage and review all versions through https://videofactory.guma3d.com and notify the user with exact version links. Never automatically upload to YouTube, even privately or unlisted. Every upload or reupload requires the human's explicit request for the specific video version and visibility. Production, editing, feedback and web-storage approval do not authorize upload. Never carry approval from an older version into a revision or reuse an already fulfilled upload request. Default completion is local and web storage with reviewable results. Upload permission does not imply public release permission."
+    },
+    {
+      "id": "category-style",
+      "category": "all",
+      "instruction": "Follow categories.py: ALL categories use Maplestory Bold with outlines and no background boxes; food uses, strawberry-accent readable captions and static product stills without zoompan jitter. Other categories retain their style. 2026-10-11 사용자 확정: 모든 신규 영상 음성은 GumaTTS의 Qwen3-TTS 1.7B VoiceDesign으로 제작한다. 모든 쇼츠(쇼핑·이야기쇼츠 포함)는 여성 F4(생기 있는 이야기꾼), Story·롱폼은 남성 M5(솔직한 현실 친구)를 사용한다. 롱폼에서 파생한 쇼츠도 F4로 새로 녹음하며 M5 음성을 그대로 재사용하지 않는다. 더 좋은 대안을 사용자가 채택하기 전까지 유지한다. 기존 음성·영상·과거 제작 기록은 보존하고 새 음성은 새 버전으로 저장한다. 모델 선택 승인은 개별 결과물 검수·YouTube 업로드 승인을 대신하지 않는다. Keep captions out of product focal areas and retain ad/disclosure readability."
+    },
+    {
+      "id": "weekly-novelty",
+      "category": "shopping",
+      "instruction": "Before selection inspect actual YouTube Studio uploads for the last seven days, including private videos, and local upload events. Record topic_key, problem_key, and per-video novelty comparisons. Reject similar subject/problem even for different products."
+    },
+    {
+      "id": "director-quality",
+      "category": "shopping",
+      "instruction": "Target 20-40; verified tech option <= KRW500000. Original resolution gate and 1080x1920 no letterbox. Each narration must match visible action: thawing on a room-temperature counter, storage in a freezer, no unrelated beauty shot. No duplicated or visually overlapping image cuts, including crop/zoom/mirror variants. Different segments of one source video must show genuinely different subjects/actions/compositions. Perform two documented editorial reviews: before production and after final rendering; both check every cut for whole-video style continuity, distinct visuals and a strong evidence-backed opening hook. Veo: candid photorealistic, bright diffused natural light, low contrast, no cinematic shadows or posing. 0.2s dissolves preserving spoken endings. No top-left branding. Persistent top-right [광고], affiliate disclosure in description last line and beside links; YouTube AI-use setting enabled for realistic generated scenes. No routine burned-in affiliate or AI captions. Keep [광고]; all captions use outlines, no background boxes. Omit virtual-person endorsements requiring extra on-screen disclosure. Review frames, motion, captions and disclosure before web review. If hearing is unavailable, honestly retain audio as user-review-pending on the web; user authorized category voices and web review. Never fabricate listening. Public release requires explicit version approval."
+    },
+    {
+      "id": "required-bgm",
+      "category": "all",
+      "instruction": "For each new video randomly select one of the original five verified Kevin MacLeod tracks (Life of Riley, Carefree, Monkeys Spinning Monkeys, Wallpaper, Fluffing a Duck) and persist the selection for retries. Measure the actual used stereo music segment and apply one constant gain to -25 LUFS (tolerance 0.3 LU). No speech-triggered ducking, sidechain, automatic attenuation or fades; preserve the original musical dynamics. Aim narration at -16 LUFS with a fixed gain constrained by safe additive peak headroom and at least 6 LU above music. Verify music presence, speech clarity and perceived consistency by actual listening; measurements never count as listening. If hearing is unavailable, retain user web-review pending. Mix once from narration-only media, preserve the video stream without recompression for audio-only changes, verify source hashes and clipping, and retain internal source/license evidence. Latest 2026-10-09 user preference restores the original Kevin MacLeod pool. Put one concise BGM credit line near the bottom of the description, immediately before the final affiliate disclosure: title, Kevin MacLeod (incompetech.com), CC BY 4.0 license URL, and excerpt/volume changes. Preserve old versions and their original license records."
+    },
+    {
+      "id": "living-visible-results-and-motion",
+      "category": "household",
+      "instruction": "Record exact-model evidence and visibility of contact, surface before/after and actual removal results for each candidate. Contact or unboxing alone is not efficacy evidence. When the human requests candidate selection, replace footage only after selection; never generate efficacy. Moving footage must cover the cut without cloned last-frame holds, loops or reversal. Adjust real source ranges, silence or adjacent-cut timing without cutting spoken endings. Review motion before and across every transition. Intentional official still images are exempt. User-selected footage is acceptance of that visual, not proof of a visible model-number label or quantified efficacy. Match on-screen titles to the actual material shown."
+    },
+    {
+      "id": "food-news-discovery",
+      "category": "food",
+      "instruction": "Before food research run recommendation_import.py --food-search-plan, then perform actual web searches across recent broadcast food coverage, overseas local food trends, retail sales/stock news and recipes. Prefer 7 days, maximum 30; distinguish publication date from event date. Verify broadcaster episode/air date, country/local original reporting, and any stock claim with seller, option, check time and source. Broadcast exposure alone is not evidence of popularity; a single sold-out listing is not a shortage craze. Save food_trend evidence and connect via same_product, related_product or recipe_ingredient with verified recipe rationale. Recommend only after exact Coupang official seller/Rocket/issued affiliate checks. Never claim related items are the featured product or taste identical."
+    },
+    {
+      "id": "approved-inserted-cut-preservation",
+      "category": "shopping",
+      "instruction": "Default 6-8 cuts; one extra cut is allowed with explicit user approval recorded in additional_cut_approval. A longer approved narration requires timing_approval (maximum 9 seconds). When the user requests an inserted cut and preservation, retain all existing source clips, narration and order; match reused speech by exact narration, voice and rate even when cut indices change. Preserve parent BGM on revisions; choose randomly from the verified five for new production. Never treat this as upload approval."
+    },
+    {
+      "id": "longform-first-strategy",
+      "category": "all",
+      "instruction": "User strategy 2026-10-10: prioritize sustainable long-term operation. Main categories include longform and story_shorts alongside tech, food and household. Develop an original longform story first, then edit useful self-contained story shorts from it. Do not create unrelated shorts just to fill quotas. Main coordinates the new categories; no new session or recurring production is implied. Preserve local originals and all web versions. Exact-version upload requests and separate public-release approval still apply."
+    },
+    {
+      "id": "longform-editorial",
+      "category": "longform",
+      "instruction": "Plan a complete original story with an opening promise, development and satisfying conclusion, using chapters and a sustainable production scope. Default 16:9 1920x1080, with length agreed in the storyboard rather than padded for duration. Research actual factual claims, distinguish fact from fiction, and retain source rights evidence. Learn hooks/pacing from popular work without copying scripts or footage. Identify candidate short segments during planning. Review every chapter, speech, captions, audio and final render before web review. Generate narration only through GumaTTS. 2026-10-11 사용자 확정: 모든 신규 영상 음성은 GumaTTS의 Qwen3-TTS 1.7B VoiceDesign으로 제작한다. 모든 쇼츠(쇼핑·이야기쇼츠 포함)는 여성 F4(생기 있는 이야기꾼), Story·롱폼은 남성 M5(솔직한 현실 친구)를 사용한다. 롱폼에서 파생한 쇼츠도 F4로 새로 녹음하며 M5 음성을 그대로 재사용하지 않는다. 더 좋은 대안을 사용자가 채택하기 전까지 유지한다. 기존 음성·영상·과거 제작 기록은 보존하고 새 음성은 새 버전으로 저장한다. 모델 선택 승인은 개별 결과물 검수·YouTube 업로드 승인을 대신하지 않는다. Preserve old voice assets and the fixed-level verified BGM policy. The shopping-only 6-8-cut template and product CTA are not this format."
+    },
+    {
+      "id": "story-shorts-from-longform",
+      "category": "story_shorts",
+      "instruction": "Derive from a recorded longform idea ID and exact Video version. Preserve source ranges in seconds, source file SHA256 and editing notes alongside each new short version. Default 9:16 1080x1920; reframe the subject and rebuild captions for mobile instead of blindly cropping. Each short needs its own hook, enough context and a payoff; never distort the source meaning or simply cut off the ending. Choose the number and length based on useful scenes, not a mandatory quota. Record intentional topic overlap with the parent. After explicit publication approval, connect the available parent via YouTube related video and verify the actual destination. A longform upload request does not authorize its shorts. Review each short independently."
+    },
+    {
+      "id": "honest-balanced-ending",
+      "category": "shopping",
+      "instruction": "상품 소개 영상의 마지막 장단점은 사용자가 직접 작성한다(2026-10-10 최신 피드백). Codex는 사용자 원문과 의미·강도·호불호를 보존하면서 낭독하기 자연스럽게만 다듬는다. 사용자 의견이 없으면 총평은 작성 대기이며, 제품 정보나 에이전트 추측으로 대신 채우지 않는다. 사용자 경험과 객관적인 제품 설명을 구분하고, 단점을 축소하거나 추가 장점·추천 대상을 임의로 만들지 않는다. 구매 CTA는 필요할 때만 짧게 덧붙인다. 총평 제공은 음성 생성·렌더·업로드 승인이 아니다."
+    },
+    {
+      "id": "tech-imagegen-fixed-camera",
+      "category": "tech",
+      "instruction": "테크 전용 비주얼 기준(2026-10-10 사용자 확정): imagegen으로 만든 이미지와 일반 영상 편집 합성을 기본 제작 경로로 사용한다. Blender·신규 3D 모델·Veo·씨댄스 등 영상 생성 도구는 사용하지 않는다. 카메라 고정은 한 컷 안에서 이어지는 상태 편집에만 적용한다. 컷 간에는 소재·촬영 거리·각도·배경·구도를 목적에 맞게 달리해 시각적 변화와 리듬을 만든다. 같은 제품 전경에 설명선·문구만 바꾼 거의 동일한 컷 반복은 금지한다(2026-10-10 사용자 피드백). 각 컷의 기준 이미지를 별도로 확정하고, 해당 컷 안의 분해·작동 설명·재조립 상태만 이를 참조 편집한다. 컷 내부에서는 회전·궤도 이동·팬·자동 줌·가상 원근 이동 없이 구도·원근·제품 방향·크기를 유지한다. 연결 상태를 독립 생성하지 않는다. 부품의 이동·순차 강조·빛의 흐름·설명선·자막으로 변화를 주고, 어색한 연결은 중간 상태 보완 또는 명확한 컷 전환으로 처리한다. 제작 전후 제품 형태·부품 수·색상·그림자·시점 일관성과 실제 영상의 연결을 검수한다. 공식 자료로 외형·기능·구조를 확인하며 미확인 내부를 실제 구조처럼 제시하지 않는다. 이 규칙은 tech에만 적용하고 Food·Living(household)·롱폼·이야기쇼츠는 기존 규칙을 유지한다. 기존 테스트와 버전은 보존하며 새 테크 제작에 적용한다. 테크 실행·인계: shopping_package.py의 각 Cut은 mode=explanatory_image(생성 이미지) 또는 illustration_clip(그 이미지의 일반 편집 합성)을 사용하고 tech_visual에 generator=imagegen, camera=fixed, reference_evidence(공식 근거), base_image(컷별 기준 이미지 경로/해시), composition(컷의 소재·각도·거리·구도), edit_lineage(참조 편집·레이어/합성 이력), consistency_review(형태·부품 수·색상·그림자·시점 및 연결 검수)를 기록한다. 생성 자체는 세션의 imagegen 도구에서 수행한다. 선언값은 픽셀 검수의 대체물이 아니며 Main은 소스·프롬프트·편집 이력과 완성 영상 전체를 대조한다. 정지 이미지 자동 줌을 끄고 신규 제작과 렌더에서 테크 전용 검사를 적용한다. 과거 버전 조회는 유지하되 과거 3D/Veo 콘티로 새 영상을 제작하지 않는다. 공유 대상은 GumaDJ-Main과 GumaDJ-Tech다. 제작 승인·정확한 버전의 업로드 승인 경계는 유지한다."
+    }
+  ],
+  "feedback": [
+    {
+      "id": "food-sesame-cuts-03-05-08-20261006",
+      "scope": "food",
+      "lesson": "User rejected noisy foil restoration in CUT03, oversized flat mochi in CUT05 and missing corn-cream-cheese product imagery in CUT08. Use accurate clean original material, reference-sized round food and a real exact-flavor cutout during its own narration. Review full motion and original-versus-processed packaging, not just stills."
+    },
+    {
+      "id": "shopping-v2",
+      "scope": "all",
+      "lesson": "Replace promotional excerpts with a need-led hook and evidence-based solution narrative. Remove inaccurate model stage; preserve actual product sources. Web review precedes exact-version upload and public approvals."
+    },
+    {
+      "id": "food-storyboard-approved-v1",
+      "scope": "food",
+      "lesson": "User approved the seven-cut strawberry-mochi storyboard on 2026-10-05 as the standard for ALL food products. Diversify the story through ingredients, hands, preparation and serving rather than repeated cross-sections. Keep bright soft realism, legible Maplestory Bold captions, static stills and smooth transitions; adapt to verified product facts. Food Video v0010 is the current reference, rated about 80% of the user target, not final perfection.",
+      "reference": "docs/references/food-storyboard-approved-v1.png"
+    },
+    {
+      "id": "constant-audio-20261006",
+      "scope": "all",
+      "lesson": "Latest user feedback replaces ducking and category-specific voices: All shorts use F4 and Story/longform uses M5 via Qwen 1.7B VoiceDesign in GumaTTS; music stays at a constant normalized gain, audible below speech; randomly draw from the verified five tracks and persist per version. Update current MD instructions and remove obsolete rules for every feedback."
+    },
+    {
+      "id": "living-transition-20261006",
+      "scope": "household",
+      "lesson": "Mijia v5 CUT4 had 2.9 seconds of source extended to 4.03 seconds with a frozen tail. Remove the hold in a new version, preserve speech, and inspect continuous motion into CUT5. The user subsequently selected candidate 1, white-fabric close-up, for CUT4 replacement based on v6. Use upright portrait footage and an accurate material-neutral title; selection does not establish quantified before/after efficacy."
+    },
+    {
+      "id": "no-credit-bgm-product-bullets-20261009",
+      "scope": "all",
+      "lesson": "User explicitly selected replacing music with attribution-free tracks and private reupload of all four videos. Remove title [광고] prefix; product bullets; exact affiliate sentence as final description line. Omit unnecessary production boilerplate. Keep in-video ad badge and Studio disclosures. Preserve old local versions. No paid generation needed."
+    },
+    {
+      "id": "restore-original-music-clean-sesame-cover-20261009",
+      "scope": "all; sesame CUT01",
+      "lesson": "User prefers the original five tracks randomized with concise bottom credits. Replace noisy inaccurate sesame opening packaging with verified normal footage or a static exact-product source image. Web/local revisions only; no upload authorization."
+    },
+    {
+      "id": "pizza-seolgi-pop-caption-20261009",
+      "scope": "food pizza-seolgi approved storyboard v0001",
+      "lesson": "User approved dynamic rounded storyboard text for actual video production. Reproduce its visual impression with installed Maple Bold without claiming exact font identity. Source is third-party Food Kingdom footage with no verified reuse permission; local/web review approval only."
+    },
+    {
+      "id": "humidifier-static-heavy-rejected-20261009",
+      "scope": "household",
+      "lesson": "User rejected humidifier Video2 despite technical/frame checks: too few functional real-action scenes and excessive still images. Reacquire varied exact-model rednote and official footage; no static substitution for missing narrated actions."
+    }
+  ],
+  "publishing": {
+    "public_catalog_url": "https://videofactory.guma3d.com/GumaDdanjit",
+    "public_catalog_legacy_url": "https://videofactory.guma3d.com/products",
+    "youtube_channel_url": "https://www.youtube.com/@GumaDdanjit",
+    "channel_confirmed_by": "user",
+    "purchase_platform": "coupang",
+    "affiliate_link_integration": "browser_verified",
+    "affiliate_browser_policy": {
+      "browser": "connected_in_app_first_chrome_fallback",
+      "authorization": "Use the user-maintained signed-in Coupang Partners session to issue links before API integration.",
+      "on_auth_required": "Pause affected work and ask user to log in or complete verification. Never bypass authentication.",
+      "on_connection_unavailable": "Report browser connection issue separately; do not assume login expired.",
+      "notification": "Notify actionable changes; avoid repeating unchanged blockers."
+    },
+    "youtube_upload_policy": {
+      "method": "computer_use_connected_browser_youtube_studio",
+      "integration_status": "request_only",
+      "channel_url": "https://www.youtube.com/@GumaDdanjit",
+      "approval": "No automatic private upload or quota retry. Preserve final versions on the web. Upload only on an explicit human request for the exact version. Public release requires separate explicit version approval.",
+      "verification": "Confirm active channel and existing upload before submitting; record video URL and state to prevent duplicates. Do not invent publication schedule.",
+      "auth": "Ask user only when login or verification is required; distinguish browser disconnection. Never bypass authentication.",
+      "browser": "Use connected in-app browser first; use Chrome if required capabilities are unavailable. Verify each browser session independently."
+    },
+    "planner_model": "current_session_model",
+    "schedule": "Longform first, then derived story shorts; cadence and exact versions require user agreement. Historical shopping slots are import identifiers, not automatic production commitments.",
+    "workspace": "Store original assets, edits and final videos locally under project storage/products/<id>/Preview/vNNNN and Video/vNNNN. Manage every version and final output through the webservice with playback/download and version links. Missing YouTube upload is not a production blocker. Never auto-upload a completed final version.",
+    "voice_rate": "natural-brisk",
+    "cta": "궁금하다면, 채널 프로필의 상품 모음 링크를 눌러보세요.",
+    "pinned_comment": "Name the exact product and direct viewers to channel profile -> 상품 모음 -> matching product. Include disclosure with affiliate URLs. Add profile product number only after actual registration. Keep comments pending until public; never claim posted. Shorts comment URLs are not clickable. Verify actual profile link label and landing page before publication.",
+    "voice_by_category": {
+      "tech": "F4",
+      "food": "F4",
+      "household": "F4",
+      "longform": "M5",
+      "story_shorts": "F4"
+    },
+    "primary_category": "longform",
+    "derived_category": "story_shorts",
+    "cta_scope": "Optional after the evidence-based balanced conclusion for shopping content, never a mandatory final sentence. Narrative videos use a context-appropriate ending and may point to the related longform.",
+    "channel_id": "UCRtAVFQFmJCcpvLeuyq03Kg",
+    "channel_name": "구마의 딴짓"
+  },
+  "caption_policy": {
+    "font": "Maplestory",
+    "background_box": false,
+    "outline": true,
+    "routine_ai_overlay": false,
+    "routine_affiliate_overlay": false,
+    "ad_badge": true,
+    "disclosure_location": "Exact full affiliate disclosure as the last description line after product bullets, links and hashtags; also beside product website purchase links/buttons and with affiliate links in comments. Preserve paid-promotion and applicable YouTube AI settings. No routine production or voice-model prose. Title has no [광고] prefix; video retains the legible [광고] badge.",
+    "exception": "Omit virtual-person endorsements requiring extra on-screen disclosure; do not present generated performance as actual evidence.",
+    "food_color_continuity": "Grade locally per food using representative before/after frames; gently improve midtone warmth and ingredient color while retaining bright diffuse low-contrast light. Protect actual purple/red surfaces, skin, white dishes and real packaging. Match all cuts, reject oversaturation, fake gloss and harsh contrast; never impose one fixed-strength filter on every product. Composite captions and the ad badge after grading so their colors stay unchanged. Avoid per-frame hard color thresholds. Review every cut and transition in motion for amplified source noise, flicker and denoise trails; one still image is insufficient.",
+    "placement": "Choose upper/lower empty space per cut after start/middle/end frame inspection; keep text fixed within the cut and style consistent. Do not mechanically alternate or occlude product, hands, print, ad badge or platform UI. Preserve old versions.",
+    "common_pop_style": {
+      "id": "common-pop-outline-v4",
+      "scope": "Required default for all new Food, Tech, Living productions and requested revisions; preserve historical versions",
+      "font": "Maplestory Bold",
+      "text": "Short 1-3 lines; white body with orange/yellow or approved accent keywords; thick black inner and white outer outlines, no box",
+      "motion": "One short 150ms scale pop, then stable; no repeated bounce",
+      "placement": "Use inspected upper/lower empty space per cut. Protect product identity, hands, printed labels, ad and UI; stable within cut."
+    }
+  },
+  "public_catalog_style": {
+    "scope": "Public product collection website only; not video captions or category styling.",
+    "theme": "Warm yellow #ffd43b, cream #fffdf7, dark brown readable text; rounded image cards and prominent yellow purchase buttons.",
+    "images": "Prefer verified exact-product representative photos from the product page, fitting the full product within the card. If unavailable, use a thumbnail of the exact published video; never invent product imagery.",
+    "preserve": "Only explicitly approved public products, original affiliate links and disclosure beside purchase buttons. Responsive one-column mobile layout."
+  },
+  "thumbnail_policy": {
+    "scope": "Mandatory for all Food, Tech, Living videos, user confirmed 2026-10-09",
+    "source": "Use image generation tool with exact-product photo references. Standalone photorealistic cover, never extracted video frame or a new in-video cut. Verify identity, shape, ingredients/functions and text; retain prompt and generated provenance.",
+    "storage": "Append-only Thumbnail/vNNNN files associated with exact Video version. Hash-verified generated cover required before new web_review and any upload/public authorization. Preserve historical versions.",
+    "publication": "Apply uploaded custom image through actual YouTube UI and verify saved result. If unavailable, record concrete limitation, preserve prepared image and never claim applied. Upload/publication still require scoped explicit user request."
+  },
+  "tts_service": {
+    "url": "https://home.guma3d.com/gumatts/",
+    "model": "qwen-design-1.7b",
+    "shorts_voice": "F4",
+    "story_voice": "M5",
+    "voice_policy_approved": true,
+    "approved_date": "2026-10-11",
+    "all_new_audio_via_service": true,
+    "derived_shorts_revoice": true
+  }
+}

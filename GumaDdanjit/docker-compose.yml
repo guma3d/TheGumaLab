@@ -1,0 +1,23 @@
+services:
+  gumaddanjit:
+    build: .
+    container_name: GumaDdanjit_app
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./storage:/data
+      - ../GumaTTS/client.py:/opt/gumatts/client.py:ro
+      - ../GumaTTS/storage/service-token:/run/secrets/gumatts_token:ro
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      TZ: Asia/Seoul
+      GUMADDANJIT_SHORTS_STORAGE: /data/shorts
+      GUMASTORY_STORAGE: /data/story
+      GUMASHOP_STORAGE: /data/shop
+      GUMASHOP_LEGACY: /data/shorts
+      GUMATTS_URL: http://host.docker.internal:8088
+      DDANJIT_WORKER: ${DDANJIT_WORKER:-0}
+    restart: unless-stopped
+    stop_grace_period: 60s
