@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 from app.config import DEFAULT_VOICE
 
-FOOD_VOICE = 'F1-fixed-v1'
+FOOD_VOICE = 'F1-bright-v2'
 FOOD_STYLE = 'Speak in natural native Korean as a bright, friendly adult female food host. Warm smiling conversational voice, lively but gentle, slightly brisk pace, short natural pauses. Not shrill, breathy, theatrical or announcer-like. Read exactly the supplied words, no additions, no laughter, no music.'
 SHOPPING_VOICE = 'F4'
 SHOPPING_STYLE = FOOD_STYLE
@@ -22,7 +22,7 @@ def _gateway(text, output_path, voice, model=None, project='video'):
     expected = FOOD_VOICE if project == 'food' else ('M5' if project in ('story', 'longform') else 'F4')
     expected_model = 'qwen-clone-1.7b' if project == 'food' else 'qwen-design-1.7b'
     if project != 'test' and (voice != expected or model not in (None, expected_model)):
-        raise ValueError('Food는 F1-fixed-v1, 다른 쇼츠 F4 / Story·롱폼 M5입니다.')
+        raise ValueError('Food는 F1-bright-v2, 다른 쇼츠 F4 / Story·롱폼 M5입니다.')
     if voice == FOOD_VOICE:
         model = model or 'qwen-clone-1.7b'
         style = ''

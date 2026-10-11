@@ -49,3 +49,14 @@ def test_food_uses_reference_conditioning_not_independent_design():
         Job(text='테스트', project='food', model=DESIGN_MODEL, voice='F4')
     with pytest.raises(ValueError):
         Job(text='테스트', project='food', style='excited')
+
+
+def test_old_reference_is_available_only_for_comparison():
+    from fixed_voices import CLONE_MODEL, FOOD_VOICE
+    assert FOOD_VOICE == 'F1-bright-v2'
+    assert Job(text='이전 참조 비교', project='test', model=CLONE_MODEL,
+               voice='F1-fixed-v1').voice == 'F1-fixed-v1'
+    with pytest.raises(ValueError):
+        Job(text='이전 참조', project='food', voice='F1-fixed-v1')
+    with pytest.raises(ValueError):
+        Job(text='임의 참조', model=CLONE_MODEL, voice='../../unknown')

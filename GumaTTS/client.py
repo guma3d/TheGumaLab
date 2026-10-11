@@ -15,7 +15,7 @@ def synthesize(text, output_path, *, model=None, voice=None, style=None, project
         with urllib.request.urlopen(req, timeout=30) as r: return r.read()
     if voice is None:
         voice = ('M5' if project in ('story', 'longform') else 'F4') if model == 'qwen-design-1.7b' else ('Sohee' if model.startswith('qwen') else 'Zephyr')
-        if model == 'qwen-clone-1.7b': voice = 'F1-fixed-v1'
+        if model == 'qwen-clone-1.7b': voice = 'F1-bright-v2'
     payload = dict(text=text, title=title, project=project, model=model, voice=voice, allow_cloud=allow_cloud)
     if style is not None: payload['style'] = style
     job = json.loads(request('/api/jobs', payload))

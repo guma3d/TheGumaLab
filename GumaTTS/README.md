@@ -4,8 +4,8 @@
 
 - 웹: https://home.guma3d.com/gumatts/ (HomeServer SSO)
 - 로컬: `D:\TheGumaLab\GumaTTS`, 컨테이너 `GumaTTS_app`, 포트 8088
-- 2026-10-11 사용자 확정: 모든 신규 영상 음성은 GumaTTS를 경유한다. Food는 Qwen 1.7B Base의 F1-fixed-v1 고정 여성 화자를 사용한다. 다른 쇼츠는 F4 VoiceDesign, Story·롱폼은 M5 VoiceDesign을 유지한다. 롱폼에서 파생한 쇼츠도 F4로 새로 녹음하며 M5 음성을 그대로 재사용하지 않는다. 더 좋은 대안을 사용자가 채택하기 전까지 유지한다. 기존 음성·영상·과거 제작 기록은 보존하고 새 음성은 새 버전으로 저장한다. 모델 선택 승인은 개별 결과물 검수·YouTube 업로드 승인을 대신하지 않는다.
-- Food 기본값 qwen-clone-1.7b/F1-fixed-v1, 다른 쇼츠 F4, Story·롱폼 M5. API는 test 이외 프로젝트에서 다른 모델/성별을 거절한다. 기존 비교 모델은 test 프로젝트에서만 시험한다.
+- 2026-10-11 사용자 확정: 모든 신규 영상 음성은 GumaTTS를 경유한다. Food는 Qwen 1.7B Base의 F1-bright-v2 고정 여성 화자를 사용한다. 다른 쇼츠는 F4 VoiceDesign, Story·롱폼은 M5 VoiceDesign을 유지한다. 롱폼에서 파생한 쇼츠도 F4로 새로 녹음하며 M5 음성을 그대로 재사용하지 않는다. 더 좋은 대안을 사용자가 채택하기 전까지 유지한다. 기존 음성·영상·과거 제작 기록은 보존하고 새 음성은 새 버전으로 저장한다. 모델 선택 승인은 개별 결과물 검수·YouTube 업로드 승인을 대신하지 않는다.
+- Food 기본값 qwen-clone-1.7b/F1-bright-v2, 다른 쇼츠 F4, Story·롱폼 M5. API는 test 이외 프로젝트에서 다른 모델/성별을 거절한다. 기존 비교 모델은 test 프로젝트에서만 시험한다.
 - 로컬은 API 요금·호출 한도 없음. 전력·GPU·생성 시간은 필요하다. Gemini는 프로젝트 결제 등급에 따라 과금 가능. 실패 시 유료 API 자동 대체 없음.
 
 ## 구조와 보존
@@ -75,6 +75,8 @@ API 모델 `qwen-design-1.7b`는 voice=M1–M5 또는 F1–F5를 사용한다. V
 
 ## Food 고정 화자 — 2026-10-11 최신 수정
 
-독립 VoiceDesign 호출은 같은 설명·seed만으로 동일 화자를 고정하지 못한다. Food는 F1 계열 합성 기준 WAV와 정확한 대본을 `storage/fixed-voices/F1-fixed-v1/`에 보존하고, Base 모델의 `create_voice_clone_prompt`와 `generate_voice_clone`을 사용한다. 임의 경로·URL·사용자 화자는 받지 않는다. 기준 해시는 생성 캐시와 결과 기록에 포함된다. 같은 기준의 연속 요청은 최대 32개를 한 프로세스에서 순차 생성하며 prompt를 재사용하고 종료 시 GPU를 해제한다. 단일 패스 동적 loudnorm 대신 측정 기반 고정 게인 검증을 유지한다. 원고와 발화 내용, 속도·피치·음량·전환 검수 및 실제 청취 대기를 구분한다.
+독립 VoiceDesign 호출은 같은 설명·seed만으로 동일 화자를 고정하지 못한다. Food는 F1 계열 합성 기준 WAV와 정확한 대본을 `storage/fixed-voices/F1-bright-v2/`에 보존하고, Base 모델의 `create_voice_clone_prompt`와 `generate_voice_clone`을 사용한다. 임의 경로·URL·사용자 화자는 받지 않는다. 기준 해시는 생성 캐시와 결과 기록에 포함된다. 같은 기준의 연속 요청은 최대 32개를 한 프로세스에서 순차 생성하며 prompt를 재사용하고 종료 시 GPU를 해제한다. 단일 패스 동적 loudnorm 대신 측정 기반 고정 게인 검증을 유지한다. 원고와 발화 내용, 속도·피치·음량·전환 검수 및 실제 청취 대기를 구분한다.
 
 근거: [Qwen 공식 Voice Design then Clone](https://github.com/QwenLM/Qwen3-TTS#voice-design-then-clone). Food 수정 승인은 다른 형식의 M5/F4 교체나 YouTube 게시 승인이 아니다.
+
+- 2026-10-11 Food 후속 피드백: 너무 차분한 v1보다 조금 더 밝고 경쾌한 친근한 여성 말투를 목표로 F1-bright-v2 참조를 재사용한다. 기존 합성 여성 정체성을 최대한 유지하며 과장된 F4·매 컷 독립 VoiceDesign으로 돌아가지 않는다. Base는 style/instruct를 적용하지 않으므로 실제 참조 생성 경로와 해시를 기록한다. 볼륨 증가·피치 시프트·일괄 배속을 말투 조정으로 대신하지 않는다. v1 원본은 보존하고 실제 청취 전에는 개선·사용자 승인으로 기록하지 않는다.

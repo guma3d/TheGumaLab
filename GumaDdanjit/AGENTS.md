@@ -4,7 +4,7 @@
 - 영상 제작의 운영 서비스는 GumaDdanjit 하나다. GumaShop=쇼핑 쇼츠(app, /shorts), GumaStory=출퇴근 이야기·롱폼(story, /story), GumaX=실험적인 고퀄 영상(shop, /shop)이다. 표시명과 기존 내부 경로를 혼동하지 않는다. 모듈별 AGENTS와 docs/shorts-production.md의 제작 기준을 유지한다.
 - 운영 URL은 https://home.guma3d.com/gumaddanjit/ 이다. 단일 컨테이너 GumaDdanjit_app, 포트 8089, 단일 인증 경계와 공통 제작 보관함을 사용한다.
 - 원본·버전·대본·검수·승인 기록은 storage/shorts, storage/story, storage/shop에 보존한다. 모듈 ID 공간과 SQLite 이력을 임의로 합치거나 덮어쓰지 않는다.
-- 신규 음성은 GumaTTS만 경유한다. Food는 F1-fixed-v1 고정 기준음성을 사용하는 Qwen Base, 다른 쇼츠는 F4 VoiceDesign, Story·롱폼은 M5 VoiceDesign. 음성 선택을 결과물 검수나 업로드 승인으로 간주하지 않는다.
+- 신규 음성은 GumaTTS만 경유한다. Food는 F1-bright-v2 고정 기준음성을 사용하는 Qwen Base, 다른 쇼츠는 F4 VoiceDesign, Story·롱폼은 M5 VoiceDesign. 음성 선택을 결과물 검수나 업로드 승인으로 간주하지 않는다.
 - 과거 서비스 폴더는 복구용 보관본이다. 기존 링크는 새 모듈로 연결한다. 공개 상품 모음만 로그인 없이 읽을 수 있으며 제작 원본·API는 SSO로 보호한다.
 - 수정·제작 결과는 웹과 프로젝트 드라이브에 버전별로 저장한다. 기존 YouTube 영상 변경·비공개 업로드·공개는 정확한 버전과 별도 사용자 요청이 필요하다.
 - 기본 결과 공유는 웹 링크와 짧은 텍스트를 사용한다. 긴 로그·이미지·전체 문서를 대화에 반복하지 않는다.
@@ -15,4 +15,6 @@
 
 - 카테고리 로고는 첫 프레임부터 마지막 프레임까지 모든 프레임에 포함한다(2026-10-11 재확인). 컷 전환·페이드·인트로·엔딩에도 누락되지 않도록 전환 합성이 끝난 최종 영상 레이어에 고정 오버레이하고, 전체 프레임 검사를 수행한다.
 
-- 2026-10-11 Food 음성 안정화: 매 컷 독립 VoiceDesign 생성과 seed 고정은 동일 화자 보장이 아니다. F1-fixed-v1 기준 WAV·대본·해시를 보존하고 Base create_voice_clone_prompt/generate_voice_clone로 재사용한다. 컷별 과장된 말투 지시는 제거하고 발화 속도·피치·음량·전환·누락을 비교한다. 같은 참조를 사용해도 실제 청취 품질 승인을 대신하지 않는다. 기존 F4 영상과 원본은 보존하고 수정본은 새 웹 버전으로 저장한다.
+- 2026-10-11 Food 음성 안정화: 매 컷 독립 VoiceDesign 생성과 seed 고정은 동일 화자 보장이 아니다. F1-bright-v2 기준 WAV·대본·해시를 보존하고 Base create_voice_clone_prompt/generate_voice_clone로 재사용한다. 컷별 과장된 말투 지시는 제거하고 발화 속도·피치·음량·전환·누락을 비교한다. 같은 참조를 사용해도 실제 청취 품질 승인을 대신하지 않는다. 기존 F4 영상과 원본은 보존하고 수정본은 새 웹 버전으로 저장한다.
+
+- 2026-10-11 Food 후속 피드백: 너무 차분한 v1보다 조금 더 밝고 경쾌한 친근한 여성 말투를 목표로 F1-bright-v2 참조를 재사용한다. 기존 합성 여성 정체성을 최대한 유지하며 과장된 F4·매 컷 독립 VoiceDesign으로 돌아가지 않는다. Base는 style/instruct를 적용하지 않으므로 실제 참조 생성 경로와 해시를 기록한다. 볼륨 증가·피치 시프트·일괄 배속을 말투 조정으로 대신하지 않는다. v1 원본은 보존하고 실제 청취 전에는 개선·사용자 승인으로 기록하지 않는다.

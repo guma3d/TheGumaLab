@@ -5,11 +5,12 @@ from pathlib import Path
 
 CLONE_MODEL = 'qwen-clone-1.7b'
 CLONE_REPO = 'Qwen/Qwen3-TTS-12Hz-1.7B-Base'
-FOOD_VOICE = 'F1-fixed-v1'
+FOOD_VOICE = 'F1-bright-v2'
+REGISTERED_VOICES = frozenset({'F1-fixed-v1', FOOD_VOICE})
 
 
 def reference(root, voice):
-    if voice != FOOD_VOICE:
+    if voice not in REGISTERED_VOICES:
         raise ValueError('등록되지 않은 고정 화자입니다.')
     folder = Path(root) / 'fixed-voices' / voice
     manifest = json.loads((folder/'reference.json').read_text(encoding='utf-8'))
