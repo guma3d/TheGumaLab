@@ -5,9 +5,9 @@ import os
 from pathlib import Path
 from app.config import DEFAULT_VOICE
 
-FOOD_VOICE = 'F4'
+FOOD_VOICE = 'F1-fixed-v1'
 FOOD_STYLE = 'Speak in natural native Korean as a bright, friendly adult female food host. Warm smiling conversational voice, lively but gentle, slightly brisk pace, short natural pauses. Not shrill, breathy, theatrical or announcer-like. Read exactly the supplied words, no additions, no laughter, no music.'
-SHOPPING_VOICE = FOOD_VOICE
+SHOPPING_VOICE = 'F4'
 SHOPPING_STYLE = FOOD_STYLE
 LEGACY_VOICE = 'Achird'
 LEGACY_STYLE = 'Speak in natural native Korean, warm, cheerful, affectionate and approachable adult male shopping host. Smile in the voice, conversational not announcer-like, slightly brisk pace, short natural pauses, clear consonants. Read exactly the supplied words, no additions, no laughter, no music.'
@@ -19,10 +19,14 @@ def _gateway(text, output_path, voice, model=None, project='video'):
     spec = importlib.util.spec_from_file_location('gumatts_client', source)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    expected = 'M5' if project in ('story', 'longform') else 'F4'
-    if project != 'test' and (voice != expected or model not in (None, 'qwen-design-1.7b')):
-        raise ValueError('제작 음성은 쇼츠 F4 / Story·롱폼 M5입니다. 새 버전에 올바른 음성을 지정하세요.')
-    if voice in ('M5', 'F4'):
+    expected = FOOD_VOICE if project == 'food' else ('M5' if project in ('story', 'longform') else 'F4')
+    expected_model = 'qwen-clone-1.7b' if project == 'food' else 'qwen-design-1.7b'
+    if project != 'test' and (voice != expected or model not in (None, expected_model)):
+        raise ValueError('Food는 F1-fixed-v1, 다른 쇼츠 F4 / Story·롱폼 M5입니다.')
+    if voice == FOOD_VOICE:
+        model = model or 'qwen-clone-1.7b'
+        style = ''
+    elif voice in ('M5', 'F4'):
         model = model or 'qwen-design-1.7b'
         style = ''  # Preserve the selected VoiceDesign profile without extra direction.
     elif voice in ('Zephyr', LEGACY_VOICE):

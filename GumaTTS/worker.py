@@ -12,10 +12,18 @@ import wave
 from pathlib import Path
 from voice_profiles import DESIGN_MODEL, DESIGN_REPO, design_instruction
 from audio_processing import normalize_speech
+from fixed_voices import CLONE_MODEL, CLONE_REPO, reference
+
+# Only lives inside a bounded worker process. Same-reference batches reuse
+# both weights and conditioning; process exit releases all GPU allocations.
+_MODELS = {}
+_PROMPTS = {}
 
 def local_generation(request):
     """Select the correct checkpoint and API without loading a GPU model."""
     kwargs = dict(text=request['text'], language='Korean', max_new_tokens=4096)
+    if request['model'] == CLONE_MODEL:
+        return CLONE_REPO, 'generate_voice_clone', kwargs
     if request['model'] == DESIGN_MODEL:
         kwargs['instruct'] = design_instruction(request['voice'], request['style'])
         return DESIGN_REPO, 'generate_voice_design', kwargs
@@ -38,9 +46,34 @@ def run(folder):
         torch.set_num_threads(4)
         torch.manual_seed(request['seed'])
         torch.cuda.reset_peak_memory_stats()
-        model = Qwen3TTSModel.from_pretrained(repo, device_map='cuda:0', dtype=torch.bfloat16, attn_implementation='sdpa')
+        if repo not in _MODELS:
+            _MODELS[repo] = Qwen3TTSModel.from_pretrained(repo, device_map='cuda:0', dtype=torch.bfloat16, attn_implementation='sdpa')
+        model = _MODELS[repo]
+        if request['model'] == CLONE_MODEL:
+            ref_wav, ref = reference(folder.parent, request['voice'])
+            prompt_key = (repo, ref['sha256'], ref['text'])
+            reused = prompt_key in _PROMPTS
+            if not reused:
+                _PROMPTS[prompt_key] = model.create_voice_clone_prompt(
+                    ref_audio=str(ref_wav), ref_text=ref['text'], x_vector_only_mode=False)
+            prompt = _PROMPTS[prompt_key]
+            kwargs.update(voice_clone_prompt=prompt, non_streaming_mode=True)
+            info.update(reference_voice=request['voice'], reference_sha256=ref['sha256'],
+                        reference_text_sha256=hashlib.sha256(ref['text'].encode()).hexdigest(),
+                        reference_source_job=ref['source_job'], conditioning='reference_audio_and_transcript',
+                        reference_prompt_reused=reused)
         loaded = time.monotonic()
         with torch.inference_mode(): wavs, sr = getattr(model, method)(**kwargs)
+        if request['model'] == CLONE_MODEL:
+            import numpy as np
+            import librosa
+            waveform = np.asarray(wavs[0], dtype=np.float32)
+            check_audio = waveform if sr == 24000 else librosa.resample(waveform, orig_sr=sr, target_sr=24000)
+            with torch.inference_mode():
+                embedding = model.model.extract_speaker_embedding(audio=check_audio, sr=24000)
+            similarity = torch.nn.functional.cosine_similarity(
+                embedding.flatten().float(), prompt[0].ref_spk_embedding.flatten().float(), dim=0).item()
+            info['reference_speaker_cosine'] = round(similarity, 5)
         sf.write(str(original), wavs[0], sr, subtype='PCM_16')
         info.update(provider='local', model_repo=repo, model_revision=getattr(model.model.config, '_commit_hash', None), load_seconds=round(loaded-started,2), generation_seconds=round(time.monotonic()-loaded,2), gpu_peak_mb=round(torch.cuda.max_memory_allocated()/1024**2), gpu=torch.cuda.get_device_name(0), style_applied='instruct' in kwargs, api_charge=False)
         if request['model'] == DESIGN_MODEL: info['design_instruction'] = kwargs['instruct']
@@ -70,8 +103,7 @@ def run(folder):
     info.update(duration=duration, elapsed_seconds=round(time.monotonic()-started,2), real_time_factor=round(info['generation_seconds']/duration,2), text_sha256=hashlib.sha256(request['text'].encode()).hexdigest(), audio_sha256=hashlib.sha256(out.read_bytes()).hexdigest(), original_sha256=hashlib.sha256(original.read_bytes()).hexdigest(), technical_decode='passed', normalization=normalization)
     (folder / 'result.json').write_text(json.dumps(info, ensure_ascii=False, indent=2), encoding='utf-8')
 
-if __name__ == '__main__':
-    folder = Path(sys.argv[1])
+def execute(folder):
     try: run(folder)
     except Exception as exc:
         # Keep dependency traces local; never print cloud credentials or request headers.
@@ -79,4 +111,10 @@ if __name__ == '__main__':
         traceback.print_exc()
         message = str(exc) if isinstance(exc, RuntimeError) and ('외부' in str(exc) or 'CUDA' in str(exc) or '길이' in str(exc)) else f'모델 실행 실패 ({type(exc).__name__}). 관리자 로그를 확인해주세요.'
         (folder/'failure.json').write_text(json.dumps({'error':message}, ensure_ascii=False), encoding='utf-8')
-        sys.exit(1)
+        return False
+    return True
+
+if __name__ == '__main__':
+    folders = sys.argv[2:] if sys.argv[1] == '--batch' else sys.argv[1:2]
+    results = [execute(Path(folder)) for folder in folders]
+    sys.exit(0 if all(results) else 1)

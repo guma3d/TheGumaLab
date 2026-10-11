@@ -21,9 +21,11 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from voice_profiles import DESIGN_MODEL, DESIGN_REPO, PROFILES
+from fixed_voices import CLONE_MODEL, CLONE_REPO, FOOD_VOICE, reference
 
 BASE = Path(__file__).parent
 MODELS = {
+    CLONE_MODEL: {'name': 'Qwen 1.7B · 차분한 고정 화자', 'repo': CLONE_REPO, 'local': True},
     DESIGN_MODEL: {'name': 'Qwen 1.7B · VoiceDesign', 'repo': DESIGN_REPO, 'local': True},
     'qwen-1.7b': {'name': 'Qwen 1.7B · 품질 비교', 'repo': 'Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice', 'local': True},
     'qwen-0.6b': {'name': 'Qwen 0.6B · 속도 비교', 'repo': 'Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice', 'local': True},
@@ -37,7 +39,7 @@ class Job(BaseModel):
     title: str = Field(default='음성 테스트', min_length=1, max_length=120)
     project: Literal['test', 'story', 'food', 'tech', 'household', 'video', 'longform', 'story_shorts'] = 'test'
     text: str = Field(min_length=1, max_length=2000)
-    model: Literal['qwen-design-1.7b', 'qwen-1.7b', 'qwen-0.6b', 'gemini-flash', 'gemini-lite'] = 'qwen-design-1.7b'
+    model: Literal['qwen-clone-1.7b', 'qwen-design-1.7b', 'qwen-1.7b', 'qwen-0.6b', 'gemini-flash', 'gemini-lite'] = 'qwen-design-1.7b'
     voice: str = 'F4'
     style: str = Field(default='', max_length=1500)
     seed: int = Field(default=42, ge=0, le=2147483647)
@@ -48,15 +50,18 @@ class Job(BaseModel):
     def defaults(cls, data):
         if not isinstance(data, dict): return data
         data = dict(data)
-        model = data.get('model', DESIGN_MODEL)
+        model = data.setdefault('model', CLONE_MODEL if data.get('project') == 'food' else DESIGN_MODEL)
         if not isinstance(model, str): return data
-        if 'style' not in data and model != DESIGN_MODEL: data['style'] = STYLE
+        if 'style' not in data and model not in (DESIGN_MODEL, CLONE_MODEL): data['style'] = STYLE
         if 'voice' not in data:
             data['voice'] = ('M5' if data.get('project') in ('story', 'longform') else 'F4') if model == DESIGN_MODEL else ('Sohee' if model.startswith('qwen') else 'Zephyr')
+            if model == CLONE_MODEL: data['voice'] = FOOD_VOICE
         return data
 
     @model_validator(mode='after')
     def valid_voice(self):
+        if self.model == CLONE_MODEL and (self.voice != FOOD_VOICE or self.style):
+            raise ValueError('고정 화자는 F1-fixed-v1 기준음성과 대본을 사용하며 컷별 말투 지시는 허용하지 않습니다.')
         if self.model == DESIGN_MODEL and self.voice not in PROFILES:
             raise ValueError('VoiceDesign은 M1–M5 또는 F1–F5 후보를 선택하세요.')
         if self.model in ('qwen-1.7b', 'qwen-0.6b') and self.voice != 'Sohee':
@@ -64,9 +69,10 @@ class Job(BaseModel):
         if self.model.startswith('gemini') and (self.voice not in ('Zephyr', 'Achird') or not self.allow_cloud):
             raise ValueError('외부 API는 음성과 비용 발생 가능성을 명시해야 합니다.')
         if self.project != 'test':
-            expected = 'M5' if self.project in ('story', 'longform') else 'F4'
-            if self.model != DESIGN_MODEL or self.voice != expected:
-                raise ValueError('제작 음성은 Qwen VoiceDesign: Story·롱폼 M5, 모든 쇼츠 F4로 고정합니다. 비교는 test 프로젝트를 사용하세요.')
+            expected = FOOD_VOICE if self.project == 'food' else ('M5' if self.project in ('story', 'longform') else 'F4')
+            expected_model = CLONE_MODEL if self.project == 'food' else DESIGN_MODEL
+            if self.model != expected_model or self.voice != expected:
+                raise ValueError('Food는 차분한 고정 화자 F1-fixed-v1, 다른 쇼츠 F4, Story·롱폼 M5를 사용합니다.')
         return self
 
 class Review(BaseModel):
@@ -105,6 +111,10 @@ class Store:
         # Do not reuse an older ready job whose one-pass loudnorm could mute
         # a short utterance. Historical jobs remain readable and immutable.
         audio_fields['engine_version'] = 2
+        if data['model'] == CLONE_MODEL:
+            _, ref = reference(self.root, data['voice'])
+            audio_fields['reference_sha256'] = ref['sha256']
+            audio_fields['reference_text'] = ref['text']
         if data['model'] == DESIGN_MODEL:
             from voice_profiles import design_instruction
             audio_fields['design_instruction'] = design_instruction(data['voice'], data['style'])
@@ -127,20 +137,33 @@ class Store:
             db.execute("UPDATE jobs SET status='failed', error='서버가 재시작되어 중단되었습니다. 원본은 보존되며 새 요청으로 재시도할 수 있습니다.' WHERE status='running'")
         while not stop.is_set():
             with self.db() as db:
-                row = db.execute("SELECT id FROM jobs WHERE status='queued' ORDER BY created LIMIT 1").fetchone()
-                if row:
-                    db.execute("UPDATE jobs SET status='running' WHERE id=?", (row['id'],))
-            if not row:
+                queued = db.execute("SELECT id,request FROM jobs WHERE status='queued' ORDER BY created LIMIT 32").fetchall()
+                rows = []
+                if queued:
+                    first = json.loads(queued[0]['request'])
+                    for row in queued:
+                        req = json.loads(row['request'])
+                        if rows and (first['model'] != CLONE_MODEL or (req['model'], req['voice']) != (first['model'], first['voice'])):
+                            break
+                        rows.append(row)
+                    db.executemany("UPDATE jobs SET status='running' WHERE id=?", [(row['id'],) for row in rows])
+            if not rows:
                 stop.wait(1)
                 continue
-            jid = row['id']
-            folder = self.root / jid
-            folder.mkdir(exist_ok=True)
-            (folder / 'request.json').write_text(json.dumps(self.get(jid)['request'], ensure_ascii=False, indent=2), encoding='utf-8')
+            folders = []
+            for row in rows:
+                folder = self.root / row['id']
+                folder.mkdir(exist_ok=True)
+                (folder/'request.json').write_text(row['request'], encoding='utf-8')
+                folders.append(folder)
+            error = None
             try:
-                # Process boundary guarantees VRAM is released at completion/failure.
-                with (folder / 'worker.log').open('w') as log:
-                    proc = subprocess.Popen([sys.executable, str(BASE / 'worker.py'), str(folder.resolve())], stdout=log, stderr=log)
+                # Same-reference jobs run sequentially in one bounded process.
+                # Prompt/weights are reused; exit releases VRAM for other work.
+                with (folders[0]/'worker.log').open('w') as log:
+                    command = [sys.executable, str(BASE/'worker.py')]
+                    if len(folders) > 1: command.append('--batch')
+                    proc = subprocess.Popen(command + [str(f.resolve()) for f in folders], stdout=log, stderr=log)
                     started = time.monotonic()
                     while proc.poll() is None:
                         if stop.wait(1) or time.monotonic() - started > 3600:
@@ -148,15 +171,18 @@ class Store:
                             try: proc.wait(timeout=10)
                             except subprocess.TimeoutExpired: proc.kill(); proc.wait()
                             raise RuntimeError('생성 시간이 초과되었거나 서버가 종료되었습니다.')
-                    if proc.returncode != 0:
-                        failure = folder / 'failure.json'
-                        raise RuntimeError(json.loads(failure.read_text())['error'] if failure.exists() else '모델 실행 실패. 관리자 로그를 확인해주세요.')
-                result = json.loads((folder / 'result.json').read_text())
-                with self.db() as db:
-                    db.execute("UPDATE jobs SET status='ready', result=? WHERE id=?", (json.dumps(result, ensure_ascii=False), jid))
             except Exception as exc:
+                error = str(exc)[:500]
+            for row, folder in zip(rows, folders):
+                result_file = folder/'result.json'
                 with self.db() as db:
-                    db.execute("UPDATE jobs SET status='failed', error=? WHERE id=?", (str(exc)[:500], jid))
+                    if result_file.exists():
+                        result = json.loads(result_file.read_text())
+                        db.execute("UPDATE jobs SET status='ready',result=? WHERE id=?", (json.dumps(result,ensure_ascii=False),row['id']))
+                    else:
+                        failure = folder/'failure.json'
+                        message = error or (json.loads(failure.read_text())['error'] if failure.exists() else '모델 실행 실패. 관리자 로그를 확인해주세요.')
+                        db.execute("UPDATE jobs SET status='failed',error=? WHERE id=?", (message,row['id']))
 
 def create_app(root=None, start_worker=True):
     store = Store(root or os.getenv('GUMATTS_STORAGE', 'storage'))
