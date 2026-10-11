@@ -31,6 +31,10 @@ Index SSO를 서비스 경계에서 검사하고 모든 쓰기는 동일 Origin�
 
 기존 쇼츠 Python 명령의 `app.core.*` 모듈 경로는 유지되며 실행 컨테이너만 GumaDdanjit_app으로 변경한다. Story 명령은 `scripts/story/`에서 실행한다. 새 제작 디렉터리는 `/data/story/productions/<new-version>`이며 음성은 M5로 생성한다. 과거 제작 스크립트의 기록은 과거 버전을 재작성하는 허가가 아니다.
 
+승진 영상 v2는 대본 v5·v1 음성을 보존하는 화면 수정본이다. `prepare_promotion_v2.py`의 65개 상황 계획을 내장 ImageGen에서 최신 캐릭터 원본을 참조해 각각 생성한다. 레퍼런스 원본을 최종 컷으로 반복하지 않는다. 실제 프롬프트·참조 및 교정 이력은 제작 폴더의 `generation-prompts.json`, `generation-corrections.json`에 보존한다. 표시 자막은 `display_captions.py`에서 낭독 원문과 분리해 숫자로 변환하며 Pretendard SemiBold·얇은 단일 외곽선을 사용한다.
+
+제작 도구(`revise_promotion_v2.py`, `display_captions.py`, `compose_longform.py`, `review_promotion_v2.py`, `publish_promotion_v2.py`)를 제작 폴더의 `tools/`에 보관한 뒤 컨테이너에서 실행한다. 조립은 `revise_promotion_v2.py <제작폴더>`, 출력은 같은 명령에 `--render`를 붙인다. `review_promotion_v2.py <제작폴더>`는 원본 음성 해시·숫자 자막·전체 프레임 로고·챕터·디코딩을 검사한다. 출력된 114개 화면과 숫자 자막을 실제 시각 검수한 후에만 검수 상태를 기록하고 `publish_promotion_v2.py <제작폴더>`와 `Store('/data/story').ingest()`로 웹에 등록한다. 검수 전·기존 버전 덮어쓰기 등록은 거부한다. 기존 영상의 음성 재사용을 신규 TTS 생성이나 실제 전편 청취 완료로 기록하지 않는다.
+
 ## 2026-10-11 이관 검증
 
 - 쇼츠 9,968개 / 이야기 990개 / 쇼핑 2,535개: 총 13,493개 파일, 약 15.68GiB. 원본 파일 SHA256 전수 일치, 두 SQLite DB의 무결성·전체 레코드 일치 확인. 증거는 `backups/migration-verified.json`.
