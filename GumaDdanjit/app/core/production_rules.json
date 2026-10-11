@@ -1,6 +1,11 @@
 {
-  "revision": "2026-10-11.9-dates-original-local-voice",
+  "revision": "2026-10-11.10-dates-f4-single-pass",
   "rules": [
+    {
+      "id": "dates-f4-single-pass-experiment",
+      "category": "food",
+      "instruction": "2026-10-11 대추야자 후속 실험: 최초 F4 원본 CUT7을 F4-dates-v1 참조로 고정해 전체 대사를 한 번의 Base 복제 호출로 생성하고 문장 경계로 분할한다. 이는 대추야자만의 사용자 승인 비교 실험이며 다른 영상·Food 기본 화자를 변경하지 않는다. v10 보존, 무음 방지 및 컷별 검수 유지, 실제 청취·업로드 승인 별도."
+    },
     {
       "id": "dates-original-local-voice-restoration",
       "category": "food",
