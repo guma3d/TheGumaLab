@@ -144,7 +144,7 @@
     {
       "id": "longform-editorial",
       "category": "longform",
-      "instruction": "Plan a complete original story with an opening promise, development and satisfying conclusion, using chapters and a sustainable production scope. Default 16:9 1920x1080, with length agreed in the storyboard rather than padded for duration. Research actual factual claims, distinguish fact from fiction, and retain source rights evidence. Learn hooks/pacing from popular work without copying scripts or footage. Identify candidate short segments during planning. Review every chapter, speech, captions, audio and final render before web review. Retain the shared Zephyr voice and fixed-level verified BGM policy. The shopping-only 6-8-cut template and product CTA are not this format."
+      "instruction": "Plan a complete original story with an opening promise, development and satisfying conclusion, using chapters and a sustainable production scope. Default 16:9 1920x1080, with length agreed in the storyboard rather than padded for duration. Research actual factual claims, distinguish fact from fiction, and retain source rights evidence. Learn hooks/pacing from popular work without copying scripts or footage. Identify candidate short segments during planning. Review every chapter, speech, captions, audio and final render before web review. Generate narration only through GumaTTS. Story tests Qwen 1.7B Sohee for natural Korean; the production voice remains pending user listening. Preserve old voice assets and the fixed-level verified BGM policy. The shopping-only 6-8-cut template and product CTA are not this format."
     },
     {
       "id": "story-shorts-from-longform",
@@ -182,7 +182,7 @@
     {
       "id": "constant-audio-20261006",
       "scope": "all",
-      "lesson": "Latest user feedback replaces ducking and category-specific voices: all new videos use Food Zephyr; music stays at a constant normalized gain, audible below speech; randomly draw from the verified five tracks and persist per version. Update current MD instructions and remove obsolete rules for every feedback."
+      "lesson": "Latest user feedback replaces ducking and category-specific voices: Food/Tech/Living use Food Zephyr through GumaTTS; Story tests local Korean voices separately; music stays at a constant normalized gain, audible below speech; randomly draw from the verified five tracks and persist per version. Update current MD instructions and remove obsolete rules for every feedback."
     },
     {
       "id": "living-transition-20261006",
@@ -283,5 +283,12 @@
     "source": "Use image generation tool with exact-product photo references. Standalone photorealistic cover, never extracted video frame or a new in-video cut. Verify identity, shape, ingredients/functions and text; retain prompt and generated provenance.",
     "storage": "Append-only Thumbnail/vNNNN files associated with exact Video version. Hash-verified generated cover required before new web_review and any upload/public authorization. Preserve historical versions.",
     "publication": "Apply uploaded custom image through actual YouTube UI and verify saved result. If unavailable, record concrete limitation, preserve prepared image and never claim applied. Upload/publication still require scoped explicit user request."
+  },
+  "tts_service": {
+    "url": "https://home.guma3d.com/gumatts/",
+    "story_trial_model": "qwen-1.7b",
+    "story_trial_voice": "Sohee",
+    "story_voice_approved": false,
+    "all_new_audio_via_service": true
   }
 }

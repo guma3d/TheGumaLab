@@ -20,6 +20,25 @@ for si, scene in enumerate(script['scenes'], 1):
     for pi, paragraph in enumerate(scene['narration'].split('\n\n'), 1):
         if paragraph.strip():
             jobs.append(dict(index=len(jobs)+1, scene=si, paragraph=pi, text=paragraph.strip(), file=f'voice/{len(jobs)+1:03}.mp3'))
+
+def existing(job):
+    out = root/job['file']
+    marker = out.with_suffix('.json')
+    if not marker.exists():
+        if out.exists() and not out.with_suffix('.tts.json').exists():
+            raise RuntimeError('기존 음성의 생성 기록이 없습니다. 새 버전 폴더를 사용하세요.')
+        return None
+    prior = json.loads(marker.read_text())
+    digest = hashlib.sha256(job['text'].encode()).hexdigest()
+    if prior['text_sha256'] != digest or aliases.get(prior.get('model'), prior.get('model')) != model or prior.get('voice') != voice:
+        raise RuntimeError('원고·모델·음성이 다른 기존 제작본입니다. 새 버전 폴더를 사용하세요.')
+    if not out.exists() or hashlib.sha256(out.read_bytes()).hexdigest() != prior['audio_sha256']:
+        raise RuntimeError('기존 음성 파일이 누락되거나 변경되었습니다.')
+    return prior
+
+# Check all prior audio before changing even the job manifest or submitting work.
+for job in jobs:
+    existing(job)
 (root/'voice-jobs.json').write_text(json.dumps(jobs, ensure_ascii=False, indent=2), encoding='utf-8')
 
 async def main():
@@ -28,12 +47,8 @@ async def main():
         out = root/job['file']
         marker = out.with_suffix('.json')
         digest = hashlib.sha256(job['text'].encode()).hexdigest()
-        if marker.exists():
-            prior = json.loads(marker.read_text())
-            if prior['text_sha256'] != digest or aliases.get(prior.get('model'), prior.get('model')) != model or prior.get('voice') != voice:
-                raise RuntimeError('원고·모델·음성이 다른 기존 제작본입니다. 새 버전 폴더를 사용하세요.')
-            if not out.exists() or hashlib.sha256(out.read_bytes()).hexdigest() != prior['audio_sha256']:
-                raise RuntimeError('기존 음성 파일이 누락되거나 변경되었습니다.')
+        prior = existing(job)
+        if prior is not None:
             results.append(prior)
             continue
         await synthesize_speech(job['text'], out, voice=voice, model=model, project='story')

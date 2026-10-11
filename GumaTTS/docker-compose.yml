@@ -8,9 +8,7 @@ services:
       - ./storage:/app/storage
       - ./models:/models
     env_file:
-      - path: ../.env
-        required: false
-      - path: ../GumaVideoFactory/.env
+      - path: .env
         required: false
     environment:
       GUMATTS_AUTH_URL: http://host.docker.internal:8081/auth

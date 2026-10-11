@@ -185,7 +185,7 @@ https://videofactory.guma3d.com/ · 홈서버 8085 · https://www.youtube.com/@G
 cd D:\TheGumaLab\GumaVideoFactory
 docker compose up -d --build
 ```
-.env.example을 참고한다. 키·쿠키·비밀번호는 출력·커밋 금지. Veo API 기본 모델은 veo-3.1-fast-generate-preview이며 유료다. 음식은 브라우저 Flow 크레딧으로 생성하며 API로 대체하지 않는다. 신규 영상은 전 카테고리 Zephyr 음성과 검증 5곡 무작위 선택을 사용한다. bgm.py는 구간 음량 정규화 후 고정 볼륨으로 믹스한다(대사 연동 감쇠 없음). 상세 음성·음량 기준은 RESEARCH.md, 기본 설정은 categories.py, 제작·재사용은 shopping.py를 따른다. Python·FFmpeg 등 의존성은 Docker 이미지로 관리한다.
+.env.example을 참고한다. 키·쿠키·비밀번호는 출력·커밋 금지. Veo API 기본 모델은 veo-3.1-fast-generate-preview이며 유료다. 음식은 브라우저 Flow 크레딧으로 생성하며 API로 대체하지 않는다. Food·Tech·Living 신규 영상은 Zephyr 음성과 검증 5곡 무작위 선택을 사용한다. Story는 GumaTTS 로컬 모델 청취 시험을 거쳐 별도 목소리를 확정한다. bgm.py는 구간 음량 정규화 후 고정 볼륨으로 믹스한다(대사 연동 감쇠 없음). 상세 음성·음량 기준은 RESEARCH.md, 기본 설정은 categories.py, 제작·재사용은 shopping.py를 따른다. Python·FFmpeg 등 의존성은 Docker 이미지로 관리한다.
 
 ## 검증·배포
 상위 AGENTS.md에 따라 검증 → 커밋 → pull/rebase → main push. 재시작이 필요하면 제작 큐가 비었는지 먼저 확인한다. 대용량 영상·데이터는 Git에 넣지 않는다.

@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GumaTTS · 음성 작업실</title><link rel="stylesheet" href="__PREFIX__/static/style.css"></head>
 <body data-prefix="__PREFIX__"><main>
-<nav><a href="https://home.guma3d.com/">← Guma Lab</a><span>VOICE STUDIO</span><a href="https://home.guma3d.com/gumastory/">Story ↗</a></nav>
+<nav><a href="https://home.guma3d.com/">← Guma Lab</a><a href="#library">음성 보관함 ↓</a><a href="https://home.guma3d.com/gumastory/">Story ↗</a></nav>
 <header><div class="eyebrow">GUMA / VOICE</div><h1>글에 목소리를<br>입히는 작업실.</h1><p>Story부터 쇼츠까지, 생성과 비교와 보관을 한곳에서.</p><div class="chips"><span>로컬 음성 · API 요금 없음</span><span>한 번에 한 작업</span><span>원본과 기록 보존</span></div></header>
 <section class="workspace"><form id="form"><div class="section-title"><h2>새 음성 만들기</h2><span>01 / CREATE</span></div>
 <label>작업 이름<input id="title" maxlength="120" value="한국어 자연스러움 비교" required></label>
@@ -11,6 +11,6 @@
 <label id="cloud-wrap" class="check" hidden><input id="cloud" type="checkbox"> 외부 API를 사용하며 결제 등급에 따라 비용이 발생할 수 있음을 확인했습니다.</label>
 <div class="actions"><button type="submit" id="create">음성 만들기</button><button type="button" id="compare" class="secondary">같은 글로 1.7B / 0.6B 비교</button></div><p id="message" role="status"></p></form>
 <aside><div class="section-title"><h2>목소리를 고르는 기준</h2><span>LISTEN FIRST</span></div><ol><li><strong>한국어가 자연스러운가</strong><p>억양, 조사, 받침이 어색하지 않은지.</p></li><li><strong>오래 들어도 편안한가</strong><p>과장된 연기보다 편안한 이야기 말투인지.</p></li><li><strong>원고를 정확히 읽는가</strong><p>숫자·영어·고유명사와 빠진 문장을 확인하세요.</p></li></ol><p class="notice">새 로컬 목소리는 아직 채널 기본 음성으로 확정되지 않았습니다. 아래 평가는 해당 음성에만 적용됩니다.</p><p class="hint">0.6B는 말투 지시를 적용하지 않습니다. 기존 영상과 음성은 변경되지 않습니다.</p></aside></section>
-<section class="library"><div class="section-title"><h2>음성 보관함 <span id="count"></span></h2><span id="queue">02 / LIBRARY</span></div><div class="filters"><button class="secondary" id="refresh">새로고침</button><select id="filter"><option value="all">모든 작업</option><option value="test">목소리 테스트</option><option value="story">Story</option><option value="food">Food</option><option value="tech">Tech</option><option value="household">Living</option></select></div><div id="jobs"></div></section>
+<section class="library" id="library"><div class="section-title"><h2>음성 보관함 <span id="count"></span></h2><span id="queue">02 / LIBRARY</span></div><div class="filters"><button class="secondary" id="refresh">새로고침</button><select id="filter"><option value="all">모든 작업</option><option value="test">목소리 테스트</option><option value="story">Story</option><option value="food">Food</option><option value="tech">Tech</option><option value="household">Living</option></select></div><div id="jobs"></div></section>
 <footer>GumaTTS · 원본 WAV와 편집용 MP3를 버전별로 보관합니다.</footer>
 </main><script src="__PREFIX__/static/app.js" defer></script></body></html>
