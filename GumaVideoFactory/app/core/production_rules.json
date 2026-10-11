@@ -1,6 +1,11 @@
 {
-  "revision": "2026-10-11.1-food-experience-ending",
+  "revision": "2026-10-11.2-tech-screen-consistency",
   "rules": [
+    {
+      "id": "tech-camera-preview-consistency",
+      "category": "tech",
+      "instruction": "촬영기기 화면 속 인물·옷·포즈·좌우 배치·촬영 배경이 실제 앞 장면과 카메라 방향에 일치해야 한다. 참조 편집 후 화면 내부와 외부 제품·장면을 함께 대조한다. 확인 전인 기술확장 대사·새 컷은 최종 렌더에 넣지 않는다."
+    },
     {
       "id": "food-user-experience-and-ending",
       "category": "food",
