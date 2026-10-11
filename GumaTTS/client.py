@@ -6,12 +6,14 @@ import time
 import urllib.request
 from pathlib import Path
 
-def synthesize(text, output_path, *, model='qwen-1.7b', voice='Sohee', style=None, project='story', title='영상 내레이션', allow_cloud=False, timeout=7200):
+def synthesize(text, output_path, *, model='qwen-design-1.7b', voice=None, style=None, project='story', title='영상 내레이션', allow_cloud=False, timeout=7200):
     base = os.getenv('GUMATTS_URL', 'http://host.docker.internal:8088').rstrip('/')
     token = Path(os.getenv('GUMATTS_TOKEN_FILE', '/run/secrets/gumatts_token')).read_text().strip()
     def request(path, data=None):
         req = urllib.request.Request(base + path, data=json.dumps(data).encode() if data is not None else None, headers={'Authorization':'Bearer '+token, 'Content-Type':'application/json'})
         with urllib.request.urlopen(req, timeout=30) as r: return r.read()
+    if voice is None:
+        voice = ('M5' if project in ('story', 'longform') else 'F4') if model == 'qwen-design-1.7b' else ('Sohee' if model.startswith('qwen') else 'Zephyr')
     payload = dict(text=text, title=title, project=project, model=model, voice=voice, allow_cloud=allow_cloud)
     if style is not None: payload['style'] = style
     job = json.loads(request('/api/jobs', payload))

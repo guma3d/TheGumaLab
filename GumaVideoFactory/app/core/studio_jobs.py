@@ -273,7 +273,7 @@ async def video_job(idea_id, number):
     for idx,scene in enumerate(board['scenes'],1):
         progress(idea_id,'Video',number,f'{idx}/6 컷 영상·음성을 만듭니다.')
         audio=folder/f'audio_{idx:02d}.mp3'
-        await synthesize_speech(scene['narration_ko'],audio,voice=DEFAULT_VOICE)
+        await synthesize_speech(scene['narration_ko'],audio,voice='M5' if idea['category']=='longform' else DEFAULT_VOICE,project=idea['category'])
         result=await asyncio.to_thread(subprocess.run,['ffprobe','-v','error','-show_entries','format=duration','-of','default=noprint_wrappers=1:nokey=1',str(audio)],capture_output=True,text=True,timeout=30)
         duration=max(4,float(result.stdout.strip())+.3)
         raw=folder/f'raw_{idx:02d}.mp4'

@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 from typing import Literal
 from pydantic import BaseModel, Field, model_validator
-DEFAULT_VOICE = "Zephyr"
+from app.config import DEFAULT_VOICE
 from app.core import quality
 from app.core import bgm, upload_metadata
 from app.core import versions as store
@@ -231,7 +231,7 @@ def enqueue(id,n,regenerate=False,reuse_video_version=None):
     else:
         bgm.assign_random(board)
     board.setdefault('category_style',dict(PRESETS[rec['category']])).update(
-        voice=PRESETS[rec['category']]['voice'],voice_direction='bright-friendly-female')
+        voice=PRESETS[rec['category']]['voice'],voice_direction=PRESETS[rec['category']]['voice_direction'])
     previous=store.history(id,'Video')
     regenerate=regenerate or bool(previous and previous[0].get('preview_version')!=n)
     return store.reserve(id,'Video',regenerate,queued=True,preview_version=n,execution_mode='session_shopping',

@@ -10,8 +10,11 @@ def test_download_hashes_and_provenance(tmp_path, monkeypatch):
     token=tmp_path/'token';token.write_text('test-token')
     monkeypatch.setenv('GUMATTS_TOKEN_FILE',str(token))
     mp3=b'test-mp3';wav=b'RIFF-test'
-    result={'audio_sha256':hashlib.sha256(mp3).hexdigest(),'original_sha256':hashlib.sha256(wav).hexdigest(),'model':'qwen-1.7b','voice':'Sohee'}
+    result={'audio_sha256':hashlib.sha256(mp3).hexdigest(),'original_sha256':hashlib.sha256(wav).hexdigest(),'model':'qwen-design-1.7b','voice':'M5'}
     def response(req,timeout):
+        if req.data:
+            payload=json.loads(req.data)
+            assert payload['model']=='qwen-design-1.7b' and payload['voice']=='M5' and payload['allow_cloud'] is False
         if req.full_url.endswith('/mp3'):return io.BytesIO(mp3)
         if req.full_url.endswith('/wav'):return io.BytesIO(wav)
         return io.BytesIO(json.dumps({'id':'test-job','status':'ready','result':result}).encode())
@@ -21,7 +24,7 @@ def test_download_hashes_and_provenance(tmp_path, monkeypatch):
         assert data['job_id']=='test-job'
         assert out.read_bytes()==mp3
         assert out.with_suffix('.wav').read_bytes()==wav
-        assert json.loads(out.with_suffix('.tts.json').read_text())['model']=='qwen-1.7b'
+        assert json.loads(out.with_suffix('.tts.json').read_text())['model']=='qwen-design-1.7b'
         out.write_bytes(b'original-do-not-overwrite')
         with pytest.raises(FileExistsError):client.synthesize('변경 원고',out)
         assert out.read_bytes()==b'original-do-not-overwrite'

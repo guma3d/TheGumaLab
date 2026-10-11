@@ -27,3 +27,12 @@ def test_comparison_and_immutable_jobs(tmp_path):
     state=c.get('/api/state',headers=h).json()
     assert len(state['voice_comparison'])==2 and len(state['voice_profiles'])==10
     assert all(j['review']=={} for j in state['voice_comparison'])
+
+
+def test_production_format_voices_are_enforced():
+    for project, voice in [('food','F4'),('tech','F4'),('household','F4'),('video','F4'),('story_shorts','F4'),('story','M5'),('longform','M5')]:
+        job=Job(text='앞으로 사용할 목소리입니다.',project=project)
+        assert job.voice==voice and job.model==DESIGN_MODEL and job.style==''
+        with pytest.raises(ValueError): Job(text='테스트',project=project,voice='M5' if voice=='F4' else 'F4')
+        with pytest.raises(ValueError): Job(text='테스트',project=project,model='gemini-flash',voice='Zephyr',allow_cloud=True)
+    assert Job(text='비교',project='test',model='qwen-1.7b',voice='Sohee').voice=='Sohee'

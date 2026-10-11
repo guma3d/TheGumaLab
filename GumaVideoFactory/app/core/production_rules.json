@@ -1,10 +1,10 @@
 {
-  "revision": "2026-10-11.3-central-tts",
+  "revision": "2026-10-11.4-approved-format-voices",
   "rules": [
     {
       "id": "central-tts-service",
       "category": "all",
-      "instruction": "모든 신규 영상 음성은 GumaTTS 공통 웹서비스/API에서 생성하고 원본 WAV, 편집용 MP3, 모델·목소리·원고·해시·작업 ID·청취 검수 상태를 보존한다. 영상 제작기에서 외부 TTS를 직접 호출하거나 로컬 모델을 별도로 로드하지 않는다. Story는 한국어 자연스러움을 우선해 Qwen3-TTS 1.7B Sohee를 시험하고 사용자 청취 전 기본 목소리 확정·품질 통과로 기록하지 않는다. Food·Tech·Living 기존 Zephyr 기준과 과거 파일은 유지하며 공통 서비스를 경유한다. 실패 시 외부 유료 모델 자동 대체 금지. 수정한 원고는 새 음성 버전으로 생성하고 변경 없는 파일은 재사용한다."
+      "instruction": "모든 신규 영상 음성은 GumaTTS 공통 웹서비스/API에서 생성하고 원본 WAV, 편집용 MP3, 모델·목소리·원고·해시·작업 ID·청취 검수 상태를 보존한다. 영상 제작기에서 외부 TTS를 직접 호출하거나 로컬 모델을 별도로 로드하지 않는다. 2026-10-11 사용자 확정: 모든 신규 영상 음성은 GumaTTS의 Qwen3-TTS 1.7B VoiceDesign으로 제작한다. 모든 쇼츠(쇼핑·이야기쇼츠 포함)는 여성 F4(생기 있는 이야기꾼), Story·롱폼은 남성 M5(솔직한 현실 친구)를 사용한다. 롱폼에서 파생한 쇼츠도 F4로 새로 녹음하며 M5 음성을 그대로 재사용하지 않는다. 더 좋은 대안을 사용자가 채택하기 전까지 유지한다. 기존 음성·영상·과거 제작 기록은 보존하고 새 음성은 새 버전으로 저장한다. 모델 선택 승인은 개별 결과물 검수·YouTube 업로드 승인을 대신하지 않는다. 실패 시 외부 유료 모델 자동 대체 금지. 수정한 원고는 새 음성 버전으로 생성하고 변경 없는 파일은 재사용한다."
     },
     {
       "id": "tech-camera-preview-consistency",
@@ -104,7 +104,7 @@
     {
       "id": "category-style",
       "category": "all",
-      "instruction": "Follow categories.py: ALL categories use Maplestory Bold with outlines and no background boxes; food uses, strawberry-accent readable captions and static product stills without zoompan jitter. Other categories retain their style. All new videos across every category use the user-approved Food Zephyr voice and the same bright, friendly female speaking style. All are naturally brisk. Keep captions out of product focal areas and retain ad/disclosure readability."
+      "instruction": "Follow categories.py: ALL categories use Maplestory Bold with outlines and no background boxes; food uses, strawberry-accent readable captions and static product stills without zoompan jitter. Other categories retain their style. 2026-10-11 사용자 확정: 모든 신규 영상 음성은 GumaTTS의 Qwen3-TTS 1.7B VoiceDesign으로 제작한다. 모든 쇼츠(쇼핑·이야기쇼츠 포함)는 여성 F4(생기 있는 이야기꾼), Story·롱폼은 남성 M5(솔직한 현실 친구)를 사용한다. 롱폼에서 파생한 쇼츠도 F4로 새로 녹음하며 M5 음성을 그대로 재사용하지 않는다. 더 좋은 대안을 사용자가 채택하기 전까지 유지한다. 기존 음성·영상·과거 제작 기록은 보존하고 새 음성은 새 버전으로 저장한다. 모델 선택 승인은 개별 결과물 검수·YouTube 업로드 승인을 대신하지 않는다. Keep captions out of product focal areas and retain ad/disclosure readability."
     },
     {
       "id": "weekly-novelty",
@@ -144,7 +144,7 @@
     {
       "id": "longform-editorial",
       "category": "longform",
-      "instruction": "Plan a complete original story with an opening promise, development and satisfying conclusion, using chapters and a sustainable production scope. Default 16:9 1920x1080, with length agreed in the storyboard rather than padded for duration. Research actual factual claims, distinguish fact from fiction, and retain source rights evidence. Learn hooks/pacing from popular work without copying scripts or footage. Identify candidate short segments during planning. Review every chapter, speech, captions, audio and final render before web review. Generate narration only through GumaTTS. Story tests Qwen 1.7B Sohee for natural Korean; the production voice remains pending user listening. Preserve old voice assets and the fixed-level verified BGM policy. The shopping-only 6-8-cut template and product CTA are not this format."
+      "instruction": "Plan a complete original story with an opening promise, development and satisfying conclusion, using chapters and a sustainable production scope. Default 16:9 1920x1080, with length agreed in the storyboard rather than padded for duration. Research actual factual claims, distinguish fact from fiction, and retain source rights evidence. Learn hooks/pacing from popular work without copying scripts or footage. Identify candidate short segments during planning. Review every chapter, speech, captions, audio and final render before web review. Generate narration only through GumaTTS. 2026-10-11 사용자 확정: 모든 신규 영상 음성은 GumaTTS의 Qwen3-TTS 1.7B VoiceDesign으로 제작한다. 모든 쇼츠(쇼핑·이야기쇼츠 포함)는 여성 F4(생기 있는 이야기꾼), Story·롱폼은 남성 M5(솔직한 현실 친구)를 사용한다. 롱폼에서 파생한 쇼츠도 F4로 새로 녹음하며 M5 음성을 그대로 재사용하지 않는다. 더 좋은 대안을 사용자가 채택하기 전까지 유지한다. 기존 음성·영상·과거 제작 기록은 보존하고 새 음성은 새 버전으로 저장한다. 모델 선택 승인은 개별 결과물 검수·YouTube 업로드 승인을 대신하지 않는다. Preserve old voice assets and the fixed-level verified BGM policy. The shopping-only 6-8-cut template and product CTA are not this format."
     },
     {
       "id": "story-shorts-from-longform",
@@ -182,7 +182,7 @@
     {
       "id": "constant-audio-20261006",
       "scope": "all",
-      "lesson": "Latest user feedback replaces ducking and category-specific voices: Food/Tech/Living use Food Zephyr through GumaTTS; Story tests local Korean voices separately; music stays at a constant normalized gain, audible below speech; randomly draw from the verified five tracks and persist per version. Update current MD instructions and remove obsolete rules for every feedback."
+      "lesson": "Latest user feedback replaces ducking and category-specific voices: All shorts use F4 and Story/longform uses M5 via Qwen 1.7B VoiceDesign in GumaTTS; music stays at a constant normalized gain, audible below speech; randomly draw from the verified five tracks and persist per version. Update current MD instructions and remove obsolete rules for every feedback."
     },
     {
       "id": "living-transition-20261006",
@@ -240,11 +240,11 @@
     "cta": "궁금하다면, 채널 프로필의 상품 모음 링크를 눌러보세요.",
     "pinned_comment": "Name the exact product and direct viewers to channel profile -> 상품 모음 -> matching product. Include disclosure with affiliate URLs. Add profile product number only after actual registration. Keep comments pending until public; never claim posted. Shorts comment URLs are not clickable. Verify actual profile link label and landing page before publication.",
     "voice_by_category": {
-      "tech": "Zephyr",
-      "food": "Zephyr",
-      "household": "Zephyr",
-      "longform": "Zephyr",
-      "story_shorts": "Zephyr"
+      "tech": "F4",
+      "food": "F4",
+      "household": "F4",
+      "longform": "M5",
+      "story_shorts": "F4"
     },
     "primary_category": "longform",
     "derived_category": "story_shorts",
@@ -286,9 +286,12 @@
   },
   "tts_service": {
     "url": "https://home.guma3d.com/gumatts/",
-    "story_trial_model": "qwen-1.7b",
-    "story_trial_voice": "Sohee",
-    "story_voice_approved": false,
-    "all_new_audio_via_service": true
+    "model": "qwen-design-1.7b",
+    "shorts_voice": "F4",
+    "story_voice": "M5",
+    "voice_policy_approved": true,
+    "approved_date": "2026-10-11",
+    "all_new_audio_via_service": true,
+    "derived_shorts_revoice": true
   }
 }

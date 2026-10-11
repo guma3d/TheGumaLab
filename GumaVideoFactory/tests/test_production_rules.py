@@ -8,12 +8,13 @@ from app.core.product_selection import selection_policy
 
 
 class SharedRulesTests(unittest.TestCase):
-    def test_all_new_video_paths_share_food_voice(self):
+    def test_new_video_paths_use_approved_format_voices(self):
         from app.config import DEFAULT_VOICE
         from app.core.categories import PRESETS
         from app.core import shopping, tts_engine
-        self.assertEqual(DEFAULT_VOICE,'Zephyr')
-        self.assertEqual({p['voice'] for p in PRESETS.values()},{'Zephyr'})
+        self.assertEqual(DEFAULT_VOICE,'F4')
+        self.assertEqual(PRESETS['longform']['voice'],'M5')
+        self.assertEqual({p['voice'] for k,p in PRESETS.items() if k!='longform'},{'F4'})
         self.assertEqual(shopping.DEFAULT_VOICE,tts_engine.FOOD_VOICE)
         self.assertEqual(tts_engine.SHOPPING_STYLE,tts_engine.FOOD_STYLE)
 

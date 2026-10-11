@@ -56,7 +56,7 @@ class ShoppingTests(unittest.TestCase):
         self.assertIn('tpad', s.motion_padding('official_image', 2.9, 4.03))
 
     def test_private_review_does_not_invent_audio_verification(self):
-        evidence=dict(voice='Zephyr',user_selected_voice=True,visual_passed=True,
+        evidence=dict(voice='F4',user_selected_voice=True,visual_passed=True,
             director_checks={k:True for k in s.quality.DIRECTOR_AXES},
             audio_review='user_review_on_private_youtube',listened_to_audio=False)
         s.quality.validate_private_review(evidence)
@@ -157,10 +157,10 @@ class ShoppingTests(unittest.TestCase):
             folder=store.version_dir(id,'Preview',n)
             review=dict(preflight={k:True for k in s.quality.PREFLIGHT_AXES},reviewed_by='codex',passed=True,board_sha256=s.digest(folder/'storyboard.json'),scenes=[dict(number=i,passed=True,notes='Synthetic fixture verification') for i in range(1,7)])
             store.write_json(root/'review.json',review);s.seal(id,n,root/'review.json')
-            v=s.enqueue(id,n);self.assertEqual(v['voice'],'Zephyr')
+            v=s.enqueue(id,n);self.assertEqual(v['voice'],'F4')
             self.assertEqual([x['stage'] for x in store.workflow(store.read(id))['buttons']],['Preview','Video'])
-            async def speech(text,path,voice,rate):
-                self.assertEqual(voice,'Zephyr')
+            async def speech(text,path,voice,rate,project):
+                self.assertEqual(voice,'F4')
                 s.media.run([s.media.get_ffmpeg_bin(),'-v','error','-f','lavfi','-i','sine=frequency=440','-t','0.3',str(path)])
             with patch.object(s,'synthesize_speech',side_effect=speech),patch.object(s,'generate_video_clip',side_effect=AssertionError('No Veo for official images')):
                 asyncio.run(s.render(id,v['number']))

@@ -513,15 +513,16 @@ async def async_generate_video(project_id: str):
             project["clips"].append(f"/storage/raw_clips/{clip_filename}")
             save_project(project)
 
-        # 2. 나레이션 오디오 합성 (Edge-TTS)
-        project["progress_message"] = "대본 나레이션 오디오 합성 중 (Edge-TTS)..."
+        # 2. 나레이션 오디오 합성 (GumaTTS)
+        project["progress_message"] = "대본 나레이션 오디오 합성 중 (GumaTTS)..."
         save_project(project)
 
         full_narration = " ".join([s.get("narration_ko", "") for s in scenes if s.get("narration_ko")])
         audio_filename = f"{project_id}_narration.mp3"
         audio_path = AUDIO_DIR / audio_filename
 
-        await synthesize_speech(full_narration, audio_path, voice=project.get("voice", DEFAULT_VOICE))
+        await synthesize_speech(full_narration, audio_path, voice=DEFAULT_VOICE, project='video')
+        project['voice'] = DEFAULT_VOICE
         project["audio_url"] = f"/storage/audio/{audio_filename}"
         save_project(project)
 

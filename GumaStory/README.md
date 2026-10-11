@@ -17,7 +17,7 @@
 - 완성 영상은 `/gumastory/watch/<asset-id>`에서 재생한다. MP4 다운로드, 실제 음성 길이에 맞춘 구간 탐색, 한국어 자막, 내레이션 단독 재생, 원본 대본 버전과 음악 출처를 함께 보관한다. 해당 대본 읽기 페이지에도 영상 링크를 표시한다.
 - 승진 주제 20분 구성 초안 포함. 대본 내용은 조사와 작성 전이며 완성 원고로 표시하지 않는다.
 - 이미지 생성·TTS·렌더·YouTube 업로드를 웹에서 자동 실행하지 않는다. 생성한 결과를 관리하는 서비스다.
-- 승인된 대본의 문단별 음성 제작·고정 일러스트/차트 편집은 `scripts/produce_narration.py`, `compose_longform.py`, `render_longform.py`를 사용한다. TTS는 공통 [GumaTTS](https://home.guma3d.com/gumatts/) API로만 요청하며, 생성 스크립트와 FFmpeg/BGM 작업은 기존 VideoFactory 런타임에서 실행한다. 외부 API 키는 GumaTTS 서버만 사용한다. Story의 로컬 시험 기본 모델은 Qwen 1.7B/Sohee이며, [남녀 10종 VoiceDesign 비교](https://home.guma3d.com/gumatts/#voices)에서 추가 후보를 고른다. 후보 표시와 최종 목소리 확정을 구분한다. 원본 음성·화면·타임라인·출처와 완성본은 버전 폴더에 보존한다. 자막은 문단 음성 경계에 맞추고 문단 내부 시간은 읽기 길이 추정임을 기록한다. 기술 검사와 실제 청취 검수를 구분한다.
+- 승인된 대본의 문단별 음성 제작·고정 일러스트/차트 편집은 `scripts/produce_narration.py`, `compose_longform.py`, `render_longform.py`를 사용한다. TTS는 공통 [GumaTTS](https://home.guma3d.com/gumatts/) API로만 요청하며, 생성 스크립트와 FFmpeg/BGM 작업은 기존 VideoFactory 런타임에서 실행한다. 외부 API 키는 GumaTTS 서버만 사용한다. 2026-10-11 사용자 확정: 모든 신규 영상 음성은 GumaTTS의 Qwen3-TTS 1.7B VoiceDesign으로 제작한다. 모든 쇼츠(쇼핑·이야기쇼츠 포함)는 여성 F4(생기 있는 이야기꾼), Story·롱폼은 남성 M5(솔직한 현실 친구)를 사용한다. 롱폼에서 파생한 쇼츠도 F4로 새로 녹음하며 M5 음성을 그대로 재사용하지 않는다. 더 좋은 대안을 사용자가 채택하기 전까지 유지한다. 기존 음성·영상·과거 제작 기록은 보존하고 새 음성은 새 버전으로 저장한다. 모델 선택 승인은 개별 결과물 검수·YouTube 업로드 승인을 대신하지 않는다. 원본 음성·화면·타임라인·출처와 완성본은 버전 폴더에 보존한다. 자막은 문단 음성 경계에 맞추고 문단 내부 시간은 읽기 길이 추정임을 기록한다. 기술 검사와 실제 청취 검수를 구분한다.
 
 ## 실행과 배포
 

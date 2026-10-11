@@ -19,6 +19,7 @@ PRESETS = {
         direction='판매·리뷰 지표 또는 최근 뉴스 원문으로 후보를 검증하고 생활 불편·계절성·디자인·선명한 동일 제품 시연 가능성을 함께 평가. 리뷰를 판매량으로 환산하지 않는다. 관심 후킹 → 실제 사용 시연 → 편리한 이유와 한계.'),
 }
 for preset in PRESETS.values():
-    preset.update(font='Maplestory', voice='Zephyr', voice_direction='bright-friendly-female', voice_rate='natural-brisk', target_age='20-40', style_revision='category-v7',caption_design='common-pop-outline-v4',thumbnail_required=True)
+    preset.update(font='Maplestory', voice='F4', voice_direction='approved-F4-female', voice_rate='natural-brisk', target_age='20-40', style_revision='category-v8',caption_design='common-pop-outline-v4',thumbnail_required=True)
     preset.setdefault('aspect_ratio', '9:16')
+PRESETS['longform'].update(voice='M5', voice_direction='approved-M5-male')
 PRESETS['food'].update(still_motion='static',storyboard_reference='docs/references/food-storyboard-approved-v1.png')

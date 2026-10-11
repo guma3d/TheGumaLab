@@ -35,13 +35,25 @@ STYLE = '편안하고 자연스러운 한국어 대화체로 읽으세요. 가�
 class Job(BaseModel):
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
     title: str = Field(default='음성 테스트', min_length=1, max_length=120)
-    project: Literal['test', 'story', 'food', 'tech', 'household', 'video'] = 'test'
+    project: Literal['test', 'story', 'food', 'tech', 'household', 'video', 'longform', 'story_shorts'] = 'test'
     text: str = Field(min_length=1, max_length=2000)
-    model: Literal['qwen-design-1.7b', 'qwen-1.7b', 'qwen-0.6b', 'gemini-flash', 'gemini-lite'] = 'qwen-1.7b'
-    voice: str = 'Sohee'
-    style: str = Field(default=STYLE, max_length=1500)
+    model: Literal['qwen-design-1.7b', 'qwen-1.7b', 'qwen-0.6b', 'gemini-flash', 'gemini-lite'] = 'qwen-design-1.7b'
+    voice: str = 'F4'
+    style: str = Field(default='', max_length=1500)
     seed: int = Field(default=42, ge=0, le=2147483647)
     allow_cloud: bool = False
+
+    @model_validator(mode='before')
+    @classmethod
+    def defaults(cls, data):
+        if not isinstance(data, dict): return data
+        data = dict(data)
+        model = data.get('model', DESIGN_MODEL)
+        if not isinstance(model, str): return data
+        if 'style' not in data and model != DESIGN_MODEL: data['style'] = STYLE
+        if 'voice' not in data:
+            data['voice'] = ('M5' if data.get('project') in ('story', 'longform') else 'F4') if model == DESIGN_MODEL else ('Sohee' if model.startswith('qwen') else 'Zephyr')
+        return data
 
     @model_validator(mode='after')
     def valid_voice(self):
@@ -51,6 +63,10 @@ class Job(BaseModel):
             raise ValueError('로컬 비교 음성은 Sohee를 사용합니다.')
         if self.model.startswith('gemini') and (self.voice not in ('Zephyr', 'Achird') or not self.allow_cloud):
             raise ValueError('외부 API는 음성과 비용 발생 가능성을 명시해야 합니다.')
+        if self.project != 'test':
+            expected = 'M5' if self.project in ('story', 'longform') else 'F4'
+            if self.model != DESIGN_MODEL or self.voice != expected:
+                raise ValueError('제작 음성은 Qwen VoiceDesign: Story·롱폼 M5, 모든 쇼츠 F4로 고정합니다. 비교는 test 프로젝트를 사용하세요.')
         return self
 
 class Review(BaseModel):
@@ -206,7 +222,7 @@ def create_app(root=None, start_worker=True):
         comparison = json.loads(comparison_file.read_text(encoding='utf-8')) if comparison_file.exists() else []
         return {'models': MODELS, 'jobs': [store.get(i) for i in ids], 'voice_profiles': PROFILES,
                 'voice_comparison': [store.get(item['id']) for item in comparison],
-                'default_style': STYLE, 'local_voice_status': '사용자 청취 검수 전 · 기본 목소리 미확정'}
+                'default_style': '', 'production_voices': {'model': DESIGN_MODEL, 'shorts':'F4', 'story':'M5'}, 'local_voice_status': '사용자 확정 · 쇼츠 F4 / Story·롱폼 M5'}
 
     @app.post('/api/jobs', status_code=202)
     def create(job: Job): return store.create(job)

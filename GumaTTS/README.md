@@ -4,8 +4,8 @@
 
 - 웹: https://home.guma3d.com/gumatts/ (HomeServer SSO)
 - 로컬: `D:\TheGumaLab\GumaTTS`, 컨테이너 `GumaTTS_app`, 포트 8088
-- Story: Qwen3-TTS 1.7B CustomVoice / Sohee 시험. 0.6B와 동일 원고 비교. 자연스러운 한국어와 장시간 청취 품질을 우선하며 사용자 청취 전 기본 음성으로 확정하지 않는다.
-- Food·Tech·Living: 기존 Zephyr 유지, 생성 요청은 이 서비스로 통합. 기존 음성·영상 보존.
+- 2026-10-11 사용자 확정: 모든 신규 영상 음성은 GumaTTS의 Qwen3-TTS 1.7B VoiceDesign으로 제작한다. 모든 쇼츠(쇼핑·이야기쇼츠 포함)는 여성 F4(생기 있는 이야기꾼), Story·롱폼은 남성 M5(솔직한 현실 친구)를 사용한다. 롱폼에서 파생한 쇼츠도 F4로 새로 녹음하며 M5 음성을 그대로 재사용하지 않는다. 더 좋은 대안을 사용자가 채택하기 전까지 유지한다. 기존 음성·영상·과거 제작 기록은 보존하고 새 음성은 새 버전으로 저장한다. 모델 선택 승인은 개별 결과물 검수·YouTube 업로드 승인을 대신하지 않는다.
+- 쇼츠 기본값 F4, Story·롱폼 기본값 M5. API는 test 이외 프로젝트에서 다른 모델/성별을 거절한다. 기존 비교 모델은 test 프로젝트에서만 시험한다.
 - 로컬은 API 요금·호출 한도 없음. 전력·GPU·생성 시간은 필요하다. Gemini는 프로젝트 결제 등급에 따라 과금 가능. 실패 시 유료 API 자동 대체 없음.
 
 ## 구조와 보존
@@ -64,4 +64,4 @@ API 모델 `qwen-design-1.7b`는 voice=M1–M5 또는 F1–F5를 사용한다. V
 
 검증 결과: 비교본 10개 모두 생성 완료(17.472–22.680초), 생성 시간 22.32–31.48초, GPU 최대 할당 4508–4662MB. 모든 최종 비교본의 자동 전사가 문장부호·공백 제외 원고와 일치했고 MP3 디코드 및 원본 결과 해시를 검증했다. F5 v1은 한 구절의 전사 차이가 있어 원본을 보존하고 seed 43의 v2로 재생성해 재검증했다(나머지 seed 42). 자동 전사는 실제 청취 승인이 아니다. 원본 목록 `storage/voice-comparison-20261011-v1.json`, 최종 목록 `storage/voice-comparison-20261011.json`, 검사 요약 `storage/verification/voice-design-summary.json`.
 
-서비스 테스트 9건과 브라우저 남성 M1·여성 F1의 끝까지 재생을 확인했다. 외부 TTS API 호출 없이 로컬 생성했다. 코드 04877cb의 GitHub Actions는 실패했고, HomeServer Compose 빌드·배포와 인증된 웹 비교 화면에서 동작을 확인했다. 최종 후보 선택은 사용자에게 맡긴다.
+서비스 테스트 9건과 브라우저 남성 M1·여성 F1의 끝까지 재생을 확인했다. 외부 TTS API 호출 없이 로컬 생성했다. 코드 04877cb의 GitHub Actions는 실패했고, HomeServer Compose 빌드·배포와 인증된 웹 비교 화면에서 동작을 확인했다. 이후 사용자 확정으로 쇼츠 F4 / Story·롱폼 M5를 제작 기준으로 적용했다.

@@ -15,7 +15,7 @@ def test_new_model_cannot_overwrite_previous_production_metadata(tmp_path, monke
     jobs=root/'voice-jobs.json';jobs.write_bytes(b'previous-manifest')
     async def forbidden(*args,**kwargs):raise AssertionError('Must reject before TTS submission')
     monkeypatch.setitem(sys.modules,'app.core.tts_engine',types.SimpleNamespace(synthesize_speech=forbidden))
-    monkeypatch.setattr(sys,'argv',['produce_narration.py',str(root),'qwen-1.7b'])
+    monkeypatch.setattr(sys,'argv',['produce_narration.py',str(root),'qwen-design-1.7b'])
     with pytest.raises(RuntimeError,match='새 버전'):
         runpy.run_path(str(Path(__file__).resolve().parents[1]/'scripts/produce_narration.py'),run_name='__main__')
     assert jobs.read_bytes()==b'previous-manifest'
