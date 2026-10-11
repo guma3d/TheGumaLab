@@ -7,7 +7,14 @@ def test_design_batch_keeps_voice_and_style_boundary():
     assert not same_local_batch(cut,{**cut,'style':'different'})
     assert not same_local_batch(cut,{**cut,'model':'gemini-flash'})
 
-def test_cloud_and_custom_voice_jobs_are_not_batched():
-    for model in ('gemini-flash','qwen-1.7b'):
+def test_cloud_jobs_are_not_batched():
+    for model in ('gemini-flash','gemini-lite'):
         cut={'model':model,'voice':'test','style':''}
         assert not same_local_batch(cut,cut)
+
+
+def test_custom_voice_batch_keeps_model_voice_and_style_boundary():
+    cut={'model':'qwen-1.7b','voice':'Sohee','style':'friendly'}
+    assert same_local_batch(cut,{**cut,'text':'다음 컷','seed':43})
+    for patch in ({'model':'qwen-0.6b'},{'voice':'other'},{'style':'calm'}):
+        assert not same_local_batch(cut,{**cut,**patch})
