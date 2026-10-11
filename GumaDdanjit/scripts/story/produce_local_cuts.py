@@ -9,7 +9,7 @@ settings=json.loads((root/'voice-settings.json').read_text()) if (root/'voice-se
 model=settings['model'];voice=settings['voice']
 profile=json.loads(client.request('/api/state'))['voice_profiles'][voice]['instruct'] if model=='qwen-design-1.7b' else None
 def matches(meta):
-    return meta.get('design_instruction','').startswith(profile+' ') if profile else meta.get('reference_sha256')==settings['reference_sha256']
+    return meta.get('design_instruction','').startswith(profile+' ') if profile else (meta.get('reference_sha256')==settings['reference_sha256'] and (not settings.get('reference_text_sha256') or meta.get('reference_text_sha256')==settings['reference_text_sha256']))
 script=json.loads((root/'script.json').read_text())
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def save(p,data):p.write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8')

@@ -25,7 +25,7 @@ from fixed_voices import CLONE_MODEL, CLONE_REPO, FOOD_VOICE, STORY_VOICE, REGIS
 
 BASE = Path(__file__).parent
 MODELS = {
-    CLONE_MODEL: {'name': 'Qwen 1.7B · 친근하고 조금 더 경쾌한 고정 화자', 'repo': CLONE_REPO, 'local': True},
+    CLONE_MODEL: {'name': 'Qwen 1.7B · 고정 화자 Voice Clone', 'repo': CLONE_REPO, 'local': True},
     DESIGN_MODEL: {'name': 'Qwen 1.7B · VoiceDesign', 'repo': DESIGN_REPO, 'local': True},
     'qwen-1.7b': {'name': 'Qwen 1.7B · 품질 비교', 'repo': 'Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice', 'local': True},
     'qwen-0.6b': {'name': 'Qwen 0.6B · 속도 비교', 'repo': 'Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice', 'local': True},
