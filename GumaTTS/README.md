@@ -65,3 +65,10 @@ API 모델 `qwen-design-1.7b`는 voice=M1–M5 또는 F1–F5를 사용한다. V
 검증 결과: 비교본 10개 모두 생성 완료(17.472–22.680초), 생성 시간 22.32–31.48초, GPU 최대 할당 4508–4662MB. 모든 최종 비교본의 자동 전사가 문장부호·공백 제외 원고와 일치했고 MP3 디코드 및 원본 결과 해시를 검증했다. F5 v1은 한 구절의 전사 차이가 있어 원본을 보존하고 seed 43의 v2로 재생성해 재검증했다(나머지 seed 42). 자동 전사는 실제 청취 승인이 아니다. 원본 목록 `storage/voice-comparison-20261011-v1.json`, 최종 목록 `storage/voice-comparison-20261011.json`, 검사 요약 `storage/verification/voice-design-summary.json`.
 
 서비스 테스트 9건과 브라우저 남성 M1·여성 F1의 끝까지 재생을 확인했다. 외부 TTS API 호출 없이 로컬 생성했다. 코드 04877cb의 GitHub Actions는 실패했고, HomeServer Compose 빌드·배포와 인증된 웹 비교 화면에서 동작을 확인했다. 이후 사용자 확정으로 쇼츠 F4 / Story·롱폼 M5를 제작 기준으로 적용했다.
+
+
+## 확정된 형식별 제작 정책 — 2026-10-11
+
+쇼츠는 F4, Story·롱폼은 M5를 기본값으로 설정하고 제작 API에서 형식과 다른 목소리·모델을 거절한다. 이야기쇼츠도 F4이며 롱폼의 M5 음성을 그대로 재사용하지 않는다. 비교 프로젝트(test)는 기존 모델 시험용으로 유지한다. 서비스 10건, 제작 기본값 3건, 게이트웨이 2건, 기존 음성 보존 1건, 검수 정책 2건 테스트 통과. 기존 전체 영상 렌더 fixture는 음성 단계 이전의 테크 시장성 근거 검사에서 실패하므로 전체 렌더 회귀 통과로 기록하지 않는다. f39ea57 자동 배포는 실패했으며 HomeServer Compose와 VideoFactory 재시작으로 직접 반영했다.
+
+실제 VideoFactory → GumaTTS 연결 확인: story_shorts/F4 작업 `2f07e8615985450ea9ed82469733fed9`, story/M5 작업 `d95df0ea8eac4b83b46e9d8d5443ddfa` 각각 6.912초 생성. 모두 qwen-design-1.7b·로컬·외부 과금 없음으로 기록됐고 클라이언트의 WAV/MP3 해시 검증을 통과했다. 검증 파일은 `GumaVideoFactory/storage/tts-policy-check-20261011/`에 보존했다. 웹의 형식별 확정 안내도 확인했다. 이 연결 검증은 실제 청취나 영상 업로드 승인이 아니다.
