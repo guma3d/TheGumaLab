@@ -75,6 +75,8 @@ class Store:
         item = dict(row)
         for key in ('request', 'result', 'review'):
             item[key] = json.loads(item[key] or '{}')
+        audit = self.root / jid / 'audit.json'
+        item['audit'] = json.loads(audit.read_text(encoding='utf-8')) if audit.exists() else {}
         return item
 
     def create(self, job):
