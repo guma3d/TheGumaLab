@@ -34,6 +34,9 @@ MODELS = {
 }
 STYLE = '편안하고 자연스러운 한국어 대화체로 읽으세요. 가까운 사람에게 이야기를 들려주듯 담백하고 따뜻하게, 뉴스 앵커 같은 말투나 과장된 연기 없이 적당한 속도로 말하세요. 입력 원고의 단어만 읽고, 시작과 끝에 인사나 감탄사, 설명을 절대 추가하지 마세요. 마지막 문장을 읽은 즉시 끝내세요. 감사합니다, 음, 네 같은 말도 원고에 없으면 발화하지 마세요.'
 
+def same_local_batch(first, request):
+    return first['model'] in (CLONE_MODEL, DESIGN_MODEL) and all(first[k]==request[k] for k in ('model','voice','style'))
+
 class Job(BaseModel):
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
     title: str = Field(default='음성 테스트', min_length=1, max_length=120)
@@ -143,7 +146,7 @@ class Store:
                     first = json.loads(queued[0]['request'])
                     for row in queued:
                         req = json.loads(row['request'])
-                        if rows and (first['model'] != CLONE_MODEL or (req['model'], req['voice']) != (first['model'], first['voice'])):
+                        if rows and not same_local_batch(first,req):
                             break
                         rows.append(row)
                     db.executemany("UPDATE jobs SET status='running' WHERE id=?", [(row['id'],) for row in rows])
@@ -158,8 +161,8 @@ class Store:
                 folders.append(folder)
             error = None
             try:
-                # Same-reference jobs run sequentially in one bounded process.
-                # Prompt/weights are reused; exit releases VRAM for other work.
+                # Same-reference or same-design-profile cuts run sequentially.
+                # Weights are reused, each cut keeps its own files/job/seed.
                 with (folders[0]/'worker.log').open('w') as log:
                     command = [sys.executable, str(BASE/'worker.py')]
                     if len(folders) > 1: command.append('--batch')

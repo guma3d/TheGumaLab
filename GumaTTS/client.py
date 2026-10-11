@@ -6,19 +6,22 @@ import time
 import urllib.request
 from pathlib import Path
 
-def synthesize(text, output_path, *, model=None, voice=None, style=None, project='story', title='영상 내레이션', allow_cloud=False, timeout=7200):
-    model = model or ('qwen-clone-1.7b' if project == 'food' else 'qwen-design-1.7b')
+def request(path, data=None):
     base = os.getenv('GUMATTS_URL', 'http://host.docker.internal:8088').rstrip('/')
     token = Path(os.getenv('GUMATTS_TOKEN_FILE', '/run/secrets/gumatts_token')).read_text().strip()
-    def request(path, data=None):
-        req = urllib.request.Request(base + path, data=json.dumps(data).encode() if data is not None else None, headers={'Authorization':'Bearer '+token, 'Content-Type':'application/json'})
-        with urllib.request.urlopen(req, timeout=30) as r: return r.read()
+    req = urllib.request.Request(base + path, data=json.dumps(data).encode() if data is not None else None, headers={'Authorization':'Bearer '+token, 'Content-Type':'application/json'})
+    with urllib.request.urlopen(req, timeout=30) as r: return r.read()
+
+def submit(text, *, model=None, voice=None, style=None, project='story', title='영상 내레이션', allow_cloud=False, seed=42):
+    model = model or ('qwen-clone-1.7b' if project == 'food' else 'qwen-design-1.7b')
     if voice is None:
         voice = ('M5' if project in ('story', 'longform') else 'F4') if model == 'qwen-design-1.7b' else ('Sohee' if model.startswith('qwen') else 'Zephyr')
         if model == 'qwen-clone-1.7b': voice = 'F1-bright-v2'
-    payload = dict(text=text, title=title, project=project, model=model, voice=voice, allow_cloud=allow_cloud)
+    payload = dict(text=text, title=title, project=project, model=model, voice=voice, allow_cloud=allow_cloud, seed=seed)
     if style is not None: payload['style'] = style
-    job = json.loads(request('/api/jobs', payload))
+    return json.loads(request('/api/jobs', payload))
+
+def collect(job, output_path, *, timeout=7200):
     deadline = time.monotonic() + timeout
     while job['status'] in ('queued','running'):
         if time.monotonic() > deadline:
@@ -44,3 +47,7 @@ def synthesize(text, output_path, *, model=None, voice=None, style=None, project
     provenance = {'service':'GumaTTS', 'job_id':job['id'], 'web_url':'https://home.guma3d.com/gumatts/#job-'+job['id'], **job['result']}
     output.with_suffix('.tts.json').write_text(json.dumps(provenance,ensure_ascii=False,indent=2),encoding='utf-8')
     return provenance
+
+def synthesize(text, output_path, *, model=None, voice=None, style=None, project='story', title='영상 내레이션', allow_cloud=False, timeout=7200, seed=42):
+    job=submit(text,model=model,voice=voice,style=style,project=project,title=title,allow_cloud=allow_cloud,seed=seed)
+    return collect(job,output_path,timeout=timeout)
