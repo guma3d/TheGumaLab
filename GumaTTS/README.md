@@ -77,3 +77,6 @@ API 모델 `qwen-design-1.7b`는 voice=M1–M5 또는 F1–F5를 사용한다. V
 - Story·롱폼 M5 및 이야기쇼츠 F4 경로는 유지한다. 기존 테스트 결과·배포 이력은 과거 검증 기록이며 새 단일 생성 전체 파이프라인 검증으로 재사용하지 않는다.
 
 근거: [Qwen 공식 Voice Design then Clone](https://github.com/QwenLM/Qwen3-TTS#voice-design-then-clone).
+
+
+2026-10-12 Story 화자 일관성 개선: 로컬 `qwen-clone-1.7b` / `M5-fixed-v1`을 기본으로 사용한다. 선정된 M5 비교 작업 `abb9d177a65344ada1587cafeb817c99`의 원본 WAV와 대본을 불변 참조로 등록한다. 컷별 생성·보관·수정 원칙을 유지하며 기준 WAV SHA256과 참조 대본 SHA256까지 캐시 키와 검수에 포함한다. VoiceDesign으로 컷마다 새 화자를 설계하지 않는다. `produce_local_cuts.py`는 제작 폴더의 `voice-settings.json`을 읽고 모든 컷에 동일 참조를 확인한다. 승진 영상 v4 제작 원본·정확한 도구 스냅샷·음색 비교 샘플·검수는 `storage/story/productions/promotion-v4`에 보존한다. 자동 화자 유사도·전사·음량 검사는 실제 청취나 사용자 승인과 구분한다.
