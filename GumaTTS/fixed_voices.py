@@ -5,8 +5,9 @@ from pathlib import Path
 
 CLONE_MODEL = 'qwen-clone-1.7b'
 CLONE_REPO = 'Qwen/Qwen3-TTS-12Hz-1.7B-Base'
+STORY_VOICE = 'M5-fixed-v1'
 FOOD_VOICE = 'F1-bright-v2'
-REGISTERED_VOICES = frozenset({'F1-fixed-v1', 'F4-dates-v1', FOOD_VOICE})
+REGISTERED_VOICES = frozenset({'F1-fixed-v1', 'F4-dates-v1', FOOD_VOICE, STORY_VOICE})
 
 
 def reference(root, voice):

@@ -21,7 +21,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from voice_profiles import DESIGN_MODEL, DESIGN_REPO, PROFILES
-from fixed_voices import CLONE_MODEL, CLONE_REPO, FOOD_VOICE, REGISTERED_VOICES, reference
+from fixed_voices import CLONE_MODEL, CLONE_REPO, FOOD_VOICE, STORY_VOICE, REGISTERED_VOICES, reference
 
 BASE = Path(__file__).parent
 MODELS = {
@@ -53,18 +53,18 @@ class Job(BaseModel):
     def defaults(cls, data):
         if not isinstance(data, dict): return data
         data = dict(data)
-        model = data.setdefault('model', CLONE_MODEL if data.get('project') == 'food' else DESIGN_MODEL)
+        model = data.setdefault('model', CLONE_MODEL if data.get('project') in ('food','story','longform') else DESIGN_MODEL)
         if not isinstance(model, str): return data
         if 'style' not in data and model not in (DESIGN_MODEL, CLONE_MODEL): data['style'] = STYLE
         if 'voice' not in data:
             data['voice'] = ('M5' if data.get('project') in ('story', 'longform') else 'F4') if model == DESIGN_MODEL else ('Sohee' if model.startswith('qwen') else 'Zephyr')
-            if model == CLONE_MODEL: data['voice'] = FOOD_VOICE
+            if model == CLONE_MODEL: data['voice'] = STORY_VOICE if data.get('project') in ('story','longform') else FOOD_VOICE
         return data
 
     @model_validator(mode='after')
     def valid_voice(self):
         if self.model == CLONE_MODEL and (self.voice not in REGISTERED_VOICES or self.style):
-            raise ValueError('고정 화자는 F1-bright-v2 기준음성과 대본을 사용하며 컷별 말투 지시는 허용하지 않습니다.')
+            raise ValueError('고정 화자는 등록된 기준음성과 대본을 사용하며 컷별 말투 지시는 허용하지 않습니다.')
         if self.model == DESIGN_MODEL and self.voice not in PROFILES:
             raise ValueError('VoiceDesign은 M1–M5 또는 F1–F5 후보를 선택하세요.')
         if self.model in ('qwen-1.7b', 'qwen-0.6b') and self.voice != 'Sohee':
@@ -72,10 +72,10 @@ class Job(BaseModel):
         if self.model.startswith('gemini') and (self.voice not in ('Zephyr', 'Achird') or not self.allow_cloud):
             raise ValueError('외부 API는 음성과 비용 발생 가능성을 명시해야 합니다.')
         if self.project != 'test':
-            expected = FOOD_VOICE if self.project == 'food' else ('M5' if self.project in ('story', 'longform') else 'F4')
-            expected_model = CLONE_MODEL if self.project == 'food' else DESIGN_MODEL
+            expected = FOOD_VOICE if self.project == 'food' else (STORY_VOICE if self.project in ('story', 'longform') else 'F4')
+            expected_model = CLONE_MODEL if self.project in ('food','story','longform') else DESIGN_MODEL
             if self.model != expected_model or self.voice != expected:
-                raise ValueError('Food는 친근하고 조금 더 경쾌한 고정 화자 F1-bright-v2, 다른 쇼츠 F4, Story·롱폼 M5를 사용합니다.')
+                raise ValueError('Food는 친근하고 조금 더 경쾌한 고정 화자 F1-bright-v2, 다른 쇼츠 F4, Story·롱폼 M5-fixed-v1 기준음성을 사용합니다.')
         return self
 
 class Review(BaseModel):

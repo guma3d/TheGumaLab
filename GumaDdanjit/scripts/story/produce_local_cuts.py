@@ -5,8 +5,11 @@ from pathlib import Path
 root=Path(sys.argv[1]).resolve()
 spec=importlib.util.spec_from_file_location('gumatts_client','/opt/gumatts/client.py')
 client=importlib.util.module_from_spec(spec);spec.loader.exec_module(client)
-model='qwen-design-1.7b';voice='M5'
-profile=json.loads(client.request('/api/state'))['voice_profiles'][voice]['instruct']
+settings=json.loads((root/'voice-settings.json').read_text()) if (root/'voice-settings.json').exists() else dict(model='qwen-design-1.7b',voice='M5')
+model=settings['model'];voice=settings['voice']
+profile=json.loads(client.request('/api/state'))['voice_profiles'][voice]['instruct'] if model=='qwen-design-1.7b' else None
+def matches(meta):
+    return meta.get('design_instruction','').startswith(profile+' ') if profile else meta.get('reference_sha256')==settings['reference_sha256']
 script=json.loads((root/'script.json').read_text())
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def save(p,data):p.write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8')
@@ -23,7 +26,7 @@ def prior(job):
     data=json.loads(mark.read_text());provenance=json.loads(out.with_suffix('.tts.json').read_text())
     assert data['text_sha256']==job['cut_id'] and data['model']==model and data['voice']==voice
     assert provenance['provider']=='local' and not provenance['api_charge']
-    assert provenance['design_instruction'].startswith(profile+' '), 'Selected M5 profile changed; prepare a new take.'
+    assert matches(provenance), 'Selected M5 profile changed; prepare a new take.'
     assert sha(out)==data['audio_sha256'] and sha(out.with_suffix('.wav'))==provenance['original_sha256']
     return data
 
@@ -43,7 +46,7 @@ for folder in root.parent.iterdir():
         if source.exists() and source.with_suffix('.wav').exists() and prov.exists() and sha(source)==data.get('audio_sha256'):
             meta=json.loads(prov.read_text())
             settings=json.loads(client.request('/api/jobs/'+data['tts_job_id']))['request']
-            if settings['style']=='' and meta.get('provider')=='local' and meta.get('normalization',{}).get('passed') and meta.get('design_instruction','').startswith(profile+' ') and sha(source.with_suffix('.wav'))==meta['original_sha256']:
+            if settings['style']=='' and meta.get('provider')=='local' and meta.get('normalization',{}).get('passed') and matches(meta) and sha(source.with_suffix('.wav'))==meta['original_sha256']:
                 cache.setdefault(data['text_sha256'],(source,data))
 for job in jobs:
     if prior(job):continue
@@ -56,17 +59,19 @@ for job in jobs:
 queuefile=root/'voice-queue.json';queue=json.loads(queuefile.read_text()) if queuefile.exists() else {}
 # Cut 002's first seed had excessive crest factor and failed the service gate.
 # A new seed is a separate preserved take, not a waiver of that gate.
+selected={1,5,20,43,80,109} if '--pilot' in sys.argv else {j['index'] for j in jobs}
 for job in jobs:
-    if prior(job):continue
+    if job['index'] not in selected or prior(job):continue
     key=str(job['index'])
     if key not in queue:
-        seed=43 if job['index']==2 else 42
+        seed=42
         submitted=client.submit(job['text'],model=model,voice=voice,project='story',title=f"{job['index']:03}",seed=seed)
         queue[key]=dict(id=submitted['id'],seed=seed,text_sha256=job['cut_id'])
         save(queuefile,queue)
 print(json.dumps({'queued':len(queue),'cached':sum(prior(j) is not None for j in jobs)}),flush=True)
 results=[];failures=[]
 for job in jobs:
+    if job['index'] not in selected:continue
     old=prior(job)
     if old:results.append(old);continue
     entry=queue[str(job['index'])]
