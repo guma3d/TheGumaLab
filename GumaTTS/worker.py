@@ -46,12 +46,15 @@ def run(folder):
         torch.set_num_threads(4)
         torch.manual_seed(request['seed'])
         torch.cuda.reset_peak_memory_stats()
-        if repo not in _MODELS:
-            _MODELS[repo] = Qwen3TTSModel.from_pretrained(repo, device_map='cuda:0', dtype=torch.bfloat16, attn_implementation='sdpa')
-        model = _MODELS[repo]
+        ref_wav, ref = reference(folder.parent, request['voice']) if request['model']==CLONE_MODEL else (None,{})
+        revision=ref.get('clone_model_revision')
+        model_key=(repo,revision)
+        if model_key not in _MODELS:
+            _MODELS[model_key] = Qwen3TTSModel.from_pretrained(repo, revision=revision, device_map='cuda:0', dtype=torch.bfloat16, attn_implementation='sdpa')
+        model = _MODELS[model_key]
         if request['model'] == CLONE_MODEL:
             ref_wav, ref = reference(folder.parent, request['voice'])
-            prompt_key = (repo, ref['sha256'], ref['text'])
+            prompt_key = (repo, revision, ref['sha256'], ref['text'])
             reused = prompt_key in _PROMPTS
             if not reused:
                 _PROMPTS[prompt_key] = model.create_voice_clone_prompt(

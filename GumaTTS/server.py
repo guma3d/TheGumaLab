@@ -118,6 +118,7 @@ class Store:
             _, ref = reference(self.root, data['voice'])
             audio_fields['reference_sha256'] = ref['sha256']
             audio_fields['reference_text'] = ref['text']
+            if ref.get('clone_model_revision'): audio_fields['clone_model_revision']=ref['clone_model_revision']
         if data['model'] == DESIGN_MODEL:
             from voice_profiles import design_instruction
             audio_fields['design_instruction'] = design_instruction(data['voice'], data['style'])
