@@ -6,6 +6,7 @@ root=Path(sys.argv[1]).resolve()
 spec=importlib.util.spec_from_file_location('gumatts_client','/opt/gumatts/client.py')
 client=importlib.util.module_from_spec(spec);spec.loader.exec_module(client)
 model='qwen-design-1.7b';voice='M5'
+profile=json.loads(client.request('/api/state'))['voice_profiles'][voice]['instruct']
 script=json.loads((root/'script.json').read_text())
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def save(p,data):p.write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8')
@@ -22,6 +23,7 @@ def prior(job):
     data=json.loads(mark.read_text());provenance=json.loads(out.with_suffix('.tts.json').read_text())
     assert data['text_sha256']==job['cut_id'] and data['model']==model and data['voice']==voice
     assert provenance['provider']=='local' and not provenance['api_charge']
+    assert provenance['design_instruction'].startswith(profile+' '), 'Selected M5 profile changed; prepare a new take.'
     assert sha(out)==data['audio_sha256'] and sha(out.with_suffix('.wav'))==provenance['original_sha256']
     return data
 
@@ -29,14 +31,19 @@ def prior(job):
 cache={}
 for folder in root.parent.iterdir():
     if folder==root or not folder.is_dir():continue
+    reviewed=folder/'production-review.json'
+    if not reviewed.exists():continue
+    quality=json.loads(reviewed.read_text()).get('asr_review',{})
+    if quality.get('meaningful_mismatches')!=0 or not quality.get('cut_count'):continue
     for mark in (folder/'voice').glob('*.json'):
         if mark.name.endswith('.tts.json'):continue
         data=json.loads(mark.read_text())
         if data.get('model')!=model or data.get('voice')!=voice:continue
         source=mark.with_suffix('.mp3');prov=source.with_suffix('.tts.json')
-        if source.exists() and prov.exists() and sha(source)==data.get('audio_sha256'):
+        if source.exists() and source.with_suffix('.wav').exists() and prov.exists() and sha(source)==data.get('audio_sha256'):
             meta=json.loads(prov.read_text())
-            if meta.get('provider')=='local' and meta.get('normalization',{}).get('passed'):
+            settings=json.loads(client.request('/api/jobs/'+data['tts_job_id']))['request']
+            if settings['style']=='' and meta.get('provider')=='local' and meta.get('normalization',{}).get('passed') and meta.get('design_instruction','').startswith(profile+' ') and sha(source.with_suffix('.wav'))==meta['original_sha256']:
                 cache.setdefault(data['text_sha256'],(source,data))
 for job in jobs:
     if prior(job):continue

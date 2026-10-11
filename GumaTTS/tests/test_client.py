@@ -36,3 +36,11 @@ def test_failed_service_does_not_fallback(tmp_path, monkeypatch):
         with pytest.raises(RuntimeError,match='quota'):client.synthesize('원고',tmp_path/'voice.mp3')
         assert call.call_count==1
         assert not (tmp_path/'voice.mp3').exists()
+
+def test_transient_read_retry_keeps_same_job(tmp_path, monkeypatch):
+    token=tmp_path/'token';token.write_text('test-token')
+    monkeypatch.setenv('GUMATTS_TOKEN_FILE',str(token))
+    with patch('urllib.request.urlopen',side_effect=[TimeoutError('connection'),io.BytesIO(b'ready')]) as call, patch('time.sleep'):
+        assert client.request('/api/jobs/existing')==b'ready'
+        assert call.call_count==2
+        assert all(c.args[0].full_url.endswith('/api/jobs/existing') for c in call.call_args_list)

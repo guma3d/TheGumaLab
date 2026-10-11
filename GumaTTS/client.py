@@ -4,13 +4,23 @@ import json
 import os
 import time
 import urllib.request
+import urllib.error
 from pathlib import Path
 
 def request(path, data=None):
     base = os.getenv('GUMATTS_URL', 'http://host.docker.internal:8088').rstrip('/')
     token = Path(os.getenv('GUMATTS_TOKEN_FILE', '/run/secrets/gumatts_token')).read_text().strip()
     req = urllib.request.Request(base + path, data=json.dumps(data).encode() if data is not None else None, headers={'Authorization':'Bearer '+token, 'Content-Type':'application/json'})
-    with urllib.request.urlopen(req, timeout=30) as r: return r.read()
+    for attempt in range(3 if data is None else 1):
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:return r.read()
+        except urllib.error.HTTPError:
+            raise
+        except (urllib.error.URLError, TimeoutError):
+            if data is not None or attempt==2:raise
+            # Repeat only the same read after a transient connection failure.
+            # Failed synthesis, authorization, or model errors are not retried.
+            time.sleep(attempt+1)
 
 def submit(text, *, model=None, voice=None, style=None, project='story', title='영상 내레이션', allow_cloud=False, seed=42):
     model = model or ('qwen-clone-1.7b' if project == 'food' else 'qwen-design-1.7b')

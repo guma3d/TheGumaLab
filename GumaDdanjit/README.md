@@ -36,6 +36,10 @@ Index SSO를 서비스 경계에서 검사하고 모든 쓰기는 동일 Origin�
 
 제작 도구(`revise_promotion_v2.py`, `display_captions.py`, `compose_longform.py`, `review_promotion_v2.py`, `publish_promotion_v2.py`)를 제작 폴더의 `tools/`에 보관한 뒤 컨테이너에서 실행한다. 조립은 `revise_promotion_v2.py <제작폴더>`, 출력은 같은 명령에 `--render`를 붙인다. `review_promotion_v2.py <제작폴더>`는 원본 음성 해시·숫자 자막·전체 프레임 로고·챕터·디코딩을 검사한다. 출력된 114개 화면과 숫자 자막을 실제 시각 검수한 후에만 검수 상태를 기록하고 `publish_promotion_v2.py <제작폴더>`와 `Store('/data/story').ingest()`로 웹에 등록한다. 검수 전·기존 버전 덮어쓰기 등록은 거부한다. 기존 영상의 음성 재사용을 신규 TTS 생성이나 실제 전편 청취 완료로 기록하지 않는다.
 
+승진 v3는 `prepare_promotion_v3.py`로 자연스러운 도입과 화면 안내 제거를 준비한 뒤 `produce_local_cuts.py`로 로컬 M5 음성을 컷별 생성·보관한다. 원문 해시·모델·프로필·음성 해시가 같은 정상 컷은 이전 제작 폴더에서 재사용한다. 실패 테이크는 보존하며 모델이나 유료 API로 자동 대체하지 않는다. `render_promotion_v3.py`는 음성 길이로 타임라인을 재계산하고 얇은 숫자 자막·최종 레이어 로고를 합성한다. Story의 기본은 배경음악 없음이며 깨끗한 음성 원본에서 출력한다. `retime_promotion_v3.py`로 완성 음성 기준 대본 시간표를 새 버전으로 저장한다. `review_promotion_v3.py`의 컷별 원본/보정/최종 음량·파형 대조, 숫자 자막, 전체 프레임 로고 검사와 완성 장면 시각 검수·전사 대사 대조 후 `publish_promotion_v3.py`와 `Store.ingest()`로 웹에 등록한다. 전사 대조·기술 검사와 실제 청취·사용자 승인은 별도로 기록한다.
+
+전사 검수는 GumaTTS의 CPU `faster-whisper==1.2.1`과 로컬 turbo 캐시를 사용한다. `audit_promotion_voice.py` 결과를 최종 `voice-manifest.json`의 작업 ID·해시와 대조하고, 필요하면 `audit_processed_cuts.py`로 실제 트림 음성을 재검사한다. 전사 표기 차이는 근거와 함께 별도 기록하고 `summarize_promotion_asr.py`에서 숫자·대사 차이를 확인한다. 렌더 재시도는 `--encode-only`로 준비된 입력 해시를 검증해 재사용하며 정적 로고는 단일 프레임의 repeatlast로 유지한다. 음성과 대본·출력 검수를 다시 생성 작업으로 대신하지 않는다.
+
 ## 2026-10-11 이관 검증
 
 - 쇼츠 9,968개 / 이야기 990개 / 쇼핑 2,535개: 총 13,493개 파일, 약 15.68GiB. 원본 파일 SHA256 전수 일치, 두 SQLite DB의 무결성·전체 레코드 일치 확인. 증거는 `backups/migration-verified.json`.

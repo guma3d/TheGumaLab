@@ -1,5 +1,6 @@
 """Compose clean v3 scenes, charts and thin numeric captions; no editorial overlays."""
 import argparse, ast, hashlib, json, re, subprocess
+from functools import lru_cache
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 from display_captions import display_text, assert_display_numbers
@@ -24,6 +25,7 @@ def main():
     for node in tree.body:
         if isinstance(node,ast.Assign) and any(isinstance(t,ast.Name) and t.id in ('cards','tables') for t in node.targets):
             data[node.targets[0].id]=ast.literal_eval(node.value)
+    @lru_cache(maxsize=16)
     def ft(size):return ImageFont.truetype(str(fonts/'Pretendard-SemiBold.otf'),size)
     W,H=1920,1080;cream='#F6F0E4';navy='#183444';teal='#267C7B'
     def lines(value,width,size):
@@ -39,6 +41,54 @@ def main():
         x,y=pos
         for line in lines(value,width,size):draw.text((x,y),line,font=ft(size),fill=color);y+=size*1.28
         return y
+    def caption_lines(value):
+        wrapped=lines(value,1510,46)
+        if len(wrapped)!=2:return wrapped
+        words=value.split();measure=ImageDraw.Draw(Image.new('RGB',(1,1)));font=ft(46)
+        widths=[measure.textlength(w,font=font) for w in words];space=measure.textlength(' ',font=font)
+        total=sum(widths)+space*(len(words)-1);prefix=0;candidates=[]
+        for split in range(1,len(words)):
+            prefix+=widths[split-1]+(space if split>1 else 0);suffix=total-prefix-space
+            if max(prefix,suffix)>1510:continue
+            score=abs(prefix-suffix)
+            if words[split-1].endswith(('.', '?', '!')):score-=50
+            if re.search(r'\d',words[split-1]) and words[split].startswith('원'):score+=300
+            candidates.append((score,split))
+        if not candidates:return wrapped
+        _,split=min(candidates)
+        return [' '.join(words[:split]),' '.join(words[split:])]
+    def balanced_captions(value):
+        wrapped=lines(value,1510,46)
+        groups=['\n'.join(wrapped[i:i+2]) for i in range(0,len(wrapped),2)]
+        if len(groups)<2 or (len(groups[-1].split())>2 and len(groups[-1].replace('\n',''))>=10):return groups
+        words=value.split();count=len(words);k=len(groups)
+        measure=ImageDraw.Draw(Image.new('RGB',(1,1)));font=ft(46)
+        widths=[measure.textlength(w,font=font) for w in words];space=measure.textlength(' ',font=font)
+        target=(sum(widths)+space*(count-1))/k;spans={}
+        for start in range(count):
+            width=0;rows=1;total=0;spans[start]=[]
+            for end in range(start,count):
+                trial=width+(space if width else 0)+widths[end]
+                if trial>1490:rows+=1;width=widths[end]
+                else:width=trial
+                if rows>2:break
+                total+=widths[end]+(space if end>start else 0)
+                penalty=(total-target)**2
+                if end-start+1<3:penalty+=target**2
+                if not words[end].endswith(('.', '?', '!')):penalty+=target**2*.10
+                spans[start].append((end+1,penalty))
+        states={0:(0,[])}
+        for _ in range(k):
+            next_states={}
+            for start,(score,path) in states.items():
+                for end,cost in spans.get(start,[]):
+                    trial=(score+cost,path+[(start,end)])
+                    if end not in next_states or trial[0]<next_states[end][0]:next_states[end]=trial
+            states=next_states
+        if count not in states:return groups
+        result=['\n'.join(lines(' '.join(words[a:b]),1510,46)) for a,b in states[count][1]]
+        assert all(len(g.splitlines())<=2 for g in result)
+        return result
     clean_charts(root,fonts)
     replacements={'가상 업무 상황':'직함은 바뀌었는데, 결정권은?', '가상의 두 팀':'서로 다른 두 팀', '편집자 제안 · 성장의 경로':'성장의 두 가지 경로', '가상 일정 · 관리 뒤에 남은 실무':'퇴근할 때 시작되는 실무', '가상 제안 A':'제안 A', '가상 제안 B':'제안 B'}
     def clean_title(title): return replacements.get(title,title)
@@ -100,8 +150,8 @@ def main():
     for p in timeline['paragraphs']:
         value=display_text(p['text']);assert_display_numbers(value)
         if value!=p['text']:changes.append(dict(index=p['index'],spoken=p['text'],display=value))
-        chunks=lines(value,1510,46)
-        groups=['\n'.join(chunks[i:i+2]) for i in range(0,len(chunks),2)]
+        groups=balanced_captions(value)
+        groups=['\n'.join(caption_lines(g.replace('\n',' '))) for g in groups]
         weights=[len(re.sub(r'\s','',g)) for g in groups];t=p['start']+.03
         for g,weight in zip(groups,weights):
             end=min(p['start']+p['speech_seconds'],t+p['speech_seconds']*weight/sum(weights))
