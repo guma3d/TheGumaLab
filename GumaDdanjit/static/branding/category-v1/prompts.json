@@ -1,9 +1,16 @@
 {
   "tool": "built-in image_gen",
-  "status": "design draft v1",
+  "status": "approved",
   "prompts": {
     "GumaShop": "Use case: logo-brand. Create ONE polished hand-lettered illustrated wordmark for the top-left corner watermark of Korean YouTube videos. Transparent background with real alpha, no background panel, no mockup. Wide compact horizontal single line, centered with modest clear margins. Readable at small overlay sizes. Cohesive family design: rounded bold custom lettering, playful but sophisticated, warm sunflower yellow and ivory letter fills, clean dark espresso outline plus thin ivory outer keyline for readability over both dark and light footage. Flat crisp illustration, very restrained depth, no ornate flourishes, no tiny text, no slogan. Exact spelling and capitalization required. Text (verbatim): \"GumaShop\". Friendly shopping discovery personality; one tiny integrated shopping-bag handle motif above the S, subtle small sparkle. Lettering is the main subject. No other words.",
     "GumaStory": "Use case: logo-brand. Create ONE polished hand-lettered illustrated wordmark for the top-left corner watermark of Korean YouTube videos. Transparent background with real alpha, no background panel, no mockup. Wide compact horizontal single line, centered with modest clear margins. Readable at small overlay sizes. Cohesive family design: rounded bold custom lettering, playful but sophisticated, warm sunflower yellow and ivory letter fills, clean dark espresso outline plus thin ivory outer keyline for readability over both dark and light footage. Flat crisp illustration, very restrained depth, no ornate flourishes, no tiny text, no slogan. Exact spelling and capitalization required. Text (verbatim): \"GumaStory\". Warm narrative personality; one small open-book stroke subtly integrated under the ending, a tiny quotation-mark accent. Lettering is the main subject. No other words.",
     "GumaX": "Use case: logo-brand. Create ONE polished hand-lettered illustrated wordmark for the top-left corner watermark of Korean YouTube videos. Transparent background with real alpha, no background panel, no mockup. Wide compact horizontal single line, centered with modest clear margins. Readable at small overlay sizes. Cohesive family design: rounded bold custom lettering, playful but sophisticated, warm sunflower yellow and ivory letter fills, clean dark espresso outline plus thin ivory outer keyline for readability over both dark and light footage. Flat crisp illustration, very restrained depth, no ornate flourishes, no tiny text, no slogan. Exact spelling and capitalization required. Text (verbatim): \"GumaX\". Inventive experimental film personality; bold expressive X with a tiny spark/energy stroke, slightly more dynamic lettering while retaining refined rounded family style. Lettering is the main subject. No other words."
+  },
+  "approved_on": "2026-10-11",
+  "usage": "New videos: corresponding category wordmark at top-left; preserve aspect ratio and safe margins.",
+  "sha256": {
+    "GumaShop": "f6042dac3526dcf80d85eefa7d948d9d5278ffe8c7c60ca422127ec313b78e14",
+    "GumaStory": "989f22985cb56e1bca9f7836d15892a42a0dcacfcc2fd864f406559183db9a53",
+    "GumaX": "7dc3a3960fbcea7c4f233cc246b809a08141d46ae062f0b490dcb94b87693b19"
   }
 }
