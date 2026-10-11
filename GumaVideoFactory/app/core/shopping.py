@@ -257,7 +257,7 @@ async def render(id,n):
             if source:
                 shutil.copyfile(source,audio);reused_audio=True
         if not reused_audio:
-            await synthesize_speech(scene['narration_ko'],audio,voice=v['voice'],rate=v.get('voice_rate','natural-brisk'))
+            await synthesize_speech(scene['narration_ko'],audio,voice=v['voice'],rate=v.get('voice_rate','natural-brisk'),project=store.read(id)['category'])
         if media.duration(audio)+.4>spoken_duration_limit(scene):
             raise ValueError(f'CUT {i}: 대사를 6초 안팎으로 간결하게 수정하세요.')
     if living:

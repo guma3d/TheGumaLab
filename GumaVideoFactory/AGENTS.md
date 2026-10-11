@@ -1,5 +1,7 @@
 # GumaVideoFactory 작업 지침
 
+- 음성 제작(2026-10-11): 모든 신규 내레이션은 GumaTTS 공통 웹서비스/API를 경유한다. Food·Tech·Living의 기존 Zephyr 기준은 유지하되 외부 API 직접 호출·카테고리별 별도 모델 로딩은 하지 않는다. 서비스 작업 ID, 원본 WAV, 편집용 MP3, 해시와 실제 모델을 보존한다. Story 로컬 음성은 한국어 품질 시험/사용자 청취 단계이며 자동으로 전체 카테고리 목소리를 바꾸지 않는다. 실패 시 유료 모델 자동 대체 금지.
+
 - 채널 프로필의 상품 모음 대표 주소는 `https://videofactory.guma3d.com/GumaDdanjit`이다(2026-10-10 적용·확인). 새 안내에는 이 주소를 사용하고 기존 `/products` 링크도 계속 작동하게 유지한다. 링크 제목은 `상품 모음`을 유지한다.
 
 - 현재 유튜브 채널은 **구마의 딴짓 / @GumaDdanjit**(고유 ID `UCRtAVFQFmJCcpvLeuyq03Kg`)이다. 취미로 운영하는 개인 채널 느낌과 노란색·팔뚝 프로필을 유지한다. 현재 브랜딩은 README, 원본/프롬프트는 `storage/branding/guma-ddanjit-v1/`을 따른다. 과거 GumaShop 제작 기록은 수정하지 않는다.

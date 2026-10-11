@@ -9,6 +9,10 @@ services:
     volumes:
       - .:/app
       - ./storage:/app/storage
+      - ../GumaTTS/client.py:/opt/gumatts/client.py:ro
+      - ../GumaTTS/storage/service-token:/run/secrets/gumatts_token:ro
+    environment:
+      GUMATTS_URL: http://host.docker.internal:8088
     env_file:
       - path: ../.env
         required: false

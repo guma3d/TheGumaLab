@@ -1,0 +1,27 @@
+services:
+  gumatts:
+    build: .
+    container_name: GumaTTS_app
+    ports:
+      - "8088:8088"
+    volumes:
+      - ./storage:/app/storage
+      - ./models:/models
+    env_file:
+      - path: ../.env
+        required: false
+      - path: ../GumaVideoFactory/.env
+        required: false
+    environment:
+      GUMATTS_AUTH_URL: http://host.docker.internal:8081/auth
+      TZ: Asia/Seoul
+      HF_HUB_DISABLE_TELEMETRY: '1'
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    stop_grace_period: 30s

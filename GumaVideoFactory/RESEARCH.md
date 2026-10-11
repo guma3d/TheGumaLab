@@ -1,5 +1,11 @@
 # 영상 제작 기준
 
+## 공통 음성 작업실 — 2026-10-11
+
+- 모든 신규 영상 음성은 [GumaTTS](https://home.guma3d.com/gumatts/) 서비스에서 생성하고 작업 ID·실제 모델·원본 WAV·편집용 MP3·해시를 연결한다. 영상 제작기에서 외부 TTS 직접 호출은 하지 않는다.
+- Food·Tech·Living은 기존 승인 Zephyr를 공통 서비스로 요청한다. Story는 한국어 자연스러움 우선으로 Qwen 1.7B/Sohee를 시험한다. 새 로컬 목소리는 사용자 청취 후 확정하며 기존 영상은 변경하지 않는다.
+- GPU 작업은 순차 처리하고 실패 시 외부 유료 모델로 자동 대체하지 않는다. 생성 성공·기술 검사와 실제 청취/사용자 수용을 구분한다.
+
 ## 장기 운영 방향 — 2026-10-10
 
 - 2026-10-10 사용자 요청으로 이야기 리소스·캐릭터·대본 관리를 **GumaStory** 프로젝트로 분리한다. 위치 `D:\TheGumaLab\GumaStory`, 기본 웹 주소 `https://home.guma3d.com/gumastory/`. 최신 캐릭터 외형은 GumaStory/AGENTS.md와 seed.json을 따른다. 기존 VideoFactory 원본과 제작·업로드 이력은 보존한다.

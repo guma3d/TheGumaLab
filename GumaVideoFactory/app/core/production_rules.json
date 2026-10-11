@@ -1,6 +1,11 @@
 {
-  "revision": "2026-10-11.2-tech-screen-consistency",
+  "revision": "2026-10-11.3-central-tts",
   "rules": [
+    {
+      "id": "central-tts-service",
+      "category": "all",
+      "instruction": "모든 신규 영상 음성은 GumaTTS 공통 웹서비스/API에서 생성하고 원본 WAV, 편집용 MP3, 모델·목소리·원고·해시·작업 ID·청취 검수 상태를 보존한다. 영상 제작기에서 외부 TTS를 직접 호출하거나 로컬 모델을 별도로 로드하지 않는다. Story는 한국어 자연스러움을 우선해 Qwen3-TTS 1.7B Sohee를 시험하고 사용자 청취 전 기본 목소리 확정·품질 통과로 기록하지 않는다. Food·Tech·Living 기존 Zephyr 기준과 과거 파일은 유지하며 공통 서비스를 경유한다. 실패 시 외부 유료 모델 자동 대체 금지. 수정한 원고는 새 음성 버전으로 생성하고 변경 없는 파일은 재사용한다."
+    },
     {
       "id": "tech-camera-preview-consistency",
       "category": "tech",
