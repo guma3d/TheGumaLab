@@ -1,4 +1,6 @@
-# GumaDdanjit story 모듈
+# GumaStory — GumaDdanjit story 모듈
+
+사용자 확정 표시명은 GumaStory이며 출퇴근 이야기·롱폼 제작 공간이다. 기존 모듈 경로와 저장소 ID는 유지한다.
 
 현재 코드·저장소는 GumaDdanjit 아래가 기준이다. 이전 서비스의 컨테이너를 실행하거나 이전 저장소에 새 제작 데이터를 쓰지 않는다. 아래 제작 품질 기준을 통합 환경에서 유지한다.
 

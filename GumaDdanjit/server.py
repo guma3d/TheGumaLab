@@ -23,7 +23,7 @@ from app.core import versions
 from story.main import app as story
 from shop.main import app as shop
 
-NAV = '''<link rel="stylesheet" href="/gumaddanjit/static/shell.css"><nav class="dd-nav" aria-label="통합 제작실"><a href="/gumaddanjit/">GumaDdanjit</a><a href="/gumaddanjit/shorts/">쇼츠</a><a href="/gumaddanjit/story/">출퇴근 이야기</a><a href="/gumaddanjit/shop/">프리미엄 쇼핑</a><a href="/gumaddanjit/#library">전체 보관함</a><a href="/gumatts/">음성 작업실</a></nav>'''
+NAV = '''<link rel="stylesheet" href="/gumaddanjit/static/shell.css"><nav class="dd-nav" aria-label="통합 제작실"><a href="/gumaddanjit/">GumaDdanjit</a><a href="/gumaddanjit/shorts/">GumaShop</a><a href="/gumaddanjit/story/">GumaStory</a><a href="/gumaddanjit/shop/">GumaX</a><a href="/gumaddanjit/#library">전체 보관함</a><a href="/gumatts/">음성 작업실</a></nav>'''
 
 def scoped_text(text, prefix):
     # Old shorts records retain their exact contents; qualify URLs only at the HTTP boundary.

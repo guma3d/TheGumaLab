@@ -3,7 +3,7 @@
 - URL: https://home.guma3d.com/gumaddanjit/
 - 홈서버 경로: `D:\TheGumaLab\GumaDdanjit`
 - 컨테이너: `GumaDdanjit_app`, HTTP 8089, 단일 FastAPI/ASGI 프로세스.
-- 쇼츠 `/shorts/`, 출퇴근 이야기 `/story/`, 프리미엄 쇼핑 `/shop/`을 공통 메뉴·검색·결과물 보관함으로 통합한다. 세 개의 기존 서버로 프록시하는 구조가 아니라 모듈을 한 실행 환경에서 구동한다.
+- GumaShop(쇼핑 쇼츠) `/shorts/`, GumaStory(출퇴근 이야기·롱폼) `/story/`, GumaX(실험적인 고퀄 영상) `/shop/`을 공통 메뉴·검색·결과물 보관함으로 통합한다. 세 개의 기존 서버로 프록시하는 구조가 아니라 모듈을 한 실행 환경에서 구동한다.
 - 독립적인 기존 ID·버전·검수 이력은 유지한다. 데이터는 `storage/{shorts,story,shop}`에 보존한다. 영상/대본/인물/상품/콘티 편집은 각 제작 모듈, 모든 프로젝트·영상·음성 검색과 재생은 통합 홈에서 제공한다.
 - 모든 음성은 별도 공통 추론 서비스 GumaTTS를 사용한다. 쇼츠 F4 / Story·롱폼 M5. 유료 API 자동 대체 없음.
 

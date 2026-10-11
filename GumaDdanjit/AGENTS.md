@@ -1,7 +1,7 @@
 # GumaDdanjit 작업 지침
 
 - 항상 한국어로 답한다. 상위 HomeServer Git·배포·비밀값 보호 지침을 따른다.
-- 영상 제작의 운영 서비스는 GumaDdanjit 하나다. app=쇼츠, story=출퇴근 롱폼, shop=프리미엄 쇼핑 모듈이다. 모듈별 AGENTS와 docs/shorts-production.md의 제작 기준을 유지한다.
+- 영상 제작의 운영 서비스는 GumaDdanjit 하나다. GumaShop=쇼핑 쇼츠(app, /shorts), GumaStory=출퇴근 이야기·롱폼(story, /story), GumaX=실험적인 고퀄 영상(shop, /shop)이다. 표시명과 기존 내부 경로를 혼동하지 않는다. 모듈별 AGENTS와 docs/shorts-production.md의 제작 기준을 유지한다.
 - 운영 URL은 https://home.guma3d.com/gumaddanjit/ 이다. 단일 컨테이너 GumaDdanjit_app, 포트 8089, 단일 인증 경계와 공통 제작 보관함을 사용한다.
 - 원본·버전·대본·검수·승인 기록은 storage/shorts, storage/story, storage/shop에 보존한다. 모듈 ID 공간과 SQLite 이력을 임의로 합치거나 덮어쓰지 않는다.
 - 신규 음성은 GumaTTS만 경유한다. 모든 쇼츠(이야기쇼츠·쇼핑 포함)는 여성 F4, Story·롱폼은 남성 M5. 음성 선택을 결과물 검수나 업로드 승인으로 간주하지 않는다.

@@ -788,7 +788,7 @@ async function render() {
         "기존 작업실의 상품을 이어받아, 가족의 새 이야기로.",
         `<a class="btn" href="/gumaddanjit/shorts/" target="_blank" rel="noopener">기존 작업실 ↗</a>`,
       ) +
-      `<div class="notice">원본은 읽기 전용으로 연결돼요. 상품 정보를 가져오면 GumaDdanjit · 프리미엄 쇼핑에서 독립적으로 편집할 수 있어요. 기존 영상과 승인 기록은 원래 작업실에서 확인해주세요.</div><div id="legacy-list" class="loading">기존 제작물을 불러오는 중이에요…</div>`;
+      `<div class="notice">원본은 읽기 전용으로 연결돼요. 상품 정보를 가져오면 GumaX에서 독립적으로 편집할 수 있어요. 기존 영상과 승인 기록은 원래 작업실에서 확인해주세요.</div><div id="legacy-list" class="loading">기존 제작물을 불러오는 중이에요…</div>`;
     try {
       const data = await api("api/legacy");
       if (sequence !== renderSequence) return;
