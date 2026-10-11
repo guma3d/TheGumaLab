@@ -1,3 +1,9 @@
+# 운영 종료 — GumaDdanjit으로 통합
+
+2026-10-11부터 이 폴더는 복구용 보관본입니다. 신규 작업은 `D:\TheGumaLab\GumaDdanjit`의 AGENTS.md 및 해당 모듈 지침을 따릅니다. 기존 서비스 실행·수정 지침은 과거 기록이며 다시 배포하지 않습니다. URL: https://home.guma3d.com/gumaddanjit/
+
+---
+
 # GumaVideoFactory
 
 롱폼 중심의 이야기 콘텐츠와 쇼핑쇼츠를 제작하고 웹에서 버전별 검토하는 작업실.

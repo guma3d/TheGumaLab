@@ -18,6 +18,6 @@ services:
       GUMASHOP_STORAGE: /data/shop
       GUMASHOP_LEGACY: /data/shorts
       GUMATTS_URL: http://host.docker.internal:8088
-      DDANJIT_WORKER: ${DDANJIT_WORKER:-0}
+      DDANJIT_WORKER: ${DDANJIT_WORKER:-1}
     restart: unless-stopped
     stop_grace_period: 60s

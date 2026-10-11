@@ -69,3 +69,31 @@ def test_scoped_urls_and_streaming_range(client):
     assert r.status_code==206 and r.content==b'0123456789'
     assert server.scoped_text('"/storage/a.mp4" "https://example.org/a"', '/gumaddanjit/shorts')=='"/gumaddanjit/shorts/storage/a.mp4" "https://example.org/a"'
     assert server.scoped_text('"/gumaddanjit/story/"','/gumaddanjit/shorts')=='"/gumaddanjit/story/"'
+
+
+def test_browser_headers_remain_ascii():
+    from pathlib import Path
+    for section, header in [('story', 'X-GumaStory'), ('shop', 'X-GumaShop')]:
+        source = (Path(__file__).parents[1]/section/'static/app.js').read_text()
+        assert header in source
+        assert 'X-GumaDdanjit' not in source
+
+
+def test_local_storyboard_render(tmp_path):
+    from PIL import Image
+    from shop.store import Store
+    from shop.render import render_preview
+    import subprocess
+    store=Store(tmp_path)
+    Image.new('RGB',(180,320),'gold').save(tmp_path/'media'/'sample.png')
+    asset=store.save('assets',{'filename':'sample.png','kind':'image'})
+    project=store.save('projects',{'cuts':[{'asset_id':asset['id'],'seconds':0.5}]})
+    job=store.save('jobs',{'status':'queued'})
+    released=[]
+    render_preview(store,job['id'],project,lambda:released.append(True))
+    result=store.get('jobs',job['id'])
+    assert result['status']=='complete'
+    video=store.get('videos',result['video_id'])
+    probe=subprocess.run(['ffprobe','-v','error','-show_entries','stream=width,height','-of','json',str(tmp_path/'media'/video['filename'])],capture_output=True,text=True,check=True)
+    assert json.loads(probe.stdout)['streams'][0]=={'width':720,'height':1280}
+    assert released==[True]

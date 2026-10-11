@@ -12,7 +12,7 @@ if "%~1"=="" (
     echo Usage: pull_update.bat ^<ProjectName^> [container_to_restart]
     echo.
     echo Available projects:
-    echo   GumaTTS  GumaServerStatus  GumaTube  GumaVideoFactory  GumaShop  GumaStory  Index  Nginx
+    echo   GumaTTS  GumaServerStatus  GumaTube  GumaDdanjit  Index  Nginx
     echo.
     exit /b 1
 )
@@ -20,6 +20,13 @@ if "%~1"=="" (
 set PROJECT=%~1
 set CONTAINER=%~2
 set PROJECT_DIR=D:\TheGumaLab\%PROJECT%
+
+for %%R in (GumaVideoFactory GumaStory GumaShop) do (
+    if /I "%PROJECT%"=="%%R" (
+        echo [ERROR] Retired service. Deploy GumaDdanjit instead.
+        exit /b 1
+    )
+)
 
 if "%DOCKER_CONFIG%"=="" (
     where docker-credential-desktop.exe >nul 2>nul

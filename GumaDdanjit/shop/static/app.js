@@ -463,7 +463,7 @@ async function api(path, options = {}) {
     {
       ...options,
       headers: {
-        "X-GumaDdanjit · 프리미엄 쇼핑": "studio",
+        "X-GumaShop": "studio",
         ...(options.body instanceof FormData
           ? {}
           : { "Content-Type": "application/json" }),

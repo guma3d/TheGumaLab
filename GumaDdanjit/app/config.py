@@ -7,7 +7,7 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-PORT = int(os.getenv("PORT", "8085"))
+PORT = int(os.getenv("PORT", "8089"))
 HOST = os.getenv("HOST", "0.0.0.0")
 
 PLANNER_MODEL = os.getenv("PLANNER_MODEL", "gemini-3.8-flash")

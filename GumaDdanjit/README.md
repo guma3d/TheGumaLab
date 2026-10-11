@@ -30,3 +30,10 @@ Index SSO를 서비스 경계에서 검사하고 모든 쓰기는 동일 Origin�
 ## 제작 명령
 
 기존 쇼츠 Python 명령의 `app.core.*` 모듈 경로는 유지되며 실행 컨테이너만 GumaDdanjit_app으로 변경한다. Story 명령은 `scripts/story/`에서 실행한다. 새 제작 디렉터리는 `/data/story/productions/<new-version>`이며 음성은 M5로 생성한다. 과거 제작 스크립트의 기록은 과거 버전을 재작성하는 허가가 아니다.
+
+## 2026-10-11 이관 검증
+
+- 쇼츠 9,968개 / 이야기 990개 / 쇼핑 2,535개: 총 13,493개 파일, 약 15.68GiB. 원본 파일 SHA256 전수 일치, 두 SQLite DB의 무결성·전체 레코드 일치 확인. 증거는 `backups/migration-verified.json`.
+- 인증·CSRF·편집 충돌·모듈 링크·Range 스트리밍·실제 FFmpeg 콘티 렌더링을 포함한 자동 검사 6개 통과. 브라우저에서 세 작업실·통합 보관함·기존 영상 재생 확인.
+- 기존 실행 컨테이너는 종료·제거하고 Compose는 `docker-compose.retired.yml`로 보관한다. 원본 데이터와 이미지는 복구용으로 유지한다. 기존 주소는 새 서비스로 리디렉션한다.
+- 유료 Veo/이미지 생성은 이관 검증에 사용하지 않았다. YouTube 업로드·공개 상태 변경 없음.
