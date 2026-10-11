@@ -85,7 +85,8 @@ def catalog(versions, story_store, shop_store):
                 continue
             pid = a.get('project_id', 'shared')
             counters[pid] = counters.get(pid, 0) + 1
-            number = counters[pid] if kind == 'videos' else a.get('generation_version', a.get('version', a.get('revision', 1)))
+            video_number = re.search(r'-v(\d+)$', a['id'])
+            number = (int(video_number[1]) if video_number else counters[pid]) if kind == 'videos' else a.get('generation_version', a.get('version', a.get('revision', 1)))
             item_group = 'concepts' if kind == 'videos' and a.get('is_preview') else group
             add('shop', item_group, pid, projects.get(pid, {}).get('title', a.get('title', a.get('original_name', '리소스'))),
                 number, a['id'], date=a.get('created_at', ''),
