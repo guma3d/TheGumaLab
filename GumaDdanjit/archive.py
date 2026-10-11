@@ -38,7 +38,7 @@ def catalog(versions, story_store, shop_store):
                           for i, s in enumerate(v.get('storyboard', {}).get('scenes', []))
                           if s.get('image_url')]
                 add('shorts', group, pid, title, v['number'], f'{pid}:{stage}:{v["number"]}',
-                    date=v.get('created_at', ''), images=images,
+                    date=v.get('created_at', ''), images=images if stage == 'Preview' else [],
                     media_url=short_url(v.get('output_url', '')) if stage == 'Video' else '',
                     poster=short_url(v.get('thumbnail_url', '')), media='video',
                     text=v.get('storyboard', {}).get('summary', ''))
@@ -71,6 +71,7 @@ def catalog(versions, story_store, shop_store):
         add('story', group, a.get('script_id') or a.get('parent_id') or a.get('character_id') or 'shared',
             a['title'], a.get('version', a.get('revision', 1)), a['id'], date=a.get('created_at', ''),
             media=a['media'], media_url=PREFIX + f'/story/media/{a["id"]}/original',
+            poster=PREFIX + f'/story/media/{a["poster_id"]}/original' if a.get('poster_id') else '',
             download=PREFIX + f'/story/media/{a["id"]}/download',
             text=a.get('source', ''), parent=a.get('parent_id', ''))
 
