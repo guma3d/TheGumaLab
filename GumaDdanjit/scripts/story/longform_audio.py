@@ -2,7 +2,23 @@
 import hashlib, json, math, subprocess
 from app.core import bgm
 
+def narration_only(source, output):
+    """Export from the clean narration source; never attempt to subtract a mixed BGM."""
+    seconds=float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','default=noprint_wrappers=1:nokey=1',str(source)]))
+    voice=bgm.measure_audio(source,seconds)
+    gain=min(-16-voice['integrated_lufs'],-1.8-voice['true_peak_dbfs'])
+    subprocess.run(['ffmpeg','-v','error','-y','-i',str(source),'-map','0:v','-map','0:a:0','-map_metadata','0','-map_chapters','0','-c:v','copy','-af',f'volume={gain}dB','-c:a','aac','-b:a','192k','-ar','48000','-movflags','+faststart',str(output)],check=True,capture_output=True)
+    final=bgm.measure_audio(output,seconds)
+    assert final['true_peak_dbfs']<=-1, 'Narration exceeds peak ceiling'
+    subprocess.run(['ffmpeg','-v','error','-y','-i',str(source),'-vn','-af',f'volume={gain}dB','-c:a','libmp3lame','-b:a','192k',str(source.parent/'narration-master.mp3')],check=True,capture_output=True)
+    def video_hash(p):return subprocess.check_output(['ffmpeg','-v','error','-i',str(p),'-map','0:v','-c:v','copy','-f','hash','-hash','sha256','-'],text=True).strip()
+    before,after=video_hash(source),video_hash(output)
+    assert before==after
+    return dict(bgm_enabled=False,track=None,music_measurement=None,voice_gain_db=gain,voice_measurement=bgm.measure_audio(source,seconds,gain_db=gain),final_measurement=final,video_stream_sha256=after,video_stream_unchanged=True,clipping_passed=True,ducking=False,mix_revision='narration-only-v1',listened_to_audio=False,audio_review='user_review_on_web')
+
 def mix(source, output, board):
+    if board.get('bgm_enabled',False) is False:
+        return narration_only(source,output)
     path, track=bgm.select(board);track=dict(track)
     track['attribution']=f"{track['title']} — Kevin MacLeod (incompetech.com) · CC BY 4.0 https://creativecommons.org/licenses/by/4.0/ · 발췌·음량 조정"
     seconds=float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','default=noprint_wrappers=1:nokey=1',str(source)]))
