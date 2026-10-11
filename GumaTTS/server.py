@@ -20,9 +20,11 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+from voice_profiles import DESIGN_MODEL, DESIGN_REPO, PROFILES
 
 BASE = Path(__file__).parent
 MODELS = {
+    DESIGN_MODEL: {'name': 'Qwen 1.7B · VoiceDesign', 'repo': DESIGN_REPO, 'local': True},
     'qwen-1.7b': {'name': 'Qwen 1.7B · 품질 비교', 'repo': 'Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice', 'local': True},
     'qwen-0.6b': {'name': 'Qwen 0.6B · 속도 비교', 'repo': 'Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice', 'local': True},
     'gemini-flash': {'name': 'Gemini Flash · 기존 Zephyr', 'repo': 'gemini-3.8-flash-tts', 'local': False},
@@ -35,7 +37,7 @@ class Job(BaseModel):
     title: str = Field(default='음성 테스트', min_length=1, max_length=120)
     project: Literal['test', 'story', 'food', 'tech', 'household', 'video'] = 'test'
     text: str = Field(min_length=1, max_length=2000)
-    model: Literal['qwen-1.7b', 'qwen-0.6b', 'gemini-flash', 'gemini-lite'] = 'qwen-1.7b'
+    model: Literal['qwen-design-1.7b', 'qwen-1.7b', 'qwen-0.6b', 'gemini-flash', 'gemini-lite'] = 'qwen-1.7b'
     voice: str = 'Sohee'
     style: str = Field(default=STYLE, max_length=1500)
     seed: int = Field(default=42, ge=0, le=2147483647)
@@ -43,7 +45,9 @@ class Job(BaseModel):
 
     @model_validator(mode='after')
     def valid_voice(self):
-        if self.model.startswith('qwen') and self.voice != 'Sohee':
+        if self.model == DESIGN_MODEL and self.voice not in PROFILES:
+            raise ValueError('VoiceDesign은 M1–M5 또는 F1–F5 후보를 선택하세요.')
+        if self.model in ('qwen-1.7b', 'qwen-0.6b') and self.voice != 'Sohee':
             raise ValueError('로컬 비교 음성은 Sohee를 사용합니다.')
         if self.model.startswith('gemini') and (self.voice not in ('Zephyr', 'Achird') or not self.allow_cloud):
             raise ValueError('외부 API는 음성과 비용 발생 가능성을 명시해야 합니다.')
@@ -83,6 +87,9 @@ class Store:
         data = job.model_dump()
         audio_fields = {k:data[k] for k in ('text', 'model', 'voice', 'style', 'seed')}
         audio_fields['engine_version'] = 1
+        if data['model'] == DESIGN_MODEL:
+            from voice_profiles import design_instruction
+            audio_fields['design_instruction'] = design_instruction(data['voice'], data['style'])
         fingerprint = hashlib.sha256(json.dumps(audio_fields, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
         with self.db() as db:
             db.execute('BEGIN IMMEDIATE')
@@ -195,7 +202,11 @@ def create_app(root=None, start_worker=True):
     def state():
         with store.db() as db:
             ids = [r['id'] for r in db.execute('SELECT id FROM jobs ORDER BY created DESC LIMIT 100')]
-        return {'models': MODELS, 'jobs': [store.get(i) for i in ids], 'default_style': STYLE, 'local_voice_status': '사용자 청취 검수 전 · 기본 목소리 미확정'}
+        comparison_file = store.root / 'voice-comparison-20261011.json'
+        comparison = json.loads(comparison_file.read_text(encoding='utf-8')) if comparison_file.exists() else []
+        return {'models': MODELS, 'jobs': [store.get(i) for i in ids], 'voice_profiles': PROFILES,
+                'voice_comparison': [store.get(item['id']) for item in comparison],
+                'default_style': STYLE, 'local_voice_status': '사용자 청취 검수 전 · 기본 목소리 미확정'}
 
     @app.post('/api/jobs', status_code=202)
     def create(job: Job): return store.create(job)

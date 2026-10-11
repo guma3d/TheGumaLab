@@ -32,7 +32,7 @@ NVIDIA GPU 지원 Docker Desktop/WSL2 필요. 첫 요청 때 공식 Hugging Face
 
 ## API
 
-- `POST /api/jobs`: text, model(qwen-1.7b/qwen-0.6b/gemini-flash/gemini-lite), voice, style, project, title. 외부 모델에는 allow_cloud=true 필요.
+- `POST /api/jobs`: text, model(qwen-design-1.7b/qwen-1.7b/qwen-0.6b/gemini-flash/gemini-lite), voice, style, project, title. 외부 모델에는 allow_cloud=true 필요.
 - `GET /api/jobs/<id>`: 상태와 생성 기록.
 - `GET /media/<id>/mp3|wav|manifest`: 인증된 다운로드.
 - `POST /api/jobs/<id>/review`: pending/approved/changes + note. 해당 음성만 평가하며 채널 기본 목소리나 YouTube 승인을 변경하지 않는다.
@@ -53,3 +53,10 @@ SSO/CSRF, 외부 API 명시 선택, 원본 덮어쓰기 방지, 중복 요청, �
 
 
 추가로 1.7B 이야기 원고의 끝 인사 추가 의심을 자동 전사에서 발견해 원고 준수 지시를 보강했다. 새 비교본 `49a4d8810d33434bb6313527f8cf6083`은 20.184초, 생성 25.55초, GPU 최대 4589MB이며 자동 전사에서 문장부호·공백을 제외한 원고가 일치했다. 이 지시를 로컬 기본 스타일에 반영했다. 자동 전사는 실제 발음·자연스러움 청취 승인을 대체하지 않는다. 비교 샘플은 총 5개이고 개별 자동 검사 메모는 웹에 표시한다. 기존 원고 및 초기 실패 기록은 보존한다.
+
+
+## 남녀 목소리 설계 비교 — 2026-10-11
+
+사용자는 기존 1.7B 시험 음성을 긍정적으로 평가했으며, 더 자연스러운 한국어 말투를 직접 고르기 위해 남성 5종·여성 5종 비교를 요청했다. `Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign`을 추가하고 `/gumatts/#voices`에서 동일 원고·동일 loudnorm 기준의 후보를 비교한다. M1–M5/F1–F5 설계 문구는 `voice_profiles.py`, 비교 작업 목록은 `storage/voice-comparison-20261011.json`에 보존한다. 지정한 성별·톤은 설계 목표이며 실제 자연스러움을 청취 승인한 것으로 간주하지 않는다.
+
+API 모델 `qwen-design-1.7b`는 voice=M1–M5 또는 F1–F5를 사용한다. VoiceDesign은 `generate_voice_design`을 호출하며 CustomVoice의 Sohee와 구분한다. 전체 설계 지시·시드·모델 revision을 결과에 보존한다. 후보 표시 버튼은 해당 샘플의 청취 메모에만 저장하고 채널 기본 음성을 바꾸지 않는다. 같은 설명만으로 모든 원고에서 음색이 완전히 고정된다고 보장하지 않는다. 최종 선택 후 장문·문단 간 일관성을 별도 검증한다. 기존 Sohee/Zephyr와 결과물은 보존한다.
