@@ -28,7 +28,7 @@ MODELS = {
     'gemini-flash': {'name': 'Gemini Flash · 기존 Zephyr', 'repo': 'gemini-3.8-flash-tts', 'local': False},
     'gemini-lite': {'name': 'Gemini Lite · 외부 API', 'repo': 'gemini-3.8-flash-lite-tts', 'local': False},
 }
-STYLE = '자연스러운 한국어로 편안하게 이야기해주세요. 가까운 사람에게 경험을 들려주듯 따뜻하고 담백하게, 과장된 감정이나 뉴스 앵커 같은 말투 없이 읽어주세요. 문장 사이에는 짧게 쉬고, 주어진 내용만 정확히 읽어주세요.'
+STYLE = '편안하고 자연스러운 한국어 대화체로 읽으세요. 가까운 사람에게 이야기를 들려주듯 담백하고 따뜻하게, 뉴스 앵커 같은 말투나 과장된 연기 없이 적당한 속도로 말하세요. 입력 원고의 단어만 읽고, 시작과 끝에 인사나 감탄사, 설명을 절대 추가하지 마세요. 마지막 문장을 읽은 즉시 끝내세요. 감사합니다, 음, 네 같은 말도 원고에 없으면 발화하지 마세요.'
 
 class Job(BaseModel):
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
