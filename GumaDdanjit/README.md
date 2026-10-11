@@ -5,10 +5,12 @@
 - 홈서버 경로: `D:\TheGumaLab\GumaDdanjit`
 - 컨테이너: `GumaDdanjit_app`, HTTP 8089, 단일 FastAPI/ASGI 프로세스.
 - GumaShop(쇼핑 쇼츠) `/shorts/`, GumaStory(출퇴근 이야기·롱폼) `/story/`, GumaX(실험적인 고퀄 영상) `/shop/`을 공통 메뉴·검색·결과물 보관함으로 통합한다. 세 개의 기존 서버로 프록시하는 구조가 아니라 모듈을 한 실행 환경에서 구동한다.
-- 독립적인 기존 ID·버전·검수 이력은 유지한다. 데이터는 `storage/{shorts,story,shop}`에 보존한다. 영상/대본/인물/상품/콘티 편집은 각 제작 모듈, 모든 프로젝트·영상·음성 검색과 재생은 통합 홈에서 제공한다.
+- 독립적인 기존 ID·버전·검수 이력은 유지한다. 데이터는 `storage/{shorts,story,shop}`에 보존한다. 웹은 공통 디자인의 읽기 전용 제작 보관함으로 리소스·이미지 콘셉트·완성 영상을 버전별로 보여준다. 대본·출처·참조 음성도 리소스에 포함한다. 피드백·수정 요청·제작/공개 승인은 Codex 대화로 받으며 웹 입력 기능은 제공하지 않는다.
 - 모든 음성은 별도 공통 추론 서비스 GumaTTS를 사용한다. 쇼핑쇼츠 고정 참조 F4-dates-v1 / 이야기쇼츠 F4 / Story·롱폼 M5. 유료 API 자동 대체 없음.
 
 ## 실행
+
+웹 UI는 `static/archive.{html,css,js}`, 읽기 전용 데이터 정규화는 `archive.py`를 사용한다. `/api/archive`는 기존 저장소를 수정하지 않고 세 공간의 버전·미디어 링크를 반환한다. 기존 쇼츠 아이템·Story 영상/대본 링크도 같은 화면에서 열리며 원본 미디어·공개 상품 모음·제작용 API·SSO 경계는 유지한다. 이전 피드백 기록은 보존하지만 피드백 제출 API는 등록하지 않는다.
 
 ```powershell
 cd D:\TheGumaLab\GumaDdanjit

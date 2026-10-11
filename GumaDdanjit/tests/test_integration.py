@@ -37,17 +37,38 @@ def test_pages_routes_and_unified_library(client):
     for section in ['shorts','story','shop']:
         r=client.get('/'+section+'/')
         assert r.status_code==200,r.text[:200]
-        assert '통합 제작실' in r.text and '/gumaddanjit/static/shell.css' in r.text
+        assert '통합 제작실' in r.text and '/gumaddanjit/static/archive.css' in r.text
+        assert '리소스' in r.text and '이미지 콘셉트' in r.text and '완성 영상' in r.text
+        assert '<textarea' not in r.text
     assert client.get('/story/api/state').status_code==200
     assert client.get('/shop/api/state').status_code==200
     idea=server.versions.create({'category':'food','subject':'통합 회귀 테스트'},'2026-10-11')
     assert client.get('/shorts/ideas/'+idea['id']).status_code==200
     html=client.get('/shorts/').text
     assert 'href="/?category=' not in html
-    assert '/gumaddanjit/shorts/ideas/' in html
+    assert '/gumaddanjit/shorts/' in html
     library=client.get('/api/library').json()
     assert any(x['id']=='shorts:'+idea['id'] for x in library['projects'])
     assert any(x['section']=='story' for x in library['projects'])
+
+
+def test_archive_preserves_versions_and_removes_web_feedback(client):
+    idea = server.versions.create({'category': 'food', 'subject': '버전 보존'}, '2026-10-12')
+    for number in (1, 2):
+        folder = server.versions.version_dir(idea['id'], 'Video', number)
+        folder.mkdir(parents=True, exist_ok=True)
+        server.versions.write_json(folder/'version.json', {
+            'number': number, 'status': 'complete',
+            'output_url': f'/storage/products/{idea["id"]}/Video/v{number:04d}/final.mp4'})
+    data = client.get('/api/archive').json()['items']
+    videos = [x for x in data if x['project'] == idea['id'] and x['group'] == 'videos']
+    assert {x['version'] for x in videos} == {1, 2}
+    assert all(x['media_url'].startswith('/gumaddanjit/shorts/storage/') for x in videos)
+    assert all(x['group'] in ('resources', 'concepts', 'videos') for x in data)
+    for child in (server.shorts, server.shop):
+        assert not any('feedback' in getattr(r, 'path', '') for r in child.routes)
+    for path in ['/shorts/ideas/'+idea['id'], '/story/watch/example', '/story/scripts/promotion/1']:
+        assert 'archive.js' in client.get(path).text
 
 def test_write_conflicts_and_cross_site_fail_closed(client):
     assert client.post('/shop/api/products',json={},headers={'Origin':'https://evil.example','X-GumaShop':'studio'}).status_code==403

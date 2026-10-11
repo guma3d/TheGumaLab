@@ -22,6 +22,16 @@ from app.main import app as shorts
 from app.core import versions
 from story.main import app as story
 from shop.main import app as shop
+from archive import catalog
+
+# Feedback is delivered through Codex. Keep historical records, remove web endpoints.
+for child in (shorts, shop):
+    child.router.routes[:] = [route for route in child.router.routes
+                             if 'feedback' not in getattr(route, 'path', '')]
+
+
+def archive_page():
+    return HTMLResponse((BASE / 'static/archive.html').read_text(encoding='utf-8'))
 
 NAV = '''<link rel="stylesheet" href="/gumaddanjit/static/shell.css"><nav class="dd-nav" aria-label="통합 제작실"><a href="/gumaddanjit/">GumaDdanjit</a><a href="/gumaddanjit/shorts/">GumaShop</a><a href="/gumaddanjit/story/">GumaStory</a><a href="/gumaddanjit/shop/">GumaX</a><a href="/gumaddanjit/#library">전체 보관함</a><a href="/gumatts/">음성 작업실</a></nav>'''
 
@@ -40,6 +50,10 @@ class Module:
         path = scope['path']
         if mount and path.startswith(mount): path = path[len(mount):] or '/'
         local.update(path=path, raw_path=path.encode(), root_path='')
+        if scope['method'] in ('GET', 'HEAD') and (path == '/' or
+                (self.section == 'shorts' and path.startswith(('/ideas/', '/legacy/'))) or
+                (self.section == 'story' and path.startswith(('/watch/', '/scripts/')))):
+            return await archive_page()(scope, receive, send)
         prefix = PREFIX+'/'+self.section
         start = None
         chunks = []
@@ -116,7 +130,12 @@ def health():
     return {'status':'ok','service':'GumaDdanjit','modules':['shorts','story','shop']}
 
 @app.get('/')
-def index(): return HTMLResponse((BASE/'static/index.html').read_text(encoding='utf-8'))
+def index(): return archive_page()
+
+
+@app.get('/api/archive')
+def archive_catalog():
+    return catalog(versions, story.state.store, shop.state.store)
 
 @app.get('/api/library')
 def library():
