@@ -33,6 +33,7 @@ MODELS = {
     'gemini-lite': {'name': 'Gemini Lite · 외부 API', 'repo': 'gemini-3.8-flash-lite-tts', 'local': False},
 }
 STYLE = '편안하고 자연스러운 한국어 대화체로 읽으세요. 가까운 사람에게 이야기를 들려주듯 담백하고 따뜻하게, 뉴스 앵커 같은 말투나 과장된 연기 없이 적당한 속도로 말하세요. 입력 원고의 단어만 읽고, 시작과 끝에 인사나 감탄사, 설명을 절대 추가하지 마세요. 마지막 문장을 읽은 즉시 끝내세요. 감사합니다, 음, 네 같은 말도 원고에 없으면 발화하지 마세요.'
+STORY_STYLE = 'Speak in natural native Korean as a bright, friendly adult female food host. Warm smiling conversational voice, lively but gentle, slightly brisk pace, short natural pauses. Not shrill, breathy, theatrical or announcer-like. Read exactly the supplied words, no additions, no laughter, no music.'
 
 def same_local_batch(first, request):
     return first['model'] in (CLONE_MODEL, DESIGN_MODEL, 'qwen-1.7b', 'qwen-0.6b') and all(first[k]==request[k] for k in ('model','voice','style'))
@@ -53,9 +54,10 @@ class Job(BaseModel):
     def defaults(cls, data):
         if not isinstance(data, dict): return data
         data = dict(data)
-        model = data.setdefault('model', CLONE_MODEL if data.get('project') in ('food','story','longform') else DESIGN_MODEL)
+        model = data.setdefault('model', 'gemini-flash' if data.get('project') in ('story','longform') else (CLONE_MODEL if data.get('project') == 'food' else DESIGN_MODEL))
         if not isinstance(model, str): return data
-        if 'style' not in data and model not in (DESIGN_MODEL, CLONE_MODEL): data['style'] = STYLE
+        if 'style' not in data and model not in (DESIGN_MODEL, CLONE_MODEL):
+            data['style'] = STORY_STYLE if data.get('project') in ('story','longform') else STYLE
         if 'voice' not in data:
             data['voice'] = ('M5' if data.get('project') in ('story', 'longform') else 'F4') if model == DESIGN_MODEL else ('Sohee' if model.startswith('qwen') else 'Zephyr')
             if model == CLONE_MODEL: data['voice'] = STORY_VOICE if data.get('project') in ('story','longform') else FOOD_VOICE
@@ -72,10 +74,10 @@ class Job(BaseModel):
         if self.model.startswith('gemini') and (self.voice not in ('Zephyr', 'Achird') or not self.allow_cloud):
             raise ValueError('외부 API는 음성과 비용 발생 가능성을 명시해야 합니다.')
         if self.project != 'test':
-            expected = FOOD_VOICE if self.project == 'food' else (STORY_VOICE if self.project in ('story', 'longform') else 'F4')
-            expected_model = CLONE_MODEL if self.project in ('food','story','longform') else DESIGN_MODEL
+            expected = 'Zephyr' if self.project in ('story','longform') else (FOOD_VOICE if self.project == 'food' else 'F4')
+            expected_model = 'gemini-flash' if self.project in ('story','longform') else (CLONE_MODEL if self.project == 'food' else DESIGN_MODEL)
             if self.model != expected_model or self.voice != expected:
-                raise ValueError('Food는 친근하고 조금 더 경쾌한 고정 화자 F1-bright-v2, 다른 쇼츠 F4, Story·롱폼 M5-fixed-v1 기준음성을 사용합니다.')
+                raise ValueError('Story·롱폼은 Gemini Flash / Zephyr, 다른 공간은 기존 로컬 음성 기준을 사용합니다.')
         return self
 
 class Review(BaseModel):
@@ -254,7 +256,7 @@ def create_app(root=None, start_worker=True):
         comparison = json.loads(comparison_file.read_text(encoding='utf-8')) if comparison_file.exists() else []
         return {'models': MODELS, 'jobs': [store.get(i) for i in ids], 'voice_profiles': PROFILES,
                 'voice_comparison': [store.get(item['id']) for item in comparison],
-                'default_style': '', 'production_voices': {'model': DESIGN_MODEL, 'shorts':'F4', 'story':'M5'}, 'local_voice_status': '사용자 확정 · 쇼츠 F4 / Story·롱폼 M5'}
+                'default_style': '', 'production_voices': {'model': DESIGN_MODEL, 'shorts':'F4', 'story':'Zephyr', 'story_model':'gemini-flash'}, 'local_voice_status': '쇼츠 로컬 F4 / Story·롱폼 Gemini Zephyr'}
 
     @app.post('/api/jobs', status_code=202)
     def create(job: Job): return store.create(job)

@@ -20,13 +20,13 @@ def test_download_hashes_and_provenance(tmp_path, monkeypatch):
         return io.BytesIO(json.dumps({'id':'test-job','status':'ready','result':result}).encode())
     with patch('urllib.request.urlopen',side_effect=response):
         out=tmp_path/'voice.mp3'
-        data=client.synthesize('테스트',out)
+        data=client.synthesize('테스트',out,model='qwen-clone-1.7b',voice='M5-fixed-v1',project='test')
         assert data['job_id']=='test-job'
         assert out.read_bytes()==mp3
         assert out.with_suffix('.wav').read_bytes()==wav
         assert json.loads(out.with_suffix('.tts.json').read_text())['model']=='qwen-clone-1.7b'
         out.write_bytes(b'original-do-not-overwrite')
-        with pytest.raises(FileExistsError):client.synthesize('변경 원고',out)
+        with pytest.raises(FileExistsError):client.synthesize('변경 원고',out,model='qwen-clone-1.7b',voice='M5-fixed-v1',project='test')
         assert out.read_bytes()==b'original-do-not-overwrite'
 
 def test_failed_service_does_not_fallback(tmp_path, monkeypatch):

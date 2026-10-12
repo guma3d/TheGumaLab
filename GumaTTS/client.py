@@ -23,7 +23,7 @@ def request(path, data=None):
             time.sleep(attempt+1)
 
 def submit(text, *, model=None, voice=None, style=None, project='story', title='영상 내레이션', allow_cloud=False, seed=42):
-    model = model or ('qwen-clone-1.7b' if project in ('food','story','longform') else 'qwen-design-1.7b')
+    model = model or ('gemini-flash' if project in ('story','longform') else ('qwen-clone-1.7b' if project == 'food' else 'qwen-design-1.7b'))
     if voice is None:
         voice = ('M5' if project in ('story', 'longform') else 'F4') if model == 'qwen-design-1.7b' else ('Sohee' if model.startswith('qwen') else 'Zephyr')
         if model == 'qwen-clone-1.7b': voice = 'M5-fixed-v1' if project in ('story','longform') else 'F1-bright-v2'

@@ -33,13 +33,13 @@ Food·Tech·Living 아이템 조사는 [구마의 딴짓 추천 기준](shopping
 | 대상 | 신규 음성 | 생성 단위 | BGM / 자막 |
 | --- | --- | --- | --- |
 | Food·Tech·Living | Qwen Base qwen-clone-1.7b, F4-dates-v1 고정 참조 | 전체 대사 한 번, 연속 마스터 | 기존 5곡 중 무작위 1곡, 고정 음량 / Maple Bold 팝 |
-| Story 롱폼 | Qwen Base qwen-clone-1.7b, M5-fixed-v1 고정 참조 | 컷별, 동일 대사·설정·참조 해시의 정상 컷 재사용 | 기본 음악 없음 / Pretendard 얇은 외곽선, 최대 2줄, 숫자 표시 |
+| Story 롱폼 | Gemini Flash TTS / Zephyr (로컬 사용 안 함) | 컷별, 동일 대사·설정·참조 해시의 정상 컷 재사용 | 기본 음악 없음 / Pretendard 얇은 외곽선, 최대 2줄, 숫자 표시 |
 | 파생 이야기쇼츠 | 선택 여성 F4, M5 원본을 그대로 쓰지 않고 새 낭독 | 해당 편집본의 승인 대본·설정 기록 | 쇼핑용 6~8컷·구매 CTA 틀을 강제하지 않음 |
 | X 신규 내레이션 | 선택 여성 F4, GumaTTS 경유 | 작품의 승인된 제작 계획에 따름 | 작품별 BGM·효과음 / Maple Bold 기준 |
 
-쇼핑의 F4 단일 생성과 Story의 M5 컷별 생성은 혼합하지 않는다. 이야기쇼츠·X에 쇼핑 전용 참조/생성 단위를 임의 확대하지 않는다. X 몽쉘 v8/v9의 기존 Zephyr는 변경 없는 음성 보존 지시의 예외이며 새 프로젝트 기본값이 아니다.
+쇼핑의 F4 단일 생성과 Story의 Gemini Zephyr 구간별 생성은 혼합하지 않는다. 이야기쇼츠·X에 쇼핑 전용 참조/생성 단위를 임의 확대하지 않는다. X 몽쉘 v8/v9의 기존 Zephyr는 변경 없는 음성 보존 지시의 예외이며 새 프로젝트 기본값이 아니다.
 
-Sohee CustomVoice는 Story의 약 5분 비교 시험이다. 그 v2 음성을 대상으로 한 무음·속도 편집 v3 요청도 시험 범위다. 명시적 채택 전까지 기본 M5를 바꾸지 않는다. VoiceDesign은 선정 참조의 출발점·비교 기능이며 쇼핑/Story의 매 컷 신규 화자 설계 기본값이 아니다.
+Sohee CustomVoice는 Story의 약 5분 비교 시험이다. 그 v2 음성을 대상으로 한 무음·속도 편집 v3 요청도 시험 범위다. 2026-10-12 최신 채택으로 Story·롱폼 기본은 Gemini Zephyr다. VoiceDesign은 선정 참조의 출발점·비교 기능이며 쇼핑/Story의 매 컷 신규 화자 설계 기본값이 아니다.
 
 Tech의 imagegen+일반 편집 합성, 컷 내부 카메라 고정 및 Blender/Veo/씨댄스 금지는 **Tech 전용**이다. Food·Living·Story·X에 확대하지 않는다. X의 연속 애니메이션과 Story의 새 상황 이미지 기준은 각 문서를 따른다.
 

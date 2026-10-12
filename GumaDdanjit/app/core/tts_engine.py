@@ -19,10 +19,10 @@ def _gateway(text, output_path, voice, model=None, project='video'):
     spec = importlib.util.spec_from_file_location('gumatts_client', source)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    expected = FOOD_VOICE if project == 'food' else ('M5' if project in ('story', 'longform') else 'F4')
-    expected_model = 'qwen-clone-1.7b' if project == 'food' else 'qwen-design-1.7b'
+    expected = 'Zephyr' if project in ('story', 'longform') else (FOOD_VOICE if project == 'food' else 'F4')
+    expected_model = 'gemini-flash' if project in ('story', 'longform') else ('qwen-clone-1.7b' if project == 'food' else 'qwen-design-1.7b')
     if project != 'test' and (voice != expected or model not in (None, expected_model)):
-        raise ValueError('Food는 F1-bright-v2, 다른 쇼츠 F4 / Story·롱폼 M5입니다.')
+        raise ValueError('Story·롱폼은 Gemini Flash / Zephyr, 다른 공간은 기존 로컬 음성 기준을 사용합니다.')
     if voice == FOOD_VOICE:
         model = model or 'qwen-clone-1.7b'
         style = ''

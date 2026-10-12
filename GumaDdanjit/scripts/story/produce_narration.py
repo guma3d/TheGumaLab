@@ -7,12 +7,12 @@ from pathlib import Path
 from app.core.tts_engine import synthesize_speech
 
 root = Path(sys.argv[1])
-model = sys.argv[2] if len(sys.argv) > 2 else 'qwen-design-1.7b'
+model = sys.argv[2] if len(sys.argv) > 2 else 'gemini-flash'
 aliases = {'gemini-3.8-flash-tts':'gemini-flash', 'gemini-3.8-flash-lite-tts':'gemini-lite'}
 model = aliases.get(model, model)
-if model != 'qwen-design-1.7b':
-    raise ValueError('GumaTTS 모델을 지정하세요.')
-voice = 'M5'
+if model != 'gemini-flash':
+    raise ValueError('Story는 Gemini Flash / Zephyr를 사용합니다. 한도 부족 시 다른 모델로 자동 대체하지 않습니다.')
+voice = 'Zephyr'
 script = json.loads((root/'script.json').read_text(encoding='utf-8'))
 (root/'voice').mkdir(exist_ok=True)
 jobs = []
