@@ -44,7 +44,7 @@ def extract(manifest, service_root, output):
         print(json.dumps(dict(aligned=cut['index'], words=len(words))), flush=True)
 
 
-def acoustic_words(row, audio, relative_drop_db=35):
+def energy_activity(audio, relative_drop_db=35):
     import numpy as np
     import soundfile as sf
     x, sr = sf.read(audio)
@@ -55,6 +55,11 @@ def acoustic_words(row, audio, relative_drop_db=35):
     db = 20 * np.log10(rms + 1e-10)
     threshold = max(-48, float(db.max()) - relative_drop_db)
     active = db > threshold
+    return active, threshold, len(x) / sr
+
+
+def acoustic_words(row, audio, relative_drop_db=35):
+    active, threshold, audio_duration = energy_activity(audio, relative_drop_db)
     # Energy activity is a proxy, not phonetic forced alignment. Keep its
     # threshold and sensitivity explicit, and do not label pauses as vowels.
     def longest_quiet(values):
@@ -75,7 +80,7 @@ def acoustic_words(row, audio, relative_drop_db=35):
             longest_quiet_seconds=longest_quiet(samples),
             quiet_seconds=round(len(samples) * .01 - active_time, 3)))
     result['energy_threshold_dbfs'] = round(threshold, 3)
-    result['duration_seconds'] = len(x) / sr
+    result['duration_seconds'] = audio_duration
     result['pauses'] = []
     # Find actual quiet runs, including quiet contained in an ASR word span.
     start = None
@@ -163,11 +168,24 @@ def evaluate(row, calibration):
                      'No candidate does not certify naturalness; listening still required'])
 
 
+def sentence_screen_summary(root):
+    path=root/'sentence-prosody-review.json'
+    if not path.exists():
+        return dict(status='not_run',naturalness_passed=False,human_listening_completed=False)
+    report=json.loads(path.read_text())
+    video=root/'final.mp4'
+    if not video.exists() or hashlib.sha256(video.read_bytes()).hexdigest()!=report['source']['video_sha256']:
+        raise ValueError('Sentence review belongs to another final video')
+    return dict(report['summary'],status='screened_pending_listening',
+        revision=report['revision'],report_sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+
+
 def production_summary(root):
     """A missing or stale timing report cannot silently become a quality pass."""
     path = root/'prosody-review.json'
     if not path.exists():
-        return dict(status='not_run', naturalness_passed=False, human_listening_completed=False)
+        return dict(status='not_run', naturalness_passed=False, human_listening_completed=False,
+            sentence_screen=sentence_screen_summary(root))
     report = json.loads(path.read_text())
     manifest_path = root/'voice-manifest.json'
     manifest = json.loads(manifest_path.read_text())
@@ -186,6 +204,7 @@ def production_summary(root):
         checked_cuts=len(manifest), elongation_candidates=[c['index'] for c in findings if c['elongation_candidate']],
         timing_review_candidates=[c['index'] for c in findings if c['findings']],
         report_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+        sentence_screen=sentence_screen_summary(root),
         naturalness_passed=False, human_listening_completed=False)
 
 
