@@ -1,5 +1,6 @@
 """Verify every local audio cut, numeric caption, encoded scene and logo frame."""
 import array,hashlib,json,math,subprocess,sys,wave
+from prosody_review import production_summary
 from pathlib import Path
 from PIL import Image
 from app.core import bgm
@@ -89,5 +90,6 @@ review.update(video_sha256=sha(movie),script_sha256=sha(root/'script.json'),
     logo=dict(all_frames_checked=count,failed_frames=len(bad),worst_mae=worst),
     technical_review=dict(width=1920,height=1080,fps=30,chapter_count=12,paragraph_count=114,script_text_verified=True,encoded_contact_sheets=len(list(folder.glob('sheet-*.jpg'))),audio_cuts_checked=len(audio_checks),no_bgm_verified=True,production_overlays_removed=True,caption_strip_count=len(midpoints)),
     visual_review='pending encoded contact-sheet inspection',human_listening_completed=False)
+review['prosody_review'] = production_summary(root)
 (root/'production-review.json').write_text(json.dumps(review,ensure_ascii=False,indent=2),encoding='utf-8')
 print(json.dumps(review['technical_review']),flush=True)
