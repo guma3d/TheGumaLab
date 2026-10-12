@@ -4,10 +4,10 @@ import hashlib
 import json
 from pathlib import Path
 from prosody_review import acoustic_words, energy_activity, calibrate, evaluate, syllables
-from sentence_pacing import sentence_units, calibrate_sentences, evaluate_sentence
+from sentence_pacing import sentence_units, calibrate_sentences, evaluate_sentence, matched_word_indices
 
 
-def run(root):
+def run(root,calibration_from=None):
     from faster_whisper import WhisperModel
     manifest=json.loads((root/'manifest.json').read_text())
     timeline=json.loads((root/'timeline.json').read_text())
@@ -36,6 +36,8 @@ def run(root):
         activity,_,_=energy_activity(audio)
         result=acoustic_words(row,audio)
         result['sentences']=sentence_units(cut['text'],result['words'],activity)
+        matched=set(matched_word_indices(result['sentences']))
+        result['unmatched_asr_words']=[w for i,w in enumerate(result['words']) if i not in matched]
         result['timeline_start']=timings[cut['index']]['start']
         measured.append(result)
         print(json.dumps(dict(aligned=cut['index'],sentences=len(result['sentences']))),flush=True)
@@ -64,9 +66,13 @@ def run(root):
             unit['preceding_pause_seconds']=round(longest*.01,3)
             unit['flow_seconds_per_syllable']=(unit['elapsed_seconds']+gap)/unit['syllables']
             previous_end=unit['global_end']
-    sentence_calibration=calibrate_sentences(measured)
-    word_calibration=calibrate(measured,{6,10})
-    word_reviews=[evaluate(row,word_calibration) for row in measured]
+    if calibration_from:
+        frozen=json.loads(calibration_from.read_text())
+        sentence_calibration=frozen['sentence_calibration'];word_calibration=frozen['word_calibration']
+    else:
+        sentence_calibration=calibrate_sentences(measured)
+        word_calibration=calibrate(measured,{6,10})
+    word_reviews=[evaluate(dict(row,words=[row['words'][i] for i in matched_word_indices(row['sentences'])]),word_calibration) for row in measured]
     sentences=[]
     for row,word_review in zip(measured,word_reviews):
         for unit in row['sentences']:
@@ -91,6 +97,7 @@ def run(root):
         sentences_per_finding={t:sum(any(f['type']==t for f in s['findings']) for s in detected) for t in types},
         human_listening_completed=False,naturalness_passed=False)
     report=dict(revision='sentence-rhythm-screen-v2',source=source,
+        calibration_source_sha256=hashlib.sha256(calibration_from.read_bytes()).hexdigest() if calibration_from else None,
         sentence_calibration=sentence_calibration,word_calibration=word_calibration,
         summary=summary,measurements=measured,sentences=sentences,word_reviews=word_reviews,
         limitations=['Final decoded audio analyzed; ASR boundaries approximate',
@@ -102,5 +109,5 @@ def run(root):
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('root',type=Path)
-    run(parser.parse_args().root)
+    parser=argparse.ArgumentParser();parser.add_argument('root',type=Path);parser.add_argument('--calibration-from',type=Path)
+    args=parser.parse_args();run(args.root,args.calibration_from)

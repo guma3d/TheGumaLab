@@ -10,6 +10,10 @@ def canonical(text):
     return re.sub(r'[^가-힣a-z0-9%]', '', display_text(text).lower())
 
 
+def matched_word_indices(units):
+    return sorted({i for s in units if s['status']=='aligned' for i in s['word_indices']})
+
+
 def sentence_units(expected, words, active):
     texts = [p.strip() for p in re.findall(r'[^.!?。！？]+[.!?。！？]*', expected) if p.strip()]
     actual = ''.join(canonical(w['text']) for w in words)

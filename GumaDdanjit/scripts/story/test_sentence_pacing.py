@@ -3,7 +3,7 @@ import json
 import tempfile
 from pathlib import Path
 from prosody_review import sentence_screen_summary
-from sentence_pacing import sentence_units, evaluate_sentence, calibrate_sentences
+from sentence_pacing import sentence_units, evaluate_sentence, calibrate_sentences, matched_word_indices
 
 CAL=dict(minimum_syllables=8,active_median=.15,active_threshold=.195,
     elapsed_median=.17,elapsed_threshold=.23,pause_fraction_threshold=.25,
@@ -11,6 +11,11 @@ CAL=dict(minimum_syllables=8,active_median=.15,active_threshold=.195,
 
 
 class SentencePacingTests(unittest.TestCase):
+    def test_asr_hallucination_is_not_a_fast_pace_reference(self):
+        words=[dict(text='고객이',start=0,end=.5),dict(text='원하지',start=.5,end=1),
+            dict(text='않습니다.',start=1,end=1.5),dict(text='감사합니다.',start=1.5,end=1.7)]
+        units=sentence_units('고객이 원하지 않습니다.',words,[True]*170)
+        self.assertEqual(matched_word_indices(units),[0,1,2])
     def test_numeric_asr_uses_spoken_syllables(self):
         words=[dict(text='2026년',start=0,end=1),dict(text='조사입니다.',start=1,end=2)]
         unit=sentence_units('이천이십육년 조사입니다.',words,[True]*200)[0]
