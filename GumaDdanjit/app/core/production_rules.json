@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-12.12-unified-guidance-scoped",
+  "revision": "2026-10-12.13-shorts-thumbnail-crop-safety",
   "rules": [
     {
       "id": "shopping-f4-single-pass-approved",
@@ -180,6 +180,11 @@
       "id": "unified-guidance-and-execution-scope",
       "category": "all",
       "instruction": "Read docs/guide-index.md plus target module AGENTS and latest exact-version handoff before work. Legacy F1-bright-v2/per-cut shopping renderer is not the approved new shopping path; use docs/shopping-voice.md and verified single-pass handoff tools. This manifest is app prompt/snapshot context, not automatic enforcement for Story/X. Preserve current user-approved scope, originals and concurrent work."
+    },
+    {
+      "id": "shorts-thumbnail-crop-safety",
+      "category": "all",
+      "instruction": "All future Shorts thumbnails (shopping, story_shorts and GumaX Shorts) must follow docs/shorts-thumbnail-safety.md. Place complete key text including outlines/shadows inside the common central crop-safe region, never at top/bottom edges. For a 9:16 master, use x12-88%, y37-63% as a conservative internal starting region, not an official YouTube guarantee. Simulate centered cover crops at 9:16, 3:4, 1:1 and 16:9 as stress tests, inspect at mobile card size, and account for actual title overlays, badges and rounded corners. Short 1-2 lines; shorten/reflow rather than illegibly shrinking text. Clipping or unreadable UI overlap fails thumbnail review. Record exact-version hash, crop previews and visual review. After a separately authorized publication, verify actual account application and mobile rendered results; simulation is not actual YouTube verification. Preserve existing assets and do not replace posted videos without scoped request."
     }
   ],
   "feedback": [
@@ -310,7 +315,31 @@
     "scope": "Mandatory for all Food, Tech, Living videos, user confirmed 2026-10-09",
     "source": "Use image generation tool with exact-product photo references. Standalone photorealistic cover, never extracted video frame or a new in-video cut. Verify identity, shape, ingredients/functions and text; retain prompt and generated provenance.",
     "storage": "Append-only Thumbnail/vNNNN files associated with exact Video version. Hash-verified generated cover required before new web_review and any upload/public authorization. Preserve historical versions.",
-    "publication": "Apply uploaded custom image through actual YouTube UI and verify saved result. If unavailable, record concrete limitation, preserve prepared image and never claim applied. Upload/publication still require scoped explicit user request."
+    "publication": "Apply uploaded custom image through actual YouTube UI and verify saved result. If unavailable, record concrete limitation, preserve prepared image and never claim applied. Upload/publication still require scoped explicit user request.",
+    "shorts_crop_safety": {
+      "scope": "All future Shorts thumbnails; does not impose Shorts crop layout on longform",
+      "guidance": "docs/shorts-thumbnail-safety.md",
+      "internal_9_16_text_bounds_percent": {
+        "x": [
+          12,
+          88
+        ],
+        "y": [
+          37,
+          63
+        ]
+      },
+      "stress_crop_ratios": [
+        "9:16",
+        "3:4",
+        "1:1",
+        "16:9"
+      ],
+      "mobile_review": "Verify all text, outlines and shadows at small card size; account for actual title/UI overlays and rounded corners",
+      "blocking_review": "Text clipping or unreadable UI overlap => changes required; do not mark thumbnail review passed",
+      "actual_display": "Pending until actual account thumbnail application and rendered mobile surface checked; no upload/public authorization implied",
+      "official_safe_area": false
+    }
   },
   "tts_service": {
     "url": "https://home.guma3d.com/gumatts/",

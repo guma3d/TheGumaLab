@@ -1,5 +1,7 @@
 # GumaShop — GumaDdanjit app 모듈
 
+- 신규 썸네일은 [쇼츠 텍스트 잘림 방지](../docs/shorts-thumbnail-safety.md)를 따른다. 원본 전체 화면만 보고 통과시키지 않고 중앙 안전 영역·다중 비율 크롭·작은 모바일 카드의 전체 문구를 검수한다.
+
 - 2026-10-12 아이템 추천 방향: [구마의 딴짓 추천 기준](../docs/shopping-recommendations.md)을 따른다. 최근 7일 화제 또는 현재 계절/사회 맥락의 적합성을 실제 근거로 확인한다. 일상에서 발견해 써보고 싶어지는 편안한 추천 톤을 사용하되 사용·구매·시식 경험을 꾸미지 않는다. 실제 개인 장단점은 사용자 의견으로만 반영한다.
 
 [통합 안내](../docs/guide-index.md), [쇼핑 제작](../docs/shorts-production.md), [고정 음성](../docs/shopping-voice.md)를 읽는다. 쇼핑 app 규칙을 Story/X로 확대하지 않는다.
