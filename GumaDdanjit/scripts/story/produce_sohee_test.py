@@ -9,6 +9,8 @@ from pathlib import Path
 root=Path(sys.argv[1]).resolve()
 parent=root.parent/'promotion-v4'
 root.mkdir(parents=True,exist_ok=True)
+if (root/'publication.json').exists():
+    raise SystemExit('Published comparison is immutable; use a new version directory.')
 spec=importlib.util.spec_from_file_location('tts_client','/opt/gumatts/client.py')
 client=importlib.util.module_from_spec(spec);spec.loader.exec_module(client)
 style=('Warm, friendly conversational Korean narration, as a confident host explaining an interesting social issue to a friend. '
