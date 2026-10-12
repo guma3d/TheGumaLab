@@ -90,16 +90,10 @@ def prepare_cut(root,cut,voice,asr,old,ed):
         d.ellipse((1510,-230,2190,450),fill='#ECE5D5');d.ellipse((-210,680,190,1080),fill='#E4EDE7')
         d.rectangle((0,934,W,H),fill=NAVY)
     layers=[];numbers=[];countfilters=[]
-    header=folder/'header.png';card(header,ed['headline'],1720 if not is_image else 1280,145 if not is_image else 122,color=(22,53,68,238) if is_image else (255,255,255,245),ink='white' if is_image else NAVY,sz=72 if not is_image else 66)
-    layers.append(dict(file=header.name,x=100,y=155 if not is_image else 790,start=.15,end=duration,role='headline'))
-    if is_image and n in KEYWORDS:
-        keys=KEYWORDS[n]
-        for i,key in enumerate(keys,1):
-            # Key phrases enter during the explanation, beyond the initial slide reveal.
-            st=max(.8,fraction_time(i/(len(keys)+1),target,aligned,asr['duration']))
-            layers[-1]['end']=st
-            name=f'keyword-{i}.png';card(folder/name,key,1280,122,color=(22,53,68,238),ink='white',sz=66)
-            layers.append(dict(file=name,x=100,y=790,start=st,end=duration,role='keyword',text=key))
+    # 2026-10-13: no standalone keyword/headline animation. Chart context stays static.
+    if chart:
+        header=folder/'header.png';card(header,ed['headline'],1720,145,color=(255,255,255,245),ink=NAVY,sz=72)
+        base.paste(Image.open(header),(100,155),Image.open(header))
     def number(value,unit,phrase,x,y,size=90,bar=None,static=False):
         a,b,ok=phrase_time(phrase,target,aligned,asr['duration'])
         if not static and not ok:raise ValueError(f'Numeric voice anchor missing: cut {n}, {phrase}')
@@ -142,22 +136,17 @@ def prepare_cut(root,cut,voice,asr,old,ed):
             if n==33:
                 badge=folder/'pay-badge.png';card(badge,'월 보상 +10%',490,90,color=TEAL,ink='white',sz=48)
                 a,b,ok=phrase_time('십 퍼센트',target,aligned,asr['duration']);assert ok
-                layers.append(dict(file=badge.name,x=1250,y=835,start=max(0,a-.4),end=duration,role='pay-increase'))
+                base.paste(Image.open(badge),(1250,835),Image.open(badge))
             elif n in (34,35):
                 badge=folder/'time-badge.png';card(badge,'시간을 기준으로 다시 보기',920,90,color=TEAL,ink='white',sz=46)
-                layers.append(dict(file=badge.name,x=885,y=838,start=.4,end=duration,role='time-comparison'))
+                base.paste(Image.open(badge),(885,838),Image.open(badge))
             write(d,(130,857),'월 보상 ÷ 일에 쓰는 시간',31,width=950)
     elif not is_image:
         values=CONCEPTS.get(n,[ed['headline']]);k=len(values);cw=int((1720-(k-1)*22)/k)
         for i,concept in enumerate(values):
             name=f'concept-{i}.png';card(folder/name,concept,cw,280,color='white',sz=60 if k<3 else 50)
-            st=max(.4,fraction_time(i/max(1,k),target,aligned,asr['duration']))
-            layers.append(dict(file=name,x=100+i*(cw+22),y=430,start=st,end=duration,role='concept',text=concept))
-        # Voice-following underline keeps long explanation cards active without inventing data.
-        for i in range(max(1,len(ed['captions']))):
-            line=Image.new('RGBA',(1550,6),TEAL);name=f'underline-{i}.png';line.save(folder/name)
-            st=fraction_time(i/len(ed['captions']),target,aligned,asr['duration']);en=fraction_time((i+1)/len(ed['captions']),target,aligned,asr['duration']) if i+1<len(ed['captions']) else duration
-            layers.append(dict(file=name,x=185,y=772,start=st,end=max(st+.3,en),role='underline',grow_seconds=max(.4,en-st),target_width=1550))
+            # Explanatory diagrams remain still; never reveal caption-like phrases as motion.
+            im=Image.open(folder/name);base.paste(im,(100+i*(cw+22),430),im)
     if is_image:
         # Reframe genuine scene illustrations; never substitute character-reference portraits.
         motion=dict(zoom_start=1.025,zoom_end=1.09,pan_direction='left' if n%2 else 'right')
@@ -265,7 +254,7 @@ def encode_cut(root,cut,folder,countfilters,preview=False):
         graph.append(f"[{node}][{label}]overlay=x={layer['x']}:y='{yy}':enable='between(t,{start},{end})':shortest=0[{new}]");node=new
     if countfilters:
         new='num';graph.append(f'[{node}]'+','.join(countfilters)+f'[{new}]');node=new
-    graph.append(f'[{node}]ass={folder}/captions.ass:fontsdir={FONTS}[cap]')
+    graph.append(f'[{node}]drawbox=x=0:y=920:w=1920:h=160:color=0x163544:t=fill,ass={folder}/captions.ass:fontsdir={FONTS}[cap]')
     graph.append(f'[cap][{len(cfg["layers"])+1}:v]overlay=0:0:shortest=0,format=yuv420p[v]')
     (folder/'filters.txt').write_text(';\n'.join(graph))
     args+=['-filter_complex_threads','2','-filter_complex_script',str(folder/'filters.txt'),'-map','[v]','-an','-frames:v',str(min(frames,120) if preview else frames),'-r','30','-c:v','libx264','-preset','veryfast','-crf','21','-threads','4','-movflags','+faststart',str(out)]
@@ -273,7 +262,8 @@ def encode_cut(root,cut,folder,countfilters,preview=False):
     return out
 def main():
     p=argparse.ArgumentParser();p.add_argument('root',type=Path);p.add_argument('--sample',type=int,nargs='*');p.add_argument('--prepare-only',action='store_true');p.add_argument('--workers',type=int,default=3);args=p.parse_args();root=args.root
-    assert not (root.parents[1]/'assets/promotion-film-v5.mp4').exists(),'Published version is immutable'
+    version=int(root.name.rsplit('-v',1)[1])
+    assert not (root.parents[1]/f'assets/promotion-film-v{version}.mp4').exists(),'Published version is immutable'
     script=json.loads((root/'script.json').read_text());voices=json.loads((root/'voice-manifest.json').read_text());olds=json.loads((root.parent/'promotion-v4/visual-plan.json').read_text());edits=editorial()
     assert len(olds)==114 and script['version']==9
     logo=ImageOps.contain(Image.open('/app/static/branding/category-v1/GumaStory.png').convert('RGBA'),(250,108))
