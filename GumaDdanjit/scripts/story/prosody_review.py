@@ -169,7 +169,13 @@ def production_summary(root):
     if not path.exists():
         return dict(status='not_run', naturalness_passed=False, human_listening_completed=False)
     report = json.loads(path.read_text())
-    manifest = json.loads((root/'voice-manifest.json').read_text())
+    manifest_path = root/'voice-manifest.json'
+    manifest = json.loads(manifest_path.read_text())
+    release_path = root/'audio-release.json'
+    if release_path.exists():
+        release = json.loads(release_path.read_text())
+        if release.get('voice_manifest_sha256') != hashlib.sha256(manifest_path.read_bytes()).hexdigest():
+            raise ValueError('Audio release belongs to another voice manifest')
     cuts = {c['index']:c for c in report['cuts']}
     for voice in manifest:
         cut = cuts.get(voice['index'])

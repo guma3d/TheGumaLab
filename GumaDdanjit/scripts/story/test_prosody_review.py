@@ -51,6 +51,9 @@ class ProsodyReviewTests(unittest.TestCase):
             (root/'prosody-review.json').write_text(json.dumps(dict(cuts=[dict(index=10,audio_sha256='old')])))
             with self.assertRaises(ValueError):
                 production_summary(root)
+            (root/'audio-release.json').write_text(json.dumps(dict(voice_manifest_sha256='stale')))
+            with self.assertRaisesRegex(ValueError,'Audio release belongs'):
+                production_summary(root)
 
 
 if __name__=='__main__':
