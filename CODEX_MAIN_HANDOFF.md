@@ -1,102 +1,38 @@
-# Main 이어받기 — 2026-10-10
+# GumaDJ-Main 이어받기 — 2026-10-12
 
-이 파일은 큰 이미지 이력을 복제하지 않고 Main 업무를 이어받기 위한 요약이다. 원본 대화와 제작 파일은 보존한다. 시점이 지난 상태는 실제 파일·웹에서 다시 확인한다.
+현재 정책의 시작점은 [통합 지침 안내](GumaDdanjit/docs/guide-index.md)다. Main도 대상 모듈 AGENTS·상세 기준·최신 작품 인계·사용자 승인 버전을 읽는다. 과거 Main 요약은 Git 이력과 GumaDdanjit/backups/guidance-audit-20261012에 보존했다. 날짜 있는 상태는 현재 상태 보장이 아니며 요청 때 재확인한다.
 
-## 현재 채널 브랜딩
+## 운영과 승인
 
-- 2026-10-10 사용자 요청으로 **구마의 딴짓 / @GumaDdanjit**으로 변경. 근육질 남성 팔뚝 프로필·노란 배너·취미 채널 소개를 적용. 프로필 상품 모음 주소도 `https://videofactory.guma3d.com/GumaDdanjit`으로 저장하고 공개 채널에서 확인했다. 기존 `/products`도 유지한다. 고유 채널 ID와 기존 영상은 유지. 관련 자료는 `GumaVideoFactory/storage/branding/guma-ddanjit-v1/`, 현재 기준은 README.
+- HomeServer Guma3D / D:\TheGumaLab / main / SSH origin. 상위 AGENTS의 보안·보존·커밋·배포 원칙을 따른다.
+- 운영은 GumaDdanjit_app, https://home.guma3d.com/gumaddanjit/ . GumaShop=app/shorts, GumaStory=story/story, GumaX=shop/shop. 데이터 storage/{shorts,story,shop}. 이전 세 서비스는 복구용이며 새 작업·배포를 하지 않는다.
+- 웹은 리소스·이미지 콘셉트·완성 영상의 읽기 전용 버전 보관함. 피드백/제작·게시 요청은 Codex 대화, 결과는 로컬·웹 버전과 짧은 링크로 공유한다.
+- 음성: 쇼핑 F4-dates-v1 Base 전체 단일 생성 / Story M5-fixed-v1 Base 컷별. 파생 이야기쇼츠·X 신규 내레이션은 여성 F4. Sohee는 Story 비교 시험, 기존 X 몽쉘 Zephyr는 부분 수정의 보존 예외다.
+- 승인된 카테고리 PNG를 왼쪽 상단 모든 프레임에 적용한다. Story 음악 없음·Pretendard, 쇼핑 고정 BGM·Maple 팝, X 연속 애니메이션·얼굴/입 사후 보정 금지는 각 상세 문서 기준이다.
+- 정확한 새 버전 요청 없이 비공개/일부 공개 업로드도 하지 않는다. 공개는 별도다. 가능한 제목/설명/썸네일 수정은 기존 URL에서 처리하며 조회수만으로 삭제/재업로드하지 않는다.
 
-## 최신 제작 전략 — 2026-10-10
+## 역할과 대화 주소
 
-- 롱폼·이야기쇼츠를 추가하고 롱폼을 주력으로 제작한 뒤 핵심 구간을 쇼츠로 재편집한다. 기존 테크·음식·생활은 유지한다. 매일 쇼핑쇼츠 3편 목표는 폐기한다. 원본 버전·해시·구간을 파생본에 기록하고 각 영상의 업로드 승인도 분리한다. 상세 내용과 구현 범위는 GumaVideoFactory/RESEARCH.md의 장기 운영 방향을 따른다. 새 세션·자동 업로드는 요청하지 않았다.
+| 역할 | 대화 ID |
+| --- | --- |
+| GumaDJ-Main | 01a10a44-3943-7d62-8798-5295f8100402 |
+| GumaDJ-Story | 01a124c3-a2c7-73a0-ac1a-ef226dcc09e6 |
+| GumaDJ-X | 01a12d51-7407-7e70-9728-5125ff089bad |
+| GumaDJ-Food | 01a0f719-ca53-7a73-8ffd-4afbabe36615 |
+| GumaDJ-Tech | 01a10a44-3c5b-7d30-8ee9-e3efd27a4b3d |
+| GumaDJ-Living | 01a10a44-3f45-76b1-b18e-5f1cb1d22917 |
+| GumaDJ-Q&A | 01a11e7f-c244-7f62-9f79-2952cb7ed329 |
 
-## 환경과 기준 문서
+읽기 조회는 가능하나 다른 세션 메시지는 사용자 명시 허가가 필요하다. 새 대화/전체 이력 fork를 자동 생성하지 않는다. 사용자는 Main 유지로 결정했다. 모바일 로딩과 중복 미디어/대형 로그 예방은 상위 AGENTS 기준이다.
 
-- HomeServer Guma3D, 작업 디렉터리 `D:\TheGumaLab`, 저장소 `guma3d/TheGumaLab`, 기본 main. SSH origin과 상위 AGENTS.md의 커밋·동기화 지침을 따른다.
-- 현재 Main: `01a10a44-3943-7d62-8798-5295f8100402`. 아직 대체 세션을 만들지 않았다.
-- 제작 정책: `GumaVideoFactory/AGENTS.md`, `RESEARCH.md`, `README.md`, `app/core/production_rules.json`. Food/Tech/Living 역할·주소는 README가 기준이다.
-- 한국어로 답한다. 비밀값은 출력·커밋하지 않는다. 파일과 웹의 버전 기록을 우선 사용하고 이전 전체 대화·이미지를 다시 불러오지 않는다.
+## 작업 상태 — 최신 기록과 재대조
 
-## 지속되는 사용자 승인 원칙
+- Story 기본 M5 승진 전체본 v4: storage/story/productions/promotion-v4. 약 5분 Sohee 비교본 v2 및 무음/속도 편집 v3는 별도 시험이다. v3 폴더 존재를 완성·수용으로 간주하지 않는다. [Story 기준](GumaDdanjit/docs/story-production.md), [발화 검수](GumaDdanjit/docs/story-prosody-review.md).
+- X 최신 [GumaDJ-X 인계](GumaDdanjit/storage/shop/handoffs/GumaDJ-X-20261012/HANDOFF.md): 전체 v9의 마지막 Blender 컷 거절, 실제 몽쉘+두 번째 토끼 믹싱 주방 엔딩 요청은 미완료 기록. v10 폴더는 시험이다. 최신 DB/후속 지시와 대조한다.
+- 쇼핑 음성 교체: 대추야자 v11 / 7xabhQa9ghM, 누룽지팝 v9 / KkBp31bYFZE, 피자설기 v10 / nUPm65q82OI. 구버전 삭제는 사용자 완료 보고 이력. [단일 생성 교체 기록](GumaDdanjit/storage/shorts/handoffs/shopping-f4-single-pass-20261011/REPORT.md).
+- 누룽지팝 v9는 10월 12일 요청으로 공개 및 상품 모음 6번/설명 연결 완료. 실제 도착 농심 142g×2 단맛 product8730212699/item25366429315, AF4083845 전달 확인. 과거 조사 URL과 구분하며 실제 구매·수수료는 미확인. [완료 기록](GumaDdanjit/storage/shorts/handoffs/nurungjipop-public-v9-20261012/REPORT.md).
+- Main의 최신 확인 기준 공개 6편: 고구마빵 IQkkmVqJn6w, 미지아 0Wa-VX-mTco, 딸기떡 yqG4SXzqpCA, 찰떡아이스 fKpQ14VtPMY, 피자설기 nUPm65q82OI, 누룽지팝 KkBp31bYFZE. 비공개 2편: 대추야자 7xabhQa9ghM, DJI qbCZf5_G644. 현재 상태 질의는 실제 재조회한다. 롱폼 YouTube 등록 완료 기록은 없다.
+- 고구마빵·미지아 재공개 후 10월 12일 오전 9시 1회 후속 점검 완료, shorts 자동화 종료. 증거 storage/shorts/handoffs/reupload-followup-20261012. 집계 불일치·표본·지연을 고려하고 미집계를 0으로 단정하지 않는다.
+- Living 가습기 v2는 기술 검수와 별개로 사용자 콘텐츠 거절/소스 재확보 상태. living-dryness-20261009의 main-state.json·content-feedback-v2.json과 최신 Living 지시를 확인하고 같은 이미지 중심 재렌더를 반복하지 않는다.
 
-- 2026-10-10 비공개 4편의 구독 피드·알림 ON 변경/저장 완료: `yqG4SXzqpCA`, `fKpQ14VtPMY`, `yypR1nJVmic`, `in626m-2X8Y`. 알림 변경 당시 전부 비공개였으며, 이후 딸기떡·찰떡아이스만 별도 승인으로 공개했다. 실제 증빙과 상태는 `GumaVideoFactory/storage/handoffs/private-notifications-20261010/completion.json` 및 각 Video의 `upload.json`. 기존 공개 2편의 비활성화된 OFF 설정과 구분한다.
-
-- 2026-10-10 최신 승인: 새 공개 예정 영상은 구독 피드·알림 ON(최초 비공개 단계부터 확인), 제목·설명·썸네일은 기존 YouTube 영상에서 수정한다. 공개 승인은 별개며 낮은 조회수 때문에 삭제·재업로드하지 않는다. 두 공개 영상 `0Wa-VX-mTco`/`IQkkmVqJn6w`는 유지, 공개 후 약 60시간인 10월 12일 09시 KST에 재점검한다. 기준 데이터는 `GumaVideoFactory/storage/handoffs/reupload-diagnosis-20261010/observations.json`. 기존 알림 OFF 기록은 과거 이력이며 새 업로드 기본값이 아니다.
-
-- 원본·수정본·최종본 모두 프로젝트 storage에 로컬 보존하고 웹에서 버전별 검토한다.
-- 최종본이 완성되어도 사용자가 정확한 버전을 업로드 요청한 때만 YouTube에 업로드한다. 공개 승인은 별개다. 고급 기능 승인이 업로드·공개 승인을 뜻하지 않는다.
-- 모든 신규 영상은 Food 승인 Zephyr 음성. 검증한 5곡 중 1곡을 무작위 선택하고 재시도에서는 같은 곡을 유지한다. BGM -25 LUFS 고정 음량, 대사 연동 감쇠·페이드 없음. 상세 수치는 RESEARCH.md를 따른다.
-- 신규 Food·Tech·Living 공통으로 컷별 빈 공간의 Maple Bold 이중 외곽선·키워드 강조·단발 팝 자막과 이미지 생성 도구의 별도 썸네일이 필수다. 해당 영상 버전의 썸네일 검수·해시 없이는 웹 검토 완료/신규 업로드를 승인하지 않는다.
-- 피드백은 관련 최신 MD와 실행 규칙에 반영하고 오래된 규칙을 정리한다. 버전별 과거 원본·검수 이력은 보존한다.
-- 설명에는 `#광고` + 실제 제품/용도/주제 관련 태그 최소 5개(총 6개 이상)가 필수다. 중복·무관 태그는 제외하고 BGM 출처 앞, 수수료 고지는 마지막 줄에 둔다. 현재 등록 5편의 설명을 이 기준으로 수정·저장 확인 완료했으며 제목·가시성·영상은 유지했다. 증빙은 `storage/handoffs/description-hashtags-20261009/completion.json`이다.
-
-## 대추야자 총평 수정본 — Video v2 웹 검토 (2026-10-10)
-
-- 사용자가 직접 작성한 장점(엄청 단맛, 피넛버터·초코의 복합적인 맛, 쓴 아메리카노와의 조화)과 단점(씨 빼기·초콜릿 굳히기가 너무 어려움)을 마지막 2컷 음성·자막으로 반영했다. 마지막 구매 CTA는 총평으로 교체했다. 앞의 6컷 영상·음성은 파일 해시 일치로 보존했다.
-- [Video v2 웹 리뷰](https://videofactory.guma3d.com/ideas/3219f31dbcaf884c?video=2#Video): Preview v2 / Video v2 / Thumbnail v2, 8컷·34.83초·1080×1920·30fps. 기존 화면·썸네일 재사용, Zephyr TTS 2회, 새 영상/이미지 생성 0회. Wallpaper 고정 -24.99 LUFS, 대사 -16.8 LUFS, 최종 true peak -3.8 dBTP. 대사 연동 감쇠·페이드 없음.
-- 전 컷·전환 프레임, 전체 디코딩·검은 화면·클리핑 검사 완료. 실제 음성 청취는 사용자 웹 검토 대기. 원본 Flow 720×1280의 기존 한계는 유지한다. 결과 SHA256 `871555ffd33475fc2d47b25816e4796fe3a29c4b33aada15331ccbf32a5be0b4`.
-- **YouTube의 기존 비공개 v1 `F3xkLiYXLKw`는 유지했다.** 사용자는 웹 수정만 요청했고 유튜브 업로드/수정은 하지 않았다. 기록은 `storage/handoffs/food-dates-2257525/production-v0002/`, 파일은 `storage/products/3219f31dbcaf884c/Video/v0002/final.mp4`.
-
-## 대추야자 이전 등록 상태 — 사용자 수용·비공개 등록 (2026-10-10)
-
-- Food의 직접 사용자 승인 “좋다! 영상제작 진행해”(`01a122ea-c11e-7e10-a541-3a0045b38944`)와 콘티 v0001 해시 확인 후 8컷·31.9초로 제작했다. 아이템 `3219f31dbcaf884c`, Preview v1 / Video v1 / Thumbnail v1. [정확한 웹 버전](https://videofactory.guma3d.com/ideas/3219f31dbcaf884c?video=1#Video).
-- 실제 KHALAS 원물·씨 제거 참고와 쿠팡 동일1kg1개·판매자쿠팡·로켓·제휴도착 확인. 7개 Flow 조리 컷 + 마지막 실제 포장 원본 사진. 단면 초안 2개 제외 후 참조 프레임으로 교정, 최종 단면은 1컷뿐. 땅콩버터·초콜릿·토핑은 별도 재료.
-- Zephyr 신규7개·공통CTA재사용, Wallpaper -25.01LUFS 고정·음성-16.53LUFS·피크-2.70dBTP. 전후 화면/기술 검사 완료, 사용자 웹 결과물 수용. 에이전트 실제 음성 청취로 기록하지 않는다. Flow 원본720×1280을1.5배 출력한 제한을 별도 기록. 잔액9,598→9,508, Veo API0회.
-- Food 직접 사용자 메시지 “좋아 유튜브 비공개 등록해”(`01a12301-0a7c-7540-a994-e410daada4a9`) 확인 후 Video v1 / Thumbnail v1을 [YouTube 비공개](https://www.youtube.com/watch?v=F3xkLiYXLKw)로 등록했다. 실제 Studio 비공개·썸네일·HD·저작권 검사 문제 없음·제목/설명과 설정 저장 확인. 구독 피드·알림 ON, 광고/AI YES. 공개·상품모음 추가 승인 없음. 채널 총 7편(공개 4·비공개 3). 증빙 `upload-completion-v0001.json`, `studio-observed.json`, `studio-proof.png`.
-- 자료·원본·승인·검수·정확한 해시는 `GumaVideoFactory/storage/handoffs/food-dates-2257525/`의 `completion.json`, `main-state.json`과 `production-v0001/`을 따른다. 실제 파일은 `storage/products/3219f31dbcaf884c/Video/v0001/final.mp4`.
-
-## 누룽지팝 최신 상태 — 사용자 수용·비공개 등록 (2026-10-09)
-
-- Food의 직접 사용자 메시지 “이건 한번에 성공!! 유튜브에 비공개로 등록해” 확인 후 `12681a1f9b25c2e8`의 Video v1 / Thumbnail v1만 [YouTube 비공개](https://www.youtube.com/watch?v=in626m-2X8Y)로 등록했다. [웹 버전](https://videofactory.guma3d.com/ideas/12681a1f9b25c2e8?video=1#Video), 8컷·31.97초, 영상 해시 `ce634cbb69e17cfd10bb009d5612b9c78bee190c6af27f46e146ec7f4fbd9874`.
-- 실제 Studio에서 비공개·커스텀 썸네일·HD·검사 문제 없음·설명과 설정 저장 확인. 공개·상품 모음 추가 승인 없음. 당시 채널 등록 6편(공개 2·비공개 4); 대추야자 등록 후 현재 총 7편(공개 4·비공개 3). 현재 옵션 일시품절과 사진 재사용 조건은 공개 전 재확인. 사용자 콘텐츠 수용을 에이전트 실제 음성 청취로 기록하지 않는다. 원본 해상도 제한과 세부 검수는 README 및 `storage/handoffs/food-nurungjipop-8989223435/`의 `completion.json`, `upload-completion-v0001.json`, `main-state.json`을 따른다.
-
-## 가습기 최신 상태 — 콘텐츠 품질 미수용·동작 소스 재확보 중 (2026-10-09)
-
-- **사용자 최신 판단이 우선한다.** Video v2는 ‘기능 설명 영상이 거의 없고 대부분 이미지에 의존한 매우 낮은 퀄리티’라는 피드백을 받았다. 아래 기술/프레임 검수와 웹 저장은 완료 이력이며 콘텐츠 품질 수용을 뜻하지 않는다. 최신 게시 상태는 `revision_requested`, 사용자 콘텐츠 검수는 `rejected`다. Living이 샤오홍슈와 제조사 공식 영상을 재조사 중이며 실제 확보 완료 전이다. Main은 새 급수·다이얼·분무·물통 분리/세척 동작 소스 인계 후에만 새 버전을 제작한다. 같은 이미지 중심 재렌더 금지. `content-feedback-v2.json`과 `main-state.json`이 최신 상태다.
-
-- Living의 사용자 제작 승인 후, 추가 지시한 ‘쌀쌀하고 건조해진 가을, 샤오미 가습기로 방 안을 촉촉하게’ 주제를 반영했다. 아이템 `277d58f6dd54822d`, Preview v2 / Video v2, 32.033초·7컷·1080×1920·30fps. [정확한 웹 버전](https://videofactory.guma3d.com/ideas/277d58f6dd54822d?video=2#Video).
-- 기존 Video v1은 보존한다. v2는 CUT1 음성·자막만 바꾸고 CUT2~7 영상과 Zephyr 음성을 재사용했다. Living의 `thumbnail-v2.png`는 이 아이템의 Thumbnail v1로 Video v2에 연결했다(파일 초안 번호와 웹 썸네일 번호는 별개). 생성 썸네일은 영상에 삽입하지 않았다.
-- BGM은 최초 무작위 선정한 Fluffing a Duck 유지, -25.0 LUFS 고정·ducking/페이드 없음. 대사 -16.89 LUFS, 최종 피크 -3.17 dBTP. 전체 디코딩·컷별/전환 프레임 검수 통과. 실제 음성 청취는 수행하지 않았으며 사용자 웹 리뷰 대기다.
-- 샤오미 공식 급수·세척·제품 사진, 실제 720×1280 다이얼/분무 영상, 별도 생성 시작·마무리 이미지를 구분해 기록했다. Living 720 원본 예외 적용, 최대 확대 1.362배. 다이얼 1.767초 뒤 다른 공식 사진으로 연결하며 정지 프레임 연장·반복 재생은 하지 않는다.
-- 설명에 `#광고 #샤오미 #가습기 #가전 #가을 #상부급수 #생활용품 #쇼츠` 및 간결 BGM 출처·마지막 줄 수수료 고지를 준비했다. 현재 상품 URL은 일반 쿠팡 URL이며 제휴 링크가 아니다. 파트너스 링크 발급·도착 검증, 제3자 영상 권리 및 모델 라벨 미확인은 게시 전 확인 항목이다. YouTube 업로드·공개 승인 및 실행은 없으며 상품 모음에도 추가하지 않았다.
-- 승인·원본·프롬프트·제작 스크립트·수정 근거는 `GumaVideoFactory/storage/handoffs/living-dryness-20261009/`, 최신 상태는 `main-state.json`, 완료 증빙은 `completion-v2.json`을 확인한다. 최종 영상은 `storage/products/277d58f6dd54822d/Video/v0002/final.mp4`에 있다.
-
-## 최근 확인한 결과 — 현재 상태와 이력을 구분
-
-- 아래 공개·비공개 상태는 2026-10-10 Studio 확인 기록 기준이다. 현재 상태를 다시 물으면 실제 채널과 대조한다. 과거의 빈 채널·삭제 대기·흑임자 v2 검토 상태는 현재 상태가 아니다.
-- 채널 `UCRtAVFQFmJCcpvLeuyq03Kg` / `@GumaDdanjit`: Standard·Intermediate·Advanced 기능 사용 가능. 고급 기능은 2026-10-08 Studio에서 Enabled 확인.
-- 공개: 고구마빵(`372a4996226cf3a5`) Video v13 / Thumbnail v2 → https://www.youtube.com/watch?v=IQkkmVqJn6w, 미지아 보풀제거기 2(`57ab7c7af6717633`) Video v11 / Thumbnail v1 → https://www.youtube.com/watch?v=0Wa-VX-mTco. 사용자 별도 교체 요청에 따라 팝 자막·생성 썸네일을 적용하고 기존 AAC 오디오 스트림·장면·제목·설명을 보존했다. 이전 `T0eKHI5ieXA`·`uSQqUUQ1GCc`는 후속 사용자 요청으로 YouTube에서 삭제했고 로컬 버전은 보존한다.
-- 추가 공개(2026-10-10): 딸기쏙우유 찹쌀떡(`67e70b2aebfc411e`) Video v17 / Thumbnail v1 → https://www.youtube.com/watch?v=yqG4SXzqpCA, 찰떡아이스 흑임자인절미(`dadc1759bf7912ef`) Video v6 / Thumbnail v1 → https://www.youtube.com/watch?v=fKpQ14VtPMY. Food의 직접 사용자 메시지 `01a122d1-353c-7f60-9537-aabc640da25b`로 공개·프로필 연결 승인 확인 후 기존 URL을 Public으로 전환했다. 공개 전 구독 피드·알림 ON 저장 확인, 사용자 제목·설명·기존 영상 보존, 삭제·재업로드 0회.
-- 비공개: 피자설기 v3 → https://www.youtube.com/watch?v=yypR1nJVmic, 누룽지팝 v1 → https://www.youtube.com/watch?v=in626m-2X8Y. 이 두 편의 공개 승인은 없다. 현재 총 6편(공개 4·비공개 2). 다음 버전은 별도 업로드 요청이 필요하다.
-- 상품 모음: https://videofactory.guma3d.com/GumaDdanjit. 상단의 큰 소개 배너를 제거하고 브랜드 아래 상품 모음 제목·개수와 카드를 바로 표시한다. 각 카드에도 연한 노란 배경·노란 구매 버튼·크림 영상 버튼 적용(2026-10-10). 작은 실제 제품 사진과 텍스트를 가로 배치, 모바일 한 열·데스크톱 두 열. 카드 높이는 이전의 절반 이하(390px: 606~625px → 237~259px), 버튼 최소 44px·고지 원문·모든 링크 보존. 검증: `storage/handoffs/compact-yellow-catalog-20261010/`. 승인된 공개 상품 01 고구마빵·02 미지아·03 딸기떡(60g × 9개입)·04 찰떡아이스(90ml × 24개)를 노출한다. 비공개/웹 검토 제품은 자동 추가하지 않는다.
-- 사용자가 직접 수정한 제목·설명이 게시 문구 기준이다. 제목 앞 [광고]를 붙이지 않고 설명은 글머리, BGM 출처는 간결한 하단 한 줄, 정확한 쿠팡 수수료 고지는 마지막 줄. 기존 음원은 출처 표시 조건을 준수한다.
-- 찰떡아이스 첫 장면은 정확한 공식 제품 표지 원본 이미지로 교체했다. 노이즈가 있는 생성 포장 합성을 재사용하지 않는다. 기존 로컬 버전·승인·검수 이력은 보존한다.
-- 최신 공개·상품모음 근거: `GumaVideoFactory/storage/handoffs/public-food-two-20261010/completion.json`, `studio-verified.json`, `catalog.png`. 이전 교체 근거: `GumaVideoFactory/storage/handoffs/private-pop-thumbnails-20261009/completion.json` 및 같은 폴더 `studio-final.txt/png`, `web-verification.json`, 제품별 검수·커버 프롬프트. 이전 공개본 교체·삭제는 `common-pop-thumbnails-20261009/completion.json`, `youtube-cleanup.json`이며 과거 승인·검수 기록은 수정하지 않는다. 제품별 최종 버전/BGM 표는 README가 기준이다.
-
-## 파트너스 확인 범위와 후속 작업
-
-- 공개 네 상품의 링크 도착 상품·옵션과 공통 추적 ID `AF4083845`를 확인했다. 계정 소유자와 추적 ID의 일치, 계정 승인·등록 매체, 실제 클릭·주문·수익은 로그인 전이므로 미확인이다. 링크 이동 성공을 수익 발생/정산 보장으로 기록하지 않는다.
-- 홈서버 브라우저 로그인 후 계정/등록 매체와 조회 기간별 리포트를 확인한다. 휴대폰의 별도 브라우저 로그인은 홈서버로 자동 공유되지 않는다. 모바일 Codex 로그인 화면 직접 조작 지원은 미검증이다. 비밀번호·인증번호·쿠키를 기록하거나 전달받지 않는다.
-- 실적 자동 수집·대시보드 연동은 구현하지 않았다. 신규 자동 조회/공개를 완료된 것처럼 공유하지 않는다.
-
-## 추가 제작 — 피자설기
-
-- 아이템 `e9d3b5997cf329dd`, 웹 리뷰 https://videofactory.guma3d.com/ideas/e9d3b5997cf329dd#Video.
-- 기존 완료본 Preview v1 / Video v2(28.33초, 8컷, Carefree, Zephyr)를 보존했다. 제3자 푸드킹덤 촬영의 재사용 허가는 미확인이다. 사용자는 후속 Video v3를 확인하고 정확한 버전의 비공개 업로드만 승인했으며 완료했다. 공개 승인은 없다.
-- 최신 승인 board-v0002: 기존 8컷의 소스·대사·순서는 그대로 두고 첫 컷에 피자설기 화제성+수라당 로켓프레시 소개 추가, 컷별 빈 공간을 이용한 상하 자막 위치 조정. Preview v2 / Video v3(34.67초) 제작·화면/기술 검수 완료. 정확한 웹 링크는 https://videofactory.guma3d.com/ideas/e9d3b5997cf329dd?video=3#Video. 별도 AI 생성 Thumbnail v1을 웹 커버와 YouTube에 등록했고 영상에는 삽입하지 않았다. Studio 비공개·HD·실제 커버 저장을 확인했다.
-- 상태·해시·검수·링크 기준: `GumaVideoFactory/storage/handoffs/food-pizza-seolgi-9719378135/main-state.json`, 최신 완료 `completion-v0002.json`. 과거 `completion.json`은 Video v2 이력이다. 원본 승인 해시와 최신 사용자 기존 컷 보존 지시를 대조한다.
-- 자막의 폰트·색·크기 체계는 통일하고 위치는 컷별 주요 제품·동작·포장 인쇄를 피한다. 컷 안에서는 고정한다. 기존 영상·음성은 재생성하지 않으며 수정 버전 BGM은 Carefree를 유지한다. 새 첫 컷 음성만 생성한다.
-- 실제 청취를 수행하지 않았으면 사용자 웹 음성 리뷰 대기로 남긴다. 기술 검사·브라우저 전체 재생은 실제 청취 검수와 구분한다.
-
-## 모바일 로딩 진단과 이어갈 일
-
-- 사용자 관찰: 모바일에서 이미지 생성 도구를 많이 사용한 대화에 로딩 실패가 집중된다. 이미지가 많은 새/기존 대화를 같은 모바일 환경에서 비교할 근거이며 생성 도구 자체의 결함이 확인된 것은 아니다.
-- 2026-10-08 측정에서 Main 원본 세션 JSONL은 약 139.85 MiB, 그 안의 인라인 이미지 문자열은 약 117.37 MiB였다. 중복 기록 포함 522회, 고유 데이터 492개. 생성 이미지뿐 아니라 스크린샷·검수 이미지가 포함된다. 이는 전송량이나 모바일 RAM 실측치가 아니다.
-- Food 약 268.99 MiB, Living 약 151.52 MiB, 짧은 `모바일 원격 접속 상태 확인` 대화 약 0.99 MiB. Main에서 기존 compact 기록 8회가 확인되었지만 원본 이력은 여전히 크다.
-- PC 여유 RAM은 약 12.3 GiB. 검사한 10월 7일 데스크톱 로그에는 메모리 부족 메시지는 없었고 원격 websocket 연결 실패·재연결 기록은 있었다. 모바일 실패 원인을 하나로 확정하지 않았다.
-- 예방 지침은 루트 AGENTS.md에 반영했다. 기존 대화 기록·DB·첨부파일은 변경하지 않았다.
-- 사용자 결정: 2026-10-08 새 Main-Mobile 생성 제안에 **현재 대화 유지**를 선택했다. 새 대화를 만들거나 역할 주소를 변경하지 않는다. 이 문서는 보존용 요약으로 둔다.
-- 현 대화에서는 텍스트 중심 상태 확인과 중복 이미지·대형 출력 억제를 즉시 적용한다. 필요한 이미지 생성·시각 검수는 계속 수행한다. 기존 누적 이미지를 제거하거나 모바일 표시 캐시를 비우는 지원 도구는 확인되지 않았다.
-- 사용자가 모바일에서 재접속해 결과를 확인하기 전에는 로딩 해결을 주장하지 않는다. 증상이 지속되면 같은 시간대 연결 오류와 모바일 클라이언트 문제를 추가 조사한다. 향후 사용자가 대화 전환을 명시적으로 요청할 때만 이 요약으로 새 대화를 만드는 대안을 사용한다.
-
-공식 참고: https://developers.openai.com/blog/mastering-codex-remote-for-engineering — `/compact`는 맥락 정리, `/fork`는 기존 이력 상속으로 설명된다.
+채널 구마의 딴짓 / @GumaDdanjit, ID UCRtAVFQFmJCcpvLeuyq03Kg, 노란색·팔뚝 프로필·취미 채널 느낌 유지. 상품 모음 대표 주소 https://videofactory.guma3d.com/GumaDdanjit 및 /products 연결 유지. 실제 목록은 registry를 확인하고 비공개/미승인 상품을 자동 공개하지 않는다.

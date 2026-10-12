@@ -21,5 +21,11 @@ PRESETS = {
 for preset in PRESETS.values():
     preset.update(font='Maplestory', voice='F4', voice_direction='approved-F4-female', voice_rate='natural-brisk', target_age='20-40', style_revision='category-v8',caption_design='common-pop-outline-v4',thumbnail_required=True)
     preset.setdefault('aspect_ratio', '9:16')
-PRESETS['longform'].update(voice='M5', voice_direction='approved-M5-male')
-PRESETS['food'].update(voice='F1-bright-v2', voice_direction='slightly-brighter-fixed-synthetic-reference', voice_rate='natural', still_motion='static',storyboard_reference='docs/references/food-storyboard-approved-v1.png')
+PRESETS['longform'].update(voice='M5', voice_direction='approved-M5-fixed-v1',
+    font='Pretendard', caption_design='longform-thin-outline', target_age='30-40')
+# These presets describe current policy; legacy per-cut shopping rendering is not
+# the approved execution path. See docs/shopping-voice.md for single-pass tools.
+for category in SHOPPING_CATEGORIES:
+    PRESETS[category].update(voice='F4-dates-v1', voice_direction='approved-fixed-F4-reference',
+        voice_rate='natural', style_revision='category-v9-unified-guidance')
+PRESETS['food'].update(still_motion='static',storyboard_reference='docs/references/food-storyboard-approved-v1.png')
