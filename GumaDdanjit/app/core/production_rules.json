@@ -1,6 +1,11 @@
 {
-  "revision": "2026-10-12.13-shorts-thumbnail-crop-safety",
+  "revision": "2026-10-12.14-shopping-playful-text",
   "rules": [
+    {
+      "id": "shopping-playful-editorial-text",
+      "category": "shopping",
+      "instruction": "2026-10-12 사용자 채택: 아브카 콘티 v2처럼 재미있는 강조 글자, 짧은 말풍선·스티커·감탄사, 단발 텍스트 팝/등장, 동작 화살표로 Food/Tech/Living 화면에 리듬을 준다. 메이플 Bold 본문과 이중 외곽선은 유지한다. 일반 대사 배경 박스는 쓰지 않되 짧은 편집 말풍선은 허용한다. 반복 바운스·제품/손/라벨/로고/[광고] 가림을 피하고 따뜻한 일관 톤과 컷별 다양한 구도를 유지한다. 텍스트는 편집 가능한 레이어로 합성하고 등장/정지/퇴장·잘림·모바일 가독성을 최종 출력에서 확인한다. 장식이나 생성 이미지로 실제 기능 동작/효과 검수를 대신하지 않는다."
+    },
     {
       "id": "shopping-f4-single-pass-approved",
       "category": "shopping",
