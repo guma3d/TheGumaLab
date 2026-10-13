@@ -1,6 +1,8 @@
 """Public, read-only selection of explicitly registered and published products."""
 import json
+import os
 import re
+import sqlite3
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -13,6 +15,26 @@ router = APIRouter()
 templates = Jinja2Templates(directory=str(Path(__file__).parent / 'templates'))
 
 
+def catalog_upload(item):
+    """Read publication evidence from the originating production module."""
+    if item.get('source_module') == 'shop':
+        path = Path(os.getenv('GUMASHOP_STORAGE', '/data/shop')) / 'studio.sqlite3'
+        with sqlite3.connect(path.resolve().as_uri() + '?mode=ro', uri=True) as db:
+            row = db.execute("SELECT data FROM records WHERE kind='videos' AND id=?",
+                             (item['video_id'],)).fetchone()
+        if not row:
+            return None
+        video = json.loads(row[0])
+        if video.get('archived') or video.get('status') != 'approved' or not video.get('youtube_uploaded'):
+            return None
+        return dict(state=video.get('youtube_visibility'), privacy=video.get('youtube_visibility'),
+                    url=video.get('youtube_url'))
+    idea = versions.read(item['idea_id'])
+    if idea.get('archived'):
+        return None
+    return json.loads((versions.version_dir(item['idea_id'], 'Video', item['version']) / 'upload.json').read_text(encoding='utf-8'))
+
+
 def public_products():
     registry = STORAGE_DIR / 'public_catalog.json'
     if not registry.is_file():
@@ -23,11 +45,10 @@ def public_products():
         if item.get('approved') is not True:
             continue
         try:
-            idea = versions.read(item['idea_id'])
-            upload = json.loads((versions.version_dir(item['idea_id'], 'Video', item['version']) / 'upload.json').read_text(encoding='utf-8'))
-        except (FileNotFoundError, ValueError, KeyError):
+            upload = catalog_upload(item)
+        except (FileNotFoundError, ValueError, KeyError, sqlite3.Error):
             continue
-        if idea.get('archived') or upload.get('state') != 'public' or upload.get('privacy') != 'public':
+        if not upload or upload.get('state') != 'public' or upload.get('privacy') != 'public':
             continue
         if not re.fullmatch(r'https://www.youtube.com/watch\?v=[A-Za-z0-9_-]{11}', upload.get('url', '')):
             continue
