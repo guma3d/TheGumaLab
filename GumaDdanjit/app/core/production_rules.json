@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-12.14-shopping-playful-text",
+  "revision": "2026-10-17.1-food-easy-transform-recipes",
   "rules": [
     {
       "id": "shopping-playful-editorial-text",
@@ -190,6 +190,11 @@
       "id": "shorts-thumbnail-crop-safety",
       "category": "all",
       "instruction": "All future Shorts thumbnails (shopping, story_shorts and GumaX Shorts) must follow docs/shorts-thumbnail-safety.md. Place complete key text including outlines/shadows inside the common central crop-safe region, never at top/bottom edges. For a 9:16 master, use x12-88%, y37-63% as a conservative internal starting region, not an official YouTube guarantee. Simulate centered cover crops at 9:16, 3:4, 1:1 and 16:9 as stress tests, inspect at mobile card size, and account for actual title overlays, badges and rounded corners. Short 1-2 lines; shorten/reflow rather than illegibly shrinking text. Clipping or unreadable UI overlap fails thumbnail review. Record exact-version hash, crop previews and visual review. After a separately authorized publication, verify actual account application and mobile rendered results; simulation is not actual YouTube verification. Preserve existing assets and do not replace posted videos without scoped request."
+    },
+    {
+      "id": "food-easy-transform-discovery",
+      "category": "food",
+      "instruction": "2026-10-17 사용자 피드백: 브리치즈처럼 제품을 간단히 조리·조합해 새로운 메뉴로 바꾸는 후보를 Food 검색에서 우선한다. 제품→관찰 가능한 조리 행동→먹음직스러운 결과의 변화를 평가하고 추가 재료·도구·난도·계절 맥락·검증 가능한 레시피/실물 자료를 비교한다. 사용자 반응을 객관적 조회수/판매 성과나 성공 보장으로 만들지 않는다. 현재 쿠팡 동일 옵션·공식 판매처·로켓배송·실제 발급 제휴 링크·제작 리소스 검증은 유지하며 미확인은 후보로 남긴다."
     }
   ],
   "feedback": [
