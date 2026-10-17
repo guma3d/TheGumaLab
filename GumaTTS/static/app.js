@@ -24,7 +24,7 @@ function renderVoices(){
    c.append(el('p',`${j.result.duration.toFixed(1)}초 · 동일 음량 기준`,'meta'));
    if(j.audit?.note)c.append(el('p',j.audit.note,'hint'));
    const button=el('button',j.review.note?.startsWith('[목소리 후보]')?'후보로 표시됨 ✓':'마음에 드는 후보로 표시','secondary');
-   button.onclick=async()=>{button.disabled=true;try{await api(`/api/jobs/${j.id}/review`,{verdict:'pending',note:'[목소리 후보] '+id+' '+p.name});$('voice-message').textContent=id+' 후보 선택을 저장했습니다. 여러 개 골라도 됩니다. 현재 제작 기준(Food 고정 화자 / 다른 쇼츠 F4 / Story M5 고정 화자)은 유지됩니다.';await load()}catch(e){$('voice-message').textContent=e.message}finally{button.disabled=false}};c.append(button);
+   button.onclick=async()=>{button.disabled=true;try{await api(`/api/jobs/${j.id}/review`,{verdict:'pending',note:'[목소리 후보] '+id+' '+p.name});$('voice-message').textContent=id+' 후보 선택을 저장했습니다. 여러 개 골라도 됩니다. 현재 제작 기준(한국어 화자 Sohee 고정)은 유지됩니다.';await load()}catch(e){$('voice-message').textContent=e.message}finally{button.disabled=false}};c.append(button);
    const a=el('a','원고·청취 메모 ↗','voice-detail');a.href='#job-'+j.id;c.append(a);
   }else c.append(el('p',j?.status==='failed'?'생성 실패 · 재검토 중':j?.status==='running'?'목소리를 생성하고 있습니다.':'샘플 준비 중','hint'));
   if(old)old.replaceWith(c);else $(p.gender+'-voices').append(c);
@@ -32,4 +32,4 @@ function renderVoices(){
 }
 document.addEventListener('play',e=>{if(e.target.tagName==='AUDIO')for(const a of document.querySelectorAll('audio'))if(a!==e.target)a.pause()},true);
 
-$('project').onchange=()=>{if($('project').value!=='test'){$('model').value=['food','story','longform'].includes($('project').value)?'qwen-clone-1.7b':'qwen-design-1.7b';$('model').onchange();$('voice').value=$('project').value==='story'?'M5':'F4'}};
+$('project').onchange=()=>{const production=$('project').value!=='test';if(production)$('model').value='qwen-1.7b';$('model').disabled=production;$('model').onchange()};

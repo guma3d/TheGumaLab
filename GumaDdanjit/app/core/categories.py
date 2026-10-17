@@ -29,3 +29,7 @@ for category in SHOPPING_CATEGORIES:
     PRESETS[category].update(voice='F4-dates-v1', voice_direction='approved-fixed-F4-reference',
         voice_rate='natural', style_revision='category-v9-unified-guidance')
 PRESETS['food'].update(still_motion='static',storyboard_reference='docs/references/food-storyboard-approved-v1.png')
+
+# User adopted native Korean speaker for all new narration, 2026-10-17.
+for preset in PRESETS.values():
+    preset.update(voice="Sohee", voice_direction="native-Korean-consistent-conversational", voice_rate="natural", style_revision="category-v10-sohee")

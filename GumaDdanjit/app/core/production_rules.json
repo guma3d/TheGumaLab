@@ -9,7 +9,7 @@
     {
       "id": "shopping-f4-single-pass-approved",
       "category": "shopping",
-      "instruction": "2026-10-11 사용자 최종 채택: 쇼핑쇼츠(Food·Tech·Living)는 대추야자 v11 방식으로 제작한다. 최초 F4 합성 원본 CUT7에서 고정한 F4-dates-v1 참조 WAV·대본·SHA256을 GumaTTS Qwen 1.7B Base(qwen-clone-1.7b)에 넣어 전체 대사를 한 번에 생성한다. 컷별 독립 생성은 하지 않는다. 발화 경계를 대본과 대조해 영상·자막을 맞추고 최종 음성은 분할 재접합하지 않은 연속 마스터를 사용한다. 피치·배속 변경이나 지원되지 않는 Base style/instruct로 말투를 조정하지 않는다. 원본·새 버전·참조 및 마스터 해시·작업 ID·정렬 근거를 보존한다. 모든 컷의 무음·잘림·발음·음량·BGM 대비와 전 프레임 로고를 검수하고 실제 청취 여부를 별도로 기록한다. 기존 5곡 BGM은 일정한 음량으로 유지하며 교체 작업에서는 기존 선택 곡을 보존한다. Story·롱폼 M5와 이야기쇼츠 F4 정책은 유지한다. 음성 방식 채택을 향후 영상의 자동 업로드·공개 승인으로 간주하지 않는다."
+      "instruction": "2026-10-17 사용자 확정: 앞으로 새로 생성하는 모든 내레이션은 한국어 기본 화자 Sohee, Qwen3-TTS 1.7B CustomVoice(qwen-1.7b), language=Korean으로 고정한다. F4 VoiceDesign/복제 및 Zephyr 등 다른 화자로 자동 대체하지 않는다. 쇼핑쇼츠는 전체 대사를 한 번에 생성하고 최종 음성은 분할 재접합 없는 연속 마스터로 사용한다. 피치·배속 변경 없이 발화 경계에 영상·자막을 맞춘다. 동일한 차분한 대화체 지시를 사용하고 모델·화자·한국어 설정·작업 ID·원본·마스터 해시를 보존한다. 모든 컷의 발음·무음·잘림·음량·BGM 대비·로고를 검사하되 실제 청취와 자동 검사를 구분한다. 기존 결과와 과거 승인은 보존하며 이번 샥즈 영상만 새 버전으로 교체한다. 음성 정책은 업로드·공개 승인이 아니다."
     },
     {
       "id": "per-cut-audio-audit",
@@ -19,7 +19,7 @@
     {
       "id": "central-tts-service",
       "category": "all",
-      "instruction": "All new narration goes through GumaTTS. Shopping Food/Tech/Living uses qwen-clone-1.7b F4-dates-v1 fixed reference and one continuous whole-script master; Story longform uses qwen-clone-1.7b M5-fixed-v1 per cut. Derived story shorts use selected female F4. Sohee is a Story comparison test until explicitly adopted. Record actual model, job ID, original audio and hashes. No automatic external paid fallback. Follow docs/guide-index.md and the target module guidance."
+      "instruction": "2026-10-17 사용자 확정: 앞으로 새로 생성하는 모든 내레이션은 한국어 기본 화자 Sohee, Qwen3-TTS 1.7B CustomVoice(qwen-1.7b), language=Korean으로 고정한다. F4 VoiceDesign/복제 및 Zephyr 등 다른 화자로 자동 대체하지 않는다. 쇼핑쇼츠는 전체 대사를 한 번에 생성하고 최종 음성은 분할 재접합 없는 연속 마스터로 사용한다. 피치·배속 변경 없이 발화 경계에 영상·자막을 맞춘다. 동일한 차분한 대화체 지시를 사용하고 모델·화자·한국어 설정·작업 ID·원본·마스터 해시를 보존한다. 모든 컷의 발음·무음·잘림·음량·BGM 대비·로고를 검사하되 실제 청취와 자동 검사를 구분한다. 기존 결과와 과거 승인은 보존하며 이번 샥즈 영상만 새 버전으로 교체한다. 음성 정책은 업로드·공개 승인이 아니다."
     },
     {
       "id": "tech-camera-preview-consistency",
@@ -159,7 +159,7 @@
     {
       "id": "longform-editorial",
       "category": "longform",
-      "instruction": "Plan a complete original story with an opening promise, development and satisfying conclusion, using chapters and a sustainable production scope. Default 16:9 1920x1080, with length agreed in the storyboard rather than padded for duration. Research actual factual claims, distinguish fact from fiction, and retain source rights evidence. Learn hooks/pacing from popular work without copying scripts or footage. Identify candidate short segments during planning. Review every chapter, speech, captions, audio and final render before web review. Generate narration only through GumaTTS. Current default is qwen-clone-1.7b / M5-fixed-v1 fixed original reference, per-cut generation and reuse by text/model/reference hashes. No background music unless explicitly requested. Preserve old voice assets. Sohee is a comparison test; follow Story AGENTS and docs/story-production.md. The shopping-only 6-8-cut template and product CTA are not this format."
+      "instruction": "2026-10-17 사용자 확정: 앞으로 새로 생성하는 모든 내레이션은 한국어 기본 화자 Sohee, Qwen3-TTS 1.7B CustomVoice(qwen-1.7b), language=Korean으로 고정한다. F4 VoiceDesign/복제 및 Zephyr 등 다른 화자로 자동 대체하지 않는다. 쇼핑쇼츠는 전체 대사를 한 번에 생성하고 최종 음성은 분할 재접합 없는 연속 마스터로 사용한다. 피치·배속 변경 없이 발화 경계에 영상·자막을 맞춘다. 동일한 차분한 대화체 지시를 사용하고 모델·화자·한국어 설정·작업 ID·원본·마스터 해시를 보존한다. 모든 컷의 발음·무음·잘림·음량·BGM 대비·로고를 검사하되 실제 청취와 자동 검사를 구분한다. 기존 결과와 과거 승인은 보존하며 이번 샥즈 영상만 새 버전으로 교체한다. 음성 정책은 업로드·공개 승인이 아니다."
     },
     {
       "id": "story-shorts-from-longform",
@@ -275,11 +275,11 @@
     "cta": "궁금하다면, 채널 프로필의 상품 모음 링크를 눌러보세요.",
     "pinned_comment": "Name the exact product and direct viewers to channel profile -> 상품 모음 -> matching product. Include disclosure with affiliate URLs. Add profile product number only after actual registration. Keep comments pending until public; never claim posted. Shorts comment URLs are not clickable. Verify actual profile link label and landing page before publication.",
     "voice_by_category": {
-      "tech": "F4",
-      "food": "F4",
-      "household": "F4",
-      "longform": "M5",
-      "story_shorts": "F4"
+      "tech": "Sohee",
+      "food": "Sohee",
+      "household": "Sohee",
+      "longform": "Sohee",
+      "story_shorts": "Sohee"
     },
     "primary_category": "longform",
     "derived_category": "story_shorts",
@@ -287,11 +287,11 @@
     "channel_id": "UCRtAVFQFmJCcpvLeuyq03Kg",
     "channel_name": "구마의 딴짓",
     "voice_profile_by_category": {
-      "tech": "F4-dates-v1",
-      "food": "F4-dates-v1",
-      "household": "F4-dates-v1",
-      "longform": "M5-fixed-v1",
-      "story_shorts": "selected F4, per approved production plan"
+      "tech": "Sohee",
+      "food": "Sohee",
+      "household": "Sohee",
+      "longform": "Sohee",
+      "story_shorts": "Sohee"
     }
   },
   "caption_policy": {
@@ -353,20 +353,22 @@
   },
   "tts_service": {
     "url": "https://home.guma3d.com/gumatts/",
-    "model": "qwen-clone-1.7b",
-    "shorts_voice": "F4",
-    "story_voice": "M5",
+    "model": "qwen-1.7b",
+    "shorts_voice": "Sohee",
+    "story_voice": "Sohee",
     "voice_policy_approved": true,
-    "approved_date": "2026-10-12",
+    "approved_date": "2026-10-17",
     "all_new_audio_via_service": true,
     "derived_shorts_revoice": true,
-    "shopping_profile": "F4-dates-v1",
+    "shopping_profile": "Sohee",
     "shopping_generation": "whole_script_continuous_master",
-    "story_profile": "M5-fixed-v1",
-    "story_generation": "per_cut_fixed_reference",
-    "story_test_model": "Qwen3-TTS 1.7B CustomVoice / Sohee, comparison only",
+    "story_profile": "Sohee",
+    "story_generation": "per_paragraph_same_korean_speaker",
+    "story_test_model": "Sohee adopted 2026-10-17",
     "guidance": "docs/guide-index.md",
-    "runtime_enforcement": "Verified handoff pipelines; legacy shopping cut renderer is not migrated"
+    "runtime_enforcement": "GumaTTS Job and client reject non-Sohee production requests",
+    "language": "Korean",
+    "native_speaker_language": "Korean"
   },
   "guidance_index": "docs/guide-index.md"
 }

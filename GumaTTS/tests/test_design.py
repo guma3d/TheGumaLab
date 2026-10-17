@@ -29,28 +29,6 @@ def test_comparison_and_immutable_jobs(tmp_path):
     assert all(j['review']=={} for j in state['voice_comparison'])
 
 
-def test_production_format_voices_are_enforced():
-    for project, voice in [('tech','F4'),('household','F4'),('video','F4'),('story_shorts','F4')]:
-        job=Job(text='앞으로 사용할 목소리입니다.',project=project)
-        assert job.voice==voice and job.model==DESIGN_MODEL and job.style==''
-        with pytest.raises(ValueError): Job(text='테스트',project=project,voice='M5' if voice=='F4' else 'F4')
-        with pytest.raises(ValueError): Job(text='테스트',project=project,model='gemini-flash',voice='Zephyr',allow_cloud=True)
-    assert Job(text='비교',project='test',model='qwen-1.7b',voice='Sohee').voice=='Sohee'
-
-
-def test_food_uses_reference_conditioning_not_independent_design():
-    from fixed_voices import CLONE_MODEL, CLONE_REPO, FOOD_VOICE
-    job = Job(text='차분하게 같은 목소리로 읽어요.', project='food')
-    assert (job.model, job.voice, job.style) == (CLONE_MODEL, FOOD_VOICE, '')
-    repo, method, kwargs = local_generation(job.model_dump())
-    assert (repo, method) == (CLONE_REPO, 'generate_voice_clone')
-    assert 'instruct' not in kwargs
-    with pytest.raises(ValueError):
-        Job(text='테스트', project='food', model=DESIGN_MODEL, voice='F4')
-    with pytest.raises(ValueError):
-        Job(text='테스트', project='food', style='excited')
-
-
 def test_old_reference_is_available_only_for_comparison():
     from fixed_voices import CLONE_MODEL, FOOD_VOICE
     assert FOOD_VOICE == 'F1-bright-v2'
@@ -60,13 +38,3 @@ def test_old_reference_is_available_only_for_comparison():
         Job(text='이전 참조', project='food', voice='F1-fixed-v1')
     with pytest.raises(ValueError):
         Job(text='임의 참조', model=CLONE_MODEL, voice='../../unknown')
-
-
-def test_story_uses_one_immutable_m5_reference():
-    from fixed_voices import CLONE_MODEL, STORY_VOICE
-    for project in ('story', 'longform'):
-        job=Job(text='화자를 고정한 컷입니다.',project=project)
-        assert (job.model,job.voice,job.style)==(CLONE_MODEL,STORY_VOICE,'')
-        assert local_generation(job.model_dump())[1]=='generate_voice_clone'
-        with pytest.raises(ValueError): Job(text='테스트',project=project,model=DESIGN_MODEL,voice='M5')
-        with pytest.raises(ValueError): Job(text='테스트',project=project,style='excited')

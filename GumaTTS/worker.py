@@ -78,7 +78,7 @@ def run(folder):
                 embedding.flatten().float(), prompt[0].ref_spk_embedding.flatten().float(), dim=0).item()
             info['reference_speaker_cosine'] = round(similarity, 5)
         sf.write(str(original), wavs[0], sr, subtype='PCM_16')
-        info.update(provider='local', model_repo=repo, model_revision=getattr(model.model.config, '_commit_hash', None), load_seconds=round(loaded-started,2), generation_seconds=round(time.monotonic()-loaded,2), gpu_peak_mb=round(torch.cuda.max_memory_allocated()/1024**2), gpu=torch.cuda.get_device_name(0), style_applied='instruct' in kwargs, api_charge=False)
+        info.update(provider='local', model_repo=repo, model_revision=getattr(model.model.config, '_commit_hash', None), language=kwargs['language'], native_speaker_language='Korean' if request['voice']=='Sohee' else None, load_seconds=round(loaded-started,2), generation_seconds=round(time.monotonic()-loaded,2), gpu_peak_mb=round(torch.cuda.max_memory_allocated()/1024**2), gpu=torch.cuda.get_device_name(0), style_applied='instruct' in kwargs, api_charge=False)
         if request['model'] == DESIGN_MODEL: info['design_instruction'] = kwargs['instruct']
     else:
         if not request.get('allow_cloud'): raise RuntimeError('외부 API 사용이 허용되지 않았습니다.')

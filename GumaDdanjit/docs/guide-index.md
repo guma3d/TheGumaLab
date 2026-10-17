@@ -1,6 +1,6 @@
 # 통합 제작 지침 안내
 
-정리 기준일: 2026-10-12. Main과 모든 제작 세션의 시작점이다. 작품별 진행 상태는 지속 규칙과 분리한다.
+정리 기준일: 2026-10-17. Main과 모든 제작 세션의 시작점이다. 작품별 진행 상태는 지속 규칙과 분리한다.
 
 ## 작업 전에 읽을 순서
 
@@ -11,7 +11,7 @@
 
 | 표시명 | 역할 | 내부 모듈 / 웹 경로 | 데이터 | 필수 기준 |
 | --- | --- | --- | --- | --- |
-| GumaShop | 음식·테크·생활 쇼핑 쇼츠 | app / shorts | storage/shorts | [AGENTS](../app/AGENTS.md), [쇼핑 제작](shorts-production.md), [F4 고정 참조](shopping-voice.md) |
+| GumaShop | 음식·테크·생활 쇼핑 쇼츠 | app / shorts | storage/shorts | [AGENTS](../app/AGENTS.md), [쇼핑 제작](shorts-production.md), [한국어 화자 고정](shopping-voice.md) |
 | GumaStory | 출퇴근 이야기·롱폼·파생 이야기쇼츠 | story / story | storage/story | [AGENTS](../story/AGENTS.md), [Story 제작](story-production.md), [발화 검수](story-prosody-review.md), story/seed.json |
 | GumaX | 실험적인 고퀄 영상 | shop / shop | storage/shop | [AGENTS](../shop/AGENTS.md), [X 제작과 인계](x-production.md) |
 | GumaTTS | 공통 음성 추론, 별도 서비스 | /gumatts | GumaTTS/storage | [AGENTS](../../GumaTTS/AGENTS.md), [README](../../GumaTTS/README.md) |
@@ -30,16 +30,11 @@ Food·Tech·Living 아이템 조사는 [구마의 딴짓 추천 기준](shopping
 
 ## 음성·화면 기준 요약
 
-| 대상 | 신규 음성 | 생성 단위 | BGM / 자막 |
-| --- | --- | --- | --- |
-| Food·Tech·Living | Qwen Base qwen-clone-1.7b, F4-dates-v1 고정 참조 | 전체 대사 한 번, 연속 마스터 | 기존 5곡 중 무작위 1곡, 고정 음량 / Maple Bold 팝 |
-| Story 롱폼 | Gemini Flash TTS / Zephyr (로컬 사용 안 함) | 컷별, 동일 대사·설정·참조 해시의 정상 컷 재사용 | 기본 음악 없음 / Pretendard 얇은 외곽선, 최대 2줄, 숫자 표시 |
-| 파생 이야기쇼츠 | 선택 여성 F4, M5 원본을 그대로 쓰지 않고 새 낭독 | 해당 편집본의 승인 대본·설정 기록 | 쇼핑용 6~8컷·구매 CTA 틀을 강제하지 않음 |
-| X 신규 내레이션 | 선택 여성 F4, GumaTTS 경유 | 작품의 승인된 제작 계획에 따름 | 작품별 BGM·효과음 / Maple Bold 기준 |
+2026-10-17 사용자 확정: 앞으로 새로 생성하는 모든 내레이션은 한국어 기본 화자 Sohee, Qwen3-TTS 1.7B CustomVoice(qwen-1.7b), language=Korean으로 고정한다. F4 VoiceDesign/복제 및 Zephyr 등 다른 화자로 자동 대체하지 않는다. 쇼핑쇼츠는 전체 대사를 한 번에 생성하고 최종 음성은 분할 재접합 없는 연속 마스터로 사용한다. 피치·배속 변경 없이 발화 경계에 영상·자막을 맞춘다. 동일한 차분한 대화체 지시를 사용하고 모델·화자·한국어 설정·작업 ID·원본·마스터 해시를 보존한다. 모든 컷의 발음·무음·잘림·음량·BGM 대비·로고를 검사하되 실제 청취와 자동 검사를 구분한다. 기존 결과와 과거 승인은 보존하며 이번 샥즈 영상만 새 버전으로 교체한다. 음성 정책은 업로드·공개 승인이 아니다.
 
-쇼핑의 F4 단일 생성과 Story의 Gemini Zephyr 구간별 생성은 혼합하지 않는다. 이야기쇼츠·X에 쇼핑 전용 참조/생성 단위를 임의 확대하지 않는다. X 몽쉘 v8/v9의 기존 Zephyr는 변경 없는 음성 보존 지시의 예외이며 새 프로젝트 기본값이 아니다.
-
-Sohee CustomVoice는 Story의 약 5분 비교 시험이다. 그 v2 음성을 대상으로 한 무음·속도 편집 v3 요청도 시험 범위다. 2026-10-12 최신 채택으로 Story·롱폼 기본은 Gemini Zephyr다. VoiceDesign은 선정 참조의 출발점·비교 기능이며 쇼핑/Story의 매 컷 신규 화자 설계 기본값이 아니다.
+- Food·Tech·Living: 전체 대사 연속 마스터, 기존 5곡 중 1곡 고정 음량 / Maple Bold 팝.
+- Story 롱폼: 동일 Sohee, 문단 단위 생성·원본 및 설정 해시 검증 후 재사용 / Pretendard 최대 2줄.
+- 이야기쇼츠·X: 동일 Sohee, 작품의 승인 제작 계획에 따른 생성 단위.
 
 Tech의 imagegen+일반 편집 합성, 컷 내부 카메라 고정 및 Blender/Veo/씨댄스 금지는 **Tech 전용**이다. Food·Living·Story·X에 확대하지 않는다. X의 연속 애니메이션과 Story의 새 상황 이미지 기준은 각 문서를 따른다.
 
