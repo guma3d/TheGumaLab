@@ -32,7 +32,7 @@ MODELS = {
     'gemini-flash': {'name': 'Gemini Flash · 기존 Zephyr', 'repo': 'gemini-3.8-flash-tts', 'local': False},
     'gemini-lite': {'name': 'Gemini Lite · 외부 API', 'repo': 'gemini-3.8-flash-lite-tts', 'local': False},
 }
-STYLE = '편안하고 자연스러운 한국어 대화체로 읽으세요. 가까운 사람에게 이야기를 들려주듯 담백하고 따뜻하게, 뉴스 앵커 같은 말투나 과장된 연기 없이 적당한 속도로 말하세요. 입력 원고의 단어만 읽고, 시작과 끝에 인사나 감탄사, 설명을 절대 추가하지 마세요. 마지막 문장을 읽은 즉시 끝내세요. 감사합니다, 음, 네 같은 말도 원고에 없으면 발화하지 마세요.'
+STYLE = '차분하고 명료한 한국어 여성 내레이션. 처음부터 끝까지 같은 중간 음역과 충분한 발성, 일정한 음량과 속도로 읽으세요. 문장마다 감정이나 목소리를 바꾸지 마세요. 속삭이거나 과장하지 말고 입력 원고만 정확하게 읽으세요.'
 STORY_STYLE = 'Speak in natural native Korean as a bright, friendly adult female food host. Warm smiling conversational voice, lively but gentle, slightly brisk pace, short natural pauses. Not shrill, breathy, theatrical or announcer-like. Read exactly the supplied words, no additions, no laughter, no music.'
 
 def same_local_batch(first, request):
