@@ -19,9 +19,14 @@ def _gateway(text, output_path, voice, model=None, project='video'):
     spec = importlib.util.spec_from_file_location('gumatts_client', source)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    if voice != 'Sohee' or model not in (None, 'qwen-1.7b'):
-        raise ValueError('신규 제작은 한국어 화자 qwen-1.7b / Sohee만 사용합니다.')
-    model = 'qwen-1.7b'
+    if project in ('story', 'longform'):
+        if voice != 'Zephyr' or model not in (None, 'gemini-flash'):
+            raise ValueError('Story 롱폼은 Gemini Flash / Zephyr만 사용합니다.')
+        model = 'gemini-flash'
+    else:
+        if voice != 'Sohee' or model not in (None, 'qwen-1.7b'):
+            raise ValueError('쇼핑 제작은 qwen-1.7b / Sohee만 사용합니다.')
+        model = 'qwen-1.7b'
     style = None  # Service supplies one consistent Korean direction.
     module.synthesize(text, output_path, voice=voice, model=model, style=style, project=project, title=Path(output_path).stem, allow_cloud=model.startswith('gemini'))
     return Path(output_path)

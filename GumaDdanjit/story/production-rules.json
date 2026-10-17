@@ -28,7 +28,8 @@
       "document-reveal",
       "pointer-callout"
     ],
-    "text_motion": "short explanatory labels, dates, questions; avoid repeating subtitles"
+    "text_motion": "explanatory diagrams only; no duplicate keyword/question headlines",
+    "cut_trigger": "spoken subject/action via ASR; duration target is secondary"
   },
   "maps": {
     "use_verified_geography": true,
@@ -62,5 +63,9 @@
     "style": "Speak in natural Korean as one warm, curious storyteller talking to a friend. Maintain a consistent comfortable conversational pace and the same relaxed mid-range vocal tone throughout. Convey curiosity through subtle emphasis, not exaggerated pitch changes, shouting or whispering. Use short natural pauses between sentences. Connect paragraphs as one continuous story, without restarting the delivery. Read exactly the supplied Korean words; do not read instructions, add words, music or sound effects.",
     "generation_unit": "coherent narrative blocks, independent of visual shots",
     "timing_priority": "audio-first; fit video and captions to natural speech; no speed or pitch changes"
-  }
+  },
+  "reference_videos": [
+    "https://www.youtube.com/watch?v=Xeglv57PZcI",
+    "https://www.youtube.com/watch?v=_qlYehTzfB4"
+  ]
 }
