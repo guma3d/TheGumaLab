@@ -33,7 +33,7 @@ def test_failed_service_does_not_fallback(tmp_path, monkeypatch):
     token=tmp_path/'token';token.write_text('test-token')
     monkeypatch.setenv('GUMATTS_TOKEN_FILE',str(token))
     with patch('urllib.request.urlopen',return_value=io.BytesIO(b'{"id":"failed","status":"failed","error":"quota"}')) as call:
-        with pytest.raises(RuntimeError,match='quota'):client.synthesize('원고',tmp_path/'voice.mp3')
+        with pytest.raises(RuntimeError,match='quota'):client.synthesize('원고',tmp_path/'voice.mp3',allow_cloud=True)
         assert call.call_count==1
         assert not (tmp_path/'voice.mp3').exists()
 

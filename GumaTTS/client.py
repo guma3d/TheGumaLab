@@ -23,11 +23,14 @@ def request(path, data=None):
             time.sleep(attempt+1)
 
 def submit(text, *, model=None, voice=None, style=None, project='story', title='영상 내레이션', allow_cloud=False, seed=43):
-    model = model or 'qwen-1.7b'
+    is_story = project in ('story', 'longform')
+    model = model or ('gemini-flash' if is_story else 'qwen-1.7b')
     if voice is None:
         voice = 'Sohee' if model.startswith('qwen') else 'Zephyr'
         if model == 'qwen-clone-1.7b': voice = 'M5-fixed-v1' if project in ('story','longform') else 'F1-bright-v2'
-    if project != 'test' and (model != 'qwen-1.7b' or voice != 'Sohee' or allow_cloud):
+    if is_story and (model != 'gemini-flash' or voice != 'Zephyr' or not allow_cloud):
+        raise ValueError('Story requires Gemini Flash / Zephyr with allow_cloud=true; local fallback is forbidden.')
+    if project not in ('test', 'story', 'longform') and (model != 'qwen-1.7b' or voice != 'Sohee' or allow_cloud):
         raise ValueError('신규 제작 음성은 한국어 화자 qwen-1.7b / Sohee만 사용합니다. 자동 대체하지 않습니다.')
     payload = dict(text=text, title=title, project=project, model=model, voice=voice, allow_cloud=allow_cloud, seed=seed)
     if style is not None: payload['style'] = style

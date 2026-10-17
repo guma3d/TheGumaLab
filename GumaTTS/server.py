@@ -33,6 +33,7 @@ MODELS = {
     'gemini-lite': {'name': 'Gemini Lite · 외부 API', 'repo': 'gemini-3.8-flash-lite-tts', 'local': False},
 }
 VOICE_POLICY = json.loads((BASE / 'voice-policy.json').read_text(encoding='utf-8'))
+STORY_POLICY = json.loads((BASE / 'story-voice-policy.json').read_text(encoding='utf-8'))
 STYLE = VOICE_POLICY['style']
 STORY_STYLE = 'Speak in natural native Korean as a bright, friendly adult female food host. Warm smiling conversational voice, lively but gentle, slightly brisk pace, short natural pauses. Not shrill, breathy, theatrical or announcer-like. Read exactly the supplied words, no additions, no laughter, no music.'
 
@@ -55,10 +56,11 @@ class Job(BaseModel):
     def defaults(cls, data):
         if not isinstance(data, dict): return data
         data = dict(data)
-        model = data.setdefault('model', 'qwen-1.7b')
+        is_story = data.get('project') in ('story', 'longform')
+        model = data.setdefault('model', 'gemini-flash' if is_story else 'qwen-1.7b')
         if not isinstance(model, str): return data
         if 'style' not in data and model not in (DESIGN_MODEL, CLONE_MODEL):
-            data['style'] = STYLE
+            data['style'] = STORY_POLICY['style'] if is_story else STYLE
         if 'voice' not in data:
             data['voice'] = ('M5' if data.get('project') in ('story', 'longform') else 'F4') if model == DESIGN_MODEL else ('Sohee' if model.startswith('qwen') else 'Zephyr')
             if model == CLONE_MODEL: data['voice'] = STORY_VOICE if data.get('project') in ('story','longform') else FOOD_VOICE
@@ -74,7 +76,12 @@ class Job(BaseModel):
             raise ValueError('로컬 비교 음성은 Sohee를 사용합니다.')
         if self.model.startswith('gemini') and (self.voice not in ('Zephyr', 'Achird') or not self.allow_cloud):
             raise ValueError('외부 API는 음성과 비용 발생 가능성을 명시해야 합니다.')
-        if self.project != 'test':
+        if self.project in ('story', 'longform'):
+            if self.model != 'gemini-flash' or self.voice != 'Zephyr' or not self.allow_cloud:
+                raise ValueError('Story requires Gemini Flash / Zephyr; local fallback is forbidden.')
+            if self.style != STORY_POLICY['style'] or self.seed != STORY_POLICY['seed']:
+                raise ValueError('Story requires its fixed Zephyr style and seed.')
+        elif self.project != 'test':
             if self.model != 'qwen-1.7b' or self.voice != 'Sohee' or self.allow_cloud:
                 raise ValueError('신규 제작 음성은 한국어 화자 qwen-1.7b / Sohee만 사용합니다. 자동 대체하지 않습니다.')
             if self.style != STYLE or self.seed != VOICE_POLICY['seed']:

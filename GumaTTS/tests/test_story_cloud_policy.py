@@ -7,7 +7,7 @@ from server import Job, STYLE, VOICE_POLICY
 from worker import local_generation
 import client
 
-@pytest.mark.parametrize('project',['food','tech','household','video','story','longform','story_shorts'])
+@pytest.mark.parametrize('project',['food','tech','household','video','story_shorts'])
 def test_native_korean_production_contract(project):
     job=Job(text='편안한 한국어로 읽어요.',project=project)
     assert (job.model,job.voice,job.style)==('qwen-1.7b','Sohee',STYLE)
@@ -33,3 +33,18 @@ def test_native_korean_production_contract(project):
 
 def test_legacy_voice_only_explicit_comparison():
     assert Job(text='과거 참조 비교',project='test',model='qwen-clone-1.7b',voice='F4-dates-v1').voice=='F4-dates-v1'
+
+@pytest.mark.parametrize('project',['story','longform'])
+def test_story_cloud_required_without_local_fallback(project):
+    from server import STORY_POLICY
+    job=Job(text='이야기를 이어갈게요.',project=project,allow_cloud=True)
+    assert (job.model,job.voice,job.style)==('gemini-flash','Zephyr',STORY_POLICY['style'])
+    for kwargs in [{}, {'model':'qwen-1.7b','voice':'Sohee'}, {'model':'gemini-lite','voice':'Zephyr','allow_cloud':True}]:
+        with pytest.raises(ValueError): Job(text='원고',project=project,**kwargs)
+    with patch.object(client,'request',return_value=b'{}') as call:
+        client.submit('원고',project=project,allow_cloud=True)
+        payload=call.call_args.args[1]
+        assert (payload['model'],payload['voice'],payload['allow_cloud'])==('gemini-flash','Zephyr',True)
+        call.reset_mock()
+        with pytest.raises(ValueError): client.submit('원고',project=project,model='qwen-1.7b',voice='Sohee')
+        call.assert_not_called()
