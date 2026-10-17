@@ -1,0 +1,10 @@
+{
+  "revision": "2026-10-17-visual-rhythm-v2",
+  "scope": "Story longform; latest user feedback",
+  "captions": {"font": "Pretendard SemiBold", "previous_size_1080p": 52, "font_size_1080p": 62.4, "scale": 1.2, "max_lines": 1, "max_width_1080p": 1680, "outline": 2.4, "background": false, "allow_semantic_compression": true},
+  "editing": {"target_shot_seconds": 4, "maximum_shot_seconds": 7, "maximum_consecutive_same_asset_seconds": 8, "minimum_unique_images_this_revision": 42, "motion_required": true, "motion_types": ["push-in", "pull-out", "pan", "detail-inset", "split-comparison", "map-route", "document-reveal", "pointer-callout"], "text_motion": "short explanatory labels, dates, questions; avoid repeating subtitles"},
+  "maps": {"use_verified_geography": true, "required_scales": ["regional context", "Dead Sea", "Qumran caves"], "generated_landscape_is_not_geographic_evidence": true},
+  "audio_review": {"background_only": true, "speaker_playback": false, "browser_autoplay": false, "reuse_unchanged_voice": true},
+  "downloaded_images": {"final_video_uses_original_photos": false, "regenerate_with_approved_3d_style": true, "preserve_original_sources_and_licenses": true, "generated_letters_are_not_textual_evidence": true},
+  "preserve_previous_versions": true
+}
