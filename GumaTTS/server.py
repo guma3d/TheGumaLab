@@ -32,7 +32,8 @@ MODELS = {
     'gemini-flash': {'name': 'Gemini Flash · 기존 Zephyr', 'repo': 'gemini-3.8-flash-tts', 'local': False},
     'gemini-lite': {'name': 'Gemini Lite · 외부 API', 'repo': 'gemini-3.8-flash-lite-tts', 'local': False},
 }
-STYLE = '차분하고 명료한 한국어 여성 내레이션. 처음부터 끝까지 같은 중간 음역과 충분한 발성, 일정한 음량과 속도로 읽으세요. 문장마다 감정이나 목소리를 바꾸지 마세요. 속삭이거나 과장하지 말고 입력 원고만 정확하게 읽으세요.'
+VOICE_POLICY = json.loads((BASE / 'voice-policy.json').read_text(encoding='utf-8'))
+STYLE = VOICE_POLICY['style']
 STORY_STYLE = 'Speak in natural native Korean as a bright, friendly adult female food host. Warm smiling conversational voice, lively but gentle, slightly brisk pace, short natural pauses. Not shrill, breathy, theatrical or announcer-like. Read exactly the supplied words, no additions, no laughter, no music.'
 
 def same_local_batch(first, request):
@@ -46,7 +47,7 @@ class Job(BaseModel):
     model: Literal['qwen-clone-1.7b', 'qwen-design-1.7b', 'qwen-1.7b', 'qwen-0.6b', 'gemini-flash', 'gemini-lite'] = 'qwen-1.7b'
     voice: str = 'Sohee'
     style: str = Field(default='', max_length=1500)
-    seed: int = Field(default=42, ge=0, le=2147483647)
+    seed: int = Field(default=43, ge=0, le=2147483647)
     allow_cloud: bool = False
 
     @model_validator(mode='before')
@@ -76,6 +77,8 @@ class Job(BaseModel):
         if self.project != 'test':
             if self.model != 'qwen-1.7b' or self.voice != 'Sohee' or self.allow_cloud:
                 raise ValueError('신규 제작 음성은 한국어 화자 qwen-1.7b / Sohee만 사용합니다. 자동 대체하지 않습니다.')
+            if self.style != STYLE or self.seed != VOICE_POLICY['seed']:
+                raise ValueError('신규 제작은 승인된 sohee-upbeat-v1 말투와 seed=43을 사용합니다. 다른 말투는 비교 샘플로만 생성하세요.')
         return self
 
 class Review(BaseModel):
@@ -254,7 +257,7 @@ def create_app(root=None, start_worker=True):
         comparison = json.loads(comparison_file.read_text(encoding='utf-8')) if comparison_file.exists() else []
         return {'models': MODELS, 'jobs': [store.get(i) for i in ids], 'voice_profiles': PROFILES,
                 'voice_comparison': [store.get(item['id']) for item in comparison],
-                'default_style': STYLE, 'production_voices': {'model':'qwen-1.7b', 'shorts':'Sohee', 'story':'Sohee', 'story_model':'qwen-1.7b', 'language':'Korean'}, 'local_voice_status':'모든 신규 제작: 한국어 화자 Sohee 고정'}
+                'default_style': STYLE, 'production_voices': {'model':'qwen-1.7b', 'shorts':'Sohee', 'story':'Sohee', 'story_model':'qwen-1.7b', 'language':'Korean', 'style_profile':VOICE_POLICY['profile_id'], 'style_sha256':VOICE_POLICY['style_sha256'], 'seed':VOICE_POLICY['seed']}, 'local_voice_status':'모든 신규 제작: 한국어 화자 Sohee 고정'}
 
     @app.post('/api/jobs', status_code=202)
     def create(job: Job): return store.create(job)

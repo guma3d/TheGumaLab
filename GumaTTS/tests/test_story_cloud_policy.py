@@ -3,7 +3,7 @@ from pathlib import Path
 from unittest.mock import patch
 import pytest
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from server import Job, STYLE
+from server import Job, STYLE, VOICE_POLICY
 from worker import local_generation
 import client
 
@@ -11,6 +11,12 @@ import client
 def test_native_korean_production_contract(project):
     job=Job(text='편안한 한국어로 읽어요.',project=project)
     assert (job.model,job.voice,job.style)==('qwen-1.7b','Sohee',STYLE)
+    assert job.seed == 43
+    assert VOICE_POLICY['approved_sample_job'] == '51af3c5b9e9e491dbcca532dd3b75693'
+    with pytest.raises(ValueError):
+        Job(text='원고',project=project,style='차분하고 낮게 읽으세요.')
+    with pytest.raises(ValueError):
+        Job(text='원고',project=project,seed=42)
     repo,method,kwargs=local_generation(job.model_dump())
     assert repo.endswith('1.7B-CustomVoice') and method=='generate_custom_voice'
     assert kwargs['language']=='Korean' and kwargs['speaker']=='Sohee'
@@ -20,6 +26,7 @@ def test_native_korean_production_contract(project):
         client.submit('원고',project=project)
         payload=call.call_args.args[1]
         assert (payload['model'],payload['voice'],payload['allow_cloud'])==('qwen-1.7b','Sohee',False)
+        assert payload['seed'] == 43
         call.reset_mock()
         with pytest.raises(ValueError):client.submit('원고',project=project,model='gemini-flash',voice='Zephyr',allow_cloud=True)
         call.assert_not_called()

@@ -32,4 +32,4 @@ PRESETS['food'].update(still_motion='static',storyboard_reference='docs/referenc
 
 # User adopted native Korean speaker for all new narration, 2026-10-17.
 for preset in PRESETS.values():
-    preset.update(voice="Sohee", voice_direction="native-Korean-consistent-conversational", voice_rate="natural", style_revision="category-v10-sohee")
+    preset.update(voice="Sohee", voice_direction="sohee-upbeat-v1-approved-smiling-phrase-endings", voice_rate="natural", style_revision="category-v10-sohee")

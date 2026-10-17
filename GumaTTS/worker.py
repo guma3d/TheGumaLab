@@ -36,7 +36,7 @@ def run(folder):
     request = json.loads((folder / 'request.json').read_text())
     original = folder / 'original.wav'
     started = time.monotonic()
-    info = {'model': request['model'], 'voice': request['voice'], 'seed': request['seed'], 'listened_to_audio': False, 'quality_status':'pending_user_listening'}
+    info = {'model': request['model'], 'voice': request['voice'], 'seed': request['seed'], 'style_sha256': hashlib.sha256(request['style'].encode()).hexdigest(), 'listened_to_audio': False, 'quality_status':'pending_user_listening'}
     if request['model'].startswith('qwen'):
         import torch
         import soundfile as sf
@@ -48,6 +48,8 @@ def run(folder):
         torch.cuda.reset_peak_memory_stats()
         ref_wav, ref = reference(folder.parent, request['voice']) if request['model']==CLONE_MODEL else (None,{})
         revision=ref.get('clone_model_revision')
+        if request['model']=='qwen-1.7b' and request['voice']=='Sohee':
+            revision=json.loads((Path(__file__).parent/'voice-policy.json').read_text())['model_revision']
         model_key=(repo,revision)
         if model_key not in _MODELS:
             _MODELS[model_key] = Qwen3TTSModel.from_pretrained(repo, revision=revision, device_map='cuda:0', dtype=torch.bfloat16, attn_implementation='sdpa')

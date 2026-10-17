@@ -9,7 +9,7 @@
     {
       "id": "shopping-f4-single-pass-approved",
       "category": "shopping",
-      "instruction": "2026-10-17 사용자 확정: 앞으로 새로 생성하는 모든 내레이션은 한국어 기본 화자 Sohee, Qwen3-TTS 1.7B CustomVoice(qwen-1.7b), language=Korean으로 고정한다. F4 VoiceDesign/복제 및 Zephyr 등 다른 화자로 자동 대체하지 않는다. 쇼핑쇼츠는 전체 대사를 한 번에 생성하고 최종 음성은 분할 재접합 없는 연속 마스터로 사용한다. 피치·배속 변경 없이 발화 경계에 영상·자막을 맞춘다. 동일한 차분한 대화체 지시를 사용하고 모델·화자·한국어 설정·작업 ID·원본·마스터 해시를 보존한다. 모든 컷의 발음·무음·잘림·음량·BGM 대비·로고를 검사하되 실제 청취와 자동 검사를 구분한다. 기존 결과와 과거 승인은 보존하며 이번 샥즈 영상만 새 버전으로 교체한다. 음성 정책은 업로드·공개 승인이 아니다."
+      "instruction": "2026-10-17 사용자 확정: 앞으로 새로 생성하는 모든 내레이션은 한국어 기본 화자 Sohee, Qwen3-TTS 1.7B CustomVoice(qwen-1.7b), language=Korean으로 고정한다. F4 VoiceDesign/복제 및 Zephyr 등 다른 화자로 자동 대체하지 않는다. 쇼핑쇼츠는 전체 대사를 한 번에 생성하고 최종 음성은 분할 재접합 없는 연속 마스터로 사용한다. 피치·배속 변경 없이 발화 경계에 영상·자막을 맞춘다. 승인된 sohee-upbeat-v1의 밝고 신나는 말투를 사용하고 모델·화자·한국어 설정·작업 ID·원본·마스터 해시를 보존한다. 모든 컷의 발음·무음·잘림·음량·BGM 대비·로고를 검사하되 실제 청취와 자동 검사를 구분한다. 기존 결과와 과거 승인은 보존하며 이번 샥즈 영상만 새 버전으로 교체한다. 음성 정책은 업로드·공개 승인이 아니다."
     },
     {
       "id": "per-cut-audio-audit",
@@ -19,7 +19,7 @@
     {
       "id": "central-tts-service",
       "category": "all",
-      "instruction": "2026-10-17 사용자 확정: 앞으로 새로 생성하는 모든 내레이션은 한국어 기본 화자 Sohee, Qwen3-TTS 1.7B CustomVoice(qwen-1.7b), language=Korean으로 고정한다. F4 VoiceDesign/복제 및 Zephyr 등 다른 화자로 자동 대체하지 않는다. 쇼핑쇼츠는 전체 대사를 한 번에 생성하고 최종 음성은 분할 재접합 없는 연속 마스터로 사용한다. 피치·배속 변경 없이 발화 경계에 영상·자막을 맞춘다. 동일한 차분한 대화체 지시를 사용하고 모델·화자·한국어 설정·작업 ID·원본·마스터 해시를 보존한다. 모든 컷의 발음·무음·잘림·음량·BGM 대비·로고를 검사하되 실제 청취와 자동 검사를 구분한다. 기존 결과와 과거 승인은 보존하며 이번 샥즈 영상만 새 버전으로 교체한다. 음성 정책은 업로드·공개 승인이 아니다."
+      "instruction": "2026-10-17 사용자 확정: 앞으로 새로 생성하는 모든 내레이션은 한국어 기본 화자 Sohee, Qwen3-TTS 1.7B CustomVoice(qwen-1.7b), language=Korean으로 고정한다. F4 VoiceDesign/복제 및 Zephyr 등 다른 화자로 자동 대체하지 않는다. 쇼핑쇼츠는 전체 대사를 한 번에 생성하고 최종 음성은 분할 재접합 없는 연속 마스터로 사용한다. 피치·배속 변경 없이 발화 경계에 영상·자막을 맞춘다. 승인된 sohee-upbeat-v1의 밝고 신나는 말투를 사용하고 모델·화자·한국어 설정·작업 ID·원본·마스터 해시를 보존한다. 모든 컷의 발음·무음·잘림·음량·BGM 대비·로고를 검사하되 실제 청취와 자동 검사를 구분한다. 기존 결과와 과거 승인은 보존하며 이번 샥즈 영상만 새 버전으로 교체한다. 음성 정책은 업로드·공개 승인이 아니다."
     },
     {
       "id": "tech-camera-preview-consistency",
@@ -159,7 +159,7 @@
     {
       "id": "longform-editorial",
       "category": "longform",
-      "instruction": "2026-10-17 사용자 확정: 앞으로 새로 생성하는 모든 내레이션은 한국어 기본 화자 Sohee, Qwen3-TTS 1.7B CustomVoice(qwen-1.7b), language=Korean으로 고정한다. F4 VoiceDesign/복제 및 Zephyr 등 다른 화자로 자동 대체하지 않는다. 쇼핑쇼츠는 전체 대사를 한 번에 생성하고 최종 음성은 분할 재접합 없는 연속 마스터로 사용한다. 피치·배속 변경 없이 발화 경계에 영상·자막을 맞춘다. 동일한 차분한 대화체 지시를 사용하고 모델·화자·한국어 설정·작업 ID·원본·마스터 해시를 보존한다. 모든 컷의 발음·무음·잘림·음량·BGM 대비·로고를 검사하되 실제 청취와 자동 검사를 구분한다. 기존 결과와 과거 승인은 보존하며 이번 샥즈 영상만 새 버전으로 교체한다. 음성 정책은 업로드·공개 승인이 아니다."
+      "instruction": "2026-10-17 사용자 확정: 앞으로 새로 생성하는 모든 내레이션은 한국어 기본 화자 Sohee, Qwen3-TTS 1.7B CustomVoice(qwen-1.7b), language=Korean으로 고정한다. F4 VoiceDesign/복제 및 Zephyr 등 다른 화자로 자동 대체하지 않는다. 쇼핑쇼츠는 전체 대사를 한 번에 생성하고 최종 음성은 분할 재접합 없는 연속 마스터로 사용한다. 피치·배속 변경 없이 발화 경계에 영상·자막을 맞춘다. 승인된 sohee-upbeat-v1의 밝고 신나는 말투를 사용하고 모델·화자·한국어 설정·작업 ID·원본·마스터 해시를 보존한다. 모든 컷의 발음·무음·잘림·음량·BGM 대비·로고를 검사하되 실제 청취와 자동 검사를 구분한다. 기존 결과와 과거 승인은 보존하며 이번 샥즈 영상만 새 버전으로 교체한다. 음성 정책은 업로드·공개 승인이 아니다."
     },
     {
       "id": "story-shorts-from-longform",
@@ -368,7 +368,13 @@
     "guidance": "docs/guide-index.md",
     "runtime_enforcement": "GumaTTS Job and client reject non-Sohee production requests",
     "language": "Korean",
-    "native_speaker_language": "Korean"
+    "native_speaker_language": "Korean",
+    "style_profile": "sohee-upbeat-v1",
+    "style_sha256": "197d80d8390bfe50b6b72aab3ed1bafc670b910770abaf73e371228412e1c95a",
+    "style": "Speak Korean as Sohee with a genuinely HAPPY, EXCITED, SUNNY and PLAYFUL delivery, like sharing wonderful news with a close friend. Smile throughout every sentence. Use light, bright, forward vocal resonance and lively rhythmic energy. Keep each phrase ending buoyant, smiling and gently lifted; carry the happy energy all the way through the final syllables. The final sentence should sound delighted and inviting. Maintain the same cheerful voice and energy throughout. Clear full-volume speech at a natural conversational pace. Read exactly the supplied Korean words, without extra words or audible laughter.",
+    "seed": 43,
+    "model_revision": "0c0e3051f131929182e2c023b9537f8b1c68adfe",
+    "approved_sample_job": "51af3c5b9e9e491dbcca532dd3b75693"
   },
   "guidance_index": "docs/guide-index.md"
 }

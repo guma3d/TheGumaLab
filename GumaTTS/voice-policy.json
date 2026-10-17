@@ -1,0 +1,14 @@
+{
+  "profile_id": "sohee-upbeat-v1",
+  "model": "qwen-1.7b",
+  "voice": "Sohee",
+  "language": "Korean",
+  "seed": 43,
+  "model_revision": "0c0e3051f131929182e2c023b9537f8b1c68adfe",
+  "style": "Speak Korean as Sohee with a genuinely HAPPY, EXCITED, SUNNY and PLAYFUL delivery, like sharing wonderful news with a close friend. Smile throughout every sentence. Use light, bright, forward vocal resonance and lively rhythmic energy. Keep each phrase ending buoyant, smiling and gently lifted; carry the happy energy all the way through the final syllables. The final sentence should sound delighted and inviting. Maintain the same cheerful voice and energy throughout. Clear full-volume speech at a natural conversational pace. Read exactly the supplied Korean words, without extra words or audible laughter.",
+  "style_sha256": "197d80d8390bfe50b6b72aab3ed1bafc670b910770abaf73e371228412e1c95a",
+  "approved_date": "2026-10-17",
+  "approved_sample_job": "51af3c5b9e9e491dbcca532dd3b75693",
+  "approved_sample_audio_sha256": "d87dfcf825d92aadfa22d69fba02f44e4a2f21f68ae151d351bc1bfbca4ac03e",
+  "approval": "사용자: 이번 톤 괜찮네. 이 샘플 톤으로 샥즈 영상 음성 교체, 앞으로 소희와 밝고 신나는 톤 고정."
+}

@@ -22,7 +22,7 @@ def request(path, data=None):
             # Failed synthesis, authorization, or model errors are not retried.
             time.sleep(attempt+1)
 
-def submit(text, *, model=None, voice=None, style=None, project='story', title='영상 내레이션', allow_cloud=False, seed=42):
+def submit(text, *, model=None, voice=None, style=None, project='story', title='영상 내레이션', allow_cloud=False, seed=43):
     model = model or 'qwen-1.7b'
     if voice is None:
         voice = 'Sohee' if model.startswith('qwen') else 'Zephyr'
@@ -60,6 +60,6 @@ def collect(job, output_path, *, timeout=7200):
     output.with_suffix('.tts.json').write_text(json.dumps(provenance,ensure_ascii=False,indent=2),encoding='utf-8')
     return provenance
 
-def synthesize(text, output_path, *, model=None, voice=None, style=None, project='story', title='영상 내레이션', allow_cloud=False, timeout=7200, seed=42):
+def synthesize(text, output_path, *, model=None, voice=None, style=None, project='story', title='영상 내레이션', allow_cloud=False, timeout=7200, seed=43):
     job=submit(text,model=model,voice=voice,style=style,project=project,title=title,allow_cloud=allow_cloud,seed=seed)
     return collect(job,output_path,timeout=timeout)
