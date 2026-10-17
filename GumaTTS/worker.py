@@ -99,7 +99,7 @@ def run(folder):
                 f.setnchannels(1); f.setsampwidth(2); f.setframerate(24000); f.writeframes(raw)
         info.update(provider='gemini', model_repo=model, api_charge='depends_on_project_billing', generation_seconds=round(time.monotonic()-started,2))
     out = folder / 'audio.mp3'
-    normalization = normalize_speech(original, out)
+    normalization = normalize_speech(original, out, peak_guard=request['model']=='qwen-1.7b' and request['voice']=='Sohee')
     duration = float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','default=nw=1:nk=1',str(out)]))
     if not 0.3 < duration < 360: raise RuntimeError('음성 길이가 검수 범위를 벗어났습니다.')
     subprocess.run(['ffmpeg','-v','error','-i',str(out),'-f','null','-'],check=True,capture_output=True)

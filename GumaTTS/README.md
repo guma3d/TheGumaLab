@@ -84,3 +84,5 @@ API 모델 `qwen-design-1.7b`는 voice=M1–M5 또는 F1–F5를 사용한다. V
 이전 2026-10-12 Story 화자 시험 기록(최신 Gemini Zephyr 채택으로 폐기된 기본값): 로컬 `qwen-clone-1.7b` / `M5-fixed-v1`을 기본으로 사용한다. 선정된 M5 비교 작업 `abb9d177a65344ada1587cafeb817c99`의 원본 WAV와 대본을 불변 참조로 등록한다. 컷별 생성·보관·수정 원칙을 유지하며 기준 WAV SHA256과 참조 대본 SHA256까지 캐시 키와 검수에 포함한다. VoiceDesign으로 컷마다 새 화자를 설계하지 않는다. `produce_local_cuts.py`는 제작 폴더의 `voice-settings.json`을 읽고 모든 컷에 동일 참조를 확인한다. 승진 영상 v4 제작 원본·정확한 도구 스냅샷·음색 비교 샘플·검수는 `storage/story/productions/promotion-v4`에 보존한다. 자동 화자 유사도·전사·음량 검사는 실제 청취나 사용자 승인과 구분한다.
 
 2026-10-12 최신 사용자 채택: Story·롱폼 기본은 Gemini Flash TTS / Zephyr이며 로컬 TTS를 사용하지 않는다. 공통 서비스와 명시적 allow_cloud=true, 구간별 저장·정상 구간 재사용을 유지한다. 한도 부족 시 Lite·로컬로 자동 전환하지 않는다. 쇼핑·파생 이야기쇼츠·X 정책은 변경하지 않는다.
+
+- 2026-10-17 Sohee 음량 보정: 희소한 자음 피크 때문에 정적 게인만으로 평균 음량이 부족하면 최대 8dB 이내의 피크 제한(자동 증폭 끔, attack 5ms/release 50ms, 지연 보상) 후 측정 기반 고정 게인을 적용한다. 원본은 보존하고 전후 LUFS·true peak·보정본 해시를 기록한다. 한도를 넘는 원본·무음·클리핑은 계속 실패 처리하며 속도·피치는 변경하지 않는다.
