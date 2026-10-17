@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-17-zephyr-audio-first-v3",
+  "revision": "2026-10-18-continuity-diversity-v4",
   "scope": "Story longform; latest user feedback",
   "captions": {
     "font": "Pretendard SemiBold",
@@ -8,15 +8,18 @@
     "scale": 1.2,
     "max_lines": 1,
     "max_width_1080p": 1680,
-    "outline": 2.4,
-    "background": false,
-    "allow_semantic_compression": true
+    "outline": 0,
+    "background": true,
+    "allow_semantic_compression": true,
+    "background_color": "#F4CE68",
+    "text_color": "#283A3B",
+    "background_shape": "rounded per-caption plate"
   },
   "editing": {
     "target_shot_seconds": 4,
     "maximum_shot_seconds": 7,
-    "maximum_consecutive_same_asset_seconds": 8,
-    "minimum_unique_images_this_revision": 42,
+    "maximum_consecutive_same_asset_seconds": 15,
+    "minimum_unique_images_this_revision": 113,
     "motion_required": true,
     "motion_types": [
       "push-in",
@@ -29,7 +32,12 @@
       "pointer-callout"
     ],
     "text_motion": "explanatory diagrams only; no duplicate keyword/question headlines",
-    "cut_trigger": "spoken subject/action via ASR; duration target is secondary"
+    "cut_trigger": "spoken subject/action via ASR; duration target is secondary",
+    "maximum_asset_appearances": 2,
+    "continuous_same_asset_motion": true,
+    "asset_identity": "source hash; crops and insets counted",
+    "camera_reset_allowed": false,
+    "long_hold_exception": "progressively animated explanatory diagram only"
   },
   "maps": {
     "use_verified_geography": true,
@@ -38,7 +46,10 @@
       "Dead Sea",
       "Qumran caves"
     ],
-    "generated_landscape_is_not_geographic_evidence": true
+    "generated_landscape_is_not_geographic_evidence": true,
+    "generated_3d_terrain_required": true,
+    "text_in_generated_image": false,
+    "labels_composited_once": true
   },
   "audio_review": {
     "background_only": true,
