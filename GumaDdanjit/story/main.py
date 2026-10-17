@@ -215,7 +215,7 @@ def create_app(storage=None, testing=False):
             raise HTTPException(404)
         lines = [f"# {item['title']}", f"버전 {version} · 상태 {item['status']}", item['summary'], item['note']]
         for scene in item['scenes']:
-            lines.extend([f"\n## {scene['start']}–{scene['end']}초 · {scene['title']}", scene['narration'], '\n화면: '+scene['visual'], '\n출처: '+scene['source'], '\n리소스: '+', '.join(scene['asset_ids'])])
+            lines.extend([f"\n## {scene['start']}–{scene['end']}초 · {scene['title']}", scene['narration'], '\n화면: '+scene.get('visual', ''), '\n출처: '+scene['source'], '\n리소스: '+', '.join(scene['asset_ids'])])
         return Response('\n\n'.join(lines), media_type='text/markdown; charset=utf-8', headers={'Content-Disposition': f'attachment; filename="{script_id}-v{version}.md"'})
 
     @app.get('/scripts/{script_id}/{version}', response_class=HTMLResponse)
@@ -246,7 +246,7 @@ def create_app(storage=None, testing=False):
                 preview = f'<img src="{media_url}/thumb" alt="{label}" loading="lazy">' if asset.get('media') == 'image' else ''
                 resources.append(f'<a href="{media_url}/original" target="_blank" rel="noopener">{preview}<span>{label}</span></a>')
             gallery = '<div class="resources">' + ''.join(resources) + '</div>'
-            sections.append(f'<section id="scene-{i}"><p class="time">{clock(s["start"])}–{clock(s["end"])}</p><h2>{e(s["title"])}</h2><div class="narration">{narration or "<p>내레이션 작성 전</p>"}</div><details><summary>화면 연출 · 출처 · 연결 리소스</summary><h3>화면 연출</h3><p class="preserve">{e(s["visual"])}</p><h3>사실 확인 · 출처</h3><p class="preserve">{e(s["source"])}</p><h3>연결 리소스 · 클릭하면 원본</h3>{gallery}</details></section>')
+            sections.append(f'<section id="scene-{i}"><p class="time">{clock(s["start"])}–{clock(s["end"])}</p><h2>{e(s["title"])}</h2><div class="narration">{narration or "<p>내레이션 작성 전</p>"}</div><details><summary>화면 연출 · 출처 · 연결 리소스</summary><h3>화면 연출</h3><p class="preserve">{e(s.get("visual", ""))}</p><h3>사실 확인 · 출처</h3><p class="preserve">{e(s["source"])}</p><h3>연결 리소스 · 클릭하면 원본</h3>{gallery}</details></section>')
         status = {'outline':'구성 초안','draft':'상세 대본 초안','review':'검토 중','approved':'승인'}.get(item['status'],item['status'])
         measured = item.get('timing_basis') == 'measured_cut_audio'
         timing_note = '완성 영상의 컷별 음성을 기준으로 측정한 시간입니다. 화면 연출과 출처는 낭독하지 않습니다.' if measured else '시간은 편집 목표입니다. 실제 길이는 TTS 낭독 후 확정합니다. 화면 연출과 출처는 낭독하지 않습니다.'
