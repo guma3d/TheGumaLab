@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-18-continuity-diversity-v4",
+  "revision": "2026-10-18-caption-cut-audit-v5",
   "scope": "Story longform; latest user feedback",
   "captions": {
     "font": "Pretendard SemiBold",
@@ -13,13 +13,17 @@
     "allow_semantic_compression": true,
     "background_color": "#F4CE68",
     "text_color": "#283A3B",
-    "background_shape": "rounded per-caption plate"
+    "background_shape": "rounded per-caption plate",
+    "source": "approved script; ASR timing only",
+    "proofread_required": true,
+    "semantic_boundary_required": true,
+    "preserve_numbers_names_negation_uncertainty": true
   },
   "editing": {
     "target_shot_seconds": 4,
-    "maximum_shot_seconds": 7,
-    "maximum_consecutive_same_asset_seconds": 15,
-    "minimum_unique_images_this_revision": 113,
+    "maximum_shot_seconds": 8,
+    "maximum_consecutive_same_asset_seconds": 8,
+    "minimum_unique_images_this_revision": 130,
     "motion_required": true,
     "motion_types": [
       "push-in",
@@ -35,9 +39,11 @@
     "cut_trigger": "spoken subject/action via ASR; duration target is secondary",
     "maximum_asset_appearances": 2,
     "continuous_same_asset_motion": true,
-    "asset_identity": "source hash; crops and insets counted",
+    "asset_identity": "source hash and lineage; every final cut counts including pan/zoom/crop",
     "camera_reset_allowed": false,
-    "long_hold_exception": "progressively animated explanatory diagram only"
+    "long_hold_exception": null,
+    "minimum_shot_seconds": 3,
+    "new_image_required_for_long_hold": true
   },
   "maps": {
     "use_verified_geography": true,
